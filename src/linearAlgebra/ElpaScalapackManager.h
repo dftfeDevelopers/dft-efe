@@ -56,8 +56,8 @@ namespace dftefe
       void
       elpaDeallocateHandles();
 
-      elpa_t &
-      getElpaHandle();
+      const elpa_t &
+      getElpaHandle() const;
 
       elpa_t &
       getElpaHandlePartialEigenVec();
@@ -65,6 +65,8 @@ namespace dftefe
       elpa_autotune_t &
       getElpaAutoTuneHandle();
 
+      const bool &
+      useElpa() const;
 
       /**
        * @brief Get relevant mpi communicator
@@ -133,10 +135,16 @@ namespace dftefe
       return d_processGridDftefeWrapper;
     }
 
-    inline elpa_t &
-    ElpaScalapackManager::getElpaHandle()
+    inline const elpa_t &
+    ElpaScalapackManager::getElpaHandle() const
     {
       return d_elpaHandle;
+    }
+
+    inline const bool &
+    ElpaScalapackManager::useElpa() const
+    {
+      return d_useELPA;
     }
 
     inline elpa_t &

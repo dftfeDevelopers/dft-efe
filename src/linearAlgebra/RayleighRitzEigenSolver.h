@@ -78,8 +78,7 @@ namespace dftefe
         const ElpaScalapackManager &elpaScala,
         std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
                                                       mpiPatternP2P,
-        std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext,
-        const bool                                    useELPA = true);
+        std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext);
 
       /**
        *@brief Default Destructor
@@ -143,7 +142,7 @@ namespace dftefe
 
       size_type d_eigenVecBatchSize, d_batchSizeSmall;
 
-      ElpaScalapackManager *d_elpaScala;
+      const ElpaScalapackManager *d_elpaScala;
       const bool            d_useELPA;
 
     }; // end of class RayleighRitzEigenSolver

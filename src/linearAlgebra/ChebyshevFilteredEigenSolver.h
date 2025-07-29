@@ -93,6 +93,7 @@ namespace dftefe
         const double                                polynomialDegree,
         const double                                illConditionTolerance,
         MultiVector<ValueTypeOperand, memorySpace> &eigenSubspaceGuess,
+        const ElpaScalapackManager                  &elpaScala,
         bool                  isResidualChebyshevFilter = true,
         const size_type       eigenVectorBatchSize      = 0,
         OrthogonalizationType orthoType =
@@ -164,6 +165,8 @@ namespace dftefe
                             d_mpiPatternP2P;
       bool                  d_printL2Norms;
       OrthogonalizationType d_orthoType;
+
+      const ElpaScalapackManager *d_elpaScala;
 
     }; // end of class ChebyshevFilteredEigenSolver
   }    // end of namespace linearAlgebra

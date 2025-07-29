@@ -42,14 +42,13 @@ namespace dftefe
         const ElpaScalapackManager &elpaScala,
         std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
                                                       mpiPatternP2P,
-        std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext,
-        const bool                                    useELPA)
+        std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext)
       : d_eigenVecBatchSize(eigenVectorBatchSize)
       , d_batchSizeSmall(0)
       , d_XinBatchSmall(nullptr)
       , d_XoutBatchSmall(nullptr)
       , d_elpaScala(&elpaScala)
-      , d_useELPA(useELPA)
+      , d_useELPA(d_elpaScala->useElpa())
     {
       d_XinBatch =
         std::make_shared<linearAlgebra::MultiVector<ValueType, memorySpace>>(
@@ -153,6 +152,9 @@ namespace dftefe
       eigenValuesMemSpace.template copyTo<utils::MemorySpace::HOST>(
         eigenValues.data(), numVec, 0, 0);
 
+      if(computeEigenVectors)
+        eigenVectorsXSubspace = XprojectedA;
+
       p.registerEnd("LAPACK Eigendecomposition");
       **/
 
@@ -175,7 +177,7 @@ namespace dftefe
               {
                 const size_type glob_j = projHamPar.global_row(j);
                 projHamPar.local_el(j, i) =
-                  *(XprojectedA.data() + glob_j * numVec + glob_i);
+                  *(XprojectedA.data() + glob_i * numVec + glob_j);
               }
           }
 
@@ -236,7 +238,7 @@ namespace dftefe
                                    "DFT-FE Error: elpa_eigenvectors error.");
             }
 
-          utils::mpi::MPIBcast(&eigenValues[0],
+          utils::mpi::MPIBcast<utils::MemorySpace::HOST>(&eigenValues[0],
                                eigenValues.size(),
                                utils::mpi::Types<RealType>::getMPIDatatype(),
                                0,
@@ -262,7 +264,7 @@ namespace dftefe
             for (size_type j = 0; j < projHamPar.local_m(); ++j)
               {
                 const size_type glob_j = projHamPar.global_row(j);
-                *(eigenVectorsXSubspace.data() + glob_j * numVec + glob_i) =
+                *(eigenVectorsXSubspace.data() + glob_i * numVec + glob_j) =
                   projHamPar.local_el(j, i);
               }
           }

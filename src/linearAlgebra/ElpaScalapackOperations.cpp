@@ -64,7 +64,7 @@ namespace dftefe
         const size_type n_active_mpi_processes =
           processGrid->get_process_grid_rows() *
           processGrid->get_process_grid_columns();
-        std::vector<int> active_ranks;
+        std::vector<int> active_ranks(0);
         for (size_type i = 0; i < n_active_mpi_processes; ++i)
           active_ranks.push_back(i);
 
@@ -128,10 +128,8 @@ namespace dftefe
 
             // std::cout<<"local_nrows: "<<tempMat.local_m() <<std::endl;
             // std::cout<<"local_ncols: "<<tempMat.local_n() <<std::endl;
-            // std::cout<<"process_row:
-            // "<<processGrid->get_this_process_row()<<std::endl;
-            // std::cout<<"process_col:
-            // "<<processGrid->get_this_process_column()<<std::endl;
+            // std::cout<<"process_row:"<<processGrid->get_this_process_row()<<std::endl;
+            // std::cout<<"process_col:"<<processGrid->get_this_process_column()<<std::endl;
 
             elpa_set_integer(elpaHandle,
                              "local_nrows",
@@ -173,8 +171,10 @@ namespace dftefe
                                  ("DFT-EFE Error: ELPA Error."));
 
             /* Setup */
-            DFTEFE_AssertWithMsg(elpa_setup(elpaHandle) == ELPA_OK,
-                                 ("DFT-EFE Error: ELPA Error."));
+            if (elpa_setup(elpaHandle) != ELPA_OK)
+              {
+                utils::throwException(false , ("DFT-EFE Error: ELPA Error."));
+              }                                 
 
             // #ifdef DFTFE_WITH_DEVICE
 

@@ -83,6 +83,8 @@ namespace dftefe
     const size_type KSDFTDefaults::MAX_DENSCOMP_WAVEFN_BATCH_SIZE = 50;
     const size_type KSDFTDefaults::CELL_BATCH_SIZE                = 1;
     const size_type KSDFTDefaults::CELL_BATCH_SIZE_GRAD_EVAL      = 1;
+    const size_type KSDFTDefaults::SCALAPACK_PARAL_PROCS          = 0;
+    const size_type KSDFTDefaults::SCALAPACK_BLOCK_SIZE           = 32;
 
     /**
      * @brief Setting all the ElectroHamiltonianDefaults

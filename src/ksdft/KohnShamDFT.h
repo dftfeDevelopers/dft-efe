@@ -38,6 +38,7 @@
 #include <utils/ConditionalOStream.h>
 #include <ksdft/MixingScheme.h>
 #include <utils/Profiler.h>
+#include <linearAlgebra/ScalapackTemplates.h>
 
 namespace dftefe
 {
@@ -588,6 +589,8 @@ namespace dftefe
       quadrature::QuadratureValuesContainer<ValueTypeElectrostaticsCoeff,
                                             memorySpace>
         d_atomicTotalElecPotNuclearQuad, d_atomicTotalElecPotElectronicQuad;
+
+      std::shared_ptr<linearAlgebra::ElpaScalapackManager> d_elpaScala;
 
     }; // end of KohnShamDFT
   }    // end of namespace ksdft

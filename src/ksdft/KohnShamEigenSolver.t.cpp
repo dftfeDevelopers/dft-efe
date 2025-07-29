@@ -60,6 +60,7 @@ namespace dftefe
         linearAlgebra::MultiVector<ValueTypeOperand, memorySpace>
           &waveFunctionSubspaceGuess,
         linearAlgebra::Vector<ValueTypeOperand, memorySpace> &lanczosGuess,
+        const linearAlgebra::ElpaScalapackManager            &elpaScala,
         bool                                 isResidualChebyshevFilter,
         const size_type                      waveFunctionBatchSize,
         const OpContext &                    MLanczos,
@@ -86,6 +87,7 @@ namespace dftefe
       , d_filteredSubspace(nullptr)
       , d_filteredSubspaceOrtho((nullptr))
       , d_orthoType(orthoType)
+      , d_elpaScala(&elpaScala)
     {
       reinitBasis(waveFunctionSubspaceGuess,
                   lanczosGuess,
@@ -152,6 +154,7 @@ namespace dftefe
         0,
         ksdft::LinearEigenSolverDefaults::ILL_COND_TOL,
         *d_waveFunctionSubspaceGuess,
+        *d_elpaScala,
         d_isResidualChebyFilter,
         d_waveFunctionBatchSize,
         d_orthoType,

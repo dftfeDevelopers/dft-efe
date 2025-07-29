@@ -151,6 +151,8 @@ namespace dftefe
       static const size_type CELL_BATCH_SIZE;
       static const size_type CELL_BATCH_SIZE_GRAD_EVAL;
       static const size_type MAX_DENSCOMP_WAVEFN_BATCH_SIZE;
+      static const size_type SCALAPACK_PARAL_PROCS;
+      static const size_type SCALAPACK_BLOCK_SIZE;
     };
 
     class ElectroHamiltonianDefaults

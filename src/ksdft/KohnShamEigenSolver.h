@@ -96,6 +96,7 @@ namespace dftefe
         linearAlgebra::MultiVector<ValueTypeOperand, memorySpace>
           &waveFunctionSubspaceGuess,
         linearAlgebra::Vector<ValueTypeOperand, memorySpace> &lanczosGuess,
+        const linearAlgebra::ElpaScalapackManager            &elpaScala,
         bool             isResidualChebyshevFilter = true,
         const size_type  waveFunctionBatchSize     = 0,
         const OpContext &MLanczos =
@@ -227,6 +228,7 @@ namespace dftefe
         d_nOnes;
 
       linearAlgebra::OrthogonalizationType d_orthoType;
+      const linearAlgebra::ElpaScalapackManager *d_elpaScala;
 
     }; // end of class KohnShamEigenSolver
   }    // namespace ksdft
