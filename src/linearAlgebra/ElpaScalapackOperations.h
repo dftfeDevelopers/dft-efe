@@ -88,19 +88,6 @@ namespace dftefe
         std::unordered_map<size_type, size_type> &globalToLocalRowIdMap,
         std::unordered_map<size_type, size_type> &globalToLocalColumnIdMap);
 
-
-      /** @brief Mpi all reduce of ScaLAPACKMat across a given inter communicator.
-       * Used for band parallelization.
-       *
-       */
-      template <typename T>
-      void
-      sumAcrossInterCommScaLAPACKMat(
-        const std::shared_ptr<const ProcessGrid> &processGrid,
-        ScaLAPACKMatrix<T> &                      mat,
-        const utils::mpi::MPIComm &               interComm);
-
-
       /** @brief scale a ScaLAPACKMat with a scalar
        *
        *
@@ -110,23 +97,10 @@ namespace dftefe
       scaleScaLAPACKMat(
         const std::shared_ptr<const ProcessGrid> &processGrid,
         /*const std::shared_ptr<
-          dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
+          linearAlgebra::BLASWrapper<utils::MemorySpace::HOST>>
           &                        BLASWrapperPtr,*/
         ScaLAPACKMatrix<T> &mat,
         const T             scalar);
-
-
-      /** @brief MPI_Bcast of ScaLAPACKMat across a given inter communicator from a given broadcast root.
-       * Used for band parallelization.
-       *
-       */
-      template <typename T>
-      void
-      broadcastAcrossInterCommScaLAPACKMat(
-        const std::shared_ptr<const ProcessGrid> &processGrid,
-        ScaLAPACKMatrix<T> &                      mat,
-        const utils::mpi::MPIComm &               interComm,
-        const size_type                           broadcastRoot);
 
       /** @brief Computes Sc=X^{T}*Xc and stores in a parallel ScaLAPACK matrix.
        * X^{T} is the subspaceVectorsArray stored in the column major format (N
@@ -142,7 +116,7 @@ namespace dftefe
       fillParallelOverlapMatrix(
         const T *X,
         /*const std::shared_ptr<
-          dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
+          linearAlgebra::BLASWrapper<utils::MemorySpace::HOST>>
           &                                              BLASWrapperPtr,*/
         const size_type                           XLocalSize,
         const size_type                           numberVectors,
@@ -151,29 +125,31 @@ namespace dftefe
         const size_type                           wfcBlockSize,
         ScaLAPACKMatrix<T> &                      overlapMatPar);
 
-
-      /** @brief Computes Sc=X^{T}*Xc and stores in a parallel ScaLAPACK matrix.
-       * X^{T} is the subspaceVectorsArray stored in the column major format (N
-       * x M). Sc is the overlapMatPar.
+      /** @brief Computes X^{T}=Q*X^{T} inplace. X^{T} is the subspaceVectorsArray
+       * stored in the column major format (N x M). Q is rotationMatPar (N x N).
        *
-       * The overlap matrix computation and filling is done in a blocked
-       * approach which avoids creation of full serial overlap matrix memory,
-       * and also avoids creation of another full X memory.
+       * The subspace rotation inside this function is done in a blocked
+       * approach which avoids creation of full serial rotation matrix memory,
+       * and also avoids creation of another full subspaceVectorsArray memory.
+       * subspaceVectorsArrayLocalSize=N*M
        *
        */
-      template <typename T, typename TLowPrec>
+      template <typename T>
       void
-      fillParallelOverlapMatrixMixedPrec(
-        const T *X,
-        /*const std::shared_ptr<
-          dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
-          &                                              BLASWrapperPtr,*/
-        const size_type                           XLocalSize,
-        const size_type                           numberVectors,
-        const std::shared_ptr<const ProcessGrid> &processGrid,
-        const utils::mpi::MPIComm &               mpiComm,
-        const size_type                           wfcBlockSize,
-        ScaLAPACKMatrix<T> &                      overlapMatPar);
+      subspaceRotation(
+      ValueType *X,
+      const size_type  M,
+      const size_type  N,
+      /*std::shared_ptr<
+        linearAlgebra::BLASWrapper<memorySpace>> &BLASWrapperPtr,*/
+      const std::shared_ptr<const ProcessGrid> &processGrid,
+      const MPI_Comm                                  &mpiCommDomain,
+      const ScaLAPACKMatrix<ValueType> &rotationMatPar,
+      const size_type                   subspaceRotDofsBlockSize,
+      const size_type                   wfcBlockSize,
+      const bool                       rotationMatTranspose = false,
+      const bool                       isRotationMatLowerTria = false)
+
     } // namespace elpaScalaOpInternal
   }   // namespace linearAlgebra
 } // namespace dftefe

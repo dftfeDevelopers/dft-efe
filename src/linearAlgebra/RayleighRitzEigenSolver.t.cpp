@@ -90,48 +90,34 @@ namespace dftefe
 
       // Compute projected hamiltonian = X_O^H A X_O
 
+      const size_type rowsBlockSize = d_elpaScala->getScalapackBlockSize();
+      std::shared_ptr<const ProcessGrid> processGrid =
+        d_elpaScala->getProcessGridDftefeScalaWrapper();
+
+      ScaLAPACKMatrix<ValueType> projHamPar(numVec, processGrid, rowsBlockSize);
+      if (processGrid->is_process_active())
+        std::fill(&projHamPar.local_el(0, 0),
+                  &projHamPar.local_el(0, 0) +
+                    projHamPar.local_m() * projHamPar.local_n(),
+                  ValueType(0.0));
+
       p.registerStart("Compute X^T H X");
 
       computeXTransOpX(X, XprojectedA, A);
 
-      /**
-      A.apply(X, eigenVectors, true, false);
+      if (processGrid->is_process_active())
+        for (size_type i = 0; i < projHamPar.local_n(); ++i)
+          {
+            const size_type glob_i = projHamPar.global_column(i);
+            for (size_type j = 0; j < projHamPar.local_m(); ++j)
+              {
+                const size_type glob_j = projHamPar.global_row(j);
+                projHamPar.local_el(j, i) =
+                  *(XprojectedA.data() + glob_i * numVec + glob_j);
+              }
+          }
 
-      linearAlgebra::blasLapack::gemm<ValueType, ValueType, memorySpace>(
-        linearAlgebra::blasLapack::Layout::ColMajor,
-        linearAlgebra::blasLapack::Op::NoTrans,
-        linearAlgebra::blasLapack::Op::ConjTrans,
-        numVec,
-        numVec,
-        vecSize,
-        (ValueType)1,
-        eigenVectors.data(),
-        numVec,
-        X.data(),
-        numVec,
-        (ValueType)0,
-        XprojectedA.data(),
-        numVec,
-        *X.getLinAlgOpContext());
-
-      // TODO: Copy only the real part because XprojectedA is real
-      // Reason: Reduced flops.
-
-      // MPI_AllReduce to get the XprojectedA from all procs
-
-      int mpierr = utils::mpi::MPIAllreduce<memorySpace>(
-        utils::mpi::MPIInPlace,
-        XprojectedA.data(),
-        XprojectedA.size(),
-        utils::mpi::Types<ValueType>::getMPIDatatype(),
-        utils::mpi::MPISum,
-        X.getMPIPatternP2P()->mpiCommunicator());
-
-      std::pair<bool, std::string> mpiIsSuccessAndMsg =
-        utils::mpi::MPIErrIsSuccessAndMsg(mpierr);
-      DFTEFE_AssertWithMsg(mpiIsSuccessAndMsg.first,
-                            "MPI Error:" + mpiIsSuccessAndMsg.second);
-      **/
+      //computeXTransOpX(X, processGrid, projHamPar, A);
 
       p.registerEnd("Compute X^T H X");
 
@@ -157,29 +143,6 @@ namespace dftefe
 
       p.registerEnd("LAPACK Eigendecomposition");
       **/
-
-      const size_type rowsBlockSize = d_elpaScala->getScalapackBlockSize();
-      std::shared_ptr<const ProcessGrid> processGrid =
-        d_elpaScala->getProcessGridDftefeScalaWrapper();
-
-      ScaLAPACKMatrix<ValueType> projHamPar(numVec, processGrid, rowsBlockSize);
-      if (processGrid->is_process_active())
-        std::fill(&projHamPar.local_el(0, 0),
-                  &projHamPar.local_el(0, 0) +
-                    projHamPar.local_m() * projHamPar.local_n(),
-                  ValueType(0.0));
-
-      if (processGrid->is_process_active())
-        for (size_type i = 0; i < projHamPar.local_n(); ++i)
-          {
-            const size_type glob_i = projHamPar.global_column(i);
-            for (size_type j = 0; j < projHamPar.local_m(); ++j)
-              {
-                const size_type glob_j = projHamPar.global_row(j);
-                projHamPar.local_el(j, i) =
-                  *(XprojectedA.data() + glob_i * numVec + glob_j);
-              }
-          }
 
       //
       // compute eigendecomposition of ProjHam HConjProj= QConj*D*QConj^{C} (C
@@ -268,6 +231,14 @@ namespace dftefe
                   projHamPar.local_el(j, i);
               }
           }
+
+      int mpierr = utils::mpi::MPIAllreduce<memorySpace>(
+        utils::mpi::MPIInPlace,
+        eigenVectorsXSubspace.data(),
+        eigenVectorsXSubspace.size(),
+        utils::mpi::Types<ValueType>::getMPIDatatype(),
+        utils::mpi::MPISum,
+        X.getMPIPatternP2P()->mpiCommunicator());
 
       if (computeEigenVectors)
         {
@@ -496,6 +467,8 @@ namespace dftefe
       return retunValue;
     }
 
+    // // ------------- DEBUG ------------------- // // 
+    // returns the Xtop(x) in full storage (memspace storage)
     template <typename ValueTypeOperator,
               typename ValueTypeOperand,
               utils::MemorySpace memorySpace>
@@ -503,8 +476,11 @@ namespace dftefe
     RayleighRitzEigenSolver<ValueTypeOperator, ValueTypeOperand, memorySpace>::
       computeXTransOpX(MultiVector<ValueTypeOperand, memorySpace> &  X,
                        utils::MemoryStorage<ValueType, memorySpace> &S,
-                       const OpContext &                             Op)
+                       const OpContext &                             Op,
+                       const bool & useBatched)
     {
+      if(useBatched == true)
+      {
       const utils::mpi::MPIComm comm = X.getMPIPatternP2P()->mpiCommunicator();
       LinAlgOpContext<memorySpace> linAlgOpContext = *X.getLinAlgOpContext();
       const size_type              vecSize         = X.locallyOwnedSize();
@@ -627,6 +603,212 @@ namespace dftefe
                                   (eigVecStartId + iSize),
                                 SBlock.data() +
                                   iSize * (numVec - eigVecStartId) + iSize);
+
+          for (size_type iSize = 0; iSize < vecLocalSize; iSize++)
+            memoryTransfer.copy(numEigVecInBatch,
+                                X.data() + iSize * numVec + eigVecStartId,
+                                subspaceBatchIn->data() +
+                                  numEigVecInBatch * iSize);
+        }
+      }
+      else
+      {
+      Op.apply(X, eigenVectors, true, false);
+
+      linearAlgebra::blasLapack::gemm<ValueType, ValueType, memorySpace>(
+        linearAlgebra::blasLapack::Layout::ColMajor,
+        linearAlgebra::blasLapack::Op::NoTrans,
+        linearAlgebra::blasLapack::Op::ConjTrans,
+        numVec,
+        numVec,
+        vecSize,
+        (ValueType)1,
+        eigenVectors.data(),
+        numVec,
+        X.data(),
+        numVec,
+        (ValueType)0,
+        XprojectedA.data(),
+        numVec,
+        *X.getLinAlgOpContext());
+
+      // TODO: Copy only the real part because XprojectedA is real
+      // Reason: Reduced flops.
+
+      // MPI_AllReduce to get the XprojectedA from all procs
+
+      int mpierr = utils::mpi::MPIAllreduce<memorySpace>(
+        utils::mpi::MPIInPlace,
+        XprojectedA.data(),
+        XprojectedA.size(),
+        utils::mpi::Types<ValueType>::getMPIDatatype(),
+        utils::mpi::MPISum,
+        X.getMPIPatternP2P()->mpiCommunicator());
+
+      std::pair<bool, std::string> mpiIsSuccessAndMsg =
+        utils::mpi::MPIErrIsSuccessAndMsg(mpierr);
+      DFTEFE_AssertWithMsg(mpiIsSuccessAndMsg.first,
+                            "MPI Error:" + mpiIsSuccessAndMsg.second);
+      }
+    }
+    // // ------------- DEBUG ------------------- // // 
+
+    // returns the Xtop(x) in scalapck format (host storage)
+    template <typename ValueTypeOperator,
+              typename ValueTypeOperand,
+              utils::MemorySpace memorySpace>
+    void
+    RayleighRitzEigenSolver<ValueTypeOperator, ValueTypeOperand, memorySpace>::
+      computeXTransOpX(MultiVector<ValueTypeOperand, memorySpace> &  X,
+                      const std::shared_ptr<const ProcessGrid> &processGrid,
+                       ScaLAPACKMatrix<T> &                      overlapMatPar,
+                       const OpContext &                             Op)
+    {
+      const utils::mpi::MPIComm comm = X.getMPIPatternP2P()->mpiCommunicator();
+      LinAlgOpContext<memorySpace> linAlgOpContext = *X.getLinAlgOpContext();
+      const size_type              vecSize         = X.locallyOwnedSize();
+      const size_type              vecLocalSize    = X.localSize();
+      const size_type              numVec          = X.getNumberComponents();
+      utils::MemoryTransfer<memorySpace, memorySpace>      memoryTransfer;
+      std::shared_ptr<MultiVector<ValueType, memorySpace>> subspaceBatchIn =
+                                                             nullptr,
+                                                           subspaceBatchOut =
+                                                             nullptr;
+
+        // get global to local index maps for Scalapack matrix
+        std::unordered_map<size_type, size_type> globalToLocalColumnIdMap;
+        std::unordered_map<size_type, size_type> globalToLocalRowIdMap;
+        elpaScalaOpInternal::createGlobalToLocalIdMapsScaLAPACKMat(
+          processGrid,
+          overlapMatPar,
+          globalToLocalRowIdMap,
+          globalToLocalColumnIdMap);
+                                                          
+      utils::MemoryStorage<ValueType, memorySpace> SBlock(numVec *
+                                                            d_eigenVecBatchSize,
+                                                          ValueType(0));
+
+      utils::MemoryStorage<ValueType, utils::MemorySpace::HOST> SBlockHost(numVec *
+                                                            d_eigenVecBatchSize,
+                                                          ValueType(0));                                                          
+
+      for (size_type eigVecStartId = 0; eigVecStartId < numVec;
+           eigVecStartId += d_eigenVecBatchSize)
+        {
+          const size_type eigVecEndId =
+            std::min(eigVecStartId + d_eigenVecBatchSize, numVec);
+          const size_type numEigVecInBatch = eigVecEndId - eigVecStartId;
+
+          if (numEigVecInBatch % d_eigenVecBatchSize == 0)
+            {
+              for (size_type iSize = 0; iSize < vecLocalSize; iSize++)
+                memoryTransfer.copy(numEigVecInBatch,
+                                    d_XinBatch->data() +
+                                      numEigVecInBatch * iSize,
+                                    X.data() + iSize * numVec + eigVecStartId);
+
+              subspaceBatchIn  = d_XinBatch;
+              subspaceBatchOut = d_XoutBatch;
+            }
+          else if (numEigVecInBatch % d_eigenVecBatchSize == d_batchSizeSmall)
+            {
+              for (size_type iSize = 0; iSize < vecLocalSize; iSize++)
+                memoryTransfer.copy(numEigVecInBatch,
+                                    d_XinBatchSmall->data() +
+                                      numEigVecInBatch * iSize,
+                                    X.data() + iSize * numVec + eigVecStartId);
+
+              subspaceBatchIn  = d_XinBatchSmall;
+              subspaceBatchOut = d_XoutBatchSmall;
+            }
+          else
+            {
+              d_batchSizeSmall = numEigVecInBatch;
+
+              d_XinBatchSmall = std::make_shared<
+                linearAlgebra::MultiVector<ValueType, memorySpace>>(
+                X.getMPIPatternP2P(),
+                X.getLinAlgOpContext(),
+                numEigVecInBatch,
+                ValueType());
+
+              d_XoutBatchSmall = std::make_shared<
+                linearAlgebra::MultiVector<ValueType, memorySpace>>(
+                X.getMPIPatternP2P(),
+                X.getLinAlgOpContext(),
+                numEigVecInBatch,
+                ValueType());
+
+              for (size_type iSize = 0; iSize < vecLocalSize; iSize++)
+                memoryTransfer.copy(numEigVecInBatch,
+                                    d_XinBatchSmall->data() +
+                                      numEigVecInBatch * iSize,
+                                    X.data() + iSize * numVec + eigVecStartId);
+
+              subspaceBatchIn  = d_XinBatchSmall;
+              subspaceBatchOut = d_XoutBatchSmall;
+            }
+
+          Op.apply(*subspaceBatchIn, *subspaceBatchOut, true, false);
+
+          // Input data is read is X^T (numVec is fastest index and then
+          // vecSize) Operation : S = (X)^H * ((B*X)). S^T = ((B*X)^T)*(X^T)^H
+
+          const ValueType alpha = 1.0;
+          const ValueType beta  = 0.0;
+
+          blasLapack::gemm<ValueTypeOperand, ValueType, memorySpace>(
+            blasLapack::Layout::ColMajor,
+            blasLapack::Op::NoTrans,
+            blasLapack::Op::ConjTrans,
+            numVec - eigVecStartId,
+            numEigVecInBatch,
+            vecSize,
+            alpha,
+            X.data() + eigVecStartId,
+            numVec,
+            subspaceBatchOut->data(),
+            numEigVecInBatch,
+            beta,
+            SBlock.data(),
+            numVec - eigVecStartId,
+            linAlgOpContext);
+
+          utils::MemoryTransfer<utils::MemorySpace::HOST, memorySpace>::copy(
+            SBlock.size(), SBlockHost.data(), (numVec - eigVecStartId) * numEigVecInBatch);
+
+          int mpierr = utils::mpi::MPIAllreduce<utils::memorySpace::HOST>(
+            utils::mpi::MPIInPlace,
+            SBlockHost.data(),
+            (numVec - eigVecStartId) * numEigVecInBatch,
+            utils::mpi::Types<ValueType>::getMPIDatatype(),
+            utils::mpi::MPISum,
+            comm);
+
+          std::pair<bool, std::string> mpiIsSuccessAndMsg =
+            utils::mpi::MPIErrIsSuccessAndMsg(mpierr);
+          DFTEFE_AssertWithMsg(mpiIsSuccessAndMsg.first,
+                               "MPI Error:" + mpiIsSuccessAndMsg.second);
+
+
+          // Copying only the lower triangular part to the ScaLAPACK
+          // overlap matrix
+          if (processGrid->is_process_active())
+            for (size_type iSize = 0; iSize < numEigVecInBatch; iSize++)
+              if (globalToLocalColumnIdMap.find(iSize + eigVecStartId) !=
+                  globalToLocalColumnIdMap.end())
+                {
+                  const size_type localColumnId =
+                    globalToLocalColumnIdMap[iSize + eigVecStartId];
+                  for (size_type jSize = eigVecStartId + iSize; jSize < numVec; jSize++)
+                    {
+                      std::unordered_map<size_type, size_type>::iterator it =
+                        globalToLocalRowIdMap.find(jSize);
+                      if (it != globalToLocalRowIdMap.end())
+                        overlapMatPar.local_el(it->second, localColumnId) =
+                          SBlockHost[iSize * (numVec - eigVecStartId) + jSize - eigVecStartId];
+                    }
+                }
 
           for (size_type iSize = 0; iSize < vecLocalSize; iSize++)
             memoryTransfer.copy(numEigVecInBatch,

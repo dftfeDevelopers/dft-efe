@@ -197,7 +197,7 @@ namespace dftefe
             //                             ("DFT-EFE Error: ELPA Error."));
 
             //                 int gpuID = 0;
-            //                 dftfe::utils::getDevice(&gpuID);
+            //                 utils::getDevice(&gpuID);
 
             //                 elpa_set_integer(elpaHandle, "use_gpu_id", gpuID,
             //                 &error); DFTEFE_AssertWithMsg(error == ELPA_OK,
@@ -331,28 +331,6 @@ namespace dftefe
           }
       }
 
-
-      template <typename T>
-      void
-      sumAcrossInterCommScaLAPACKMat(
-        const std::shared_ptr<const ProcessGrid> &processGrid,
-        ScaLAPACKMatrix<T> &                      mat,
-        const utils::mpi::MPIComm &               interComm)
-      {
-        // sum across all inter communicator groups
-        if (processGrid->is_process_active() &&
-            utils::mpi::numMPIProcesses(interComm) > 1)
-          {
-            utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
-              utils::mpi::MPIInPlace,
-              &mat.local_el(0, 0),
-              mat.local_m() * mat.local_n(),
-              utils::mpi::Types<T>::getMPIDatatype(),
-              utils::mpi::MPISum,
-              interComm);
-          }
-      }
-
       template <typename T>
       void
       scaleScaLAPACKMat(const std::shared_ptr<const ProcessGrid> &processGrid,
@@ -366,223 +344,6 @@ namespace dftefe
         //     xscal(&numberComponents, &scalar, &mat.local_el(0, 0), &inc);
         //   }
       }
-
-
-
-      template <typename T>
-      void
-      broadcastAcrossInterCommScaLAPACKMat(
-        const std::shared_ptr<const ProcessGrid> &processGrid,
-        ScaLAPACKMatrix<T> &                      mat,
-        const utils::mpi::MPIComm &               interComm,
-        const size_type                           broadcastRoot)
-      {
-        // sum across all inter communicator groups
-        if (processGrid->is_process_active() &&
-            utils::mpi::numMPIProcesses(interComm) > 1)
-          {
-            utils::mpi::MPIBcast<utils::MemorySpace::HOST>(
-              &mat.local_el(0, 0),
-              mat.local_m() * mat.local_n(),
-              utils::mpi::Types<T>::getMPIDatatype(),
-              broadcastRoot,
-              interComm);
-          }
-      }
-
-      template <typename T, typename TLowPrec>
-      void
-      fillParallelOverlapMatrixMixedPrec(
-        const T *                                 subspaceVectorsArray,
-        const size_type                           subspaceVectorsArrayLocalSize,
-        const size_type                           N,
-        const std::shared_ptr<const ProcessGrid> &processGrid,
-        const utils::mpi::MPIComm &               mpiComm,
-        const size_type                           wfcBlockSize,
-        ScaLAPACKMatrix<T> &                      overlapMatPar)
-      {
-        const size_type numLocalDofs = subspaceVectorsArrayLocalSize / N;
-
-        // // band group parallelization data structures
-        // const size_type numberBandGroups =
-        //   utils::mpi::numMPIProcesses(interBandGroupComm);
-        // const size_type bandGroupTaskId =
-        //   utils::mpi::thisMPIProcess(interBandGroupComm);
-        // std::vector<size_type> bandGroupLowHighPlusOneIndices;
-        // dftUtils::createBandParallelizationIndices(
-        //   interBandGroupComm, N, bandGroupLowHighPlusOneIndices);
-
-        // get global to local index maps for Scalapack matrix
-        std::unordered_map<size_type, size_type> globalToLocalColumnIdMap;
-        std::unordered_map<size_type, size_type> globalToLocalRowIdMap;
-        elpaScalaOpInternal::createGlobalToLocalIdMapsScaLAPACKMat(
-          processGrid,
-          overlapMatPar,
-          globalToLocalRowIdMap,
-          globalToLocalColumnIdMap);
-
-
-        /*
-         * Sc=X^{T}*Xc is done in a blocked approach for memory optimization:
-         * Sum_{blocks} X^{T}*XcBlock. The result of each X^{T}*XBlock
-         * has a much smaller memory compared to X^{T}*Xc.
-         * X^{T} is a matrix with size number of wavefunctions times
-         * number of local degrees of freedom (N x MLoc).
-         * MLoc is denoted by numLocalDofs.
-         * Xc denotes complex conjugate of X.
-         * XcBlock is a matrix with size (MLoc x B). B is the block size.
-         * A further optimization is done to reduce floating point operations:
-         * As X^{T}*Xc is a Hermitian matrix, it suffices to compute only the
-         * lower triangular part. To exploit this, we do X^{T}*Xc=Sum_{blocks}
-         * XTrunc^{T}*XcBlock where XTrunc^{T} is a (D x MLoc) sub matrix of
-         * X^{T} with the row indices ranging fromt the lowest global index of
-         * XcBlock (denoted by ivec in the code) to N. D=N-ivec. The parallel
-         * ScaLapack overlap matrix is directly filled from the
-         * XTrunc^{T}*XcBlock result
-         */
-        const size_type vectorsBlockSize =
-          wfcBlockSize; //, bandGroupLowHighPlusOneIndices[1]);
-
-        std::vector<T>        overlapMatrixBlock(N * vectorsBlockSize, T(0.0));
-        std::vector<TLowPrec> overlapMatrixBlockLowPrec(N * vectorsBlockSize,
-                                                        TLowPrec(0.0));
-        std::vector<T>        overlapMatrixBlockDoublePrec(vectorsBlockSize *
-                                                      vectorsBlockSize,
-                                                    T(0.0));
-
-        std::vector<TLowPrec> subspaceVectorsArrayLowPrec(
-          subspaceVectorsArray,
-          subspaceVectorsArray + subspaceVectorsArrayLocalSize);
-        for (size_type ivec = 0; ivec < N; ivec += vectorsBlockSize)
-          {
-            // Correct block dimensions if block "goes off edge of" the matrix
-            const size_type B = std::min(vectorsBlockSize, N - ivec);
-
-            // // If one plus the ending index of a block lies within a band
-            // // parallelization group do computations for that block within
-            // the
-            // // band group, otherwise skip that block. This is only activated
-            // if
-            // // NPBAND>1
-            // if ((ivec + B) <=
-            //       bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId + 1] &&
-            //     (ivec + B) >
-            //       bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId])
-            //   {
-            blasLapack::Op
-              transA = blasLapack::Op::NoTrans /*'N'*/,
-              transB = std::is_same<T, std::complex<double>>::value ?
-                         linearAlgebra::blasLapack::Op::ConjTrans /*'C'*/ :
-                         linearAlgebra::blasLapack::Op::Trans /*'T'*/;
-            const T        scalarCoeffAlpha = 1.0, scalarCoeffBeta = 0.0;
-            const TLowPrec scalarCoeffAlphaLowPrec = 1.0,
-                           scalarCoeffBetaLowPrec  = 0.0;
-
-            std::fill(overlapMatrixBlock.begin(), overlapMatrixBlock.end(), 0.);
-            std::fill(overlapMatrixBlockLowPrec.begin(),
-                      overlapMatrixBlockLowPrec.end(),
-                      0.);
-
-            const size_type D = N - ivec;
-
-            blasLapack::gemm<T, T, utils::MemorySpace::HOST>(
-              blasLapack::Layout::ColMajor,
-              transA,
-              transB,
-              B,
-              B,
-              numLocalDofs,
-              scalarCoeffAlpha,
-              subspaceVectorsArray + ivec,
-              N,
-              subspaceVectorsArray + ivec,
-              N,
-              scalarCoeffBeta,
-              &overlapMatrixBlockDoublePrec[0],
-              B,
-              *LinAlgOpContextDefaults::LINALG_OP_CONTXT_HOST);
-
-            const size_type DRem = D - B;
-            if (DRem != 0)
-              {
-                blasLapack::gemm<TLowPrec, TLowPrec, utils::MemorySpace::HOST>(
-                  blasLapack::Layout::ColMajor,
-                  transA,
-                  transB,
-                  DRem,
-                  B,
-                  numLocalDofs,
-                  scalarCoeffAlphaLowPrec,
-                  &subspaceVectorsArrayLowPrec[0] + ivec + B,
-                  N,
-                  &subspaceVectorsArrayLowPrec[0] + ivec,
-                  N,
-                  scalarCoeffBetaLowPrec,
-                  &overlapMatrixBlockLowPrec[0],
-                  DRem,
-                  *LinAlgOpContextDefaults::LINALG_OP_CONTXT_HOST);
-              }
-
-            utils::mpi::MPIBarrier(mpiComm);
-            // Sum local XTrunc^{T}*XcBlock for double precision across
-            // domain decomposition processors
-            utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
-              utils::mpi::MPIInPlace,
-              &overlapMatrixBlockDoublePrec[0],
-              B * B,
-              utils::mpi::Types<T>::getMPIDatatype(),
-              utils::mpi::MPISum,
-              mpiComm);
-
-            utils::mpi::MPIBarrier(mpiComm);
-            // Sum local XTrunc^{T}*XcBlock for single precision across
-            // domain decomposition processors
-            utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
-              utils::mpi::MPIInPlace,
-              &overlapMatrixBlockLowPrec[0],
-              DRem * B,
-              utils::mpi::Types<T>::getMPIDatatype(),
-              utils::mpi::MPISum,
-              mpiComm);
-
-            for (size_type i = 0; i < B; ++i)
-              {
-                for (size_type j = 0; j < B; ++j)
-                  overlapMatrixBlock[i * D + j] =
-                    overlapMatrixBlockDoublePrec[i * B + j];
-
-                for (size_type j = 0; j < DRem; ++j)
-                  overlapMatrixBlock[i * D + j + B] =
-                    overlapMatrixBlockLowPrec[i * DRem + j];
-              }
-
-            // Copying only the lower triangular part to the ScaLAPACK
-            // overlap matrix
-            if (processGrid->is_process_active())
-              for (size_type i = 0; i < B; ++i)
-                if (globalToLocalColumnIdMap.find(i + ivec) !=
-                    globalToLocalColumnIdMap.end())
-                  {
-                    const size_type localColumnId =
-                      globalToLocalColumnIdMap[i + ivec];
-                    for (size_type j = ivec + i; j < N; ++j)
-                      {
-                        std::unordered_map<size_type, size_type>::iterator it =
-                          globalToLocalRowIdMap.find(j);
-                        if (it != globalToLocalRowIdMap.end())
-                          overlapMatPar.local_el(it->second, localColumnId) =
-                            overlapMatrixBlock[i * D + j - ivec];
-                      }
-                  }
-            // } // band parallelization
-          } // block loop
-
-
-        // accumulate contribution from all band parallelization groups
-        // linearAlgebra::elpaScalaOpInternal::sumAcrossInterCommScaLAPACKMat(
-        //   processGrid, overlapMatPar, interBandGroupComm);
-      }
-
 
       template <typename T>
       void
@@ -634,8 +395,7 @@ namespace dftefe
          * ScaLapack overlap matrix is directly filled from the
          * XTrunc^{T}*XcBlock result
          */
-        const size_type vectorsBlockSize =
-          wfcBlockSize; //, bandGroupLowHighPlusOneIndices[1]);
+        const size_type vectorsBlockSize = wfcBlockSize;
 
         std::vector<T> overlapMatrixBlock(N * vectorsBlockSize, 0.0);
 
@@ -643,18 +403,6 @@ namespace dftefe
           {
             // Correct block dimensions if block "goes off edge of" the matrix
             const size_type B = std::min(vectorsBlockSize, N - ivec);
-
-            // // If one plus the ending index of a block lies within a band
-            // // parallelization group do computations for that block within
-            // the
-            // // band group, otherwise skip that block. This is only activated
-            // if
-            // // NPBAND>1
-            // if ((ivec + B) <=
-            //       bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId + 1] &&
-            //     (ivec + B) >
-            //       bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId])
-            //   {
             blasLapack::Op
               transA = blasLapack::Op::NoTrans /*'N'*/,
               transB = std::is_same<T, std::complex<double>>::value ?
@@ -713,13 +461,163 @@ namespace dftefe
                             overlapMatrixBlock[i * D + j - ivec];
                       }
                   }
-            // } // band parallelization
           } // block loop
+      }
+
+      template <typename ValueType>
+      void
+      subspaceRotation(
+      ValueType *X,
+      const size_type  M,
+      const size_type  N,
+      /*std::shared_ptr<
+        linearAlgebra::BLASWrapper<memorySpace>> &BLASWrapperPtr,*/
+      const std::shared_ptr<const ProcessGrid> &processGrid,
+      const MPI_Comm                                  &mpiCommDomain,
+      const ScaLAPACKMatrix<ValueType> &rotationMatPar,
+      const size_type                   subspaceRotDofsBlockSize,
+      const size_type                   wfcBlockSize,
+      const bool                       rotationMatTranspose,
+      const bool                       isRotationMatLowerTria)
+      {
+        const size_type maxNumLocalDofs =
+          dealii::Utilities::MPI::max(M, mpiCommDomain);
+
+        std::unordered_map<size_type, size_type> globalToLocalColumnIdMap;
+        std::unordered_map<size_type, size_type> globalToLocalRowIdMap;
+        createGlobalToLocalIdMapsScaLAPACKMat(
+          processGrid,
+          rotationMatPar,
+          globalToLocalRowIdMap,
+          globalToLocalColumnIdMap);
+
+        const size_type vectorsBlockSize = std::min(wfcBlockSize, N);
+        const size_type dofsBlockSize =
+          std::min(maxNumLocalDofs, subspaceRotDofsBlockSize);
+
+        utils::MemoryStorage<ValueType, utils::MemorySpace::HOST_PINNED>
+          rotationMatBlockHost;
+
+        rotationMatBlockHost.resize(vectorsBlockSize * N, ValueType(0));
+        rotationMatBlockHost.setValue(0);
+
+        utils::MemoryStorage<ValueType, memorySpace>
+          rotationMatBlock(vectorsBlockSize * N, ValueType(0));
+        utils::MemoryStorage<ValueType, memorySpace>
+          rotatedVectorsMatBlock(N * dofsBlockSize, ValueType(0));
+
+        for (size_type idof = 0; idof < maxNumLocalDofs; idof += dofsBlockSize)
+          {
+            // Correct block dimensions if block "goes off edge of" the matrix
+            size_type BDof = 0;
+            if (M >= idof)
+              BDof = std::min(dofsBlockSize, M - idof);
+
+            for (size_type jvec = 0; jvec < N; jvec += vectorsBlockSize)
+              {
+                // Correct block dimensions if block "goes off edge of" the matrix
+                const size_type BVec = std::min(vectorsBlockSize, N - jvec);
+
+                const size_type D = isRotationMatLowerTria ? (jvec + BVec) : N;
+
+                    std::memset(rotationMatBlockHost.begin(),
+                                0,
+                                BVec * N);
+
+                    // Extract QBVec from parallel ScaLAPACK matrix Q
+                    if (rotationMatTranspose)
+                      {
+                        if (processGrid->is_process_active())
+                          for (size_type i = 0; i < D; ++i)
+                            if (globalToLocalRowIdMap.find(i) !=
+                                globalToLocalRowIdMap.end())
+                              {
+                                const size_type localRowId =
+                                  globalToLocalRowIdMap[i];
+                                for (size_type j = 0; j < BVec; ++j)
+                                  {
+                                    std::unordered_map<size_type,
+                                                      size_type>::iterator
+                                      it = globalToLocalColumnIdMap.find(
+                                        j + jvec);
+                                    if (it != globalToLocalColumnIdMap.end())
+                                      *(rotationMatBlockHost.begin() +
+                                        i * BVec + j) =
+                                        rotationMatPar.local_el(localRowId,
+                                                                it->second);
+                                  }
+                              }
+                      }
+                    else
+                      {
+                        if (processGrid->is_process_active())
+                          for (size_type i = 0; i < D; ++i)
+                            if (globalToLocalColumnIdMap.find(i) !=
+                                globalToLocalColumnIdMap.end())
+                              {
+                                const size_type localColumnId =
+                                  globalToLocalColumnIdMap[i];
+                                for (size_type j = 0; j < BVec; ++j)
+                                  {
+                                    std::unordered_map<size_type,
+                                                      size_type>::iterator
+                                      it =
+                                        globalToLocalRowIdMap.find(j + jvec);
+                                    if (it != globalToLocalRowIdMap.end())
+                                      *(rotationMatBlockHost.begin() +
+                                        i * BVec + j) =
+                                        rotationMatPar.local_el(
+                                          it->second, localColumnId);
+                                  }
+                              }
+                      }
+                  
+
+                    utils::mpi::MPIAllreduce(utils::mpi::MPIInPlace,
+                                  rotationMatBlockHost.begin(),
+                                  BVec * D,
+                                  utils::mpi::Types<ValueType>::getMPIDatatype(),
+                                  utils::mpi::MPISum,
+                                  mpiCommDomain);
+
+                    utils::deviceMemcpyH2D(
+                        rotationMatBlock.begin(),
+                        rotationMatBlockHost.begin(),
+                      BVec * D);
+
+                  const ValueType scalarCoeffAlpha =
+                    ValueType(1.0);
+                  const ValueType scalarCoeffBeta =
+                    ValueType(0);
+
+                    if (BDof != 0)
+                      {
+                        BLASWrapperPtr->xgemm('N',
+                                              'N',
+                                              BVec,
+                                              BDof,
+                                              D,
+                                              &scalarCoeffAlpha,
+                                              rotationMatBlock.begin(),
+                                              BVec,
+                                              X + idof * N,
+                                              N,
+                                              &scalarCoeffBeta,
+                                              rotatedVectorsMatBlock.begin() +
+                                                jvec,
+                                              N);
+                      }
+              } // block loop over vectors
 
 
-        // accumulate contribution from all band parallelization groups
-        // linearAlgebra::elpaScalaOpInternal::sumAcrossInterCommScaLAPACKMat(
-        //   processGrid, overlapMatPar, interBandGroupComm);
+            if (BDof != 0)
+              {
+                utils::deviceMemcpyAsyncD2D(
+                  X + idof * N,
+                  rotatedVectorsMatBlock.begin(),
+                  N * BDof);
+              }
+          } // block loop over dofs
       }
 
       template void
@@ -756,28 +654,6 @@ namespace dftefe
         const size_type                           wfcBlockSize,
         ScaLAPACKMatrix<std::complex<double>> &   overlapMatPar);
 
-
-      template void
-      fillParallelOverlapMatrixMixedPrec<double, float>(
-        const double *                            X,
-        const size_type                           XLocalSize,
-        const size_type                           numberVectors,
-        const std::shared_ptr<const ProcessGrid> &processGrid,
-        const utils::mpi::MPIComm &               mpiComm,
-        const size_type                           wfcBlockSize,
-        ScaLAPACKMatrix<double> &                 overlapMatPar);
-
-      template void
-      fillParallelOverlapMatrixMixedPrec<std::complex<double>,
-                                         std::complex<float>>(
-        const std::complex<double> *              X,
-        const size_type                           XLocalSize,
-        const size_type                           numberVectors,
-        const std::shared_ptr<const ProcessGrid> &processGrid,
-        const utils::mpi::MPIComm &               mpiComm,
-        const size_type                           wfcBlockSize,
-        ScaLAPACKMatrix<std::complex<double>> &   overlapMatPar);
-
       template void
       scaleScaLAPACKMat(const std::shared_ptr<const ProcessGrid> &processGrid,
                         ScaLAPACKMatrix<double> &                 mat,
@@ -787,32 +663,6 @@ namespace dftefe
       scaleScaLAPACKMat(const std::shared_ptr<const ProcessGrid> &processGrid,
                         ScaLAPACKMatrix<std::complex<double>> &   mat,
                         const std::complex<double>                scalar);
-
-      template void
-      sumAcrossInterCommScaLAPACKMat(
-        const std::shared_ptr<const ProcessGrid> &processGrid,
-        ScaLAPACKMatrix<double> &                 mat,
-        const utils::mpi::MPIComm &               interComm);
-
-      template void
-      sumAcrossInterCommScaLAPACKMat(
-        const std::shared_ptr<const ProcessGrid> &processGrid,
-        ScaLAPACKMatrix<std::complex<double>> &   mat,
-        const utils::mpi::MPIComm &               interComm);
-
-      template void
-      broadcastAcrossInterCommScaLAPACKMat(
-        const std::shared_ptr<const ProcessGrid> &processGrid,
-        ScaLAPACKMatrix<double> &                 mat,
-        const utils::mpi::MPIComm &               interComm,
-        const size_type                           broadcastRoot);
-
-      template void
-      broadcastAcrossInterCommScaLAPACKMat(
-        const std::shared_ptr<const ProcessGrid> &processGrid,
-        ScaLAPACKMatrix<std::complex<double>> &   mat,
-        const utils::mpi::MPIComm &               interComm,
-        const size_type                           broadcastRoot);
     } // namespace elpaScalaOpInternal
   }   // namespace linearAlgebra
 } // namespace dftefe

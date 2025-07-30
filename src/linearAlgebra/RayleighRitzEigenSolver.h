@@ -137,6 +137,12 @@ namespace dftefe
                        utils::MemoryStorage<ValueType, memorySpace> &S,
                        const OpContext &                             Op);
 
+      void
+      computeXTransOpX(MultiVector<ValueTypeOperand, memorySpace> &  X,
+                      const std::shared_ptr<const ProcessGrid> &processGrid,
+                       ScaLAPACKMatrix<T> &                      overlapMatPar,
+                       const OpContext &                             Op)
+
       std::shared_ptr<MultiVector<ValueType, memorySpace>> d_XinBatchSmall,
         d_XinBatch, d_XoutBatchSmall, d_XoutBatch;
 
