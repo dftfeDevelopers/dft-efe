@@ -135,18 +135,20 @@ namespace dftefe
       void
       computeXTransOpX(MultiVector<ValueTypeOperand, memorySpace> &  X,
                        utils::MemoryStorage<ValueType, memorySpace> &S,
-                       const OpContext &                             Op);
+                       const OpContext &                             Op,
+                      const bool & useBatched = true);
 
       void
       computeXTransOpX(MultiVector<ValueTypeOperand, memorySpace> &  X,
                       const std::shared_ptr<const ProcessGrid> &processGrid,
-                       ScaLAPACKMatrix<T> &                      overlapMatPar,
-                       const OpContext &                             Op)
+                       ScaLAPACKMatrix<ValueType> &            overlapMatPar,
+                       const OpContext &                             Op);
 
       std::shared_ptr<MultiVector<ValueType, memorySpace>> d_XinBatchSmall,
         d_XinBatch, d_XoutBatchSmall, d_XoutBatch;
 
-      size_type d_eigenVecBatchSize, d_batchSizeSmall;
+      size_type d_batchSizeSmall;
+      const size_type d_eigenVecBatchSize;
 
       const ElpaScalapackManager *d_elpaScala;
       const bool            d_useELPA;

@@ -77,16 +77,16 @@ namespace dftefe
       EigenSolverErrorCode err;
       LapackError          lapackReturn;
 
-      size_type numVec  = X.getNumberComponents();
-      size_type vecSize = X.locallyOwnedSize();
+      const size_type numVec  = X.getNumberComponents();
+      const size_type vecSize = X.locallyOwnedSize();
 
-      p.registerStart("Memory Storage");
-      utils::MemoryStorage<ValueType, memorySpace> XprojectedA(
-        numVec * numVec, utils::Types<ValueType>::zero);
-      utils::MemoryStorage<ValueType, memorySpace> eigenVectorsXSubspace(
-        numVec * numVec, utils::Types<ValueType>::zero);
-      utils::MemoryStorage<RealType, memorySpace> eigenValuesMemSpace(numVec);
-      p.registerEnd("Memory Storage");
+      // p.registerStart("Memory Storage");
+      // utils::MemoryStorage<ValueType, memorySpace> XprojectedA(
+      //   numVec * numVec, utils::Types<ValueType>::zero);
+      // utils::MemoryStorage<ValueType, memorySpace> eigenVectorsXSubspace(
+      //   numVec * numVec, utils::Types<ValueType>::zero);
+      // utils::MemoryStorage<RealType, memorySpace> eigenValuesMemSpace(numVec);
+      // p.registerEnd("Memory Storage");
 
       // Compute projected hamiltonian = X_O^H A X_O
 
@@ -103,21 +103,21 @@ namespace dftefe
 
       p.registerStart("Compute X^T H X");
 
-      computeXTransOpX(X, XprojectedA, A);
+      // computeXTransOpX(X, XprojectedA, A);
 
-      if (processGrid->is_process_active())
-        for (size_type i = 0; i < projHamPar.local_n(); ++i)
-          {
-            const size_type glob_i = projHamPar.global_column(i);
-            for (size_type j = 0; j < projHamPar.local_m(); ++j)
-              {
-                const size_type glob_j = projHamPar.global_row(j);
-                projHamPar.local_el(j, i) =
-                  *(XprojectedA.data() + glob_i * numVec + glob_j);
-              }
-          }
+      // if (processGrid->is_process_active())
+      //   for (size_type i = 0; i < projHamPar.local_n(); ++i)
+      //     {
+      //       const size_type glob_i = projHamPar.global_column(i);
+      //       for (size_type j = 0; j < projHamPar.local_m(); ++j)
+      //         {
+      //           const size_type glob_j = projHamPar.global_row(j);
+      //           projHamPar.local_el(j, i) =
+      //             *(XprojectedA.data() + glob_i * numVec + glob_j);
+      //         }
+      //     }
 
-      //computeXTransOpX(X, processGrid, projHamPar, A);
+      computeXTransOpX(X, processGrid, projHamPar, A);
 
       p.registerEnd("Compute X^T H X");
 
@@ -220,25 +220,25 @@ namespace dftefe
           p.registerEnd("ScaLAPACK eigen decomp, RR step");
         }
 
-      if (processGrid->is_process_active())
-        for (size_type i = 0; i < projHamPar.local_n(); ++i)
-          {
-            const size_type glob_i = projHamPar.global_column(i);
-            for (size_type j = 0; j < projHamPar.local_m(); ++j)
-              {
-                const size_type glob_j = projHamPar.global_row(j);
-                *(eigenVectorsXSubspace.data() + glob_i * numVec + glob_j) =
-                  projHamPar.local_el(j, i);
-              }
-          }
+      // if (processGrid->is_process_active())
+      //   for (size_type i = 0; i < projHamPar.local_n(); ++i)
+      //     {
+      //       const size_type glob_i = projHamPar.global_column(i);
+      //       for (size_type j = 0; j < projHamPar.local_m(); ++j)
+      //         {
+      //           const size_type glob_j = projHamPar.global_row(j);
+      //           *(eigenVectorsXSubspace.data() + glob_i * numVec + glob_j) =
+      //             projHamPar.local_el(j, i);
+      //         }
+      //     }
 
-      int mpierr = utils::mpi::MPIAllreduce<memorySpace>(
-        utils::mpi::MPIInPlace,
-        eigenVectorsXSubspace.data(),
-        eigenVectorsXSubspace.size(),
-        utils::mpi::Types<ValueType>::getMPIDatatype(),
-        utils::mpi::MPISum,
-        X.getMPIPatternP2P()->mpiCommunicator());
+      // int mpierr = utils::mpi::MPIAllreduce<memorySpace>(
+      //   utils::mpi::MPIInPlace,
+      //   eigenVectorsXSubspace.data(),
+      //   eigenVectorsXSubspace.size(),
+      //   utils::mpi::Types<ValueType>::getMPIDatatype(),
+      //   utils::mpi::MPISum,
+      //   X.getMPIPatternP2P()->mpiCommunicator());
 
       if (computeEigenVectors)
         {
@@ -247,27 +247,40 @@ namespace dftefe
 
           p.registerStart("Subspace Rotation");
 
-          // ScaLAPACKMatrix<ValueType> projHamParCopy(numVec,
-          //                                         processGrid,
-          //                                         rowsBlockSize);
-          // projHamParCopy.copy_conjugate_transposed(projHamPar);
+          ScaLAPACKMatrix<ValueType> projHamParCopy(numVec,
+                                                  processGrid,
+                                                  rowsBlockSize);
+          projHamParCopy.copy_conjugate_transposed(projHamPar);
 
-          blasLapack::gemm<ValueType, ValueType, memorySpace>(
-            blasLapack::Layout::ColMajor,
-            blasLapack::Op::Trans,
-            blasLapack::Op::NoTrans,
-            numVec,
-            vecSize,
-            numVec,
-            (ValueType)1,
-            eigenVectorsXSubspace.data(),
-            numVec,
-            X.data(),
-            numVec,
-            (ValueType)0,
-            eigenVectors.data(),
-            numVec,
-            *X.getLinAlgOpContext());
+          elpaScalaOpInternal::subspaceRotation<ValueType, memorySpace>(
+                                      eigenVectors.data(),
+                                      vecSize,
+                                      numVec,
+                                      processGrid,
+                                      X.getMPIPatternP2P()->mpiCommunicator(),
+                                      *X.getLinAlgOpContext(),
+                                      projHamParCopy,
+                                      RayleighRitzDefaults::SUBSPACE_ROT_DOF_BATCH,
+                                      d_eigenVecBatchSize,
+                                      false,
+                                      false);
+
+          // blasLapack::gemm<ValueType, ValueType, memorySpace>(
+          //   blasLapack::Layout::ColMajor,
+          //   blasLapack::Op::Trans,
+          //   blasLapack::Op::NoTrans,
+          //   numVec,
+          //   vecSize,
+          //   numVec,
+          //   (ValueType)1,
+          //   eigenVectorsXSubspace.data(),
+          //   numVec,
+          //   X.data(),
+          //   numVec,
+          //   (ValueType)0,
+          //   eigenVectors.data(),
+          //   numVec,
+          //   *X.getLinAlgOpContext());
 
           p.registerEnd("Subspace Rotation");
         }
@@ -613,7 +626,15 @@ namespace dftefe
       }
       else
       {
-      Op.apply(X, eigenVectors, true, false);
+
+      size_type numVec  = X.getNumberComponents();
+      size_type vecSize = X.locallyOwnedSize();
+
+      utils::MemoryStorage<ValueType, memorySpace> XprojectedA(
+        numVec * numVec, utils::Types<ValueType>::zero);
+      MultiVector<ValueType, memorySpace> scratch(X , (ValueType)0);
+        
+      Op.apply(X, scratch, true, false);
 
       linearAlgebra::blasLapack::gemm<ValueType, ValueType, memorySpace>(
         linearAlgebra::blasLapack::Layout::ColMajor,
@@ -623,7 +644,7 @@ namespace dftefe
         numVec,
         vecSize,
         (ValueType)1,
-        eigenVectors.data(),
+        scratch.data(),
         numVec,
         X.data(),
         numVec,
@@ -661,7 +682,7 @@ namespace dftefe
     RayleighRitzEigenSolver<ValueTypeOperator, ValueTypeOperand, memorySpace>::
       computeXTransOpX(MultiVector<ValueTypeOperand, memorySpace> &  X,
                       const std::shared_ptr<const ProcessGrid> &processGrid,
-                       ScaLAPACKMatrix<T> &                      overlapMatPar,
+                       ScaLAPACKMatrix<ValueType> &             overlapMatPar,
                        const OpContext &                             Op)
     {
       const utils::mpi::MPIComm comm = X.getMPIPatternP2P()->mpiCommunicator();
@@ -774,10 +795,10 @@ namespace dftefe
             numVec - eigVecStartId,
             linAlgOpContext);
 
-          utils::MemoryTransfer<utils::MemorySpace::HOST, memorySpace>::copy(
-            SBlock.size(), SBlockHost.data(), (numVec - eigVecStartId) * numEigVecInBatch);
+          utils::MemoryTransfer<utils::MemorySpace::HOST , memorySpace>::copy(
+            (numVec - eigVecStartId) * numEigVecInBatch, SBlockHost.data() , SBlock.data());
 
-          int mpierr = utils::mpi::MPIAllreduce<utils::memorySpace::HOST>(
+          int mpierr = utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
             utils::mpi::MPIInPlace,
             SBlockHost.data(),
             (numVec - eigVecStartId) * numEigVecInBatch,
@@ -806,7 +827,7 @@ namespace dftefe
                         globalToLocalRowIdMap.find(jSize);
                       if (it != globalToLocalRowIdMap.end())
                         overlapMatPar.local_el(it->second, localColumnId) =
-                          SBlockHost[iSize * (numVec - eigVecStartId) + jSize - eigVecStartId];
+                          *(SBlockHost.data() + iSize * (numVec - eigVecStartId) + jSize - eigVecStartId);
                     }
                 }
 

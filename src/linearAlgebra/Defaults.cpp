@@ -66,5 +66,10 @@ namespace dftefe
         std::make_shared<
           linearAlgebra::blasLapack::LapackQueue<utils::MemorySpace::HOST>>(0));
 
+    /**
+     * @brief Setting all the RayleighRitzRDefaults
+     */
+    const size_type RayleighRitzDefaults::SUBSPACE_ROT_DOF_BATCH = 2000;        
+
   } // end of namespace linearAlgebra
 } // end of namespace dftefe

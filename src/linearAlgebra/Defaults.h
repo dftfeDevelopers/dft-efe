@@ -127,6 +127,12 @@ namespace dftefe
         LINALG_OP_CONTXT_HOST;
     }; // end of class LinAlgOpContextHost
 
+    class RayleighRitzDefaults
+    {
+    public:
+      static const size_type SUBSPACE_ROT_DOF_BATCH;
+    }; // end of class LinAlgOpContextHost
+
   } // end of namespace linearAlgebra
 } // end of namespace dftefe
 #endif // dftefeLinearAlgebraDefaults_h

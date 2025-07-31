@@ -27,6 +27,8 @@
 #include <elpa/elpa.h>
 #include <unordered_map>
 #include <iostream>
+#include "LinAlgOpContext.h"
+
 namespace dftefe
 {
   namespace linearAlgebra
@@ -134,7 +136,7 @@ namespace dftefe
        * subspaceVectorsArrayLocalSize=N*M
        *
        */
-      template <typename T>
+      template <typename ValueType, typename utils::MemorySpace memorySpace>
       void
       subspaceRotation(
       ValueType *X,
@@ -143,14 +145,16 @@ namespace dftefe
       /*std::shared_ptr<
         linearAlgebra::BLASWrapper<memorySpace>> &BLASWrapperPtr,*/
       const std::shared_ptr<const ProcessGrid> &processGrid,
-      const MPI_Comm                                  &mpiCommDomain,
+      const utils::mpi::MPIComm              &mpiCommDomain,
+      LinAlgOpContext<memorySpace>        &linAlgOpContext,
       const ScaLAPACKMatrix<ValueType> &rotationMatPar,
       const size_type                   subspaceRotDofsBlockSize,
       const size_type                   wfcBlockSize,
       const bool                       rotationMatTranspose = false,
-      const bool                       isRotationMatLowerTria = false)
+      const bool                       isRotationMatLowerTria = false);
 
     } // namespace elpaScalaOpInternal
   }   // namespace linearAlgebra
 } // namespace dftefe
+#include <linearAlgebra/ElpaScalapackOperations.t.cpp>
 #endif
