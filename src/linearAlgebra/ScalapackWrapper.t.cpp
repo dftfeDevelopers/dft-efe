@@ -1215,7 +1215,7 @@ namespace dftefe
     ScaLAPACKMatrix<NumberType>::eigenpairs_hermitian_by_index(
       const std::pair<unsigned int, unsigned int> &index_limits,
       const bool                                   compute_eigenvectors,
-      ScalapackError                              &scalapackError)
+      ScalapackError &                             scalapackError)
     {
       // check validity of index limits
       DFTEFE_Assert(index_limits.first < n_rows);
@@ -1227,7 +1227,7 @@ namespace dftefe
 
       // compute all eigenvalues/eigenvectors
       if (idx.first == 0 && idx.second == static_cast<unsigned int>(n_rows - 1))
-        return eigenpairs_hermitian(compute_eigenvectors , scalapackError);
+        return eigenpairs_hermitian(compute_eigenvectors, scalapackError);
       else
         return eigenpairs_hermitian(compute_eigenvectors, scalapackError, idx);
     }
@@ -1237,7 +1237,7 @@ namespace dftefe
     std::vector<double>
     ScaLAPACKMatrix<NumberType>::eigenpairs_hermitian(
       const bool                                   compute_eigenvectors,
-      ScalapackError                              &scalapackError,
+      ScalapackError &                             scalapackError,
       const std::pair<unsigned int, unsigned int> &eigenvalue_idx,
       const std::pair<double, double> &            eigenvalue_limits)
     {
@@ -1569,7 +1569,7 @@ namespace dftefe
     ScaLAPACKMatrix<NumberType>::eigenpairs_hermitian_by_index_MRRR(
       const std::pair<unsigned int, unsigned int> &index_limits,
       const bool                                   compute_eigenvectors,
-      ScalapackError                              &scalapackError)
+      ScalapackError &                             scalapackError)
     {
       // Check validity of index limits.
       DFTEFE_Assert(index_limits.first < static_cast<unsigned int>(n_rows));
@@ -1581,9 +1581,11 @@ namespace dftefe
 
       // Compute all eigenvalues/eigenvectors.
       if (idx.first == 0 && idx.second == static_cast<unsigned int>(n_rows - 1))
-        return eigenpairs_hermitian_MRRR(compute_eigenvectors , scalapackError);
+        return eigenpairs_hermitian_MRRR(compute_eigenvectors, scalapackError);
       else
-        return eigenpairs_hermitian_MRRR(compute_eigenvectors, scalapackError , idx);
+        return eigenpairs_hermitian_MRRR(compute_eigenvectors,
+                                         scalapackError,
+                                         idx);
     }
 
 
@@ -1591,7 +1593,7 @@ namespace dftefe
     std::vector<double>
     ScaLAPACKMatrix<NumberType>::eigenpairs_hermitian_MRRR(
       const bool                                   compute_eigenvectors,
-      ScalapackError                              &scalapackError,
+      ScalapackError &                             scalapackError,
       const std::pair<unsigned int, unsigned int> &eigenvalue_idx,
       const std::pair<double, double> &            eigenvalue_limits)
     {

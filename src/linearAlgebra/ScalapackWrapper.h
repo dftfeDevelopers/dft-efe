@@ -591,7 +591,7 @@ namespace dftefe
       eigenpairs_hermitian_by_index(
         const std::pair<unsigned int, unsigned int> &index_limits,
         const bool                                   compute_eigenvectors,
-        ScalapackError                              &scalapackError);
+        ScalapackError &                             scalapackError);
 
       /**
        * Computing selected eigenvalues and, optionally, the eigenvectors of the
@@ -613,7 +613,7 @@ namespace dftefe
       eigenpairs_hermitian_by_index_MRRR(
         const std::pair<unsigned int, unsigned int> &index_limits,
         const bool                                   compute_eigenvectors,
-        ScalapackError                              &scalapackError);
+        ScalapackError &                             scalapackError);
 
     private:
       /**
@@ -629,7 +629,7 @@ namespace dftefe
       std::vector<double>
       eigenpairs_hermitian(
         const bool                                   compute_eigenvectors,
-        ScalapackError                              &scalapackError,
+        ScalapackError &                             scalapackError,
         const std::pair<unsigned int, unsigned int> &index_limits =
           std::make_pair(std::numeric_limits<unsigned int>::max(),
                          std::numeric_limits<unsigned int>::max()),
@@ -660,7 +660,7 @@ namespace dftefe
       std::vector<double>
       eigenpairs_hermitian_MRRR(
         const bool                                   compute_eigenvectors,
-        ScalapackError                              &scalapackError,
+        ScalapackError &                             scalapackError,
         const std::pair<unsigned int, unsigned int> &index_limits =
           std::make_pair(std::numeric_limits<unsigned int>::max(),
                          std::numeric_limits<unsigned int>::max()),

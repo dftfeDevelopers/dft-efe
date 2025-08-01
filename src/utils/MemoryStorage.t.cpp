@@ -98,10 +98,12 @@ namespace dftefe
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     void
-    MemoryStorage<ValueType, memorySpace>::setZero(size_type size, const size_type offset)
+    MemoryStorage<ValueType, memorySpace>::setZero(size_type       size,
+                                                   const size_type offset)
     {
       dftefe::utils::MemoryManager<ValueType, memorySpace>::setZero(d_size,
-                                                                d_data + offset);
+                                                                    d_data +
+                                                                      offset);
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>

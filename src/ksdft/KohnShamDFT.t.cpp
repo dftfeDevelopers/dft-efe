@@ -440,23 +440,25 @@ namespace dftefe
 
       if (elpa_init(ELPA_API_VERSION) != ELPA_OK)
         {
-          utils::throwException(false , ("Error: ELPA API version not supported."));
+          utils::throwException(false,
+                                ("Error: ELPA API version not supported."));
         }
 
-      const bool                 useELPA = true;
-      const bool                 useELPADeviceKernel = false;
-      const size_type            scalapackParalProcs = KSDFTDefaults::SCALAPACK_PARAL_PROCS;
-      const size_type            scalapackBlockSize = KSDFTDefaults::SCALAPACK_BLOCK_SIZE;
-      d_elpaScala = 
-        std::make_shared<linearAlgebra::ElpaScalapackManager>(d_mpiCommDomain,
-                                                                    scalapackParalProcs,
-                                                                    useELPA,
-                                                                    scalapackBlockSize,
-                                                                    useELPADeviceKernel);
+      const bool      useELPA             = true;
+      const bool      useELPADeviceKernel = false;
+      const size_type scalapackParalProcs =
+        KSDFTDefaults::SCALAPACK_PARAL_PROCS;
+      const size_type scalapackBlockSize = KSDFTDefaults::SCALAPACK_BLOCK_SIZE;
+      d_elpaScala = std::make_shared<linearAlgebra::ElpaScalapackManager>(
+        d_mpiCommDomain,
+        scalapackParalProcs,
+        useELPA,
+        scalapackBlockSize,
+        useELPADeviceKernel);
 
       d_elpaScala->processGridELPASetup(numWantedEigenvalues);
       utils::mpi::MPIBarrier(d_mpiCommDomain);
-      
+
       if (isResidualChebyshevFilter)
         {
           KohnShamEigenSolver<ValueTypeOperator, ValueTypeOperand, memorySpace>
@@ -768,19 +770,21 @@ namespace dftefe
 
       if (elpa_init(ELPA_API_VERSION) != ELPA_OK)
         {
-          utils::throwException(false , ("Error: ELPA API version not supported."));
+          utils::throwException(false,
+                                ("Error: ELPA API version not supported."));
         }
 
-      const bool                 useELPA = true;
-      const bool                 useELPADeviceKernel = false;
-      const size_type            scalapackParalProcs = KSDFTDefaults::SCALAPACK_PARAL_PROCS;
-      const size_type            scalapackBlockSize = KSDFTDefaults::SCALAPACK_BLOCK_SIZE;
-      d_elpaScala = 
-        std::make_shared<linearAlgebra::ElpaScalapackManager>(d_mpiCommDomain,
-                                                                    scalapackParalProcs,
-                                                                    useELPA,
-                                                                    scalapackBlockSize,
-                                                                    useELPADeviceKernel);
+      const bool      useELPA             = true;
+      const bool      useELPADeviceKernel = false;
+      const size_type scalapackParalProcs =
+        KSDFTDefaults::SCALAPACK_PARAL_PROCS;
+      const size_type scalapackBlockSize = KSDFTDefaults::SCALAPACK_BLOCK_SIZE;
+      d_elpaScala = std::make_shared<linearAlgebra::ElpaScalapackManager>(
+        d_mpiCommDomain,
+        scalapackParalProcs,
+        useELPA,
+        scalapackBlockSize,
+        useELPADeviceKernel);
 
       d_elpaScala->processGridELPASetup(numWantedEigenvalues);
       utils::mpi::MPIBarrier(d_mpiCommDomain);
@@ -1135,19 +1139,21 @@ namespace dftefe
 
       if (elpa_init(ELPA_API_VERSION) != ELPA_OK)
         {
-          utils::throwException(false , ("Error: ELPA API version not supported."));
+          utils::throwException(false,
+                                ("Error: ELPA API version not supported."));
         }
 
-      const bool                 useELPA = true;
-      const bool                 useELPADeviceKernel = false;
-      const size_type            scalapackParalProcs = KSDFTDefaults::SCALAPACK_PARAL_PROCS;
-      const size_type            scalapackBlockSize = KSDFTDefaults::SCALAPACK_BLOCK_SIZE;
-      d_elpaScala = 
-        std::make_shared<linearAlgebra::ElpaScalapackManager>(d_mpiCommDomain,
-                                                                    scalapackParalProcs,
-                                                                    useELPA,
-                                                                    scalapackBlockSize,
-                                                                    useELPADeviceKernel);
+      const bool      useELPA             = true;
+      const bool      useELPADeviceKernel = false;
+      const size_type scalapackParalProcs =
+        KSDFTDefaults::SCALAPACK_PARAL_PROCS;
+      const size_type scalapackBlockSize = KSDFTDefaults::SCALAPACK_BLOCK_SIZE;
+      d_elpaScala = std::make_shared<linearAlgebra::ElpaScalapackManager>(
+        d_mpiCommDomain,
+        scalapackParalProcs,
+        useELPA,
+        scalapackBlockSize,
+        useELPADeviceKernel);
 
       d_elpaScala->processGridELPASetup(numWantedEigenvalues);
       utils::mpi::MPIBarrier(d_mpiCommDomain);
@@ -1600,19 +1606,21 @@ namespace dftefe
 
       if (elpa_init(ELPA_API_VERSION) != ELPA_OK)
         {
-          utils::throwException(false , ("Error: ELPA API version not supported."));
+          utils::throwException(false,
+                                ("Error: ELPA API version not supported."));
         }
 
-      const bool                 useELPA = true;
-      const bool                 useELPADeviceKernel = false;
-      const size_type            scalapackParalProcs = KSDFTDefaults::SCALAPACK_PARAL_PROCS;
-      const size_type            scalapackBlockSize = KSDFTDefaults::SCALAPACK_BLOCK_SIZE;
-      d_elpaScala = 
-        std::make_shared<linearAlgebra::ElpaScalapackManager>(d_mpiCommDomain,
-                                                                    scalapackParalProcs,
-                                                                    useELPA,
-                                                                    scalapackBlockSize,
-                                                                    useELPADeviceKernel);
+      const bool      useELPA             = true;
+      const bool      useELPADeviceKernel = false;
+      const size_type scalapackParalProcs =
+        KSDFTDefaults::SCALAPACK_PARAL_PROCS;
+      const size_type scalapackBlockSize = KSDFTDefaults::SCALAPACK_BLOCK_SIZE;
+      d_elpaScala = std::make_shared<linearAlgebra::ElpaScalapackManager>(
+        d_mpiCommDomain,
+        scalapackParalProcs,
+        useELPA,
+        scalapackBlockSize,
+        useELPADeviceKernel);
 
       d_elpaScala->processGridELPASetup(numWantedEigenvalues);
       utils::mpi::MPIBarrier(d_mpiCommDomain);
@@ -2064,19 +2072,21 @@ namespace dftefe
 
       if (elpa_init(ELPA_API_VERSION) != ELPA_OK)
         {
-          utils::throwException(false , ("Error: ELPA API version not supported."));
+          utils::throwException(false,
+                                ("Error: ELPA API version not supported."));
         }
 
-      const bool                 useELPA = true;
-      const bool                 useELPADeviceKernel = false;
-      const size_type            scalapackParalProcs = KSDFTDefaults::SCALAPACK_PARAL_PROCS;
-      const size_type            scalapackBlockSize = KSDFTDefaults::SCALAPACK_BLOCK_SIZE;
-      d_elpaScala = 
-        std::make_shared<linearAlgebra::ElpaScalapackManager>(d_mpiCommDomain,
-                                                                    scalapackParalProcs,
-                                                                    useELPA,
-                                                                    scalapackBlockSize,
-                                                                    useELPADeviceKernel);
+      const bool      useELPA             = true;
+      const bool      useELPADeviceKernel = false;
+      const size_type scalapackParalProcs =
+        KSDFTDefaults::SCALAPACK_PARAL_PROCS;
+      const size_type scalapackBlockSize = KSDFTDefaults::SCALAPACK_BLOCK_SIZE;
+      d_elpaScala = std::make_shared<linearAlgebra::ElpaScalapackManager>(
+        d_mpiCommDomain,
+        scalapackParalProcs,
+        useELPA,
+        scalapackBlockSize,
+        useELPADeviceKernel);
 
       d_elpaScala->processGridELPASetup(numWantedEigenvalues);
       utils::mpi::MPIBarrier(d_mpiCommDomain);

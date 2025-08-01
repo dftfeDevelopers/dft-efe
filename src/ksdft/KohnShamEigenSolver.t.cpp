@@ -60,7 +60,7 @@ namespace dftefe
         linearAlgebra::MultiVector<ValueTypeOperand, memorySpace>
           &waveFunctionSubspaceGuess,
         linearAlgebra::Vector<ValueTypeOperand, memorySpace> &lanczosGuess,
-        const linearAlgebra::ElpaScalapackManager            &elpaScala,
+        const linearAlgebra::ElpaScalapackManager &           elpaScala,
         bool                                 isResidualChebyshevFilter,
         const size_type                      waveFunctionBatchSize,
         const OpContext &                    MLanczos,

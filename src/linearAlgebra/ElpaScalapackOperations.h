@@ -96,13 +96,12 @@ namespace dftefe
        */
       template <typename T>
       void
-      scaleScaLAPACKMat(
-        const std::shared_ptr<const ProcessGrid> &processGrid,
-        /*const std::shared_ptr<
-          linearAlgebra::BLASWrapper<utils::MemorySpace::HOST>>
-          &                        BLASWrapperPtr,*/
-        ScaLAPACKMatrix<T> &mat,
-        const T             scalar);
+      scaleScaLAPACKMat(const std::shared_ptr<const ProcessGrid> &processGrid,
+                        /*const std::shared_ptr<
+                          linearAlgebra::BLASWrapper<utils::MemorySpace::HOST>>
+                          &                        BLASWrapperPtr,*/
+                        ScaLAPACKMatrix<T> &mat,
+                        const T             scalar);
 
       /** @brief Computes Sc=X^{T}*Xc and stores in a parallel ScaLAPACK matrix.
        * X^{T} is the subspaceVectorsArray stored in the column major format (N
@@ -139,19 +138,19 @@ namespace dftefe
       template <typename ValueType, typename utils::MemorySpace memorySpace>
       void
       subspaceRotation(
-      ValueType *X,
-      const size_type  M,
-      const size_type  N,
-      /*std::shared_ptr<
-        linearAlgebra::BLASWrapper<memorySpace>> &BLASWrapperPtr,*/
-      const std::shared_ptr<const ProcessGrid> &processGrid,
-      const utils::mpi::MPIComm              &mpiCommDomain,
-      LinAlgOpContext<memorySpace>        &linAlgOpContext,
-      const ScaLAPACKMatrix<ValueType> &rotationMatPar,
-      const size_type                   subspaceRotDofsBlockSize,
-      const size_type                   wfcBlockSize,
-      const bool                       rotationMatTranspose = false,
-      const bool                       isRotationMatLowerTria = false);
+        ValueType *     X,
+        const size_type M,
+        const size_type N,
+        /*std::shared_ptr<
+          linearAlgebra::BLASWrapper<memorySpace>> &BLASWrapperPtr,*/
+        const std::shared_ptr<const ProcessGrid> &processGrid,
+        const utils::mpi::MPIComm &               mpiCommDomain,
+        LinAlgOpContext<memorySpace> &            linAlgOpContext,
+        const ScaLAPACKMatrix<ValueType> &        rotationMatPar,
+        const size_type                           subspaceRotDofsBlockSize,
+        const size_type                           wfcBlockSize,
+        const bool                                rotationMatTranspose = false,
+        const bool isRotationMatLowerTria                              = false);
 
     } // namespace elpaScalaOpInternal
   }   // namespace linearAlgebra

@@ -187,19 +187,19 @@ namespace dftefe
       template <typename ValueType, typename utils::MemorySpace memorySpace>
       void
       subspaceRotation(
-      ValueType *X,
-      const size_type  M,
-      const size_type  N,
-      /*std::shared_ptr<
-        linearAlgebra::BLASWrapper<memorySpace>> &BLASWrapperPtr,*/
-      const std::shared_ptr<const ProcessGrid> &processGrid,
-      const utils::mpi::MPIComm                 &mpiCommDomain,
-      LinAlgOpContext<memorySpace>         &linAlgOpContext,
-      const ScaLAPACKMatrix<ValueType> &rotationMatPar,
-      const size_type                   subspaceRotDofsBlockSize,
-      const size_type                   wfcBlockSize,
-      const bool                       rotationMatTranspose,
-      const bool                       isRotationMatLowerTria)
+        ValueType *     X,
+        const size_type M,
+        const size_type N,
+        /*std::shared_ptr<
+          linearAlgebra::BLASWrapper<memorySpace>> &BLASWrapperPtr,*/
+        const std::shared_ptr<const ProcessGrid> &processGrid,
+        const utils::mpi::MPIComm &               mpiCommDomain,
+        LinAlgOpContext<memorySpace> &            linAlgOpContext,
+        const ScaLAPACKMatrix<ValueType> &        rotationMatPar,
+        const size_type                           subspaceRotDofsBlockSize,
+        const size_type                           wfcBlockSize,
+        const bool                                rotationMatTranspose,
+        const bool                                isRotationMatLowerTria)
       {
         size_type maxNumLocalDofs = 0;
         utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
@@ -212,11 +212,10 @@ namespace dftefe
 
         std::unordered_map<size_type, size_type> globalToLocalColumnIdMap;
         std::unordered_map<size_type, size_type> globalToLocalRowIdMap;
-        createGlobalToLocalIdMapsScaLAPACKMat(
-          processGrid,
-          rotationMatPar,
-          globalToLocalRowIdMap,
-          globalToLocalColumnIdMap);
+        createGlobalToLocalIdMapsScaLAPACKMat(processGrid,
+                                              rotationMatPar,
+                                              globalToLocalRowIdMap,
+                                              globalToLocalColumnIdMap);
 
         const size_type vectorsBlockSize = std::min(wfcBlockSize, N);
         const size_type dofsBlockSize =
@@ -225,10 +224,10 @@ namespace dftefe
         utils::MemoryStorage<ValueType, utils::MemorySpace::HOST>
           rotationMatBlockHost(vectorsBlockSize * N, ValueType(0));
 
-        utils::MemoryStorage<ValueType, memorySpace>
-          rotationMatBlock(vectorsBlockSize * N, ValueType(0));
-        utils::MemoryStorage<ValueType, memorySpace>
-          rotatedVectorsMatBlock(N * dofsBlockSize, ValueType(0));
+        utils::MemoryStorage<ValueType, memorySpace> rotationMatBlock(
+          vectorsBlockSize * N, ValueType(0));
+        utils::MemoryStorage<ValueType, memorySpace> rotatedVectorsMatBlock(
+          N * dofsBlockSize, ValueType(0));
 
         for (size_type idof = 0; idof < maxNumLocalDofs; idof += dofsBlockSize)
           {
@@ -239,94 +238,94 @@ namespace dftefe
 
             for (size_type jvec = 0; jvec < N; jvec += vectorsBlockSize)
               {
-                // Correct block dimensions if block "goes off edge of" the matrix
+                // Correct block dimensions if block "goes off edge of" the
+                // matrix
                 const size_type BVec = std::min(vectorsBlockSize, N - jvec);
 
                 const size_type D = isRotationMatLowerTria ? (jvec + BVec) : N;
 
-                    rotationMatBlockHost.setZero(BVec * N , 0);
+                rotationMatBlockHost.setZero(BVec * N, 0);
 
-                    // Extract QBVec from parallel ScaLAPACK matrix Q
-                    if (rotationMatTranspose)
-                      {
-                        if (processGrid->is_process_active())
-                          for (size_type i = 0; i < D; ++i)
-                            if (globalToLocalRowIdMap.find(i) !=
-                                globalToLocalRowIdMap.end())
+                // Extract QBVec from parallel ScaLAPACK matrix Q
+                if (rotationMatTranspose)
+                  {
+                    if (processGrid->is_process_active())
+                      for (size_type i = 0; i < D; ++i)
+                        if (globalToLocalRowIdMap.find(i) !=
+                            globalToLocalRowIdMap.end())
+                          {
+                            const size_type localRowId =
+                              globalToLocalRowIdMap[i];
+                            for (size_type j = 0; j < BVec; ++j)
                               {
-                                const size_type localRowId =
-                                  globalToLocalRowIdMap[i];
-                                for (size_type j = 0; j < BVec; ++j)
-                                  {
-                                    std::unordered_map<size_type,
-                                                      size_type>::iterator
-                                      it = globalToLocalColumnIdMap.find(
-                                        j + jvec);
-                                    if (it != globalToLocalColumnIdMap.end())
-                                      *(rotationMatBlockHost.begin() +
-                                        i * BVec + j) =
-                                        rotationMatPar.local_el(localRowId,
-                                                                it->second);
-                                  }
+                                std::unordered_map<size_type,
+                                                   size_type>::iterator it =
+                                  globalToLocalColumnIdMap.find(j + jvec);
+                                if (it != globalToLocalColumnIdMap.end())
+                                  *(rotationMatBlockHost.begin() + i * BVec +
+                                    j) = rotationMatPar.local_el(localRowId,
+                                                                 it->second);
                               }
-                      }
-                    else
-                      {
-                        if (processGrid->is_process_active())
-                          for (size_type i = 0; i < D; ++i)
-                            if (globalToLocalColumnIdMap.find(i) !=
-                                globalToLocalColumnIdMap.end())
+                          }
+                  }
+                else
+                  {
+                    if (processGrid->is_process_active())
+                      for (size_type i = 0; i < D; ++i)
+                        if (globalToLocalColumnIdMap.find(i) !=
+                            globalToLocalColumnIdMap.end())
+                          {
+                            const size_type localColumnId =
+                              globalToLocalColumnIdMap[i];
+                            for (size_type j = 0; j < BVec; ++j)
                               {
-                                const size_type localColumnId =
-                                  globalToLocalColumnIdMap[i];
-                                for (size_type j = 0; j < BVec; ++j)
-                                  {
-                                    std::unordered_map<size_type,
-                                                      size_type>::iterator
-                                      it =
-                                        globalToLocalRowIdMap.find(j + jvec);
-                                    if (it != globalToLocalRowIdMap.end())
-                                      *(rotationMatBlockHost.begin() +
-                                        i * BVec + j) =
-                                        rotationMatPar.local_el(
-                                          it->second, localColumnId);
-                                  }
+                                std::unordered_map<size_type,
+                                                   size_type>::iterator it =
+                                  globalToLocalRowIdMap.find(j + jvec);
+                                if (it != globalToLocalRowIdMap.end())
+                                  *(rotationMatBlockHost.begin() + i * BVec +
+                                    j) = rotationMatPar.local_el(it->second,
+                                                                 localColumnId);
                               }
-                      }
-                  
+                          }
+                  }
 
-                    utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(utils::mpi::MPIInPlace,
-                                  rotationMatBlockHost.begin(),
-                                  BVec * D,
-                                  utils::mpi::Types<ValueType>::getMPIDatatype(),
-                                  utils::mpi::MPISum,
-                                  mpiCommDomain);
 
-                utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
-                  BVec * D, rotationMatBlock.begin(), rotationMatBlockHost.begin());
+                utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
+                  utils::mpi::MPIInPlace,
+                  rotationMatBlockHost.begin(),
+                  BVec * D,
+                  utils::mpi::Types<ValueType>::getMPIDatatype(),
+                  utils::mpi::MPISum,
+                  mpiCommDomain);
 
-                  const ValueType scalarCoeffAlpha = ValueType(1.0);
-                  const ValueType scalarCoeffBeta =  ValueType(0);
+                utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::
+                  copy(BVec * D,
+                       rotationMatBlock.begin(),
+                       rotationMatBlockHost.begin());
 
-                    if (BDof != 0)
-                      {
-                        blasLapack::gemm<ValueType, ValueType, memorySpace>(
-                          blasLapack::Layout::ColMajor,
-                          blasLapack::Op::NoTrans,
-                          blasLapack::Op::NoTrans,
-                          BVec,
-                          BDof,
-                          D,
-                          scalarCoeffAlpha,
-                          rotationMatBlock.begin(),
-                          BVec,
-                          X + idof * N,
-                          N,
-                          scalarCoeffBeta,
-                          rotatedVectorsMatBlock.begin() + jvec,
-                          N,
-                          linAlgOpContext);                        
-                      }
+                const ValueType scalarCoeffAlpha = ValueType(1.0);
+                const ValueType scalarCoeffBeta  = ValueType(0);
+
+                if (BDof != 0)
+                  {
+                    blasLapack::gemm<ValueType, ValueType, memorySpace>(
+                      blasLapack::Layout::ColMajor,
+                      blasLapack::Op::NoTrans,
+                      blasLapack::Op::NoTrans,
+                      BVec,
+                      BDof,
+                      D,
+                      scalarCoeffAlpha,
+                      rotationMatBlock.begin(),
+                      BVec,
+                      X + idof * N,
+                      N,
+                      scalarCoeffBeta,
+                      rotatedVectorsMatBlock.begin() + jvec,
+                      N,
+                      linAlgOpContext);
+                  }
               } // block loop over vectors
 
 

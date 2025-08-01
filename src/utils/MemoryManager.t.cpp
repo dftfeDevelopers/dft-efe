@@ -61,9 +61,9 @@ namespace dftefe
     template <typename ValueType>
     void
     MemoryManager<ValueType, MemorySpace::HOST>::setZero(size_type  size,
-                                                     ValueType *ptr)
+                                                         ValueType *ptr)
     {
-      std::memset(ptr, (ValueType)0 , size * sizeof(ValueType));
+      std::memset(ptr, (ValueType)0, size * sizeof(ValueType));
     }
 
 #ifdef DFTEFE_WITH_DEVICE
@@ -97,9 +97,9 @@ namespace dftefe
     template <typename ValueType>
     void
     MemoryManager<ValueType, MemorySpace::HOST_PINNED>::setZero(size_type  size,
-                                                            ValueType *ptr)
+                                                                ValueType *ptr)
     {
-      std::memset(ptr, (ValueType)0 , size * sizeof(ValueType));
+      std::memset(ptr, (ValueType)0, size * sizeof(ValueType));
     }
 
     template <typename ValueType>
@@ -129,7 +129,7 @@ namespace dftefe
     template <typename ValueType>
     void
     MemoryManager<ValueType, MemorySpace::DEVICE>::setZero(size_type  size,
-                                                       ValueType *ptr)
+                                                           ValueType *ptr)
     {
       deviceSetValue(ptr, (ValueType)0, size);
     }

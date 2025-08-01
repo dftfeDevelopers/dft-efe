@@ -46,7 +46,7 @@ namespace dftefe
         const double                                polynomialDegree,
         const double                                illConditionTolerance,
         MultiVector<ValueTypeOperand, memorySpace> &eigenSubspaceGuess,
-        const ElpaScalapackManager                  &elpaScala,
+        const ElpaScalapackManager &                elpaScala,
         bool                                        isResidualChebyshevFilter,
         const size_type                             eigenVectorBatchSize,
         OrthogonalizationType                       orthoType,

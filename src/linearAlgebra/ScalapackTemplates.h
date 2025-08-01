@@ -16,11 +16,11 @@
 #ifndef dftefeScalapackTemplates_h
 #define dftefeScalapackTemplates_h
 
-#  include "MultiVector.h"
-#  include <fstream>
-#  include <iostream>
-#  include <fenv.h>
-#  include <vector>
+#include "MultiVector.h"
+#include <fstream>
+#include <iostream>
+#include <fenv.h>
+#include <vector>
 
 // useful examples:
 // https://stackoverflow.com/questions/14147705/cholesky-decomposition-scalapack-error/14203864

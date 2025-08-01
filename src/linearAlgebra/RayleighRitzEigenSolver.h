@@ -79,7 +79,7 @@ namespace dftefe
         std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
                                                       mpiPatternP2P,
         std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext,
-        const bool useScalpack = true);
+        const bool                                    useScalpack = true);
 
       /**
        *@brief Default Destructor
@@ -137,23 +137,23 @@ namespace dftefe
       computeXTransOpX(MultiVector<ValueTypeOperand, memorySpace> &  X,
                        utils::MemoryStorage<ValueType, memorySpace> &S,
                        const OpContext &                             Op,
-                      const bool & useBatched = true);
+                       const bool &useBatched = true);
 
       void
-      computeXTransOpX(MultiVector<ValueTypeOperand, memorySpace> &  X,
-                      const std::shared_ptr<const ProcessGrid> &processGrid,
-                       ScaLAPACKMatrix<ValueType> &            overlapMatPar,
-                       const OpContext &                             Op);
+      computeXTransOpX(MultiVector<ValueTypeOperand, memorySpace> &X,
+                       const std::shared_ptr<const ProcessGrid> &  processGrid,
+                       ScaLAPACKMatrix<ValueType> &overlapMatPar,
+                       const OpContext &           Op);
 
       std::shared_ptr<MultiVector<ValueType, memorySpace>> d_XinBatchSmall,
         d_XinBatch, d_XoutBatchSmall, d_XoutBatch;
 
-      size_type d_batchSizeSmall;
+      size_type       d_batchSizeSmall;
       const size_type d_eigenVecBatchSize;
 
       const ElpaScalapackManager *d_elpaScala;
-      const bool            d_useELPA;
-      const bool            d_useScalapack;
+      const bool                  d_useELPA;
+      const bool                  d_useScalapack;
 
     }; // end of class RayleighRitzEigenSolver
   }    // end of namespace linearAlgebra

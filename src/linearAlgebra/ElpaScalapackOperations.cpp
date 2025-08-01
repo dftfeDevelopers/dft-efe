@@ -173,8 +173,8 @@ namespace dftefe
             /* Setup */
             if (elpa_setup(elpaHandle) != ELPA_OK)
               {
-                utils::throwException(false , ("DFT-EFE Error: ELPA Error."));
-              }                                 
+                utils::throwException(false, ("DFT-EFE Error: ELPA Error."));
+              }
 
             // #ifdef DFTFE_WITH_DEVICE
 

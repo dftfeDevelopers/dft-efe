@@ -65,7 +65,7 @@ if (NOT TARGET dft-efe-linalg)
     target_include_directories(dft-efe-linalg PUBLIC ${SLATE_DIR}/include)
     target_link_directories(dft-efe-linalg PUBLIC ${SLATE_DIR}/lib64)
 
-    #NOTE : DFTFE doesn't link to scalapack directly. Check this. 
+    #NOTE : DFTFE doesn't link to scalapack directly. Check this.
     target_link_libraries(dft-efe-linalg PUBLIC ${SCALAPACK_LIBRARIES})
 
     find_package(ELPA 2023 REQUIRED)
