@@ -78,7 +78,8 @@ namespace dftefe
         const ElpaScalapackManager &elpaScala,
         std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
                                                       mpiPatternP2P,
-        std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext);
+        std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext,
+        const bool useScalpack = true);
 
       /**
        *@brief Default Destructor
@@ -152,6 +153,7 @@ namespace dftefe
 
       const ElpaScalapackManager *d_elpaScala;
       const bool            d_useELPA;
+      const bool            d_useScalapack;
 
     }; // end of class RayleighRitzEigenSolver
   }    // end of namespace linearAlgebra

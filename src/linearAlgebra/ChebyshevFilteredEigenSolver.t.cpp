@@ -94,6 +94,7 @@ namespace dftefe
       d_ortho = std::make_shared<
         OrthonormalizationFunctions<ValueTypeOperator, ValueType, memorySpace>>(
         eigenVectorBatchSize,
+        *d_elpaScala,
         d_mpiPatternP2P,
         eigenSubspaceGuess.getLinAlgOpContext());
 
@@ -170,6 +171,7 @@ namespace dftefe
                                                          ValueType,
                                                          memorySpace>>(
               d_eigenVecBatchSize,
+              *d_elpaScala,
               d_mpiPatternP2P,
               eigenSubspaceGuess.getLinAlgOpContext());
 

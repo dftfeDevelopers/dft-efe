@@ -91,6 +91,8 @@ namespace dftefe
          "Lanczos solve error in KohnShamEigenSolver. "},
         {EigenSolverErrorCode::KS_NEWTON_RAPHSON_ERROR,
          "Newton Raphson solve error in KohnShamEigenSolver. "},
+        {EigenSolverErrorCode::ELPASCALAPACK_ERROR,
+         "Elpa/Scalapack error in KohnShamEigenSolver. "},
         {EigenSolverErrorCode::OTHER_ERROR, "Other error encountered. "}};
 
     const std::map<OrthonormalizationErrorCode, std::string>
@@ -99,6 +101,8 @@ namespace dftefe
         {OrthonormalizationErrorCode::LAPACK_ERROR, "LAPACK function failed. "},
         {OrthonormalizationErrorCode::MAX_PASS_EXCEEDED,
          "Maximum pass for multipass orthogonalization exceeded."},
+        {OrthonormalizationErrorCode::ELPASCALAPACK_ERROR,
+         "Elpa/Scalapack error in Orthogonalization. "},
         {OrthonormalizationErrorCode::NON_ORTHONORMALIZABLE_MULTIVECTOR,
          "Failed to converge. "}};
 

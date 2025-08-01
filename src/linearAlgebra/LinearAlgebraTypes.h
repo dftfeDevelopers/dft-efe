@@ -101,6 +101,7 @@ namespace dftefe
       KS_CHFSI_ERROR,
       KS_LANCZOS_ERROR,
       KS_NEWTON_RAPHSON_ERROR,
+      ELPASCALAPACK_ERROR,
       OTHER_ERROR
     };
 
@@ -109,6 +110,7 @@ namespace dftefe
       SUCCESS,
       LAPACK_ERROR,
       NON_ORTHONORMALIZABLE_MULTIVECTOR,
+      ELPASCALAPACK_ERROR,
       MAX_PASS_EXCEEDED
     };
 

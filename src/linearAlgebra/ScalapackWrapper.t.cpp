@@ -1214,7 +1214,8 @@ namespace dftefe
     std::vector<double>
     ScaLAPACKMatrix<NumberType>::eigenpairs_hermitian_by_index(
       const std::pair<unsigned int, unsigned int> &index_limits,
-      const bool                                   compute_eigenvectors)
+      const bool                                   compute_eigenvectors,
+      ScalapackError                              &scalapackError)
     {
       // check validity of index limits
       DFTEFE_Assert(index_limits.first < n_rows);
@@ -1226,9 +1227,9 @@ namespace dftefe
 
       // compute all eigenvalues/eigenvectors
       if (idx.first == 0 && idx.second == static_cast<unsigned int>(n_rows - 1))
-        return eigenpairs_hermitian(compute_eigenvectors);
+        return eigenpairs_hermitian(compute_eigenvectors , scalapackError);
       else
-        return eigenpairs_hermitian(compute_eigenvectors, idx);
+        return eigenpairs_hermitian(compute_eigenvectors, scalapackError, idx);
     }
 
 
@@ -1236,10 +1237,10 @@ namespace dftefe
     std::vector<double>
     ScaLAPACKMatrix<NumberType>::eigenpairs_hermitian(
       const bool                                   compute_eigenvectors,
+      ScalapackError                              &scalapackError,
       const std::pair<unsigned int, unsigned int> &eigenvalue_idx,
       const std::pair<double, double> &            eigenvalue_limits)
     {
-      ScalapackError returnVal;
       DFTEFE_AssertWithMsg(
         state == LAPACKSupport::matrix,
         "Matrix has to be in Matrix state before calling this function.");
@@ -1386,12 +1387,12 @@ namespace dftefe
                     &info);
               if (info != 0)
                 {
-                  returnVal = ScalapackErrorMsg::isSuccessAndMsg(
+                  scalapackError = ScalapackErrorMsg::isSuccessAndMsg(
                     ScalapackErrorCode::FAILED_STANDARD_HERMITIAN_EIGENPROBLEM);
-                  returnVal.msg += std::to_string(info) + " .";
+                  scalapackError.msg += std::to_string(info) + " .";
                 }
               else
-                returnVal = ScalapackErrorMsg::isSuccessAndMsg(
+                scalapackError = ScalapackErrorMsg::isSuccessAndMsg(
                   ScalapackErrorCode::SUCCESS);
             }
           else
@@ -1436,12 +1437,12 @@ namespace dftefe
                      &info);
               if (info != 0)
                 {
-                  returnVal = ScalapackErrorMsg::isSuccessAndMsg(
+                  scalapackError = ScalapackErrorMsg::isSuccessAndMsg(
                     ScalapackErrorCode::FAILED_STANDARD_HERMITIAN_EIGENPROBLEM);
-                  returnVal.msg += std::to_string(info) + " .";
+                  scalapackError.msg += std::to_string(info) + " .";
                 }
               else
-                returnVal = ScalapackErrorMsg::isSuccessAndMsg(
+                scalapackError = ScalapackErrorMsg::isSuccessAndMsg(
                   ScalapackErrorCode::SUCCESS);
             }
           lwork = lworkFromWork(work);
@@ -1467,12 +1468,12 @@ namespace dftefe
 
               if (info != 0)
                 {
-                  returnVal = ScalapackErrorMsg::isSuccessAndMsg(
+                  scalapackError = ScalapackErrorMsg::isSuccessAndMsg(
                     ScalapackErrorCode::FAILED_STANDARD_HERMITIAN_EIGENPROBLEM);
-                  returnVal.msg += std::to_string(info) + " .";
+                  scalapackError.msg += std::to_string(info) + " .";
                 }
               else
-                returnVal = ScalapackErrorMsg::isSuccessAndMsg(
+                scalapackError = ScalapackErrorMsg::isSuccessAndMsg(
                   ScalapackErrorCode::SUCCESS);
             }
           else
@@ -1513,12 +1514,12 @@ namespace dftefe
 
               if (info != 0)
                 {
-                  returnVal = ScalapackErrorMsg::isSuccessAndMsg(
+                  scalapackError = ScalapackErrorMsg::isSuccessAndMsg(
                     ScalapackErrorCode::FAILED_STANDARD_HERMITIAN_EIGENPROBLEM);
-                  returnVal.msg += std::to_string(info) + " .";
+                  scalapackError.msg += std::to_string(info) + " .";
                 }
               else
-                returnVal = ScalapackErrorMsg::isSuccessAndMsg(
+                scalapackError = ScalapackErrorMsg::isSuccessAndMsg(
                   ScalapackErrorCode::SUCCESS);
             }
           // if eigenvectors are queried copy eigenvectors to original matrix
@@ -1567,9 +1568,9 @@ namespace dftefe
     std::vector<double>
     ScaLAPACKMatrix<NumberType>::eigenpairs_hermitian_by_index_MRRR(
       const std::pair<unsigned int, unsigned int> &index_limits,
-      const bool                                   compute_eigenvectors)
+      const bool                                   compute_eigenvectors,
+      ScalapackError                              &scalapackError)
     {
-      ScalapackError returnVal;
       // Check validity of index limits.
       DFTEFE_Assert(index_limits.first < static_cast<unsigned int>(n_rows));
       DFTEFE_Assert(index_limits.second < static_cast<unsigned int>(n_rows));
@@ -1580,9 +1581,9 @@ namespace dftefe
 
       // Compute all eigenvalues/eigenvectors.
       if (idx.first == 0 && idx.second == static_cast<unsigned int>(n_rows - 1))
-        return eigenpairs_hermitian_MRRR(compute_eigenvectors);
+        return eigenpairs_hermitian_MRRR(compute_eigenvectors , scalapackError);
       else
-        return eigenpairs_hermitian_MRRR(compute_eigenvectors, idx);
+        return eigenpairs_hermitian_MRRR(compute_eigenvectors, scalapackError , idx);
     }
 
 
@@ -1590,10 +1591,10 @@ namespace dftefe
     std::vector<double>
     ScaLAPACKMatrix<NumberType>::eigenpairs_hermitian_MRRR(
       const bool                                   compute_eigenvectors,
+      ScalapackError                              &scalapackError,
       const std::pair<unsigned int, unsigned int> &eigenvalue_idx,
       const std::pair<double, double> &            eigenvalue_limits)
     {
-      ScalapackError returnVal;
       DFTEFE_AssertWithMsg(
         state == LAPACKSupport::matrix,
         "Matrix has to be in Matrix state before calling this function.");
@@ -1721,13 +1722,13 @@ namespace dftefe
                  &info);
           if (info != 0)
             {
-              returnVal = ScalapackErrorMsg::isSuccessAndMsg(
+              scalapackError = ScalapackErrorMsg::isSuccessAndMsg(
                 ScalapackErrorCode::
                   FAILED_STANDARD_HERMITIAN_EIGENPROBLEM_MRRR);
-              returnVal.msg += std::to_string(info) + " .";
+              scalapackError.msg += std::to_string(info) + " .";
             }
           else
-            returnVal =
+            scalapackError =
               ScalapackErrorMsg::isSuccessAndMsg(ScalapackErrorCode::SUCCESS);
 
           lwork = lworkFromWork(work);
@@ -1762,13 +1763,13 @@ namespace dftefe
 
           if (info != 0)
             {
-              returnVal = ScalapackErrorMsg::isSuccessAndMsg(
+              scalapackError = ScalapackErrorMsg::isSuccessAndMsg(
                 ScalapackErrorCode::
                   FAILED_STANDARD_HERMITIAN_EIGENPROBLEM_MRRR);
-              returnVal.msg += std::to_string(info) + " .";
+              scalapackError.msg += std::to_string(info) + " .";
             }
           else
-            returnVal =
+            scalapackError =
               ScalapackErrorMsg::isSuccessAndMsg(ScalapackErrorCode::SUCCESS);
 
           if (compute_eigenvectors)
