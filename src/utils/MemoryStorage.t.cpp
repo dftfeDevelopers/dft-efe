@@ -97,6 +97,14 @@ namespace dftefe
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    void
+    MemoryStorage<ValueType, memorySpace>::setZero(size_type size, const size_type offset)
+    {
+      dftefe::utils::MemoryManager<ValueType, memorySpace>::setZero(d_size,
+                                                                d_data + offset);
+    }
+
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     MemoryStorage<ValueType, memorySpace>::MemoryStorage(
       MemoryStorage<ValueType, memorySpace> &&u) noexcept
       : d_size(u.d_size)
@@ -212,7 +220,7 @@ namespace dftefe
     MemoryStorage<ValueType, memorySpace>::copyTo(
       MemoryStorage<ValueType, memorySpaceDst> &dstMemoryStorage) const
     {
-      throwException<LengthError>(
+      DFTEFE_AssertWithMsg(
         d_size <= dstMemoryStorage.size(),
         "The allocated size of destination MemoryStorage is insufficient to "
         "copy from the the MemoryStorage.");
@@ -229,12 +237,12 @@ namespace dftefe
       const size_type                           srcOffset,
       const size_type                           dstOffset) const
     {
-      throwException<LengthError>(
+      DFTEFE_AssertWithMsg(
         srcOffset + N <= d_size,
         "The offset and copy size specified for the source MemoryStorage"
         " is out of range for it.");
 
-      throwException<LengthError>(
+      DFTEFE_AssertWithMsg(
         dstOffset + N <= dstMemoryStorage.size(),
         "The offset and size specified for the destination MemoryStorage"
         " is out of range for it.");
@@ -250,7 +258,7 @@ namespace dftefe
     MemoryStorage<ValueType, memorySpace>::copyFrom(
       const MemoryStorage<ValueType, memorySpaceSrc> &srcMemoryStorage)
     {
-      throwException<LengthError>(
+      DFTEFE_AssertWithMsg(
         srcMemoryStorage.size() <= d_size,
         "The allocated size of the MemoryStorage is insufficient to "
         " copy from the source MemoryStorage.");
@@ -267,12 +275,12 @@ namespace dftefe
       const size_type                           srcOffset,
       const size_type                           dstOffset)
     {
-      throwException<LengthError>(
+      DFTEFE_AssertWithMsg(
         srcOffset + N <= srcMemoryStorage.size(),
         "The offset and copy size specified for the source MemoryStorage"
         " is out of range for it.");
 
-      throwException<LengthError>(
+      DFTEFE_AssertWithMsg(
         dstOffset + N <= d_size,
         "The offset and size specified for the destination MemoryStorage"
         " is out of range for it.");
@@ -300,7 +308,7 @@ namespace dftefe
       const size_type srcOffset,
       const size_type dstOffset) const
     {
-      throwException<LengthError>(
+      DFTEFE_AssertWithMsg(
         srcOffset + N <= d_size,
         "The offset and copy size specified for the source MemoryStorage"
         " is out of range for it.");
@@ -327,7 +335,7 @@ namespace dftefe
                                                     const size_type  srcOffset,
                                                     const size_type  dstOffset)
     {
-      throwException<LengthError>(
+      DFTEFE_AssertWithMsg(
         dstOffset + N <= d_size,
         "The offset and size specified for the destination MemoryStorage"
         " is out of range for it.");
@@ -356,7 +364,7 @@ namespace dftefe
       const size_type         srcOffset,
       const size_type         dstOffset) const
     {
-      throwException<LengthError>(
+      DFTEFE_AssertWithMsg(
         srcOffset + N <= d_size,
         "The offset and copy size specified for the source MemoryStorage"
         " is out of range for it.");
@@ -373,7 +381,7 @@ namespace dftefe
     MemoryStorage<ValueType, memorySpace>::copyFrom(
       const std::vector<ValueType> &src)
     {
-      throwException<LengthError>(
+      DFTEFE_AssertWithMsg(
         src.size() <= d_size,
         "The allocated size of the MemoryStorage is insufficient to copy from "
         "the source STL vector");
@@ -390,12 +398,12 @@ namespace dftefe
       const size_type               srcOffset,
       const size_type               dstOffset)
     {
-      throwException<LengthError>(
+      DFTEFE_AssertWithMsg(
         dstOffset + N <= d_size,
         "The offset and size specified for the destination MemoryStorage"
         " is out of range for it.");
 
-      throwException<LengthError>(
+      DFTEFE_AssertWithMsg(
         srcOffset + N <= src.size(),
         "The offset and size specified for the source STL vector "
         " is out of range for it.");

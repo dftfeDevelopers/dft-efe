@@ -94,6 +94,13 @@ namespace dftefe
       setValue(const ValueType val);
 
       /**
+       * @brief Set all the entries to a given value
+       * @param[in] val The value to which the entries are to be set
+       */
+      void
+      setZero(size_type size, const size_type offset);
+
+      /**
        * @brief Return iterator pointing to the beginning of point
        * data.
        *

@@ -223,10 +223,7 @@ namespace dftefe
           std::min(maxNumLocalDofs, subspaceRotDofsBlockSize);
 
         utils::MemoryStorage<ValueType, utils::MemorySpace::HOST>
-          rotationMatBlockHost;
-
-        rotationMatBlockHost.resize(vectorsBlockSize * N, ValueType(0));
-        rotationMatBlockHost.setValue(0);
+          rotationMatBlockHost(vectorsBlockSize * N, ValueType(0));
 
         utils::MemoryStorage<ValueType, memorySpace>
           rotationMatBlock(vectorsBlockSize * N, ValueType(0));
@@ -247,9 +244,7 @@ namespace dftefe
 
                 const size_type D = isRotationMatLowerTria ? (jvec + BVec) : N;
 
-                    std::memset(rotationMatBlockHost.begin(),
-                                0,
-                                BVec * N);
+                    rotationMatBlockHost.setZero(BVec * N , 0);
 
                     // Extract QBVec from parallel ScaLAPACK matrix Q
                     if (rotationMatTranspose)

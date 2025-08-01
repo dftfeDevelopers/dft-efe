@@ -131,6 +131,7 @@ namespace dftefe
     {
     public:
       static const size_type SUBSPACE_ROT_DOF_BATCH;
+      static const size_type WAVE_FN_BATCH;
     }; // end of class LinAlgOpContextHost
 
   } // end of namespace linearAlgebra

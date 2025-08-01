@@ -25,6 +25,9 @@
 
 #include "DeviceAPICalls.h"
 #include <algorithm>
+#include <bitset>
+#include <climits>
+#include <cstring>
 
 
 namespace dftefe
@@ -55,6 +58,14 @@ namespace dftefe
       std::fill(ptr, ptr + size, val);
     }
 
+    template <typename ValueType>
+    void
+    MemoryManager<ValueType, MemorySpace::HOST>::setZero(size_type  size,
+                                                     ValueType *ptr)
+    {
+      std::memset(ptr, (ValueType)0 , size * sizeof(ValueType));
+    }
+
 #ifdef DFTEFE_WITH_DEVICE
     template <typename ValueType>
     void
@@ -83,6 +94,13 @@ namespace dftefe
       std::fill(ptr, ptr + size, val);
     }
 
+    template <typename ValueType>
+    void
+    MemoryManager<ValueType, MemorySpace::HOST_PINNED>::setZero(size_type  size,
+                                                            ValueType *ptr)
+    {
+      std::memset(ptr, (ValueType)0 , size * sizeof(ValueType));
+    }
 
     template <typename ValueType>
     void
@@ -106,6 +124,14 @@ namespace dftefe
                                                        ValueType  val)
     {
       deviceSetValue(ptr, val, size);
+    }
+
+    template <typename ValueType>
+    void
+    MemoryManager<ValueType, MemorySpace::DEVICE>::setZero(size_type  size,
+                                                       ValueType *ptr)
+    {
+      deviceSetValue(ptr, (ValueType)0, size);
     }
 
 #endif // DFTEFE_WITH_DEVICE

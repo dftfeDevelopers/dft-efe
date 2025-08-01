@@ -253,7 +253,7 @@ namespace dftefe
           projHamParCopy.copy_conjugate_transposed(projHamPar);
 
           elpaScalaOpInternal::subspaceRotation<ValueType, memorySpace>(
-                                      eigenVectors.data(),
+                                      X.data(),
                                       vecSize,
                                       numVec,
                                       processGrid,
@@ -261,9 +261,11 @@ namespace dftefe
                                       *X.getLinAlgOpContext(),
                                       projHamParCopy,
                                       RayleighRitzDefaults::SUBSPACE_ROT_DOF_BATCH,
-                                      d_eigenVecBatchSize,
+                                      RayleighRitzDefaults::WAVE_FN_BATCH,
                                       false,
                                       false);
+
+          eigenVectors = X;                            
 
           // blasLapack::gemm<ValueType, ValueType, memorySpace>(
           //   blasLapack::Layout::ColMajor,
