@@ -74,6 +74,16 @@ namespace dftefe
         const OpContext &B = IdentityOperatorContext<ValueTypeOperator,
                                                      ValueTypeOperand,
                                                      memorySpace>());
+      OrthonormalizationError
+      MultipassCGS(
+        MultiVector<ValueTypeOperand, memorySpace> &X,
+        size_type                                   maxPass,
+        RealType                                    shiftTolerance,
+        RealType                                    identityTolerance,
+        MultiVector<ValueType, memorySpace> &       orthogonalizedX,
+        const OpContext &B = IdentityOperatorContext<ValueTypeOperator,
+                                                     ValueTypeOperand,
+                                                     memorySpace>());
 
       OrthonormalizationError
       MultipassLowdin(

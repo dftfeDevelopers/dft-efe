@@ -157,7 +157,22 @@ int main()
   linearAlgebra::MultiVector<ValueType, Host> X0X0TX(X, 0.0);
 
   copyX = X;
-  linearAlgebra::OrthonormalizationFunctions<ValueType, ValueType, Host>::MultipassLowdin(
+
+  std::shared_ptr<linearAlgebra::ElpaScalapackManager> d_elpaScala = 
+    std::make_shared<linearAlgebra::ElpaScalapackManager>(
+      X.getMPIPatternP2P()->mpiCommunicator(),
+      0,
+      true,
+      32,
+      false);
+
+  linearAlgebra::OrthonormalizationFunctions<ValueType, ValueType, Host> d_ortho(
+    1,
+    *d_elpaScala,
+    X.getMPIPatternP2P(),
+    X.getLinAlgOpContext());
+
+  d_ortho.MultipassLowdin(
                       copyX,
                       3,
                       1e-3,

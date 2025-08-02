@@ -18,6 +18,8 @@ if(ENABLE_MPI)
 	set(DFTEFE_MPI_LIBRARIES ${MPI_CXX_LIBRARIES})
 endif()
 
+list(APPEND CMAKE_MODULE_PATH ${MAIN_PROJECT_DIR}/cmake)
+
 add_subdirectory(${MAIN_PROJECT_DIR}/src/linearAlgebra ${MAIN_PROJECT_DIR}/test/linearAlgebra/lib/buildLinearAlgebra)
 include_directories(${MAIN_PROJECT_DIR}/src)
 

@@ -353,13 +353,13 @@ namespace dftefe
                                                   *d_eigenSubspaceGuess,
                                                   B);
         }
-      else if (d_orthoType == OrthogonalizationType::MULTIPASS_LOWDIN)
+      else if (d_orthoType == OrthogonalizationType::MULTIPASS_CGS)
         {
-          orthoerr = d_ortho->MultipassLowdin(
+          orthoerr = d_ortho->MultipassCGS(
             eigenVectors, /*in/out, eigenvector*/
-            linearAlgebra::MultiPassLowdinDefaults::MAX_PASS,
-            linearAlgebra::MultiPassLowdinDefaults::SHIFT_TOL,
-            linearAlgebra::MultiPassLowdinDefaults::IDENTITY_TOL,
+            linearAlgebra::MultiPassOrthoDefaults::MAX_PASS,
+            linearAlgebra::MultiPassOrthoDefaults::SHIFT_TOL,
+            linearAlgebra::MultiPassOrthoDefaults::IDENTITY_TOL,
             *d_eigenSubspaceGuess, // go away
             B);
         }

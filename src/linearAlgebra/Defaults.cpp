@@ -36,11 +36,11 @@ namespace dftefe
     const double LinearSolverDefaults::DIVERGENCE_TOL = 1e6;
 
     /**
-     * @brief Setting all the MultiPassLowdinDefaults
+     * @brief Setting all the MultiPassOrthoDefaults
      */
-    const size_type MultiPassLowdinDefaults::MAX_PASS     = 50;
-    const double    MultiPassLowdinDefaults::SHIFT_TOL    = 1e-12;
-    const double    MultiPassLowdinDefaults::IDENTITY_TOL = 1e-12;
+    const size_type MultiPassOrthoDefaults::MAX_PASS     = 50;
+    const double    MultiPassOrthoDefaults::SHIFT_TOL    = 1e-12;
+    const double    MultiPassOrthoDefaults::IDENTITY_TOL = 1e-12;
 
     /**
      * @brief Setting all the PrintControlDefaults

@@ -100,7 +100,7 @@ namespace dftefe
       static const double DIVERGENCE_TOL;
     }; // end of class LinearSolverDefaults
 
-    class MultiPassLowdinDefaults
+    class MultiPassOrthoDefaults
     {
     public:
       //
@@ -117,7 +117,7 @@ namespace dftefe
       //
       // calculate frobenus norm |S - I| < this tolerance
       static const double IDENTITY_TOL;
-    }; // end of class MultiPassLowdinDefaults
+    }; // end of class MultiPassOrthoDefaults
 
     class LinAlgOpContextDefaults
     {
