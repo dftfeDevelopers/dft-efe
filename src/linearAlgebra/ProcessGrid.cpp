@@ -239,11 +239,19 @@ namespace dftefe
 
     ProcessGrid::~ProcessGrid()
     {
-      if (mpi_process_is_active)
-        Cblacs_gridexit(blacs_context);
+      int mpi_initialized = 0, mpi_finalized = 0;
+      utils::mpi::MPIInitialized(&mpi_initialized);
+      utils::mpi::MPIFinalized(&mpi_finalized);
 
-      if (mpi_communicator_inactive_with_root != utils::mpi::MPICommNull)
-        MPI_Comm_free(&mpi_communicator_inactive_with_root);
+      if (mpi_initialized && !mpi_finalized)
+        {
+          if (mpi_process_is_active)
+            Cblacs_gridexit(blacs_context);
+
+          if (mpi_communicator_inactive_with_root != utils::mpi::MPICommNull)
+            utils::mpi::MPICommFree(&mpi_communicator_inactive_with_root);
+          mpi_communicator_inactive_with_root = utils::mpi::MPICommNull;
+        }
     }
 
 

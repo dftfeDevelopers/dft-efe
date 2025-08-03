@@ -50,14 +50,21 @@ namespace dftefe
     //
     ElpaScalapackManager::~ElpaScalapackManager()
     {
-      if (d_processGridCommunicatorActive != utils::mpi::MPICommNull)
-        utils::mpi::MPICommFree(&d_processGridCommunicatorActive);
+      int mpi_initialized = 0, mpi_finalized = 0;
+      utils::mpi::MPIInitialized(&mpi_initialized);
+      utils::mpi::MPIFinalized(&mpi_finalized);
 
-      if (d_processGridCommunicatorActivePartial != utils::mpi::MPICommNull)
-        utils::mpi::MPICommFree(&d_processGridCommunicatorActivePartial);
-      //
-      //
-      //
+      if (mpi_initialized && !mpi_finalized)
+        {
+          if (d_processGridCommunicatorActive != utils::mpi::MPICommNull)
+            utils::mpi::MPICommFree(&d_processGridCommunicatorActive);
+          d_processGridCommunicatorActive = utils::mpi::MPICommNull;
+
+          if (d_processGridCommunicatorActivePartial != utils::mpi::MPICommNull)
+            utils::mpi::MPICommFree(&d_processGridCommunicatorActivePartial);
+          d_processGridCommunicatorActivePartial = utils::mpi::MPICommNull;
+        }
+
       return;
     }
     //

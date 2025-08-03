@@ -74,6 +74,10 @@ namespace dftefe
                       const LAPACKSupport::Property             property =
                         LAPACKSupport::Property::hermitian);
 
+      /**
+       * Destructor.
+       */
+      ~ScaLAPACKMatrix() = default;
 
       /**
        * Initialize the rectangular matrix with @p n_rows and @p n_cols

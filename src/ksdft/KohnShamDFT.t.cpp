@@ -2158,6 +2158,22 @@ namespace dftefe
               typename ValueTypeWaveFunctionBasis,
               utils::MemorySpace memorySpace,
               size_type          dim>
+    KohnShamDFT<ValueTypeElectrostaticsCoeff,
+                ValueTypeElectrostaticsBasis,
+                ValueTypeWaveFunctionCoeff,
+                ValueTypeWaveFunctionBasis,
+                memorySpace,
+                dim>::~KohnShamDFT()
+    {
+      d_elpaScala->elpaDeallocateHandles();
+    }
+
+    template <typename ValueTypeElectrostaticsCoeff,
+              typename ValueTypeElectrostaticsBasis,
+              typename ValueTypeWaveFunctionCoeff,
+              typename ValueTypeWaveFunctionBasis,
+              utils::MemorySpace memorySpace,
+              size_type          dim>
     void
     KohnShamDFT<ValueTypeElectrostaticsCoeff,
                 ValueTypeElectrostaticsBasis,

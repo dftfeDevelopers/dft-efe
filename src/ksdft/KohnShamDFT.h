@@ -490,7 +490,7 @@ namespace dftefe
                                                  memorySpace>(),
         bool isResidualChebyshevFilter = true);
 
-      ~KohnShamDFT() = default;
+      ~KohnShamDFT();
 
       void
       solve();

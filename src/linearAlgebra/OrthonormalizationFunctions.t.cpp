@@ -454,11 +454,11 @@ namespace dftefe
                                 ValueTypeOperand,
                                 memorySpace>::
       MultipassCGS(MultiVector<ValueTypeOperand, memorySpace> &X,
-                      size_type                                   maxPass,
-                      RealType                             shiftTolerance,
-                      RealType                             identityTolerance,
-                      MultiVector<ValueType, memorySpace> &orthogonalizedX,
-                      const OpContext &                    B)
+                   size_type                                   maxPass,
+                   RealType                                    shiftTolerance,
+                   RealType                             identityTolerance,
+                   MultiVector<ValueType, memorySpace> &orthogonalizedX,
+                   const OpContext &                    B)
     {
       utils::throwException(
         d_useScalapack,
@@ -503,16 +503,15 @@ namespace dftefe
           * estimate by doing prefactor * e_machine/root(e_min) <
           identityTolerance*root(size of I) */
 
-          size_type iPass = 0;
+          size_type iPass = 1;
 
-          const size_type rowsBlockSize =
-            d_elpaScala->getScalapackBlockSize();
+          const size_type rowsBlockSize = d_elpaScala->getScalapackBlockSize();
           std::shared_ptr<const ProcessGrid> processGrid =
             d_elpaScala->getProcessGridDftefeScalaWrapper();
 
           ScaLAPACKMatrix<ValueType> overlapMatPar(numVec,
-                                                    processGrid,
-                                                    rowsBlockSize);
+                                                   processGrid,
+                                                   rowsBlockSize);
 
           if (processGrid->is_process_active())
             std::fill(&overlapMatPar.local_el(0, 0),
@@ -520,8 +519,9 @@ namespace dftefe
                         overlapMatPar.local_m() * overlapMatPar.local_n(),
                       ValueType(0.0));
 
-          ScaLAPACKMatrix<ValueType> overlapMatParConjTrans(
-            numVec, processGrid, rowsBlockSize);
+          ScaLAPACKMatrix<ValueType> overlapMatParConjTrans(numVec,
+                                                            processGrid,
+                                                            rowsBlockSize);
 
           if (processGrid->is_process_active())
             std::fill(&overlapMatParConjTrans.local_el(0, 0),
@@ -530,8 +530,14 @@ namespace dftefe
                           overlapMatParConjTrans.local_n(),
                       ValueType(0.0));
 
-          bool cholSuccess = true;
-          bool solveSuccess = true;
+          ScaLAPACKMatrix<ValueType> LMatPar(
+            numVec,
+            processGrid,
+            rowsBlockSize,
+            LAPACKSupport::Property::lower_triangular);
+
+          bool           cholSuccess  = true;
+          bool           solveSuccess = true;
           ScalapackError lapackReturn;
 
           while (iPass <= maxPass)
@@ -547,8 +553,8 @@ namespace dftefe
 
               overlapMatParConjTrans.copy_conjugate_transposed(overlapMatPar);
               overlapMatPar.add(overlapMatParConjTrans,
-                            ValueType(1.0),
-                            ValueType(1.0));
+                                ValueType(1.0),
+                                ValueType(1.0));
 
               RealType orthoErrValueType = 0;
               if (processGrid->is_process_active())
@@ -559,16 +565,16 @@ namespace dftefe
                       {
                         const size_type glob_j = overlapMatPar.global_row(j);
                         if (glob_i == glob_j)
-                        {
-                          overlapMatPar.local_el(j, i) *= ValueType(0.5);
-                          orthoErrValueType +=
+                          {
+                            overlapMatPar.local_el(j, i) *= ValueType(0.5);
+                            orthoErrValueType +=
                               (overlapMatPar.local_el(j, i) - (ValueType)1.0) *
                               utils::conjugate<ValueType>(
-                                 overlapMatPar.local_el(j, i) - (ValueType)1.0);
-                        }
-                        orthoErrValueType +=
-                            (overlapMatPar.local_el(j, i)) * utils::conjugate<ValueType>(
-                                overlapMatPar.local_el(j, i));
+                                overlapMatPar.local_el(j, i) - (ValueType)1.0);
+                          }
+                        orthoErrValueType += (overlapMatPar.local_el(j, i)) *
+                                             utils::conjugate<ValueType>(
+                                               overlapMatPar.local_el(j, i));
                       }
                   }
 
@@ -581,60 +587,64 @@ namespace dftefe
                 X.getMPIPatternP2P()->mpiCommunicator());
 
               orthoErr =
-                  std::sqrt(utils::realPart<ValueType>(orthoErrValueType));
-                if (orthoErr < identityTolerance * std::sqrt(numVec))
-                  {
-                    break;
-                  }                
+                std::sqrt(utils::realPart<ValueType>(orthoErrValueType));
+              if (orthoErr < identityTolerance * std::sqrt(numVec))
+                {
+                  break;
+                }
 
               p.registerEnd("Compute X^T M X");
-              
+
               p.registerStart("Minimum EigenValue Check");
               /* do a eigendecomposition and get min eigenvalue and get shift*/
 
+              overlapMatParConjTrans.copy_conjugate_transposed(overlapMatPar);
+
               if (d_useELPA)
+                {
+                  // For ELPA eigendecomposition the full matrix is required
+                  // unlike ScaLAPACK which can work with only the lower
+                  // triangular part
+                  if (processGrid->is_process_active())
                     {
-                      // For ELPA eigendecomposition the full matrix is required unlike
-                      // ScaLAPACK which can work with only the lower triangular part
-                      if (processGrid->is_process_active())
-                        {
-                          int error;
-                          elpa_eigenvalues(d_elpaScala->getElpaHandle(),
-                                            &overlapMatPar.local_el(0, 0),
-                                            &eigenValuesS[0],
-                                            &error);
-                          if (error != ELPA_OK)
-                            solveSuccess = false;
-                        }
-
-                      utils::mpi::MPIBcast<utils::MemorySpace::HOST>(
-                        &eigenValuesS[0],
-                        eigenValuesS.size(),
-                        utils::mpi::Types<RealType>::getMPIDatatype(),
-                        0,
-                        X.getMPIPatternP2P()->mpiCommunicator());
-                    }
-                  else
-                    {
-                      ScalapackError scalapackError;
-                      p.registerStart("ScaLAPACK eigen decomp, RR step");
-                      eigenValuesS = overlapMatPar.eigenpairs_hermitian_by_index_MRRR(
-                        std::make_pair(0, numVec - 1), false, scalapackError);
-                      p.registerEnd("ScaLAPACK eigen decomp, RR step");
-
-                      if (scalapackError.err != ScalapackErrorCode::SUCCESS)
+                      int error;
+                      elpa_eigenvalues(d_elpaScala->getElpaHandle(),
+                                       &overlapMatParConjTrans.local_el(0, 0),
+                                       &eigenValuesS[0],
+                                       &error);
+                      if (error != ELPA_OK)
                         solveSuccess = false;
                     }
 
+                  utils::mpi::MPIBcast<utils::MemorySpace::HOST>(
+                    &eigenValuesS[0],
+                    eigenValuesS.size(),
+                    utils::mpi::Types<RealType>::getMPIDatatype(),
+                    0,
+                    X.getMPIPatternP2P()->mpiCommunicator());
+                }
+              else
+                {
+                  ScalapackError scalapackError;
+                  p.registerStart("ScaLAPACK eigen decomp, RR step");
+                  eigenValuesS =
+                    overlapMatParConjTrans.eigenpairs_hermitian_by_index_MRRR(
+                      std::make_pair(0, numVec - 1), false, scalapackError);
+                  p.registerEnd("ScaLAPACK eigen decomp, RR step");
+
+                  if (scalapackError.err != ScalapackErrorCode::SUCCESS)
+                    solveSuccess = false;
+                }
+
               eigenValueMin = eigenValuesS[0];
 
-              bool lastPass = false;
-              RealType shift = (RealType)0;
+              bool     lastPass = false;
+              RealType shift    = (RealType)0;
               if (eigenValueMin > shiftTolerance)
-              {
-                shift = (RealType)0;
-                lastPass = true;
-              }
+                {
+                  shift    = (RealType)0;
+                  lastPass = true;
+                }
               else
                 shift = shiftTolerance - eigenValueMin;
 
@@ -648,9 +658,9 @@ namespace dftefe
                       {
                         const size_type glob_j = overlapMatPar.global_row(j);
                         if (glob_i == glob_j)
-                        {
-                          overlapMatPar.local_el(j, i) += (ValueType)shift;
-                        }
+                          {
+                            overlapMatPar.local_el(j, i) += (ValueType)shift;
+                          }
                       }
                   }
 
@@ -699,11 +709,6 @@ namespace dftefe
                 "DFT-EFE Error: overlap matrix property after cholesky factorization incorrect");
 
               // extract LConj
-              ScaLAPACKMatrix<ValueType> LMatPar(
-                numVec,
-                processGrid,
-                rowsBlockSize,
-                LAPACKSupport::Property::lower_triangular);
 
               if (processGrid->is_process_active())
                 for (size_type i = 0; i < LMatPar.local_n(); ++i)
@@ -736,7 +741,7 @@ namespace dftefe
 
               p.registerEnd("Cholesky Orthogonalize");
 
-              if(lastPass)
+              if (lastPass)
                 break;
 
               iPass++;
@@ -753,36 +758,35 @@ namespace dftefe
           //--------------------------DEBUG ONLY------------------------------
           **/
 
-              if (iPass > maxPass)
-                {
-                  err        = OrthonormalizationErrorCode::MAX_PASS_EXCEEDED;
-                  retunValue = OrthonormalizationErrorMsg::isSuccessAndMsg(err);
-                }
-              else if (!cholSuccess)
-                {
-                  err        = OrthonormalizationErrorCode::ELPASCALAPACK_ERROR;
-                  retunValue = OrthonormalizationErrorMsg::isSuccessAndMsg(err);
-                }
-              else if (lapackReturn.err ==
-                       ScalapackErrorCode::FAILED_MATRIX_INVERT)
-                {
-                  err        = OrthonormalizationErrorCode::ELPASCALAPACK_ERROR;
-                  retunValue = OrthonormalizationErrorMsg::isSuccessAndMsg(err);
-                  retunValue.msg += lapackReturn.msg;
-                }
-              else if (!solveSuccess)
-                {
-                  err        = OrthonormalizationErrorCode::ELPASCALAPACK_ERROR;
-                  retunValue = OrthonormalizationErrorMsg::isSuccessAndMsg(err);
-                }                
-              else
-                {
-                  err        = OrthonormalizationErrorCode::SUCCESS;
-                  retunValue = OrthonormalizationErrorMsg::isSuccessAndMsg(err);
-                  retunValue.msg += "Maximum number of Lowdin passes are " +
-                                    std::to_string(iPass) + ".";
-                }
-        orthogonalizedX = X;
+          if (iPass > maxPass)
+            {
+              err        = OrthonormalizationErrorCode::MAX_PASS_EXCEEDED;
+              retunValue = OrthonormalizationErrorMsg::isSuccessAndMsg(err);
+            }
+          else if (!cholSuccess)
+            {
+              err        = OrthonormalizationErrorCode::ELPASCALAPACK_ERROR;
+              retunValue = OrthonormalizationErrorMsg::isSuccessAndMsg(err);
+            }
+          else if (lapackReturn.err == ScalapackErrorCode::FAILED_MATRIX_INVERT)
+            {
+              err        = OrthonormalizationErrorCode::ELPASCALAPACK_ERROR;
+              retunValue = OrthonormalizationErrorMsg::isSuccessAndMsg(err);
+              retunValue.msg += lapackReturn.msg;
+            }
+          else if (!solveSuccess)
+            {
+              err        = OrthonormalizationErrorCode::ELPASCALAPACK_ERROR;
+              retunValue = OrthonormalizationErrorMsg::isSuccessAndMsg(err);
+            }
+          else
+            {
+              err        = OrthonormalizationErrorCode::SUCCESS;
+              retunValue = OrthonormalizationErrorMsg::isSuccessAndMsg(err);
+              retunValue.msg += "Maximum number of Lowdin passes are " +
+                                std::to_string(iPass) + ".";
+            }
+          orthogonalizedX = X;
         }
       p.print();
       return retunValue;
