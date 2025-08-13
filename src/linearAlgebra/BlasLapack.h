@@ -27,12 +27,10 @@
 #define dftefeBlasWrappers_h
 
 #include <linearAlgebra/LinearAlgebraTypes.h>
-#include <linearAlgebra/BlasLapackTypedef.h>
-#include <linearAlgebra/LinAlgOpContext.h>
-#include <utils/TypeConfig.h>
 #include <utils/ConditionalOStream.h>
 #include <utils/Profiler.h>
 #include "Defaults.h"
+#include <linearAlgebra/BlasAPIWrapper.h>
 
 namespace dftefe
 {
@@ -425,21 +423,20 @@ namespace dftefe
                 typename ValueType2,
                 typename dftefe::utils::MemorySpace memorySpace>
       void
-      gemm(Layout                               layout,
-           Op                                   transA,
-           Op                                   transB,
-           size_type                            m,
-           size_type                            n,
-           size_type                            k,
-           scalar_type<ValueType1, ValueType2>  alpha,
-           ValueType1 const *                   dA,
-           size_type                            ldda,
-           ValueType2 const *                   dB,
-           size_type                            lddb,
-           scalar_type<ValueType1, ValueType2>  beta,
-           scalar_type<ValueType1, ValueType2> *dC,
-           size_type                            lddc,
-           LinAlgOpContext<memorySpace> &       context);
+      gemm(const char                                &transA,
+           const char                                &transB,
+           const size_type                           m,
+           const size_type                           n,
+           const size_type                           k,
+           const scalar_type<ValueType1, ValueType2> alpha,
+           ValueType1 const *                        dA,
+           const size_type                           ldda,
+           ValueType2 const *                        dB,
+           const size_type                           lddb,
+           const scalar_type<ValueType1, ValueType2> beta,
+           scalar_type<ValueType1, ValueType2> *     dC,
+           const size_type                           lddc,
+           LinAlgOpContext<memorySpace> &            context);
 
       /**
        * @brief Variable Strided Batch GEMMM
@@ -451,10 +448,9 @@ namespace dftefe
                 typename ValueType2,
                 typename dftefe::utils::MemorySpace memorySpace>
       void
-      gemmStridedVarBatched(Layout                               layout,
-                            size_type                            numMats,
-                            const Op *                           transA,
-                            const Op *                           transB,
+      gemmStridedVarBatched(size_type                            numMats,
+                            const char *                           transA,
+                            const char *                           transB,
                             const size_type *                    stridea,
                             const size_type *                    strideb,
                             const size_type *                    stridec,

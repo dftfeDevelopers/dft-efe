@@ -124,10 +124,10 @@ namespace dftefe
             // Correct block dimensions if block "goes off edge of" the matrix
             const size_type B = std::min(vectorsBlockSize, N - ivec);
             blasLapack::Op
-              transA = blasLapack::Op::NoTrans /*'N'*/,
+              transA = 'N' /*'N'*/,
               transB = std::is_same<T, std::complex<double>>::value ?
-                         linearAlgebra::blasLapack::Op::ConjTrans /*'C'*/ :
-                         linearAlgebra::blasLapack::Op::Trans /*'T'*/;
+                         'C' /*'C'*/ :
+                         'T' /*'T'*/;
             const T scalarCoeffAlpha = 1.0, scalarCoeffBeta = 0.0;
 
             std::fill(overlapMatrixBlock.begin(), overlapMatrixBlock.end(), 0.);
@@ -136,7 +136,6 @@ namespace dftefe
 
             // Comptute local XTrunc^{T}*XcBlock.
             blasLapack::gemm<T, T, utils::MemorySpace::HOST>(
-              blasLapack::Layout::ColMajor,
               transA,
               transB,
               D,
@@ -310,9 +309,8 @@ namespace dftefe
                 if (BDof != 0)
                   {
                     blasLapack::gemm<ValueType, ValueType, memorySpace>(
-                      blasLapack::Layout::ColMajor,
-                      blasLapack::Op::NoTrans,
-                      blasLapack::Op::NoTrans,
+                      'N',
+                      'N',
                       BVec,
                       BDof,
                       D,

@@ -52,16 +52,15 @@ namespace dftefe
         const size_type              vecSize         = X.locallyOwnedSize();
         const size_type              numVec          = X.getNumberComponents();
 
-        linearAlgebra::MultiVector<ValueType, memorySpace> X0X0HBX(X, 0.0),
+        MultiVector<ValueType, memorySpace> X0X0HBX(X, 0.0),
           residual(X, 0.0);
         utils::MemoryStorage<ValueType, memorySpace> X0HBX(numVec * numVec);
 
         B.apply(X, residual, true, false);
-        linearAlgebra::blasLapack::
+        blasLapack::
           gemm<ValueTypeOperand, ValueType, memorySpace>(
-            linearAlgebra::blasLapack::Layout::ColMajor,
-            linearAlgebra::blasLapack::Op::NoTrans,
-            linearAlgebra::blasLapack::Op::ConjTrans,
+            'N',
+            'C',
             numVec,
             numVec,
             vecSize,
@@ -90,10 +89,9 @@ namespace dftefe
         DFTEFE_AssertWithMsg(mpiIsSuccessAndMsg.first,
                              "MPI Error:" + mpiIsSuccessAndMsg.second);
 
-        linearAlgebra::blasLapack::gemm<ValueType, ValueType, memorySpace>(
-          linearAlgebra::blasLapack::Layout::ColMajor,
-          linearAlgebra::blasLapack::Op::NoTrans,
-          linearAlgebra::blasLapack::Op::NoTrans,
+        blasLapack::gemm<ValueType, ValueType, memorySpace>(
+          'N',
+          'N',
           numVec,
           vecSize,
           numVec,
@@ -141,11 +139,11 @@ namespace dftefe
       , d_useELPA(elpaScala.useElpa())
     {
       d_XinBatch =
-        std::make_shared<linearAlgebra::MultiVector<ValueType, memorySpace>>(
+        std::make_shared<MultiVector<ValueType, memorySpace>>(
           mpiPatternP2P, linAlgOpContext, eigenVectorBatchSize, ValueType());
 
       d_XoutBatch =
-        std::make_shared<linearAlgebra::MultiVector<ValueType, memorySpace>>(
+        std::make_shared<MultiVector<ValueType, memorySpace>>(
           mpiPatternP2P, linAlgOpContext, eigenVectorBatchSize, ValueType());
     }
 
@@ -393,9 +391,8 @@ namespace dftefe
               const ValueType beta  = 0.0;
 
               blasLapack::gemm<ValueType, ValueTypeOperand, memorySpace>(
-                blasLapack::Layout::ColMajor,
-                blasLapack::Op::NoTrans,
-                blasLapack::Op::NoTrans,
+                'N',
+                'N',
                 numVec,
                 vecSize,
                 numVec,
@@ -432,7 +429,7 @@ namespace dftefe
           return retunValue;
         }
       //--------------------------DEBUG ONLY------------------------------
-      /**linearAlgebra::MultiVector<ValueType, memorySpace> copyX(X, 0.0);
+      /**MultiVector<ValueType, memorySpace> copyX(X, 0.0);
       copyX = X;
       double norm = OrthonormalizationFunctionsInternal::
         doesOrthogonalizationPreserveSubspace<ValueTypeOperator,
@@ -471,7 +468,7 @@ namespace dftefe
 
       /*
       //--------------------------DEBUG ONLY------------------------------
-      linearAlgebra::MultiVector<ValueType, memorySpace> copyX(X, 0.0);
+      MultiVector<ValueType, memorySpace> copyX(X, 0.0);
       copyX = X;
       //--------------------------DEBUG ONLY------------------------------
       */
@@ -818,7 +815,7 @@ namespace dftefe
 
       /*
       //--------------------------DEBUG ONLY------------------------------
-      linearAlgebra::MultiVector<ValueType, memorySpace> copyX(X, 0.0);
+      MultiVector<ValueType, memorySpace> copyX(X, 0.0);
       copyX = X;
       //--------------------------DEBUG ONLY------------------------------
       */
@@ -881,9 +878,8 @@ namespace dftefe
               B.apply(X, orthogonalizedX, true, false);
 
               blasLapack::gemm<ValueTypeOperand, ValueType, memorySpace>(
-                blasLapack::Layout::ColMajor,
-                blasLapack::Op::NoTrans,
-                blasLapack::Op::ConjTrans,
+                'N',
+                'C',
                 numVec,
                 numVec,
                 vecSize,
@@ -995,9 +991,8 @@ namespace dftefe
               /* Do Y = XVD^(-1/2)V^H */
               // S = VD^(-1/2)
               blasLapack::gemm<ValueType, RealType, memorySpace>(
-                blasLapack::Layout::ColMajor,
-                blasLapack::Op::NoTrans,
-                blasLapack::Op::NoTrans,
+                'N',
+                'N',
                 numVec,
                 numVec,
                 numVec,
@@ -1013,9 +1008,8 @@ namespace dftefe
 
               // S = VD^(-1/2)V^H
               blasLapack::gemm<ValueType, ValueType, memorySpace>(
-                blasLapack::Layout::ColMajor,
-                blasLapack::Op::NoTrans,
-                blasLapack::Op::ConjTrans,
+                'N',
+                'C',
                 numVec,
                 numVec,
                 numVec,
@@ -1030,9 +1024,8 @@ namespace dftefe
                 linAlgOpContext);
 
               blasLapack::gemm<ValueType, ValueType, memorySpace>(
-                blasLapack::Layout::ColMajor,
-                blasLapack::Op::NoTrans,
-                blasLapack::Op::NoTrans,
+                'N',
+                'N',
                 numVec,
                 vecSize,
                 numVec,
@@ -1256,14 +1249,14 @@ namespace dftefe
                   d_batchSizeSmall = numEigVecInBatch;
 
                   d_XinBatchSmall = std::make_shared<
-                    linearAlgebra::MultiVector<ValueType, memorySpace>>(
+                    MultiVector<ValueType, memorySpace>>(
                     X.getMPIPatternP2P(),
                     X.getLinAlgOpContext(),
                     numEigVecInBatch,
                     ValueType());
 
                   d_XoutBatchSmall = std::make_shared<
-                    linearAlgebra::MultiVector<ValueType, memorySpace>>(
+                    MultiVector<ValueType, memorySpace>>(
                     X.getMPIPatternP2P(),
                     X.getLinAlgOpContext(),
                     numEigVecInBatch,
@@ -1290,9 +1283,8 @@ namespace dftefe
               const ValueType beta  = 0.0;
 
               blasLapack::gemm<ValueTypeOperand, ValueType, memorySpace>(
-                blasLapack::Layout::ColMajor,
-                blasLapack::Op::NoTrans,
-                blasLapack::Op::ConjTrans,
+                'N',
+                'C',
                 numVec - eigVecStartId,
                 numEigVecInBatch,
                 vecSize,
@@ -1357,9 +1349,8 @@ namespace dftefe
           const ValueType beta  = 0.0;
 
           blasLapack::gemm<ValueTypeOperand, ValueType, memorySpace>(
-            blasLapack::Layout::ColMajor,
-            blasLapack::Op::NoTrans,
-            blasLapack::Op::ConjTrans,
+            'N',
+            'C',
             numVec,
             numVec,
             vecSize,
@@ -1504,14 +1495,14 @@ namespace dftefe
               d_batchSizeSmall = numEigVecInBatch;
 
               d_XinBatchSmall = std::make_shared<
-                linearAlgebra::MultiVector<ValueType, memorySpace>>(
+                MultiVector<ValueType, memorySpace>>(
                 X.getMPIPatternP2P(),
                 X.getLinAlgOpContext(),
                 numEigVecInBatch,
                 ValueType());
 
               d_XoutBatchSmall = std::make_shared<
-                linearAlgebra::MultiVector<ValueType, memorySpace>>(
+                MultiVector<ValueType, memorySpace>>(
                 X.getMPIPatternP2P(),
                 X.getLinAlgOpContext(),
                 numEigVecInBatch,
@@ -1536,9 +1527,8 @@ namespace dftefe
           const ValueType beta  = 0.0;
 
           blasLapack::gemm<ValueTypeOperand, ValueType, memorySpace>(
-            blasLapack::Layout::ColMajor,
-            blasLapack::Op::NoTrans,
-            blasLapack::Op::ConjTrans,
+            'N',
+            'C',
             numVec - eigVecStartId,
             numEigVecInBatch,
             vecSize,

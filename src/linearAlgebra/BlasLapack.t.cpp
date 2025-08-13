@@ -339,9 +339,8 @@ namespace dftefe
                 typename ValueType2,
                 dftefe::utils::MemorySpace memorySpace>
       void
-      gemm(const Layout                              layout,
-           const Op                                  transA,
-           const Op                                  transB,
+      gemm(const char                                &transA,
+           const char                                &transB,
            const size_type                           m,
            const size_type                           n,
            const size_type                           k,
@@ -355,8 +354,9 @@ namespace dftefe
            const size_type                           lddc,
            LinAlgOpContext<memorySpace> &            context)
       {
-        blas::gemm(layout,
-                   transA,
+        xgemm<ValueType1,
+                ValueType2,
+                memorySpace>(transA,
                    transB,
                    m,
                    n,
@@ -368,14 +368,14 @@ namespace dftefe
                    lddb,
                    beta,
                    dC,
-                   lddc);
+                   lddc,
+                   context);
       }
 
       template <typename ValueType1, typename ValueType2>
       void
-      gemm(const Layout                                         layout,
-           const Op                                             transA,
-           const Op                                             transB,
+      gemm(const char                                           &transA,
+           const char                                           &transB,
            const size_type                                      m,
            const size_type                                      n,
            const size_type                                      k,
@@ -389,21 +389,9 @@ namespace dftefe
            const size_type                                      lddc,
            LinAlgOpContext<dftefe::utils::MemorySpace::DEVICE> &context)
       {
-        blas::gemm(layout,
-                   transA,
-                   transB,
-                   m,
-                   n,
-                   k,
-                   alpha,
-                   dA,
-                   ldda,
-                   dB,
-                   lddb,
-                   beta,
-                   dC,
-                   lddc,
-                   context.getBlasQueue());
+        utils::throwException(
+          false,
+          "blasLapack::gemm() is not implemented for dftefe::utils::MemorySpace::DEVICE .... ");
       }
 
 
@@ -412,10 +400,9 @@ namespace dftefe
                 typename ValueType2,
                 dftefe::utils::MemorySpace memorySpace>
       void
-      gemmStridedVarBatched(const Layout                              layout,
-                            const size_type                           numMats,
-                            const Op *                                transA,
-                            const Op *                                transB,
+      gemmStridedVarBatched(const size_type                           numMats,
+                            const char   *                                transA,
+                            const char   *                                transB,
                             const size_type *                         stridea,
                             const size_type *                         strideb,
                             const size_type *                         stridec,
@@ -438,20 +425,23 @@ namespace dftefe
         for (size_type ibatch = 0; ibatch < numMats; ++ibatch)
           {
             if (*(m + ibatch) > 0 && *(n + ibatch) > 0 && *(k + ibatch) > 0)
-              blas::gemm(layout,
-                         *(transA + ibatch),
-                         *(transB + ibatch),
-                         *(m + ibatch),
-                         *(n + ibatch),
-                         *(k + ibatch),
-                         alpha,
-                         dA + cumulativeA,
-                         *(ldda + ibatch),
-                         dB + cumulativeB,
-                         *(lddb + ibatch),
-                         beta,
-                         dC + cumulativeC,
-                         *(lddc + ibatch));
+              xgemm<ValueType1,
+                    ValueType2,
+                    memorySpace>(
+                        *(transA + ibatch),
+                        *(transB + ibatch),
+                        *(m + ibatch),
+                        *(n + ibatch),
+                        *(k + ibatch),
+                        alpha,
+                        dA + cumulativeA,
+                        *(ldda + ibatch),
+                        dB + cumulativeB,
+                        *(lddb + ibatch),
+                        beta,
+                        dC + cumulativeC,
+                        *(lddc + ibatch),
+                        context);
 
             cumulativeA += *(stridea + ibatch);
             cumulativeB += *(strideb + ibatch);
@@ -461,11 +451,9 @@ namespace dftefe
 
       template <typename ValueType1, typename ValueType2>
       void
-      gemmStridedVarBatched(
-        const Layout                                         layout,
-        const size_type                                      numMats,
-        const Op *                                           transA,
-        const Op *                                           transB,
+      gemmStridedVarBatched(const size_type                  numMats,
+        const char   *                                         transA,
+        const char   *                                         transB,
         const size_type *                                    stridea,
         const size_type *                                    strideb,
         const size_type *                                    stridec,
@@ -482,33 +470,9 @@ namespace dftefe
         const size_type *                                    lddc,
         LinAlgOpContext<dftefe::utils::MemorySpace::DEVICE> &context)
       {
-        size_type cumulativeA = 0;
-        size_type cumulativeB = 0;
-        size_type cumulativeC = 0;
-        for (size_type ibatch = 0; ibatch < numMats; ++ibatch)
-          {
-            if (*(m + ibatch) > 0 && *(n + ibatch) > 0 && *(k + ibatch) > 0)
-              blas::gemm(layout,
-                         *(transA + ibatch),
-                         *(transB + ibatch),
-                         *(m + ibatch),
-                         *(n + ibatch),
-                         *(k + ibatch),
-                         alpha,
-                         dA + cumulativeA,
-                         *(ldda + ibatch),
-                         dB + cumulativeB,
-                         *(lddb + ibatch),
-                         beta,
-                         dC + cumulativeC,
-                         *(lddc + ibatch),
-                         context.getBlasQueue());
-
-
-            cumulativeA += *(stridea + ibatch);
-            cumulativeB += *(strideb + ibatch);
-            cumulativeC += *(stridec + ibatch);
-          }
+        utils::throwException(
+          false,
+          "blasLapack::gemmStridedVarBatched() is not implemented for dftefe::utils::MemorySpace::DEVICE .... ");
       }
 
       // ------------ lapack calls with memSpace template specialization-------
@@ -650,9 +614,9 @@ namespace dftefe
       //  extern "C"
       //  {
       //       void
-      //       dsyevr_(const char         *jobz,
-      //                 const char         *range,
-      //                 const char         *uplo,
+      //       dsyevr_(const char           *jobz,
+      //                 const char           *range,
+      //                 const char           *uplo,
       //                 const unsigned int *n,
       //                 double             *A,
       //                 const unsigned int *lda,

@@ -793,9 +793,6 @@ namespace dftefe
         // For better performance, we evaluate ye for multiple cells at a time
         //
 
-        linearAlgebra::blasLapack::Layout layout =
-          linearAlgebra::blasLapack::Layout::ColMajor;
-
         size_type BStartOffset       = 0;
         size_type cellLocalIdsOffset = 0;
 
@@ -853,10 +850,10 @@ namespace dftefe
                                       cellsInBlockNumDoFs,
                                       xCellValues);
 
-            std::vector<linearAlgebra::blasLapack::Op> transA(
-              numCellsInBlock, linearAlgebra::blasLapack::Op::NoTrans);
-            std::vector<linearAlgebra::blasLapack::Op> transB(
-              numCellsInBlock, linearAlgebra::blasLapack::Op::NoTrans);
+            std::vector<char> transA(
+              numCellsInBlock, 'N');
+            std::vector<char> transB(
+              numCellsInBlock, 'N');
 
             utils::MemoryStorage<size_type, memorySpace> mSizes(
               numCellsInBlock);
@@ -915,7 +912,6 @@ namespace dftefe
             linearAlgebra::blasLapack::gemmStridedVarBatched<ValueTypeOperator,
                                                              ValueTypeOperand,
                                                              memorySpace>(
-              layout,
               numCellsInBlock,
               transA.data(),
               transB.data(),
@@ -1111,10 +1107,10 @@ namespace dftefe
               numCellsInBlock);
             cellsInBlockNumDoFs.copyFrom(cellsInBlockNumDoFsSTL);
 
-            std::vector<linearAlgebra::blasLapack::Op> transA(
-              numCellsInBlock, linearAlgebra::blasLapack::Op::NoTrans);
-            std::vector<linearAlgebra::blasLapack::Op> transB(
-              numCellsInBlock, linearAlgebra::blasLapack::Op::NoTrans);
+            std::vector<char> transA(
+              numCellsInBlock, 'N');
+            std::vector<char> transB(
+              numCellsInBlock, 'N');
 
             utils::MemoryStorage<size_type, memorySpace> mSizes(
               numCellsInBlock);
@@ -1163,7 +1159,6 @@ namespace dftefe
             linearAlgebra::blasLapack::gemmStridedVarBatched<ValueTypeOperator,
                                                              ValueTypeOperand,
                                                              memorySpace>(
-              layout,
               numCellsInBlock,
               transA.data(),
               transB.data(),

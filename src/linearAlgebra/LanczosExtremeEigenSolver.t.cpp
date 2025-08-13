@@ -599,9 +599,8 @@ namespace dftefe
           // }
 
           blasLapack::gemm<ValueType, ValueType, memorySpace>(
-            blasLapack::Layout::ColMajor,
-            blasLapack::Op::Trans,
-            blasLapack::Op::Trans,
+            'T',
+            'T',
             numWantedEigenValues,
             q.locallyOwnedSize(),
             krylovSubspaceSize,

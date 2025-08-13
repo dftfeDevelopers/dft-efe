@@ -39,10 +39,8 @@ namespace dftefe
   {
     namespace blasLapack
     {
-      using Side   = blas::Side;
       using Op     = blas::Op; // Op::NoTrans, Op::Trans, Op::ConjTrans
       using Diag   = blas::Diag;
-      using Uplo   = blas::Uplo;
       using Layout = blas::Layout;
 
       // lapack

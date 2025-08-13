@@ -9,6 +9,7 @@ if (NOT TARGET dft-efe-linalg)
 	    Defaults.cpp
 	    LinearAlgebraTypes.cpp
 	    LinearAlgebraProfiler.cpp
+            BlasAPIWrapperHost.cpp
             BlasLapack.cpp
             BlasLapackKernels.cpp
             BlasLapackKernels.cu

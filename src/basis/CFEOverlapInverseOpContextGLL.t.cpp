@@ -269,9 +269,8 @@ namespace dftefe
 
             linearAlgebra::blasLapack::
               gemm<ValueTypeOperand, ValueTypeOperand, memorySpace>(
-                linearAlgebra::blasLapack::Layout::ColMajor,
-                linearAlgebra::blasLapack::Op::NoTrans,
-                linearAlgebra::blasLapack::Op::Trans,
+                'N',
+                'T',
                 dofsPerCell,
                 dofsPerCell,
                 nQuadPointInCellClassicalBlock,

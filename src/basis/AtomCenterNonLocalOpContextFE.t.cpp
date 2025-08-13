@@ -56,9 +56,6 @@ namespace dftefe
           linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
                                                  ValueTypeOperand>;
 
-        linearAlgebra::blasLapack::Layout layout =
-          linearAlgebra::blasLapack::Layout::ColMajor;
-
         size_type cellStartId          = cellRange.first;
         size_type cellEndId            = cellRange.second;
         size_type cellWiseCStartOffset = 0;
@@ -70,12 +67,11 @@ namespace dftefe
 
         size_type numCellsInBlock = cellEndId - cellStartId;
 
-        std::vector<linearAlgebra::blasLapack::Op> transA(
-          numCellsInBlock, linearAlgebra::blasLapack::Op::NoTrans);
-        std::vector<linearAlgebra::blasLapack::Op> transB(
+        std::vector<char> transA(
+          numCellsInBlock, 'N');
+        std::vector<char> transB(
           numCellsInBlock,
-          isCConjTransX ? linearAlgebra::blasLapack::Op::ConjTrans :
-                          linearAlgebra::blasLapack::Op::NoTrans);
+          isCConjTransX ? 'C' : 'N');
 
         utils::MemoryStorage<size_type, memorySpace> mSizes(numCellsInBlock);
         utils::MemoryStorage<size_type, memorySpace> nSizes(numCellsInBlock);
@@ -137,7 +133,6 @@ namespace dftefe
         linearAlgebra::blasLapack::gemmStridedVarBatched<ValueTypeOperator,
                                                          ValueTypeOperand,
                                                          memorySpace>(
-          layout,
           numCellsInBlock,
           transA.data(),
           transB.data(),
@@ -486,9 +481,8 @@ namespace dftefe
               linearAlgebra::blasLapack::gemm<ValueTypeOperator,
                                               ValueTypeOperator,
                                               utils::MemorySpace::HOST>(
-                linearAlgebra::blasLapack::Layout::ColMajor,
-                linearAlgebra::blasLapack::Op::Trans,
-                linearAlgebra::blasLapack::Op::Trans,
+                'T',
+                'T',
                 numProjsInCell,
                 numDofsInCell,
                 nQuadsInCell,

@@ -344,9 +344,8 @@ namespace dftefe
               M.apply(kohnShamWaveFunctions, temp, true, true);
 
               linearAlgebra::blasLapack::gemm<ValueType, ValueType,
-          memorySpace>( linearAlgebra::blasLapack::Layout::ColMajor,
-                linearAlgebra::blasLapack::Op::NoTrans,
-                linearAlgebra::blasLapack::Op::ConjTrans,
+          memorySpace>('N',
+                'C',
                 numVec,
                 numVec,
                 vecSize,
