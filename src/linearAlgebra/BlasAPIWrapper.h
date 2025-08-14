@@ -55,6 +55,54 @@ namespace dftefe
            const size_type                            ldc,
            LinAlgOpContext<memorySpace>               &context);
 
+      template <typename ValueType,
+                typename utils::MemorySpace memorySpace>
+      real_type<ValueType>
+      xasum(const size_type               n,
+           ValueType const *             x,
+           const size_type               incx,
+           LinAlgOpContext<memorySpace> &context);
+
+      template <typename ValueType,
+                typename utils::MemorySpace memorySpace>
+      size_type
+      xiamax(const size_type               n,
+           ValueType const *             x,
+           const size_type               incx,
+           LinAlgOpContext<memorySpace> &context);
+
+      template <typename ValueType1,
+                typename ValueType2,
+                typename utils::MemorySpace memorySpace>
+      void
+      xaxpy(const size_type                           n,
+           const scalar_type<ValueType1, ValueType2> alpha,
+           ValueType1 const *                        x,
+           const size_type                           incx,
+           ValueType2 *                              y,
+           const size_type                           incy,
+           LinAlgOpContext<memorySpace> &            context);
+
+
+      template <typename ValueType1,
+                typename ValueType2,
+                dftefe::utils::MemorySpace memorySpace>
+      scalar_type<ValueType1, ValueType2>
+      xdot(const size_type               n,
+          ValueType1 const *            x,
+          const size_type               incx,
+          ValueType2 const *            y,
+          const size_type               incy,
+          LinAlgOpContext<memorySpace> &context);
+
+
+      template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+      real_type<ValueType>
+      xnrm2(const size_type               n,
+           ValueType const *             x,
+           const size_type               incx,
+           LinAlgOpContext<memorySpace> &context);
+
 #if defined(DFTEFE_WITH_DEVICE)
 
     enum class tensorOpDataType

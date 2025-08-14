@@ -106,6 +106,17 @@ namespace dftefe
            double *b,
            int    *ldb,
            int    *info);
+
+    void
+    zgesv_(int    *n,
+           int    *nrhs,
+           std::complex<double> *a,
+           int    *lda,
+           int    *ipiv,
+           std::complex<double> *b,
+           int    *ldb,
+           int    *info);
+
     void
     dsysv_(const char *UPLO,
            const int  *n,
@@ -118,6 +129,27 @@ namespace dftefe
            double     *work,
            const int  *lwork,
            int        *info);
+
+    void
+    dsteqr_(const char         *jobz,
+		const int  *n,
+		double *D,
+		double *E,
+		double *Z,
+		const int *lda,
+		double *work,
+		int        *info);
+
+    void
+    zsteqr_(const char         *jobz,
+		const int  *n,
+		double *D,
+		double *E,
+		std::complex<double> *Z,
+		const int *lda,
+		std::complex<double> *work,
+		int        *info);
+
     void
     dscal_(const unsigned int *n,
            const double       *alpha,
@@ -216,6 +248,35 @@ namespace dftefe
             int          *iwork,
             int          *ifail,
             int          *info);
+
+    void
+    dsygv_(const int    *itype,
+            const char   *jobz,
+            const char   *uplo,
+            const int    *n,
+            double       *a,
+            const int    *lda,
+            double       *b,
+            const int    *ldb,
+            double       *w,
+            double       *work,
+            const int    *lwork,
+            int          *info);
+
+    void
+    zhegv_(const int    *itype,
+            const char   *jobz,
+            const char   *uplo,
+            const int    *n,
+            std::complex<double>       *a,
+            const int    *lda,
+            std::complex<double>       *b,
+            const int    *ldb,
+            double       *w,
+            std::complex<double>       *work,
+            const int    *lwork,
+            int          *info);
+            
     void
     dsyevx_(const char   *jobz,
             const char   *range,
@@ -413,6 +474,31 @@ namespace dftefe
     dznrm2_(const unsigned int         *n,
             const std::complex<double> *x,
             const unsigned int         *incx);
+
+    double
+    sasum_(const unsigned int *n, const float *x, const unsigned int *incx);
+
+    double
+    dasum_(const unsigned int *n, const double *x, const unsigned int *incx);
+
+    double
+    scasum_(const unsigned int *n, const std::complex<float> *x, const unsigned int *incx);
+
+    double
+    dzasum_(const unsigned int *n, const std::complex<double> *x, const unsigned int *incx);
+
+    unsigned int 
+    isamax_(const unsigned int *n, const float *x, const unsigned int *incx);
+
+    unsigned int 
+    idamax_(const unsigned int *n, const double *x, const unsigned int *incx);
+
+    unsigned int 
+    icamax_(const unsigned int *n, const std::complex<float> *x, const unsigned int *incx);
+
+    unsigned int 
+    izamax_(const unsigned int *n, const std::complex<double> *x, const unsigned int *incx);
+
     void
     zaxpy_(const unsigned int         *n,
            const std::complex<double> *alpha,

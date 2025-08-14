@@ -17,12 +17,8 @@ namespace dftefe
            const size_type               incx,
            LinAlgOpContext<memorySpace> &context)
       {
-        //      auto memorySpaceDevice = dftefe::utils::MemorySpace::DEVICE;
-        utils::throwException(
-          memorySpace != dftefe::utils::MemorySpace::DEVICE,
-          "blas::asum() is not implemented for dftefe::utils::MemorySpace::DEVICE .... ");
         real_type<ValueType> output;
-        output = blas::asum(n, x, incx);
+        output = xasum<ValueType , memorySpace>(n, x, incx , context);
         return output;
       }
 
@@ -33,12 +29,8 @@ namespace dftefe
            const size_type               incx,
            LinAlgOpContext<memorySpace> &context)
       {
-        utils::throwException(
-          memorySpace != dftefe::utils::MemorySpace::DEVICE,
-          "amax() is not implemented for dftefe::utils::MemorySpace::DEVICE .... ");
-
         size_type outputIndex;
-        outputIndex = blas::iamax(n, x, incx);
+        outputIndex = xiamax<ValueType , memorySpace>(n, x, incx , context);
         return std::abs(*(x + outputIndex));
       }
 
@@ -273,12 +265,8 @@ namespace dftefe
           const size_type               incy,
           LinAlgOpContext<memorySpace> &context)
       {
-        utils::throwException(
-          memorySpace != dftefe::utils::MemorySpace::DEVICE,
-          "blas::dot() is not implemented for dftefe::utils::MemorySpace::DEVICE .... ");
-
         scalar_type<ValueType1, ValueType2> output;
-        output = blas::dot(n, x, incx, y, incy);
+        output = xdot<ValueType1, ValueType2, memorySpace>(n, x, incx, y, incy, context);
         return output;
       }
 
@@ -314,11 +302,8 @@ namespace dftefe
            const size_type               incx,
            LinAlgOpContext<memorySpace> &context)
       {
-        utils::throwException(
-          memorySpace != dftefe::utils::MemorySpace::DEVICE,
-          "blas::nrm2() is not implemented for dftefe::utils::MemorySpace::DEVICE .... ");
         real_type<ValueType> output;
-        output = blas::nrm2(n, x, incx);
+        output = xnrm2<ValueType, memorySpace>(n, x, incx , context);
         return output;
       }
 
@@ -475,7 +460,7 @@ namespace dftefe
           "blasLapack::gemmStridedVarBatched() is not implemented for dftefe::utils::MemorySpace::DEVICE .... ");
       }
 
-      // ------------ lapack calls with memSpace template specialization-------
+      // ------------ lapack calls -------
       template <typename ValueType,
                 typename dftefe::utils::MemorySpace memorySpace>
       LapackError
@@ -611,121 +596,6 @@ namespace dftefe
         return returnVal;
       }
 
-      //  extern "C"
-      //  {
-      //       void
-      //       dsyevr_(const char           *jobz,
-      //                 const char           *range,
-      //                 const char           *uplo,
-      //                 const unsigned int *n,
-      //                 double             *A,
-      //                 const unsigned int *lda,
-      //                 const double       *vl,
-      //                 const double       *vu,
-      //                 const unsigned int *il,
-      //                 const unsigned int *iu,
-      //                 const double       *abstol,
-      //                 const unsigned int *m,
-      //                 double             *w,
-      //                 double             *Z,
-      //                 const unsigned int *ldz,
-      //                 unsigned int       *isuppz,
-      //                 double             *work,
-      //                 const int          *lwork,
-      //                 int                *iwork,
-      //                 const int          *liwork,
-      //                 int                *info);
-      //  }
-
-      template <typename ValueType,
-                typename dftefe::utils::MemorySpace memorySpace>
-      LapackError
-      heevr(Job                           jobz,
-            Range                         range,
-            Uplo                          uplo,
-            size_type                     n,
-            ValueType *                   A,
-            size_type                     lda,
-            real_type<ValueType>          vl,
-            real_type<ValueType>          vu,
-            size_type                     il,
-            size_type                     iu,
-            real_type<ValueType>          abstol,
-            size_type                     nfound,
-            real_type<ValueType> *        W,
-            ValueType *                   Z,
-            size_type                     ldz,
-            LinAlgOpContext<memorySpace> &context)
-      {
-        LapackError      returnVal;
-        global_size_type error;
-
-        utils::MemoryStorage<LapackInt, memorySpace> isuppz(n != 0 ? 2 * n : 2);
-        LapackInt                                    nfoundLapack = 0;
-        error = lapack::heevr(jobz,
-                              range,
-                              uplo,
-                              n,
-                              A,
-                              lda,
-                              vl,
-                              vu,
-                              il,
-                              iu,
-                              abstol,
-                              &nfoundLapack,
-                              W,
-                              Z,
-                              ldz,
-                              isuppz.data());
-
-        // char                      jobz1 = 'V', uplo1 = 'U', range1= 'A';
-        // const double              vl1 = 0.0, vu1 = 0.0;
-        // const unsigned int        il1 = 0, iu1 = 0;
-        // const double              abstol1 = 0.0;
-        // std::vector<unsigned int> isuppz1(2 * n);
-        // const int                 lwork1 = 26 * n;
-        // std::vector<double>       work1(lwork1);
-        // const int                 liwork1 = 10 * n;
-        // std::vector<int>          iwork1(liwork1);
-        // int                       info1;
-
-        // dsyevr_(&jobz1,
-        //         &range1,
-        //         &uplo1,
-        //         &n,
-        //         A,
-        //         &n,
-        //         &vl1,
-        //         &vu1,
-        //         &il1,
-        //         &iu1,
-        //         &abstol1,
-        //         &n,
-        //         W,
-        //         Z,
-        //         &n,
-        //         &isuppz1[0],
-        //         &work1[0],
-        //         &lwork1,
-        //         &iwork1[0],
-        //         &liwork1,
-        //         &info1);
-
-        nfound = (size_type)nfoundLapack;
-
-        if (error != 0)
-          {
-            returnVal = LapackErrorMsg::isSuccessAndMsg(
-              LapackErrorCode::FAILED_STANDARD_EIGENPROBLEM);
-            returnVal.msg += std::to_string(error) + " .";
-          }
-        else
-          returnVal = LapackErrorMsg::isSuccessAndMsg(LapackErrorCode::SUCCESS);
-
-        return returnVal;
-      }
-
       template <typename ValueType,
                 typename dftefe::utils::MemorySpace memorySpace>
       LapackError
@@ -794,37 +664,9 @@ namespace dftefe
               LinAlgOpContext<dftefe::utils::MemorySpace::DEVICE> &context)
       {
         LapackError      returnVal;
-        global_size_type error1, error2;
-
-        utils::MemoryStorage<LapackInt, dftefe::utils::MemorySpace::HOST> ipiv(
-          n);
-        utils::MemoryStorage<ValueType, dftefe::utils::MemorySpace::HOST> Ahost(
-          n * n);
-
-        utils::MemoryTransfer<utils::MemorySpace::HOST,
-                              utils::MemorySpace::DEVICE>::copy(n * n,
-                                                                Ahost.data(),
-                                                                A);
-
-        error1 = lapack::getrf(n, n, Ahost.data(), n, ipiv.data());
-
-        error2 = lapack::getri(n, Ahost.data(), n, ipiv.data());
-
-        utils::MemoryTransfer<utils::MemorySpace::DEVICE,
-                              utils::MemorySpace::HOST>::copy(n * n,
-                                                              A,
-                                                              Ahost.data());
-
-        if (error1 != 0 || error2 != 0)
-          {
-            returnVal = LapackErrorMsg::isSuccessAndMsg(
-              LapackErrorCode::FAILED_DENSE_MATRIX_INVERSE);
-            returnVal.msg +=
-              std::to_string(error1) + ", " + std::to_string(error2) + " .";
-          }
-        else
-          returnVal = LapackErrorMsg::isSuccessAndMsg(LapackErrorCode::SUCCESS);
-
+        utils::throwException(
+          false,
+          "inverse() is not implemented for dftefe::utils::MemorySpace::DEVICE .... ");
         return returnVal;
       }
 
@@ -838,31 +680,9 @@ namespace dftefe
             LinAlgOpContext<dftefe::utils::MemorySpace::DEVICE> &context)
       {
         LapackError      returnVal;
-        global_size_type error;
-
-        utils::MemoryStorage<ValueType, dftefe::utils::MemorySpace::HOST> Ahost(
-          n * n);
-        utils::MemoryTransfer<utils::MemorySpace::HOST,
-                              utils::MemorySpace::DEVICE>::copy(n * n,
-                                                                Ahost.data(),
-                                                                A);
-
-        error = lapack::trtri(uplo, diag, n, Ahost.data(), lda);
-
-        utils::MemoryTransfer<utils::MemorySpace::DEVICE,
-                              utils::MemorySpace::HOST>::copy(n * n,
-                                                              A,
-                                                              Ahost.data());
-
-        if (error != 0)
-          {
-            returnVal = LapackErrorMsg::isSuccessAndMsg(
-              LapackErrorCode::FAILED_TRIA_MATRIX_INVERSE);
-            returnVal.msg += std::to_string(error) + " .";
-          }
-        else
-          returnVal = LapackErrorMsg::isSuccessAndMsg(LapackErrorCode::SUCCESS);
-
+        utils::throwException(
+          false,
+          "trtri() is not implemented for dftefe::utils::MemorySpace::DEVICE .... ");
         return returnVal;
       }
 
@@ -875,31 +695,9 @@ namespace dftefe
             LinAlgOpContext<dftefe::utils::MemorySpace::DEVICE> &context)
       {
         LapackError      returnVal;
-        global_size_type error;
-
-        utils::MemoryStorage<ValueType, dftefe::utils::MemorySpace::HOST> Ahost(
-          n * n);
-        utils::MemoryTransfer<utils::MemorySpace::HOST,
-                              utils::MemorySpace::DEVICE>::copy(n * n,
-                                                                Ahost.data(),
-                                                                A);
-
-        error = lapack::potrf(uplo, n, Ahost.data(), lda);
-
-        utils::MemoryTransfer<utils::MemorySpace::DEVICE,
-                              utils::MemorySpace::HOST>::copy(n * n,
-                                                              A,
-                                                              Ahost.data());
-
-        if (error != 0)
-          {
-            returnVal = LapackErrorMsg::isSuccessAndMsg(
-              LapackErrorCode::FAILED_CHOLESKY_FACTORIZATION);
-            returnVal.msg += std::to_string(error) + " .";
-          }
-        else
-          returnVal = LapackErrorMsg::isSuccessAndMsg(LapackErrorCode::SUCCESS);
-
+        utils::throwException(
+          false,
+          "potrf() is not implemented for dftefe::utils::MemorySpace::DEVICE .... ");
         return returnVal;
       }
 
@@ -914,52 +712,9 @@ namespace dftefe
             LinAlgOpContext<dftefe::utils::MemorySpace::DEVICE> &context)
       {
         LapackError      returnVal;
-        global_size_type error;
-
-        utils::MemoryStorage<ValueType, dftefe::utils::MemorySpace::HOST> Dhost(
-          n);
-        utils::MemoryTransfer<utils::MemorySpace::HOST,
-                              utils::MemorySpace::DEVICE>::copy(n,
-                                                                Dhost.data(),
-                                                                D);
-        utils::MemoryStorage<ValueType, dftefe::utils::MemorySpace::HOST> Ehost(
-          n - 1);
-        utils::MemoryTransfer<utils::MemorySpace::HOST,
-                              utils::MemorySpace::DEVICE>::copy(n - 1,
-                                                                Ehost.data(),
-                                                                E);
-        utils::MemoryStorage<ValueType, dftefe::utils::MemorySpace::HOST> Zhost(
-          n * n);
-        utils::MemoryTransfer<utils::MemorySpace::HOST,
-                              utils::MemorySpace::DEVICE>::copy(n * n,
-                                                                Zhost.data(),
-                                                                Z);
-
-        error =
-          lapack::steqr(jobz, n, Dhost.data(), Ehost.data(), Zhost.data(), ldz);
-
-        utils::MemoryTransfer<utils::MemorySpace::DEVICE,
-                              utils::MemorySpace::HOST>::copy(n,
-                                                              D,
-                                                              Dhost.data());
-        utils::MemoryTransfer<utils::MemorySpace::DEVICE,
-                              utils::MemorySpace::HOST>::copy(n - 1,
-                                                              E,
-                                                              Ehost.data());
-        utils::MemoryTransfer<utils::MemorySpace::DEVICE,
-                              utils::MemorySpace::HOST>::copy(n * n,
-                                                              Z,
-                                                              Zhost.data());
-
-        if (error != 0)
-          {
-            returnVal = LapackErrorMsg::isSuccessAndMsg(
-              LapackErrorCode::FAILED_REAL_TRIDIAGONAL_EIGENPROBLEM);
-            returnVal.msg += std::to_string(error) + " .";
-          }
-        else
-          returnVal = LapackErrorMsg::isSuccessAndMsg(LapackErrorCode::SUCCESS);
-
+        utils::throwException(
+          false,
+          "steqr() is not implemented for dftefe::utils::MemorySpace::DEVICE .... ");
         return returnVal;
       }
 
@@ -974,41 +729,9 @@ namespace dftefe
             LinAlgOpContext<dftefe::utils::MemorySpace::DEVICE> &context)
       {
         LapackError      returnVal;
-        global_size_type error;
-
-        utils::MemoryStorage<ValueType, dftefe::utils::MemorySpace::HOST> Ahost(
-          n * n);
-        utils::MemoryTransfer<utils::MemorySpace::HOST,
-                              utils::MemorySpace::DEVICE>::copy(n * n,
-                                                                Ahost.data(),
-                                                                A);
-        utils::MemoryStorage<ValueType, dftefe::utils::MemorySpace::HOST> Whost(
-          n);
-        utils::MemoryTransfer<utils::MemorySpace::HOST,
-                              utils::MemorySpace::DEVICE>::copy(n,
-                                                                Whost.data(),
-                                                                W);
-
-        error = lapack::heevd(jobz, uplo, n, Ahost.data(), lda, Whost.data());
-
-        utils::MemoryTransfer<utils::MemorySpace::DEVICE,
-                              utils::MemorySpace::HOST>::copy(n * n,
-                                                              A,
-                                                              Ahost.data());
-        utils::MemoryTransfer<utils::MemorySpace::DEVICE,
-                              utils::MemorySpace::HOST>::copy(n,
-                                                              W,
-                                                              Whost.data());
-
-        if (error != 0)
-          {
-            returnVal = LapackErrorMsg::isSuccessAndMsg(
-              LapackErrorCode::FAILED_STANDARD_EIGENPROBLEM);
-            returnVal.msg += std::to_string(error) + " .";
-          }
-        else
-          returnVal = LapackErrorMsg::isSuccessAndMsg(LapackErrorCode::SUCCESS);
-
+        utils::throwException(
+          false,
+          "heevd() is not implemented for dftefe::utils::MemorySpace::DEVICE .... ");
         return returnVal;
       }
 
@@ -1032,67 +755,9 @@ namespace dftefe
             LinAlgOpContext<dftefe::utils::MemorySpace::DEVICE> &context)
       {
         LapackError      returnVal;
-        global_size_type error;
-
-        utils::MemoryStorage<LapackInt, dftefe::utils::MemorySpace::HOST>
-          isuppz(n != 0 ? 2 * n : 2);
-
-        utils::MemoryStorage<ValueType, dftefe::utils::MemorySpace::HOST> Ahost(
-          n * n);
-        utils::MemoryTransfer<utils::MemorySpace::HOST,
-                              utils::MemorySpace::DEVICE>::copy(n * n,
-                                                                Ahost.data(),
-                                                                A);
-        utils::MemoryStorage<ValueType, dftefe::utils::MemorySpace::HOST> Zhost(
-          n * n);
-        utils::MemoryTransfer<utils::MemorySpace::HOST,
-                              utils::MemorySpace::DEVICE>::copy(n * n,
-                                                                Zhost.data(),
-                                                                Z);
-
-        utils::MemoryStorage<ValueType, dftefe::utils::MemorySpace::HOST> Whost(
-          n);
-        utils::MemoryTransfer<utils::MemorySpace::HOST,
-                              utils::MemorySpace::DEVICE>::copy(n,
-                                                                Whost.data(),
-                                                                W);
-        LapackInt nfoundLapack = 0;
-        error                  = lapack::heevd(jobz,
-                              range,
-                              uplo,
-                              n,
-                              Ahost.data(),
-                              lda,
-                              vl,
-                              vu,
-                              il,
-                              iu,
-                              abstol,
-                              &nfoundLapack,
-                              Whost.data(),
-                              Zhost.data(),
-                              ldz,
-                              isuppz.data());
-        nfound                 = (size_type)nfoundLapack;
-
-        utils::MemoryTransfer<utils::MemorySpace::DEVICE,
-                              utils::MemorySpace::HOST>::copy(n * n,
-                                                              A,
-                                                              Ahost.data());
-        utils::MemoryTransfer<utils::MemorySpace::DEVICE,
-                              utils::MemorySpace::HOST>::copy(n,
-                                                              W,
-                                                              Whost.data());
-
-        if (error != 0)
-          {
-            returnVal = LapackErrorMsg::isSuccessAndMsg(
-              LapackErrorCode::FAILED_STANDARD_EIGENPROBLEM);
-            returnVal.msg += std::to_string(error) + " .";
-          }
-        else
-          returnVal = LapackErrorMsg::isSuccessAndMsg(LapackErrorCode::SUCCESS);
-
+        utils::throwException(
+          false,
+          "heevr() is not implemented for dftefe::utils::MemorySpace::DEVICE .... ");
         return returnVal;
       }
 
@@ -1110,59 +775,9 @@ namespace dftefe
            LinAlgOpContext<dftefe::utils::MemorySpace::DEVICE> &context)
       {
         LapackError      returnVal;
-        global_size_type error;
-
-        utils::MemoryStorage<ValueType, dftefe::utils::MemorySpace::HOST> Ahost(
-          n * n);
-        utils::MemoryTransfer<utils::MemorySpace::HOST,
-                              utils::MemorySpace::DEVICE>::copy(n * n,
-                                                                Ahost.data(),
-                                                                A);
-        utils::MemoryStorage<ValueType, dftefe::utils::MemorySpace::HOST> Bhost(
-          n * n);
-        utils::MemoryTransfer<utils::MemorySpace::HOST,
-                              utils::MemorySpace::DEVICE>::copy(n * n,
-                                                                Bhost.data(),
-                                                                B);
-        utils::MemoryStorage<ValueType, dftefe::utils::MemorySpace::HOST> Whost(
-          n);
-        utils::MemoryTransfer<utils::MemorySpace::HOST,
-                              utils::MemorySpace::DEVICE>::copy(n,
-                                                                Whost.data(),
-                                                                W);
-
-        error = lapack::hegv(itype,
-                             jobz,
-                             uplo,
-                             n,
-                             Ahost.data(),
-                             lda,
-                             Bhost.data(),
-                             ldb,
-                             Whost.data());
-
-        utils::MemoryTransfer<utils::MemorySpace::DEVICE,
-                              utils::MemorySpace::HOST>::copy(n * n,
-                                                              A,
-                                                              Ahost.data());
-        utils::MemoryTransfer<utils::MemorySpace::DEVICE,
-                              utils::MemorySpace::HOST>::copy(n * n,
-                                                              B,
-                                                              Bhost.data());
-        utils::MemoryTransfer<utils::MemorySpace::DEVICE,
-                              utils::MemorySpace::HOST>::copy(n,
-                                                              W,
-                                                              Whost.data());
-
-        if (error != 0)
-          {
-            returnVal = LapackErrorMsg::isSuccessAndMsg(
-              LapackErrorCode::FAILED_GENERALIZED_EIGENPROBLEM);
-            returnVal.msg += std::to_string(error) + " .";
-          }
-        else
-          returnVal = LapackErrorMsg::isSuccessAndMsg(LapackErrorCode::SUCCESS);
-
+        utils::throwException(
+          false,
+          "hegv() is not implemented for dftefe::utils::MemorySpace::DEVICE .... ");
         return returnVal;
       }
 
@@ -1178,15 +793,9 @@ namespace dftefe
            LinAlgOpContext<dftefe::utils::MemorySpace::DEVICE> &context)
       {
         LapackError      returnVal;
-        global_size_type error;
-
         utils::throwException(
           false,
-          "blasLapack::gesv() is not implemented for dftefe::utils::MemorySpace::DEVICE .... ");
-
-        returnVal =
-          LapackErrorMsg::isSuccessAndMsg(LapackErrorCode::OTHER_ERROR);
-
+          "gesv() is not implemented for dftefe::utils::MemorySpace::DEVICE .... ");
         return returnVal;
       }
 

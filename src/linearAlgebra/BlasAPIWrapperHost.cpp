@@ -275,7 +275,251 @@ namespace dftefe
       std::complex<double>       *C,
       const size_type           ldc,
       LinAlgOpContext<utils::MemorySpace::HOST> &context);
+
+      template <typename ValueType>
+      real_type<ValueType>
+      xasum(const size_type               n,
+           ValueType const *             x,
+           const size_type               incx,
+           LinAlgOpContext<utils::MemorySpace::HOST> &context)
+      {
+        utils::throwException(false, "The input valuetypes are not supported by xgemm");
+        return (real_type<ValueType>)0;
+      }
       
+      template <>
+      real_type<float>
+      xasum<float , utils::MemorySpace::HOST>
+          (const size_type               n,
+           float const *             x,
+           const size_type               incx,
+           LinAlgOpContext<utils::MemorySpace::HOST> &context)
+      {
+        unsigned int nTmp   = n;
+        unsigned int incxTmp = incx;
+        return sasum_(&nTmp,
+                x,
+                &incxTmp);
+      }
+
+      template <>
+      real_type<double>
+      xasum<double , utils::MemorySpace::HOST>
+          (const size_type               n,
+           double const *             x,
+           const size_type               incx,
+           LinAlgOpContext<utils::MemorySpace::HOST> &context)
+      {
+        unsigned int nTmp   = n;
+        unsigned int incxTmp = incx;
+        return dasum_(&nTmp,
+                x,
+                &incxTmp);
+      }
+
+      template <>
+      real_type<std::complex<float>>
+      xasum<std::complex<float> , utils::MemorySpace::HOST>
+          (const size_type               n,
+           std::complex<float> const *             x,
+           const size_type               incx,
+           LinAlgOpContext<utils::MemorySpace::HOST> &context)
+      {
+        unsigned int nTmp   = n;
+        unsigned int incxTmp = incx;
+        return scasum_(&nTmp,
+                x,
+                &incxTmp);
+      }
+
+      template <>
+      real_type<std::complex<double>>
+      xasum<std::complex<double> , utils::MemorySpace::HOST>
+          (const size_type               n,
+           std::complex<double> const *             x,
+           const size_type               incx,
+           LinAlgOpContext<utils::MemorySpace::HOST> &context)
+      {
+        unsigned int nTmp   = n;
+        unsigned int incxTmp = incx;
+        return dzasum_(&nTmp,
+                x,
+                &incxTmp);
+      }
+
+      template <typename ValueType>
+      size_type
+      xiamax(const size_type               n,
+           ValueType const *             x,
+           const size_type               incx,
+           LinAlgOpContext<utils::MemorySpace::HOST> &context)
+      {
+        utils::throwException(false, "The input valuetypes are not supported by xgemm");
+        return 0;
+      }
+      
+      template <>
+      size_type
+      xiamax<float , utils::MemorySpace::HOST>
+          (const size_type               n,
+           float const *             x,
+           const size_type               incx,
+           LinAlgOpContext<utils::MemorySpace::HOST> &context)
+      {
+        unsigned int nTmp   = n;
+        unsigned int incxTmp = incx;
+        return isamax_(&nTmp,
+                x,
+                &incxTmp);
+      }
+
+      template <>
+      size_type
+      xiamax<double , utils::MemorySpace::HOST>
+          (const size_type               n,
+           double const *             x,
+           const size_type               incx,
+           LinAlgOpContext<utils::MemorySpace::HOST> &context)
+      {
+        unsigned int nTmp   = n;
+        unsigned int incxTmp = incx;
+        return idamax_(&nTmp,
+                x,
+                &incxTmp);
+      }
+
+      template <>
+      size_type
+      xiamax<std::complex<float> , utils::MemorySpace::HOST>
+          (const size_type               n,
+           std::complex<float> const *             x,
+           const size_type               incx,
+           LinAlgOpContext<utils::MemorySpace::HOST> &context)
+      {
+        unsigned int nTmp   = n;
+        unsigned int incxTmp = incx;
+        return icamax_(&nTmp,
+                x,
+                &incxTmp);
+      }
+
+      template <>
+      size_type
+      xiamax<std::complex<double> , utils::MemorySpace::HOST>
+          (const size_type               n,
+           std::complex<double> const *             x,
+           const size_type               incx,
+           LinAlgOpContext<utils::MemorySpace::HOST> &context)
+      {
+        unsigned int nTmp   = n;
+        unsigned int incxTmp = incx;
+        return izamax_(&nTmp,
+                x,
+                &incxTmp);
+      }
+
+
+      template <typename ValueType1,
+                typename ValueType2>
+      scalar_type<ValueType1, ValueType2>
+      xdot(const size_type               n,
+          ValueType1 const *            x,
+          const size_type               incx,
+          ValueType2 const *            y,
+          const size_type               incy,
+          LinAlgOpContext<utils::MemorySpace::HOST> &context)
+      {
+        utils::throwException("xdot not yet implemented in BlasWrapperAPIHost");
+      }
+
+      template <typename ValueType>
+      real_type<ValueType>
+      xnrm2(const size_type               n,
+           ValueType const *             x,
+           const size_type               incx,
+           LinAlgOpContext<utils::MemorySpace::HOST> &context)
+      {
+        utils::throwException("xnrm2 not yet implemented in BlasWrapperAPIHost");
+      }
+
+      template <typename ValueType1,
+                typename ValueType2>
+      void
+      xaxpy(const size_type                           n,
+           const scalar_type<ValueType1, ValueType2> alpha,
+           ValueType1 const *                        x,
+           const size_type                           incx,
+           ValueType2 *                              y,
+           const size_type                           incy,
+           LinAlgOpContext<utils::MemorySpace::HOST> &            context)
+      {
+        utils::throwException("xaxpy not yet implemented in BlasWrapperAPIHost");
+      }
+
+      template
+      real_type<float>
+      xasum<float , utils::MemorySpace::HOST>
+          (const size_type               n,
+           float const *             x,
+           const size_type               incx,
+           LinAlgOpContext<utils::MemorySpace::HOST> &context);
+
+      template
+      real_type<double>
+      xasum<double , utils::MemorySpace::HOST>
+          (const size_type               n,
+           double const *             x,
+           const size_type               incx,
+           LinAlgOpContext<utils::MemorySpace::HOST> &context);
+
+      template
+      real_type<std::complex<float>>
+      xasum<std::complex<float> , utils::MemorySpace::HOST>
+          (const size_type               n,
+           std::complex<float> const *             x,
+           const size_type               incx,
+           LinAlgOpContext<utils::MemorySpace::HOST> &context);
+
+      template
+      real_type<std::complex<double>>
+      xasum<std::complex<double> , utils::MemorySpace::HOST>
+          (const size_type               n,
+           std::complex<double> const *             x,
+           const size_type               incx,
+           LinAlgOpContext<utils::MemorySpace::HOST> &context);
+      
+      template
+      size_type
+      xiamax<float , utils::MemorySpace::HOST>
+          (const size_type               n,
+           float const *             x,
+           const size_type               incx,
+           LinAlgOpContext<utils::MemorySpace::HOST> &context);
+
+      template
+      size_type
+      xiamax<double , utils::MemorySpace::HOST>
+          (const size_type               n,
+           double const *             x,
+           const size_type               incx,
+           LinAlgOpContext<utils::MemorySpace::HOST> &context);
+
+      template
+      size_type
+      xiamax<std::complex<float> , utils::MemorySpace::HOST>
+          (const size_type               n,
+           std::complex<float> const *             x,
+           const size_type               incx,
+           LinAlgOpContext<utils::MemorySpace::HOST> &context);
+
+      template
+      size_type
+      xiamax<std::complex<double> , utils::MemorySpace::HOST>
+          (const size_type               n,
+           std::complex<double> const *             x,
+           const size_type               incx,
+           LinAlgOpContext<utils::MemorySpace::HOST> &context);
+
   } // namespace blasWrapper
   } // End of namespace linearAlgebra
 } // End of namespace dftefe
