@@ -1,0 +1,14 @@
+<map id="dftefe::basis::FEBasisOperationsInternal::BasisWeakFormKernelWithField" name="dftefe::basis::FEBasisOperationsInternal::BasisWeakFormKernelWithField">
+<area shape="rect" id="node1" title=" " alt="" coords="5,220,264,260"/>
+<area shape="rect" id="node2" href="$classdftefe_1_1utils_1_1MemoryTransfer.html#a7f0d9eed66c1e39ad68c80643f4b6ac0" title="Copy array from the memory space of source to the memory space of destination." alt="" coords="319,5,504,45"/>
+<area shape="rect" id="node3" href="$classdftefe_1_1utils_1_1MemoryStorage.html#a0b7d69ed206a226bdb79c0ba12e42111" title="Return the raw pointer to the Vector." alt="" coords="320,69,503,109"/>
+<area shape="rect" id="node4" href="$namespacedftefe_1_1linearAlgebra_1_1blasLapack.html#a47ab882cbdc8b4af09bac5c728722d45" title=" " alt="" coords="312,134,511,189"/>
+<area shape="rect" id="node5" href="$classdftefe_1_1quadrature_1_1QuadratureRuleAttributes.html#af7382ec374a9f5fab9163364333a92ed" title=" " alt="" coords="324,213,499,267"/>
+<area shape="rect" id="node6" href="$namespacedftefe_1_1linearAlgebra_1_1blasLapack.html#a2dbdf6ba043739168fe1b8dc13ca9f91" title="Template for performing &#160;alpha &#160;z_i = x_i * y_i$." alt="" coords="809,285,1012,325"/>
+<area shape="rect" id="node8" href="$namespacedftefe_1_1linearAlgebra_1_1blasLapack.html#ab74b8ac2f1c9a9db24fd6eb84ac5bca6" title=" " alt="" coords="315,343,508,398"/>
+<area shape="rect" id="node12" href="$namespacedftefe_1_1utils.html#a6984a4700c624f90d483553661c499b6" title=" " alt="" coords="322,422,501,447"/>
+<area shape="rect" id="node7" href="$classdftefe_1_1linearAlgebra_1_1blasLapack_1_1KernelsTwoValueTypes.html#a5997fb179977b61e130ab5b6492527e1" title="Template for performing &#160;z_i = x_i * y_i$." alt="" coords="1060,274,1263,329"/>
+<area shape="rect" id="node9" href="$classdftefe_1_1linearAlgebra_1_1blasLapack_1_1KernelsTwoValueTypes.html#a34fe340f74dda953439950800f7e326d" title="Template for performing hadamard product of two columns of batches of matrix A and B having num col A..." alt="" coords="559,343,761,398"/>
+<area shape="rect" id="node10" href="$namespacedftefe_1_1linearAlgebra_1_1blasLapack.html#af58774813fa90108d8daef1b7ea9dbf8" title=" " alt="" coords="841,357,980,397"/>
+<area shape="rect" id="node11" href="$classdftefe_1_1linearAlgebra_1_1blasLapack_1_1KernelsTwoValueTypes.html#af8d3647666ae296dc39ec28ae32f198f" title="Template for performing &#160;alpha &#160;z = \alpha x$." alt="" coords="1060,353,1263,407"/>
+</map>

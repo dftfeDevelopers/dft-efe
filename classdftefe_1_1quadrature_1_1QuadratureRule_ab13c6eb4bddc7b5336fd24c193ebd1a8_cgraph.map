@@ -1,0 +1,4 @@
+<map id="dftefe::quadrature::QuadratureRule::get1DWeights" name="dftefe::quadrature::QuadratureRule::get1DWeights">
+<area shape="rect" id="node1" title="A function to return the 1D quad points in the parametric space. This function throws an error if thi..." alt="" coords="5,5,211,45"/>
+<area shape="rect" id="node2" href="$namespacedftefe_1_1utils.html#a6984a4700c624f90d483553661c499b6" title=" " alt="" coords="259,13,437,38"/>
+</map>

@@ -1,0 +1,4 @@
+<map id="dftefe::ksdft::KohnShamOperatorContextFE&lt; ValueTypeElectrostaticsCoeff, ValueTypeElectrostaticsBasis, ValueTypeWaveFunctionCoeff, ValueTypeWaveFunctionBasis, memorySpace, dim &gt;" name="dftefe::ksdft::KohnShamOperatorContextFE&lt; ValueTypeElectrostaticsCoeff, ValueTypeElectrostaticsBasis, ValueTypeWaveFunctionCoeff, ValueTypeWaveFunctionBasis, memorySpace, dim &gt;">
+<area shape="rect" id="node1" title="A derived class of linearAlgebra::OperatorContext to encapsulate the action of a discrete Kohn&#45;Sham o..." alt="" coords="437,20,788,104"/>
+<area shape="rect" id="node2" href="$classdftefe_1_1linearAlgebra_1_1OperatorContext.html" title=" " alt="" coords="5,5,389,119"/>
+</map>

@@ -1,0 +1,27 @@
+var classdftefe_1_1basis_1_1FEBasisOperations =
+[
+    [ "StorageBasis", "classdftefe_1_1basis_1_1FEBasisOperations.html#a5fc79e67a305ded8752324c2d2aadb3f", null ],
+    [ "StorageUnion", "classdftefe_1_1basis_1_1FEBasisOperations.html#a6750491fcacb8a7057fe51bc0cefc0b9", null ],
+    [ "ValueTypeUnion", "classdftefe_1_1basis_1_1FEBasisOperations.html#a32a5b8cc65aa0b3b0392c9898b9b1177", null ],
+    [ "FEBasisOperations", "classdftefe_1_1basis_1_1FEBasisOperations.html#a32b1ab9da932329be453f0ed12edc86d", null ],
+    [ "~FEBasisOperations", "classdftefe_1_1basis_1_1FEBasisOperations.html#a93ffe52646d693eba5573443884a2473", null ],
+    [ "computeFEMatrices", "classdftefe_1_1basis_1_1FEBasisOperations.html#aa0e170b2bc6afa9c781121ef379ae0d8", null ],
+    [ "computeFEMatrices", "classdftefe_1_1basis_1_1FEBasisOperations.html#a73fce936022cbc5afb423befe26f20d6", null ],
+    [ "integrateWithBasisValues", "classdftefe_1_1basis_1_1FEBasisOperations.html#a83c6603b02ae978c1ee0bb0410da1117", null ],
+    [ "integrateWithBasisValues", "classdftefe_1_1basis_1_1FEBasisOperations.html#ace2cdd9f2861538e41c695dd4f315e9e", null ],
+    [ "interpolate", "classdftefe_1_1basis_1_1FEBasisOperations.html#a19bc4409617ae05bf0f94f29dddafceb", null ],
+    [ "interpolate", "classdftefe_1_1basis_1_1FEBasisOperations.html#ac860f88b0a099ee279e698a6f876de6d", null ],
+    [ "interpolateWithBasisGradient", "classdftefe_1_1basis_1_1FEBasisOperations.html#a492f68f13df04f8ffe2e77901f50e0c4", null ],
+    [ "reinit", "classdftefe_1_1basis_1_1FEBasisOperations.html#a37b4669d1ef974f5e49e6537573d14a4", null ],
+    [ "d_feBasisDataStorage", "classdftefe_1_1basis_1_1FEBasisOperations.html#aaf7cdc3878496d86a51a65f900ad35ab", null ],
+    [ "d_maxCellBlock", "classdftefe_1_1basis_1_1FEBasisOperations.html#a9c119b573cc4a1337c9c97b6674ebdf1", null ],
+    [ "d_maxFieldBlock", "classdftefe_1_1basis_1_1FEBasisOperations.html#acc830a5c8bc0eb9516b49557753c91a6", null ],
+    [ "d_tmpCellGradientsBlock", "classdftefe_1_1basis_1_1FEBasisOperations.html#a3ce0756654829be4099548a4e0c94262", null ],
+    [ "d_tmpCellMatrixBlock", "classdftefe_1_1basis_1_1FEBasisOperations.html#ad69f655bef71689cb4879deb419b756f", null ],
+    [ "d_tmpCellValuesBlock", "classdftefe_1_1basis_1_1FEBasisOperations.html#a1e3aa783196d1633ce6ec619da77d96a", null ],
+    [ "d_tmpFieldCellValues", "classdftefe_1_1basis_1_1FEBasisOperations.html#a3dfa70b391f9e6a1c5d5ff03fa82a55d", null ],
+    [ "d_tmpFieldxScalN", "classdftefe_1_1basis_1_1FEBasisOperations.html#a3956d0e29638e917735f2ac7ed220600", null ],
+    [ "d_tmpFieldxVecN", "classdftefe_1_1basis_1_1FEBasisOperations.html#a32b86d3d9a387e513b42615ce42a4721", null ],
+    [ "d_tmpJxWxScalN", "classdftefe_1_1basis_1_1FEBasisOperations.html#a4175497e4a7c459d8d3c5759950cfffc", null ],
+    [ "d_tmpJxWxVecN", "classdftefe_1_1basis_1_1FEBasisOperations.html#a6a3c83c78866ba2adbcaf470de535fd5", null ]
+];

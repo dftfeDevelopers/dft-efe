@@ -1,0 +1,5 @@
+<map id="dftefe::linearAlgebra::NewtonRaphsonSolver::solve" name="dftefe::linearAlgebra::NewtonRaphsonSolver::solve">
+<area shape="rect" id="node1" title="Function that initiates the NR solve." alt="" coords="479,5,640,60"/>
+<area shape="rect" id="node2" href="$classdftefe_1_1ksdft_1_1KohnShamEigenSolver.html#a4b85d6d4f552e3108999b937cb510b30" title=" " alt="" coords="239,13,431,53"/>
+<area shape="rect" id="node3" href="$classdftefe_1_1ksdft_1_1KohnShamDFT.html#a93228382096193898b108951542c74a7" title=" " alt="" coords="5,13,191,53"/>
+</map>

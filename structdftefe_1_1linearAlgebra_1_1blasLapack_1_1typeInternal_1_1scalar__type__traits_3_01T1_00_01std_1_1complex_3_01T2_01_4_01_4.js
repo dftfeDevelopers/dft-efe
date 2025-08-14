@@ -1,0 +1,4 @@
+var structdftefe_1_1linearAlgebra_1_1blasLapack_1_1typeInternal_1_1scalar__type__traits_3_01T1_00_01std_1_1complex_3_01T2_01_4_01_4 =
+[
+    [ "type", "structdftefe_1_1linearAlgebra_1_1blasLapack_1_1typeInternal_1_1scalar__type__traits_3_01T1_00_01std_1_1complex_3_01T2_01_4_01_4.html#aac0a7e520a71918c6cb410a840fe84d0", null ]
+];

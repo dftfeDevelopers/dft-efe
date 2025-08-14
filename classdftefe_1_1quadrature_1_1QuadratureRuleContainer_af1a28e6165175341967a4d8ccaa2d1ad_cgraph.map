@@ -1,0 +1,7 @@
+<map id="dftefe::quadrature::QuadratureRuleContainer::QuadratureRuleContainer" name="dftefe::quadrature::QuadratureRuleContainer::QuadratureRuleContainer">
+<area shape="rect" id="node1" title="Constructor for creating an adaptive quadrature rule in each cell based user&#45;defined functions." alt="" coords="5,106,179,161"/>
+<area shape="rect" id="node2" href="$classdftefe_1_1basis_1_1CellMappingBase.html#aec17accaa085113640bf9da1c18519eb" title=" " alt="" coords="231,5,401,45"/>
+<area shape="rect" id="node3" href="$classdftefe_1_1quadrature_1_1QuadratureRuleAttributes.html#af7382ec374a9f5fab9163364333a92ed" title=" " alt="" coords="229,70,403,125"/>
+<area shape="rect" id="node4" href="$classdftefe_1_1basis_1_1CellMappingBase.html#a0c40fc33eff9e4be038b2093fdd839b9" title=" " alt="" coords="231,149,401,189"/>
+<area shape="rect" id="node5" href="$namespacedftefe_1_1utils.html#a6984a4700c624f90d483553661c499b6" title=" " alt="" coords="227,214,405,239"/>
+</map>

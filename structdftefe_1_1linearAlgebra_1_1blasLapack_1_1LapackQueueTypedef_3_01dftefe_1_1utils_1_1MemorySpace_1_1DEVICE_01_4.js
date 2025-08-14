@@ -1,0 +1,4 @@
+var structdftefe_1_1linearAlgebra_1_1blasLapack_1_1LapackQueueTypedef_3_01dftefe_1_1utils_1_1MemorySpace_1_1DEVICE_01_4 =
+[
+    [ "LAPACKTYPE", "structdftefe_1_1linearAlgebra_1_1blasLapack_1_1LapackQueueTypedef_3_01dftefe_1_1utils_1_1MemorySpace_1_1DEVICE_01_4.html#a0a8cbca57e34789b9544d522fcc1c510", null ]
+];

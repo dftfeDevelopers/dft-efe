@@ -1,0 +1,5 @@
+<map id="dftefe::utils::DiscontiguousDataOperations::copyFromDiscontiguousMemory" name="dftefe::utils::DiscontiguousDataOperations::copyFromDiscontiguousMemory">
+<area shape="rect" id="node1" title="Function to copy a source array x to a destination array y, where the source is accessed discontiguou..." alt="" coords="253,57,511,111"/>
+<area shape="rect" id="node2" href="$classdftefe_1_1utils_1_1mpi_1_1MPICommunicatorP2P.html#aeec54259aa02022cd2a8cd67dcbc9dc0" title=" " alt="" coords="5,5,205,75"/>
+<area shape="rect" id="node3" href="$classdftefe_1_1utils_1_1mpi_1_1MPICommunicatorP2P.html#a7eee428f6801f0bfe18172f93db4a8f6" title=" " alt="" coords="18,99,193,154"/>
+</map>

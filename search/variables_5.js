@@ -1,0 +1,6 @@
+var searchData=
+[
+  ['e_0',['e',['../namespacedftefe_1_1utils_1_1mathConstants.html#ab7c023b7e530c38943cecd2a493af749',1,'dftefe::utils::mathConstants']]],
+  ['enrichment_5fbatch_5fsize_1',['ENRICHMENT_BATCH_SIZE',['../classdftefe_1_1basis_1_1ECIDefaults.html#a786ba999aa0a96778d3d9eab20d12f01',1,'dftefe::basis::ECIDefaults']]],
+  ['err_2',['err',['../structdftefe_1_1linearAlgebra_1_1LapackError.html#aa33155540e6186218e2afd4c5a606c2d',1,'dftefe::linearAlgebra::LapackError::err()'],['../structdftefe_1_1linearAlgebra_1_1ScalapackError.html#a2365197b0a6f9f857c17cc4f89f89e54',1,'dftefe::linearAlgebra::ScalapackError::err()'],['../structdftefe_1_1linearAlgebra_1_1LinearSolverError.html#ad2afa3987d2b7f1d18d41af8300e5656',1,'dftefe::linearAlgebra::LinearSolverError::err()'],['../structdftefe_1_1linearAlgebra_1_1EigenSolverError.html#aba854c4d1b8b7d0f7adf4cb4bf10aeb5',1,'dftefe::linearAlgebra::EigenSolverError::err()'],['../structdftefe_1_1linearAlgebra_1_1OrthonormalizationError.html#a2b59ce2bd1fe2bf1f37744dc383f1e9f',1,'dftefe::linearAlgebra::OrthonormalizationError::err()'],['../structdftefe_1_1linearAlgebra_1_1NewtonRaphsonError.html#a76329089cfd627e61c88157542e8af92',1,'dftefe::linearAlgebra::NewtonRaphsonError::err()']]]
+];

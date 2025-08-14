@@ -1,0 +1,29 @@
+<map id="dftefe::utils::MemoryStorage::copyFrom" name="dftefe::utils::MemoryStorage::copyFrom">
+<area shape="rect" id="node1" title="Copies data from a MemoryStorage object in a different memory space. This provides a seamless interfa..." alt="" coords="900,654,1083,694"/>
+<area shape="rect" id="node2" href="$classdftefe_1_1basis_1_1AtomCenterNonLocalOpContextFE.html#a572bc13a493dd8d25263a4583dd54fde" title=" " alt="" coords="273,28,552,68"/>
+<area shape="rect" id="node3" href="$classdftefe_1_1basis_1_1AtomCenterNonLocalOpContextFE.html#a443c8ed3667073dbbe64d82e711694c1" title=" " alt="" coords="264,104,561,144"/>
+<area shape="rect" id="node4" href="$classdftefe_1_1basis_1_1AtomCenterNonLocalOpContextFE.html#ad7c27a220ad0c56b06f8a5266750e425" title="Constructor Class does : \sum_atoms \sum_lpm CVC^T X = Y where V = coupling matrix C_lpm,..." alt="" coords="615,260,846,315"/>
+<area shape="rect" id="node5" href="$namespacedftefe_1_1basis_1_1AtomCenterNonLocalOpContextFEInternal.html#aa2f734a1810c783df37ce4d6273bf24f" title=" " alt="" coords="631,79,830,134"/>
+<area shape="rect" id="node6" href="$namespacedftefe_1_1basis_1_1AtomCenterNonLocalOpContextFEInternal.html#a05b00a2a6db3b63c57ce0f46b6efcf07" title=" " alt="" coords="313,190,512,244"/>
+<area shape="rect" id="node8" href="$classdftefe_1_1basis_1_1CFEOverlapInverseOpContextGLL.html#aa8437e5784e96b364a184b3805813213" title=" " alt="" coords="617,339,845,394"/>
+<area shape="rect" id="node9" href="$classdftefe_1_1basis_1_1CFEOverlapOperatorContext.html#afacd3f53936471456f3334151fbe6afa" title=" " alt="" coords="609,418,852,472"/>
+<area shape="rect" id="node10" href="$namespacedftefe_1_1basis_1_1CFEOverlapOperatorContextInternal.html#a87efd15a3d0fe3daaf3c78dc0e1272d6" title=" " alt="" coords="325,516,501,571"/>
+<area shape="rect" id="node12" href="$namespacedftefe_1_1basis_1_1OrthoEFEOverlapOperatorContextInternal.html#a57e7e88ca503cdea90a0ee89353d183b" title=" " alt="" coords="313,647,512,702"/>
+<area shape="rect" id="node14" href="$namespacedftefe_1_1basis_1_1PristineEFEOverlapOperatorContextInternal.html#a61d5c8948af5f63ecabdd258b6a86b16" title=" " alt="" coords="287,784,539,839"/>
+<area shape="rect" id="node16" href="$namespacedftefe_1_1electrostatics_1_1LaplaceOperatorContextFEInternal.html#aa67f94f03296f4b354dbc0dc165f1657" title=" " alt="" coords="299,878,526,932"/>
+<area shape="rect" id="node18" href="$namespacedftefe_1_1ksdft_1_1KohnShamOperatorContextFEInternal.html#a7af61cf776f7f56107fbbda17f468114" title=" " alt="" coords="273,1090,552,1130"/>
+<area shape="rect" id="node20" href="$namespacedftefe_1_1ksdft_1_1KohnShamOperatorContextFEInternal.html#a0916fe3a682c4d8b30cd308b36b51e6d" title=" " alt="" coords="289,1011,536,1066"/>
+<area shape="rect" id="node21" href="$namespacedftefe_1_1electrostatics_1_1PoissonLinearSolverFunctionFEInternal.html#ab8ae4b8a95b87bd649b328bc96767ff2" title=" " alt="" coords="631,1170,830,1224"/>
+<area shape="rect" id="node22" href="$namespacedftefe_1_1basis_1_1L2ProjectionLinearSolverFunctionInternal.html#aa2ebd70cdc9925c23e04ec3f7e283a2f" title=" " alt="" coords="637,1248,825,1303"/>
+<area shape="rect" id="node23" href="$namespacedftefe_1_1basis_1_1CFEOverlapOperatorContextInternal.html#ac9d9857e352f8dc08438aa90e9f201de" title=" " alt="" coords="647,548,815,603"/>
+<area shape="rect" id="node24" href="$namespacedftefe_1_1basis_1_1OrthoEFEOverlapOperatorContextInternal.html#a56eb0b469e09ecf5bed3ea011f411206" title=" " alt="" coords="631,679,830,734"/>
+<area shape="rect" id="node25" href="$namespacedftefe_1_1basis_1_1PristineEFEOverlapOperatorContextInternal.html#a2daf53b3775454fcf5349b9d4e64265f" title=" " alt="" coords="617,809,844,849"/>
+<area shape="rect" id="node26" href="$namespacedftefe_1_1electrostatics_1_1LaplaceOperatorContextFEInternal.html#a9c014e937d414819a9a5251acf6f8381" title=" " alt="" coords="617,924,844,979"/>
+<area shape="rect" id="node27" href="$namespacedftefe_1_1ksdft_1_1KohnShamOperatorContextFEInternal.html#ac8bc51d4f301463fd97ae8641094c7c2" title=" " alt="" coords="625,1054,836,1094"/>
+<area shape="rect" id="node7" href="$classdftefe_1_1basis_1_1AtomCenterNonLocalOpContextFE.html#a15f1cad6ace2ff2da04a6566835a7d45" title=" " alt="" coords="15,197,206,237"/>
+<area shape="rect" id="node11" href="$classdftefe_1_1basis_1_1CFEOverlapOperatorContext.html#a868f5a8d9850c4a88b99a91f034b505b" title=" " alt="" coords="27,524,195,564"/>
+<area shape="rect" id="node13" href="$classdftefe_1_1basis_1_1OrthoEFEOverlapOperatorContext.html#a8f18379728c0217f62847973c015bf64" title="Apply AX = B where A is the discretized matrix, X is the operand and B is the result." alt="" coords="11,654,210,694"/>
+<area shape="rect" id="node15" href="$classdftefe_1_1basis_1_1PristineEFEOverlapOperatorContext.html#a8f0464047d4a0c282b7ca3b3264246ed" title="Apply AX = B where A is the discretized matrix, X is the operand and B is the result." alt="" coords="5,792,216,832"/>
+<area shape="rect" id="node17" href="$classdftefe_1_1electrostatics_1_1LaplaceOperatorContextFE.html#a3db38f60ab07a6aea3a37e4b447736f5" title=" " alt="" coords="19,878,203,932"/>
+<area shape="rect" id="node19" href="$classdftefe_1_1ksdft_1_1KohnShamOperatorContextFE.html#aa17228af948ba388a4f2d4c8bf7953b8" title=" " alt="" coords="5,1054,216,1094"/>
+</map>

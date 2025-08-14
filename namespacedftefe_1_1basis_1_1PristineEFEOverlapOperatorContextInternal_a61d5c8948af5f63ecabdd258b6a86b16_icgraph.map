@@ -1,0 +1,4 @@
+<map id="dftefe::basis::PristineEFEOverlapOperatorContextInternal::computeAxCellWiseLocal" name="dftefe::basis::PristineEFEOverlapOperatorContextInternal::computeAxCellWiseLocal">
+<area shape="rect" id="node1" title=" " alt="" coords="264,5,516,60"/>
+<area shape="rect" id="node2" href="$classdftefe_1_1basis_1_1PristineEFEOverlapOperatorContext.html#a8f0464047d4a0c282b7ca3b3264246ed" title="Apply AX = B where A is the discretized matrix, X is the operand and B is the result." alt="" coords="5,13,216,53"/>
+</map>

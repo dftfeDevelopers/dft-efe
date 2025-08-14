@@ -1,0 +1,24 @@
+<map id="dftefe::basis::AtomCenterNonLocalOpContextFE::apply" name="dftefe::basis::AtomCenterNonLocalOpContextFE::apply">
+<area shape="rect" id="node1" title=" " alt="" coords="5,289,196,329"/>
+<area shape="rect" id="node2" href="$classdftefe_1_1linearAlgebra_1_1MultiVector.html#aaf5d3a3258392b00d211f5d02e66c927" title="Return iterator pointing to the beginning of MultiVector data." alt="" coords="295,49,431,89"/>
+<area shape="rect" id="node3" href="$namespacedftefe_1_1basis_1_1AtomCenterNonLocalOpContextFEInternal.html#a05b00a2a6db3b63c57ce0f46b6efcf07" title=" " alt="" coords="263,114,462,169"/>
+<area shape="rect" id="node12" href="$classdftefe_1_1basis_1_1ConstraintsLocal.html#a99395aced1dcd19ed14708c9a77a6237" title=" " alt="" coords="265,193,460,233"/>
+<area shape="rect" id="node13" href="$classdftefe_1_1basis_1_1ConstraintsLocal.html#a8e72e1a8f31835473c7cd0f7ec9187d1" title=" " alt="" coords="265,257,460,297"/>
+<area shape="rect" id="node14" href="$classdftefe_1_1linearAlgebra_1_1MultiVector.html#ae6856e6ef3bcfec194d5177862e17bdb" title=" " alt="" coords="255,321,471,361"/>
+<area shape="rect" id="node15" href="$classdftefe_1_1linearAlgebra_1_1MultiVector.html#aa238557ebf746787c4dba34d5a694b2f" title="Returns the nunber of vectors in this multi&#45;vector." alt="" coords="244,385,481,425"/>
+<area shape="rect" id="node16" href="$namespacedftefe_1_1linearAlgebra_1_1blasLapack.html#ab74b8ac2f1c9a9db24fd6eb84ac5bca6" title=" " alt="" coords="266,450,459,505"/>
+<area shape="rect" id="node22" href="$classdftefe_1_1linearAlgebra_1_1MultiVector.html#a067883a44286ea9b52ed32bd5c8b2c32" title=" " alt="" coords="255,529,470,569"/>
+<area shape="rect" id="node4" href="$namespacedftefe_1_1basis_1_1AtomCenterNonLocalOpContextFEInternal.html#aa2f734a1810c783df37ce4d6273bf24f" title=" " alt="" coords="535,147,734,202"/>
+<area shape="rect" id="node5" href="$classdftefe_1_1utils_1_1MemoryStorage.html#ae53237f8f422012c01111353a2feedce" title="Copies data from a MemoryStorage object in a different memory space. This provides a seamless interfa..." alt="" coords="798,225,981,265"/>
+<area shape="rect" id="node9" href="$classdftefe_1_1utils_1_1MemoryStorage.html#a0b7d69ed206a226bdb79c0ba12e42111" title="Return the raw pointer to the Vector." alt="" coords="798,81,981,121"/>
+<area shape="rect" id="node11" href="$classdftefe_1_1basis_1_1FECellWiseDataOperations.html#a189220b0e5e26ad4f0372f5bb32b4279" title=" " alt="" coords="529,17,740,71"/>
+<area shape="rect" id="node10" href="$namespacedftefe_1_1linearAlgebra_1_1blasLapack.html#a47ab882cbdc8b4af09bac5c728722d45" title=" " alt="" coords="790,146,989,201"/>
+<area shape="rect" id="node6" href="$classdftefe_1_1utils_1_1MemoryStorage.html#a51b8cb789b4fb7a976d6d914acac5482" title="Return iterator pointing to the beginning of point data." alt="" coords="1049,100,1231,140"/>
+<area shape="rect" id="node7" href="$classdftefe_1_1utils_1_1MemoryTransfer.html#a7f0d9eed66c1e39ad68c80643f4b6ac0" title="Copy array from the memory space of source to the memory space of destination." alt="" coords="1047,225,1233,265"/>
+<area shape="rect" id="node8" href="$classdftefe_1_1utils_1_1MemoryStorage.html#ab6dc2f530a90b36a9308fcdf17104362" title="Returns the dimension of the Vector." alt="" coords="1049,5,1231,45"/>
+<area shape="rect" id="node17" href="$classdftefe_1_1linearAlgebra_1_1blasLapack_1_1KernelsTwoValueTypes.html#a34fe340f74dda953439950800f7e326d" title="Template for performing hadamard product of two columns of batches of matrix A and B having num col A..." alt="" coords="533,450,736,505"/>
+<area shape="rect" id="node18" href="$namespacedftefe_1_1linearAlgebra_1_1blasLapack.html#af58774813fa90108d8daef1b7ea9dbf8" title=" " alt="" coords="820,493,959,533"/>
+<area shape="rect" id="node20" href="$namespacedftefe_1_1linearAlgebra_1_1blasLapack.html#a2dbdf6ba043739168fe1b8dc13ca9f91" title="Template for performing &#160;alpha &#160;z_i = x_i * y_i$." alt="" coords="788,425,991,465"/>
+<area shape="rect" id="node19" href="$classdftefe_1_1linearAlgebra_1_1blasLapack_1_1KernelsTwoValueTypes.html#af8d3647666ae296dc39ec28ae32f198f" title="Template for performing &#160;alpha &#160;z = \alpha x$." alt="" coords="1039,493,1241,547"/>
+<area shape="rect" id="node21" href="$classdftefe_1_1linearAlgebra_1_1blasLapack_1_1KernelsTwoValueTypes.html#a5997fb179977b61e130ab5b6492527e1" title="Template for performing &#160;z_i = x_i * y_i$." alt="" coords="1039,414,1241,469"/>
+</map>

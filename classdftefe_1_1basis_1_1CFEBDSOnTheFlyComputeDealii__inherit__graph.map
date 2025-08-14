@@ -1,0 +1,5 @@
+<map id="dftefe::basis::CFEBDSOnTheFlyComputeDealii&lt; ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace, dim &gt;" name="dftefe::basis::CFEBDSOnTheFlyComputeDealii&lt; ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace, dim &gt;">
+<area shape="rect" id="node1" title="An abstract class to store and access data for a given basis, such as the basis function values on a ..." alt="" coords="5,211,315,265"/>
+<area shape="rect" id="node2" href="$classdftefe_1_1basis_1_1FEBasisDataStorage.html" title="An abstract class to store and access data for a given basis, such as the basis function values on a ..." alt="" coords="59,108,261,163"/>
+<area shape="rect" id="node3" href="$classdftefe_1_1basis_1_1BasisDataStorage.html" title="An abstract class to store and access data for a given basis, such as the basis function values on a ..." alt="" coords="59,5,261,60"/>
+</map>

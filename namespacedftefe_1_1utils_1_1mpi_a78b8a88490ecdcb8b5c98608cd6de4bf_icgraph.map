@@ -1,0 +1,8 @@
+<map id="dftefe::utils::mpi::MPICommGroup" name="dftefe::utils::mpi::MPICommGroup">
+<area shape="rect" id="node1" title=" " alt="" coords="472,77,597,117"/>
+<area shape="rect" id="node2" href="$classdftefe_1_1linearAlgebra_1_1ScaLAPACKMatrix.html#aa69f8a97456e4902e54040c4dfccb1fa" title=" " alt="" coords="227,13,418,53"/>
+<area shape="rect" id="node4" href="$classdftefe_1_1linearAlgebra_1_1ProcessGrid.html#ac8e3684fb726201ea2cee609eea691cd" title=" " alt="" coords="233,77,412,117"/>
+<area shape="rect" id="node5" href="$namespacedftefe_1_1linearAlgebra_1_1elpaScalaOpInternal.html#ac912b70dcbc48706d4483fc584eb8266" title="Contains internal functions used in linearAlgebra." alt="" coords="221,141,424,196"/>
+<area shape="rect" id="node3" href="$classdftefe_1_1linearAlgebra_1_1RayleighRitzEigenSolver.html#afd0d8bac79ef59b73adb48eb1bd708bf" title=" " alt="" coords="5,5,173,60"/>
+<area shape="rect" id="node6" href="$classdftefe_1_1linearAlgebra_1_1ElpaScalapackManager.html#a4d092250fea378cdedbb674c4008d9d9" title=" " alt="" coords="6,141,173,196"/>
+</map>

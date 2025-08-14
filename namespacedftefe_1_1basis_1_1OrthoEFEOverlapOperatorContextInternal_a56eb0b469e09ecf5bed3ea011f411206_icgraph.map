@@ -1,0 +1,5 @@
+<map id="dftefe::basis::OrthoEFEOverlapOperatorContextInternal::storeSizes" name="dftefe::basis::OrthoEFEOverlapOperatorContextInternal::storeSizes">
+<area shape="rect" id="node1" title=" " alt="" coords="499,5,697,60"/>
+<area shape="rect" id="node2" href="$namespacedftefe_1_1basis_1_1OrthoEFEOverlapOperatorContextInternal.html#a57e7e88ca503cdea90a0ee89353d183b" title=" " alt="" coords="252,5,451,60"/>
+<area shape="rect" id="node3" href="$classdftefe_1_1basis_1_1OrthoEFEOverlapOperatorContext.html#a8f18379728c0217f62847973c015bf64" title="Apply AX = B where A is the discretized matrix, X is the operand and B is the result." alt="" coords="5,13,204,53"/>
+</map>

@@ -1,0 +1,26 @@
+var classdftefe_1_1linearAlgebra_1_1ElpaScalapackManager =
+[
+    [ "ElpaScalapackManager", "classdftefe_1_1linearAlgebra_1_1ElpaScalapackManager.html#a7f2f417d123bac86835e3b530ec3524b", null ],
+    [ "~ElpaScalapackManager", "classdftefe_1_1linearAlgebra_1_1ElpaScalapackManager.html#abca01c6d4626540220ee4390485afa8d", null ],
+    [ "elpaDeallocateHandles", "classdftefe_1_1linearAlgebra_1_1ElpaScalapackManager.html#ac5f73db399b38ec645af98357522948a", null ],
+    [ "getElpaAutoTuneHandle", "classdftefe_1_1linearAlgebra_1_1ElpaScalapackManager.html#ab27b244a8ece76e8b384f3cca785e7cb", null ],
+    [ "getElpaHandle", "classdftefe_1_1linearAlgebra_1_1ElpaScalapackManager.html#ae888ba2ff41c1f768d5b9f659d0c0bda", null ],
+    [ "getElpaHandlePartialEigenVec", "classdftefe_1_1linearAlgebra_1_1ElpaScalapackManager.html#a3ceb0c9e908c668da67ca3654c0d5ed6", null ],
+    [ "getMPICommunicator", "classdftefe_1_1linearAlgebra_1_1ElpaScalapackManager.html#a69121a6debc8dee1663adc197859f943", null ],
+    [ "getProcessGridDftefeScalaWrapper", "classdftefe_1_1linearAlgebra_1_1ElpaScalapackManager.html#af2aabb639d4147f97fe9fd10fb65876f", null ],
+    [ "getScalapackBlockSize", "classdftefe_1_1linearAlgebra_1_1ElpaScalapackManager.html#af60c65570ce02af7ee53257c9424d1f1", null ],
+    [ "processGridELPASetup", "classdftefe_1_1linearAlgebra_1_1ElpaScalapackManager.html#a4d092250fea378cdedbb674c4008d9d9", null ],
+    [ "useElpa", "classdftefe_1_1linearAlgebra_1_1ElpaScalapackManager.html#ada55def1349dfa34908c6c572c31d5d6", null ],
+    [ "d_elpaAutoTuneHandle", "classdftefe_1_1linearAlgebra_1_1ElpaScalapackManager.html#a74ee3b76489260902de4169082e641bb", null ],
+    [ "d_elpaHandle", "classdftefe_1_1linearAlgebra_1_1ElpaScalapackManager.html#a47052d79119546dc4abeb0957ae2ed3a", null ],
+    [ "d_elpaHandlePartialEigenVec", "classdftefe_1_1linearAlgebra_1_1ElpaScalapackManager.html#a6f1bb4e30c5e8cb11363c05886e916c4", null ],
+    [ "d_mpi_communicator", "classdftefe_1_1linearAlgebra_1_1ElpaScalapackManager.html#af23c2100e1cad6e6dff3a8f55e11b625", null ],
+    [ "d_processGridCommunicatorActive", "classdftefe_1_1linearAlgebra_1_1ElpaScalapackManager.html#a52b55bd5f85008d137229341df18e3ba", null ],
+    [ "d_processGridCommunicatorActivePartial", "classdftefe_1_1linearAlgebra_1_1ElpaScalapackManager.html#a7c98dd2b1fd82451365d0a8639e9ec86", null ],
+    [ "d_processGridDftefeWrapper", "classdftefe_1_1linearAlgebra_1_1ElpaScalapackManager.html#aa810fec51424e2407996c76723901a23", null ],
+    [ "d_scalapackBlockSize", "classdftefe_1_1linearAlgebra_1_1ElpaScalapackManager.html#a87db75538be8598a8b9d78fce5d03929", null ],
+    [ "d_scalapackBlockSizeInp", "classdftefe_1_1linearAlgebra_1_1ElpaScalapackManager.html#a09fb835042ef7acf0c81548f1e91f31b", null ],
+    [ "d_scalapackParalProcs", "classdftefe_1_1linearAlgebra_1_1ElpaScalapackManager.html#a176eca2f7c6a7bae7d88e066b6743989", null ],
+    [ "d_useELPA", "classdftefe_1_1linearAlgebra_1_1ElpaScalapackManager.html#a603ce24e96bc235c95329a4ceff9be14", null ],
+    [ "d_useELPADeviceKernel", "classdftefe_1_1linearAlgebra_1_1ElpaScalapackManager.html#af39b15411d01aef824694edb8c044110", null ]
+];

@@ -1,0 +1,13 @@
+var searchData=
+[
+  ['u_0',['U',['../namespacedftefe_1_1linearAlgebra_1_1LAPACKSupport.html#a241811d95853b2d5dda0aaee20d83b63',1,'dftefe::linearAlgebra::LAPACKSupport']]],
+  ['underflowerror_1',['UnderflowError',['../namespacedftefe_1_1utils.html#a3b990f33c5cbe3e2d59c8a7d85bb8b37',1,'dftefe::utils']]],
+  ['unusable_2',['unusable',['../namespacedftefe_1_1linearAlgebra_1_1LAPACKSupport.html#a89c7ae4e066ecff097081435fe7ab550ae72e25c1202a2c156c010a52cdae63df',1,'dftefe::linearAlgebra::LAPACKSupport']]],
+  ['updateghostvalues_3',['updateGhostValues',['../classdftefe_1_1basis_1_1Field.html#a2866d5b78003f1cc5fb66de916e3f199',1,'dftefe::basis::Field::updateGhostValues()'],['../classdftefe_1_1linearAlgebra_1_1MultiVector.html#a067883a44286ea9b52ed32bd5c8b2c32',1,'dftefe::linearAlgebra::MultiVector::updateGhostValues()'],['../classdftefe_1_1utils_1_1mpi_1_1MPICommunicatorP2P.html#af50107c68fda34dfe1dd11c7dbb634e8',1,'dftefe::utils::mpi::MPICommunicatorP2P::updateGhostValues()']]],
+  ['updateghostvaluesbegin_4',['updateGhostValuesBegin',['../classdftefe_1_1basis_1_1Field.html#a5f3c6518b2338c082af7b2039228d597',1,'dftefe::basis::Field::updateGhostValuesBegin()'],['../classdftefe_1_1linearAlgebra_1_1MultiVector.html#a10b6122e2fc9de5bf396a88004f66997',1,'dftefe::linearAlgebra::MultiVector::updateGhostValuesBegin()'],['../classdftefe_1_1utils_1_1mpi_1_1MPICommunicatorP2P.html#a7eee428f6801f0bfe18172f93db4a8f6',1,'dftefe::utils::mpi::MPICommunicatorP2P::updateGhostValuesBegin()']]],
+  ['updateghostvaluesend_5',['updateGhostValuesEnd',['../classdftefe_1_1basis_1_1Field.html#acdd0902cba6d1769e9e9ca265d8d9953',1,'dftefe::basis::Field::updateGhostValuesEnd()'],['../classdftefe_1_1linearAlgebra_1_1MultiVector.html#ac5567e364181388388f3af379054021d',1,'dftefe::linearAlgebra::MultiVector::updateGhostValuesEnd()'],['../classdftefe_1_1utils_1_1mpi_1_1MPICommunicatorP2P.html#a8e0fa7b93c68d8851627ea67f55def69',1,'dftefe::utils::mpi::MPICommunicatorP2P::updateGhostValuesEnd()']]],
+  ['upf_5fparent_5fpath_5flookup_6',['UPF_PARENT_PATH_LOOKUP',['../classdftefe_1_1atoms_1_1AtomSphDataPSPDefaults.html#a2e9f4edb84f5c322ec3dc33af51cc3c3',1,'dftefe::atoms::AtomSphDataPSPDefaults']]],
+  ['uplo_7',['uplo',['../classdftefe_1_1linearAlgebra_1_1ScaLAPACKMatrix.html#a17ff2d6fa2f1dc9b25830613366518c0',1,'dftefe::linearAlgebra::ScaLAPACKMatrix']]],
+  ['upper_5ftriangular_8',['upper_triangular',['../namespacedftefe_1_1linearAlgebra_1_1LAPACKSupport.html#a3b00078a548ec42e6c4a51109a4934a9a8d6f43aa5f4834d38506a667485b7d8b',1,'dftefe::linearAlgebra::LAPACKSupport']]],
+  ['useelpa_9',['useElpa',['../classdftefe_1_1linearAlgebra_1_1ElpaScalapackManager.html#ada55def1349dfa34908c6c572c31d5d6',1,'dftefe::linearAlgebra::ElpaScalapackManager']]]
+];

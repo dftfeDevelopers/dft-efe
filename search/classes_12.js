@@ -1,0 +1,28 @@
+var searchData=
+[
+  ['scalapackerror_0',['ScalapackError',['../structdftefe_1_1linearAlgebra_1_1ScalapackError.html',1,'dftefe::linearAlgebra']]],
+  ['scalapackerrormsg_1',['ScalapackErrorMsg',['../classdftefe_1_1linearAlgebra_1_1ScalapackErrorMsg.html',1,'dftefe::linearAlgebra']]],
+  ['scalapackmatrix_2',['ScaLAPACKMatrix',['../classdftefe_1_1linearAlgebra_1_1ScaLAPACKMatrix.html',1,'dftefe::linearAlgebra']]],
+  ['scalar_5ftype_5ftraits_3',['scalar_type_traits',['../structdftefe_1_1linearAlgebra_1_1blasLapack_1_1typeInternal_1_1scalar__type__traits.html',1,'dftefe::linearAlgebra::blasLapack::typeInternal']]],
+  ['scalar_5ftype_5ftraits_3c_20std_3a_3acomplex_3c_20t1_20_3e_2c_20std_3a_3acomplex_3c_20t2_20_3e_20_3e_4',['scalar_type_traits&lt; std::complex&lt; T1 &gt;, std::complex&lt; T2 &gt; &gt;',['../structdftefe_1_1linearAlgebra_1_1blasLapack_1_1typeInternal_1_1scalar__type__traits_3_01std_1_1cb5431f797ac3831fefa7218930460acd.html',1,'dftefe::linearAlgebra::blasLapack::typeInternal']]],
+  ['scalar_5ftype_5ftraits_3c_20std_3a_3acomplex_3c_20t1_20_3e_2c_20t2_20_3e_5',['scalar_type_traits&lt; std::complex&lt; T1 &gt;, T2 &gt;',['../structdftefe_1_1linearAlgebra_1_1blasLapack_1_1typeInternal_1_1scalar__type__traits_3_01std_1_1complex_3_01T1_01_4_00_01T2_01_4.html',1,'dftefe::linearAlgebra::blasLapack::typeInternal']]],
+  ['scalar_5ftype_5ftraits_3c_20t_20_3e_6',['scalar_type_traits&lt; T &gt;',['../structdftefe_1_1linearAlgebra_1_1blasLapack_1_1typeInternal_1_1scalar__type__traits_3_01T_01_4.html',1,'dftefe::linearAlgebra::blasLapack::typeInternal']]],
+  ['scalar_5ftype_5ftraits_3c_20t1_2c_20std_3a_3acomplex_3c_20t2_20_3e_20_3e_7',['scalar_type_traits&lt; T1, std::complex&lt; T2 &gt; &gt;',['../structdftefe_1_1linearAlgebra_1_1blasLapack_1_1typeInternal_1_1scalar__type__traits_3_01T1_00_01std_1_1complex_3_01T2_01_4_01_4.html',1,'dftefe::linearAlgebra::blasLapack::typeInternal']]],
+  ['scalar_5ftype_5ftraits_3c_20t1_2c_20t2_20_3e_8',['scalar_type_traits&lt; T1, T2 &gt;',['../structdftefe_1_1linearAlgebra_1_1blasLapack_1_1typeInternal_1_1scalar__type__traits_3_01T1_00_01T2_01_4.html',1,'dftefe::linearAlgebra::blasLapack::typeInternal']]],
+  ['scalar_5ftype_5ftraits_3c_20t1_2c_20t2_2c_20types_2e_2e_2e_20_3e_9',['scalar_type_traits&lt; T1, T2, Types... &gt;',['../structdftefe_1_1linearAlgebra_1_1blasLapack_1_1typeInternal_1_1scalar__type__traits_3_01T1_00_01T2_00_01Types_8_8_8_01_4.html',1,'dftefe::linearAlgebra::blasLapack::typeInternal']]],
+  ['scalarproduct_10',['ScalarProduct',['../classdftefe_1_1linearAlgebra_1_1blasLapack_1_1blasLapackKernelsInternal_1_1ScalarProduct.html',1,'dftefe::linearAlgebra::blasLapack::blasLapackKernelsInternal']]],
+  ['scalarproduct_3c_20t1_2c_20t2_2c_20scalarop_3a_3aconj_2c_20scalarop_3a_3aconj_20_3e_11',['ScalarProduct&lt; T1, T2, ScalarOp::Conj, ScalarOp::Conj &gt;',['../classdftefe_1_1linearAlgebra_1_1blasLapack_1_1blasLapackKernelsInternal_1_1ScalarProduct_3_01T1_9f7fe9f92c2e982edd941f400f0e9f01.html',1,'dftefe::linearAlgebra::blasLapack::blasLapackKernelsInternal']]],
+  ['scalarproduct_3c_20t1_2c_20t2_2c_20scalarop_3a_3aconj_2c_20scalarop_3a_3aidentity_20_3e_12',['ScalarProduct&lt; T1, T2, ScalarOp::Conj, ScalarOp::Identity &gt;',['../classdftefe_1_1linearAlgebra_1_1blasLapack_1_1blasLapackKernelsInternal_1_1ScalarProduct_3_01T1_fb168be88ad2507a1872b415dcc5248f.html',1,'dftefe::linearAlgebra::blasLapack::blasLapackKernelsInternal']]],
+  ['scalarproduct_3c_20t1_2c_20t2_2c_20scalarop_3a_3aidentity_2c_20scalarop_3a_3aconj_20_3e_13',['ScalarProduct&lt; T1, T2, ScalarOp::Identity, ScalarOp::Conj &gt;',['../classdftefe_1_1linearAlgebra_1_1blasLapack_1_1blasLapackKernelsInternal_1_1ScalarProduct_3_01T1_fcf385721bd6542644c4bd709094cda0.html',1,'dftefe::linearAlgebra::blasLapack::blasLapackKernelsInternal']]],
+  ['scalarzerofunctionreal_14',['ScalarZeroFunctionReal',['../classdftefe_1_1utils_1_1ScalarZeroFunctionReal.html',1,'dftefe::utils']]],
+  ['section_15',['Section',['../structdftefe_1_1utils_1_1Profiler_1_1Section.html',1,'dftefe::utils::Profiler']]],
+  ['smearchargedensityfunction_16',['SmearChargeDensityFunction',['../classdftefe_1_1utils_1_1SmearChargeDensityFunction.html',1,'dftefe::utils']]],
+  ['smearchargepotentialfunction_17',['SmearChargePotentialFunction',['../classdftefe_1_1utils_1_1SmearChargePotentialFunction.html',1,'dftefe::utils']]],
+  ['sphericaldata_18',['SphericalData',['../classdftefe_1_1atoms_1_1SphericalData.html',1,'dftefe::atoms']]],
+  ['sphericaldataanalytical_19',['SphericalDataAnalytical',['../classdftefe_1_1atoms_1_1SphericalDataAnalytical.html',1,'dftefe::atoms']]],
+  ['sphericaldatadefaults_20',['SphericalDataDefaults',['../classdftefe_1_1atoms_1_1SphericalDataDefaults.html',1,'dftefe::atoms']]],
+  ['sphericaldatamixed_21',['SphericalDataMixed',['../classdftefe_1_1atoms_1_1SphericalDataMixed.html',1,'dftefe::atoms']]],
+  ['sphericaldatanumerical_22',['SphericalDataNumerical',['../classdftefe_1_1atoms_1_1SphericalDataNumerical.html',1,'dftefe::atoms']]],
+  ['sphericalharmonicfunctions_23',['SphericalHarmonicFunctions',['../classdftefe_1_1atoms_1_1SphericalHarmonicFunctions.html',1,'dftefe::atoms']]],
+  ['spline_24',['Spline',['../classdftefe_1_1utils_1_1Spline.html',1,'dftefe::utils']]]
+];

@@ -1,0 +1,5 @@
+<map id="dftefe::quadrature::QuadratureRule::getPoints" name="dftefe::quadrature::QuadratureRule::getPoints">
+<area shape="rect" id="node1" title="A function to return the quad points in the parametric space." alt="" coords="227,53,405,93"/>
+<area shape="rect" id="node2" href="$classdftefe_1_1quadrature_1_1QuadratureRuleAdaptive.html#aa490c39e27a91403c23585c8c95199f8" title=" " alt="" coords="7,5,177,60"/>
+<area shape="rect" id="node3" href="$classdftefe_1_1quadrature_1_1QuadratureRuleContainer.html#abe1c7b1dacd4cd250dafbcc30796beb9" title="Constructor for creating a subdivided quadrature rule in each cell based user&#45;defined functions and a..." alt="" coords="5,84,179,139"/>
+</map>

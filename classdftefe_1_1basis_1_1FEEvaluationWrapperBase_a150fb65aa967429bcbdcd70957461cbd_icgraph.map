@@ -1,0 +1,4 @@
+<map id="dftefe::basis::FEEvaluationWrapperBase::readDoFValuesPlain" name="dftefe::basis::FEEvaluationWrapperBase::readDoFValuesPlain">
+<area shape="rect" id="node1" title="Calls dealii::FEEvaluation::read_dofs_values_plain." alt="" coords="259,13,483,53"/>
+<area shape="rect" id="node2" href="$classdftefe_1_1electrostatics_1_1PoissonSolverDealiiMatrixFreeFE.html#a67570782480c077c1b2da349e85dae06" title=" " alt="" coords="5,5,211,60"/>
+</map>

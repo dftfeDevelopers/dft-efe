@@ -1,0 +1,6 @@
+var searchData=
+[
+  ['opcontext_0',['OpContext',['../classdftefe_1_1ksdft_1_1KohnShamDFT.html#aa13a268369ddd5cab975bdd4f25c02cd',1,'dftefe::ksdft::KohnShamDFT::OpContext()'],['../classdftefe_1_1ksdft_1_1KohnShamEigenSolver.html#a0bf2d0664629fe45e707990a820b24d4',1,'dftefe::ksdft::KohnShamEigenSolver::OpContext()'],['../classdftefe_1_1linearAlgebra_1_1ChebyshevFilteredEigenSolver.html#a802db8e639334ba1b3633193a66823c5',1,'dftefe::linearAlgebra::ChebyshevFilteredEigenSolver::OpContext()'],['../classdftefe_1_1linearAlgebra_1_1LanczosExtremeEigenSolver.html#acb9513bcee8a09d00f69bb4f39e42400',1,'dftefe::linearAlgebra::LanczosExtremeEigenSolver::OpContext()'],['../classdftefe_1_1linearAlgebra_1_1OrthonormalizationFunctions.html#ab73825f085ac737e999a4c95bd98f33d',1,'dftefe::linearAlgebra::OrthonormalizationFunctions::OpContext()'],['../classdftefe_1_1linearAlgebra_1_1RayleighRitzEigenSolver.html#a4b672c3f34e717b1739b2af5fe1d5318',1,'dftefe::linearAlgebra::RayleighRitzEigenSolver::OpContext()']]],
+  ['outofrangeerror_1',['OutOfRangeError',['../namespacedftefe_1_1utils.html#a6879327c47bc3787df9ca8699c3b9198',1,'dftefe::utils']]],
+  ['overflowerror_2',['OverflowError',['../namespacedftefe_1_1utils.html#abf21fbc9111209f8691212fb59b13568',1,'dftefe::utils']]]
+];

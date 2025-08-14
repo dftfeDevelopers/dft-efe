@@ -1,0 +1,14 @@
+<map id="dftefe::linearAlgebra::elpaScalaOpInternal::subspaceRotation" name="dftefe::linearAlgebra::elpaScalaOpInternal::subspaceRotation">
+<area shape="rect" id="node1" title="Computes X^{T}=Q*X^{T} inplace. X^{T} is the subspaceVectorsArray stored in the column major format (..." alt="" coords="5,141,151,195"/>
+<area shape="rect" id="node2" href="$classdftefe_1_1utils_1_1MemoryStorage.html#a51b8cb789b4fb7a976d6d914acac5482" title="Return iterator pointing to the beginning of point data." alt="" coords="215,5,397,45"/>
+<area shape="rect" id="node3" href="$classdftefe_1_1utils_1_1MemoryTransfer.html#a7f0d9eed66c1e39ad68c80643f4b6ac0" title="Copy array from the memory space of source to the memory space of destination." alt="" coords="213,69,399,109"/>
+<area shape="rect" id="node4" href="$namespacedftefe_1_1linearAlgebra_1_1elpaScalaOpInternal.html#a4735d1a08e53a28f7446869de011cef5" title="Creates global row/column id to local row/column ids for ScaLAPACKMatrix." alt="" coords="199,133,413,203"/>
+<area shape="rect" id="node10" href="$classdftefe_1_1linearAlgebra_1_1ScaLAPACKMatrix.html#a8d6429c8402ceb55b7adbc87a0232d4c" title=" " alt="" coords="211,227,401,267"/>
+<area shape="rect" id="node11" href="$classdftefe_1_1utils_1_1MemoryStorage.html#a063538460cf1d1305b29b2ef4ae30229" title="Set all the entries to a given value." alt="" coords="215,291,397,331"/>
+<area shape="rect" id="node5" href="$classdftefe_1_1linearAlgebra_1_1ScaLAPACKMatrix.html#a0e1e8c9a20ac7cb2bb2a3f65dd85b7bb" title=" " alt="" coords="475,13,654,67"/>
+<area shape="rect" id="node7" href="$classdftefe_1_1linearAlgebra_1_1ScaLAPACKMatrix.html#ae7508b6095e48ab56a7cf625109be75f" title=" " alt="" coords="461,92,668,132"/>
+<area shape="rect" id="node8" href="$classdftefe_1_1linearAlgebra_1_1ScaLAPACKMatrix.html#ad442a6bfa5ceccbb38bc3c5b4433ca46" title=" " alt="" coords="469,156,660,196"/>
+<area shape="rect" id="node9" href="$classdftefe_1_1linearAlgebra_1_1ScaLAPACKMatrix.html#a764687e9bdb1b998a3c816e79747ee91" title=" " alt="" coords="471,220,658,260"/>
+<area shape="rect" id="node6" href="$namespacedftefe_1_1linearAlgebra.html#abadeb8a4c2e29c5bf8168354e2b99088" title=" " alt="" coords="716,56,852,96"/>
+<area shape="rect" id="node12" href="$classdftefe_1_1utils_1_1MemoryManager.html#af665ff8437416d7d09fabbd76c523d3f" title=" " alt="" coords="471,291,658,331"/>
+</map>

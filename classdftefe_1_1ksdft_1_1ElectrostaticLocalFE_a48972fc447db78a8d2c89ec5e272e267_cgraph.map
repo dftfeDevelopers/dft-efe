@@ -1,0 +1,8 @@
+<map id="dftefe::ksdft::ElectrostaticLocalFE::reinitBasis" name="dftefe::ksdft::ElectrostaticLocalFE::reinitBasis">
+<area shape="rect" id="node1" title=" " alt="" coords="5,70,173,110"/>
+<area shape="rect" id="node2" href="$namespacedftefe_1_1quadrature.html#a7fc259e3f52195575c91bb2164fa8bda" title="Perform ." alt="" coords="236,77,385,103"/>
+<area shape="rect" id="node5" href="$namespacedftefe_1_1quadrature.html#a4055047cd59f3629fccc4f6f96771664" title="Perform ." alt="" coords="249,13,372,53"/>
+<area shape="rect" id="node6" href="$namespacedftefe_1_1utils.html#a6984a4700c624f90d483553661c499b6" title=" " alt="" coords="221,127,400,152"/>
+<area shape="rect" id="node3" href="$classdftefe_1_1quadrature_1_1QuadratureValuesContainer.html#ac0f80485fa38eff33ee059b6c36a005f" title=" " alt="" coords="448,5,635,60"/>
+<area shape="rect" id="node4" href="$classdftefe_1_1quadrature_1_1QuadratureValuesContainer.html#ad2504793324141b6cc7802b8c0967d35" title=" " alt="" coords="448,84,635,139"/>
+</map>

@@ -1,0 +1,4 @@
+<map id="dftefe::utils::DiscontiguousDataOperations::copyFromDiscontiguousMemory" name="dftefe::utils::DiscontiguousDataOperations::copyFromDiscontiguousMemory">
+<area shape="rect" id="node1" title="Function to copy a source array x to a destination array y, where the source is accessed discontiguou..." alt="" coords="5,5,263,60"/>
+<area shape="rect" id="node2" href="$classdftefe_1_1utils_1_1MemoryTransfer.html#a7f0d9eed66c1e39ad68c80643f4b6ac0" title="Copy array from the memory space of source to the memory space of destination." alt="" coords="311,13,496,53"/>
+</map>

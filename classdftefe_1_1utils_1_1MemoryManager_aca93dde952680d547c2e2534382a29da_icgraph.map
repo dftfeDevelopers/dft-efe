@@ -1,0 +1,31 @@
+<map id="dftefe::utils::MemoryManager::deallocate" name="dftefe::utils::MemoryManager::deallocate">
+<area shape="rect" id="node1" title=" " alt="" coords="872,687,1059,727"/>
+<area shape="rect" id="node2" href="$classdftefe_1_1utils_1_1MemoryStorage.html#a27a99259f56c8c34eac291943b080675" title="Deallocates and then resizes Vector with new size and initial value arguments." alt="" coords="641,687,824,727"/>
+<area shape="rect" id="node3" href="$classdftefe_1_1basis_1_1AtomCenterNonLocalOpContextFE.html#ad7c27a220ad0c56b06f8a5266750e425" title="Constructor Class does : \sum_atoms \sum_lpm CVC^T X = Y where V = coupling matrix C_lpm,..." alt="" coords="343,5,574,60"/>
+<area shape="rect" id="node4" href="$namespacedftefe_1_1basis_1_1OrthoEFEOverlapOperatorContextInternal.html#ae1ec3b8ed7ad7102971db8615b79d1ef" title=" " alt="" coords="359,84,558,139"/>
+<area shape="rect" id="node6" href="$namespacedftefe_1_1basis_1_1OEFEAtomBlockOverlapInvOpContextGLLInternal.html#a8bec397ee4777c835c5773e18f6b168e" title=" " alt="" coords="351,163,566,217"/>
+<area shape="rect" id="node7" href="$classdftefe_1_1basis_1_1OEFEAtomBlockOverlapInvOpContextGLL.html#aa2bfaccb251079725142675d7e4437e2" title=" " alt="" coords="5,188,276,243"/>
+<area shape="rect" id="node8" href="$namespacedftefe_1_1basis_1_1OrthoEFEOverlapInverseOpContextGLLInternal.html#a3f0c9ccc2c8528ba6bad99006f3007b6" title=" " alt="" coords="359,293,558,348"/>
+<area shape="rect" id="node10" href="$namespacedftefe_1_1basis_1_1CFEOverlapInverseOpContextGLLInternal.html#a4ed2ff16477264120e916d6ceaff9d57" title=" " alt="" coords="361,372,556,427"/>
+<area shape="rect" id="node12" href="$namespacedftefe_1_1basis_1_1PristineEFEOverlapOperatorContextInternal.html#ab959c37f2267a1543c9edba1421f0369" title=" " alt="" coords="335,451,583,505"/>
+<area shape="rect" id="node14" href="$namespacedftefe_1_1basis_1_1CFEOverlapOperatorContextInternal.html#a11dd09df323caf7b6bc541b969271eb0" title=" " alt="" coords="363,529,554,584"/>
+<area shape="rect" id="node16" href="$namespacedftefe_1_1quadrature_1_1QuadratureValuesContainerInternal.html#aec58d8f44548b514e46b34276c02fbc5" title=" " alt="" coords="365,608,552,663"/>
+<area shape="rect" id="node17" href="$classdftefe_1_1ksdft_1_1KohnShamDFT.html#a93228382096193898b108951542c74a7" title=" " alt="" coords="366,687,551,727"/>
+<area shape="rect" id="node18" href="$classdftefe_1_1basis_1_1OrthoEFEOverlapOperatorContext.html#a5939179aaaad0c8ab9e485585dc7845b" title="Constructor where the classical dofs have a different quadrature rule than that of the enrichment dof..." alt="" coords="347,752,570,807"/>
+<area shape="rect" id="node19" href="$classdftefe_1_1linearAlgebra_1_1LanczosExtremeEigenSolver.html#ac653c35378fee8e266211889d59eb062" title=" " alt="" coords="362,831,555,885"/>
+<area shape="rect" id="node20" href="$namespacedftefe_1_1basis_1_1CFEBasisDataStorageDealiiInternal.html#ade6f7fe63de196e5a49fef72dda920c5" title=" " alt="" coords="353,909,564,964"/>
+<area shape="rect" id="node21" href="$namespacedftefe_1_1basis_1_1EFEBasisDataStorageDealiiInternal.html#a349309c0bd76b0e5ce3c43949950b586" title=" " alt="" coords="353,988,564,1043"/>
+<area shape="rect" id="node22" href="$namespacedftefe_1_1basis_1_1CFEBasisDataStorageDealiiInternal.html#af47d3b88b2b7c45ea473ada8db6fb6bd" title=" " alt="" coords="335,1067,583,1121"/>
+<area shape="rect" id="node23" href="$namespacedftefe_1_1basis_1_1EFEBasisDataStorageDealiiInternal.html#a158e963da3bfafca8a07399b6f912bf5" title=" " alt="" coords="335,1145,583,1200"/>
+<area shape="rect" id="node24" href="$namespacedftefe_1_1basis_1_1EFEBasisDataStorageDealiiInternal.html#ae31802da4310b998888ef4321caf6c67" title=" " alt="" coords="350,1224,567,1279"/>
+<area shape="rect" id="node26" href="$namespacedftefe_1_1basis_1_1EFEBDSOnTheFlyComputeDealiiInternal.html#ae23ee05528294db10fcac757d11c1d1b" title=" " alt="" coords="324,1303,593,1357"/>
+<area shape="rect" id="node28" href="$namespacedftefe_1_1basis_1_1EFEBasisDataStorageDealiiInternal.html#a690ad41f1fd7e294ea3a5015bb07a77a" title=" " alt="" coords="350,1381,567,1436"/>
+<area shape="rect" id="node5" href="$classdftefe_1_1basis_1_1OrthoEFEOverlapOperatorContext.html#a9b2035250e2ffc9b1333a0c3b3aa012b" title="Constructor where the classical dofs have a different quadrature rule than that of the enrichment dof..." alt="" coords="29,84,252,139"/>
+<area shape="rect" id="node9" href="$classdftefe_1_1basis_1_1OrthoEFEOverlapInverseOpContextGLL.html#a41d13bfdd3ee7fcdddfaa539df5284dc" title=" " alt="" coords="11,293,270,348"/>
+<area shape="rect" id="node11" href="$classdftefe_1_1basis_1_1CFEOverlapInverseOpContextGLL.html#aa8437e5784e96b364a184b3805813213" title=" " alt="" coords="27,372,255,427"/>
+<area shape="rect" id="node13" href="$classdftefe_1_1basis_1_1PristineEFEOverlapOperatorContext.html#a69807721f1faac6867753922da46653d" title="Constructor for getting the overlap matrix operator." alt="" coords="23,451,258,505"/>
+<area shape="rect" id="node15" href="$classdftefe_1_1basis_1_1CFEOverlapOperatorContext.html#a9a32b16b766a0442bead8f19040ddf68" title="Constructor." alt="" coords="19,529,262,584"/>
+<area shape="rect" id="node25" href="$classdftefe_1_1basis_1_1EFEBasisDataStorageDealii.html#a2d48545c496bfde83c91323341b8d412" title=" " alt="" coords="33,1231,248,1271"/>
+<area shape="rect" id="node27" href="$classdftefe_1_1basis_1_1EFEBDSOnTheFlyComputeDealii.html#a8606ebcadc4014efbe301c39fc356bfa" title=" " alt="" coords="21,1310,260,1350"/>
+<area shape="rect" id="node29" href="$classdftefe_1_1basis_1_1EFEBasisDataStorageDealii.html#a78328125bd68f060135431e907f51a4a" title=" " alt="" coords="33,1389,248,1429"/>
+</map>

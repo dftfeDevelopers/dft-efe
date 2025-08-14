@@ -1,0 +1,21 @@
+var searchData=
+[
+  ['f_0',['f',['../namespacedftefe_1_1utils_1_1SplineInternal.html#a66cc53b9c2b7e911aaf08a28f3c9893c',1,'dftefe::utils::SplineInternal::f()'],['../namespacedftefe_1_1atoms_1_1BoostAutoDiffInternal.html#a605aa4777f235fe7945711b3dbe236ee',1,'dftefe::atoms::BoostAutoDiffInternal::f()']]],
+  ['f1_1',['f1',['../namespacedftefe_1_1atoms.html#a795e193f13426e628c31cffe2ed92a71',1,'dftefe::atoms']]],
+  ['f1der_2',['f1Der',['../namespacedftefe_1_1atoms.html#ae11b40f880ab22e8959c2c7db68f6a8d',1,'dftefe::atoms']]],
+  ['f2_3',['f2',['../namespacedftefe_1_1atoms.html#a2a031cbae57c4941cf0f36ff9bb5ff9f',1,'dftefe::atoms']]],
+  ['f2der_4',['f2Der',['../namespacedftefe_1_1atoms.html#a9ea3880e7ade73452c12600df9b0a0dc',1,'dftefe::atoms']]],
+  ['febasismanager_5',['FEBasisManager',['../classdftefe_1_1basis_1_1FEBasisManager.html#a4d03a80caef7500158865c17e50ac975',1,'dftefe::basis::FEBasisManager']]],
+  ['febasisoperations_6',['FEBasisOperations',['../classdftefe_1_1basis_1_1FEBasisOperations.html#a32b1ab9da932329be453f0ed12edc86d',1,'dftefe::basis::FEBasisOperations']]],
+  ['fecelldealii_7',['FECellDealii',['../classdftefe_1_1basis_1_1FECellDealii.html#a28ed619d99452cbb02f46fb93b10dc04',1,'dftefe::basis::FECellDealii']]],
+  ['feevaluationwrapperderived_8',['FEEvaluationWrapperDerived',['../classdftefe_1_1basis_1_1FEEvaluationWrapperDerived.html#a82ed7cd9a4925fc9467f01c71f8b69ca',1,'dftefe::basis::FEEvaluationWrapperDerived']]],
+  ['fermidirac_9',['fermiDirac',['../namespacedftefe_1_1ksdft.html#a5f366fa3e1a103d05553a213fa071f00',1,'dftefe::ksdft']]],
+  ['fermidiracder_10',['fermiDiracDer',['../namespacedftefe_1_1ksdft.html#aefbd6d4ee9ccafda1ab2d59ef8122a91',1,'dftefe::ksdft']]],
+  ['field_11',['Field',['../classdftefe_1_1basis_1_1Field.html#a3def9849fb635a3869c5dc94b46aae85',1,'dftefe::basis::Field']]],
+  ['fillparalleloverlapmatrix_12',['fillParallelOverlapMatrix',['../namespacedftefe_1_1linearAlgebra_1_1elpaScalaOpInternal.html#ab273a80ace40b521f572117b34002aa8',1,'dftefe::linearAlgebra::elpaScalaOpInternal']]],
+  ['finalizetriangulationconstruction_13',['finalizeTriangulationConstruction',['../classdftefe_1_1basis_1_1TriangulationDealiiSerial.html#a6e9b49731263292ef458acd09543113d',1,'dftefe::basis::TriangulationDealiiSerial::finalizeTriangulationConstruction()'],['../classdftefe_1_1basis_1_1TriangulationDealiiParallel.html#aa9b2e5631fe444f1a81e280590320677',1,'dftefe::basis::TriangulationDealiiParallel::finalizeTriangulationConstruction()'],['../classdftefe_1_1basis_1_1TriangulationBase.html#a7cc2f19687ff25e72bc990cbee8064d8',1,'dftefe::basis::TriangulationBase::finalizeTriangulationConstruction()']]],
+  ['find_5fclosest_14',['find_closest',['../classdftefe_1_1utils_1_1Spline.html#acf0465af643ddd7d32e159f77da3a474',1,'dftefe::utils::Spline']]],
+  ['finish_15',['finish',['../classdftefe_1_1utils_1_1mpi_1_1MPIRequestersNBX.html#ac211b9a3758cc06a9e8fe7c013ad429a',1,'dftefe::utils::mpi::MPIRequestersNBX']]],
+  ['fractionaloccupancyfunction_16',['FractionalOccupancyFunction',['../classdftefe_1_1ksdft_1_1FractionalOccupancyFunction.html#accc03e37a6d89c0a2e59dbac815a8aa7',1,'dftefe::ksdft::FractionalOccupancyFunction']]],
+  ['fromseconds_17',['fromSeconds',['../namespacedftefe_1_1utils_1_1TimerInternal.html#ad672eb07446e7c376c31044af953d7cd',1,'dftefe::utils::TimerInternal']]]
+];

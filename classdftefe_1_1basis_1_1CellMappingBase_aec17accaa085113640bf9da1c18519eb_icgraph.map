@@ -1,0 +1,5 @@
+<map id="dftefe::basis::CellMappingBase::getJxW" name="dftefe::basis::CellMappingBase::getJxW">
+<area shape="rect" id="node1" title=" " alt="" coords="227,53,396,93"/>
+<area shape="rect" id="node2" href="$classdftefe_1_1quadrature_1_1QuadratureRuleAdaptive.html#aa490c39e27a91403c23585c8c95199f8" title=" " alt="" coords="7,5,177,60"/>
+<area shape="rect" id="node3" href="$classdftefe_1_1quadrature_1_1QuadratureRuleContainer.html#af1a28e6165175341967a4d8ccaa2d1ad" title="Constructor for creating an adaptive quadrature rule in each cell based user&#45;defined functions." alt="" coords="5,84,179,139"/>
+</map>

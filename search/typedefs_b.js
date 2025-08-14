@@ -1,0 +1,5 @@
+var searchData=
+[
+  ['point_0',['Point',['../namespacedftefe_1_1utils.html#a41aef2cc62c0c33f2e2699f6e1c6b64e',1,'dftefe::utils']]],
+  ['pointer_1',['pointer',['../classdftefe_1_1basis_1_1BasisDataStorage.html#a7c494cc119ee41744769e9a3fbe6e047',1,'dftefe::basis::BasisDataStorage::pointer()'],['../classdftefe_1_1basis_1_1Field.html#a030769a66ad09e18d3db1003e5e536ed',1,'dftefe::basis::Field::pointer()'],['../classdftefe_1_1linearAlgebra_1_1MultiVector.html#a9bfc3f844748b7a718e01d2d734a4a1c',1,'dftefe::linearAlgebra::MultiVector::pointer()'],['../classdftefe_1_1linearAlgebra_1_1Vector.html#ad9bead1f6069e4b9920fff971fa48de3',1,'dftefe::linearAlgebra::Vector::pointer()'],['../classdftefe_1_1quadrature_1_1QuadratureValuesContainer.html#a5de766f684e39173e7e81429a55dc50d',1,'dftefe::quadrature::QuadratureValuesContainer::pointer()'],['../classdftefe_1_1utils_1_1MemoryStorage.html#a7191c2cfc68ecd85934044e023826013',1,'dftefe::utils::MemoryStorage::pointer()'],['../classdftefe_1_1utils_1_1PointImpl.html#afda0739cc851b3dd24a8ae4419851119',1,'dftefe::utils::PointImpl::pointer()']]]
+];

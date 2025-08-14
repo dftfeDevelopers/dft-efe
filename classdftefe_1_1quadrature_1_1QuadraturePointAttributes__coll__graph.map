@@ -1,0 +1,4 @@
+<map id="dftefe::quadrature::QuadraturePointAttributes" name="dftefe::quadrature::QuadraturePointAttributes">
+<area shape="rect" id="node1" title="Class to store the attributes of a quad point, such as the cell Id it belongs, the quadPointId within..." alt="" coords="5,108,184,148"/>
+<area shape="rect" id="node2" href="$classdftefe_1_1quadrature_1_1QuadratureRuleAttributes.html" title=" " alt="" coords="7,5,182,45"/>
+</map>
