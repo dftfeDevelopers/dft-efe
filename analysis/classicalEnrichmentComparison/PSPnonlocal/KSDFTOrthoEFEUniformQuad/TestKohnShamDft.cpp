@@ -945,12 +945,12 @@ int main(int argc, char** argv)
   p.registerEnd("Hamiltonian Basis overlap inverse eval");
   utils::printCurrentMemoryUsage(comm, "Hamiltonian Basis overlap and inv");
   p.registerStart("Kohn Sham DFT Class Init");
-  std::shared_ptr<ksdft::KohnShamDFT<double,
+  ksdft::KohnShamDFT<double,
                                         double,
                                         double,
                                         double,
                                         Host,
-                                        dim>> dftefeSolve = nullptr;
+                                        dim>* dftefeSolve = nullptr;
 
   if(isNumericalNuclearSolve && !isDeltaRhoPoissonSolve)
   {
@@ -959,12 +959,12 @@ int main(int argc, char** argv)
   else if (!isNumericalNuclearSolve && !isDeltaRhoPoissonSolve)
   {
     dftefeSolve =
-    std::make_shared<ksdft::KohnShamDFT<double,
+     new ksdft::KohnShamDFT<double,
                                           double,
                                           double,
                                           double,
                                           Host,
-                                          dim>>(
+                                          dim>(
                                           atomCoordinatesVec,
                                           atomChargesVec,
                                           atomSymbolVec,
@@ -1012,12 +1012,12 @@ int main(int argc, char** argv)
                     atomCoordinatesVec);                      
 
     dftefeSolve =
-    std::make_shared<ksdft::KohnShamDFT<double,
+     new ksdft::KohnShamDFT<double,
                                           double,
                                           double,
                                           double,
                                           Host,
-                                          dim>>(
+                                          dim>(
                                           atomCoordinatesVec,
                                           atomChargesVec,
                                           atomSymbolVec,
@@ -1068,6 +1068,8 @@ int main(int argc, char** argv)
 
   pTot.registerEnd("Kohn Sham DFT Solve");
   pTot.print();
+
+  delete dftefeSolve;
 
   //gracefully end MPI
 

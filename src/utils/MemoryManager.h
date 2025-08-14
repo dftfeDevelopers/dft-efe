@@ -23,6 +23,9 @@ namespace dftefe
 
       static void
       set(size_type size, ValueType *ptr, ValueType val);
+
+      static void
+      setZero(size_type size, ValueType *ptr);
     };
 
     template <typename ValueType>
@@ -37,6 +40,9 @@ namespace dftefe
 
       static void
       set(size_type size, ValueType *ptr, ValueType val);
+
+      static void
+      setZero(size_type size, ValueType *ptr);
     };
 
 #ifdef DFTEFE_WITH_DEVICE
@@ -52,6 +58,9 @@ namespace dftefe
 
       static void
       set(size_type size, ValueType *ptr, ValueType val);
+
+      static void
+      setZero(size_type size, ValueType *ptr);
     };
 
 
@@ -67,6 +76,9 @@ namespace dftefe
 
       static void
       set(size_type size, ValueType *ptr, ValueType val);
+
+      static void
+      setZero(size_type size, ValueType *ptr);
     };
 #endif // DFTEFE_WITH_DEVICE
   }    // namespace utils

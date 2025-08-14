@@ -26,12 +26,9 @@
 #ifndef dftefeBlasWrapperTypedef_h
 #define dftefeBlasWrapperTypedef_h
 
-#include <blas.hh>
-#define LAPACK_COMPLEX_CPP
-#define HAVE_LAPACK_CONFIG_H
-#include <lapack.hh>
-#include <lapack/device.hh>
 #include <utils/MemoryStorage.h>
+#include <complex>
+#include <cstdarg>
 
 namespace dftefe
 {
@@ -39,17 +36,132 @@ namespace dftefe
   {
     namespace blasLapack
     {
-      using Side   = blas::Side;
-      using Op     = blas::Op; // Op::NoTrans, Op::Trans, Op::ConjTrans
-      using Diag   = blas::Diag;
-      using Uplo   = blas::Uplo;
-      using Layout = blas::Layout;
+      namespace typeInternal
+      {
+        // Adapted from include/blas/util.hh
+        // (https://github.com/icl-utk-edu/blaspp/blob/b5d0761a0c3a45ed1bad73b697125c2e46ac1617/include/blas/util.hh#L309)
 
-      // lapack
-      using Job   = lapack::Job;   // Job::Vec, Job::NoVec
-      using Uplo  = lapack::Uplo;  // Uplo::Lower, Uplo::Upper
-      using Diag  = lapack::Diag;  // Diag::NonUnit, Diag::Unit
-      using Range = lapack::Range; // Range::All , Range::Value , Range::Index
+        // -----------------------------------------------------------------------------
+        // Based on C++14 common_type implementation from
+        // http://www.cplusplus.com/reference/type_traits/common_type/
+        // Adds promotion of complex types based on the common type of the
+        // associated real types. This fixes various cases:
+        //
+        // std::std::common_type_t< double, complex<float> > is complex<float>
+        // (wrong)
+        //        scalar_type< double, complex<float> > is complex<double>
+        //        (right)
+        //
+        // std::std::common_type_t< int, complex<long> > is not defined (compile
+        // error)
+        //        scalar_type< int, complex<long> > is complex<long> (right)
+
+        // for zero types
+        template <typename... Types>
+        struct scalar_type_traits;
+
+        // define scalar_type<> type alias
+        template <typename... Types>
+        using scalar_type = typename scalar_type_traits<Types...>::type;
+
+        // for one type
+        template <typename T>
+        struct scalar_type_traits<T>
+        {
+          using type = std::decay_t<T>;
+        };
+
+        // for two types
+        // relies on type of ?: operator being the common type of its two
+        // arguments
+        template <typename T1, typename T2>
+        struct scalar_type_traits<T1, T2>
+        {
+          using type = std::decay_t<decltype(true ? std::declval<T1>() :
+                                                    std::declval<T2>())>;
+        };
+
+        // for either or both complex,
+        // find common type of associated real types, then add complex
+        template <typename T1, typename T2>
+        struct scalar_type_traits<std::complex<T1>, T2>
+        {
+          using type = std::complex<std::common_type_t<T1, T2>>;
+        };
+
+        template <typename T1, typename T2>
+        struct scalar_type_traits<T1, std::complex<T2>>
+        {
+          using type = std::complex<std::common_type_t<T1, T2>>;
+        };
+
+        template <typename T1, typename T2>
+        struct scalar_type_traits<std::complex<T1>, std::complex<T2>>
+        {
+          using type = std::complex<std::common_type_t<T1, T2>>;
+        };
+
+        // for three or more types
+        template <typename T1, typename T2, typename... Types>
+        struct scalar_type_traits<T1, T2, Types...>
+        {
+          using type = scalar_type<scalar_type<T1, T2>, Types...>;
+        };
+
+        // -----------------------------------------------------------------------------
+        // for any combination of types, determine associated real, scalar,
+        // and complex types.
+        //
+        // real_type< float >                               is float
+        // real_type< float, double, complex<float> >       is double
+        //
+        // scalar_type< float >                             is float
+        // scalar_type< float, complex<float> >             is complex<float>
+        // scalar_type< float, double, complex<float> >     is complex<double>
+        //
+        // complex_type< float >                            is complex<float>
+        // complex_type< float, double >                    is complex<double>
+        // complex_type< float, double, complex<float> >    is complex<double>
+
+        // for zero types
+        template <typename... Types>
+        struct real_type_traits;
+
+        // define real_type<> type alias
+        template <typename... Types>
+        using real_type = typename real_type_traits<Types...>::real_t;
+
+        // define complex_type<> type alias
+        template <typename... Types>
+        using complex_type = std::complex<real_type<Types...>>;
+
+        // for one type
+        template <typename T>
+        struct real_type_traits<T>
+        {
+          using real_t = T;
+        };
+
+        // for one complex type, strip complex
+        template <typename T>
+        struct real_type_traits<std::complex<T>>
+        {
+          using real_t = T;
+        };
+
+        // for two or more types
+        template <typename T1, typename... Types>
+        struct real_type_traits<T1, Types...>
+        {
+          using real_t = scalar_type<real_type<T1>, real_type<Types...>>;
+        };
+      } // namespace typeInternal
+
+      enum class Layout
+      {
+        ColMajor,
+        RowMajor
+      };
 
       using LapackInt = int64_t;
 
@@ -62,13 +174,14 @@ namespace dftefe
       // real_type< float >                               is float
       // real_type< float, double, complex<float> >       is double
       template <typename ValueType>
-      using real_type = blas::real_type<ValueType>;
+      using real_type = typeInternal::real_type<ValueType>;
 
       // scalar_type< float >                             is float
       // scalar_type< float, complex<float> >             is complex<float>
       // scalar_type< float, double, complex<float> >     is complex<double>
       template <typename ValueType1, typename ValueType2>
-      using scalar_type = blas::scalar_type<ValueType1, ValueType2>;
+      using scalar_type = typeInternal::scalar_type<ValueType1, ValueType2>;
+
       template <dftefe::utils::MemorySpace memorySpace>
       struct BlasQueueTypedef
       {
@@ -91,7 +204,7 @@ namespace dftefe
       template <>
       struct BlasQueueTypedef<dftefe::utils::MemorySpace::DEVICE>
       {
-        typedef blas::Queue TYPE;
+        typedef int TYPE;
       };
 
       template <dftefe::utils::MemorySpace memorySpace>
@@ -119,7 +232,7 @@ namespace dftefe
       template <>
       struct LapackQueueTypedef<dftefe::utils::MemorySpace::DEVICE>
       {
-        typedef lapack::Queue LAPACKTYPE;
+        typedef int LAPACKTYPE;
       };
 
       template <dftefe::utils::MemorySpace memorySpace>

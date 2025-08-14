@@ -27,11 +27,10 @@
 #define dftefeBlasWrappers_h
 
 #include <linearAlgebra/LinearAlgebraTypes.h>
-#include <linearAlgebra/BlasLapackTypedef.h>
-#include <linearAlgebra/LinAlgOpContext.h>
-#include <utils/TypeConfig.h>
 #include <utils/ConditionalOStream.h>
 #include <utils/Profiler.h>
+#include "Defaults.h"
+#include <linearAlgebra/BlasAPIWrapper.h>
 
 namespace dftefe
 {
@@ -424,21 +423,20 @@ namespace dftefe
                 typename ValueType2,
                 typename dftefe::utils::MemorySpace memorySpace>
       void
-      gemm(Layout                               layout,
-           Op                                   transA,
-           Op                                   transB,
-           size_type                            m,
-           size_type                            n,
-           size_type                            k,
-           scalar_type<ValueType1, ValueType2>  alpha,
-           ValueType1 const *                   dA,
-           size_type                            ldda,
-           ValueType2 const *                   dB,
-           size_type                            lddb,
-           scalar_type<ValueType1, ValueType2>  beta,
-           scalar_type<ValueType1, ValueType2> *dC,
-           size_type                            lddc,
-           LinAlgOpContext<memorySpace> &       context);
+      gemm(const char &                              transA,
+           const char &                              transB,
+           const size_type                           m,
+           const size_type                           n,
+           const size_type                           k,
+           const scalar_type<ValueType1, ValueType2> alpha,
+           ValueType1 const *                        dA,
+           const size_type                           ldda,
+           ValueType2 const *                        dB,
+           const size_type                           lddb,
+           const scalar_type<ValueType1, ValueType2> beta,
+           scalar_type<ValueType1, ValueType2> *     dC,
+           const size_type                           lddc,
+           LinAlgOpContext<memorySpace> &            context);
 
       /**
        * @brief Variable Strided Batch GEMMM
@@ -450,10 +448,9 @@ namespace dftefe
                 typename ValueType2,
                 typename dftefe::utils::MemorySpace memorySpace>
       void
-      gemmStridedVarBatched(Layout                               layout,
-                            size_type                            numMats,
-                            const Op *                           transA,
-                            const Op *                           transB,
+      gemmStridedVarBatched(size_type                            numMats,
+                            const char *                         transA,
+                            const char *                         transB,
                             const size_type *                    stridea,
                             const size_type *                    strideb,
                             const size_type *                    stridec,
@@ -485,8 +482,8 @@ namespace dftefe
       template <typename ValueType,
                 typename dftefe::utils::MemorySpace memorySpace>
       LapackError
-      trtri(Uplo                          uplo,
-            Diag                          diag,
+      trtri(const char                    uplo,
+            const char                    diag,
             size_type                     n,
             ValueType *                   A,
             size_type                     lda,
@@ -498,7 +495,7 @@ namespace dftefe
       template <typename ValueType,
                 typename dftefe::utils::MemorySpace memorySpace>
       LapackError
-      potrf(Uplo                          uplo,
+      potrf(const char                    uplo,
             size_type                     n,
             ValueType *                   A,
             size_type                     lda,
@@ -510,7 +507,7 @@ namespace dftefe
       template <typename ValueType,
                 typename dftefe::utils::MemorySpace memorySpace>
       LapackError
-      steqr(Job                           jobz,
+      steqr(const char                    jobz,
             size_type                     n,
             real_type<ValueType> *        D,
             real_type<ValueType> *        E,
@@ -524,116 +521,12 @@ namespace dftefe
       template <typename ValueType,
                 typename dftefe::utils::MemorySpace memorySpace>
       LapackError
-      heevd(Job                           jobz,
-            Uplo                          uplo,
+      heevd(const char                    jobz,
+            const char                    uplo,
             size_type                     n,
             ValueType *                   A,
             size_type                     lda,
             real_type<ValueType> *        W,
-            LinAlgOpContext<memorySpace> &context);
-
-      /**
-       * @brief Standard hermitian eigenvalue decomposition
-
-          Parameters
-          [in]	jobz
-
-               lapack::Job::NoVec: Compute eigenvalues only;
-               lapack::Job::Vec: Compute eigenvalues and eigenvectors.
-
-          [in]	range
-
-               lapack::Range::All: all eigenvalues will be found.
-               lapack::Range::Value: all eigenvalues in the half-open interval
-       (vl,vu] will be found. lapack::Range::Index: the il-th through iu-th
-       eigenvalues will be found. For range = Value or Index and iu - il < n -
-       1, lapack::stebz and lapack::stein are called.
-
-          [in]	uplo
-
-               lapack::Uplo::Upper: Upper triangle of A is stored;
-               lapack::Uplo::Lower: Lower triangle of A is stored.
-
-          [in]	n	The order of the matrix A. n >= 0.
-          [in,out]	A	The n-by-n matrix A, stored in an lda-by-n array. On
-       entry, the Hermitian matrix A.
-
-               If uplo = Upper, the leading n-by-n upper triangular part of A
-       contains the upper triangular part of the matrix A. If uplo = Lower, the
-       leading n-by-n lower triangular part of A contains the lower triangular
-       part of the matrix A. On exit, the lower triangle (if uplo=Lower) or the
-       upper triangle (if uplo=Upper) of A, including the diagonal, is
-       destroyed.
-
-          [in]	lda	The leading dimension of the array A. lda >= max(1,n).
-          [in]	vl	If range=Value, the lower bound of the interval to be
-       searched for eigenvalues. vl < vu. Not referenced if range = All or
-       Index. [in]	vu	If range=Value, the upper bound of the interval to be
-       searched for eigenvalues. vl < vu. Not referenced if range = All or
-       Index. [in]	il	If range=Index, the index of the smallest eigenvalue to
-       be returned. 1 <= il <= iu <= n, if n > 0; il = 1 and iu = 0 if n = 0.
-       Not referenced if range = All or Value.
-          [in]	iu	If range=Index, the index of the largest eigenvalue to be
-       returned. 1 <= il <= iu <= n, if n > 0; il = 1 and iu = 0 if n = 0. Not
-       referenced if range = All or Value. [in]	abstol	The absolute error
-       tolerance for the eigenvalues. An approximate eigenvalue is accepted as
-       converged when it is determined to lie in an interval [a,b] of width less
-       than or equal to abstol + eps * max( |a|,|b| ), where eps is the machine
-       precision. If abstol is less than or equal to zero, then eps*|T| will be
-       used in its place, where |T| is the 1-norm of the tridiagonal matrix
-       obtained by reducing A to tridiagonal form. If high relative accuracy is
-       important, set abstol to DLAMCH( 'Safe minimum' ). Doing so will
-       guarantee that eigenvalues are computed to high relative accuracy when
-       possible in future releases. The current code does not make any
-       guarantees about high relative accuracy, but future releases will. [out]
-       nfound	The total number of eigenvalues found. 0 <= nfound <= n.
-
-               If range = All, nfound = n;
-               if range = Index, nfound = iu-il+1.
-
-          [out]	W	The vector W of length n. The first nfound elements contain
-       the selected eigenvalues in ascending order. [out]	Z	The n-by-nfound
-       matrix Z, stored in an ldz-by-zcol array.
-
-               If jobz = Vec, then if successful, the first nfound columns of Z
-       contain the orthonormal eigenvectors of the matrix A corresponding to the
-       selected eigenvalues, with the i-th column of Z holding the eigenvector
-       associated with W(i). If jobz = NoVec, then Z is not referenced. Note:
-       the user must ensure that zcol >= max(1,nfound) columns are supplied in
-       the array Z; if range = Value, the exact value of nfound is not known in
-       advance and an upper bound must be used.
-
-          [in]	ldz	The leading dimension of the array Z. ldz >= 1, and if jobz
-       = Vec, ldz >= max(1,n). [out]isuppz	The vector isuppz of length
-       2*max(1,nfound). The support of the eigenvectors in Z, i.e., the indices
-       indicating the nonzero elements in Z. The i-th eigenvector is nonzero
-       only in elements isuppz( 2*i-1 ) through isuppz( 2*i ). This is an output
-       of lapack::stemr (tridiagonal matrix). The support of the eigenvectors of
-       A is typically 1:n because of the unitary transformations applied by
-       lapack::unmtr. Implemented only for range = All or Index and iu - il = n
-       - 1
-
-          Returns
-          = 0: successful exit
-          > 0: Internal error
-       */
-      template <typename ValueType,
-                typename dftefe::utils::MemorySpace memorySpace>
-      LapackError
-      heevr(Job                           jobz,
-            Range                         range,
-            Uplo                          uplo,
-            size_type                     n,
-            ValueType *                   A,
-            size_type                     lda,
-            real_type<ValueType>          vl,
-            real_type<ValueType>          vu,
-            size_type                     il,
-            size_type                     iu,
-            real_type<ValueType>          abstol,
-            real_type<ValueType> *        W,
-            ValueType *                   Z,
-            size_type                     ldz,
             LinAlgOpContext<memorySpace> &context);
 
       /**
@@ -643,8 +536,8 @@ namespace dftefe
                 typename dftefe::utils::MemorySpace memorySpace>
       LapackError
       hegv(size_type                     itype,
-           Job                           jobz,
-           Uplo                          uplo,
+           const char                    jobz,
+           const char                    uplo,
            size_type                     n,
            ValueType *                   A,
            size_type                     lda,
@@ -664,7 +557,6 @@ namespace dftefe
            size_type                     nrhs,
            ValueType *                   A,
            size_type                     lda,
-           LapackInt *                   ipiv,
            ValueType *                   B,
            size_type                     ldb,
            LinAlgOpContext<memorySpace> &context);

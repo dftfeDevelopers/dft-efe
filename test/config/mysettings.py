@@ -20,7 +20,7 @@ site_configuration = {
         {
             'name': 'greatlakes',
             'descr': 'Greatlakes UMICH',
-            'hostnames': ['.*'],
+            'hostnames': ['greatlakes*', 'gl*'],
             'modules_system': 'lmod',
             'partitions': [
                 {
@@ -89,7 +89,7 @@ site_configuration = {
         {
             'name': 'perlmutter',
             'descr': 'Perlmutter NERSC',
-            'hostnames': ['.*'],
+            'hostnames': ['login*'],
             'modules_system': 'lmod',
             'partitions': [
                 {

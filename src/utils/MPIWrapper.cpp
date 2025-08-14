@@ -109,6 +109,12 @@ namespace dftefe
       }
 
       int
+      MPIGroupUnion(MPIGroup group1, MPIGroup group2, MPIGroup *newgroup)
+      {
+        return ::MPI_Group_union(group1, group2, newgroup);
+      }
+
+      int
       MPIInit(int *argc, char ***argv)
       {
         return ::MPI_Init(argc, argv);
@@ -325,6 +331,15 @@ namespace dftefe
       }
 
       int
+      MPIGroupUnion(MPIGroup group1, MPIGroup group2, MPIGroup *newgroup);
+      {
+        DFTEFE_AssertWithMsg(
+          false,
+          "MPIGroup_union is not implemented when not linking with an MPI library.");
+        return MPISuccess;
+      }
+
+      int
       MPIGroupTranslateRanks(MPIGroup  group1,
                              int       n,
                              const int ranks1[],
@@ -509,6 +524,30 @@ namespace dftefe
       }
 
 #endif // DFTEFE_WITH_MPI
-    }  // end of namespace mpi
-  }    // end of namespace utils
+
+      unsigned int
+      numMPIProcesses(const MPIComm mpi_communicator)
+      {
+        int n_jobs = 1;
+        int ierr   = MPICommSize(mpi_communicator, &n_jobs);
+        std::pair<bool, std::string> mpiIsSuccessAndMsg =
+          utils::mpi::MPIErrIsSuccessAndMsg(ierr);
+        DFTEFE_AssertWithMsg(mpiIsSuccessAndMsg.first,
+                             "MPI Error:" + mpiIsSuccessAndMsg.second);
+        return n_jobs;
+      }
+
+      unsigned int
+      thisMPIProcess(const MPIComm mpi_communicator)
+      {
+        int rank = 0;
+        int ierr = MPICommRank(mpi_communicator, &rank);
+        std::pair<bool, std::string> mpiIsSuccessAndMsg =
+          utils::mpi::MPIErrIsSuccessAndMsg(ierr);
+        DFTEFE_AssertWithMsg(mpiIsSuccessAndMsg.first,
+                             "MPI Error:" + mpiIsSuccessAndMsg.second);
+        return rank;
+      }
+    } // end of namespace mpi
+  }   // end of namespace utils
 } // end of namespace dftefe

@@ -46,6 +46,7 @@ namespace dftefe
         const double                                polynomialDegree,
         const double                                illConditionTolerance,
         MultiVector<ValueTypeOperand, memorySpace> &eigenSubspaceGuess,
+        const ElpaScalapackManager &                elpaScala,
         bool                                        isResidualChebyshevFilter,
         const size_type                             eigenVectorBatchSize,
         OrthogonalizationType                       orthoType,
@@ -64,6 +65,7 @@ namespace dftefe
       , d_mpiPatternP2P(eigenSubspaceGuess.getMPIPatternP2P())
       , d_printL2Norms(false)
       , d_orthoType(orthoType)
+      , d_elpaScala(&elpaScala)
     {
       if (d_storeIntermediateSubspaces)
         {
@@ -92,12 +94,14 @@ namespace dftefe
       d_ortho = std::make_shared<
         OrthonormalizationFunctions<ValueTypeOperator, ValueType, memorySpace>>(
         eigenVectorBatchSize,
+        *d_elpaScala,
         d_mpiPatternP2P,
         eigenSubspaceGuess.getLinAlgOpContext());
 
       d_rr = std::make_shared<
         RayleighRitzEigenSolver<ValueTypeOperator, ValueType, memorySpace>>(
         eigenVectorBatchSize,
+        *d_elpaScala,
         d_mpiPatternP2P,
         eigenSubspaceGuess.getLinAlgOpContext());
 
@@ -167,12 +171,14 @@ namespace dftefe
                                                          ValueType,
                                                          memorySpace>>(
               d_eigenVecBatchSize,
+              *d_elpaScala,
               d_mpiPatternP2P,
               eigenSubspaceGuess.getLinAlgOpContext());
 
           d_rr = std::make_shared<
             RayleighRitzEigenSolver<ValueTypeOperator, ValueType, memorySpace>>(
             d_eigenVecBatchSize,
+            *d_elpaScala,
             d_mpiPatternP2P,
             eigenSubspaceGuess.getLinAlgOpContext());
         }
@@ -347,13 +353,13 @@ namespace dftefe
                                                   *d_eigenSubspaceGuess,
                                                   B);
         }
-      else if (d_orthoType == OrthogonalizationType::MULTIPASS_LOWDIN)
+      else if (d_orthoType == OrthogonalizationType::MULTIPASS_CGS)
         {
-          orthoerr = d_ortho->MultipassLowdin(
+          orthoerr = d_ortho->MultipassCGS(
             eigenVectors, /*in/out, eigenvector*/
-            linearAlgebra::MultiPassLowdinDefaults::MAX_PASS,
-            linearAlgebra::MultiPassLowdinDefaults::SHIFT_TOL,
-            linearAlgebra::MultiPassLowdinDefaults::IDENTITY_TOL,
+            linearAlgebra::MultiPassOrthoDefaults::MAX_PASS,
+            linearAlgebra::MultiPassOrthoDefaults::SHIFT_TOL,
+            linearAlgebra::MultiPassOrthoDefaults::IDENTITY_TOL,
             *d_eigenSubspaceGuess, // go away
             B);
         }

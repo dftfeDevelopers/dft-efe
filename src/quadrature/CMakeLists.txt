@@ -38,9 +38,6 @@ if (NOT TARGET dft-efe-utils)
   add_subdirectory(../utils ${CMAKE_CURRENT_BINARY_DIR}/buildUtils)
 endif()
 
-target_include_directories(dft-efe-quadrature PUBLIC ${SLATE_DIR}/include)
-target_link_directories(dft-efe-quadrature PUBLIC ${SLATE_DIR}/lib64)
-
 include_directories(../)
-target_link_libraries(dft-efe-quadrature PUBLIC blaspp lapackpp slate dft-efe-utils ${DFTEFE_MPI_LIBRARIES})
+target_link_libraries(dft-efe-quadrature PUBLIC dft-efe-utils ${DFTEFE_MPI_LIBRARIES})
 endif()

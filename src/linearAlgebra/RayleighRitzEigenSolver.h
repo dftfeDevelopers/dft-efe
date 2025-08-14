@@ -34,6 +34,7 @@
 #include <linearAlgebra/LinearAlgebraTypes.h>
 #include <linearAlgebra/OperatorContext.h>
 #include <memory>
+#include <linearAlgebra/ElpaScalapackManager.h>
 
 namespace dftefe
 {
@@ -73,10 +74,12 @@ namespace dftefe
        * @brief Constructor
        */
       RayleighRitzEigenSolver(
-        const size_type eigenVectorBatchSize,
+        const size_type             eigenVectorBatchSize,
+        const ElpaScalapackManager &elpaScala,
         std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
                                                       mpiPatternP2P,
-        std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext);
+        std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext,
+        const bool                                    useScalpack = true);
 
       /**
        *@brief Default Destructor
@@ -84,6 +87,9 @@ namespace dftefe
        */
       ~RayleighRitzEigenSolver() = default;
 
+      // In this case we can solve the KohnSham GHEP if the X's are B
+      // orthogonalized. X_MO^T H X_MO Q = \lambda X_MO^T M X_MO Q , or, H X =
+      // \lambda M X if X = X_MO Q
       EigenSolverError
       solve(const OpContext &                           A,
             MultiVector<ValueTypeOperand, memorySpace> &X,
@@ -91,6 +97,9 @@ namespace dftefe
             MultiVector<ValueType, memorySpace> &       eigenVectors,
             bool computeEigenVectors = false);
 
+      // In this case we solve the Kohn Sham GHEP if X's are othogonalized.
+      // X_O^T H X_O Q = \lambda X_O^T M X_O Q , or,
+      // H X = \lambda M X if X = X_O Q
       EigenSolverError
       solve(const OpContext &                           A,
             const OpContext &                           B,
@@ -99,16 +108,52 @@ namespace dftefe
             MultiVector<ValueType, memorySpace> &       eigenVectors,
             bool computeEigenVectors = false);
 
+      // /**  In this case we solve the Kohn Sham GHEP for any general X
+      // * Performs cholesky factorization for orthogonalization internally.
+      // * SConj = X^T M X
+      // * SConj=LConj*L^{T}
+      // * Lconj^{-1} compute
+      // * compute HSConjProj= Lconj^{-1}*HConjProj*(Lconj^{-1})^C  (C denotes
+      // *     conjugate transpose LAPACK notation)
+      // * compute standard eigendecomposition HSConjProj: {QConjPrime,D}
+      // * HSConjProj=QConjPrime*D*QConjPrime^{C} QConj={Lc^{-1}}^{C}*QConjPrime
+      // *     rotate the basis in the subspace
+      // * X^{T}={QConjPrime}^{C}*LConj^{-1}*X^{T}, stored in the column major
+      // *     format In the above we use Q^{T}={QConjPrime}^{C}*LConj^{-1}
+      // * In other words, X_O^T H X_O Q = \lambda X_O^T M X_O Q , or,
+      // * H X = \lambda M X if X = X_O Q where X_O = X((LInv)^C) (C is conj
+      // trans)
+      // **/
+      // EigenSolverError
+      // solveGEPNoOrtho(const OpContext &                 A,
+      //       const OpContext &                           B,
+      //       MultiVector<ValueTypeOperand, memorySpace> &X,
+      //       std::vector<RealType> &                     eigenValues,
+      //       MultiVector<ValueType, memorySpace> &       eigenVectors,
+      //       bool computeEigenVectors = false);
+
     private:
       void
       computeXTransOpX(MultiVector<ValueTypeOperand, memorySpace> &  X,
                        utils::MemoryStorage<ValueType, memorySpace> &S,
-                       const OpContext &                             Op);
+                       const OpContext &                             Op,
+                       const bool &useBatched = true);
+
+      void
+      computeXTransOpX(MultiVector<ValueTypeOperand, memorySpace> &X,
+                       const std::shared_ptr<const ProcessGrid> &  processGrid,
+                       ScaLAPACKMatrix<ValueType> &overlapMatPar,
+                       const OpContext &           Op);
 
       std::shared_ptr<MultiVector<ValueType, memorySpace>> d_XinBatchSmall,
         d_XinBatch, d_XoutBatchSmall, d_XoutBatch;
 
-      size_type d_eigenVecBatchSize, d_batchSizeSmall;
+      size_type       d_batchSizeSmall;
+      const size_type d_eigenVecBatchSize;
+
+      const ElpaScalapackManager *d_elpaScala;
+      const bool                  d_useELPA;
+      const bool                  d_useScalapack;
 
     }; // end of class RayleighRitzEigenSolver
   }    // end of namespace linearAlgebra

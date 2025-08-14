@@ -123,6 +123,9 @@ namespace dftefe
                              int       ranks2[]);
 
       int
+      MPIGroupUnion(MPIGroup group1, MPIGroup group2, MPIGroup *newgroup);
+
+      int
       MPIInit(int *argc, char ***argv);
 
       int
@@ -285,6 +288,12 @@ namespace dftefe
       template <typename T, MemorySpace memorySpace>
       MinMaxAvg<T>
       MPIAllreduceMinMaxAvg(const T &data, MPIComm comm);
+
+      unsigned int
+      numMPIProcesses(const MPIComm comm);
+
+      unsigned int
+      thisMPIProcess(const MPIComm comm);
 
     } // end of namespace mpi
   }   // end of namespace utils

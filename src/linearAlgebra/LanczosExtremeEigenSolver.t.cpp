@@ -411,7 +411,7 @@ namespace dftefe
                         utils::Types<ValueType>::zero);
                       LapackError lapackReturn =
                         blasLapack::steqr<ValueType, memorySpace>(
-                          blasLapack::Job::Vec,
+                          'V',
                           krylovSubspaceSize,
                           eigenValuesIter.data(),
                           betaVecTemp.data(),
@@ -433,7 +433,7 @@ namespace dftefe
                     {
                       LapackError lapackReturn =
                         blasLapack::steqr<ValueType, memorySpace>(
-                          blasLapack::Job::NoVec,
+                          'N',
                           krylovSubspaceSize,
                           eigenValuesIter.data(),
                           betaVecTemp.data(),
@@ -599,9 +599,8 @@ namespace dftefe
           // }
 
           blasLapack::gemm<ValueType, ValueType, memorySpace>(
-            blasLapack::Layout::ColMajor,
-            blasLapack::Op::Trans,
-            blasLapack::Op::Trans,
+            'T',
+            'T',
             numWantedEigenValues,
             q.locallyOwnedSize(),
             krylovSubspaceSize,

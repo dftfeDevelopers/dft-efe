@@ -136,9 +136,8 @@ namespace dftefe
         //       }
 
         //     linearAlgebra::blasLapack::gemm<RealType, RealType, memorySpace>(
-        //       linearAlgebra::blasLapack::Layout::ColMajor,
-        //       linearAlgebra::blasLapack::Op::Trans,
-        //       linearAlgebra::blasLapack::Op::NoTrans,
+        //       'T',
+        //       'N',
         //       1,
         //       n,
         //       numPsiInBatch,

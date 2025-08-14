@@ -214,7 +214,6 @@ namespace dftefe
       if (N > 0)
         {
           size_type NRHS = 1, lda = N, ldb = N;
-          std::vector<linearAlgebra::blasLapack::LapackInt> ipiv(N);
           d_A.resize(lda * N);
           d_c.resize(ldb * NRHS);
           for (int i = 0; i < lda * N; i++)
@@ -234,7 +233,7 @@ namespace dftefe
             }
 
           linearAlgebra::blasLapack::gesv<ValueType, utils::MemorySpace::HOST>(
-            N, NRHS, &d_A[0], lda, &ipiv[0], &d_c[0], ldb, linAlgOpContextHost);
+            N, NRHS, &d_A[0], lda, &d_c[0], ldb, linAlgOpContextHost);
         }
       d_cFinal = 1.0;
       for (int i = 0; i < N; i++)

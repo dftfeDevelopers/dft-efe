@@ -71,10 +71,8 @@ namespace dftefe
         utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>
           memoryTransfer;
 
-        std::vector<linearAlgebra::blasLapack::Op> transA(
-          numMats, linearAlgebra::blasLapack::Op::NoTrans);
-        std::vector<linearAlgebra::blasLapack::Op> transB(
-          numMats, linearAlgebra::blasLapack::Op::NoTrans);
+        std::vector<char>      transA(numMats, 'N');
+        std::vector<char>      transB(numMats, 'N');
         std::vector<size_type> mSizesTmp(numMats, 0);
         std::vector<size_type> nSizesTmp(numMats, 0);
         std::vector<size_type> kSizesTmp(numMats, 0);
@@ -130,7 +128,6 @@ namespace dftefe
         linearAlgebra::blasLapack::gemmStridedVarBatched<ValueTypeBasisData,
                                                          ValueTypeBasisData,
                                                          memorySpace>(
-          linearAlgebra::blasLapack::Layout::ColMajor,
           numMats,
           transA.data(),
           transB.data(),

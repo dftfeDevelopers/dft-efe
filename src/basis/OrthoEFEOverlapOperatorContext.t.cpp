@@ -483,9 +483,8 @@ namespace dftefe
                 linearAlgebra::blasLapack::gemm<ValueTypeOperator,
                                                 ValueTypeOperator,
                                                 utils::MemorySpace::HOST>(
-                  linearAlgebra::blasLapack::Layout::ColMajor,
-                  linearAlgebra::blasLapack::Op::NoTrans,
-                  linearAlgebra::blasLapack::Op::NoTrans,
+                  'N',
+                  'N',
                   numEnrichmentIdsInCell,
                   nQuadPointInCellEnrichmentBlockClassical,
                   dofsPerCellCFE,
@@ -511,9 +510,8 @@ namespace dftefe
                 linearAlgebra::blasLapack::gemm<ValueTypeOperator,
                                                 ValueTypeOperator,
                                                 utils::MemorySpace::HOST>(
-                  linearAlgebra::blasLapack::Layout::ColMajor,
-                  linearAlgebra::blasLapack::Op::NoTrans,
-                  linearAlgebra::blasLapack::Op::NoTrans,
+                  'N',
+                  'N',
                   numEnrichmentIdsInCell,
                   nQuadPointInCellEnrichmentBlockEnrichment,
                   dofsPerCellCFE,
@@ -573,9 +571,8 @@ namespace dftefe
 
             linearAlgebra::blasLapack::
               gemm<ValueTypeOperand, ValueTypeOperand, memorySpace>(
-                linearAlgebra::blasLapack::Layout::ColMajor,
-                linearAlgebra::blasLapack::Op::NoTrans,
-                linearAlgebra::blasLapack::Op::ConjTrans,
+                'N',
+                'C',
                 n,
                 n,
                 k,
@@ -624,9 +621,8 @@ namespace dftefe
 
                 linearAlgebra::blasLapack::
                   gemm<ValueTypeOperand, ValueTypeOperand, memorySpace>(
-                    linearAlgebra::blasLapack::Layout::ColMajor,
-                    linearAlgebra::blasLapack::Op::NoTrans,
-                    linearAlgebra::blasLapack::Op::ConjTrans,
+                    'N',
+                    'C',
                     dofsPerCell,
                     numEnrichmentIdsInCell,
                     k,
@@ -667,9 +663,8 @@ namespace dftefe
 
                 linearAlgebra::blasLapack::
                   gemm<ValueTypeOperand, ValueTypeOperator, memorySpace>(
-                    linearAlgebra::blasLapack::Layout::ColMajor,
-                    linearAlgebra::blasLapack::Op::NoTrans,
-                    linearAlgebra::blasLapack::Op::ConjTrans,
+                    'N',
+                    'C',
                     n,
                     numEnrichmentIdsInCell,
                     k,
@@ -723,9 +718,8 @@ namespace dftefe
 
                 linearAlgebra::blasLapack::
                   gemm<ValueTypeOperand, ValueTypeOperand, memorySpace>(
-                    linearAlgebra::blasLapack::Layout::ColMajor,
-                    linearAlgebra::blasLapack::Op::NoTrans,
-                    linearAlgebra::blasLapack::Op::ConjTrans,
+                    'N',
+                    'C',
                     n,
                     n,
                     k,
@@ -769,9 +763,8 @@ namespace dftefe
 
                 linearAlgebra::blasLapack::
                   gemm<ValueTypeOperand, ValueTypeOperator, memorySpace>(
-                    linearAlgebra::blasLapack::Layout::ColMajor,
-                    linearAlgebra::blasLapack::Op::NoTrans,
-                    linearAlgebra::blasLapack::Op::ConjTrans,
+                    'N',
+                    'C',
                     n,
                     n,
                     k,
@@ -815,9 +808,8 @@ namespace dftefe
 
                 linearAlgebra::blasLapack::
                   gemm<ValueTypeOperand, ValueTypeOperator, memorySpace>(
-                    linearAlgebra::blasLapack::Layout::ColMajor,
-                    linearAlgebra::blasLapack::Op::NoTrans,
-                    linearAlgebra::blasLapack::Op::ConjTrans,
+                    'N',
+                    'C',
                     n,
                     n,
                     k,
@@ -833,9 +825,8 @@ namespace dftefe
 
                 // linearAlgebra::blasLapack::
                 //   gemm<ValueTypeOperand, ValueTypeOperator, memorySpace>(
-                //     linearAlgebra::blasLapack::Layout::ColMajor,
-                //     linearAlgebra::blasLapack::Op::Trans,
-                //     linearAlgebra::blasLapack::Op::Trans,
+                //     'T',
+                //     'T',
                 //     n,
                 //     n,
                 //     k,
@@ -1186,9 +1177,6 @@ namespace dftefe
         // For better performance, we evaluate ye for multiple cells at a time
         //
 
-        linearAlgebra::blasLapack::Layout layout =
-          linearAlgebra::blasLapack::Layout::ColMajor;
-
         size_type BStartOffset       = 0;
         size_type cellLocalIdsOffset = 0;
         for (size_type cellStartId = 0; cellStartId < numLocallyOwnedCells;
@@ -1227,10 +1215,8 @@ namespace dftefe
                                       cellsInBlockNumDoFs,
                                       xCellValues);
 
-            std::vector<linearAlgebra::blasLapack::Op> transA(
-              numCellsInBlock, linearAlgebra::blasLapack::Op::NoTrans);
-            std::vector<linearAlgebra::blasLapack::Op> transB(
-              numCellsInBlock, linearAlgebra::blasLapack::Op::NoTrans);
+            std::vector<char> transA(numCellsInBlock, 'N');
+            std::vector<char> transB(numCellsInBlock, 'N');
 
             utils::MemoryStorage<size_type, memorySpace> mSizes(
               numCellsInBlock);
@@ -1289,7 +1275,6 @@ namespace dftefe
             linearAlgebra::blasLapack::gemmStridedVarBatched<ValueTypeOperator,
                                                              ValueTypeOperand,
                                                              memorySpace>(
-              layout,
               numCellsInBlock,
               transA.data(),
               transB.data(),
@@ -2169,9 +2154,8 @@ namespace dftefe
 
               linearAlgebra::blasLapack::
                 gemm<ValueTypeOperator, ValueTypeOperand, memorySpace>(
-                  linearAlgebra::blasLapack::Layout::ColMajor,
-                  linearAlgebra::blasLapack::Op::NoTrans,
-                  linearAlgebra::blasLapack::Op::Trans,
+                  'N',
+                  'T',
                   numComponents,
                   d_nglobalEnrichmentIds,
                   d_nglobalEnrichmentIds,
@@ -2212,9 +2196,8 @@ namespace dftefe
               if (nlocallyOwnedEnrichmentIds > 0)
                 linearAlgebra::blasLapack::
                   gemm<ValueTypeOperator, ValueTypeOperand, memorySpace>(
-                    linearAlgebra::blasLapack::Layout::ColMajor,
-                    linearAlgebra::blasLapack::Op::NoTrans,
-                    linearAlgebra::blasLapack::Op::NoTrans,
+                    'N',
+                    'N',
                     numComponents,
                     nlocallyOwnedEnrichmentIds,
                     nlocallyOwnedEnrichmentIds,

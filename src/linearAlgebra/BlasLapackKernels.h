@@ -4,7 +4,6 @@
 #include <utils/MemoryManager.h>
 #include <linearAlgebra/BlasLapackTypedef.h>
 #include <linearAlgebra/LinAlgOpContext.h>
-#include <blas.hh>
 #include <vector>
 
 namespace dftefe

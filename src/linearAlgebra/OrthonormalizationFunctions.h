@@ -35,6 +35,7 @@
 #include <linearAlgebra/BlasLapackTypedef.h>
 #include <linearAlgebra/OperatorContext.h>
 #include <linearAlgebra/IdentityOperatorContext.h>
+#include <linearAlgebra/ElpaScalapackManager.h>
 
 namespace dftefe
 {
@@ -53,10 +54,12 @@ namespace dftefe
         OperatorContext<ValueTypeOperator, ValueTypeOperand, memorySpace>;
 
       OrthonormalizationFunctions(
-        const size_type eigenVectorBatchSize,
+        const size_type             eigenVectorBatchSize,
+        const ElpaScalapackManager &elpaScala,
         std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
                                                       mpiPatternP2P,
-        std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext);
+        std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext,
+        const bool                                    useScalpack = true);
 
       /**
        *@brief Default Destructor
@@ -67,6 +70,16 @@ namespace dftefe
       OrthonormalizationError
       CholeskyGramSchmidt(
         MultiVector<ValueTypeOperand, memorySpace> &X,
+        MultiVector<ValueType, memorySpace> &       orthogonalizedX,
+        const OpContext &B = IdentityOperatorContext<ValueTypeOperator,
+                                                     ValueTypeOperand,
+                                                     memorySpace>());
+      OrthonormalizationError
+      MultipassCGS(
+        MultiVector<ValueTypeOperand, memorySpace> &X,
+        size_type                                   maxPass,
+        RealType                                    shiftTolerance,
+        RealType                                    identityTolerance,
         MultiVector<ValueType, memorySpace> &       orthogonalizedX,
         const OpContext &B = IdentityOperatorContext<ValueTypeOperator,
                                                      ValueTypeOperand,
@@ -83,7 +96,7 @@ namespace dftefe
                                                      ValueTypeOperand,
                                                      memorySpace>());
 
-      static OrthonormalizationError
+      OrthonormalizationError
       ModifiedGramSchmidt(
         MultiVector<ValueTypeOperand, memorySpace> &X,
         MultiVector<ValueType, memorySpace> &       orthogonalizedX,
@@ -95,12 +108,23 @@ namespace dftefe
       void
       computeXTransOpX(MultiVector<ValueTypeOperand, memorySpace> &  X,
                        utils::MemoryStorage<ValueType, memorySpace> &S,
-                       const OpContext &                             Op);
+                       const OpContext &                             Op,
+                       const bool &useBatched = true);
+
+      void
+      computeXTransOpX(MultiVector<ValueTypeOperand, memorySpace> &X,
+                       const std::shared_ptr<const ProcessGrid> &  processGrid,
+                       ScaLAPACKMatrix<ValueType> &overlapMatPar,
+                       const OpContext &           Op);
 
       std::shared_ptr<MultiVector<ValueType, memorySpace>> d_XinBatchSmall,
         d_XinBatch, d_XoutBatchSmall, d_XoutBatch;
 
       size_type d_eigenVecBatchSize, d_batchSizeSmall;
+
+      const ElpaScalapackManager *d_elpaScala;
+      const bool                  d_useELPA;
+      const bool                  d_useScalapack;
 
     }; // end of class OrthonormalizationFunctions
   }    // end of namespace linearAlgebra

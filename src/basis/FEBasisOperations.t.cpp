@@ -322,10 +322,8 @@ namespace dftefe
                                linAlgOpContext);
 
                 /*--------- Do the integration -----------------*/
-                std::vector<linearAlgebra::blasLapack::Op> transA(
-                  numCellsInBlock, linearAlgebra::blasLapack::Op::NoTrans);
-                std::vector<linearAlgebra::blasLapack::Op> transB(
-                  numCellsInBlock, linearAlgebra::blasLapack::Op::ConjTrans);
+                std::vector<char>      transA(numCellsInBlock, 'N');
+                std::vector<char>      transB(numCellsInBlock, 'C');
                 std::vector<size_type> mSizesTmp(numCellsInBlock, 0);
                 std::vector<size_type> nSizesTmp(numCellsInBlock, 0);
                 std::vector<size_type> kSizesTmp(numCellsInBlock, 0);
@@ -403,8 +401,7 @@ namespace dftefe
                 linearAlgebra::blasLapack::gemmStridedVarBatched<
                   ValueTypeBasisData,
                   ValueTypeUnion,
-                  memorySpace>(layout,
-                               numCellsInBlock,
+                  memorySpace>(numCellsInBlock,
                                transA.data(),
                                transB.data(),
                                strideA.data(),
@@ -651,10 +648,8 @@ namespace dftefe
                    numCellsInBlockDofs[iCell];
                       }
       */
-                std::vector<linearAlgebra::blasLapack::Op> transA(
-                  numCellsInBlock, linearAlgebra::blasLapack::Op::NoTrans);
-                std::vector<linearAlgebra::blasLapack::Op> transB(
-                  numCellsInBlock, linearAlgebra::blasLapack::Op::ConjTrans);
+                std::vector<char>      transA(numCellsInBlock, 'N');
+                std::vector<char>      transB(numCellsInBlock, 'C');
                 std::vector<size_type> mSizesTmp(numCellsInBlock, 0);
                 std::vector<size_type> nSizesTmp(numCellsInBlock, 0);
                 std::vector<size_type> kSizesTmp(numCellsInBlock, 0);
@@ -741,8 +736,7 @@ namespace dftefe
                 linearAlgebra::blasLapack::gemmStridedVarBatched<
                   ValueTypeBasisData,
                   ValueTypeBasisData,
-                  memorySpace>(layout,
-                               numCellsInBlock,
+                  memorySpace>(numCellsInBlock,
                                transA.data(),
                                transB.data(),
                                strideA.data(),
@@ -767,11 +761,11 @@ namespace dftefe
                 // transA.resize(numCellsInBlock);
                 // std::fill(transA.begin(),
                 //           transA.end(),
-                //           linearAlgebra::blasLapack::Op::Trans);
+                //           'T');
                 // transB.resize(numCellsInBlock);
                 // std::fill(transB.begin(),
                 //           transB.end(),
-                //           linearAlgebra::blasLapack::Op::Trans);
+                //           'T');
                 // mSizesTmp.resize(numCellsInBlock);
                 // nSizesTmp.resize(numCellsInBlock);
                 // kSizesTmp.resize(numCellsInBlock);
@@ -839,8 +833,7 @@ namespace dftefe
                 // linearAlgebra::blasLapack::gemmStridedVarBatched<
                 //   ValueTypeBasisData,
                 //   ValueTypeBasisData,
-                //   memorySpace>(layout,
-                //                numCellsInBlock,
+                //   memorySpace>(numCellsInBlock,
                 //                transA.data(),
                 //                transB.data(),
                 //                strideA.data(),
@@ -867,9 +860,8 @@ namespace dftefe
                     linearAlgebra::blasLapack::gemm<
                       ValueTypeBasisData,
                       ValueTypeBasisData,
-                      memorySpace>(layout,
-                              linearAlgebra::blasLapack::Op::Trans,
-                              linearAlgebra::blasLapack::Op::Trans,
+                      memorySpace>('T',
+                              'T',
                               1,
                               numCellsInBlockDofs[iCell] *
                 numCellsInBlockDofs[iCell], dim, alpha, u.data() + cumulativeA,
@@ -1102,9 +1094,7 @@ namespace dftefe
       // Ae*(Be)^T, with Be stored in row major format
       //
       const bool zeroStrideB = sameQuadRuleInAllCells && (!variableDofsPerCell);
-      linearAlgebra::blasLapack::Layout layout =
-        linearAlgebra::blasLapack::Layout::ColMajor;
-      size_type cellLocalIdsOffset = 0;
+      size_type  cellLocalIdsOffset = 0;
       // size_type       AStartOffset       = 0;
       size_type       CStartOffset  = 0;
       const size_type cellBlockSize = d_maxCellBlock;
@@ -1174,10 +1164,8 @@ namespace dftefe
                                     numCellsInBlockDofsMemSpace,
                                     fieldCellValues);
 
-          std::vector<linearAlgebra::blasLapack::Op> transA(
-            numCellsInBlock, linearAlgebra::blasLapack::Op::NoTrans);
-          std::vector<linearAlgebra::blasLapack::Op> transB(
-            numCellsInBlock, linearAlgebra::blasLapack::Op::NoTrans);
+          std::vector<char>      transA(numCellsInBlock, 'N');
+          std::vector<char>      transB(numCellsInBlock, 'N');
           std::vector<size_type> mSizesTmp(numCellsInBlock, 0);
           std::vector<size_type> nSizesTmp(numCellsInBlock, 0);
           std::vector<size_type> kSizesTmp(numCellsInBlock, 0);
@@ -1256,7 +1244,6 @@ namespace dftefe
           linearAlgebra::blasLapack::gemmStridedVarBatched<ValueTypeBasisCoeff,
                                                            ValueTypeBasisData,
                                                            memorySpace>(
-            layout,
             numCellsInBlock,
             transA.data(),
             transB.data(),
@@ -1392,8 +1379,6 @@ namespace dftefe
       // (Ae)*(Be)^T, with Be stored in row major format
       //
 
-      linearAlgebra::blasLapack::Layout layout =
-        linearAlgebra::blasLapack::Layout::ColMajor;
       size_type cellLocalIdsOffset = 0;
       // size_type       AStartOffset       = 0;
       size_type       CStartOffset  = 0;
@@ -1460,10 +1445,8 @@ namespace dftefe
                                     numCellsInBlockDofsMemSpace,
                                     fieldCellValues);
 
-          std::vector<linearAlgebra::blasLapack::Op> transA(
-            numCellsInBlock, linearAlgebra::blasLapack::Op::NoTrans);
-          std::vector<linearAlgebra::blasLapack::Op> transB(
-            numCellsInBlock, linearAlgebra::blasLapack::Op::NoTrans);
+          std::vector<char>      transA(numCellsInBlock, 'N');
+          std::vector<char>      transB(numCellsInBlock, 'N');
           std::vector<size_type> mSizesTmp(numCellsInBlock, 0);
           std::vector<size_type> nSizesTmp(numCellsInBlock, 0);
           std::vector<size_type> kSizesTmp(numCellsInBlock, 0);
@@ -1541,7 +1524,6 @@ namespace dftefe
           linearAlgebra::blasLapack::gemmStridedVarBatched<ValueTypeBasisCoeff,
                                                            ValueTypeBasisData,
                                                            memorySpace>(
-            layout,
             numCellsInBlock,
             transA.data(),
             transB.data(),
@@ -1691,9 +1673,6 @@ namespace dftefe
           // data), we use the transpose of Be matrix. That is, we perform Ce =
           // Ae*(Be)^T, with Be stored in row major format
           //
-
-          linearAlgebra::blasLapack::Layout layout =
-            linearAlgebra::blasLapack::Layout::ColMajor;
           size_type              cellLocalIdsOffset = 0;
           std::vector<size_type> BStartOffset(dim, 0);
           for (size_type iDim = 0; iDim < dim; iDim++)
@@ -1733,10 +1712,10 @@ namespace dftefe
                                         itCellLocalIdsBegin +
     cellLocalIdsOffset, numCellsInBlockDofsMemSpace, fieldCellValues);
 
-              std::vector<linearAlgebra::blasLapack::Op> transA(
-                numCellsInBlock, linearAlgebra::blasLapack::Op::NoTrans);
-              std::vector<linearAlgebra::blasLapack::Op> transB(
-                numCellsInBlock, linearAlgebra::blasLapack::Op::Trans);
+              std::vector<char> transA(
+                numCellsInBlock, 'N');
+              std::vector<char> transB(
+                numCellsInBlock, 'T');
               std::vector<size_type> mSizesTmp(numCellsInBlock, 0);
               std::vector<size_type> nSizesTmp(numCellsInBlock, 0);
               std::vector<size_type> kSizesTmp(numCellsInBlock, 0);
@@ -1821,8 +1800,7 @@ namespace dftefe
                   linearAlgebra::blasLapack::gemmStridedVarBatched<
                     ValueTypeBasisCoeff,
                     ValueTypeBasisData,
-                    memorySpace>(layout,
-                                 numCellsInBlock,
+                    memorySpace>(numCellsInBlock,
                                  transA.data(),
                                  transB.data(),
                                  strideA.data(),
@@ -2095,10 +2073,8 @@ namespace dftefe
           **/
 
           // TODO check if these are right ?? Why is the B Transposed
-          std::vector<linearAlgebra::blasLapack::Op> transA(
-            numCellsInBlock, linearAlgebra::blasLapack::Op::NoTrans);
-          std::vector<linearAlgebra::blasLapack::Op> transB(
-            numCellsInBlock, linearAlgebra::blasLapack::Op::Trans);
+          std::vector<char>      transA(numCellsInBlock, 'N');
+          std::vector<char>      transB(numCellsInBlock, 'T');
           std::vector<size_type> mSizesTmp(numCellsInBlock, 0);
           std::vector<size_type> nSizesTmp(numCellsInBlock, 0);
           std::vector<size_type> kSizesTmp(numCellsInBlock, 0);
@@ -2173,7 +2149,6 @@ namespace dftefe
           linearAlgebra::blasLapack::gemmStridedVarBatched<ValueTypeBasisCoeff,
                                                            ValueTypeBasisData,
                                                            memorySpace>(
-            layout,
             numCellsInBlock,
             transA.data(),
             transB.data(),
