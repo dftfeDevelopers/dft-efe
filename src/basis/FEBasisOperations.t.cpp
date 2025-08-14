@@ -322,10 +322,8 @@ namespace dftefe
                                linAlgOpContext);
 
                 /*--------- Do the integration -----------------*/
-                std::vector<char> transA(
-                  numCellsInBlock, 'N');
-                std::vector<char> transB(
-                  numCellsInBlock, 'C');
+                std::vector<char>      transA(numCellsInBlock, 'N');
+                std::vector<char>      transB(numCellsInBlock, 'C');
                 std::vector<size_type> mSizesTmp(numCellsInBlock, 0);
                 std::vector<size_type> nSizesTmp(numCellsInBlock, 0);
                 std::vector<size_type> kSizesTmp(numCellsInBlock, 0);
@@ -650,10 +648,8 @@ namespace dftefe
                    numCellsInBlockDofs[iCell];
                       }
       */
-                std::vector<char> transA(
-                  numCellsInBlock, 'N');
-                std::vector<char> transB(
-                  numCellsInBlock, 'C');
+                std::vector<char>      transA(numCellsInBlock, 'N');
+                std::vector<char>      transB(numCellsInBlock, 'C');
                 std::vector<size_type> mSizesTmp(numCellsInBlock, 0);
                 std::vector<size_type> nSizesTmp(numCellsInBlock, 0);
                 std::vector<size_type> kSizesTmp(numCellsInBlock, 0);
@@ -1098,7 +1094,7 @@ namespace dftefe
       // Ae*(Be)^T, with Be stored in row major format
       //
       const bool zeroStrideB = sameQuadRuleInAllCells && (!variableDofsPerCell);
-      size_type cellLocalIdsOffset = 0;
+      size_type  cellLocalIdsOffset = 0;
       // size_type       AStartOffset       = 0;
       size_type       CStartOffset  = 0;
       const size_type cellBlockSize = d_maxCellBlock;
@@ -1168,10 +1164,8 @@ namespace dftefe
                                     numCellsInBlockDofsMemSpace,
                                     fieldCellValues);
 
-          std::vector<char> transA(
-            numCellsInBlock, 'N');
-          std::vector<char> transB(
-            numCellsInBlock, 'N');
+          std::vector<char>      transA(numCellsInBlock, 'N');
+          std::vector<char>      transB(numCellsInBlock, 'N');
           std::vector<size_type> mSizesTmp(numCellsInBlock, 0);
           std::vector<size_type> nSizesTmp(numCellsInBlock, 0);
           std::vector<size_type> kSizesTmp(numCellsInBlock, 0);
@@ -1451,10 +1445,8 @@ namespace dftefe
                                     numCellsInBlockDofsMemSpace,
                                     fieldCellValues);
 
-          std::vector<char> transA(
-            numCellsInBlock, 'N');
-          std::vector<char> transB(
-            numCellsInBlock, 'N');
+          std::vector<char>      transA(numCellsInBlock, 'N');
+          std::vector<char>      transB(numCellsInBlock, 'N');
           std::vector<size_type> mSizesTmp(numCellsInBlock, 0);
           std::vector<size_type> nSizesTmp(numCellsInBlock, 0);
           std::vector<size_type> kSizesTmp(numCellsInBlock, 0);
@@ -2081,10 +2073,8 @@ namespace dftefe
           **/
 
           // TODO check if these are right ?? Why is the B Transposed
-          std::vector<char> transA(
-            numCellsInBlock, 'N');
-          std::vector<char> transB(
-            numCellsInBlock, 'T');
+          std::vector<char>      transA(numCellsInBlock, 'N');
+          std::vector<char>      transB(numCellsInBlock, 'T');
           std::vector<size_type> mSizesTmp(numCellsInBlock, 0);
           std::vector<size_type> nSizesTmp(numCellsInBlock, 0);
           std::vector<size_type> kSizesTmp(numCellsInBlock, 0);

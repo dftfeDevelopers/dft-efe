@@ -52,27 +52,25 @@ namespace dftefe
         const size_type              vecSize         = X.locallyOwnedSize();
         const size_type              numVec          = X.getNumberComponents();
 
-        MultiVector<ValueType, memorySpace> X0X0HBX(X, 0.0),
-          residual(X, 0.0);
+        MultiVector<ValueType, memorySpace> X0X0HBX(X, 0.0), residual(X, 0.0);
         utils::MemoryStorage<ValueType, memorySpace> X0HBX(numVec * numVec);
 
         B.apply(X, residual, true, false);
-        blasLapack::
-          gemm<ValueTypeOperand, ValueType, memorySpace>(
-            'N',
-            'C',
-            numVec,
-            numVec,
-            vecSize,
-            1,
-            residual.data(),
-            numVec,
-            orthogonalizedX.data(),
-            numVec,
-            0,
-            X0HBX.data(),
-            numVec,
-            linAlgOpContext);
+        blasLapack::gemm<ValueTypeOperand, ValueType, memorySpace>(
+          'N',
+          'C',
+          numVec,
+          numVec,
+          vecSize,
+          1,
+          residual.data(),
+          numVec,
+          orthogonalizedX.data(),
+          numVec,
+          0,
+          X0HBX.data(),
+          numVec,
+          linAlgOpContext);
 
         // MPI_AllReduce to get the S from all procs
         // mpi_inplace
@@ -138,13 +136,11 @@ namespace dftefe
       , d_elpaScala(&elpaScala)
       , d_useELPA(elpaScala.useElpa())
     {
-      d_XinBatch =
-        std::make_shared<MultiVector<ValueType, memorySpace>>(
-          mpiPatternP2P, linAlgOpContext, eigenVectorBatchSize, ValueType());
+      d_XinBatch = std::make_shared<MultiVector<ValueType, memorySpace>>(
+        mpiPatternP2P, linAlgOpContext, eigenVectorBatchSize, ValueType());
 
-      d_XoutBatch =
-        std::make_shared<MultiVector<ValueType, memorySpace>>(
-          mpiPatternP2P, linAlgOpContext, eigenVectorBatchSize, ValueType());
+      d_XoutBatch = std::make_shared<MultiVector<ValueType, memorySpace>>(
+        mpiPatternP2P, linAlgOpContext, eigenVectorBatchSize, ValueType());
     }
 
     template <typename ValueTypeOperator,
@@ -370,22 +366,13 @@ namespace dftefe
 
               LapackError lapackReturn1 =
                 blasLapack::potrf<ValueType, memorySpace>(
-                  blasLapack::Uplo::Lower,
-                  numVec,
-                  S.data(),
-                  numVec,
-                  linAlgOpContext);
+                  'L', numVec, S.data(), numVec, linAlgOpContext);
 
               // Compute LInv^C
 
               LapackError lapackReturn2 =
                 blasLapack::trtri<ValueType, memorySpace>(
-                  blasLapack::Uplo::Lower,
-                  blasLapack::Diag::NonUnit,
-                  numVec,
-                  S.data(),
-                  numVec,
-                  linAlgOpContext);
+                  'L', 'N', numVec, S.data(), numVec, linAlgOpContext);
 
               const ValueType alpha = 1.0;
               const ValueType beta  = 0.0;
@@ -944,8 +931,8 @@ namespace dftefe
               /* do a eigendecomposition and get min eigenvalue and get shift*/
 
               lapackReturn = blasLapack::heevd<ValueType, memorySpace>(
-                blasLapack::Job::Vec,
-                blasLapack::Uplo::Lower,
+                'V',
+                'L',
                 numVec,
                 eigenVectorsS.data(),
                 numVec,
@@ -1248,19 +1235,19 @@ namespace dftefe
                 {
                   d_batchSizeSmall = numEigVecInBatch;
 
-                  d_XinBatchSmall = std::make_shared<
-                    MultiVector<ValueType, memorySpace>>(
-                    X.getMPIPatternP2P(),
-                    X.getLinAlgOpContext(),
-                    numEigVecInBatch,
-                    ValueType());
+                  d_XinBatchSmall =
+                    std::make_shared<MultiVector<ValueType, memorySpace>>(
+                      X.getMPIPatternP2P(),
+                      X.getLinAlgOpContext(),
+                      numEigVecInBatch,
+                      ValueType());
 
-                  d_XoutBatchSmall = std::make_shared<
-                    MultiVector<ValueType, memorySpace>>(
-                    X.getMPIPatternP2P(),
-                    X.getLinAlgOpContext(),
-                    numEigVecInBatch,
-                    ValueType());
+                  d_XoutBatchSmall =
+                    std::make_shared<MultiVector<ValueType, memorySpace>>(
+                      X.getMPIPatternP2P(),
+                      X.getLinAlgOpContext(),
+                      numEigVecInBatch,
+                      ValueType());
 
                   for (size_type iSize = 0; iSize < vecLocalSize; iSize++)
                     memoryTransfer.copy(numEigVecInBatch,
@@ -1494,19 +1481,19 @@ namespace dftefe
             {
               d_batchSizeSmall = numEigVecInBatch;
 
-              d_XinBatchSmall = std::make_shared<
-                MultiVector<ValueType, memorySpace>>(
-                X.getMPIPatternP2P(),
-                X.getLinAlgOpContext(),
-                numEigVecInBatch,
-                ValueType());
+              d_XinBatchSmall =
+                std::make_shared<MultiVector<ValueType, memorySpace>>(
+                  X.getMPIPatternP2P(),
+                  X.getLinAlgOpContext(),
+                  numEigVecInBatch,
+                  ValueType());
 
-              d_XoutBatchSmall = std::make_shared<
-                MultiVector<ValueType, memorySpace>>(
-                X.getMPIPatternP2P(),
-                X.getLinAlgOpContext(),
-                numEigVecInBatch,
-                ValueType());
+              d_XoutBatchSmall =
+                std::make_shared<MultiVector<ValueType, memorySpace>>(
+                  X.getMPIPatternP2P(),
+                  X.getLinAlgOpContext(),
+                  numEigVecInBatch,
+                  ValueType());
 
               for (size_type iSize = 0; iSize < vecLocalSize; iSize++)
                 memoryTransfer.copy(numEigVecInBatch,

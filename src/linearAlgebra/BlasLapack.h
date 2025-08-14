@@ -423,8 +423,8 @@ namespace dftefe
                 typename ValueType2,
                 typename dftefe::utils::MemorySpace memorySpace>
       void
-      gemm(const char                                &transA,
-           const char                                &transB,
+      gemm(const char &                              transA,
+           const char &                              transB,
            const size_type                           m,
            const size_type                           n,
            const size_type                           k,
@@ -449,8 +449,8 @@ namespace dftefe
                 typename dftefe::utils::MemorySpace memorySpace>
       void
       gemmStridedVarBatched(size_type                            numMats,
-                            const char *                           transA,
-                            const char *                           transB,
+                            const char *                         transA,
+                            const char *                         transB,
                             const size_type *                    stridea,
                             const size_type *                    strideb,
                             const size_type *                    stridec,
@@ -482,8 +482,8 @@ namespace dftefe
       template <typename ValueType,
                 typename dftefe::utils::MemorySpace memorySpace>
       LapackError
-      trtri(Uplo                          uplo,
-            Diag                          diag,
+      trtri(const char                    uplo,
+            const char                    diag,
             size_type                     n,
             ValueType *                   A,
             size_type                     lda,
@@ -495,7 +495,7 @@ namespace dftefe
       template <typename ValueType,
                 typename dftefe::utils::MemorySpace memorySpace>
       LapackError
-      potrf(Uplo                          uplo,
+      potrf(const char                    uplo,
             size_type                     n,
             ValueType *                   A,
             size_type                     lda,
@@ -507,7 +507,7 @@ namespace dftefe
       template <typename ValueType,
                 typename dftefe::utils::MemorySpace memorySpace>
       LapackError
-      steqr(Job                           jobz,
+      steqr(const char                    jobz,
             size_type                     n,
             real_type<ValueType> *        D,
             real_type<ValueType> *        E,
@@ -521,8 +521,8 @@ namespace dftefe
       template <typename ValueType,
                 typename dftefe::utils::MemorySpace memorySpace>
       LapackError
-      heevd(Job                           jobz,
-            Uplo                          uplo,
+      heevd(const char                    jobz,
+            const char                    uplo,
             size_type                     n,
             ValueType *                   A,
             size_type                     lda,
@@ -536,8 +536,8 @@ namespace dftefe
                 typename dftefe::utils::MemorySpace memorySpace>
       LapackError
       hegv(size_type                     itype,
-           Job                           jobz,
-           Uplo                          uplo,
+           const char                    jobz,
+           const char                    uplo,
            size_type                     n,
            ValueType *                   A,
            size_type                     lda,
@@ -557,7 +557,6 @@ namespace dftefe
            size_type                     nrhs,
            ValueType *                   A,
            size_type                     lda,
-           LapackInt *                   ipiv,
            ValueType *                   B,
            size_type                     ldb,
            LinAlgOpContext<memorySpace> &context);

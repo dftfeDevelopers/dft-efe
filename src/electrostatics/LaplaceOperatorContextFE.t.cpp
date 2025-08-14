@@ -154,10 +154,8 @@ namespace dftefe
                                       cellsInBlockNumDoFs,
                                       xCellValues);
 
-            std::vector<char> transA(
-              numCellsInBlock, 'N');
-            std::vector<char> transB(
-              numCellsInBlock, 'N');
+            std::vector<char> transA(numCellsInBlock, 'N');
+            std::vector<char> transB(numCellsInBlock, 'N');
 
             utils::MemoryStorage<size_type, memorySpace> mSizes(
               numCellsInBlock);

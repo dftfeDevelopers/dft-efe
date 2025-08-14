@@ -30,496 +30,580 @@ namespace dftefe
   {
     namespace blasLapack
     {
-      template <typename ValueType1,
-                typename ValueType2>
-      void
-      xgemm(const char                                   transA,
-           const char                                   transB,
-           const size_type                            m,
-           const size_type                            n,
-           const size_type                            k,
-           const scalar_type<ValueType1, ValueType2>  alpha,
-           ValueType1 const *                         A,
-           const size_type                            lda,
-           ValueType2 const *                         B,
-           const size_type                            ldb,
-           const scalar_type<ValueType1, ValueType2>  beta,
-           scalar_type<ValueType1, ValueType2> *C,
-           const size_type                            ldc,
-           LinAlgOpContext<utils::MemorySpace::HOST>               &context)
+      namespace blasWrapper
       {
-        utils::throwException(false, "The input valuetypes are not supported by xgemm");
-      }
+        template <typename ValueType1, typename ValueType2>
+        void
+        gemm(const char                                 transA,
+             const char                                 transB,
+             const size_type                            m,
+             const size_type                            n,
+             const size_type                            k,
+             const scalar_type<ValueType1, ValueType2>  alpha,
+             ValueType1 const *                         A,
+             const size_type                            lda,
+             ValueType2 const *                         B,
+             const size_type                            ldb,
+             const scalar_type<ValueType1, ValueType2>  beta,
+             scalar_type<ValueType1, ValueType2> *      C,
+             const size_type                            ldc,
+             LinAlgOpContext<utils::MemorySpace::HOST> &context)
+        {
+          utils::throwException(
+            false, "The input valuetypes are not supported by gemm");
+        }
 
-    template<>
-    void
-    xgemm<float,float,utils::MemorySpace::HOST>
-          (const char                                   transA,
-           const char                                   transB,
-           const size_type                            m,
-           const size_type                            n,
-           const size_type                            k,
-           const float  alpha,
-           float const *                         A,
-           const size_type                            lda,
-           float const *                         B,
-           const size_type                            ldb,
-           const float  beta,
-           float *C,
-           const size_type                            ldc,
-           LinAlgOpContext<utils::MemorySpace::HOST>   &context)
-    {
-      unsigned int mTmp   = m;
-      unsigned int nTmp   = n;
-      unsigned int kTmp   = k;
-      unsigned int ldaTmp = lda;
-      unsigned int ldbTmp = ldb;
-      unsigned int ldcTmp = ldc;
-      sgemm_(&transA,
-             &transB,
-             &mTmp,
-             &nTmp,
-             &kTmp,
-             &alpha,
-             A,
-             &ldaTmp,
-             B,
-             &ldbTmp,
-             &beta,
-             C,
-             &ldcTmp);
-    }
-
-    template<>
-    void
-    xgemm<double,double,utils::MemorySpace::HOST>(
-          const char   transA,
-          const char   transB,
-          const size_type m,
-          const size_type n,
-          const size_type k,
-          const double     alpha,
-          const double     *A,
-          const size_type lda,
-          const double     *B,
-          const size_type ldb,
-          const double     beta,
-          double           *C,
-          const size_type ldc,
+        template <>
+        void
+        gemm<float, float, utils::MemorySpace::HOST>(
+          const char                                 transA,
+          const char                                 transB,
+          const size_type                            m,
+          const size_type                            n,
+          const size_type                            k,
+          const float                                alpha,
+          float const *                              A,
+          const size_type                            lda,
+          float const *                              B,
+          const size_type                            ldb,
+          const float                                beta,
+          float *                                    C,
+          const size_type                            ldc,
           LinAlgOpContext<utils::MemorySpace::HOST> &context)
-    {
-      unsigned int mTmp   = m;
-      unsigned int nTmp   = n;
-      unsigned int kTmp   = k;
-      unsigned int ldaTmp = lda;
-      unsigned int ldbTmp = ldb;
-      unsigned int ldcTmp = ldc;
-      dgemm_(&transA,
-             &transB,
-             &mTmp,
-             &nTmp,
-             &kTmp,
-             &alpha,
-             A,
-             &ldaTmp,
-             B,
-             &ldbTmp,
-             &beta,
-             C,
-             &ldcTmp);
-    }
+        {
+          unsigned int mTmp   = m;
+          unsigned int nTmp   = n;
+          unsigned int kTmp   = k;
+          unsigned int ldaTmp = lda;
+          unsigned int ldbTmp = ldb;
+          unsigned int ldcTmp = ldc;
+          sgemm_(&transA,
+                 &transB,
+                 &mTmp,
+                 &nTmp,
+                 &kTmp,
+                 &alpha,
+                 A,
+                 &ldaTmp,
+                 B,
+                 &ldbTmp,
+                 &beta,
+                 C,
+                 &ldcTmp);
+        }
 
-    template<>
-    void
-    xgemm<std::complex<float>,std::complex<float>,utils::MemorySpace::HOST>(
-      const char                   transA,
-      const char                   transB,
-      const size_type          m,
-      const size_type          n,
-      const size_type          k,
-      const std::complex<float> alpha,
-      const std::complex<float> *A,
-      const size_type          lda,
-      const std::complex<float> *B,
-      const size_type          ldb,
-      const std::complex<float> beta,
-      std::complex<float>       *C,
-      const size_type          ldc,
-      LinAlgOpContext<utils::MemorySpace::HOST> &context)
-    {
-      unsigned int mTmp   = m;
-      unsigned int nTmp   = n;
-      unsigned int kTmp   = k;
-      unsigned int ldaTmp = lda;
-      unsigned int ldbTmp = ldb;
-      unsigned int ldcTmp = ldc;
-      cgemm_(&transA,
-             &transB,
-             &mTmp,
-             &nTmp,
-             &kTmp,
-             &alpha,
-             A,
-             &ldaTmp,
-             B,
-             &ldbTmp,
-             &beta,
-             C,
-             &ldcTmp);
-    }
-
-    template<>
-    void
-    xgemm<std::complex<double>,std::complex<double>,utils::MemorySpace::HOST>(
-      const char                    transA,
-      const char                    transB,
-      const size_type           m,
-      const size_type           n,
-      const size_type           k,
-      const std::complex<double> alpha,
-      const std::complex<double> *A,
-      const size_type           lda,
-      const std::complex<double> *B,
-      const size_type           ldb,
-      const std::complex<double> beta,
-      std::complex<double>       *C,
-      const size_type           ldc,
-      LinAlgOpContext<utils::MemorySpace::HOST> &context)
-    {
-      unsigned int mTmp   = m;
-      unsigned int nTmp   = n;
-      unsigned int kTmp   = k;
-      unsigned int ldaTmp = lda;
-      unsigned int ldbTmp = ldb;
-      unsigned int ldcTmp = ldc;
-      zgemm_(&transA,
-             &transB,
-             &mTmp,
-             &nTmp,
-             &kTmp,
-             &alpha,
-             A,
-             &ldaTmp,
-             B,
-             &ldbTmp,
-             &beta,
-             C,
-             &ldcTmp);
-    }
-
-
-    template void
-    xgemm<float,float,utils::MemorySpace::HOST>(
-          const char                                   transA,
-           const char                                   transB,
-           const size_type                            m,
-           const size_type                            n,
-           const size_type                            k,
-           const float  alpha,
-           float const *                         A,
-           const size_type                            lda,
-           float const *                         B,
-           const size_type                            ldb,
-           const float  beta,
-           float *C,
-           const size_type                            ldc,
-           LinAlgOpContext<utils::MemorySpace::HOST>   &context);
-
-    template void
-    xgemm<double,double,utils::MemorySpace::HOST>(
-          const char   transA,
-          const char   transB,
-          const size_type m,
-          const size_type n,
-          const size_type k,
-          const double     alpha,
-          const double     *A,
-          const size_type lda,
-          const double     *B,
-          const size_type ldb,
-          const double     beta,
-          double           *C,
-          const size_type ldc,
-          LinAlgOpContext<utils::MemorySpace::HOST> &context);          
-
-    template void
-    xgemm<std::complex<float>,std::complex<float>,utils::MemorySpace::HOST>(
-      const char                   transA,
-      const char                   transB,
-      const size_type          m,
-      const size_type          n,
-      const size_type          k,
-      const std::complex<float> alpha,
-      const std::complex<float> *A,
-      const size_type          lda,
-      const std::complex<float> *B,
-      const size_type          ldb,
-      const std::complex<float> beta,
-      std::complex<float>       *C,
-      const size_type          ldc,
-      LinAlgOpContext<utils::MemorySpace::HOST> &context);
-
-    template void
-    xgemm<std::complex<double>,std::complex<double>,utils::MemorySpace::HOST>(
-      const char                    transA,
-      const char                    transB,
-      const size_type           m,
-      const size_type           n,
-      const size_type           k,
-      const std::complex<double> alpha,
-      const std::complex<double> *A,
-      const size_type           lda,
-      const std::complex<double> *B,
-      const size_type           ldb,
-      const std::complex<double> beta,
-      std::complex<double>       *C,
-      const size_type           ldc,
-      LinAlgOpContext<utils::MemorySpace::HOST> &context);
-
-      template <typename ValueType>
-      real_type<ValueType>
-      xasum(const size_type               n,
-           ValueType const *             x,
-           const size_type               incx,
-           LinAlgOpContext<utils::MemorySpace::HOST> &context)
-      {
-        utils::throwException(false, "The input valuetypes are not supported by xgemm");
-        return (real_type<ValueType>)0;
-      }
-      
-      template <>
-      real_type<float>
-      xasum<float , utils::MemorySpace::HOST>
-          (const size_type               n,
-           float const *             x,
-           const size_type               incx,
-           LinAlgOpContext<utils::MemorySpace::HOST> &context)
-      {
-        unsigned int nTmp   = n;
-        unsigned int incxTmp = incx;
-        return sasum_(&nTmp,
-                x,
-                &incxTmp);
-      }
-
-      template <>
-      real_type<double>
-      xasum<double , utils::MemorySpace::HOST>
-          (const size_type               n,
-           double const *             x,
-           const size_type               incx,
-           LinAlgOpContext<utils::MemorySpace::HOST> &context)
-      {
-        unsigned int nTmp   = n;
-        unsigned int incxTmp = incx;
-        return dasum_(&nTmp,
-                x,
-                &incxTmp);
-      }
-
-      template <>
-      real_type<std::complex<float>>
-      xasum<std::complex<float> , utils::MemorySpace::HOST>
-          (const size_type               n,
-           std::complex<float> const *             x,
-           const size_type               incx,
-           LinAlgOpContext<utils::MemorySpace::HOST> &context)
-      {
-        unsigned int nTmp   = n;
-        unsigned int incxTmp = incx;
-        return scasum_(&nTmp,
-                x,
-                &incxTmp);
-      }
-
-      template <>
-      real_type<std::complex<double>>
-      xasum<std::complex<double> , utils::MemorySpace::HOST>
-          (const size_type               n,
-           std::complex<double> const *             x,
-           const size_type               incx,
-           LinAlgOpContext<utils::MemorySpace::HOST> &context)
-      {
-        unsigned int nTmp   = n;
-        unsigned int incxTmp = incx;
-        return dzasum_(&nTmp,
-                x,
-                &incxTmp);
-      }
-
-      template <typename ValueType>
-      size_type
-      xiamax(const size_type               n,
-           ValueType const *             x,
-           const size_type               incx,
-           LinAlgOpContext<utils::MemorySpace::HOST> &context)
-      {
-        utils::throwException(false, "The input valuetypes are not supported by xgemm");
-        return 0;
-      }
-      
-      template <>
-      size_type
-      xiamax<float , utils::MemorySpace::HOST>
-          (const size_type               n,
-           float const *             x,
-           const size_type               incx,
-           LinAlgOpContext<utils::MemorySpace::HOST> &context)
-      {
-        unsigned int nTmp   = n;
-        unsigned int incxTmp = incx;
-        return isamax_(&nTmp,
-                x,
-                &incxTmp);
-      }
-
-      template <>
-      size_type
-      xiamax<double , utils::MemorySpace::HOST>
-          (const size_type               n,
-           double const *             x,
-           const size_type               incx,
-           LinAlgOpContext<utils::MemorySpace::HOST> &context)
-      {
-        unsigned int nTmp   = n;
-        unsigned int incxTmp = incx;
-        return idamax_(&nTmp,
-                x,
-                &incxTmp);
-      }
-
-      template <>
-      size_type
-      xiamax<std::complex<float> , utils::MemorySpace::HOST>
-          (const size_type               n,
-           std::complex<float> const *             x,
-           const size_type               incx,
-           LinAlgOpContext<utils::MemorySpace::HOST> &context)
-      {
-        unsigned int nTmp   = n;
-        unsigned int incxTmp = incx;
-        return icamax_(&nTmp,
-                x,
-                &incxTmp);
-      }
-
-      template <>
-      size_type
-      xiamax<std::complex<double> , utils::MemorySpace::HOST>
-          (const size_type               n,
-           std::complex<double> const *             x,
-           const size_type               incx,
-           LinAlgOpContext<utils::MemorySpace::HOST> &context)
-      {
-        unsigned int nTmp   = n;
-        unsigned int incxTmp = incx;
-        return izamax_(&nTmp,
-                x,
-                &incxTmp);
-      }
-
-
-      template <typename ValueType1,
-                typename ValueType2>
-      scalar_type<ValueType1, ValueType2>
-      xdot(const size_type               n,
-          ValueType1 const *            x,
-          const size_type               incx,
-          ValueType2 const *            y,
-          const size_type               incy,
+        template <>
+        void
+        gemm<double, double, utils::MemorySpace::HOST>(
+          const char                                 transA,
+          const char                                 transB,
+          const size_type                            m,
+          const size_type                            n,
+          const size_type                            k,
+          const double                               alpha,
+          const double *                             A,
+          const size_type                            lda,
+          const double *                             B,
+          const size_type                            ldb,
+          const double                               beta,
+          double *                                   C,
+          const size_type                            ldc,
           LinAlgOpContext<utils::MemorySpace::HOST> &context)
-      {
-        utils::throwException("xdot not yet implemented in BlasWrapperAPIHost");
-      }
+        {
+          unsigned int mTmp   = m;
+          unsigned int nTmp   = n;
+          unsigned int kTmp   = k;
+          unsigned int ldaTmp = lda;
+          unsigned int ldbTmp = ldb;
+          unsigned int ldcTmp = ldc;
+          dgemm_(&transA,
+                 &transB,
+                 &mTmp,
+                 &nTmp,
+                 &kTmp,
+                 &alpha,
+                 A,
+                 &ldaTmp,
+                 B,
+                 &ldbTmp,
+                 &beta,
+                 C,
+                 &ldcTmp);
+        }
 
-      template <typename ValueType>
-      real_type<ValueType>
-      xnrm2(const size_type               n,
-           ValueType const *             x,
-           const size_type               incx,
-           LinAlgOpContext<utils::MemorySpace::HOST> &context)
-      {
-        utils::throwException("xnrm2 not yet implemented in BlasWrapperAPIHost");
-      }
+        template <>
+        void
+        gemm<std::complex<float>,
+             std::complex<float>,
+             utils::MemorySpace::HOST>(
+          const char                                 transA,
+          const char                                 transB,
+          const size_type                            m,
+          const size_type                            n,
+          const size_type                            k,
+          const std::complex<float>                  alpha,
+          const std::complex<float> *                A,
+          const size_type                            lda,
+          const std::complex<float> *                B,
+          const size_type                            ldb,
+          const std::complex<float>                  beta,
+          std::complex<float> *                      C,
+          const size_type                            ldc,
+          LinAlgOpContext<utils::MemorySpace::HOST> &context)
+        {
+          unsigned int mTmp   = m;
+          unsigned int nTmp   = n;
+          unsigned int kTmp   = k;
+          unsigned int ldaTmp = lda;
+          unsigned int ldbTmp = ldb;
+          unsigned int ldcTmp = ldc;
+          cgemm_(&transA,
+                 &transB,
+                 &mTmp,
+                 &nTmp,
+                 &kTmp,
+                 &alpha,
+                 A,
+                 &ldaTmp,
+                 B,
+                 &ldbTmp,
+                 &beta,
+                 C,
+                 &ldcTmp);
+        }
 
-      template <typename ValueType1,
-                typename ValueType2>
-      void
-      xaxpy(const size_type                           n,
-           const scalar_type<ValueType1, ValueType2> alpha,
-           ValueType1 const *                        x,
-           const size_type                           incx,
-           ValueType2 *                              y,
-           const size_type                           incy,
-           LinAlgOpContext<utils::MemorySpace::HOST> &            context)
-      {
-        utils::throwException("xaxpy not yet implemented in BlasWrapperAPIHost");
-      }
+        template <>
+        void
+        gemm<std::complex<double>,
+             std::complex<double>,
+             utils::MemorySpace::HOST>(
+          const char                                 transA,
+          const char                                 transB,
+          const size_type                            m,
+          const size_type                            n,
+          const size_type                            k,
+          const std::complex<double>                 alpha,
+          const std::complex<double> *               A,
+          const size_type                            lda,
+          const std::complex<double> *               B,
+          const size_type                            ldb,
+          const std::complex<double>                 beta,
+          std::complex<double> *                     C,
+          const size_type                            ldc,
+          LinAlgOpContext<utils::MemorySpace::HOST> &context)
+        {
+          unsigned int mTmp   = m;
+          unsigned int nTmp   = n;
+          unsigned int kTmp   = k;
+          unsigned int ldaTmp = lda;
+          unsigned int ldbTmp = ldb;
+          unsigned int ldcTmp = ldc;
+          zgemm_(&transA,
+                 &transB,
+                 &mTmp,
+                 &nTmp,
+                 &kTmp,
+                 &alpha,
+                 A,
+                 &ldaTmp,
+                 B,
+                 &ldbTmp,
+                 &beta,
+                 C,
+                 &ldcTmp);
+        }
 
-      template
-      real_type<float>
-      xasum<float , utils::MemorySpace::HOST>
-          (const size_type               n,
-           float const *             x,
-           const size_type               incx,
-           LinAlgOpContext<utils::MemorySpace::HOST> &context);
 
-      template
-      real_type<double>
-      xasum<double , utils::MemorySpace::HOST>
-          (const size_type               n,
-           double const *             x,
-           const size_type               incx,
-           LinAlgOpContext<utils::MemorySpace::HOST> &context);
+        template void
+        gemm<float, float, utils::MemorySpace::HOST>(
+          const char                                 transA,
+          const char                                 transB,
+          const size_type                            m,
+          const size_type                            n,
+          const size_type                            k,
+          const float                                alpha,
+          float const *                              A,
+          const size_type                            lda,
+          float const *                              B,
+          const size_type                            ldb,
+          const float                                beta,
+          float *                                    C,
+          const size_type                            ldc,
+          LinAlgOpContext<utils::MemorySpace::HOST> &context);
 
-      template
-      real_type<std::complex<float>>
-      xasum<std::complex<float> , utils::MemorySpace::HOST>
-          (const size_type               n,
-           std::complex<float> const *             x,
-           const size_type               incx,
-           LinAlgOpContext<utils::MemorySpace::HOST> &context);
+        template void
+        gemm<double, double, utils::MemorySpace::HOST>(
+          const char                                 transA,
+          const char                                 transB,
+          const size_type                            m,
+          const size_type                            n,
+          const size_type                            k,
+          const double                               alpha,
+          const double *                             A,
+          const size_type                            lda,
+          const double *                             B,
+          const size_type                            ldb,
+          const double                               beta,
+          double *                                   C,
+          const size_type                            ldc,
+          LinAlgOpContext<utils::MemorySpace::HOST> &context);
 
-      template
-      real_type<std::complex<double>>
-      xasum<std::complex<double> , utils::MemorySpace::HOST>
-          (const size_type               n,
-           std::complex<double> const *             x,
-           const size_type               incx,
-           LinAlgOpContext<utils::MemorySpace::HOST> &context);
-      
-      template
-      size_type
-      xiamax<float , utils::MemorySpace::HOST>
-          (const size_type               n,
-           float const *             x,
-           const size_type               incx,
-           LinAlgOpContext<utils::MemorySpace::HOST> &context);
+        template void
+        gemm<std::complex<float>,
+             std::complex<float>,
+             utils::MemorySpace::HOST>(
+          const char                                 transA,
+          const char                                 transB,
+          const size_type                            m,
+          const size_type                            n,
+          const size_type                            k,
+          const std::complex<float>                  alpha,
+          const std::complex<float> *                A,
+          const size_type                            lda,
+          const std::complex<float> *                B,
+          const size_type                            ldb,
+          const std::complex<float>                  beta,
+          std::complex<float> *                      C,
+          const size_type                            ldc,
+          LinAlgOpContext<utils::MemorySpace::HOST> &context);
 
-      template
-      size_type
-      xiamax<double , utils::MemorySpace::HOST>
-          (const size_type               n,
-           double const *             x,
-           const size_type               incx,
-           LinAlgOpContext<utils::MemorySpace::HOST> &context);
+        template void
+        gemm<std::complex<double>,
+             std::complex<double>,
+             utils::MemorySpace::HOST>(
+          const char                                 transA,
+          const char                                 transB,
+          const size_type                            m,
+          const size_type                            n,
+          const size_type                            k,
+          const std::complex<double>                 alpha,
+          const std::complex<double> *               A,
+          const size_type                            lda,
+          const std::complex<double> *               B,
+          const size_type                            ldb,
+          const std::complex<double>                 beta,
+          std::complex<double> *                     C,
+          const size_type                            ldc,
+          LinAlgOpContext<utils::MemorySpace::HOST> &context);
 
-      template
-      size_type
-      xiamax<std::complex<float> , utils::MemorySpace::HOST>
-          (const size_type               n,
-           std::complex<float> const *             x,
-           const size_type               incx,
-           LinAlgOpContext<utils::MemorySpace::HOST> &context);
+        template <typename ValueType>
+        real_type<ValueType>
+        asum(const size_type                            n,
+             ValueType const *                          x,
+             const size_type                            incx,
+             LinAlgOpContext<utils::MemorySpace::HOST> &context)
+        {
+          utils::throwException(
+            false, "The input valuetypes are not supported by gemm");
+          return (real_type<ValueType>)0;
+        }
 
-      template
-      size_type
-      xiamax<std::complex<double> , utils::MemorySpace::HOST>
-          (const size_type               n,
-           std::complex<double> const *             x,
-           const size_type               incx,
-           LinAlgOpContext<utils::MemorySpace::HOST> &context);
+        template <>
+        real_type<float>
+        asum<float, utils::MemorySpace::HOST>(
+          const size_type                            n,
+          float const *                              x,
+          const size_type                            incx,
+          LinAlgOpContext<utils::MemorySpace::HOST> &context)
+        {
+          unsigned int nTmp    = n;
+          unsigned int incxTmp = incx;
+          return sasum_(&nTmp, x, &incxTmp);
+        }
 
-  } // namespace blasWrapper
-  } // End of namespace linearAlgebra
+        template <>
+        real_type<double>
+        asum<double, utils::MemorySpace::HOST>(
+          const size_type                            n,
+          double const *                             x,
+          const size_type                            incx,
+          LinAlgOpContext<utils::MemorySpace::HOST> &context)
+        {
+          unsigned int nTmp    = n;
+          unsigned int incxTmp = incx;
+          return dasum_(&nTmp, x, &incxTmp);
+        }
+
+        template <>
+        real_type<std::complex<float>>
+        asum<std::complex<float>, utils::MemorySpace::HOST>(
+          const size_type                            n,
+          std::complex<float> const *                x,
+          const size_type                            incx,
+          LinAlgOpContext<utils::MemorySpace::HOST> &context)
+        {
+          unsigned int nTmp    = n;
+          unsigned int incxTmp = incx;
+          return scasum_(&nTmp, x, &incxTmp);
+        }
+
+        template <>
+        real_type<std::complex<double>>
+        asum<std::complex<double>, utils::MemorySpace::HOST>(
+          const size_type                            n,
+          std::complex<double> const *               x,
+          const size_type                            incx,
+          LinAlgOpContext<utils::MemorySpace::HOST> &context)
+        {
+          unsigned int nTmp    = n;
+          unsigned int incxTmp = incx;
+          return dzasum_(&nTmp, x, &incxTmp);
+        }
+
+        template <typename ValueType>
+        size_type
+        iamax(const size_type                            n,
+              ValueType const *                          x,
+              const size_type                            incx,
+              LinAlgOpContext<utils::MemorySpace::HOST> &context)
+        {
+          utils::throwException(
+            false, "The input valuetypes are not supported by gemm");
+          return 0;
+        }
+
+        template <>
+        size_type
+        iamax<float, utils::MemorySpace::HOST>(
+          const size_type                            n,
+          float const *                              x,
+          const size_type                            incx,
+          LinAlgOpContext<utils::MemorySpace::HOST> &context)
+        {
+          unsigned int nTmp    = n;
+          unsigned int incxTmp = incx;
+          return isamax_(&nTmp, x, &incxTmp);
+        }
+
+        template <>
+        size_type
+        iamax<double, utils::MemorySpace::HOST>(
+          const size_type                            n,
+          double const *                             x,
+          const size_type                            incx,
+          LinAlgOpContext<utils::MemorySpace::HOST> &context)
+        {
+          unsigned int nTmp    = n;
+          unsigned int incxTmp = incx;
+          return idamax_(&nTmp, x, &incxTmp);
+        }
+
+        template <>
+        size_type
+        iamax<std::complex<float>, utils::MemorySpace::HOST>(
+          const size_type                            n,
+          std::complex<float> const *                x,
+          const size_type                            incx,
+          LinAlgOpContext<utils::MemorySpace::HOST> &context)
+        {
+          unsigned int nTmp    = n;
+          unsigned int incxTmp = incx;
+          return icamax_(&nTmp, x, &incxTmp);
+        }
+
+        template <>
+        size_type
+        iamax<std::complex<double>, utils::MemorySpace::HOST>(
+          const size_type                            n,
+          std::complex<double> const *               x,
+          const size_type                            incx,
+          LinAlgOpContext<utils::MemorySpace::HOST> &context)
+        {
+          unsigned int nTmp    = n;
+          unsigned int incxTmp = incx;
+          return izamax_(&nTmp, x, &incxTmp);
+        }
+
+        template <typename ValueType1, typename ValueType2>
+        void
+        axpy(const size_type                            n,
+             const scalar_type<ValueType1, ValueType2>  alpha,
+             ValueType1 const *                         x,
+             const size_type                            incx,
+             ValueType2 *                               y,
+             const size_type                            incy,
+             LinAlgOpContext<utils::MemorySpace::HOST> &context)
+        {
+          utils::throwException(
+            "axpy not yet implemented in BlasWrapperAPIHost");
+        }
+
+        template <>
+        void
+        axpy<double, double, utils::MemorySpace::HOST>(
+          const size_type                            n,
+          const scalar_type<double, double>          alpha,
+          double const *                             x,
+          const size_type                            incx,
+          double *                                   y,
+          const size_type                            incy,
+          LinAlgOpContext<utils::MemorySpace::HOST> &context)
+        {
+          unsigned int nTmp    = n;
+          unsigned int incxTmp = incx;
+          unsigned int incyTmp = incy;
+          return daxpy_(&nTmp, &alpha, x, &incxTmp, y, &incyTmp);
+        }
+
+        template <>
+        void
+        axpy<float, float, utils::MemorySpace::HOST>(
+          const size_type                            n,
+          const scalar_type<float, float>            alpha,
+          float const *                              x,
+          const size_type                            incx,
+          float *                                    y,
+          const size_type                            incy,
+          LinAlgOpContext<utils::MemorySpace::HOST> &context)
+        {
+          unsigned int nTmp    = n;
+          unsigned int incxTmp = incx;
+          unsigned int incyTmp = incy;
+          return saxpy_(&nTmp, &alpha, x, &incxTmp, y, &incyTmp);
+        }
+
+        template <>
+        void
+        axpy<std::complex<float>,
+             std::complex<float>,
+             utils::MemorySpace::HOST>(
+          const size_type                                             n,
+          const scalar_type<std::complex<float>, std::complex<float>> alpha,
+          std::complex<float> const *                                 x,
+          const size_type                                             incx,
+          std::complex<float> *                                       y,
+          const size_type                                             incy,
+          LinAlgOpContext<utils::MemorySpace::HOST> &                 context)
+        {
+          unsigned int nTmp    = n;
+          unsigned int incxTmp = incx;
+          unsigned int incyTmp = incy;
+          return caxpy_(&nTmp, &alpha, x, &incxTmp, y, &incyTmp);
+        }
+
+
+        template <>
+        void
+        axpy<std::complex<double>,
+             std::complex<double>,
+             utils::MemorySpace::HOST>(
+          const size_type                                               n,
+          const scalar_type<std::complex<double>, std::complex<double>> alpha,
+          std::complex<double> const *                                  x,
+          const size_type                                               incx,
+          std::complex<double> *                                        y,
+          const size_type                                               incy,
+          LinAlgOpContext<utils::MemorySpace::HOST> &                   context)
+        {
+          unsigned int nTmp    = n;
+          unsigned int incxTmp = incx;
+          unsigned int incyTmp = incy;
+          return zaxpy_(&nTmp, &alpha, x, &incxTmp, y, &incyTmp);
+        }
+
+        template real_type<float>
+        asum<float, utils::MemorySpace::HOST>(
+          const size_type                            n,
+          float const *                              x,
+          const size_type                            incx,
+          LinAlgOpContext<utils::MemorySpace::HOST> &context);
+
+        template real_type<double>
+        asum<double, utils::MemorySpace::HOST>(
+          const size_type                            n,
+          double const *                             x,
+          const size_type                            incx,
+          LinAlgOpContext<utils::MemorySpace::HOST> &context);
+
+        template real_type<std::complex<float>>
+        asum<std::complex<float>, utils::MemorySpace::HOST>(
+          const size_type                            n,
+          std::complex<float> const *                x,
+          const size_type                            incx,
+          LinAlgOpContext<utils::MemorySpace::HOST> &context);
+
+        template real_type<std::complex<double>>
+        asum<std::complex<double>, utils::MemorySpace::HOST>(
+          const size_type                            n,
+          std::complex<double> const *               x,
+          const size_type                            incx,
+          LinAlgOpContext<utils::MemorySpace::HOST> &context);
+
+        template size_type
+        iamax<float, utils::MemorySpace::HOST>(
+          const size_type                            n,
+          float const *                              x,
+          const size_type                            incx,
+          LinAlgOpContext<utils::MemorySpace::HOST> &context);
+
+        template size_type
+        iamax<double, utils::MemorySpace::HOST>(
+          const size_type                            n,
+          double const *                             x,
+          const size_type                            incx,
+          LinAlgOpContext<utils::MemorySpace::HOST> &context);
+
+        template size_type
+        iamax<std::complex<float>, utils::MemorySpace::HOST>(
+          const size_type                            n,
+          std::complex<float> const *                x,
+          const size_type                            incx,
+          LinAlgOpContext<utils::MemorySpace::HOST> &context);
+
+        template size_type
+        iamax<std::complex<double>, utils::MemorySpace::HOST>(
+          const size_type                            n,
+          std::complex<double> const *               x,
+          const size_type                            incx,
+          LinAlgOpContext<utils::MemorySpace::HOST> &context);
+
+
+        template void
+        axpy<double, double, utils::MemorySpace::HOST>(
+          const size_type                            n,
+          const scalar_type<double, double>          alpha,
+          double const *                             x,
+          const size_type                            incx,
+          double *                                   y,
+          const size_type                            incy,
+          LinAlgOpContext<utils::MemorySpace::HOST> &context);
+
+        template void
+        axpy<float, float, utils::MemorySpace::HOST>(
+          const size_type                            n,
+          const scalar_type<float, float>            alpha,
+          float const *                              x,
+          const size_type                            incx,
+          float *                                    y,
+          const size_type                            incy,
+          LinAlgOpContext<utils::MemorySpace::HOST> &context);
+
+        template void
+        axpy<std::complex<float>,
+             std::complex<float>,
+             utils::MemorySpace::HOST>(
+          const size_type                                             n,
+          const scalar_type<std::complex<float>, std::complex<float>> alpha,
+          std::complex<float> const *                                 x,
+          const size_type                                             incx,
+          std::complex<float> *                                       y,
+          const size_type                                             incy,
+          LinAlgOpContext<utils::MemorySpace::HOST> &                 context);
+
+
+        template void
+        axpy<std::complex<double>,
+             std::complex<double>,
+             utils::MemorySpace::HOST>(
+          const size_type                                               n,
+          const scalar_type<std::complex<double>, std::complex<double>> alpha,
+          std::complex<double> const *                                  x,
+          const size_type                                               incx,
+          std::complex<double> *                                        y,
+          const size_type                                               incy,
+          LinAlgOpContext<utils::MemorySpace::HOST> &context);
+      } // namespace blasWrapper
+
+    } // namespace blasLapack
+  }   // End of namespace linearAlgebra
 } // End of namespace dftefe

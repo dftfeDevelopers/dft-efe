@@ -34,126 +34,107 @@ namespace dftefe
 {
   namespace linearAlgebra
   {
-    namespace blasLapack 
+    namespace blasLapack
     {
-      template <typename ValueType1,
-                typename ValueType2,
-                typename utils::MemorySpace memorySpace>
-      void
-      xgemm(const char                                 transA,
-           const char                                 transB,
-           const size_type                            m,
-           const size_type                            n,
-           const size_type                            k,
-           const scalar_type<ValueType1, ValueType2>  alpha,
-           ValueType1 const *                         A,
-           const size_type                            lda,
-           ValueType2 const *                         B,
-           const size_type                            ldb,
-           const scalar_type<ValueType1, ValueType2>  beta,
-           scalar_type<ValueType1, ValueType2> *C,
-           const size_type                            ldc,
-           LinAlgOpContext<memorySpace>               &context);
+      namespace blasWrapper
+      {
+        template <typename ValueType1,
+                  typename ValueType2,
+                  typename utils::MemorySpace memorySpace>
+        void
+        gemm(const char                                transA,
+             const char                                transB,
+             const size_type                           m,
+             const size_type                           n,
+             const size_type                           k,
+             const scalar_type<ValueType1, ValueType2> alpha,
+             ValueType1 const *                        A,
+             const size_type                           lda,
+             ValueType2 const *                        B,
+             const size_type                           ldb,
+             const scalar_type<ValueType1, ValueType2> beta,
+             scalar_type<ValueType1, ValueType2> *     C,
+             const size_type                           ldc,
+             LinAlgOpContext<memorySpace> &            context);
 
-      template <typename ValueType,
-                typename utils::MemorySpace memorySpace>
-      real_type<ValueType>
-      xasum(const size_type               n,
-           ValueType const *             x,
-           const size_type               incx,
-           LinAlgOpContext<memorySpace> &context);
+        template <typename ValueType, typename utils::MemorySpace memorySpace>
+        real_type<ValueType>
+        asum(const size_type               n,
+             ValueType const *             x,
+             const size_type               incx,
+             LinAlgOpContext<memorySpace> &context);
 
-      template <typename ValueType,
-                typename utils::MemorySpace memorySpace>
-      size_type
-      xiamax(const size_type               n,
-           ValueType const *             x,
-           const size_type               incx,
-           LinAlgOpContext<memorySpace> &context);
+        template <typename ValueType, typename utils::MemorySpace memorySpace>
+        size_type
+        iamax(const size_type               n,
+              ValueType const *             x,
+              const size_type               incx,
+              LinAlgOpContext<memorySpace> &context);
 
-      template <typename ValueType1,
-                typename ValueType2,
-                typename utils::MemorySpace memorySpace>
-      void
-      xaxpy(const size_type                           n,
-           const scalar_type<ValueType1, ValueType2> alpha,
-           ValueType1 const *                        x,
-           const size_type                           incx,
-           ValueType2 *                              y,
-           const size_type                           incy,
-           LinAlgOpContext<memorySpace> &            context);
-
-
-      template <typename ValueType1,
-                typename ValueType2,
-                dftefe::utils::MemorySpace memorySpace>
-      scalar_type<ValueType1, ValueType2>
-      xdot(const size_type               n,
-          ValueType1 const *            x,
-          const size_type               incx,
-          ValueType2 const *            y,
-          const size_type               incy,
-          LinAlgOpContext<memorySpace> &context);
-
-
-      template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-      real_type<ValueType>
-      xnrm2(const size_type               n,
-           ValueType const *             x,
-           const size_type               incx,
-           LinAlgOpContext<memorySpace> &context);
+        template <typename ValueType1,
+                  typename ValueType2,
+                  typename utils::MemorySpace memorySpace>
+        void
+        axpy(const size_type                           n,
+             const scalar_type<ValueType1, ValueType2> alpha,
+             ValueType1 const *                        x,
+             const size_type                           incx,
+             ValueType2 *                              y,
+             const size_type                           incy,
+             LinAlgOpContext<memorySpace> &            context);
 
 #if defined(DFTEFE_WITH_DEVICE)
 
-    enum class tensorOpDataType
-    {
-      fp32,
-      tf32,
-      bf16,
-      fp16
-    };
+        enum class tensorOpDataType
+        {
+          fp32,
+          tf32,
+          bf16,
+          fp16
+        };
 
-      template <typename ValueType1, typename ValueType2>
-      static void
-      copyValueType1ArrToValueType2ArrDeviceCall(
-        const size_type            size,
-        const ValueType1            *valueType1Arr,
-        ValueType2                  *valueType2Arr,
-        utils::deviceStream_t streamId = utils::defaultStream);
+        template <typename ValueType1, typename ValueType2>
+        static void
+        copyValueType1ArrToValueType2ArrDeviceCall(
+          const size_type       size,
+          const ValueType1 *    valueType1Arr,
+          ValueType2 *          valueType2Arr,
+          utils::deviceStream_t streamId = utils::defaultStream);
 
-      utils::deviceBlasHandle_t &
-      getDeviceBlasHandle();
+        utils::deviceBlasHandle_t &
+        getDeviceBlasHandle();
 
-      void
-      setTensorOpDataType(tensorOpDataType opType)
-      {
-        d_opType = opType;
-      }
+        void
+        setTensorOpDataType(tensorOpDataType opType)
+        {
+          d_opType = opType;
+        }
 
-      static utils::deviceBlasStatus_t
-      setStream(utils::deviceStream_t streamId);
+        static utils::deviceBlasStatus_t
+        setStream(utils::deviceStream_t streamId);
 
-      inline static utils::deviceBlasHandle_t d_deviceBlasHandle;
-      inline static utils::deviceStream_t     d_streamId;
+        inline static utils::deviceBlasHandle_t d_deviceBlasHandle;
+        inline static utils::deviceStream_t     d_streamId;
 
 #  ifdef DFTEFE_WITH_DEVICE_AMD
-      void
-      initialize();
+        void
+        initialize();
 #  endif
 
-      /// storage for deviceblas handle
-      tensorOpDataType d_opType;
+        /// storage for deviceblas handle
+        tensorOpDataType d_opType;
 
-      utils::deviceBlasStatus_t
-      create();
+        utils::deviceBlasStatus_t
+        create();
 
-      utils::deviceBlasStatus_t
-      destroy();
+        utils::deviceBlasStatus_t
+        destroy();
 
-    #endif
+#endif
 
-    }// end of blasWrapper
-  } // end of namespace linearAlgebra
+      } // namespace blasWrapper
+    }   // namespace blasLapack
+  }     // end of namespace linearAlgebra
 
 } // end of namespace dftefe
 

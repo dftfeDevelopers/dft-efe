@@ -34,84 +34,81 @@ namespace dftefe
 {
   namespace linearAlgebra
   {
-    namespace blasLapack 
+    namespace blasLapack
     {
       namespace lapackWrapper
       {
-      template <typename ValueType>
-      int
-      getrf(const int m, 
-            const int n, 
-            ValueType *A, 
-            const unsigned int lda, 
-            int *ipiv);
+        template <typename ValueType>
+        int
+        getrf(const int          m,
+              const int          n,
+              ValueType *        A,
+              const unsigned int lda,
+              int *              ipiv);
 
-      template <typename ValueType>
-      int
-      getri(const int    N,
-            ValueType *A,
-            const unsigned int    lda,
-            int    *ipiv);
+        template <typename ValueType>
+        int
+        getri(const int N, ValueType *A, const unsigned int lda, int *ipiv);
 
-      template <typename ValueType>
-      int
-      trtri(const char         uplo,
-            const char         diag,
-            const unsigned int n,
-            ValueType          *a,
-            const unsigned int lda);
+        template <typename ValueType>
+        int
+        trtri(const char         uplo,
+              const char         diag,
+              const unsigned int n,
+              ValueType *        a,
+              const unsigned int lda);
 
-      template <typename ValueType>
-      int
-      potrf(const char           uplo,
-            const unsigned int   n,
-            ValueType            *a,
-            const unsigned int   lda);
+        template <typename ValueType>
+        int
+        potrf(const char         uplo,
+              const unsigned int n,
+              ValueType *        a,
+              const unsigned int lda);
 
-      template <typename ValueType>
-      int
-      steqr(const char                    jobz,
-            const unsigned int            n,
-            real_type<ValueType> *        D,
-            real_type<ValueType> *        E,
-            ValueType *                   Z,
-            const unsigned int            lda);
+        template <typename ValueType>
+        int
+        steqr(const char            jobz,
+              const unsigned int    n,
+              real_type<ValueType> *D,
+              real_type<ValueType> *E,
+              ValueType *           Z,
+              const unsigned int    lda);
 
 
-      template <typename ValueType>
-      int
-      heevd(const char           jobz,
-            const char           uplo,
-            const unsigned int   n,
-            ValueType            *A,
-            const unsigned int   lda,
-            double               *w);
+        template <typename ValueType>
+        int
+        heevd(const char         jobz,
+              const char         uplo,
+              const unsigned int n,
+              ValueType *        A,
+              const unsigned int lda,
+              double *           w);
 
-      template <typename ValueType>
-      int
-      hegv(const int itype, 
-          const char  jobz, 
-          const char  uplo, 
-          const unsigned int n,
-          ValueType* A, 
-          const unsigned int  lda,
-          ValueType* B, 
-          const unsigned int  ldb,
-          double* w);
+        template <typename ValueType>
+        int
+        hegv(const int          itype,
+             const char         jobz,
+             const char         uplo,
+             const unsigned int n,
+             ValueType *        A,
+             const unsigned int lda,
+             ValueType *        B,
+             const unsigned int ldb,
+             double *           w);
 
-      template <typename ValueType>
-      int
-      gesv(const unsigned int  	n,
-          const unsigned int  	nrhs,
-          ValueType *  	A,
-          const unsigned int  	lda,
-          int *  	ipiv,
-          ValueType *  	B,
-          const unsigned int  	ldb);
-      }
+        template <typename ValueType>
+        int
+        gesv(const unsigned int n,
+             const unsigned int nrhs,
+             ValueType *        A,
+             const unsigned int lda,
+             int *              ipiv,
+             ValueType *        B,
+             const unsigned int ldb);
+      } // namespace lapackWrapper
 
-    }// end of LAPACKWrapper
-  } // end of namespace linearAlgebra
+    } // namespace blasLapack
+  }   // end of namespace linearAlgebra
 
 } // end of namespace dftefe
 

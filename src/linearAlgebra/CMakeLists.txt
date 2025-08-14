@@ -9,13 +9,13 @@ if (NOT TARGET dft-efe-linalg)
 	    Defaults.cpp
 	    LinearAlgebraTypes.cpp
 	    LinearAlgebraProfiler.cpp
-            BlasAPIWrapperHost.cpp
-            LapackAPIWrapperHost.cpp
-            BlasLapack.cpp
-            BlasLapackKernels.cpp
-            BlasLapackKernels.cu
-            LinAlgOpContext.cpp
-            VectorAttributes.cpp
+        BlasAPIWrapperHost.cpp
+        LapackAPIWrapperHost.cpp
+        BlasLapack.cpp
+        BlasLapackKernels.cpp
+        BlasLapackKernels.cu
+        LinAlgOpContext.cpp
+        VectorAttributes.cpp
 	    Vector.cpp
 	    MultiVector.cpp
 	    LinearSolver.cpp
@@ -64,12 +64,9 @@ if (NOT TARGET dft-efe-linalg)
         add_subdirectory(../utils ${CMAKE_CURRENT_BINARY_DIR}/buildUtils)
     endif ()
 
-    target_include_directories(dft-efe-linalg PUBLIC ${SLATE_DIR}/include)
-    target_link_directories(dft-efe-linalg PUBLIC ${SLATE_DIR}/lib64)
-
     #NOTE : DFTFE doesn't link to scalapack directly. Check this.
     target_link_libraries(dft-efe-linalg PUBLIC ${SCALAPACK_LIBRARIES})
 
     find_package(ELPA 2023 REQUIRED)
-    target_link_libraries(dft-efe-linalg PUBLIC ELPA::ELPA blaspp lapackpp slate dft-efe-utils ${DFTEFE_LINEARALGEBRA_MPI_LIBRARIES})
+    target_link_libraries(dft-efe-linalg PUBLIC ELPA::ELPA dft-efe-utils ${DFTEFE_LINEARALGEBRA_MPI_LIBRARIES})
 endif ()

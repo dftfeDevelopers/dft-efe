@@ -52,13 +52,11 @@ namespace dftefe
       , d_useELPA(d_elpaScala->useElpa())
       , d_useScalapack(useScalpack)
     {
-      d_XinBatch =
-        std::make_shared<MultiVector<ValueType, memorySpace>>(
-          mpiPatternP2P, linAlgOpContext, eigenVectorBatchSize, ValueType());
+      d_XinBatch = std::make_shared<MultiVector<ValueType, memorySpace>>(
+        mpiPatternP2P, linAlgOpContext, eigenVectorBatchSize, ValueType());
 
-      d_XoutBatch =
-        std::make_shared<MultiVector<ValueType, memorySpace>>(
-          mpiPatternP2P, linAlgOpContext, eigenVectorBatchSize, ValueType());
+      d_XoutBatch = std::make_shared<MultiVector<ValueType, memorySpace>>(
+        mpiPatternP2P, linAlgOpContext, eigenVectorBatchSize, ValueType());
     }
 
     template <typename ValueTypeOperator,
@@ -249,8 +247,8 @@ namespace dftefe
           // Solve the standard eigenvalue problem
 
           lapackReturn = blasLapack::heevd<ValueType, memorySpace>(
-            computeEigenVectors ? blasLapack::Job::Vec : blasLapack::Job::NoVec,
-            blasLapack::Uplo::Lower,
+            computeEigenVectors ? 'V' : 'N',
+            'L',
             numVec,
             XprojectedA.data(),
             numVec,
@@ -415,8 +413,8 @@ namespace dftefe
         {
           lapackReturn =
             blasLapack::hegv<ValueType, memorySpace>(1,
-                                                     blasLapack::Job::Vec,
-                                                     blasLapack::Uplo::Lower,
+                                                     'V',
+                                                     'L',
                                                      numVec,
                                                      XprojectedA.data(),
                                                      numVec,
@@ -451,8 +449,8 @@ namespace dftefe
         {
           lapackReturn =
             blasLapack::hegv<ValueType, memorySpace>(1,
-                                                     blasLapack::Job::NoVec,
-                                                     blasLapack::Uplo::Lower,
+                                                     'N',
+                                                     'L',
                                                      numVec,
                                                      XprojectedA.data(),
                                                      numVec,
@@ -547,19 +545,19 @@ namespace dftefe
                 {
                   d_batchSizeSmall = numEigVecInBatch;
 
-                  d_XinBatchSmall = std::make_shared<
-                    MultiVector<ValueType, memorySpace>>(
-                    X.getMPIPatternP2P(),
-                    X.getLinAlgOpContext(),
-                    numEigVecInBatch,
-                    ValueType());
+                  d_XinBatchSmall =
+                    std::make_shared<MultiVector<ValueType, memorySpace>>(
+                      X.getMPIPatternP2P(),
+                      X.getLinAlgOpContext(),
+                      numEigVecInBatch,
+                      ValueType());
 
-                  d_XoutBatchSmall = std::make_shared<
-                    MultiVector<ValueType, memorySpace>>(
-                    X.getMPIPatternP2P(),
-                    X.getLinAlgOpContext(),
-                    numEigVecInBatch,
-                    ValueType());
+                  d_XoutBatchSmall =
+                    std::make_shared<MultiVector<ValueType, memorySpace>>(
+                      X.getMPIPatternP2P(),
+                      X.getLinAlgOpContext(),
+                      numEigVecInBatch,
+                      ValueType());
 
                   for (size_type iSize = 0; iSize < vecLocalSize; iSize++)
                     memoryTransfer.copy(numEigVecInBatch,
@@ -749,19 +747,19 @@ namespace dftefe
             {
               d_batchSizeSmall = numEigVecInBatch;
 
-              d_XinBatchSmall = std::make_shared<
-                MultiVector<ValueType, memorySpace>>(
-                X.getMPIPatternP2P(),
-                X.getLinAlgOpContext(),
-                numEigVecInBatch,
-                ValueType());
+              d_XinBatchSmall =
+                std::make_shared<MultiVector<ValueType, memorySpace>>(
+                  X.getMPIPatternP2P(),
+                  X.getLinAlgOpContext(),
+                  numEigVecInBatch,
+                  ValueType());
 
-              d_XoutBatchSmall = std::make_shared<
-                MultiVector<ValueType, memorySpace>>(
-                X.getMPIPatternP2P(),
-                X.getLinAlgOpContext(),
-                numEigVecInBatch,
-                ValueType());
+              d_XoutBatchSmall =
+                std::make_shared<MultiVector<ValueType, memorySpace>>(
+                  X.getMPIPatternP2P(),
+                  X.getLinAlgOpContext(),
+                  numEigVecInBatch,
+                  ValueType());
 
               for (size_type iSize = 0; iSize < vecLocalSize; iSize++)
                 memoryTransfer.copy(numEigVecInBatch,

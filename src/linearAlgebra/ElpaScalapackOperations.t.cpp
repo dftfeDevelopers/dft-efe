@@ -122,12 +122,11 @@ namespace dftefe
         for (size_type ivec = 0; ivec < N; ivec += vectorsBlockSize)
           {
             // Correct block dimensions if block "goes off edge of" the matrix
-            const size_type B = std::min(vectorsBlockSize, N - ivec);
-            blasLapack::Op
-              transA = 'N' /*'N'*/,
-              transB = std::is_same<T, std::complex<double>>::value ?
-                         'C' /*'C'*/ :
-                         'T' /*'T'*/;
+            const size_type B      = std::min(vectorsBlockSize, N - ivec);
+            char            transA = 'N' /*'N'*/,
+                 transB = std::is_same<T, std::complex<double>>::value ?
+                            'C' /*'C'*/ :
+                            'T' /*'T'*/;
             const T scalarCoeffAlpha = 1.0, scalarCoeffBeta = 0.0;
 
             std::fill(overlapMatrixBlock.begin(), overlapMatrixBlock.end(), 0.);

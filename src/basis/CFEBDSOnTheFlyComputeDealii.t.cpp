@@ -71,10 +71,8 @@ namespace dftefe
         utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>
           memoryTransfer;
 
-        std::vector<char> transA(
-          numMats, 'N');
-        std::vector<char> transB(
-          numMats, 'N');
+        std::vector<char>      transA(numMats, 'N');
+        std::vector<char>      transB(numMats, 'N');
         std::vector<size_type> mSizesTmp(numMats, 0);
         std::vector<size_type> nSizesTmp(numMats, 0);
         std::vector<size_type> kSizesTmp(numMats, 0);

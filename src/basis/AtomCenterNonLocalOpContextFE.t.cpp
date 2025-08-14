@@ -67,11 +67,8 @@ namespace dftefe
 
         size_type numCellsInBlock = cellEndId - cellStartId;
 
-        std::vector<char> transA(
-          numCellsInBlock, 'N');
-        std::vector<char> transB(
-          numCellsInBlock,
-          isCConjTransX ? 'C' : 'N');
+        std::vector<char> transA(numCellsInBlock, 'N');
+        std::vector<char> transB(numCellsInBlock, isCConjTransX ? 'C' : 'N');
 
         utils::MemoryStorage<size_type, memorySpace> mSizes(numCellsInBlock);
         utils::MemoryStorage<size_type, memorySpace> nSizes(numCellsInBlock);

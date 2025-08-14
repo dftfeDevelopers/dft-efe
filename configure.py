@@ -3,9 +3,7 @@ import os
 import textwrap
 import traceback
 
-cmake_dict = {'SLATE_DIR':['', 'Path to SLATE installation',
-                                       '--SLATE_DIR=/path/to/SLATE/installation'],
-              'ELPA_DIR':['', 'Path to ELPA installation',
+cmake_dict = {'ELPA_DIR':['', 'Path to ELPA installation',
                                                 '--ELPA_DIR=/path/to/ELPA/installation'],
               'SCALAPACK_LIBRARIES':['', 'Path to SCALAPACK libraries',
                                                 '--SCALAPACK_LIBRARIES=/path/to/SCALAPACK/libraries'],                                            
