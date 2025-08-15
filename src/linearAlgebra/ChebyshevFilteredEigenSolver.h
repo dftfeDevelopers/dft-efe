@@ -97,6 +97,7 @@ namespace dftefe
         const ElpaScalapackManager &                elpaScala,
         bool                  isResidualChebyshevFilter = true,
         const size_type       eigenVectorBatchSize      = 0,
+        bool                  isGHEP                    = true,
         OrthogonalizationType orthoType =
           OrthogonalizationType::CHOLESKY_GRAMSCHMIDT,
         bool storeIntermediateSubspaces = false);
@@ -168,6 +169,8 @@ namespace dftefe
       OrthogonalizationType d_orthoType;
 
       const ElpaScalapackManager *d_elpaScala;
+
+      const bool d_isGHEP;
 
     }; // end of class ChebyshevFilteredEigenSolver
   }    // end of namespace linearAlgebra

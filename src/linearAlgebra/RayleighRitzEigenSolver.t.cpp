@@ -310,172 +310,263 @@ namespace dftefe
             const OpContext &                           B,
             MultiVector<ValueTypeOperand, memorySpace> &X,
             std::vector<RealType> &                     eigenValues,
-            MultiVector<ValueType, memorySpace>
-              &  eigenVectors, /* M ortho eigenvecs(in)/ out*/
-            bool computeEigenVectors)
+            MultiVector<ValueType, memorySpace> &       eigenVectors,
+            bool                                        computeEigenVectors)
     {
       EigenSolverError     retunValue;
       EigenSolverErrorCode err;
-      LapackError          lapackReturn;
 
-      size_type numVec  = X.getNumberComponents();
-      size_type vecSize = X.locallyOwnedSize();
-      // MultiVector<ValueType, memorySpace> temp(X, (ValueType)0);
+      const size_type numVec  = X.getNumberComponents();
+      const size_type vecSize = X.locallyOwnedSize();
 
-      // allocate memory for overlap matrix
-      utils::MemoryStorage<ValueType, memorySpace> S(
-        numVec * numVec, utils::Types<ValueType>::zero);
-
-      utils::MemoryStorage<ValueType, memorySpace> XprojectedA(
-        numVec * numVec, utils::Types<ValueType>::zero);
-
-      utils::MemoryStorage<RealType, memorySpace> eigenValuesMemSpace(numVec);
-
-      // Compute overlap matrix S = X^H B X
-
-      B.apply(X, eigenVectors, true, false);
-
-      blasLapack::gemm<ValueType, ValueTypeOperand, memorySpace>(
-        'N',
-        'C',
-        numVec,
-        numVec,
-        vecSize,
-        (ValueType)1,
-        eigenVectors.data(),
-        numVec,
-        X.data(),
-        numVec,
-        (ValueType)0,
-        S.data(),
-        numVec,
-        *X.getLinAlgOpContext());
-
-      // TODO: Copy only the real part because S is real
-      // Reason: Reduced flops.
-
-      // MPI_AllReduce to get the S from all procs
-
-      int mpierr = utils::mpi::MPIAllreduce<memorySpace>(
-        utils::mpi::MPIInPlace,
-        S.data(),
-        S.size(),
-        utils::mpi::Types<ValueType>::getMPIDatatype(),
-        utils::mpi::MPISum,
-        X.getMPIPatternP2P()->mpiCommunicator());
-
-      std::pair<bool, std::string> mpiIsSuccessAndMsg =
-        utils::mpi::MPIErrIsSuccessAndMsg(mpierr);
-      DFTEFE_AssertWithMsg(mpiIsSuccessAndMsg.first,
-                           "MPI Error:" + mpiIsSuccessAndMsg.second);
-
-      // No orthogonalization required
-      // Compute projected hamiltonian = X^H A X
-
-      A.apply(X, eigenVectors, true, false);
-
-      blasLapack::gemm<ValueType, ValueTypeOperand, memorySpace>(
-        'N',
-        'C',
-        numVec,
-        numVec,
-        vecSize,
-        (ValueType)1,
-        eigenVectors.data(),
-        numVec,
-        X.data(),
-        numVec,
-        (ValueType)0,
-        XprojectedA.data(),
-        numVec,
-        *X.getLinAlgOpContext());
-
-      // TODO: Copy only the real part because XprojectedA is real
-      // Reason: Reduced flops.
-
-      // MPI_AllReduce to get the XprojectedA from all procs
-
-      mpierr = utils::mpi::MPIAllreduce<memorySpace>(
-        utils::mpi::MPIInPlace,
-        XprojectedA.data(),
-        XprojectedA.size(),
-        utils::mpi::Types<ValueType>::getMPIDatatype(),
-        utils::mpi::MPISum,
-        X.getMPIPatternP2P()->mpiCommunicator());
-
-      mpiIsSuccessAndMsg = utils::mpi::MPIErrIsSuccessAndMsg(mpierr);
-      DFTEFE_AssertWithMsg(mpiIsSuccessAndMsg.first,
-                           "MPI Error:" + mpiIsSuccessAndMsg.second);
-
-      // Solve generalized eigenvalue problem
-
-      if (computeEigenVectors)
+      if (d_useScalapack)
         {
-          lapackReturn =
-            blasLapack::hegv<ValueType, memorySpace>(1,
-                                                     'V',
-                                                     'L',
-                                                     numVec,
-                                                     XprojectedA.data(),
-                                                     numVec,
-                                                     S.data(),
-                                                     numVec,
-                                                     eigenValuesMemSpace.data(),
-                                                     *X.getLinAlgOpContext());
+          bool            solveSuccess = true;
+          utils::Profiler p(X.getMPIPatternP2P()->mpiCommunicator(),
+                            "Rayleigh-Ritz EigenSolver");
 
-          eigenValuesMemSpace.template copyTo<utils::MemorySpace::HOST>(
-            eigenValues.data(), numVec, 0, 0);
+          // Compute projected hamiltonian = X_O^H A X_O
+
+          const size_type rowsBlockSize = d_elpaScala->getScalapackBlockSize();
+          std::shared_ptr<const ProcessGrid> processGrid =
+            d_elpaScala->getProcessGridDftefeScalaWrapper();
+
+          p.registerStart("XtHX and XtOX, RR GEP step");
+          //
+          // compute overlap matrix
+          //
+          ScaLAPACKMatrix<ValueType> overlapMatPar(numVec,
+                                                   processGrid,
+                                                   rowsBlockSize);
+
+          if (processGrid->is_process_active())
+            std::fill(&overlapMatPar.local_el(0, 0),
+                      &overlapMatPar.local_el(0, 0) +
+                        overlapMatPar.local_m() * overlapMatPar.local_n(),
+                      ValueType(0.0));
+
+          ScaLAPACKMatrix<ValueType> projHamPar(numVec,
+                                                processGrid,
+                                                rowsBlockSize);
+          if (processGrid->is_process_active())
+            std::fill(&projHamPar.local_el(0, 0),
+                      &projHamPar.local_el(0, 0) +
+                        projHamPar.local_m() * projHamPar.local_n(),
+                      ValueType(0.0));
+
+          computeXTransOpX(X, processGrid, projHamPar, A);
+
+          computeXTransOpX(X, processGrid, overlapMatPar, B);
+
+          // Construct the full HConjProj matrix
+          ScaLAPACKMatrix<ValueType> projHamParConjTrans(numVec,
+                                                         processGrid,
+                                                         rowsBlockSize);
+
+          if (processGrid->is_process_active())
+            std::fill(&projHamParConjTrans.local_el(0, 0),
+                      &projHamParConjTrans.local_el(0, 0) +
+                        projHamParConjTrans.local_m() *
+                          projHamParConjTrans.local_n(),
+                      ValueType(0.0));
 
 
-          // Rotation X_febasis = XQ. /* X_i, Y_i scratch of block size ;  */
+          projHamParConjTrans.copy_conjugate_transposed(projHamPar);
+          projHamPar.add(projHamParConjTrans, ValueType(1.0), ValueType(1.0));
 
-          blasLapack::gemm<ValueType, ValueType, memorySpace>(
-            'T',
-            'N',
-            numVec,
-            vecSize,
-            numVec,
-            (ValueType)1,
-            XprojectedA.data(),
-            numVec,
-            X.data(),
-            numVec,
-            (ValueType)0,
-            eigenVectors.data(),
-            numVec,
-            *X.getLinAlgOpContext());
+          if (processGrid->is_process_active())
+            for (size_type i = 0; i < projHamPar.local_n(); ++i)
+              {
+                const size_type glob_i = projHamPar.global_column(i);
+                for (size_type j = 0; j < projHamPar.local_m(); ++j)
+                  {
+                    const size_type glob_j = projHamPar.global_row(j);
+                    if (glob_i == glob_j)
+                      projHamPar.local_el(j, i) *= ValueType(0.5);
+                  }
+              }
+
+          p.registerEnd("XtHX and XtOX, RR GEP step");
+
+          //
+          // compute standard eigendecomposition HSConjProj: {QConjPrime,D}
+          // HSConjProj=QConjPrime*D*QConjPrime^{C}
+          // QConj={Lc^{-1}}^{C}*QConjPrime
+          if (d_useELPA)
+            {
+              p.registerStart("ELPA eigen decomp, RR step");
+              ScaLAPACKMatrix<ValueType> eigenVectorsPar(numVec,
+                                                         processGrid,
+                                                         rowsBlockSize);
+
+              if (processGrid->is_process_active())
+                std::fill(&eigenVectorsPar.local_el(0, 0),
+                          &eigenVectorsPar.local_el(0, 0) +
+                            eigenVectorsPar.local_m() *
+                              eigenVectorsPar.local_n(),
+                          ValueType(0.0));
+
+              ScaLAPACKMatrix<ValueType> overlapMatParConjTrans(numVec,
+                                                                processGrid,
+                                                                rowsBlockSize);
+
+              if (processGrid->is_process_active())
+                std::fill(&overlapMatParConjTrans.local_el(0, 0),
+                          &overlapMatParConjTrans.local_el(0, 0) +
+                            overlapMatParConjTrans.local_m() *
+                              overlapMatParConjTrans.local_n(),
+                          ValueType(0.0));
+
+
+              overlapMatParConjTrans.copy_conjugate_transposed(overlapMatPar);
+
+              if (processGrid->is_process_active())
+                {
+                  int error;
+
+                  elpa_generalized_eigenvectors(
+                    d_elpaScala->getElpaHandle(),
+                    &projHamPar.local_el(0, 0),
+                    &overlapMatParConjTrans.local_el(0, 0),
+                    &eigenValues[0],
+                    &eigenVectorsPar.local_el(0, 0),
+                    0,
+                    &error);
+
+                  if (error != ELPA_OK)
+                    solveSuccess = false;
+                }
+
+              utils::mpi::MPIBcast<utils::MemorySpace::HOST>(
+                &eigenValues[0],
+                eigenValues.size(),
+                utils::mpi::Types<RealType>::getMPIDatatype(),
+                0,
+                X.getMPIPatternP2P()->mpiCommunicator());
+
+              projHamPar.copy_conjugate_transposed(eigenVectorsPar);
+
+              p.registerEnd("ELPA eigen decomp, RR step");
+            }
+          else
+            {
+              // SConj=LConj*L^{T}
+              p.registerStart("Cholesky and triangular matrix invert");
+
+
+              LAPACKSupport::Property overlapMatPropertyPostCholesky;
+              overlapMatPar.compute_cholesky_factorization();
+
+              overlapMatPropertyPostCholesky = overlapMatPar.get_property();
+
+              DFTEFE_AssertWithMsg(
+                overlapMatPropertyPostCholesky ==
+                  LAPACKSupport::Property::lower_triangular,
+                "DFT-EFE Error: overlap matrix property after cholesky factorization incorrect");
+
+              // extract LConj
+              ScaLAPACKMatrix<ValueType> LMatPar(
+                numVec,
+                processGrid,
+                rowsBlockSize,
+                LAPACKSupport::Property::lower_triangular);
+
+              if (processGrid->is_process_active())
+                for (size_type i = 0; i < LMatPar.local_n(); ++i)
+                  {
+                    const size_type glob_i = LMatPar.global_column(i);
+                    for (size_type j = 0; j < LMatPar.local_m(); ++j)
+                      {
+                        const size_type glob_j = LMatPar.global_row(j);
+                        if (glob_j < glob_i)
+                          LMatPar.local_el(j, i) = ValueType(0);
+                        else
+                          LMatPar.local_el(j, i) = overlapMatPar.local_el(j, i);
+                      }
+                  }
+
+              // compute LConj^{-1}
+              LMatPar.invert();
+
+              p.registerEnd("Cholesky and triangular matrix invert");
+
+              p.registerStart(
+                "Compute HSConjProj= Lconj^{-1}*HConjProj*(Lconj^{-1})^C, RR step");
+
+              ScaLAPACKMatrix<ValueType> projHamParCopy(numVec,
+                                                        processGrid,
+                                                        rowsBlockSize);
+
+              // compute HSConjProj= Lconj^{-1}*HConjProj*(Lconj^{-1})^C  (C
+              // denotes conjugate transpose LAPACK notation)
+              LMatPar.mmult(projHamParCopy, projHamPar);
+              projHamParCopy.zmCmult(projHamPar, LMatPar);
+
+              ScalapackError scalapackError;
+
+              p.registerEnd(
+                "Compute HSConjProj= Lconj^{-1}*HConjProj*(Lconj^{-1})^C, RR step");
+              p.registerStart("ScaLAPACK eigen decomp, RR step");
+              eigenValues = projHamPar.eigenpairs_hermitian_by_index_MRRR(
+                std::make_pair(0, numVec - 1), true, scalapackError);
+              projHamParCopy.copy_conjugate_transposed(projHamPar);
+              projHamParCopy.mmult(projHamPar, LMatPar);
+
+              if (scalapackError.err != ScalapackErrorCode::SUCCESS)
+                solveSuccess = false;
+
+              p.registerEnd("ScaLAPACK eigen decomp, RR step");
+            }
+
+          if (computeEigenVectors)
+            {
+              //
+              // rotate the basis in the subspace
+              // X^{T}={QConjPrime}^{C}*LConj^{-1}*X^{T}, stored in the column
+              // major format In the above we use
+              // Q^{T}={QConjPrime}^{C}*LConj^{-1}
+              p.registerStart(
+                "X^{T}={QConjPrime}^{C}*LConj^{-1}*X^{T}, RR step");
+
+              elpaScalaOpInternal::subspaceRotation<ValueType, memorySpace>(
+                X.data(),
+                vecSize,
+                numVec,
+                processGrid,
+                X.getMPIPatternP2P()->mpiCommunicator(),
+                *X.getLinAlgOpContext(),
+                projHamPar,
+                RayleighRitzDefaults::SUBSPACE_ROT_DOF_BATCH,
+                RayleighRitzDefaults::WAVE_FN_BATCH,
+                false,
+                false);
+
+              eigenVectors = X;
+
+              p.registerEnd("X^{T}={QConjPrime}^{C}*LConj^{-1}*X^{T}, RR step");
+            }
+
+          if (!solveSuccess)
+            {
+              err        = EigenSolverErrorCode::ELPASCALAPACK_ERROR;
+              retunValue = EigenSolverErrorMsg::isSuccessAndMsg(err);
+            }
+          else
+            {
+              err        = EigenSolverErrorCode::SUCCESS;
+              retunValue = EigenSolverErrorMsg::isSuccessAndMsg(err);
+            }
+          p.print();
+          return retunValue;
         }
       else
         {
-          lapackReturn =
-            blasLapack::hegv<ValueType, memorySpace>(1,
-                                                     'N',
-                                                     'L',
-                                                     numVec,
-                                                     XprojectedA.data(),
-                                                     numVec,
-                                                     S.data(),
-                                                     numVec,
-                                                     eigenValuesMemSpace.data(),
-                                                     *X.getLinAlgOpContext());
-
-          eigenValuesMemSpace.template copyTo<utils::MemorySpace::HOST>(
-            eigenValues.data(), numVec, 0, 0);
+          // // ------- For DEBUG ---------------
+          EigenSolverError retunValue;
+          utils::throwException(
+            false, "RR EigSolve not impl for without scalapack case.");
+          return retunValue;
         }
-
-      if (lapackReturn.err == LapackErrorCode::FAILED_GENERALIZED_EIGENPROBLEM)
-        {
-          err        = EigenSolverErrorCode::LAPACK_ERROR;
-          retunValue = EigenSolverErrorMsg::isSuccessAndMsg(err);
-          retunValue.msg += lapackReturn.msg;
-        }
-      else
-        {
-          err        = EigenSolverErrorCode::SUCCESS;
-          retunValue = EigenSolverErrorMsg::isSuccessAndMsg(err);
-        }
-
-      return retunValue;
     }
 
     // // ------------- DEBUG ------------------- // //

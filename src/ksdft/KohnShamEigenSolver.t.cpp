@@ -65,6 +65,7 @@ namespace dftefe
         const size_type                      waveFunctionBatchSize,
         const OpContext &                    MLanczos,
         const OpContext &                    MInvLanczos,
+        const bool                           isGHEP,
         linearAlgebra::OrthogonalizationType orthoType,
         bool                                 storeIntermediateSubspaces)
       : d_numWantedEigenvalues(waveFunctionSubspaceGuess.getNumberComponents())
@@ -88,6 +89,7 @@ namespace dftefe
       , d_filteredSubspaceOrtho((nullptr))
       , d_orthoType(orthoType)
       , d_elpaScala(&elpaScala)
+      , d_isGHEP(isGHEP)
     {
       reinitBasis(waveFunctionSubspaceGuess,
                   lanczosGuess,
@@ -157,6 +159,7 @@ namespace dftefe
         *d_elpaScala,
         d_isResidualChebyFilter,
         d_waveFunctionBatchSize,
+        d_isGHEP,
         d_orthoType,
         d_storeIntermediateSubspaces);
     }

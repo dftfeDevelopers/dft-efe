@@ -107,6 +107,7 @@ namespace dftefe
           linearAlgebra::IdentityOperatorContext<ValueTypeOperator,
                                                  ValueTypeOperand,
                                                  memorySpace>(),
+        const bool                           isGHEP = true,
         linearAlgebra::OrthogonalizationType orthoType =
           linearAlgebra::OrthogonalizationType::CHOLESKY_GRAMSCHMIDT,
         bool storeIntermediateSubspaces = false);
@@ -229,6 +230,7 @@ namespace dftefe
 
       linearAlgebra::OrthogonalizationType       d_orthoType;
       const linearAlgebra::ElpaScalapackManager *d_elpaScala;
+      bool                                       d_isGHEP;
 
     }; // end of class KohnShamEigenSolver
   }    // namespace ksdft

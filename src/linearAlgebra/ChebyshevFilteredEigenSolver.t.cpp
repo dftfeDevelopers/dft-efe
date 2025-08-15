@@ -49,6 +49,7 @@ namespace dftefe
         const ElpaScalapackManager &                elpaScala,
         bool                                        isResidualChebyshevFilter,
         const size_type                             eigenVectorBatchSize,
+        bool                                        isGHEP,
         OrthogonalizationType                       orthoType,
         bool                                        storeIntermediateSubspaces)
       : d_p(eigenSubspaceGuess.getMPIPatternP2P()->mpiCommunicator(), "CHFSI")
@@ -66,6 +67,7 @@ namespace dftefe
       , d_printL2Norms(false)
       , d_orthoType(orthoType)
       , d_elpaScala(&elpaScala)
+      , d_isGHEP(isGHEP)
     {
       if (d_storeIntermediateSubspaces)
         {
@@ -343,57 +345,74 @@ namespace dftefe
         }
 
       d_p.registerEnd("Chebyshev Filter");
-      d_p.registerStart("OrthoNormalization");
 
-      // B orthogonalization required of X -> X_O : /*scratch2->eigenvector*/
+      if (!d_isGHEP)
+        {
+          d_p.registerStart("OrthoNormalization");
 
-      if (d_orthoType == OrthogonalizationType::CHOLESKY_GRAMSCHMIDT)
-        {
-          orthoerr = d_ortho->CholeskyGramSchmidt(eigenVectors,
-                                                  *d_eigenSubspaceGuess,
-                                                  B);
-        }
-      else if (d_orthoType == OrthogonalizationType::MULTIPASS_CGS)
-        {
-          orthoerr = d_ortho->MultipassCGS(
-            eigenVectors, /*in/out, eigenvector*/
-            linearAlgebra::MultiPassOrthoDefaults::MAX_PASS,
-            linearAlgebra::MultiPassOrthoDefaults::SHIFT_TOL,
-            linearAlgebra::MultiPassOrthoDefaults::IDENTITY_TOL,
-            *d_eigenSubspaceGuess, // go away
-            B);
+          // B orthogonalization required of X -> X_O :
+          // /*scratch2->eigenvector*/
+
+          if (d_orthoType == OrthogonalizationType::CHOLESKY_GRAMSCHMIDT)
+            {
+              orthoerr = d_ortho->CholeskyGramSchmidt(eigenVectors,
+                                                      *d_eigenSubspaceGuess,
+                                                      B);
+            }
+          else if (d_orthoType == OrthogonalizationType::MULTIPASS_CGS)
+            {
+              orthoerr = d_ortho->MultipassCGS(
+                eigenVectors, /*in/out, eigenvector*/
+                linearAlgebra::MultiPassOrthoDefaults::MAX_PASS,
+                linearAlgebra::MultiPassOrthoDefaults::SHIFT_TOL,
+                linearAlgebra::MultiPassOrthoDefaults::IDENTITY_TOL,
+                *d_eigenSubspaceGuess, // go away
+                B);
+            }
+          else
+            {
+              utils::throwException(false,
+                                    "Orthogonalization type not present");
+            }
+
+          if (d_storeIntermediateSubspaces && d_printL2Norms)
+            {
+              *d_filteredSubspaceOrtho = *d_eigenSubspaceGuess;
+              rootCout << "d_filteredSubspaceOrtho l2norms CHFSI: ";
+              for (auto &i : d_filteredSubspaceOrtho->l2Norms())
+                rootCout << i << "\t";
+              rootCout << "\n";
+            }
+          d_p.registerEnd("OrthoNormalization");
+
+          // [RR] Perform the Rayleigh–Ritz procedure for filteredSubspaceOrtho
+
+          d_p.registerStart("RR Step");
+          rrerr = d_rr->solve(A,
+                              *d_eigenSubspaceGuess, // go away
+                              eigenValues,
+                              eigenVectors, /*in/out*/
+                              computeEigenVectors);
+          d_p.registerEnd("RR Step");
         }
       else
         {
-          utils::throwException(false, "Orthogonalization type not present");
+          *d_eigenSubspaceGuess = eigenVectors;
+          OrthonormalizationErrorCode err1 =
+            OrthonormalizationErrorCode::SUCCESS;
+          orthoerr = OrthonormalizationErrorMsg::isSuccessAndMsg(err1);
+
+          /* Using GHEP with B = Identity in orthogonalization
+           * does not work. Prob due to no distribute C2P
+           * in IdenstiyOperator. */
+          rrerr = d_rr->solve(A,
+                              B,
+                              *d_eigenSubspaceGuess, // go away
+                              eigenValues,
+                              eigenVectors, /*in/out*/
+                              computeEigenVectors);
         }
 
-      // orthoerr = linearAlgebra::OrthonormalizationFunctions<
-      //   ValueType,
-      //   ValueType,
-      //   memorySpace>::ModifiedGramSchmidt(eigenVectors,
-      //                                     *d_eigenSubspaceGuess,
-      //                                     B);
-
-      if (d_storeIntermediateSubspaces && d_printL2Norms)
-        {
-          *d_filteredSubspaceOrtho = *d_eigenSubspaceGuess;
-          rootCout << "d_filteredSubspaceOrtho l2norms CHFSI: ";
-          for (auto &i : d_filteredSubspaceOrtho->l2Norms())
-            rootCout << i << "\t";
-          rootCout << "\n";
-        }
-      d_p.registerEnd("OrthoNormalization");
-
-      // [RR] Perform the Rayleigh–Ritz procedure for filteredSubspaceOrtho
-
-      d_p.registerStart("RR Step");
-      rrerr = d_rr->solve(A,
-                          *d_eigenSubspaceGuess, // go away
-                          eigenValues,
-                          eigenVectors, /*in/out*/
-                          computeEigenVectors);
-      d_p.registerEnd("RR Step");
       d_p.print();
 
       if (d_printL2Norms)
@@ -403,16 +422,6 @@ namespace dftefe
             rootCout << i << "\t";
           rootCout << "\n";
         }
-
-      /* Using GHEP with B = Identity in orthogonalization
-       * does not work. Prob due to no distribute C2P
-       * in IdenstiyOperator. */
-      // rrerr = d_rr->solve(A,
-      //                     B,
-      //                     *d_eigenSubspaceGuess,//go away
-      //                     eigenValues,
-      //                     eigenVectors,/*in/out*/
-      //                     computeEigenVectors);
 
       if (!orthoerr.isSuccess)
         {
