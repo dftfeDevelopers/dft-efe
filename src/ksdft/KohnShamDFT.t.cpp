@@ -284,10 +284,10 @@ namespace dftefe
       , d_kohnShamEnergies(numWantedEigenvalues, 0.0)
       , d_SCFTol(scfDensityResidualNormTolerance)
       , d_rootCout(std::cout)
-      , d_waveFunctionSubspaceGuess(feBMWaveFn->getMPIPatternP2P(),
-                                    linAlgOpContext,
-                                    numWantedEigenvalues)
-      , d_kohnShamWaveFunctions(d_waveFunctionSubspaceGuess, (ValueType)0.0)
+      , d_kohnShamWaveFunctions(feBMWaveFn->getMPIPatternP2P(),
+                                linAlgOpContext,
+                                numWantedEigenvalues, 
+                                (ValueType)0.0)
       , d_lanczosGuess(feBMWaveFn->getMPIPatternP2P(),
                        linAlgOpContext,
                        0.0,
@@ -318,7 +318,7 @@ namespace dftefe
           d_isOEFEBasis = false;
 
       KohnShamDFTInternal::generateRandNormDistMultivec(
-        d_waveFunctionSubspaceGuess);
+        d_kohnShamWaveFunctions);
       utils::throwException(electronChargeDensityInput.getNumberComponents() ==
                               1,
                             "Electron density should have only one component.");
@@ -434,9 +434,9 @@ namespace dftefe
       d_lanczosGuess.updateGhostValues();
       feBMWaveFn->getConstraints().distributeParentToChild(d_lanczosGuess, 1);
 
-      d_waveFunctionSubspaceGuess.updateGhostValues();
+      d_kohnShamWaveFunctions.updateGhostValues();
       feBMWaveFn->getConstraints().distributeParentToChild(
-        d_waveFunctionSubspaceGuess, numWantedEigenvalues);
+        d_kohnShamWaveFunctions, numWantedEigenvalues);
 
       if (elpa_init(ELPA_API_VERSION) != ELPA_OK)
         {
@@ -468,7 +468,7 @@ namespace dftefe
                        fracOccupancyTolerance,
                        eigenSolveResidualTolerance,
                        1,
-                       d_waveFunctionSubspaceGuess,
+                       numWantedEigenvalues,
                        d_lanczosGuess,
                        *d_elpaScala,
                        false,
@@ -495,7 +495,7 @@ namespace dftefe
         fracOccupancyTolerance,
         eigenSolveResidualTolerance,
         maxChebyshevFilterPass,
-        d_waveFunctionSubspaceGuess,
+        numWantedEigenvalues,
         d_lanczosGuess,
         *d_elpaScala,
         isResidualChebyshevFilter,
@@ -616,10 +616,10 @@ namespace dftefe
       , d_kohnShamEnergies(numWantedEigenvalues, 0.0)
       , d_SCFTol(scfDensityResidualNormTolerance)
       , d_rootCout(std::cout)
-      , d_waveFunctionSubspaceGuess(feBMWaveFn->getMPIPatternP2P(),
-                                    linAlgOpContext,
-                                    numWantedEigenvalues)
-      , d_kohnShamWaveFunctions(d_waveFunctionSubspaceGuess, (ValueType)0.0)
+      , d_kohnShamWaveFunctions(feBMWaveFn->getMPIPatternP2P(),
+                                linAlgOpContext,
+                                numWantedEigenvalues, 
+                                (ValueType)0.0)
       , d_lanczosGuess(feBMWaveFn->getMPIPatternP2P(),
                        linAlgOpContext,
                        0.0,
@@ -644,7 +644,7 @@ namespace dftefe
         d_isOEFEBasis = false;
 
       KohnShamDFTInternal::generateRandNormDistMultivec(
-        d_waveFunctionSubspaceGuess);
+        d_kohnShamWaveFunctions);
       utils::throwException(electronChargeDensityInput.getNumberComponents() ==
                               1,
                             "Electron density should have only one component.");
@@ -764,9 +764,9 @@ namespace dftefe
       d_lanczosGuess.updateGhostValues();
       feBMWaveFn->getConstraints().distributeParentToChild(d_lanczosGuess, 1);
 
-      d_waveFunctionSubspaceGuess.updateGhostValues();
+      d_kohnShamWaveFunctions.updateGhostValues();
       feBMWaveFn->getConstraints().distributeParentToChild(
-        d_waveFunctionSubspaceGuess, numWantedEigenvalues);
+        d_kohnShamWaveFunctions, numWantedEigenvalues);
 
       if (elpa_init(ELPA_API_VERSION) != ELPA_OK)
         {
@@ -798,7 +798,7 @@ namespace dftefe
                        fracOccupancyTolerance,
                        eigenSolveResidualTolerance,
                        1,
-                       d_waveFunctionSubspaceGuess,
+                       numWantedEigenvalues,
                        d_lanczosGuess,
                        *d_elpaScala,
                        false,
@@ -825,7 +825,7 @@ namespace dftefe
         fracOccupancyTolerance,
         eigenSolveResidualTolerance,
         maxChebyshevFilterPass,
-        d_waveFunctionSubspaceGuess,
+        numWantedEigenvalues,
         d_lanczosGuess,
         *d_elpaScala,
         isResidualChebyshevFilter,
@@ -959,10 +959,10 @@ namespace dftefe
       , d_kohnShamEnergies(numWantedEigenvalues, 0.0)
       , d_SCFTol(scfDensityResidualNormTolerance)
       , d_rootCout(std::cout)
-      , d_waveFunctionSubspaceGuess(feBMWaveFn->getMPIPatternP2P(),
-                                    linAlgOpContext,
-                                    numWantedEigenvalues)
-      , d_kohnShamWaveFunctions(d_waveFunctionSubspaceGuess, (ValueType)0.0)
+      , d_kohnShamWaveFunctions(feBMWaveFn->getMPIPatternP2P(),
+                                linAlgOpContext,
+                                numWantedEigenvalues, 
+                                (ValueType)0.0)
       , d_lanczosGuess(feBMWaveFn->getMPIPatternP2P(),
                        linAlgOpContext,
                        0.0,
@@ -991,7 +991,7 @@ namespace dftefe
           feBDElectronicChargeRhs->getQuadratureRuleContainer(), 1, 0.0);
 
       KohnShamDFTInternal::generateRandNormDistMultivec(
-        d_waveFunctionSubspaceGuess);
+        d_kohnShamWaveFunctions);
       utils::throwException(d_densityInQuadValues.getNumberComponents() == 1,
                             "Electron density should have only one component.");
 
@@ -1133,9 +1133,9 @@ namespace dftefe
       d_lanczosGuess.updateGhostValues();
       feBMWaveFn->getConstraints().distributeParentToChild(d_lanczosGuess, 1);
 
-      d_waveFunctionSubspaceGuess.updateGhostValues();
+      d_kohnShamWaveFunctions.updateGhostValues();
       feBMWaveFn->getConstraints().distributeParentToChild(
-        d_waveFunctionSubspaceGuess, numWantedEigenvalues);
+        d_kohnShamWaveFunctions, numWantedEigenvalues);
 
       if (elpa_init(ELPA_API_VERSION) != ELPA_OK)
         {
@@ -1166,7 +1166,7 @@ namespace dftefe
                        fracOccupancyTolerance,
                        eigenSolveResidualTolerance,
                        1,
-                       d_waveFunctionSubspaceGuess,
+                       numWantedEigenvalues,
                        d_lanczosGuess,
                        *d_elpaScala,
                        false,
@@ -1193,7 +1193,7 @@ namespace dftefe
         fracOccupancyTolerance,
         eigenSolveResidualTolerance,
         maxChebyshevFilterPass,
-        d_waveFunctionSubspaceGuess,
+        numWantedEigenvalues,
         d_lanczosGuess,
         *d_elpaScala,
         isResidualChebyshevFilter,
@@ -1308,10 +1308,10 @@ namespace dftefe
       , d_kohnShamEnergies(numWantedEigenvalues, 0.0)
       , d_SCFTol(scfDensityResidualNormTolerance)
       , d_rootCout(std::cout)
-      , d_waveFunctionSubspaceGuess(feBMWaveFn->getMPIPatternP2P(),
-                                    linAlgOpContext,
-                                    numWantedEigenvalues)
-      , d_kohnShamWaveFunctions(d_waveFunctionSubspaceGuess, (ValueType)0.0)
+      , d_kohnShamWaveFunctions(feBMWaveFn->getMPIPatternP2P(),
+                                linAlgOpContext,
+                                numWantedEigenvalues, 
+                                (ValueType)0.0)
       , d_lanczosGuess(feBMWaveFn->getMPIPatternP2P(),
                        linAlgOpContext,
                        0.0,
@@ -1397,7 +1397,7 @@ namespace dftefe
         d_isOEFEBasis = false;
 
       KohnShamDFTInternal::generateRandNormDistMultivec(
-        d_waveFunctionSubspaceGuess);
+        d_kohnShamWaveFunctions);
       utils::throwException(d_densityInQuadValues.getNumberComponents() == 1,
                             "Electron density should have only one component.");
 
@@ -1600,9 +1600,9 @@ namespace dftefe
       d_lanczosGuess.updateGhostValues();
       feBMWaveFn->getConstraints().distributeParentToChild(d_lanczosGuess, 1);
 
-      d_waveFunctionSubspaceGuess.updateGhostValues();
+      d_kohnShamWaveFunctions.updateGhostValues();
       feBMWaveFn->getConstraints().distributeParentToChild(
-        d_waveFunctionSubspaceGuess, numWantedEigenvalues);
+        d_kohnShamWaveFunctions, numWantedEigenvalues);
 
       if (elpa_init(ELPA_API_VERSION) != ELPA_OK)
         {
@@ -1634,7 +1634,7 @@ namespace dftefe
                        fracOccupancyTolerance,
                        eigenSolveResidualTolerance,
                        1,
-                       d_waveFunctionSubspaceGuess,
+                       numWantedEigenvalues,
                        d_lanczosGuess,
                        *d_elpaScala,
                        false,
@@ -1661,7 +1661,7 @@ namespace dftefe
         fracOccupancyTolerance,
         eigenSolveResidualTolerance,
         maxChebyshevFilterPass,
-        d_waveFunctionSubspaceGuess,
+        numWantedEigenvalues,
         d_lanczosGuess,
         *d_elpaScala,
         isResidualChebyshevFilter,
@@ -1775,10 +1775,10 @@ namespace dftefe
       , d_kohnShamEnergies(numWantedEigenvalues, 0.0)
       , d_SCFTol(scfDensityResidualNormTolerance)
       , d_rootCout(std::cout)
-      , d_waveFunctionSubspaceGuess(feBMWaveFn->getMPIPatternP2P(),
-                                    linAlgOpContext,
-                                    numWantedEigenvalues)
-      , d_kohnShamWaveFunctions(d_waveFunctionSubspaceGuess, (ValueType)0.0)
+      , d_kohnShamWaveFunctions(feBMWaveFn->getMPIPatternP2P(),
+                                linAlgOpContext,
+                                numWantedEigenvalues, 
+                                (ValueType)0.0)
       , d_lanczosGuess(feBMWaveFn->getMPIPatternP2P(),
                        linAlgOpContext,
                        0.0,
@@ -1863,7 +1863,7 @@ namespace dftefe
         d_isOEFEBasis = false;
 
       KohnShamDFTInternal::generateRandNormDistMultivec(
-        d_waveFunctionSubspaceGuess);
+        d_kohnShamWaveFunctions);
       utils::throwException(d_densityInQuadValues.getNumberComponents() == 1,
                             "Electron density should have only one component.");
 
@@ -2066,9 +2066,9 @@ namespace dftefe
       d_lanczosGuess.updateGhostValues();
       feBMWaveFn->getConstraints().distributeParentToChild(d_lanczosGuess, 1);
 
-      d_waveFunctionSubspaceGuess.updateGhostValues();
+      d_kohnShamWaveFunctions.updateGhostValues();
       feBMWaveFn->getConstraints().distributeParentToChild(
-        d_waveFunctionSubspaceGuess, numWantedEigenvalues);
+        d_kohnShamWaveFunctions, numWantedEigenvalues);
 
       if (elpa_init(ELPA_API_VERSION) != ELPA_OK)
         {
@@ -2100,7 +2100,7 @@ namespace dftefe
                        fracOccupancyTolerance,
                        eigenSolveResidualTolerance,
                        1,
-                       d_waveFunctionSubspaceGuess,
+                       numWantedEigenvalues,
                        d_lanczosGuess,
                        *d_elpaScala,
                        false,
@@ -2127,7 +2127,7 @@ namespace dftefe
         fracOccupancyTolerance,
         eigenSolveResidualTolerance,
         maxChebyshevFilterPass,
-        d_waveFunctionSubspaceGuess,
+        numWantedEigenvalues,
         d_lanczosGuess,
         *d_elpaScala,
         isResidualChebyshevFilter,

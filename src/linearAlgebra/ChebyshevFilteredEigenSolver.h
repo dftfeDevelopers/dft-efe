@@ -93,7 +93,9 @@ namespace dftefe
         const double                                unWantedSpectrumUpperBound,
         const double                                polynomialDegree,
         const double                                illConditionTolerance,
-        MultiVector<ValueTypeOperand, memorySpace> &eigenSubspaceGuess,
+        std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
+                                                      mpiPatternP2P,
+        std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext,    
         const ElpaScalapackManager &                elpaScala,
         bool                  isResidualChebyshevFilter = true,
         const size_type       eigenVectorBatchSize      = 0,
@@ -114,7 +116,9 @@ namespace dftefe
              const double unWantedSpectrumUpperBound,
              const double polynomialDegree,
              const double illConditionTolerance,
-             MultiVector<ValueTypeOperand, memorySpace> &eigenSubspaceGuess);
+            std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
+                                                            mpiPatternP2P,
+            std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext);
 
       EigenSolverError
       solve(const OpContext &                    A,

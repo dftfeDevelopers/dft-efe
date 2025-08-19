@@ -151,7 +151,6 @@ namespace dftefe
                                 ValueTypeOperand,
                                 memorySpace>::
       CholeskyGramSchmidt(MultiVector<ValueTypeOperand, memorySpace> &X,
-                          MultiVector<ValueType, memorySpace> &orthogonalizedX,
                           const OpContext &                    B)
     {
       utils::Profiler p(X.getMPIPatternP2P()->mpiCommunicator(),
@@ -328,8 +327,6 @@ namespace dftefe
                 false,
                 true);
 
-              orthogonalizedX = X;
-
               p.registerEnd("Cholesky orthogonalize");
 
               if (!cholSuccess)
@@ -355,6 +352,7 @@ namespace dftefe
             }
           else
             {
+              MultiVector<ValueType, memorySpace> orthogonalizedX(X , (ValueType)0);
               // ------------ DEBUG --------------------------
               utils::MemoryStorage<ValueType, memorySpace> S(
                 numVec * numVec, utils::Types<ValueType>::zero);
@@ -392,6 +390,8 @@ namespace dftefe
                 orthogonalizedX.data(),
                 numVec,
                 linAlgOpContext);
+
+              X = orthogonalizedX;
 
               if (lapackReturn1.err ==
                   LapackErrorCode::FAILED_CHOLESKY_FACTORIZATION)
@@ -441,7 +441,6 @@ namespace dftefe
                    size_type                                   maxPass,
                    RealType                                    shiftTolerance,
                    RealType                             identityTolerance,
-                   MultiVector<ValueType, memorySpace> &orthogonalizedX,
                    const OpContext &                    B)
     {
       utils::throwException(
@@ -770,7 +769,6 @@ namespace dftefe
               retunValue.msg += "Maximum number of Lowdin passes are " +
                                 std::to_string(iPass) + ".";
             }
-          orthogonalizedX = X;
         }
       p.print();
       return retunValue;
@@ -790,6 +788,12 @@ namespace dftefe
                       MultiVector<ValueType, memorySpace> &orthogonalizedX,
                       const OpContext &                    B)
     {
+      if(X.data() == orthogonalizedX.data())
+      {
+        utils::throwException(
+          false,
+          "X and orthoX cannot be same in MultipassLowdin.");
+      }
       utils::throwException(
         !d_useScalapack,
         "ModifiedGramSchmidt orthonormalization does not provide scalapack interface.");
@@ -1082,6 +1086,12 @@ namespace dftefe
                           MultiVector<ValueType, memorySpace> &orthogonalizedX,
                           const OpContext &                    B)
     {
+      if(X.data() == orthogonalizedX.data())
+      {
+        utils::throwException(
+          false,
+          "X and orthoX cannot be same in MultipassLowdin.");
+      }
       utils::throwException(
         !d_useScalapack,
         "ModifiedGramSchmidt orthonormalization does not provide scalapack interface.");

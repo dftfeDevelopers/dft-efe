@@ -65,9 +65,8 @@ namespace dftefe
     EigenSolverError
     RayleighRitzEigenSolver<ValueTypeOperator, ValueTypeOperand, memorySpace>::
       solve(const OpContext &                           A,
-            MultiVector<ValueTypeOperand, memorySpace> &X,
             std::vector<RealType> &                     eigenValues,
-            MultiVector<ValueType, memorySpace> &       eigenVectors,
+            MultiVector<ValueType, memorySpace> &       X,
             bool                                        computeEigenVectors)
     {
       EigenSolverError     retunValue;
@@ -212,8 +211,6 @@ namespace dftefe
                 false,
                 false);
 
-              eigenVectors = X;
-
               p.registerEnd("Subspace Rotation");
             }
 
@@ -232,6 +229,7 @@ namespace dftefe
         }
       else
         {
+          MultiVector<ValueType, memorySpace>       eigenVectors(X , (ValueType)0);
           // // ------- For DEBUG ---------------
           EigenSolverError                             retunValue;
           LapackError                                  lapackReturn;
@@ -285,6 +283,8 @@ namespace dftefe
             numVec,
             *X.getLinAlgOpContext());
 
+          X = eigenVectors;
+
           if (lapackReturn.err == LapackErrorCode::FAILED_STANDARD_EIGENPROBLEM)
             {
               err        = EigenSolverErrorCode::LAPACK_ERROR;
@@ -308,9 +308,8 @@ namespace dftefe
     RayleighRitzEigenSolver<ValueTypeOperator, ValueTypeOperand, memorySpace>::
       solve(const OpContext &                           A,
             const OpContext &                           B,
-            MultiVector<ValueTypeOperand, memorySpace> &X,
             std::vector<RealType> &                     eigenValues,
-            MultiVector<ValueType, memorySpace> &       eigenVectors,
+            MultiVector<ValueType, memorySpace> &       X,
             bool                                        computeEigenVectors)
     {
       EigenSolverError     retunValue;
@@ -540,8 +539,6 @@ namespace dftefe
                 RayleighRitzDefaults::WAVE_FN_BATCH,
                 false,
                 false);
-
-              eigenVectors = X;
 
               p.registerEnd("X^{T}={QConjPrime}^{C}*LConj^{-1}*X^{T}, RR step");
             }

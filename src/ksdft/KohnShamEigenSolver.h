@@ -93,8 +93,7 @@ namespace dftefe
         const double    fracOccupancyTolerance,
         const double    eigenSolveResidualTolerance,
         const size_type maxChebyshevFilterPass,
-        linearAlgebra::MultiVector<ValueTypeOperand, memorySpace>
-          &waveFunctionSubspaceGuess,
+        const size_type numWantedEigenvalues,
         linearAlgebra::Vector<ValueTypeOperand, memorySpace> &lanczosGuess,
         const linearAlgebra::ElpaScalapackManager &           elpaScala,
         bool             isResidualChebyshevFilter = true,
@@ -107,7 +106,7 @@ namespace dftefe
           linearAlgebra::IdentityOperatorContext<ValueTypeOperator,
                                                  ValueTypeOperand,
                                                  memorySpace>(),
-        const bool                           isGHEP = true,
+        const bool                           isGHEP = false,
         linearAlgebra::OrthogonalizationType orthoType =
           linearAlgebra::OrthogonalizationType::CHOLESKY_GRAMSCHMIDT,
         bool storeIntermediateSubspaces = false);
@@ -120,8 +119,6 @@ namespace dftefe
 
       void
       reinitBasis(
-        linearAlgebra::MultiVector<ValueTypeOperand, memorySpace>
-          &waveFunctionSubspaceGuess,
         linearAlgebra::Vector<ValueTypeOperand, memorySpace> &lanczosGuess,
         const OpContext &                                     MLanczos =
           linearAlgebra::IdentityOperatorContext<ValueTypeOperator,
@@ -189,7 +186,7 @@ namespace dftefe
       double    d_eigenSolveResidualTolerance;
       size_type d_maxChebyshevFilterPass;
       size_type d_chebyshevPolynomialDegree;
-      size_type d_numWantedEigenvalues;
+      const size_type d_numWantedEigenvalues;
       size_type d_waveFunctionBatchSize;
       linearAlgebra::MultiVector<ValueTypeOperand, memorySpace>
         *d_waveFunctionSubspaceGuess;

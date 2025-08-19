@@ -558,7 +558,7 @@ namespace dftefe
       linearAlgebra::Vector<ValueTypeWaveFunctionCoeff, memorySpace>
         d_lanczosGuess;
       linearAlgebra::MultiVector<ValueTypeWaveFunctionCoeff, memorySpace>
-                      d_waveFunctionSubspaceGuess, d_kohnShamWaveFunctions;
+                      d_kohnShamWaveFunctions;
       const size_type d_numElectrons;
 
       std::shared_ptr<

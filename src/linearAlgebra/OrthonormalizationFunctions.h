@@ -70,7 +70,6 @@ namespace dftefe
       OrthonormalizationError
       CholeskyGramSchmidt(
         MultiVector<ValueTypeOperand, memorySpace> &X,
-        MultiVector<ValueType, memorySpace> &       orthogonalizedX,
         const OpContext &B = IdentityOperatorContext<ValueTypeOperator,
                                                      ValueTypeOperand,
                                                      memorySpace>());
@@ -80,7 +79,6 @@ namespace dftefe
         size_type                                   maxPass,
         RealType                                    shiftTolerance,
         RealType                                    identityTolerance,
-        MultiVector<ValueType, memorySpace> &       orthogonalizedX,
         const OpContext &B = IdentityOperatorContext<ValueTypeOperator,
                                                      ValueTypeOperand,
                                                      memorySpace>());

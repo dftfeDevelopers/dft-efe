@@ -92,7 +92,6 @@ namespace dftefe
       // \lambda M X if X = X_MO Q
       EigenSolverError
       solve(const OpContext &                           A,
-            MultiVector<ValueTypeOperand, memorySpace> &X,
             std::vector<RealType> &                     eigenValues,
             MultiVector<ValueType, memorySpace> &       eigenVectors,
             bool computeEigenVectors = false);
@@ -116,7 +115,6 @@ namespace dftefe
       EigenSolverError
       solve(const OpContext &                           A,
             const OpContext &                           B,
-            MultiVector<ValueTypeOperand, memorySpace> &X,
             std::vector<RealType> &                     eigenValues,
             MultiVector<ValueType, memorySpace> &       eigenVectors,
             bool computeEigenVectors = false);
