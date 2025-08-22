@@ -3,6 +3,13 @@
 ## ReFrame Guide
 https://reframe-hpc.readthedocs.io/en/stable/
 
+## Run Test in greatlakes
+cd <Test Folder containing testfilename>
+ ../reframe/bin/reframe -C ../config/mysettings.py -c <testfilename> -r -p=gnu -n='BuildAnd*'
+## Run Test in perlmutter
+cd <Test Folder containing testfilename>
+../reframe/bin/reframe -C ../config/mysettings.py -c <testfilename> -r -p=PrgEnv-gnu -n='BuildAnd*'
+
 ## Table of contents <a name="contents"></a>
 + [Installation](#installation)
 + [How to run](#howtorun)

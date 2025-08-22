@@ -18,6 +18,8 @@ set(DFT-EFE-ATOMS-SOURCES
     SphericalDataMixed.cpp
     SphericalDataAnalytical.cpp
     AtomSphericalDataAnalytical.cpp
+    simdjson.cpp
+    AtomTCIASpline.cpp
    )
 
 add_library(dft-efe-atoms SHARED ${DFT-EFE-ATOMS-SOURCES})
