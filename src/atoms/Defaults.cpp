@@ -51,6 +51,7 @@ namespace dftefe
       "z_valence",
       "l_max",
       "number_of_wfc",
+      "total_psenergy",
       "number_of_proj",
       "core_correction",
       "dij"};

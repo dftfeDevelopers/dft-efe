@@ -213,7 +213,10 @@ namespace dftefe
                         linAlgOpContext,
         const size_type maxCellBlock,
         const size_type maxWaveFnBlock,
-        const bool      useDealiiMatrixFreePoissonSolve)
+        const std::unordered_map<std::string,
+                                 std::shared_ptr<atoms::AtomTCIASpline>>
+                   fieldToTCIASplineMap,
+        const bool useDealiiMatrixFreePoissonSolve)
       : d_linAlgOpContext(linAlgOpContext)
       , d_numComponents(1)
       , d_rootCout(std::cout)
@@ -280,6 +283,7 @@ namespace dftefe
                                               memorySpace,
                                               dim>>(
           atomCoordinates,
+          atomSymbolVec,
           atomCharges,
           smearedChargeRadius,
           // atomicElectronChargeDensity,
@@ -296,6 +300,7 @@ namespace dftefe
           *d_atomVLocFunction,
           linAlgOpContext,
           maxCellBlock,
+          fieldToTCIASplineMap,
           useDealiiMatrixFreePoissonSolve);
     }
 

@@ -180,14 +180,14 @@ namespace dftefe
           &              kohnShamWaveFunctions,
         const OpContext &M);
 
-      double    d_smearingTemperature;
-      double    d_fermiEnergyTolerance;
-      double    d_fracOccupancyTolerance;
-      double    d_eigenSolveResidualTolerance;
-      size_type d_maxChebyshevFilterPass;
-      size_type d_chebyshevPolynomialDegree;
+      double          d_smearingTemperature;
+      double          d_fermiEnergyTolerance;
+      double          d_fracOccupancyTolerance;
+      double          d_eigenSolveResidualTolerance;
+      size_type       d_maxChebyshevFilterPass;
+      size_type       d_chebyshevPolynomialDegree;
       const size_type d_numWantedEigenvalues;
-      size_type d_waveFunctionBatchSize;
+      size_type       d_waveFunctionBatchSize;
       linearAlgebra::MultiVector<ValueTypeOperand, memorySpace>
         *d_waveFunctionSubspaceGuess;
       linearAlgebra::Vector<ValueTypeOperand, memorySpace> *d_lanczosGuess;

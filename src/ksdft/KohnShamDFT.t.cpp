@@ -286,7 +286,7 @@ namespace dftefe
       , d_rootCout(std::cout)
       , d_kohnShamWaveFunctions(feBMWaveFn->getMPIPatternP2P(),
                                 linAlgOpContext,
-                                numWantedEigenvalues, 
+                                numWantedEigenvalues,
                                 (ValueType)0.0)
       , d_lanczosGuess(feBMWaveFn->getMPIPatternP2P(),
                        linAlgOpContext,
@@ -618,7 +618,7 @@ namespace dftefe
       , d_rootCout(std::cout)
       , d_kohnShamWaveFunctions(feBMWaveFn->getMPIPatternP2P(),
                                 linAlgOpContext,
-                                numWantedEigenvalues, 
+                                numWantedEigenvalues,
                                 (ValueType)0.0)
       , d_lanczosGuess(feBMWaveFn->getMPIPatternP2P(),
                        linAlgOpContext,
@@ -870,6 +870,7 @@ namespace dftefe
         /* Atom related info */
         const std::vector<utils::Point> &atomCoordinates,
         const std::vector<double> &      atomCharges,
+        const std::vector<std::string> & atomSymbolVec,
         const std::vector<double> &      smearedChargeRadius,
         const size_type                  numElectrons,
         /* SCF related info */
@@ -941,7 +942,9 @@ namespace dftefe
         const OpContext &MContextForInv,
         const OpContext &MContext,
         const OpContext &MInvContext,
-        bool             isResidualChebyshevFilter)
+        bool             isResidualChebyshevFilter,
+        /* TCI related info */
+        const atoms::TCIADataParams &params)
       : d_mixingHistory(mixingHistory)
       , d_mixingParameter(mixingParameter)
       , d_isAdaptiveAndersonMixingParameter(isAdaptiveAndersonMixingParameter)
@@ -961,7 +964,7 @@ namespace dftefe
       , d_rootCout(std::cout)
       , d_kohnShamWaveFunctions(feBMWaveFn->getMPIPatternP2P(),
                                 linAlgOpContext,
-                                numWantedEigenvalues, 
+                                numWantedEigenvalues,
                                 (ValueType)0.0)
       , d_lanczosGuess(feBMWaveFn->getMPIPatternP2P(),
                        linAlgOpContext,
@@ -1061,6 +1064,29 @@ namespace dftefe
         KSDFTDefaults::CELL_BATCH_SIZE_GRAD_EVAL,
         KSDFTDefaults::MAX_KINENG_WAVEFN_BATCH_SIZE);
 
+      std::unordered_map<std::string, std::shared_ptr<atoms::AtomTCIASpline>>
+        fieldToTCIASplineMap;
+      fieldToTCIASplineMap["rhoAtom-phiAtom"] =
+        std::make_shared<atoms::AtomTCIASpline>("rhoAtom-phiAtom",
+                                                params,
+                                                std::vector<std::string>{"Si"},
+                                                std::vector<std::string>{"S"},
+                                                1000);
+
+      fieldToTCIASplineMap["rhoAtom-vlocCorrection"] =
+        std::make_shared<atoms::AtomTCIASpline>("rhoAtom-vlocCorrection",
+                                                params,
+                                                std::vector<std::string>{"Si"},
+                                                std::vector<std::string>{"S"},
+                                                1000);
+
+      fieldToTCIASplineMap["bSmear-phiAtom"] =
+        std::make_shared<atoms::AtomTCIASpline>("bSmear-phiAtom",
+                                                params,
+                                                std::vector<std::string>{"Si"},
+                                                std::vector<std::string>{"S"},
+                                                1000);
+
       d_hamitonianElec =
         std::make_shared<ElectrostaticLocalFE<ValueTypeElectrostaticsBasis,
                                               ValueTypeElectrostaticsCoeff,
@@ -1068,6 +1094,7 @@ namespace dftefe
                                               memorySpace,
                                               dim>>(
           atomCoordinates,
+          atomSymbolVec,
           atomCharges,
           smearedChargeRadius,
           // d_densityOutQuadValues,  /*NOTE: Atomic density input should not be
@@ -1082,7 +1109,8 @@ namespace dftefe
           feBDElectrostaticsHamiltonian,
           externalPotentialFunction,
           linAlgOpContext,
-          KSDFTDefaults::CELL_BATCH_SIZE);
+          KSDFTDefaults::CELL_BATCH_SIZE,
+          fieldToTCIASplineMap);
       d_hamitonianXC =
         std::make_shared<ExchangeCorrelationFE<ValueTypeWaveFunctionBasis,
                                                ValueTypeWaveFunctionCoeff,
@@ -1310,7 +1338,7 @@ namespace dftefe
       , d_rootCout(std::cout)
       , d_kohnShamWaveFunctions(feBMWaveFn->getMPIPatternP2P(),
                                 linAlgOpContext,
-                                numWantedEigenvalues, 
+                                numWantedEigenvalues,
                                 (ValueType)0.0)
       , d_lanczosGuess(feBMWaveFn->getMPIPatternP2P(),
                        linAlgOpContext,
@@ -1759,7 +1787,9 @@ namespace dftefe
         const OpContext &MContextForInv,
         const OpContext &MContext,
         const OpContext &MInvContext,
-        bool             isResidualChebyshevFilter)
+        bool             isResidualChebyshevFilter,
+        /* TCI related info */
+        const atoms::TCIADataParams &params)
       : d_mixingHistory(mixingHistory)
       , d_mixingParameter(mixingParameter)
       , d_isAdaptiveAndersonMixingParameter(isAdaptiveAndersonMixingParameter)
@@ -1777,7 +1807,7 @@ namespace dftefe
       , d_rootCout(std::cout)
       , d_kohnShamWaveFunctions(feBMWaveFn->getMPIPatternP2P(),
                                 linAlgOpContext,
-                                numWantedEigenvalues, 
+                                numWantedEigenvalues,
                                 (ValueType)0.0)
       , d_lanczosGuess(feBMWaveFn->getMPIPatternP2P(),
                        linAlgOpContext,
@@ -1937,6 +1967,29 @@ namespace dftefe
           KSDFTDefaults::MAX_WAVEFN_BATCH_SIZE :
           numWantedEigenvalues;
 
+      std::unordered_map<std::string, std::shared_ptr<atoms::AtomTCIASpline>>
+        fieldToTCIASplineMap;
+      fieldToTCIASplineMap["rhoAtom-phiAtom"] =
+        std::make_shared<atoms::AtomTCIASpline>("rhoAtom-phiAtom",
+                                                params,
+                                                std::vector<std::string>{"Si"},
+                                                std::vector<std::string>{"S"},
+                                                1000);
+
+      fieldToTCIASplineMap["rhoAtom-vlocCorrection"] =
+        std::make_shared<atoms::AtomTCIASpline>("rhoAtom-vlocCorrection",
+                                                params,
+                                                std::vector<std::string>{"Si"},
+                                                std::vector<std::string>{"S"},
+                                                1000);
+
+      fieldToTCIASplineMap["bSmear-phiAtom"] =
+        std::make_shared<atoms::AtomTCIASpline>("bSmear-phiAtom",
+                                                params,
+                                                std::vector<std::string>{"Si"},
+                                                std::vector<std::string>{"S"},
+                                                1000);
+
       d_hamitonianElec =
         std::make_shared<ElectrostaticONCVNonLocFE<ValueTypeElectrostaticsBasis,
                                                    ValueTypeElectrostaticsCoeff,
@@ -1963,7 +2016,8 @@ namespace dftefe
           feBDAtomCenterNonLocalOperator,
           linAlgOpContext,
           KSDFTDefaults::CELL_BATCH_SIZE,
-          waveFnBatch);
+          waveFnBatch,
+          fieldToTCIASplineMap);
 
       if (d_isNlcc && d_isONCVNonLocPSP)
         {

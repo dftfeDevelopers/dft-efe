@@ -90,9 +90,7 @@ namespace dftefe
       , d_elpaScala(&elpaScala)
       , d_isGHEP(isGHEP)
     {
-      reinitBasis(lanczosGuess,
-                  MLanczos,
-                  MInvLanczos);
+      reinitBasis(lanczosGuess, MLanczos, MInvLanczos);
     }
 
     template <typename ValueTypeOperator,
@@ -105,11 +103,11 @@ namespace dftefe
         const OpContext &                                     MLanczos,
         const OpContext &                                     MInvLanczos)
     {
-      d_isSolved                  = false;
-      d_isBoundKnown              = false;
-      d_lanczosGuess              = &lanczosGuess;
-      d_MLanczos                  = &MLanczos;
-      d_MInvLanczos               = &MInvLanczos;
+      d_isSolved     = false;
+      d_isBoundKnown = false;
+      d_lanczosGuess = &lanczosGuess;
+      d_MLanczos     = &MLanczos;
+      d_MInvLanczos  = &MInvLanczos;
       int rank;
       utils::mpi::MPICommRank(
         lanczosGuess.getMPIPatternP2P()->mpiCommunicator(), &rank);

@@ -64,10 +64,10 @@ namespace dftefe
               utils::MemorySpace memorySpace>
     EigenSolverError
     RayleighRitzEigenSolver<ValueTypeOperator, ValueTypeOperand, memorySpace>::
-      solve(const OpContext &                           A,
-            std::vector<RealType> &                     eigenValues,
-            MultiVector<ValueType, memorySpace> &       X,
-            bool                                        computeEigenVectors)
+      solve(const OpContext &                    A,
+            std::vector<RealType> &              eigenValues,
+            MultiVector<ValueType, memorySpace> &X,
+            bool                                 computeEigenVectors)
     {
       EigenSolverError     retunValue;
       EigenSolverErrorCode err;
@@ -229,7 +229,7 @@ namespace dftefe
         }
       else
         {
-          MultiVector<ValueType, memorySpace>       eigenVectors(X , (ValueType)0);
+          MultiVector<ValueType, memorySpace> eigenVectors(X, (ValueType)0);
           // // ------- For DEBUG ---------------
           EigenSolverError                             retunValue;
           LapackError                                  lapackReturn;
@@ -306,11 +306,11 @@ namespace dftefe
               utils::MemorySpace memorySpace>
     EigenSolverError
     RayleighRitzEigenSolver<ValueTypeOperator, ValueTypeOperand, memorySpace>::
-      solve(const OpContext &                           A,
-            const OpContext &                           B,
-            std::vector<RealType> &                     eigenValues,
-            MultiVector<ValueType, memorySpace> &       X,
-            bool                                        computeEigenVectors)
+      solve(const OpContext &                    A,
+            const OpContext &                    B,
+            std::vector<RealType> &              eigenValues,
+            MultiVector<ValueType, memorySpace> &X,
+            bool                                 computeEigenVectors)
     {
       EigenSolverError     retunValue;
       EigenSolverErrorCode err;

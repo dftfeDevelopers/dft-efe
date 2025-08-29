@@ -151,7 +151,7 @@ namespace dftefe
                                 ValueTypeOperand,
                                 memorySpace>::
       CholeskyGramSchmidt(MultiVector<ValueTypeOperand, memorySpace> &X,
-                          const OpContext &                    B)
+                          const OpContext &                           B)
     {
       utils::Profiler p(X.getMPIPatternP2P()->mpiCommunicator(),
                         "Orthogonalization");
@@ -352,7 +352,8 @@ namespace dftefe
             }
           else
             {
-              MultiVector<ValueType, memorySpace> orthogonalizedX(X , (ValueType)0);
+              MultiVector<ValueType, memorySpace> orthogonalizedX(X,
+                                                                  (ValueType)0);
               // ------------ DEBUG --------------------------
               utils::MemoryStorage<ValueType, memorySpace> S(
                 numVec * numVec, utils::Types<ValueType>::zero);
@@ -434,14 +435,14 @@ namespace dftefe
               typename ValueTypeOperand,
               utils::MemorySpace memorySpace>
     OrthonormalizationError
-    OrthonormalizationFunctions<ValueTypeOperator,
-                                ValueTypeOperand,
-                                memorySpace>::
-      MultipassCGS(MultiVector<ValueTypeOperand, memorySpace> &X,
-                   size_type                                   maxPass,
-                   RealType                                    shiftTolerance,
-                   RealType                             identityTolerance,
-                   const OpContext &                    B)
+    OrthonormalizationFunctions<
+      ValueTypeOperator,
+      ValueTypeOperand,
+      memorySpace>::MultipassCGS(MultiVector<ValueTypeOperand, memorySpace> &X,
+                                 size_type        maxPass,
+                                 RealType         shiftTolerance,
+                                 RealType         identityTolerance,
+                                 const OpContext &B)
     {
       utils::throwException(
         d_useScalapack,
@@ -788,12 +789,11 @@ namespace dftefe
                       MultiVector<ValueType, memorySpace> &orthogonalizedX,
                       const OpContext &                    B)
     {
-      if(X.data() == orthogonalizedX.data())
-      {
-        utils::throwException(
-          false,
-          "X and orthoX cannot be same in MultipassLowdin.");
-      }
+      if (X.data() == orthogonalizedX.data())
+        {
+          utils::throwException(
+            false, "X and orthoX cannot be same in MultipassLowdin.");
+        }
       utils::throwException(
         !d_useScalapack,
         "ModifiedGramSchmidt orthonormalization does not provide scalapack interface.");
@@ -1086,12 +1086,11 @@ namespace dftefe
                           MultiVector<ValueType, memorySpace> &orthogonalizedX,
                           const OpContext &                    B)
     {
-      if(X.data() == orthogonalizedX.data())
-      {
-        utils::throwException(
-          false,
-          "X and orthoX cannot be same in MultipassLowdin.");
-      }
+      if (X.data() == orthogonalizedX.data())
+        {
+          utils::throwException(
+            false, "X and orthoX cannot be same in MultipassLowdin.");
+        }
       utils::throwException(
         !d_useScalapack,
         "ModifiedGramSchmidt orthonormalization does not provide scalapack interface.");

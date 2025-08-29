@@ -40,40 +40,56 @@ namespace dftefe
 {
   namespace atoms
   {
+    struct TCIADataParams
+    {
+      std::string folderName;
+      std::string outFilePrefix;
+    };
+
     class AtomTCIASpline
     {
     public:
-      AtomTCIASpline(const std::string &fieldName,
-                    const std::string  &tciaDataFileName,
-                    const int derivativeOrder = 0,
-                    const size_type maxPairs = 1000);
+      AtomTCIASpline(const std::string &            fieldName,
+                     const TCIADataParams &         params,
+                     const std::vector<std::string> atomSymbols,
+                     const std::vector<std::string> tciTypes = {"S"},
+                     const size_type                maxPairs = 1000);
 
       /**
        * @brief Destructor
        */
       ~AtomTCIASpline() = default;
 
-      utils::Spline*
-      getSpline(const std::string &atomPair);
+      utils::Spline *
+      getSpline(const std::string &atomCombination, const std::string tciType);
 
       double
       maxRadialGrid();
 
     private:
-      bool loadAtomPair(const std::string &atomPair,
-                        std::vector<double> &values);
-      void evictIfNeeded();
-      void touch(const std::string &key);
+      bool
+      loadAtomCombination(const std::string &               atomCombination,
+                          std::vector<std::vector<double>> &values);
+      void
+      evictIfNeeded();
+      void
+      touch(const std::string &key);
 
-      std::unordered_map<std::string, std::unique_ptr<utils::Spline>> d_cache;
-      std::string d_jsonFile;
-      std::vector<double> d_rgrid;
-      size_type d_maxSize;
-      std::string d_SorSprime , d_fieldName;
+      std::unordered_map<std::string, int> d_tciTypeToIndex;
 
-    // LRU bookkeeping
-    std::list<std::string> d_lruList; // front = most recent, back = least
-    std::unordered_map<std::string, std::list<std::string>::iterator> d_keyToIter;
+      std::unordered_map<std::string,
+                         std::vector<std::unique_ptr<utils::Spline>>>
+                                     d_cache;
+      const TCIADataParams           d_tciaparams;
+      std::vector<double>            d_dgrid;
+      size_type                      d_maxSize;
+      std::string                    d_fieldName;
+      const std::vector<std::string> d_tciTypes;
+
+      // LRU bookkeeping
+      std::list<std::string> d_lruList; // front = most recent, back = least
+      std::unordered_map<std::string, std::list<std::string>::iterator>
+        d_keyToIter;
 
     }; // end of class AtomTCIASpline
   }    // end of namespace atoms

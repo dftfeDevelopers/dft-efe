@@ -40,20 +40,20 @@ namespace dftefe
                                  ValueTypeOperand,
                                  memorySpace>::
       ChebyshevFilteredEigenSolver(
-        const double                                wantedSpectrumLowerBound,
-        const double                                wantedSpectrumUpperBound,
-        const double                                unWantedSpectrumUpperBound,
-        const double                                polynomialDegree,
-        const double                                illConditionTolerance,
+        const double wantedSpectrumLowerBound,
+        const double wantedSpectrumUpperBound,
+        const double unWantedSpectrumUpperBound,
+        const double polynomialDegree,
+        const double illConditionTolerance,
         std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
                                                       mpiPatternP2P,
-        std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext,        
-        const ElpaScalapackManager &                elpaScala,
-        bool                                        isResidualChebyshevFilter,
-        const size_type                             eigenVectorBatchSize,
-        bool                                        isGHEP,
-        OrthogonalizationType                       orthoType,
-        bool                                        storeIntermediateSubspaces)
+        std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext,
+        const ElpaScalapackManager &                  elpaScala,
+        bool                                          isResidualChebyshevFilter,
+        const size_type                               eigenVectorBatchSize,
+        bool                                          isGHEP,
+        OrthogonalizationType                         orthoType,
+        bool storeIntermediateSubspaces)
       : d_p(mpiPatternP2P->mpiCommunicator(), "CHFSI")
       , d_isResidualChebyFilter(isResidualChebyshevFilter)
       , d_storeIntermediateSubspaces(storeIntermediateSubspaces)
@@ -75,48 +75,41 @@ namespace dftefe
         {
           d_filteredSubspaceOrtho =
             std::make_shared<MultiVector<ValueType, memorySpace>>(
-              mpiPatternP2P , linAlgOpContext , 1, (ValueType)0);
+              mpiPatternP2P, linAlgOpContext, 1, (ValueType)0);
           d_filteredSubspace =
             std::make_shared<MultiVector<ValueType, memorySpace>>(
-              mpiPatternP2P , linAlgOpContext , 1, (ValueType)0);
+              mpiPatternP2P, linAlgOpContext, 1, (ValueType)0);
         }
 
       d_XinBatch =
         std::make_shared<linearAlgebra::MultiVector<ValueType, memorySpace>>(
-          d_mpiPatternP2P,
-          linAlgOpContext,
-          eigenVectorBatchSize,
-          ValueType());
+          d_mpiPatternP2P, linAlgOpContext, eigenVectorBatchSize, ValueType());
 
       d_XoutBatch =
         std::make_shared<linearAlgebra::MultiVector<ValueType, memorySpace>>(
-          d_mpiPatternP2P,
-          linAlgOpContext,
-          eigenVectorBatchSize,
-          ValueType());
-        
-      if(!d_isGHEP)
-      d_ortho = std::make_shared<
-        OrthonormalizationFunctions<ValueTypeOperator, ValueType, memorySpace>>(
-        eigenVectorBatchSize,
-        *d_elpaScala,
-        d_mpiPatternP2P,
-        linAlgOpContext);
+          d_mpiPatternP2P, linAlgOpContext, eigenVectorBatchSize, ValueType());
+
+      if (!d_isGHEP)
+        d_ortho =
+          std::make_shared<OrthonormalizationFunctions<ValueTypeOperator,
+                                                       ValueType,
+                                                       memorySpace>>(
+            eigenVectorBatchSize,
+            *d_elpaScala,
+            d_mpiPatternP2P,
+            linAlgOpContext);
 
       d_rr = std::make_shared<
         RayleighRitzEigenSolver<ValueTypeOperator, ValueType, memorySpace>>(
-        eigenVectorBatchSize,
-        *d_elpaScala,
-        d_mpiPatternP2P,
-        linAlgOpContext);
+        eigenVectorBatchSize, *d_elpaScala, d_mpiPatternP2P, linAlgOpContext);
 
       reinit(wantedSpectrumLowerBound,
              wantedSpectrumUpperBound,
              unWantedSpectrumUpperBound,
              polynomialDegree,
              illConditionTolerance,
-            d_mpiPatternP2P,
-            linAlgOpContext);
+             d_mpiPatternP2P,
+             linAlgOpContext);
     }
 
     template <typename ValueTypeOperator,
@@ -131,9 +124,9 @@ namespace dftefe
              const double unWantedSpectrumUpperBound,
              const double polynomialDegree,
              const double illConditionTolerance,
-            std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
-                                                            mpiPatternP2P,
-            std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext)
+             std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
+                                                           mpiPatternP2P,
+             std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext)
     {
       // d_eigenSubspaceGuess         = &eigenSubspaceGuess;
       d_polynomialDegree           = polynomialDegree;
@@ -145,38 +138,32 @@ namespace dftefe
         {
           if (d_storeIntermediateSubspaces && d_printL2Norms)
             {
-                d_filteredSubspaceOrtho =
-                  std::make_shared<MultiVector<ValueType, memorySpace>>(
-                    mpiPatternP2P , linAlgOpContext , 1, (ValueType)0);
-                d_filteredSubspace =
-                  std::make_shared<MultiVector<ValueType, memorySpace>>(
-                    mpiPatternP2P , linAlgOpContext , 1, (ValueType)0);
+              d_filteredSubspaceOrtho =
+                std::make_shared<MultiVector<ValueType, memorySpace>>(
+                  mpiPatternP2P, linAlgOpContext, 1, (ValueType)0);
+              d_filteredSubspace =
+                std::make_shared<MultiVector<ValueType, memorySpace>>(
+                  mpiPatternP2P, linAlgOpContext, 1, (ValueType)0);
             }
 
           d_mpiPatternP2P = mpiPatternP2P;
           d_XinBatch      = std::make_shared<
             linearAlgebra::MultiVector<ValueType, memorySpace>>(
-            d_mpiPatternP2P,
-            linAlgOpContext,
-            d_eigenVecBatchSize,
-            ValueType());
+            d_mpiPatternP2P, linAlgOpContext, d_eigenVecBatchSize, ValueType());
 
           d_XoutBatch = std::make_shared<
             linearAlgebra::MultiVector<ValueType, memorySpace>>(
-            d_mpiPatternP2P,
-            linAlgOpContext,
-            d_eigenVecBatchSize,
-            ValueType());
+            d_mpiPatternP2P, linAlgOpContext, d_eigenVecBatchSize, ValueType());
 
-          if(!d_isGHEP)
-          d_ortho =
-            std::make_shared<OrthonormalizationFunctions<ValueTypeOperator,
-                                                         ValueType,
-                                                         memorySpace>>(
-              d_eigenVecBatchSize,
-              *d_elpaScala,
-              d_mpiPatternP2P,
-              linAlgOpContext);
+          if (!d_isGHEP)
+            d_ortho =
+              std::make_shared<OrthonormalizationFunctions<ValueTypeOperator,
+                                                           ValueType,
+                                                           memorySpace>>(
+                d_eigenVecBatchSize,
+                *d_elpaScala,
+                d_mpiPatternP2P,
+                linAlgOpContext);
 
           d_rr = std::make_shared<
             RayleighRitzEigenSolver<ValueTypeOperator, ValueType, memorySpace>>(
@@ -338,15 +325,21 @@ namespace dftefe
 
       if (d_storeIntermediateSubspaces && d_printL2Norms)
         {
-          if(d_filteredSubspaceOrtho->getNumberComponents() != numEigenVectors)
-          {
-            d_filteredSubspaceOrtho =
-              std::make_shared<MultiVector<ValueType, memorySpace>>(
-                d_mpiPatternP2P , eigenVectors.getLinAlgOpContext() , numEigenVectors, (ValueType)0);
-            d_filteredSubspace =
-              std::make_shared<MultiVector<ValueType, memorySpace>>(
-                d_mpiPatternP2P , eigenVectors.getLinAlgOpContext() , numEigenVectors, (ValueType)0);
-          }
+          if (d_filteredSubspaceOrtho->getNumberComponents() != numEigenVectors)
+            {
+              d_filteredSubspaceOrtho =
+                std::make_shared<MultiVector<ValueType, memorySpace>>(
+                  d_mpiPatternP2P,
+                  eigenVectors.getLinAlgOpContext(),
+                  numEigenVectors,
+                  (ValueType)0);
+              d_filteredSubspace =
+                std::make_shared<MultiVector<ValueType, memorySpace>>(
+                  d_mpiPatternP2P,
+                  eigenVectors.getLinAlgOpContext(),
+                  numEigenVectors,
+                  (ValueType)0);
+            }
           *d_filteredSubspace = eigenVectors;
           rootCout << "d_filteredSubspace l2norms CHFSI: ";
           for (auto &i : d_filteredSubspace->l2Norms())
@@ -365,8 +358,7 @@ namespace dftefe
 
           if (d_orthoType == OrthogonalizationType::CHOLESKY_GRAMSCHMIDT)
             {
-              orthoerr = d_ortho->CholeskyGramSchmidt(eigenVectors,
-                                                      B);
+              orthoerr = d_ortho->CholeskyGramSchmidt(eigenVectors, B);
             }
           else if (d_orthoType == OrthogonalizationType::MULTIPASS_CGS)
             {

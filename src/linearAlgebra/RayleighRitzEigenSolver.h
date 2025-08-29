@@ -91,10 +91,10 @@ namespace dftefe
       // orthogonalized. X_MO^T H X_MO Q = \lambda X_MO^T M X_MO Q , or, H X =
       // \lambda M X if X = X_MO Q
       EigenSolverError
-      solve(const OpContext &                           A,
-            std::vector<RealType> &                     eigenValues,
-            MultiVector<ValueType, memorySpace> &       eigenVectors,
-            bool computeEigenVectors = false);
+      solve(const OpContext &                    A,
+            std::vector<RealType> &              eigenValues,
+            MultiVector<ValueType, memorySpace> &eigenVectors,
+            bool                                 computeEigenVectors = false);
 
       /**  In this case we solve the Kohn Sham GHEP for any general X
       * Performs cholesky factorization for orthogonalization internally.
@@ -113,11 +113,11 @@ namespace dftefe
       trans)
       **/
       EigenSolverError
-      solve(const OpContext &                           A,
-            const OpContext &                           B,
-            std::vector<RealType> &                     eigenValues,
-            MultiVector<ValueType, memorySpace> &       eigenVectors,
-            bool computeEigenVectors = false);
+      solve(const OpContext &                    A,
+            const OpContext &                    B,
+            std::vector<RealType> &              eigenValues,
+            MultiVector<ValueType, memorySpace> &eigenVectors,
+            bool                                 computeEigenVectors = false);
 
     private:
       void

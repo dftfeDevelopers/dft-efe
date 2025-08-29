@@ -169,7 +169,10 @@ namespace dftefe
                         linAlgOpContext,
         const size_type maxCellBlock,
         const size_type maxWaveFnBlock,
-        const bool      useDealiiMatrixFreePoissonSolve = true);
+        const std::unordered_map<std::string,
+                                 std::shared_ptr<atoms::AtomTCIASpline>>
+                   fieldToTCIASplineMap            = {},
+        const bool useDealiiMatrixFreePoissonSolve = true);
 
       ~ElectrostaticONCVNonLocFE() = default;
 

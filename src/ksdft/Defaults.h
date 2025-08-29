@@ -29,6 +29,7 @@
 #include <utils/TypeConfig.h>
 #include <string>
 #include <utils/MathConstants.h>
+#include <atoms/AtomTCIASpline.h>
 #include <linearAlgebra/LinearAlgebraTypes.h>
 
 namespace dftefe
@@ -163,6 +164,12 @@ namespace dftefe
       //
       static const double ATOM_PARTITION_TOL_BETA;
     };
+
+    class TCIADataDefaults
+    {
+    public:
+      static const atoms::TCIADataParams TCIA_PARAMS;
+    }; // end of class AtomTCIADataDefaults
 
   } // end of namespace ksdft
 } // end of namespace dftefe

@@ -91,5 +91,7 @@ namespace dftefe
      */
     const double ElectroHamiltonianDefaults::ATOM_PARTITION_TOL_BETA = 1e-6;
 
+    const atoms::TCIADataParams TCIADataDefaults::TCIA_PARAMS = {"", ""};
+
   } // end of namespace ksdft
 } // end of namespace dftefe

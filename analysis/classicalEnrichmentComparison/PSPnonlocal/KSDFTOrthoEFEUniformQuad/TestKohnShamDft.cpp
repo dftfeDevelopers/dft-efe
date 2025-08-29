@@ -1051,7 +1051,9 @@ int main(int argc, char** argv)
                                           *MContextForInv,
                                           /**MContextForInv,*/
                                           *MContext,
-                                          *MInvContext);
+                                          *MInvContext,
+                                          true,
+                                          {"/global/homes/a/avirup/ks1d/analysis/tci/tcia_data" , "data"});
   }
   else
   {

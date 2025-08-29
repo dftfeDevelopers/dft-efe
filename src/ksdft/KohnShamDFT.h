@@ -243,6 +243,7 @@ namespace dftefe
         /* Atom related info */
         const std::vector<utils::Point> &atomCoordinates,
         const std::vector<double> &      atomCharges,
+        const std::vector<std::string> & atomSymbolVec,
         const std::vector<double> &      smearedChargeRadius,
         const size_type                  numElectrons,
         /* SCF related info */
@@ -324,7 +325,9 @@ namespace dftefe
           linearAlgebra::IdentityOperatorContext<ValueTypeOperator,
                                                  ValueTypeOperand,
                                                  memorySpace>(),
-        bool isResidualChebyshevFilter = true);
+        bool isResidualChebyshevFilter = true,
+        /* TCI related info */
+        const atoms::TCIADataParams &params = TCIADataDefaults::TCIA_PARAMS);
 
       //// used if analytical vself canellation route taken with PSP
       KohnShamDFT(
@@ -488,7 +491,9 @@ namespace dftefe
           linearAlgebra::IdentityOperatorContext<ValueTypeOperator,
                                                  ValueTypeOperand,
                                                  memorySpace>(),
-        bool isResidualChebyshevFilter = true);
+        bool isResidualChebyshevFilter = true,
+        /* TCI related info */
+        const atoms::TCIADataParams &params = TCIADataDefaults::TCIA_PARAMS);
 
       ~KohnShamDFT();
 

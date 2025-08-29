@@ -88,15 +88,15 @@ namespace dftefe
        * @brief Constructor
        */
       ChebyshevFilteredEigenSolver(
-        const double                                wantedSpectrumLowerBound,
-        const double                                wantedSpectrumUpperBound,
-        const double                                unWantedSpectrumUpperBound,
-        const double                                polynomialDegree,
-        const double                                illConditionTolerance,
+        const double wantedSpectrumLowerBound,
+        const double wantedSpectrumUpperBound,
+        const double unWantedSpectrumUpperBound,
+        const double polynomialDegree,
+        const double illConditionTolerance,
         std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
                                                       mpiPatternP2P,
-        std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext,    
-        const ElpaScalapackManager &                elpaScala,
+        std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext,
+        const ElpaScalapackManager &                  elpaScala,
         bool                  isResidualChebyshevFilter = true,
         const size_type       eigenVectorBatchSize      = 0,
         bool                  isGHEP                    = true,
@@ -116,9 +116,9 @@ namespace dftefe
              const double unWantedSpectrumUpperBound,
              const double polynomialDegree,
              const double illConditionTolerance,
-            std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
-                                                            mpiPatternP2P,
-            std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext);
+             std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
+                                                           mpiPatternP2P,
+             std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext);
 
       EigenSolverError
       solve(const OpContext &                    A,
