@@ -1338,6 +1338,7 @@ namespace dftefe
 
       if (!d_isTCIEnabled)
         {
+          d_rootCout << "TCIA Data not provided , using bSmear quad rule for atomic energy contributions.";
           auto jxwStorageNucl = d_feBDNuclearChargeRhs->getJxWInAllCells();
 
           RealType        value              = 0;
@@ -1406,6 +1407,7 @@ namespace dftefe
         }
       else
         {
+          d_rootCout << "TCIA Data provided , using that for atomic energy contributions.";
           double ylm00 = atoms::Clm(0, 0) * atoms::Dm(0) * atoms::Qm(0, 0);
 
           std::shared_ptr<atoms::AtomTCIASpline> tciSpRhoAtPhiAt,
@@ -1462,21 +1464,21 @@ namespace dftefe
                   if (r < tciSpRhoAtPhiAt->maxRadialGrid())
                     {
                       d_intRhoAtPhiAt +=
-                        0.5 * (*tciSpRhoAtPhiAt->getSpline("Si-Si", "S"))(r) *
+                        0.5 * (*tciSpRhoAtPhiAt->getSpline(atomSymbolPair, "S"))(r) *
                         (1 / (ylm00 * ylm00));
                     }
                   if (r < tciSpRhoAtPhiCorr->maxRadialGrid())
                     {
                       // vext - vsmear
                       d_correctionEnergyAtomic +=
-                        0.5 * (*tciSpRhoAtPhiCorr->getSpline("Si-Si", "S"))(r) *
+                        0.5 * (*tciSpRhoAtPhiCorr->getSpline(atomSymbolPair, "S"))(r) *
                         (1 / (ylm00 * ylm00));
                     }
                   if (r < tciSpBSmearPhiAt->maxRadialGrid())
                     {
                       d_integralPhiAtxbSmear +=
-                        0.5 * std::abs(d_atomCharges[jAtom]) *
-                        (*tciSpBSmearPhiAt->getSpline("Si", "S"))(r) *
+                        0.5 * std::abs(d_atomCharges[iAtom]) *
+                        (*tciSpBSmearPhiAt->getSpline(d_atomSymbolVec[jAtom], "S"))(r) *
                         (1 / (ylm00 * ylm00));
                     }
                 }

@@ -25,6 +25,7 @@
 #include <utils/Exceptions.h>
 #include "AtomTCIASpline.h"
 #include "simdjson.h"
+#include <unordered_set>
 namespace dftefe
 {
   namespace atoms
@@ -156,6 +157,12 @@ namespace dftefe
       , d_fieldName(fieldName)
       , d_tciTypes(tciTypes)
     {
+      // Create an unordered_set from the vector, which automatically handles uniqueness
+      std::unordered_set<std::string> uniqueSymbolsSet(atomSymbols.begin(), atomSymbols.end());
+      
+      // Create a new vector from the set
+      std::vector<std::string> uniqueAtomsymbols(uniqueSymbolsSet.begin(), uniqueSymbolsSet.end());
+      
       for (int i = 0; i < d_tciTypes.size(); i++)
         {
           if (d_tciTypes[i] == "S")
@@ -176,20 +183,20 @@ namespace dftefe
       // Load rgrid once (top-level "d")
       simdjson::ondemand::parser parser;
       std::vector<std::string>   atomComb(0);
-      for (int i = 0; i < atomSymbols.size(); i++)
+      for (int i = 0; i < uniqueAtomsymbols.size(); i++)
         {
-          for (int j = 0; j < atomSymbols.size(); j++)
+          for (int j = 0; j < uniqueAtomsymbols.size(); j++)
             {
               if (fieldName == "rhoAtom-vlocCorrection" ||
                   fieldName == "rhoAtom-phiAtom")
                 {
                   atomComb.push_back(
-                    std::string(atomSymbols[i] + "-" + atomSymbols[j]));
+                    std::string(uniqueAtomsymbols[i] + "-" + uniqueAtomsymbols[j]));
                 }
             }
           if (fieldName == "bSmear-phiAtom")
             {
-              atomComb.push_back(std::string(atomSymbols[i]));
+              atomComb.push_back(std::string(uniqueAtomsymbols[i]));
             }
         }
 

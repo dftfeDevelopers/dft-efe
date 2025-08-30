@@ -1065,27 +1065,30 @@ namespace dftefe
         KSDFTDefaults::MAX_KINENG_WAVEFN_BATCH_SIZE);
 
       std::unordered_map<std::string, std::shared_ptr<atoms::AtomTCIASpline>>
-        fieldToTCIASplineMap;
-      fieldToTCIASplineMap["rhoAtom-phiAtom"] =
-        std::make_shared<atoms::AtomTCIASpline>("rhoAtom-phiAtom",
-                                                params,
-                                                std::vector<std::string>{"Si"},
-                                                std::vector<std::string>{"S"},
-                                                1000);
+        fieldToTCIASplineMap = {};
+      if(params.folderName != "")
+      {
+        fieldToTCIASplineMap["rhoAtom-phiAtom"] =
+          std::make_shared<atoms::AtomTCIASpline>("rhoAtom-phiAtom",
+                                                  params,
+                                                  std::vector<std::string>{"Si"},
+                                                  std::vector<std::string>{"S"},
+                                                  1000);
 
-      fieldToTCIASplineMap["rhoAtom-vlocCorrection"] =
-        std::make_shared<atoms::AtomTCIASpline>("rhoAtom-vlocCorrection",
-                                                params,
-                                                std::vector<std::string>{"Si"},
-                                                std::vector<std::string>{"S"},
-                                                1000);
+        fieldToTCIASplineMap["rhoAtom-vlocCorrection"] =
+          std::make_shared<atoms::AtomTCIASpline>("rhoAtom-vlocCorrection",
+                                                  params,
+                                                  std::vector<std::string>{"Si"},
+                                                  std::vector<std::string>{"S"},
+                                                  1000);
 
-      fieldToTCIASplineMap["bSmear-phiAtom"] =
-        std::make_shared<atoms::AtomTCIASpline>("bSmear-phiAtom",
-                                                params,
-                                                std::vector<std::string>{"Si"},
-                                                std::vector<std::string>{"S"},
-                                                1000);
+        fieldToTCIASplineMap["bSmear-phiAtom"] =
+          std::make_shared<atoms::AtomTCIASpline>("bSmear-phiAtom",
+                                                  params,
+                                                  std::vector<std::string>{"Si"},
+                                                  std::vector<std::string>{"S"},
+                                                  1000);
+      }
 
       d_hamitonianElec =
         std::make_shared<ElectrostaticLocalFE<ValueTypeElectrostaticsBasis,
@@ -1968,27 +1971,30 @@ namespace dftefe
           numWantedEigenvalues;
 
       std::unordered_map<std::string, std::shared_ptr<atoms::AtomTCIASpline>>
-        fieldToTCIASplineMap;
-      fieldToTCIASplineMap["rhoAtom-phiAtom"] =
-        std::make_shared<atoms::AtomTCIASpline>("rhoAtom-phiAtom",
-                                                params,
-                                                std::vector<std::string>{"Si"},
-                                                std::vector<std::string>{"S"},
-                                                1000);
+        fieldToTCIASplineMap = {};
+      if(params.folderName != "")
+      {
+        fieldToTCIASplineMap["rhoAtom-phiAtom"] =
+          std::make_shared<atoms::AtomTCIASpline>("rhoAtom-phiAtom",
+                                                  params,
+                                                  atomSymbolVec,
+                                                  std::vector<std::string>{"S"},
+                                                  1000);
 
-      fieldToTCIASplineMap["rhoAtom-vlocCorrection"] =
-        std::make_shared<atoms::AtomTCIASpline>("rhoAtom-vlocCorrection",
-                                                params,
-                                                std::vector<std::string>{"Si"},
-                                                std::vector<std::string>{"S"},
-                                                1000);
+        fieldToTCIASplineMap["rhoAtom-vlocCorrection"] =
+          std::make_shared<atoms::AtomTCIASpline>("rhoAtom-vlocCorrection",
+                                                  params,
+                                                  atomSymbolVec,
+                                                  std::vector<std::string>{"S"},
+                                                  1000);
 
-      fieldToTCIASplineMap["bSmear-phiAtom"] =
-        std::make_shared<atoms::AtomTCIASpline>("bSmear-phiAtom",
-                                                params,
-                                                std::vector<std::string>{"Si"},
-                                                std::vector<std::string>{"S"},
-                                                1000);
+        fieldToTCIASplineMap["bSmear-phiAtom"] =
+          std::make_shared<atoms::AtomTCIASpline>("bSmear-phiAtom",
+                                                  params,
+                                                  atomSymbolVec,
+                                                  std::vector<std::string>{"S"},
+                                                  1000);
+      }
 
       d_hamitonianElec =
         std::make_shared<ElectrostaticONCVNonLocFE<ValueTypeElectrostaticsBasis,

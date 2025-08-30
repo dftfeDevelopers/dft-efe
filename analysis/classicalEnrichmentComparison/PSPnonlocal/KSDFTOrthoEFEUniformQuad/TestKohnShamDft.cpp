@@ -47,39 +47,62 @@ using namespace dftefe;
 const utils::MemorySpace Host = utils::MemorySpace::HOST;
 
 template<typename T>
-T readParameter(std::string ParamFile, std::string param, utils::ConditionalOStream &rootCout)
+T readParameter(const std::string &ParamFile,
+                const std::string &param,
+                utils::ConditionalOStream &rootCout,
+                bool throwIfEmpty   = true,
+                bool throwIfMissing = true,
+                T defaultValue      = T{})
 {
-  T t(0);
+  T t = defaultValue;
   std::string line;
-  std::fstream fstream;
-  fstream.open(ParamFile, std::fstream::in);
-  int count = 0;
+  std::fstream fstream(ParamFile, std::fstream::in);
+  bool found = false;
+
   while (std::getline(fstream, line))
   {
-    for (int i = 0; i < line.length(); i++)
+    auto pos = line.find('=');
+    if (pos == std::string::npos) continue;
+
+    std::string key = line.substr(0, pos);
+    // trim spaces
+    key.erase(std::remove_if(key.begin(), key.end(), ::isspace), key.end());
+
+    if (key == param)
     {
-        if (line[i] == ' ')
-        {
-            line.erase(line.begin() + i);
-            i--;
+      found = true;
+      std::string value = line.substr(pos + 1);
+      // trim leading spaces
+      value.erase(value.begin(),
+                  std::find_if(value.begin(), value.end(),
+                               [](unsigned char ch){ return !std::isspace(ch); }));
+
+      if (value.empty()) {
+        if (throwIfEmpty) {
+          utils::throwException(false, "Parameter found but empty: " + param);
         }
-    }
-    std::istringstream iss(line);
-    std::string type;
-    std::getline(iss, type, '=');
-    if (type.compare(param) == 0)
-    {
-      iss >> t;
-      count = 1;
+        t = defaultValue;
+      } else {
+        if constexpr (std::is_same<T, std::string>::value) {
+          t = value;
+        } else {
+          std::istringstream iss(value);
+          iss >> t;
+        }
+      }
       break;
     }
   }
-  if(count == 0)
-  {
-    utils::throwException(false, "The parameter is not found: "+ param);
+
+  if (!found) {
+    if (throwIfMissing) {
+      utils::throwException(false, "The parameter is not found: " + param);
+    }
+    t = defaultValue;
   }
+
   fstream.close();
-  rootCout << "Reading parameter -- " << param << " = "<<t<<std::endl;
+  rootCout << "Reading parameter -- " << param << " = " << t << std::endl;
   return t;
 }
 
@@ -368,6 +391,11 @@ int main(int argc, char** argv)
   bool isNumericalNuclearSolve = readParameter<bool>(parameterInputFileName, "isNumericalNuclearSolve", rootCout);
   bool isDeltaRhoPoissonSolve = readParameter<bool>(parameterInputFileName, "isDeltaRhoPoissonSolve", rootCout);
 
+  std::string tciaFolder = readParameter<std::string>(parameterInputFileName, "tciaFolder", rootCout , false , false);
+  std::string tciaOutFilePrefix = readParameter<std::string>(parameterInputFileName, "tciaOutFilePrefix", rootCout , false , false);
+
+  const atoms::TCIADataParams  tciaparams{tciaFolder , tciaOutFilePrefix};
+
   unsigned int num1DGaussSubdividedSizeNonLocOperator = 14;
   unsigned int gaussSubdividedCopiesNonLocOperator = 1;
 
@@ -404,11 +432,11 @@ int main(int argc, char** argv)
   // read the input file and create atomsymbol vector and atom coordinates vector.
   std::vector<utils::Point> atomCoordinatesVec(0,utils::Point(dim, 0.0));
     std::vector<double> coordinates;
-        std::vector<std::string> pspFilePathVec(0);
+        std::vector<std::string> pspFilePathVec(0) , xmlFileNameVec(0);
   coordinates.resize(dim,0.);
   std::vector<std::string> atomSymbolVec(0);
   std::vector<double> atomChargesVec(0);
-  std::string symbol;
+  std::string symbol , xmlFileName;
   double valanceNumber;
   atomSymbolVec.resize(0);
   std::string line;
@@ -416,6 +444,7 @@ int main(int argc, char** argv)
   while (std::getline(fstream, line)){
       std::stringstream ss(line);
       ss >> symbol; 
+      ss >> xmlFileName; 
       ss >> valanceNumber; 
       ss >> pspFilePath;
       for(unsigned int i=0 ; i<dim ; i++){
@@ -425,6 +454,7 @@ int main(int argc, char** argv)
       atomCoordinatesVec.push_back(coordinates);
       atomSymbolVec.push_back(symbol);
       atomChargesVec.push_back((-1.0)*valanceNumber);
+      xmlFileNameVec.push_back(xmlFileName);
   }
   utils::mpi::MPIBarrier(comm);
   fstream.close();
@@ -442,9 +472,9 @@ int main(int argc, char** argv)
   }
 
   std::map<std::string, std::string> atomSymbolToFilename;
-  for (auto i:atomSymbolVec )
+  for (int i = 0 ; i < atomSymbolVec.size() ; i++)
   {
-      atomSymbolToFilename[i] = sourceDir + i + ".xml";
+      atomSymbolToFilename[atomSymbolVec[i]] = sourceDir + xmlFileNameVec[i];
   }
 
   std::vector<std::string> fieldNames{"orbital","vtotal","density"};
@@ -458,6 +488,7 @@ int main(int argc, char** argv)
 
   for (auto i:atomSymbolVec )
   {
+    rootCout << "For atom symbol: "<<i<<std::endl;
     rootCout << "Reading xml file: "<<atomSymbolToFilename[i]<<std::endl; 
     rootCout << "Cutoff and smoothness for "<<i<<std::endl; 
     for(auto j:fieldNames)
@@ -1053,7 +1084,7 @@ int main(int argc, char** argv)
                                           *MContext,
                                           *MInvContext,
                                           true,
-                                          {"/global/homes/a/avirup/ks1d/analysis/tci/tcia_data" , "data"});
+                                          tciaparams);
   }
   else
   {
