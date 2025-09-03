@@ -82,7 +82,7 @@ namespace dftefe
       ElectrostaticLocalFE(
         const std::vector<utils::Point> &atomCoordinates,
         const std::vector<double> &      atomCharges,
-        const std::vector<double> &      smearedChargeRadius,
+        const double &      smearedChargeRadius,
         const quadrature::QuadratureValuesContainer<RealType, memorySpace>
           &                                               electronChargeDensity,
         std::shared_ptr<const basis::FEBasisManager<ValueTypeBasisCoeff,
@@ -111,7 +111,7 @@ namespace dftefe
       ElectrostaticLocalFE(
         const std::vector<utils::Point> &atomCoordinates,
         const std::vector<double> &      atomCharges,
-        const std::vector<double> &      smearedChargeRadius,
+        const double &      smearedChargeRadius,
         const quadrature::QuadratureValuesContainer<RealType, memorySpace>
           &                                               electronChargeDensity,
         std::shared_ptr<const basis::FEBasisManager<ValueTypeBasisCoeff,
@@ -148,7 +148,7 @@ namespace dftefe
         const std::vector<utils::Point> &atomCoordinates,
         const std::vector<std::string> & atomSymbols,
         const std::vector<double> &      atomCharges,
-        const std::vector<double> &      smearedChargeRadius,
+        const double &      smearedChargeRadius,
         // const quadrature::QuadratureValuesContainer<RealType, memorySpace>
         //   &atomicElectronChargeDensity,
         // const quadrature::QuadratureValuesContainer<ValueTypeBasisCoeff,
@@ -335,7 +335,7 @@ namespace dftefe
       std::vector<utils::Point> d_atomCoordinates;
       const size_type           d_numAtoms;
       const std::vector<double> d_atomCharges;
-      const std::vector<double> d_smearedChargeRadius;
+      const double d_smearedChargeRadius;
       RealType                  d_energy;
       RealType                  d_nuclearSelfEnergy;
 
@@ -442,6 +442,7 @@ namespace dftefe
                                std::shared_ptr<atoms::AtomTCIASpline>>
            d_fieldToTCIASplineMap;
       bool d_isTCIEnabled;
+      double  d_integralDiffVZZCorrVSmearxSumBZZCorrBSmear;
 
     }; // end of class ElectrostaticLocalFE
   }    // end of namespace ksdft

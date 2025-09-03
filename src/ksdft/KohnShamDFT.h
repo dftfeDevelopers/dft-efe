@@ -80,7 +80,7 @@ namespace dftefe
         /* Atom related info */
         const std::vector<utils::Point> &atomCoordinates,
         const std::vector<double> &      atomCharges,
-        const std::vector<double> &      smearedChargeRadius,
+        const double &      smearedChargeRadius,
         const size_type                  numElectrons,
         /* SCF related info */
         const size_type numWantedEigenvalues,
@@ -158,7 +158,7 @@ namespace dftefe
         /* Atom related info */
         const std::vector<utils::Point> &atomCoordinates,
         const std::vector<double> &      atomCharges,
-        const std::vector<double> &      smearedChargeRadius,
+        const double &      smearedChargeRadius,
         const size_type                  numElectrons,
         /* SCF related info */
         const size_type numWantedEigenvalues,
@@ -244,7 +244,7 @@ namespace dftefe
         const std::vector<utils::Point> &atomCoordinates,
         const std::vector<double> &      atomCharges,
         const std::vector<std::string> & atomSymbolVec,
-        const std::vector<double> &      smearedChargeRadius,
+        const double &      smearedChargeRadius,
         const size_type                  numElectrons,
         /* SCF related info */
         const size_type numWantedEigenvalues,
@@ -335,7 +335,7 @@ namespace dftefe
         const std::vector<utils::Point> &atomCoordinates,
         const std::vector<double> &      atomCharges,
         const std::vector<std::string> & atomSymbolVec,
-        const std::vector<double> &      smearedChargeRadius,
+        const double &      smearedChargeRadius,
         const size_type                  numElectrons,
         /* SCF related info */
         const size_type numWantedEigenvalues,
@@ -416,7 +416,7 @@ namespace dftefe
         const std::vector<utils::Point> &atomCoordinates,
         const std::vector<double> &      atomCharges,
         const std::vector<std::string> & atomSymbolVec,
-        const std::vector<double> &      smearedChargeRadius,
+        const double &      smearedChargeRadius,
         const size_type                  numElectrons,
         /* SCF related info */
         const size_type numWantedEigenvalues,

@@ -615,8 +615,6 @@ int main(int argc, char** argv)
   p.registerEnd("Quadrature Rule Creation");
     utils::printCurrentMemoryUsage(comm, "Quadrature Rule Creation");
   p.registerStart("Ortho EFE basis manager creation");
-        
-  std::vector<double> smearedChargeRadiusVec(atomCoordinatesVec.size(),rc);
 
   // Make orthogonalized EFE basis for all the fields
 
@@ -999,7 +997,7 @@ int main(int argc, char** argv)
                                           atomCoordinatesVec,
                                           atomChargesVec,
                                           atomSymbolVec,
-                                          smearedChargeRadiusVec,
+                                          rc,
                                           numElectrons,
                                           numWantedEigenvalues,
                                           smearingTemperature,
@@ -1052,7 +1050,7 @@ int main(int argc, char** argv)
                                           atomCoordinatesVec,
                                           atomChargesVec,
                                           atomSymbolVec,
-                                          smearedChargeRadiusVec,
+                                          rc,
                                           numElectrons,
                                           numWantedEigenvalues,
                                           smearingTemperature,

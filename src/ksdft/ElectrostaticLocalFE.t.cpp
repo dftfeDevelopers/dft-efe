@@ -152,7 +152,7 @@ namespace dftefe
       ElectrostaticLocalFE(
         const std::vector<utils::Point> &atomCoordinates,
         const std::vector<double> &      atomCharges,
-        const std::vector<double> &      smearedChargeRadius,
+        const double &      smearedChargeRadius,
         const quadrature::QuadratureValuesContainer<RealType, memorySpace>
           &                                               electronChargeDensity,
         std::shared_ptr<const basis::FEBasisManager<ValueTypeBasisCoeff,
@@ -227,7 +227,7 @@ namespace dftefe
       ElectrostaticLocalFE(
         const std::vector<utils::Point> &atomCoordinates,
         const std::vector<double> &      atomCharges,
-        const std::vector<double> &      smearedChargeRadius,
+        const double &      smearedChargeRadius,
         const quadrature::QuadratureValuesContainer<RealType, memorySpace>
           &                                               electronChargeDensity,
         std::shared_ptr<const basis::FEBasisManager<ValueTypeBasisCoeff,
@@ -311,7 +311,7 @@ namespace dftefe
         const std::vector<utils::Point> &atomCoordinates,
         const std::vector<std::string> & atomSymbols,
         const std::vector<double> &      atomCharges,
-        const std::vector<double> &      smearedChargeRadius,
+        const double &      smearedChargeRadius,
         // const quadrature::QuadratureValuesContainer<RealType, memorySpace>
         //   &atomicElectronChargeDensity,
         // const quadrature::QuadratureValuesContainer<ValueTypeBasisCoeff,
@@ -1335,10 +1335,10 @@ namespace dftefe
       d_integralPhiAtxbSmear   = 0;
       d_intRhoAtPhiAt          = 0;
       d_correctionEnergyAtomic = 0;
+      d_integralDiffVZZCorrVSmearxSumBZZCorrBSmear = 0;
 
       if (!d_isTCIEnabled)
         {
-          d_rootCout << "TCIA Data not provided , using bSmear quad rule for atomic energy contributions.";
           auto jxwStorageNucl = d_feBDNuclearChargeRhs->getJxWInAllCells();
 
           RealType        value              = 0;
@@ -1407,11 +1407,10 @@ namespace dftefe
         }
       else
         {
-          d_rootCout << "TCIA Data provided , using that for atomic energy contributions.";
           double ylm00 = atoms::Clm(0, 0) * atoms::Dm(0) * atoms::Qm(0, 0);
 
           std::shared_ptr<atoms::AtomTCIASpline> tciSpRhoAtPhiAt,
-            tciSpRhoAtPhiCorr, tciSpBSmearPhiAt;
+            tciSpRhoAtPhiCorr, tciSpBSmearPhiAt , tciSpSumBZZCorrBSmearDiffVZZCorrVSmear;
           auto it = d_fieldToTCIASplineMap.find("rhoAtom-phiAtom");
           if (it != d_fieldToTCIASplineMap.end())
             {
@@ -1448,6 +1447,14 @@ namespace dftefe
                 "Could not find the field bSmear-phiAtom in fieldToTCIASplineMap.");
             }
 
+          bool useEZZCorr = false;
+          it = d_fieldToTCIASplineMap.find("sumBZZCorrBSmear-diffVZZCorrVSmear");
+          if (it != d_fieldToTCIASplineMap.end())
+            {
+              useEZZCorr = true;
+              tciSpSumBZZCorrBSmearDiffVZZCorrVSmear = it->second;
+            }
+
           for (int iAtom = 0; iAtom < atomCoordinates.size(); iAtom++)
             {
               for (int jAtom = 0; jAtom < atomCoordinates.size(); jAtom++)
@@ -1481,12 +1488,23 @@ namespace dftefe
                         (*tciSpBSmearPhiAt->getSpline(d_atomSymbolVec[jAtom], "S"))(r) *
                         (1 / (ylm00 * ylm00));
                     }
+                  if(useEZZCorr)
+                  {
+                    if (r < tciSpSumBZZCorrBSmearDiffVZZCorrVSmear->maxRadialGrid())
+                      {
+                        d_integralDiffVZZCorrVSmearxSumBZZCorrBSmear +=
+                          0.5 * std::abs(d_atomCharges[iAtom]) * std::abs(d_atomCharges[jAtom]) *
+                          (*tciSpSumBZZCorrBSmearDiffVZZCorrVSmear->getSpline("DefaultAtom", "S"))(r) *
+                          (1 / (ylm00 * ylm00));
+                      }
+                  }
                 }
             }
         }
 
       d_rootCout << "Atomic Energies delta rho: " << d_intRhoAtPhiAt << "\t"
-                 << d_correctionEnergyAtomic << "\t" << d_integralPhiAtxbSmear
+                 << d_correctionEnergyAtomic << "\t" << d_integralPhiAtxbSmear << "\t"
+                 << d_integralDiffVZZCorrVSmearxSumBZZCorrBSmear
                  << "\n";
 
       d_scratchDensNuclearQuad->setValue(0);
@@ -1812,7 +1830,7 @@ namespace dftefe
             std::make_shared<const utils::SmearChargePotentialFunction>(
               d_atomCoordinates[iAtom],
               d_atomCharges[iAtom],
-              d_smearedChargeRadius[iAtom]);
+              d_smearedChargeRadius);
 
           d_feBMNuclearCharge[iAtom] =
             std::make_shared<basis::FEBasisManager<ValueTypeBasisCoeff,
@@ -1824,7 +1842,7 @@ namespace dftefe
           smfunc = std::make_shared<const utils::SmearChargeDensityFunction>(
             d_atomCoordinates[iAtom],
             d_atomCharges[iAtom],
-            d_smearedChargeRadius[iAtom]);
+            d_smearedChargeRadius);
 
           d_nuclearChargeQuad[iAtom] = 0;
           for (size_type iCell = 0; iCell < quadRuleContainerNucl->nCells();
@@ -1978,7 +1996,7 @@ namespace dftefe
               const utils::SmearChargeDensityFunction smfunc(
                 d_atomCoordinates[iAtom],
                 d_atomCharges[iAtom],
-                d_smearedChargeRadius[iAtom]);
+                d_smearedChargeRadius);
 
               for (size_type iCell = 0; iCell < quadRuleContainerNucl->nCells();
                    iCell++)
@@ -2044,12 +2062,13 @@ namespace dftefe
             {
               for (unsigned int iAtom = 0; iAtom < d_numAtoms; iAtom++)
                 {
+                  double rc = d_fieldToTCIASplineMap.begin()->second->smearedChargeRadius();
                   const utils::SmearChargePotentialFunction smfunc(
                     d_atomCoordinates[iAtom],
                     d_atomCharges[iAtom],
-                    d_smearedChargeRadius[iAtom]);
+                    rc);
 
-                  double Ig = 10976. / (17875 * d_smearedChargeRadius[iAtom]);
+                  double Ig = 10976. / (17875 * rc);
                   selfEnergy +=
                     (RealType)(0.5 * std::pow(d_atomCharges[iAtom], 2) *
                                (Ig - (smfunc(d_atomCoordinates[iAtom]) /
@@ -2079,13 +2098,13 @@ namespace dftefe
                     std::make_shared<utils::SmearChargeDensityFunction>(
                       d_atomCoordinates[iAtom],
                       d_atomCharges[iAtom],
-                      d_smearedChargeRadius[iAtom]));
+                      d_smearedChargeRadius));
 
                   smfuncPot.push_back(
                     std::make_shared<utils::SmearChargePotentialFunction>(
                       d_atomCoordinates[iAtom],
                       d_atomCharges[iAtom],
-                      d_smearedChargeRadius[iAtom]));
+                      d_smearedChargeRadius));
                 }
 
               RealType        value                = 0;
@@ -2266,7 +2285,8 @@ namespace dftefe
                    d_feBMTotalCharge->getMPIPatternP2P()->mpiCommunicator());
 
           totalEnergy = (d_integralPhiAtxbSmear + integralDelPhixbSmear +
-                         d_intRhoAtPhiAt + intRhoAtDelPhi + intDelRhoPhiTot) *
+                         d_intRhoAtPhiAt + intRhoAtDelPhi + intDelRhoPhiTot
+                         + d_integralDiffVZZCorrVSmearxSumBZZCorrBSmear) *
                         0.5;
 
           // d_rootCout << "integralPhiAtxbSmear : " << d_integralPhiAtxbSmear

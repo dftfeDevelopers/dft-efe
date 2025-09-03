@@ -66,6 +66,15 @@ namespace dftefe
       double
       maxRadialGrid();
 
+      double
+      smearedChargeRadius();
+
+      double
+      smearedChargeRadiusZZCorr();
+
+      std::string
+      getVLocInfo(std::string atomSymbol, std::string paramName);
+
     private:
       bool
       loadAtomCombination(const std::string &               atomCombination,
@@ -85,6 +94,9 @@ namespace dftefe
       size_type                      d_maxSize;
       std::string                    d_fieldName;
       const std::vector<std::string> d_tciTypes;
+      double                         d_rcSmear;
+      double                         d_rcSmearZZCorr;
+      std::unordered_map<std::string , std::unordered_map<std::string , std::string>> d_vLocParams;
 
       // LRU bookkeeping
       std::list<std::string> d_lruList; // front = most recent, back = least
