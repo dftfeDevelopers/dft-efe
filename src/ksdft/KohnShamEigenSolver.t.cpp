@@ -256,7 +256,6 @@ namespace dftefe
                                  *d_MLanczos,
                                  *d_MInvLanczos);
       d_p.registerEnd("Lanczos Solve");
-      d_p.print();
 
       std::vector<RealType> diagonal(0), subDiagonal(0);
       lanczos.getTridiagonalMatrix(diagonal, subDiagonal);
@@ -306,6 +305,7 @@ namespace dftefe
           d_rootCout << "Chebyshev Polynomial Degree : "
                      << d_chebyshevPolynomialDegree << "\n";
 
+          d_p.registerStart("Reinit CHFSI");
           d_chfsi->reinit(d_wantedSpectrumLowerBound,
                           d_wantedSpectrumUpperBound,
                           eigenValuesLanczos[1] + residual,
@@ -313,11 +313,13 @@ namespace dftefe
                           ksdft::LinearEigenSolverDefaults::ILL_COND_TOL,
                           kohnShamWaveFunctions.getMPIPatternP2P(),
                           kohnShamWaveFunctions.getLinAlgOpContext());
+           d_p.registerEnd("Reinit CHFSI");
 
           for (; iPass < d_maxChebyshevFilterPass; iPass++)
             {
               // do chebyshev filetered eigensolve
 
+              d_p.registerStart("Solve CHFSI");
               chfsiErr = d_chfsi->solve(kohnShamOperator,
                                         kohnShamEnergies,
                                         kohnShamWaveFunctions,
@@ -326,6 +328,7 @@ namespace dftefe
                                         MInv);
 
               kohnShamWaveFunctions.updateGhostValues();
+              d_p.registerEnd("Solve CHFSI");
 
               /*
               // Compute projected hamiltonian = Y^H M Y
@@ -389,6 +392,7 @@ namespace dftefe
               //   std::cout <<  i <<", ";
               // std::cout << "\n";
 
+              d_p.registerStart("Compute chemical potential");
               // Calculate the chemical potential using newton raphson
 
               std::shared_ptr<ksdft::FractionalOccupancyFunction> fOcc =
@@ -428,6 +432,9 @@ namespace dftefe
                                   d_kohnShamEnergiesMemspace.data(),
                                   kohnShamEnergies.data());
 
+              d_p.registerEnd("Compute chemical potential");
+              d_p.registerStart("Compute Residuals");
+
               size_type numLevelsBelowFermiEnergyResidualConverged = 0;
               if (computeWaveFunctions)
                 {
@@ -462,6 +469,7 @@ namespace dftefe
                   d_rootCout
                     << "Not Computing EigenVectors. Linear Eigensolve break condition only satisfied by Max Cheby Filter Pass.";
                 }
+              d_p.registerEnd("Compute Residuals");
 
               // *d_waveFunctionSubspaceGuess = kohnShamWaveFunctions;
 
@@ -474,6 +482,7 @@ namespace dftefe
                   d_wantedSpectrumLowerBound = kohnShamEnergies[0];
                   d_wantedSpectrumUpperBound =
                     kohnShamEnergies[d_numWantedEigenvalues - 1];
+                  d_p.registerStart("Reinit CHFSI");
                   d_chfsi->reinit(
                     d_wantedSpectrumLowerBound,
                     d_wantedSpectrumUpperBound,
@@ -482,6 +491,7 @@ namespace dftefe
                     ksdft::LinearEigenSolverDefaults::ILL_COND_TOL,
                     kohnShamWaveFunctions.getMPIPatternP2P(),
                     kohnShamWaveFunctions.getLinAlgOpContext());
+                  d_p.registerEnd("Reinit CHFSI");
                 }
             }
           if (!chfsiErr.isSuccess)
@@ -531,6 +541,7 @@ namespace dftefe
 
       d_chebyPolyScalingFactor = 1.0;
 
+      d_p.print();
       return returnValue;
     }
 
