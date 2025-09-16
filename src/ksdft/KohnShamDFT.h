@@ -503,6 +503,9 @@ namespace dftefe
       double
       getGroundStateEnergy();
 
+      double
+      getFreeEnergy();
+
     private:
       const size_type       d_numWantedEigenvalues;
       std::vector<RealType> d_occupation;
@@ -596,6 +599,8 @@ namespace dftefe
         d_atomicTotalElecPotNuclearQuad, d_atomicTotalElecPotElectronicQuad;
 
       std::shared_ptr<linearAlgebra::ElpaScalapackManager> d_elpaScala;
+
+      double d_smearingTemperature , d_freeEnergy;
 
     }; // end of KohnShamDFT
   }    // end of namespace ksdft

@@ -374,6 +374,7 @@ namespace dftefe
       , d_atomSymbolVec(atomSymbols)
       , d_fieldToTCIASplineMap(fieldToTCIASplineMap)
       , d_isTCIEnabled(!d_fieldToTCIASplineMap.empty() ? true : false)
+      , d_integralAtRho(0.)
     {
       int rank;
       utils::mpi::MPICommRank(
@@ -1246,6 +1247,33 @@ namespace dftefe
           cumulativeQuadInCell += numQuadInCell;
         }
 
+      size_type quadId    = 0;
+      auto jxwData = d_atomicElectronChargeDensity.getQuadratureRuleContainer()->getJxW();
+      for (size_type iCell = 0; iCell < d_atomicElectronChargeDensity.nCells();
+            iCell++)
+        {
+          std::vector<RealType> a(
+            d_atomicElectronChargeDensity.nCellQuadraturePoints(iCell) *
+            d_atomicElectronChargeDensity.getNumberComponents());
+          d_atomicElectronChargeDensity
+            .template getCellValues<utils::MemorySpace::HOST>(
+              iCell, a.data());
+          for (auto j : a)
+            {
+              d_integralAtRho += *(jxwData.data() + quadId) * j;
+              quadId = quadId + 1;
+            }
+        }
+      utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
+        utils::mpi::MPIInPlace,
+        &d_integralAtRho,
+        1,
+        utils::mpi::Types<double>::getMPIDatatype(),
+        utils::mpi::MPISum,
+        d_feBMTotalCharge->getMPIPatternP2P()->mpiCommunicator());
+
+      d_rootCout << "Integral Atomic Rho over domain: " << d_integralAtRho << "\n";
+
       const utils::SmearChargeDensityFunction smfuncDens(d_atomCoordinates,
                                                          d_atomCharges,
                                                          d_smearedChargeRadius);
@@ -1560,7 +1588,45 @@ namespace dftefe
     {
       if (d_isDeltaRhoSolve)
         {
+          // /**----------Integral Delta Rho--------**/
+          // size_type quadId    = 0;
+          // double    normValue = 0.;
+          // auto      jxwData =
+          //   electronChargeDensity.getQuadratureRuleContainer()->getJxW();
+          // for (size_type iCell = 0; iCell < electronChargeDensity.nCells();
+          //      iCell++)
+          //   {
+          //     std::vector<RealType> a(
+          //       electronChargeDensity.nCellQuadraturePoints(iCell) *
+          //       electronChargeDensity.getNumberComponents());
+          //     electronChargeDensity
+          //       .template getCellValues<utils::MemorySpace::HOST>(
+          //         iCell, a.data());
+          //     for (auto j : a)
+          //       {
+          //         normValue += *(jxwData.data() + quadId) * j;
+          //         quadId = quadId + 1;
+          //       }
+          //   }
+          // utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
+          //   utils::mpi::MPIInPlace,
+          //   &normValue,
+          //   1,
+          //   utils::mpi::Types<double>::getMPIDatatype(),
+          //   utils::mpi::MPISum,
+          //   d_feBMTotalCharge->getMPIPatternP2P()->mpiCommunicator());
+
+          // d_rootCout << "Integral Rho: " << normValue << "\n";
+
           d_electronChargeDensity = &electronChargeDensity;
+
+          // quadrature::QuadratureValuesContainer<RealType, memorySpace> electronChargeDensityScaled(
+          //           electronChargeDensity);
+
+          // quadrature::scale((RealType)std::abs(d_integralAtRho/normValue),
+          //                   electronChargeDensityScaled,
+          //                   *d_linAlgOpContext);
+
           quadrature::add((RealType)1.0,
                           *d_electronChargeDensity,
                           (RealType)(-1.0),
@@ -2078,6 +2144,21 @@ namespace dftefe
             }
           else
             {
+              // for (unsigned int iAtom = 0; iAtom < d_numAtoms; iAtom++)
+              //   {
+              //     const utils::SmearChargePotentialFunction smfunc(
+              //       d_atomCoordinates[iAtom],
+              //       d_atomCharges[iAtom],
+              //       d_smearedChargeRadius);
+
+              //     double Ig = 10976. / (17875 * d_smearedChargeRadius);
+              //     selfEnergy +=
+              //       (RealType)(0.5 * std::pow(d_atomCharges[iAtom], 2) *
+              //                  (Ig - (smfunc(d_atomCoordinates[iAtom]) /
+              //                         d_atomCharges[iAtom])));
+              //   }
+              // selfEnergy *= -1;
+
               std::vector<std::shared_ptr<utils::SmearChargeDensityFunction>>
                 smfuncDens(0);
               std::vector<std::shared_ptr<utils::SmearChargePotentialFunction>>

@@ -443,6 +443,7 @@ namespace dftefe
            d_fieldToTCIASplineMap;
       bool d_isTCIEnabled;
       double  d_integralDiffVZZCorrVSmearxSumBZZCorrBSmear;
+      double d_integralAtRho;
 
     }; // end of class ElectrostaticLocalFE
   }    // end of namespace ksdft

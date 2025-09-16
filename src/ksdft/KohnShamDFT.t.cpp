@@ -33,6 +33,39 @@ namespace dftefe
   {
     namespace KohnShamDFTInternal
     {
+      double
+      computeEntropicEnergy(
+        const std::vector<double> &partialOccupancies,
+        const double              temperature)
+      {
+        double            entropy = 0.0;
+        const size_type numEigenValues = partialOccupancies.size();
+
+        for (size_type i = 0; i < numEigenValues; ++i)
+          {
+            double partialOccupancy = partialOccupancies[i];
+
+            double fTimeslogf, oneminusfTimeslogoneminusf;
+
+            if (std::abs(partialOccupancy - 1.0) <= 1e-07 ||
+                std::abs(partialOccupancy) <= 1e-07)
+              {
+                fTimeslogf                 = 0.0;
+                oneminusfTimeslogoneminusf = 0.0;
+              }
+            else
+              {
+                fTimeslogf = partialOccupancy * log(partialOccupancy);
+                oneminusfTimeslogoneminusf =
+                  (1.0 - partialOccupancy) * log(1.0 - partialOccupancy);
+              }
+            entropy += -2.0 * Constants::BOLTZMANN_CONST_HARTREE *
+                      (fTimeslogf + oneminusfTimeslogoneminusf);
+          }
+
+        return temperature * entropy;
+      }
+
       template <typename RealType, utils::MemorySpace memorySpace>
       RealType
       computeResidualQuadData(
@@ -296,6 +329,8 @@ namespace dftefe
       , d_feBDEXCHamiltonian(feBDEXCHamiltonian)
       , d_isSolved(false)
       , d_groundStateEnergy(0)
+      , d_freeEnergy(0)
+      , d_smearingTemperature(smearingTemperature)
       , d_p(feBMWaveFn->getMPIPatternP2P()->mpiCommunicator(), "Kohn Sham DFT")
       , d_isResidualChebyshevFilter(isResidualChebyshevFilter)
       , d_occupation(numWantedEigenvalues, 0)
@@ -628,6 +663,8 @@ namespace dftefe
       , d_feBDEXCHamiltonian(feBDEXCHamiltonian)
       , d_isSolved(false)
       , d_groundStateEnergy(0)
+      , d_freeEnergy(0)
+      , d_smearingTemperature(smearingTemperature)
       , d_p(feBMWaveFn->getMPIPatternP2P()->mpiCommunicator(), "Kohn Sham DFT")
       , d_isResidualChebyshevFilter(isResidualChebyshevFilter)
       , d_occupation(numWantedEigenvalues, 0)
@@ -974,6 +1011,8 @@ namespace dftefe
       , d_feBDEXCHamiltonian(feBDEXCHamiltonian)
       , d_isSolved(false)
       , d_groundStateEnergy(0)
+      , d_freeEnergy(0)
+      , d_smearingTemperature(smearingTemperature)
       , d_p(feBMWaveFn->getMPIPatternP2P()->mpiCommunicator(), "Kohn Sham DFT")
       , d_isResidualChebyshevFilter(isResidualChebyshevFilter)
       , d_occupation(numWantedEigenvalues, 0)
@@ -1378,6 +1417,8 @@ namespace dftefe
       , d_feBDEXCHamiltonian(feBDEXCHamiltonian)
       , d_isSolved(false)
       , d_groundStateEnergy(0)
+      , d_freeEnergy(0)
+      , d_smearingTemperature(smearingTemperature)
       , d_p(feBMWaveFn->getMPIPatternP2P()->mpiCommunicator(), "Kohn Sham DFT")
       , d_isResidualChebyshevFilter(isResidualChebyshevFilter)
       , d_occupation(numWantedEigenvalues, 0)
@@ -1847,6 +1888,8 @@ namespace dftefe
       , d_feBDEXCHamiltonian(feBDEXCHamiltonian)
       , d_isSolved(false)
       , d_groundStateEnergy(0)
+      , d_freeEnergy(0)
+      , d_smearingTemperature(smearingTemperature)
       , d_p(feBMWaveFn->getMPIPatternP2P()->mpiCommunicator(), "Kohn Sham DFT")
       , d_isResidualChebyshevFilter(isResidualChebyshevFilter)
       , d_occupation(numWantedEigenvalues, 0)
@@ -2737,6 +2780,15 @@ namespace dftefe
               d_rootCout << "Ground State Energy: " << totalEnergy << "\n";
 
               d_groundStateEnergy = totalEnergy;
+
+              RealType entEnergy = KohnShamDFTInternal::computeEntropicEnergy(d_occupation,
+                                                          d_smearingTemperature);
+
+              d_rootCout << "Entropic Energy: " << entEnergy << "\n";
+
+              d_rootCout << "Free Energy: " << totalEnergy -  entEnergy<< "\n";
+
+              d_freeEnergy = totalEnergy -  entEnergy;
             }
 
           if (scfIter > 0)
@@ -2827,6 +2879,15 @@ namespace dftefe
           d_rootCout << "Ground State Energy: " << totalEnergy << "\n";
 
           d_groundStateEnergy = totalEnergy;
+
+          RealType entEnergy = KohnShamDFTInternal::computeEntropicEnergy(d_occupation,
+                                                      d_smearingTemperature);
+
+          d_rootCout << "Entropic Energy: " << entEnergy << "\n";
+
+          d_rootCout << "Free Energy: " << totalEnergy -  entEnergy<< "\n";
+
+          d_freeEnergy = totalEnergy -  entEnergy;
         }
     }
 
@@ -2848,6 +2909,26 @@ namespace dftefe
         d_isSolved,
         "Cannot call ksdft getGroundStateEnergy() before solving the KS problem.");
       return d_groundStateEnergy;
+    }
+
+    template <typename ValueTypeElectrostaticsCoeff,
+              typename ValueTypeElectrostaticsBasis,
+              typename ValueTypeWaveFunctionCoeff,
+              typename ValueTypeWaveFunctionBasis,
+              utils::MemorySpace memorySpace,
+              size_type          dim>
+    double
+    KohnShamDFT<ValueTypeElectrostaticsCoeff,
+                ValueTypeElectrostaticsBasis,
+                ValueTypeWaveFunctionCoeff,
+                ValueTypeWaveFunctionBasis,
+                memorySpace,
+                dim>::getFreeEnergy()
+    {
+      utils::throwException(
+        d_isSolved,
+        "Cannot call ksdft getFreeEnergy() before solving the KS problem.");
+      return d_freeEnergy;
     }
 
   } // end of namespace ksdft
