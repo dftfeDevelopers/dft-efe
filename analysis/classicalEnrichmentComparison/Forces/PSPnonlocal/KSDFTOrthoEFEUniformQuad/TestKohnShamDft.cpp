@@ -995,7 +995,7 @@ int main(int argc, char** argv)
   std::shared_ptr<linearAlgebra::OperatorContext<double,
                                                    double,
                                                    Host>> MInvContext =
-    std::make_shared<basis::OrthoEFEOverlapInverseOpContextGLL/*OEFEAtomBlockOverlapInvOpContextGLL*/<double,
+    std::make_shared<basis::/*OrthoEFEOverlapInverseOpContextGLL*/OEFEAtomBlockOverlapInvOpContextGLL<double,
                                                    double,
                                                    Host,
                                                    dim>>
