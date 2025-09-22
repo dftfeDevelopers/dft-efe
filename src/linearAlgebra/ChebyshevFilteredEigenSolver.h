@@ -45,8 +45,8 @@ namespace dftefe
     enum class OrthogonalizationType
     {
       CHOLESKY_GRAMSCHMIDT,
-      MULTIPASS_LOWDIN,
       MULTIPASS_CGS,
+      MULTIPASS_LOWDIN,
     };
 
     /**

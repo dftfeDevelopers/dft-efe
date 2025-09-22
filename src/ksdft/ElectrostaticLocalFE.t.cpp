@@ -29,6 +29,7 @@
 #include <basis/FEBasisDofHandler.h>
 #include <utils/ConditionalOStream.h>
 #include <atoms/SphericalHarmonicFunctions.h>
+#include <basis/EFEBasisDofHandler.h>
 namespace dftefe
 {
   namespace ksdft
@@ -203,6 +204,20 @@ namespace dftefe
 
       d_rootCout.setCondition(rank == 0);
 
+      const basis::BasisDofHandler &basisDofHandler =
+      feBMTotalCharge->getBasisDofHandler();
+
+      const basis::EFEBasisDofHandler<ValueTypeBasisCoeff,
+      ValueTypeBasisData, memorySpace, dim>
+        &feDofHandler = dynamic_cast<
+          const basis::EFEBasisDofHandler<ValueTypeBasisCoeff,
+          ValueTypeBasisData, memorySpace, dim> &>(
+          basisDofHandler);
+      if(&feDofHandler != nullptr)
+      {
+        d_useDealiiMatrixFreePoissonSolve = false;
+      }
+
       reinitBasis(atomCoordinates,
                   feBMTotalCharge,
                   feBDTotalChargeStiffnessMatrix,
@@ -284,6 +299,20 @@ namespace dftefe
 
       d_rootCout.setCondition(rank == 0);
 
+      const basis::BasisDofHandler &basisDofHandler =
+      feBMTotalCharge->getBasisDofHandler();
+
+      const basis::EFEBasisDofHandler<ValueTypeBasisCoeff,
+      ValueTypeBasisData, memorySpace, dim>
+        &feDofHandler = dynamic_cast<
+          const basis::EFEBasisDofHandler<ValueTypeBasisCoeff,
+          ValueTypeBasisData, memorySpace, dim> &>(
+          basisDofHandler);
+      if(&feDofHandler != nullptr)
+      {
+        d_useDealiiMatrixFreePoissonSolve = false;
+      }
+      
       reinitBasis(atomCoordinates,
                   feBMTotalCharge,
                   feBDTotalChargeStiffnessMatrix,

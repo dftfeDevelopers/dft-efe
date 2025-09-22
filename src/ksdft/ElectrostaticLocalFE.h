@@ -326,7 +326,7 @@ namespace dftefe
       void
       deleteStorages();
 
-      const bool                d_useDealiiMatrixFreePoissonSolve;
+      bool                d_useDealiiMatrixFreePoissonSolve;
       const bool                d_isCalculateIntegralDeltaRho;
       bool                      d_isNumericalVSelfSolve;
       bool                      d_isDeltaRhoSolve;

@@ -334,6 +334,8 @@ namespace dftefe
       , d_p(feBMWaveFn->getMPIPatternP2P()->mpiCommunicator(), "Kohn Sham DFT")
       , d_isResidualChebyshevFilter(isResidualChebyshevFilter)
       , d_occupation(numWantedEigenvalues, 0)
+      , d_isONCVNonLocPSP(false)
+      , d_isNlcc(false)
     {
       d_p.registerStart("Pre Init Checks");
       if (dynamic_cast<
@@ -668,6 +670,8 @@ namespace dftefe
       , d_p(feBMWaveFn->getMPIPatternP2P()->mpiCommunicator(), "Kohn Sham DFT")
       , d_isResidualChebyshevFilter(isResidualChebyshevFilter)
       , d_occupation(numWantedEigenvalues, 0)
+      , d_isONCVNonLocPSP(false)
+      , d_isNlcc(false)
     {
       d_p.registerStart("Pre Init Checks");
       if (dynamic_cast<
@@ -1016,6 +1020,8 @@ namespace dftefe
       , d_p(feBMWaveFn->getMPIPatternP2P()->mpiCommunicator(), "Kohn Sham DFT")
       , d_isResidualChebyshevFilter(isResidualChebyshevFilter)
       , d_occupation(numWantedEigenvalues, 0)
+      , d_isONCVNonLocPSP(false)
+      , d_isNlcc(false)
     {
       d_p.registerStart("Pre Init Checks");
       if (dynamic_cast<
