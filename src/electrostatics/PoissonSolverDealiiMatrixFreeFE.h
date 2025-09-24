@@ -108,7 +108,9 @@ namespace dftefe
           std::string,
           const quadrature::QuadratureValuesContainer<ValueType, memorySpace> &>
           &                                     inpRhs,
-        const linearAlgebra::PreconditionerType pcType);
+        const linearAlgebra::PreconditionerType pcType,
+        std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
+                        linAlgOpContext);
 
       /**
        * @brief This constructor creates an instance of a base LinearSolverFunction called PoissonSolverDealiiMatrixFreeFE
@@ -126,7 +128,9 @@ namespace dftefe
           feBasisDataStorageRhs,
         const quadrature::QuadratureValuesContainer<ValueType, memorySpace>
           &                                     inpRhs,
-        const linearAlgebra::PreconditionerType pcType);
+        const linearAlgebra::PreconditionerType pcType,
+        std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
+                        linAlgOpContext);
 
       void
       reinit(
@@ -231,6 +235,8 @@ namespace dftefe
           const basis::FEBasisDataStorage<ValueTypeOperator, memorySpace>>>
         d_feBasisDataStorageRhs;
 
+      std::vector<distributedCPUVec<ValueType>> d_nonTensorSructuredQuadeRhs;
+
       unsigned int d_matrixFreeQuadCompStiffnessMatrix;
       std::map<dealii::CellId, unsigned int> d_cellIdToCellIndexMap;
 
@@ -238,6 +244,11 @@ namespace dftefe
       dealii::MappingQ1<dim, dim>          d_mappingDealii;
       // dealii::IndexSet d_ghostIndexSet, d_locallyOwnedIndexSet;
       utils::ConditionalOStream pcout;
+
+      linearAlgebra::MultiVector<
+                        linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
+                                                              ValueTypeOperand>,
+                        memorySpace> d_scratchMultiVec;
 
     }; // end of class PoissonSolverDealiiMatrixFreeFE
   }    // namespace electrostatics

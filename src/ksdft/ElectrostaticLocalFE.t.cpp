@@ -821,7 +821,8 @@ namespace dftefe
           d_feBDTotalChargeStiffnessMatrix,
           d_feBasisDataStorageRhsMap,
           inpRhsMap,
-          ksdft::PoissonProblemDefaults::PC_TYPE);
+          ksdft::PoissonProblemDefaults::PC_TYPE,
+          d_linAlgOpContext);
     }
 
     template <typename ValueTypeBasisData,
@@ -1083,7 +1084,8 @@ namespace dftefe
           d_feBDTotalChargeStiffnessMatrix,
           d_feBasisDataStorageRhsMap,
           inpRhsMap,
-          ksdft::PoissonProblemDefaults::PC_TYPE);
+          ksdft::PoissonProblemDefaults::PC_TYPE,
+          d_linAlgOpContext);
     }
 
     template <typename ValueTypeBasisData,
@@ -1597,7 +1599,8 @@ namespace dftefe
           d_feBDTotalChargeStiffnessMatrix,
           d_feBasisDataStorageRhsMap,
           inpRhsMap,
-          ksdft::PoissonProblemDefaults::PC_TYPE);
+          ksdft::PoissonProblemDefaults::PC_TYPE,
+          d_linAlgOpContext);
     }
 
     template <typename ValueTypeBasisData,
@@ -2008,7 +2011,8 @@ namespace dftefe
                           feBDNuclearChargeStiffnessMatrix,
                           feBDNuclearChargeRhs,
                           *d_scratchDensNuclearQuad,
-                          ksdft::PoissonProblemDefaults::PC_TYPE);
+                          ksdft::PoissonProblemDefaults::PC_TYPE,
+                          d_linAlgOpContext);
             }
           else
             {

@@ -714,12 +714,21 @@ int main(int argc, char** argv)
           "vtotal",
           i));      
     }
+    }
+    if(isDeltaRhoPoissonSolve)
+    {
       functionsVec.push_back(std::make_shared<BPlusRhoTimesVTotalFunction>(
         atomSphericalDataContainer,
         atomSymbolVec,
         atomChargesVec,
         rc,
         atomCoordinatesVec));
+      functionsVec.push_back(std::make_shared<BTimesVNuclearFunction>(
+      atomSphericalDataContainer,
+      atomSymbolVec,
+      atomChargesVec,
+      rc,
+      atomCoordinatesVec));
     }
     if(isNumericalNuclearSolve)
     {
@@ -1003,27 +1012,27 @@ int main(int argc, char** argv)
       (basisDofHandlerTotalPot, quadAttrAdaptive, basisAttrMap);
   else
     feBDNucChargeRhs =   
-      std::make_shared<basis::CFEBDSOnTheFlyComputeDealii<double, double, Host,dim>>
-      (basisDofHandlerTotalPot, quadAttrGaussSubdivided, basisAttrMap, ksdft::KSDFTDefaults::CELL_BATCH_SIZE_GRAD_EVAL, *linAlgOpContext);
+      std::make_shared<basis::CFEBasisDataStorageDealii<double, double, Host,dim>>
+      (basisDofHandlerTotalPot, quadAttrAdaptive, basisAttrMap);
 
-  if (!isDeltaRhoPoissonSolve)
-    feBDNucChargeRhs->evaluateBasisData(quadAttrAdaptive, quadRuleContainerAdaptiveElec, basisAttrMap);
-  else
-  {
-    size_type num1DGaussSubdividedSizeBSmear = 2;
-    size_type gaussSubdividedCopiesBSmear = 10;
-    std::shared_ptr<quadrature::QuadratureRule> gaussSubdivQuadRuleElec =
-      std::make_shared<quadrature::QuadratureRuleGaussIterated>(dim, num1DGaussSubdividedSizeBSmear, gaussSubdividedCopiesBSmear);
+  //if (!isDeltaRhoPoissonSolve)
+    feBDNucChargeRhs->evaluateBasisData(quadAttrAdaptive, quadRuleContainerAdaptiveOrbital, basisAttrMap);
+  // else
+  // {
+  //   size_type num1DGaussSubdividedSizeBSmear = 3;
+  //   size_type gaussSubdividedCopiesBSmear = 10;
+  //   std::shared_ptr<quadrature::QuadratureRule> gaussSubdivQuadRuleElec =
+  //     std::make_shared<quadrature::QuadratureRuleGaussIterated>(dim, num1DGaussSubdividedSizeBSmear, gaussSubdividedCopiesBSmear);
 
-    std::shared_ptr<quadrature::QuadratureRuleContainer> quadRuleContainerGaussSubdividedBSmear =
-      std::make_shared<quadrature::QuadratureRuleContainer>
-      (quadAttrGaussSubdivided, 
-      gaussSubdivQuadRuleElec, 
-      triangulationBase, 
-      *cellMapping); 
+  //   std::shared_ptr<quadrature::QuadratureRuleContainer> quadRuleContainerGaussSubdividedBSmear =
+  //     std::make_shared<quadrature::QuadratureRuleContainer>
+  //     (quadAttrGaussSubdivided, 
+  //     gaussSubdivQuadRuleElec, 
+  //     triangulationBase, 
+  //     *cellMapping); 
 
-    feBDNucChargeRhs->evaluateBasisData(quadAttrGaussSubdivided, quadRuleContainerGaussSubdividedBSmear, basisAttrMap);
-  }
+  //   feBDNucChargeRhs->evaluateBasisData(quadAttrGaussSubdivided, quadRuleContainerGaussSubdividedBSmear, basisAttrMap);
+  // }
 
   std::shared_ptr<basis::FEBasisDataStorage<double, Host>> feBDElecChargeRhs = nullptr;
   if (!isDeltaRhoPoissonSolve)
