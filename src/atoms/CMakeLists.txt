@@ -11,6 +11,7 @@ set(DFT-EFE-ATOMS-SOURCES
     SphericalHarmonicFunctions.cpp
     SmoothCutoffFunctions.cpp
     AtomSphericalDataEnrichment.cpp
+    AtomSphericalDataEnrichmentJSON.cpp
     AtomSphericalDataContainer.cpp
     BoostAutoDiff.cpp
     AtomSevereFunction.cpp

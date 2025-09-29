@@ -331,7 +331,7 @@ namespace dftefe
       }
 
       int
-      MPIGroupUnion(MPIGroup group1, MPIGroup group2, MPIGroup *newgroup);
+      MPIGroupUnion(MPIGroup group1, MPIGroup group2, MPIGroup *newgroup)
       {
         DFTEFE_AssertWithMsg(
           false,
@@ -533,7 +533,7 @@ namespace dftefe
         std::pair<bool, std::string> mpiIsSuccessAndMsg =
           utils::mpi::MPIErrIsSuccessAndMsg(ierr);
         DFTEFE_AssertWithMsg(mpiIsSuccessAndMsg.first,
-                             "MPI Error:" + mpiIsSuccessAndMsg.second);
+                             (std::string("MPI Error:") + mpiIsSuccessAndMsg.second).c_str());
         return n_jobs;
       }
 
@@ -545,7 +545,7 @@ namespace dftefe
         std::pair<bool, std::string> mpiIsSuccessAndMsg =
           utils::mpi::MPIErrIsSuccessAndMsg(ierr);
         DFTEFE_AssertWithMsg(mpiIsSuccessAndMsg.first,
-                             "MPI Error:" + mpiIsSuccessAndMsg.second);
+                             (std::string("MPI Error:") + mpiIsSuccessAndMsg.second).c_str());
         return rank;
       }
     } // end of namespace mpi
