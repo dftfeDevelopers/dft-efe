@@ -153,7 +153,7 @@ namespace dftefe
       ElectrostaticLocalFE(
         const std::vector<utils::Point> &atomCoordinates,
         const std::vector<double> &      atomCharges,
-        const double &      smearedChargeRadius,
+        const double &                   smearedChargeRadius,
         const quadrature::QuadratureValuesContainer<RealType, memorySpace>
           &                                               electronChargeDensity,
         std::shared_ptr<const basis::FEBasisManager<ValueTypeBasisCoeff,
@@ -205,18 +205,20 @@ namespace dftefe
       d_rootCout.setCondition(rank == 0);
 
       const basis::BasisDofHandler &basisDofHandler =
-      feBMTotalCharge->getBasisDofHandler();
+        feBMTotalCharge->getBasisDofHandler();
 
       const basis::EFEBasisDofHandler<ValueTypeBasisCoeff,
-      ValueTypeBasisData, memorySpace, dim>
-        &feDofHandler = dynamic_cast<
-          const basis::EFEBasisDofHandler<ValueTypeBasisCoeff,
-          ValueTypeBasisData, memorySpace, dim> &>(
-          basisDofHandler);
-      if(&feDofHandler != nullptr)
-      {
-        d_useDealiiMatrixFreePoissonSolve = false;
-      }
+                                      ValueTypeBasisData,
+                                      memorySpace,
+                                      dim> &feDofHandler =
+        dynamic_cast<const basis::EFEBasisDofHandler<ValueTypeBasisCoeff,
+                                                     ValueTypeBasisData,
+                                                     memorySpace,
+                                                     dim> &>(basisDofHandler);
+      if (&feDofHandler != nullptr)
+        {
+          d_useDealiiMatrixFreePoissonSolve = false;
+        }
 
       reinitBasis(atomCoordinates,
                   feBMTotalCharge,
@@ -242,7 +244,7 @@ namespace dftefe
       ElectrostaticLocalFE(
         const std::vector<utils::Point> &atomCoordinates,
         const std::vector<double> &      atomCharges,
-        const double &      smearedChargeRadius,
+        const double &                   smearedChargeRadius,
         const quadrature::QuadratureValuesContainer<RealType, memorySpace>
           &                                               electronChargeDensity,
         std::shared_ptr<const basis::FEBasisManager<ValueTypeBasisCoeff,
@@ -300,19 +302,21 @@ namespace dftefe
       d_rootCout.setCondition(rank == 0);
 
       const basis::BasisDofHandler &basisDofHandler =
-      feBMTotalCharge->getBasisDofHandler();
+        feBMTotalCharge->getBasisDofHandler();
 
       const basis::EFEBasisDofHandler<ValueTypeBasisCoeff,
-      ValueTypeBasisData, memorySpace, dim>
-        &feDofHandler = dynamic_cast<
-          const basis::EFEBasisDofHandler<ValueTypeBasisCoeff,
-          ValueTypeBasisData, memorySpace, dim> &>(
-          basisDofHandler);
-      if(&feDofHandler != nullptr)
-      {
-        d_useDealiiMatrixFreePoissonSolve = false;
-      }
-      
+                                      ValueTypeBasisData,
+                                      memorySpace,
+                                      dim> &feDofHandler =
+        dynamic_cast<const basis::EFEBasisDofHandler<ValueTypeBasisCoeff,
+                                                     ValueTypeBasisData,
+                                                     memorySpace,
+                                                     dim> &>(basisDofHandler);
+      if (&feDofHandler != nullptr)
+        {
+          d_useDealiiMatrixFreePoissonSolve = false;
+        }
+
       reinitBasis(atomCoordinates,
                   feBMTotalCharge,
                   feBDTotalChargeStiffnessMatrix,
@@ -340,7 +344,7 @@ namespace dftefe
         const std::vector<utils::Point> &atomCoordinates,
         const std::vector<std::string> & atomSymbols,
         const std::vector<double> &      atomCharges,
-        const double &      smearedChargeRadius,
+        const double &                   smearedChargeRadius,
         // const quadrature::QuadratureValuesContainer<RealType, memorySpace>
         //   &atomicElectronChargeDensity,
         // const quadrature::QuadratureValuesContainer<ValueTypeBasisCoeff,
@@ -1278,17 +1282,17 @@ namespace dftefe
           cumulativeQuadInCell += numQuadInCell;
         }
 
-      size_type quadId    = 0;
-      auto jxwData = d_atomicElectronChargeDensity.getQuadratureRuleContainer()->getJxW();
+      size_type quadId = 0;
+      auto      jxwData =
+        d_atomicElectronChargeDensity.getQuadratureRuleContainer()->getJxW();
       for (size_type iCell = 0; iCell < d_atomicElectronChargeDensity.nCells();
-            iCell++)
+           iCell++)
         {
           std::vector<RealType> a(
             d_atomicElectronChargeDensity.nCellQuadraturePoints(iCell) *
             d_atomicElectronChargeDensity.getNumberComponents());
           d_atomicElectronChargeDensity
-            .template getCellValues<utils::MemorySpace::HOST>(
-              iCell, a.data());
+            .template getCellValues<utils::MemorySpace::HOST>(iCell, a.data());
           for (auto j : a)
             {
               d_integralAtRho += *(jxwData.data() + quadId) * j;
@@ -1303,7 +1307,8 @@ namespace dftefe
         utils::mpi::MPISum,
         d_feBMTotalCharge->getMPIPatternP2P()->mpiCommunicator());
 
-      d_rootCout << "Integral Atomic Rho over domain: " << d_integralAtRho << "\n";
+      d_rootCout << "Integral Atomic Rho over domain: " << d_integralAtRho
+                 << "\n";
 
       const utils::SmearChargeDensityFunction smfuncDens(d_atomCoordinates,
                                                          d_atomCharges,
@@ -1391,9 +1396,9 @@ namespace dftefe
       /* Compute energy of d_integralPhiAtxbSmear , d_intRhoAtPhiAt ,
        * d_correctionEnergyAtomic*/
 
-      d_integralPhiAtxbSmear   = 0;
-      d_intRhoAtPhiAt          = 0;
-      d_correctionEnergyAtomic = 0;
+      d_integralPhiAtxbSmear                       = 0;
+      d_intRhoAtPhiAt                              = 0;
+      d_correctionEnergyAtomic                     = 0;
       d_integralDiffVZZCorrVSmearxSumBZZCorrBSmear = 0;
 
       if (!d_isTCIEnabled)
@@ -1469,7 +1474,8 @@ namespace dftefe
           double ylm00 = atoms::Clm(0, 0) * atoms::Dm(0) * atoms::Qm(0, 0);
 
           std::shared_ptr<atoms::AtomTCIASpline> tciSpRhoAtPhiAt,
-            tciSpRhoAtPhiCorr, tciSpBSmearPhiAt , tciSpSumBZZCorrBSmearDiffVZZCorrVSmear;
+            tciSpRhoAtPhiCorr, tciSpBSmearPhiAt,
+            tciSpSumBZZCorrBSmearDiffVZZCorrVSmear;
           auto it = d_fieldToTCIASplineMap.find("rhoAtom-phiAtom");
           if (it != d_fieldToTCIASplineMap.end())
             {
@@ -1507,10 +1513,11 @@ namespace dftefe
             }
 
           bool useEZZCorr = false;
-          it = d_fieldToTCIASplineMap.find("sumBZZCorrBSmear-diffVZZCorrVSmear");
+          it =
+            d_fieldToTCIASplineMap.find("sumBZZCorrBSmear-diffVZZCorrVSmear");
           if (it != d_fieldToTCIASplineMap.end())
             {
-              useEZZCorr = true;
+              useEZZCorr                             = true;
               tciSpSumBZZCorrBSmearDiffVZZCorrVSmear = it->second;
             }
 
@@ -1530,40 +1537,47 @@ namespace dftefe
                   if (r < tciSpRhoAtPhiAt->maxRadialGrid())
                     {
                       d_intRhoAtPhiAt +=
-                        0.5 * (*tciSpRhoAtPhiAt->getSpline(atomSymbolPair, "S"))(r) *
+                        0.5 *
+                        (*tciSpRhoAtPhiAt->getSpline(atomSymbolPair, "S"))(r) *
                         (1 / (ylm00 * ylm00));
                     }
                   if (r < tciSpRhoAtPhiCorr->maxRadialGrid())
                     {
                       // vext - vsmear
                       d_correctionEnergyAtomic +=
-                        0.5 * (*tciSpRhoAtPhiCorr->getSpline(atomSymbolPair, "S"))(r) *
+                        0.5 *
+                        (*tciSpRhoAtPhiCorr->getSpline(atomSymbolPair, "S"))(
+                          r) *
                         (1 / (ylm00 * ylm00));
                     }
                   if (r < tciSpBSmearPhiAt->maxRadialGrid())
                     {
                       d_integralPhiAtxbSmear +=
                         0.5 * std::abs(d_atomCharges[iAtom]) *
-                        (*tciSpBSmearPhiAt->getSpline(d_atomSymbolVec[jAtom], "S"))(r) *
+                        (*tciSpBSmearPhiAt->getSpline(d_atomSymbolVec[jAtom],
+                                                      "S"))(r) *
                         (1 / (ylm00 * ylm00));
                     }
-                  if(useEZZCorr)
-                  {
-                    if (r < tciSpSumBZZCorrBSmearDiffVZZCorrVSmear->maxRadialGrid())
-                      {
-                        d_integralDiffVZZCorrVSmearxSumBZZCorrBSmear +=
-                          0.5 * std::abs(d_atomCharges[iAtom]) * std::abs(d_atomCharges[jAtom]) *
-                          (*tciSpSumBZZCorrBSmearDiffVZZCorrVSmear->getSpline("DefaultAtom", "S"))(r) *
-                          (1 / (ylm00 * ylm00));
-                      }
-                  }
+                  if (useEZZCorr)
+                    {
+                      if (r < tciSpSumBZZCorrBSmearDiffVZZCorrVSmear
+                                ->maxRadialGrid())
+                        {
+                          d_integralDiffVZZCorrVSmearxSumBZZCorrBSmear +=
+                            0.5 * std::abs(d_atomCharges[iAtom]) *
+                            std::abs(d_atomCharges[jAtom]) *
+                            (*tciSpSumBZZCorrBSmearDiffVZZCorrVSmear->getSpline(
+                              "DefaultAtom", "S"))(r) *
+                            (1 / (ylm00 * ylm00));
+                        }
+                    }
                 }
             }
         }
 
       d_rootCout << "Atomic Energies delta rho: " << d_intRhoAtPhiAt << "\t"
-                 << d_correctionEnergyAtomic << "\t" << d_integralPhiAtxbSmear << "\t"
-                 << d_integralDiffVZZCorrVSmearxSumBZZCorrBSmear
+                 << d_correctionEnergyAtomic << "\t" << d_integralPhiAtxbSmear
+                 << "\t" << d_integralDiffVZZCorrVSmearxSumBZZCorrBSmear
                  << "\n";
 
       d_scratchDensNuclearQuad->setValue(0);
@@ -1652,7 +1666,8 @@ namespace dftefe
 
           d_electronChargeDensity = &electronChargeDensity;
 
-          // quadrature::QuadratureValuesContainer<RealType, memorySpace> electronChargeDensityScaled(
+          // quadrature::QuadratureValuesContainer<RealType, memorySpace>
+          // electronChargeDensityScaled(
           //           electronChargeDensity);
 
           // quadrature::scale((RealType)std::abs(d_integralAtRho/normValue),
@@ -2161,11 +2176,10 @@ namespace dftefe
             {
               for (unsigned int iAtom = 0; iAtom < d_numAtoms; iAtom++)
                 {
-                  double rc = d_fieldToTCIASplineMap.begin()->second->smearedChargeRadius();
+                  double rc = d_fieldToTCIASplineMap.begin()
+                                ->second->smearedChargeRadius();
                   const utils::SmearChargePotentialFunction smfunc(
-                    d_atomCoordinates[iAtom],
-                    d_atomCharges[iAtom],
-                    rc);
+                    d_atomCoordinates[iAtom], d_atomCharges[iAtom], rc);
 
                   double Ig = 10976. / (17875 * rc);
                   selfEnergy +=
@@ -2399,8 +2413,8 @@ namespace dftefe
                    d_feBMTotalCharge->getMPIPatternP2P()->mpiCommunicator());
 
           totalEnergy = (d_integralPhiAtxbSmear + integralDelPhixbSmear +
-                         d_intRhoAtPhiAt + intRhoAtDelPhi + intDelRhoPhiTot
-                         + d_integralDiffVZZCorrVSmearxSumBZZCorrBSmear) *
+                         d_intRhoAtPhiAt + intRhoAtDelPhi + intDelRhoPhiTot +
+                         d_integralDiffVZZCorrVSmearxSumBZZCorrBSmear) *
                         0.5;
 
           // d_rootCout << "integralPhiAtxbSmear : " << d_integralPhiAtxbSmear

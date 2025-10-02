@@ -34,11 +34,10 @@ namespace dftefe
     namespace KohnShamDFTInternal
     {
       double
-      computeEntropicEnergy(
-        const std::vector<double> &partialOccupancies,
-        const double              temperature)
+      computeEntropicEnergy(const std::vector<double> &partialOccupancies,
+                            const double               temperature)
       {
-        double            entropy = 0.0;
+        double          entropy        = 0.0;
         const size_type numEigenValues = partialOccupancies.size();
 
         for (size_type i = 0; i < numEigenValues; ++i)
@@ -60,7 +59,7 @@ namespace dftefe
                   (1.0 - partialOccupancy) * log(1.0 - partialOccupancy);
               }
             entropy += -2.0 * Constants::BOLTZMANN_CONST_HARTREE *
-                      (fTimeslogf + oneminusfTimeslogoneminusf);
+                       (fTimeslogf + oneminusfTimeslogoneminusf);
           }
 
         return temperature * entropy;
@@ -247,7 +246,7 @@ namespace dftefe
       KohnShamDFT(
         const std::vector<utils::Point> &atomCoordinates,
         const std::vector<double> &      atomCharges,
-        const double &      smearedChargeRadius,
+        const double &                   smearedChargeRadius,
         const size_type                  numElectrons,
         const size_type                  numWantedEigenvalues,
         const double                     smearingTemperature,
@@ -576,7 +575,7 @@ namespace dftefe
       KohnShamDFT(
         const std::vector<utils::Point> &atomCoordinates,
         const std::vector<double> &      atomCharges,
-        const double &      smearedChargeRadius,
+        const double &                   smearedChargeRadius,
         const size_type                  numElectrons,
         const size_type                  numWantedEigenvalues,
         const double                     smearingTemperature,
@@ -912,7 +911,7 @@ namespace dftefe
         const std::vector<utils::Point> &atomCoordinates,
         const std::vector<double> &      atomCharges,
         const std::vector<std::string> & atomSymbolVec,
-        const double &      smearedChargeRadius,
+        const double &                   smearedChargeRadius,
         const size_type                  numElectrons,
         /* SCF related info */
         const size_type numWantedEigenvalues,
@@ -1111,56 +1110,65 @@ namespace dftefe
 
       std::unordered_map<std::string, std::shared_ptr<atoms::AtomTCIASpline>>
         fieldToTCIASplineMap = {};
-      if(params.folderName != "")
-      {
-        d_rootCout << "\nTCIA Data provided , using that for atomic data energy contributions.\n";
-
-        fieldToTCIASplineMap["rhoAtom-phiAtom"] =
-          std::make_shared<atoms::AtomTCIASpline>("rhoAtom-phiAtom",
-                                                  params,
-                                                  atomSymbolVec,
-                                                  std::vector<std::string>{"S"},
-                                                  1000);
-
-        fieldToTCIASplineMap["rhoAtom-vlocCorrection"] =
-          std::make_shared<atoms::AtomTCIASpline>("rhoAtom-vlocCorrection",
-                                                  params,
-                                                  atomSymbolVec,
-                                                  std::vector<std::string>{"S"},
-                                                  1000);
-
-        fieldToTCIASplineMap["bSmear-phiAtom"] =
-          std::make_shared<atoms::AtomTCIASpline>("bSmear-phiAtom",
-                                                  params,
-                                                  atomSymbolVec,
-                                                  std::vector<std::string>{"S"},
-                                                  1000);
-
-        bool useEZZCorr = false;
-        for(auto i : fieldToTCIASplineMap)
+      if (params.folderName != "")
         {
-          double smearedChargeRadiusZZCorr = i.second->smearedChargeRadiusZZCorr();
-          double smearedChargeRadius = i.second->smearedChargeRadius();
-          if(std::abs(smearedChargeRadiusZZCorr - smearedChargeRadius) > 1e-12)
-          {
-            useEZZCorr = true;
-            d_rootCout << "\nOne of the smeared charge radiuses is > 0.7, using the energy correction due to spreaded nuclear charges.\n\n";
-            break;
-          }
-        }
+          d_rootCout
+            << "\nTCIA Data provided , using that for atomic data energy contributions.\n";
 
-        if(useEZZCorr)   
-          fieldToTCIASplineMap["sumBZZCorrBSmear-diffVZZCorrVSmear"] =
-            std::make_shared<atoms::AtomTCIASpline>("sumBZZCorrBSmear-diffVZZCorrVSmear",
+          fieldToTCIASplineMap["rhoAtom-phiAtom"] =
+            std::make_shared<atoms::AtomTCIASpline>("rhoAtom-phiAtom",
                                                     params,
-                                                    std::vector<std::string>{"DefaultAtom"},
-                                                    std::vector<std::string>{"S"},
-                                                    1000);                                                    
-      }
+                                                    atomSymbolVec,
+                                                    std::vector<std::string>{
+                                                      "S"},
+                                                    1000);
+
+          fieldToTCIASplineMap["rhoAtom-vlocCorrection"] =
+            std::make_shared<atoms::AtomTCIASpline>("rhoAtom-vlocCorrection",
+                                                    params,
+                                                    atomSymbolVec,
+                                                    std::vector<std::string>{
+                                                      "S"},
+                                                    1000);
+
+          fieldToTCIASplineMap["bSmear-phiAtom"] =
+            std::make_shared<atoms::AtomTCIASpline>("bSmear-phiAtom",
+                                                    params,
+                                                    atomSymbolVec,
+                                                    std::vector<std::string>{
+                                                      "S"},
+                                                    1000);
+
+          bool useEZZCorr = false;
+          for (auto i : fieldToTCIASplineMap)
+            {
+              double smearedChargeRadiusZZCorr =
+                i.second->smearedChargeRadiusZZCorr();
+              double smearedChargeRadius = i.second->smearedChargeRadius();
+              if (std::abs(smearedChargeRadiusZZCorr - smearedChargeRadius) >
+                  1e-12)
+                {
+                  useEZZCorr = true;
+                  d_rootCout
+                    << "\nOne of the smeared charge radiuses is > 0.7, using the energy correction due to spreaded nuclear charges.\n\n";
+                  break;
+                }
+            }
+
+          if (useEZZCorr)
+            fieldToTCIASplineMap["sumBZZCorrBSmear-diffVZZCorrVSmear"] =
+              std::make_shared<atoms::AtomTCIASpline>(
+                "sumBZZCorrBSmear-diffVZZCorrVSmear",
+                params,
+                std::vector<std::string>{"DefaultAtom"},
+                std::vector<std::string>{"S"},
+                1000);
+        }
       else
-      {
-        d_rootCout << "\nTCIA Data not provided , using bSmear quad rule for atomic data energy contributions.\n\n";
-      }
+        {
+          d_rootCout
+            << "\nTCIA Data not provided , using bSmear quad rule for atomic data energy contributions.\n\n";
+        }
 
       d_hamitonianElec =
         std::make_shared<ElectrostaticLocalFE<ValueTypeElectrostaticsBasis,
@@ -1342,7 +1350,7 @@ namespace dftefe
         const std::vector<utils::Point> &atomCoordinates,
         const std::vector<double> &      atomCharges,
         const std::vector<std::string> & atomSymbolVec,
-        const double &      smearedChargeRadius,
+        const double &                   smearedChargeRadius,
         const size_type                  numElectrons,
         const size_type                  numWantedEigenvalues,
         const double                     smearingTemperature,
@@ -1807,7 +1815,7 @@ namespace dftefe
         const std::vector<utils::Point> &atomCoordinates,
         const std::vector<double> &      atomCharges,
         const std::vector<std::string> & atomSymbolVec,
-        const double &      smearedChargeRadius,
+        const double &                   smearedChargeRadius,
         const size_type                  numElectrons,
         const size_type                  numWantedEigenvalues,
         const double                     smearingTemperature,
@@ -2048,100 +2056,120 @@ namespace dftefe
 
       std::unordered_map<std::string, std::shared_ptr<atoms::AtomTCIASpline>>
         fieldToTCIASplineMap = {};
-      if(params.folderName != "")
-      {
-        d_rootCout << "\nTCIA Data provided , using that for atomic data energy contributions.\n";
-
-        fieldToTCIASplineMap["rhoAtom-phiAtom"] =
-          std::make_shared<atoms::AtomTCIASpline>("rhoAtom-phiAtom",
-                                                  params,
-                                                  atomSymbolVec,
-                                                  std::vector<std::string>{"S"},
-                                                  1000);
-
-        fieldToTCIASplineMap["rhoAtom-vlocCorrection"] =
-          std::make_shared<atoms::AtomTCIASpline>("rhoAtom-vlocCorrection",
-                                                  params,
-                                                  atomSymbolVec,
-                                                  std::vector<std::string>{"S"},
-                                                  1000);
-
-        fieldToTCIASplineMap["bSmear-phiAtom"] =
-          std::make_shared<atoms::AtomTCIASpline>("bSmear-phiAtom",
-                                                  params,
-                                                  atomSymbolVec,
-                                                  std::vector<std::string>{"S"},
-                                                  1000);
-
-        bool useEZZCorr = false;
-        for(auto i : fieldToTCIASplineMap)
+      if (params.folderName != "")
         {
-          double smearedChargeRadiusZZCorr = i.second->smearedChargeRadiusZZCorr();
-          double smearedChargeRadius = i.second->smearedChargeRadius();
-          
-          if(std::abs(smearedChargeRadiusZZCorr - smearedChargeRadius) > 1e-12)
-          {
-            useEZZCorr = true;
-            d_rootCout << "\nOne of the smeared charge radiuses is > 0.7, using the energy correction due to spreaded nuclear charges.\n\n";
-            break;
-          }
-        }
+          d_rootCout
+            << "\nTCIA Data provided , using that for atomic data energy contributions.\n";
 
-        if(useEZZCorr)                                            
-          fieldToTCIASplineMap["sumBZZCorrBSmear-diffVZZCorrVSmear"] =
-            std::make_shared<atoms::AtomTCIASpline>("sumBZZCorrBSmear-diffVZZCorrVSmear",
+          fieldToTCIASplineMap["rhoAtom-phiAtom"] =
+            std::make_shared<atoms::AtomTCIASpline>("rhoAtom-phiAtom",
                                                     params,
-                                                    std::vector<std::string>{"DefaultAtom"},
-                                                    std::vector<std::string>{"S"},
+                                                    atomSymbolVec,
+                                                    std::vector<std::string>{
+                                                      "S"},
                                                     1000);
 
-        for(auto i : fieldToTCIASplineMap)
-        {
-          double smearedChargeRadiusZZCorr = i.second->smearedChargeRadiusZZCorr();
-          if(std::abs(smearedChargeRadiusZZCorr - smearedChargeRadius) > 1e-12)
-          {
-            utils::throwException(false,
-                                  "The TCIA data smearedChargeRadiusZZCorr " + std::to_string(smearedChargeRadiusZZCorr) + 
-                                  " does not match with input smearedChargeRadius " + std::to_string(smearedChargeRadius));
-          }
-        }
+          fieldToTCIASplineMap["rhoAtom-vlocCorrection"] =
+            std::make_shared<atoms::AtomTCIASpline>("rhoAtom-vlocCorrection",
+                                                    params,
+                                                    atomSymbolVec,
+                                                    std::vector<std::string>{
+                                                      "S"},
+                                                    1000);
 
-        for (int atomSymbolId = 0; atomSymbolId < atomSymbolVec.size();
-            atomSymbolId++)
-          {
-            if(d_atomSphericalDataContainerPSP->getMetadata(
-                atomSymbolVec[atomSymbolId], "pseudo_type") !=
-                fieldToTCIASplineMap["bSmear-phiAtom"]->getVLocInfo
-                (atomSymbolVec[atomSymbolId] , "pseudo_type"))
+          fieldToTCIASplineMap["bSmear-phiAtom"] =
+            std::make_shared<atoms::AtomTCIASpline>("bSmear-phiAtom",
+                                                    params,
+                                                    atomSymbolVec,
+                                                    std::vector<std::string>{
+                                                      "S"},
+                                                    1000);
+
+          bool useEZZCorr = false;
+          for (auto i : fieldToTCIASplineMap)
             {
-              utils::throwException(false,
-                                    "The PSP upf file pseudo_type does not match the UPF file used"
-                                    " for TCIA data generation for atomSymbol " + atomSymbolVec[atomSymbolId] + ".");
+              double smearedChargeRadiusZZCorr =
+                i.second->smearedChargeRadiusZZCorr();
+              double smearedChargeRadius = i.second->smearedChargeRadius();
+
+              if (std::abs(smearedChargeRadiusZZCorr - smearedChargeRadius) >
+                  1e-12)
+                {
+                  useEZZCorr = true;
+                  d_rootCout
+                    << "\nOne of the smeared charge radiuses is > 0.7, using the energy correction due to spreaded nuclear charges.\n\n";
+                  break;
+                }
             }
-            if(d_atomSphericalDataContainerPSP->getMetadata(
-                atomSymbolVec[atomSymbolId], "z_valence") !=
-                fieldToTCIASplineMap["bSmear-phiAtom"]->getVLocInfo
-                (atomSymbolVec[atomSymbolId] , "z_valence"))
+
+          if (useEZZCorr)
+            fieldToTCIASplineMap["sumBZZCorrBSmear-diffVZZCorrVSmear"] =
+              std::make_shared<atoms::AtomTCIASpline>(
+                "sumBZZCorrBSmear-diffVZZCorrVSmear",
+                params,
+                std::vector<std::string>{"DefaultAtom"},
+                std::vector<std::string>{"S"},
+                1000);
+
+          for (auto i : fieldToTCIASplineMap)
             {
-              utils::throwException(false,
-                                    "The PSP upf file z_valence does not match the UPF file used"
-                                    " for TCIA data generation for atomSymbol " + atomSymbolVec[atomSymbolId] + ".");
+              double smearedChargeRadiusZZCorr =
+                i.second->smearedChargeRadiusZZCorr();
+              if (std::abs(smearedChargeRadiusZZCorr - smearedChargeRadius) >
+                  1e-12)
+                {
+                  utils::throwException(
+                    false,
+                    "The TCIA data smearedChargeRadiusZZCorr " +
+                      std::to_string(smearedChargeRadiusZZCorr) +
+                      " does not match with input smearedChargeRadius " +
+                      std::to_string(smearedChargeRadius));
+                }
             }
-            if(d_atomSphericalDataContainerPSP->getMetadata(
-                atomSymbolVec[atomSymbolId], "total_psenergy") !=
-                fieldToTCIASplineMap["bSmear-phiAtom"]->getVLocInfo
-                (atomSymbolVec[atomSymbolId] , "total_psenergy"))
+
+          for (int atomSymbolId = 0; atomSymbolId < atomSymbolVec.size();
+               atomSymbolId++)
             {
-              utils::throwException(false,
-                                    "The PSP upf file total_psenergy does not match the UPF file used"
-                                    " for TCIA data generation for atomSymbol " + atomSymbolVec[atomSymbolId] + ".");
+              if (d_atomSphericalDataContainerPSP->getMetadata(
+                    atomSymbolVec[atomSymbolId], "pseudo_type") !=
+                  fieldToTCIASplineMap["bSmear-phiAtom"]->getVLocInfo(
+                    atomSymbolVec[atomSymbolId], "pseudo_type"))
+                {
+                  utils::throwException(
+                    false,
+                    "The PSP upf file pseudo_type does not match the UPF file used"
+                    " for TCIA data generation for atomSymbol " +
+                      atomSymbolVec[atomSymbolId] + ".");
+                }
+              if (d_atomSphericalDataContainerPSP->getMetadata(
+                    atomSymbolVec[atomSymbolId], "z_valence") !=
+                  fieldToTCIASplineMap["bSmear-phiAtom"]->getVLocInfo(
+                    atomSymbolVec[atomSymbolId], "z_valence"))
+                {
+                  utils::throwException(
+                    false,
+                    "The PSP upf file z_valence does not match the UPF file used"
+                    " for TCIA data generation for atomSymbol " +
+                      atomSymbolVec[atomSymbolId] + ".");
+                }
+              if (d_atomSphericalDataContainerPSP->getMetadata(
+                    atomSymbolVec[atomSymbolId], "total_psenergy") !=
+                  fieldToTCIASplineMap["bSmear-phiAtom"]->getVLocInfo(
+                    atomSymbolVec[atomSymbolId], "total_psenergy"))
+                {
+                  utils::throwException(
+                    false,
+                    "The PSP upf file total_psenergy does not match the UPF file used"
+                    " for TCIA data generation for atomSymbol " +
+                      atomSymbolVec[atomSymbolId] + ".");
+                }
             }
-          } 
-      }
+        }
       else
-      {
-        d_rootCout << "\nTCIA Data not provided , using bSmear quad rule for atomic data energy contributions.\n\n";
-      }
+        {
+          d_rootCout
+            << "\nTCIA Data not provided , using bSmear quad rule for atomic data energy contributions.\n\n";
+        }
 
       d_hamitonianElec =
         std::make_shared<ElectrostaticONCVNonLocFE<ValueTypeElectrostaticsBasis,
@@ -2787,14 +2815,14 @@ namespace dftefe
 
               d_groundStateEnergy = totalEnergy;
 
-              RealType entEnergy = KohnShamDFTInternal::computeEntropicEnergy(d_occupation,
-                                                          d_smearingTemperature);
+              RealType entEnergy = KohnShamDFTInternal::computeEntropicEnergy(
+                d_occupation, d_smearingTemperature);
 
               d_rootCout << "Entropic Energy: " << entEnergy << "\n";
 
-              d_rootCout << "Free Energy: " << totalEnergy -  entEnergy<< "\n";
+              d_rootCout << "Free Energy: " << totalEnergy - entEnergy << "\n";
 
-              d_freeEnergy = totalEnergy -  entEnergy;
+              d_freeEnergy = totalEnergy - entEnergy;
             }
 
           if (scfIter > 0)
@@ -2886,14 +2914,15 @@ namespace dftefe
 
           d_groundStateEnergy = totalEnergy;
 
-          RealType entEnergy = KohnShamDFTInternal::computeEntropicEnergy(d_occupation,
-                                                      d_smearingTemperature);
+          RealType entEnergy =
+            KohnShamDFTInternal::computeEntropicEnergy(d_occupation,
+                                                       d_smearingTemperature);
 
           d_rootCout << "Entropic Energy: " << entEnergy << "\n";
 
-          d_rootCout << "Free Energy: " << totalEnergy -  entEnergy<< "\n";
+          d_rootCout << "Free Energy: " << totalEnergy - entEnergy << "\n";
 
-          d_freeEnergy = totalEnergy -  entEnergy;
+          d_freeEnergy = totalEnergy - entEnergy;
         }
     }
 

@@ -532,8 +532,9 @@ namespace dftefe
         int ierr   = MPICommSize(mpi_communicator, &n_jobs);
         std::pair<bool, std::string> mpiIsSuccessAndMsg =
           utils::mpi::MPIErrIsSuccessAndMsg(ierr);
-        DFTEFE_AssertWithMsg(mpiIsSuccessAndMsg.first,
-                             (std::string("MPI Error:") + mpiIsSuccessAndMsg.second).c_str());
+        DFTEFE_AssertWithMsg(
+          mpiIsSuccessAndMsg.first,
+          (std::string("MPI Error:") + mpiIsSuccessAndMsg.second).c_str());
         return n_jobs;
       }
 
@@ -544,8 +545,9 @@ namespace dftefe
         int ierr = MPICommRank(mpi_communicator, &rank);
         std::pair<bool, std::string> mpiIsSuccessAndMsg =
           utils::mpi::MPIErrIsSuccessAndMsg(ierr);
-        DFTEFE_AssertWithMsg(mpiIsSuccessAndMsg.first,
-                             (std::string("MPI Error:") + mpiIsSuccessAndMsg.second).c_str());
+        DFTEFE_AssertWithMsg(
+          mpiIsSuccessAndMsg.first,
+          (std::string("MPI Error:") + mpiIsSuccessAndMsg.second).c_str());
         return rank;
       }
     } // end of namespace mpi

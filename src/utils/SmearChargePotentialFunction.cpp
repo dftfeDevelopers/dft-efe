@@ -16,12 +16,12 @@ namespace dftefe
     {}
 
     SmearChargePotentialFunction::SmearChargePotentialFunction(
-        const std::vector<utils::Point> &atomCoordinates,
-        const std::vector<double> &      atomCharges,
-        const double &      smearedChargeRadius)
+      const std::vector<utils::Point> &atomCoordinates,
+      const std::vector<double> &      atomCharges,
+      const double &                   smearedChargeRadius)
       : d_atomCoordinates(atomCoordinates)
       , d_z(atomCharges)
-      , d_rc(std::vector<double>(atomCoordinates.size() , smearedChargeRadius))
+      , d_rc(std::vector<double>(atomCoordinates.size(), smearedChargeRadius))
     {}
 
     SmearChargePotentialFunction::SmearChargePotentialFunction(

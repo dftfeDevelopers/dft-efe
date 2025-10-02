@@ -47,7 +47,7 @@ namespace dftefe
         const std::vector<double> &      atomCharges,
         const std::vector<std::string> & atomSymbolVec,
         const std::shared_ptr<atoms::AtomSphericalDataContainer>
-                                   atomSphericalDataContainerPSP,
+                      atomSphericalDataContainerPSP,
         const double &smearedChargeRadius,
         const quadrature::QuadratureValuesContainer<RealType, memorySpace>
           &                                               electronChargeDensity,
@@ -170,7 +170,7 @@ namespace dftefe
         const std::vector<double> &      atomCharges,
         const std::vector<std::string> & atomSymbolVec,
         const std::shared_ptr<atoms::AtomSphericalDataContainer>
-                                   atomSphericalDataContainerPSP,
+                      atomSphericalDataContainerPSP,
         const double &smearedChargeRadius,
         // const quadrature::QuadratureValuesContainer<RealType, memorySpace>
         //   &atomicElectronChargeDensity,

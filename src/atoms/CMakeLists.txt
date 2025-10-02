@@ -38,13 +38,13 @@ if (NOT TARGET dft-efe-utils)
 endif()
 
 include(FetchContent)
- 
+
 FetchContent_Declare(
   simdjson
   GIT_REPOSITORY https://github.com/simdjson/simdjson.git
   GIT_TAG  tags/v0.9.6
   GIT_SHALLOW TRUE)
- 
+
 FetchContent_MakeAvailable(simdjson)
 
 target_link_libraries(dft-efe-atoms PUBLIC dft-efe-utils simdjson)

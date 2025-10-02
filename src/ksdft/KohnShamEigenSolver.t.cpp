@@ -313,7 +313,7 @@ namespace dftefe
                           ksdft::LinearEigenSolverDefaults::ILL_COND_TOL,
                           kohnShamWaveFunctions.getMPIPatternP2P(),
                           kohnShamWaveFunctions.getLinAlgOpContext());
-           d_p.registerEnd("Reinit CHFSI");
+          d_p.registerEnd("Reinit CHFSI");
 
           for (; iPass < d_maxChebyshevFilterPass; iPass++)
             {

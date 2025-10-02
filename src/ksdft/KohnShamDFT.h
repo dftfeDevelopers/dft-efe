@@ -80,7 +80,7 @@ namespace dftefe
         /* Atom related info */
         const std::vector<utils::Point> &atomCoordinates,
         const std::vector<double> &      atomCharges,
-        const double &      smearedChargeRadius,
+        const double &                   smearedChargeRadius,
         const size_type                  numElectrons,
         /* SCF related info */
         const size_type numWantedEigenvalues,
@@ -158,7 +158,7 @@ namespace dftefe
         /* Atom related info */
         const std::vector<utils::Point> &atomCoordinates,
         const std::vector<double> &      atomCharges,
-        const double &      smearedChargeRadius,
+        const double &                   smearedChargeRadius,
         const size_type                  numElectrons,
         /* SCF related info */
         const size_type numWantedEigenvalues,
@@ -244,7 +244,7 @@ namespace dftefe
         const std::vector<utils::Point> &atomCoordinates,
         const std::vector<double> &      atomCharges,
         const std::vector<std::string> & atomSymbolVec,
-        const double &      smearedChargeRadius,
+        const double &                   smearedChargeRadius,
         const size_type                  numElectrons,
         /* SCF related info */
         const size_type numWantedEigenvalues,
@@ -335,7 +335,7 @@ namespace dftefe
         const std::vector<utils::Point> &atomCoordinates,
         const std::vector<double> &      atomCharges,
         const std::vector<std::string> & atomSymbolVec,
-        const double &      smearedChargeRadius,
+        const double &                   smearedChargeRadius,
         const size_type                  numElectrons,
         /* SCF related info */
         const size_type numWantedEigenvalues,
@@ -416,7 +416,7 @@ namespace dftefe
         const std::vector<utils::Point> &atomCoordinates,
         const std::vector<double> &      atomCharges,
         const std::vector<std::string> & atomSymbolVec,
-        const double &      smearedChargeRadius,
+        const double &                   smearedChargeRadius,
         const size_type                  numElectrons,
         /* SCF related info */
         const size_type numWantedEigenvalues,
@@ -600,7 +600,7 @@ namespace dftefe
 
       std::shared_ptr<linearAlgebra::ElpaScalapackManager> d_elpaScala;
 
-      double d_smearingTemperature , d_freeEnergy;
+      double d_smearingTemperature, d_freeEnergy;
 
     }; // end of KohnShamDFT
   }    // end of namespace ksdft

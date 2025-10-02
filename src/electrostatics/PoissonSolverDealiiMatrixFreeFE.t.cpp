@@ -110,7 +110,7 @@ namespace dftefe
           &                                     inpRhs,
         const linearAlgebra::PreconditionerType pcType,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
-                        linAlgOpContext)
+          linAlgOpContext)
       : d_feBasisManagerField(feBasisManagerField)
       , d_numComponents(
           !inpRhs.empty() ? inpRhs.begin()->second.getNumberComponents() : 0)
@@ -124,9 +124,9 @@ namespace dftefe
       , d_matrixFreeQuadCompStiffnessMatrix(0)
       , d_dealiiQuadratureRuleVec(1, dealii::Quadrature<dim>())
       , d_scratchMultiVec(feBasisManagerField->getMPIPatternP2P(),
-                            linAlgOpContext,
-                            d_numComponents,
-                            ValueType())
+                          linAlgOpContext,
+                          d_numComponents,
+                          ValueType())
     {
       int rank;
       utils::mpi::MPICommRank(this->getMPIComm(), &rank);
@@ -217,24 +217,26 @@ namespace dftefe
           const quadrature::QuadratureFamily quadratureFamily =
             quadAttr.getQuadratureFamily();
 
-          if(!(quadratureFamily == quadrature::QuadratureFamily::GAUSS ||
-              quadratureFamily == quadrature::QuadratureFamily::GLL ||
-              quadratureFamily == quadrature::QuadratureFamily::GAUSS_SUBDIVIDED))
-          {
-            d_nonTensorSructuredQuadeRhs.push_back(distributedCPUVec<ValueTypeOperator>());
-          }
+          if (!(quadratureFamily == quadrature::QuadratureFamily::GAUSS ||
+                quadratureFamily == quadrature::QuadratureFamily::GLL ||
+                quadratureFamily ==
+                  quadrature::QuadratureFamily::GAUSS_SUBDIVIDED))
+            {
+              d_nonTensorSructuredQuadeRhs.push_back(
+                distributedCPUVec<ValueTypeOperator>());
+            }
           else
-          {
-            d_dealiiQuadratureRuleVec.push_back(dealii::Quadrature<dim>());
-          PoissonSolverDealiiMatrixFreeFEInternal::getDealiiQuadRule<
-            ValueTypeOperator,
-            ValueTypeOperand,
-            memorySpace,
-            dim>(iter1->second,
-                 d_dealiiQuadratureRuleVec[count],
-                 d_num1DQuadPointsRhs[iter1->first]);
-          count += 1;
-          }
+            {
+              d_dealiiQuadratureRuleVec.push_back(dealii::Quadrature<dim>());
+              PoissonSolverDealiiMatrixFreeFEInternal::getDealiiQuadRule<
+                ValueTypeOperator,
+                ValueTypeOperand,
+                memorySpace,
+                dim>(iter1->second,
+                     d_dealiiQuadratureRuleVec[count],
+                     d_num1DQuadPointsRhs[iter1->first]);
+              count += 1;
+            }
           iter1++;
         }
 
@@ -289,10 +291,10 @@ namespace dftefe
         d_pcType == dftefe::linearAlgebra::PreconditionerType::JACOBI,
         "Only JACOBI preconditioner avaliable for Dealii Matrix Free Poisson Solve. Contact developers for other options.");
 
-      for(auto &i:d_nonTensorSructuredQuadeRhs)
-      {
-        i.reinit(d_x);
-      }
+      for (auto &i : d_nonTensorSructuredQuadeRhs)
+        {
+          i.reinit(d_x);
+        }
 
       computeDiagonalA();
       reinit(feBasisManagerField, inpRhs);
@@ -323,7 +325,7 @@ namespace dftefe
           memorySpace> &                        inpRhs,
         const linearAlgebra::PreconditionerType pcType,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
-                        linAlgOpContext)
+          linAlgOpContext)
       : PoissonSolverDealiiMatrixFreeFE(
           feBasisManagerField,
           feBasisDataStorageStiffnessMatrix,
@@ -788,7 +790,7 @@ namespace dftefe
         }
 
       unsigned int matrixFreeQuadratureComponentRhs = 1;
-      unsigned int nonTensorStructQuadInRhsCount = 0;
+      unsigned int nonTensorStructQuadInRhsCount    = 0;
       auto         iter = d_feBasisDataStorageRhs.begin();
       while (iter != d_feBasisDataStorageRhs.end())
         {
@@ -798,92 +800,98 @@ namespace dftefe
           const quadrature::QuadratureFamily quadratureFamily =
             quadAttr.getQuadratureFamily();
 
-          if(!(quadratureFamily == quadrature::QuadratureFamily::GAUSS ||
-              quadratureFamily == quadrature::QuadratureFamily::GLL ||
-              quadratureFamily == quadrature::QuadratureFamily::GAUSS_SUBDIVIDED))
-          {
-            // Set up basis Operations for RHS
-            basis::FEBasisOperations<ValueTypeOperand,
-                                      ValueTypeOperator,
-                                      memorySpace,
-                                      dim>
-              feBasisOperations(iter->second,
-                                1,
-                                d_numComponents);
+          if (!(quadratureFamily == quadrature::QuadratureFamily::GAUSS ||
+                quadratureFamily == quadrature::QuadratureFamily::GLL ||
+                quadratureFamily ==
+                  quadrature::QuadratureFamily::GAUSS_SUBDIVIDED))
+            {
+              // Set up basis Operations for RHS
+              basis::FEBasisOperations<ValueTypeOperand,
+                                       ValueTypeOperator,
+                                       memorySpace,
+                                       dim>
+                feBasisOperations(iter->second, 1, d_numComponents);
 
               feBasisOperations.integrateWithBasisValues(
-                inpRhs.find(iter->first)->second, *d_feBasisManagerHomo, d_scratchMultiVec);
+                inpRhs.find(iter->first)->second,
+                *d_feBasisManagerHomo,
+                d_scratchMultiVec);
 
-            for (size_type i = 0; i < d_scratchMultiVec.locallyOwnedSize(); i++)
-              {
-                *(d_nonTensorSructuredQuadeRhs[nonTensorStructQuadInRhsCount].begin() + i) = d_scratchMultiVec.data()[i];
-              }
-            nonTensorStructQuadInRhsCount += 1;
-          }
-          else
-          {
-          // dealii::FEEvaluation<
-          // 3,
-          // FEOrderElectro,
-          // C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>()>
-          // fe_eval_density(*d_dealiiMatrixFree,
-          //                 d_dofHandlerIndex,
-          //                 matrixFreeQuadratureComponentRhs);
-
-          basis::DealiiFEEvaluationWrapper<1> fe_eval_density_wrap(
-            d_feOrder,
-            d_num1DQuadPointsRhs[iter->first],
-            *d_dealiiMatrixFree,
-            d_dofHandlerIndex,
-            matrixFreeQuadratureComponentRhs);
-
-          basis::FEEvaluationWrapperBase &fe_eval_density =
-            fe_eval_density_wrap.getFEEvaluationWrapperBase();
-
-          dealii::AlignedVector<dealii::VectorizedArray<double>> rhoQuads(
-            fe_eval_density.totalNumberofQuadraturePoints(),
-            dealii::make_vectorized_array(0.0));
-          for (unsigned int macrocell = 0;
-               macrocell < d_dealiiMatrixFree->n_cell_batches();
-               ++macrocell)
-            {
-              fe_eval_density.reinit(macrocell);
-
-              std::fill(rhoQuads.begin(),
-                        rhoQuads.end(),
-                        dealii::make_vectorized_array(0.0));
-              const unsigned int numSubCells =
-                d_dealiiMatrixFree->n_active_entries_per_cell_batch(macrocell);
-              for (unsigned int iSubCell = 0; iSubCell < numSubCells;
-                   ++iSubCell)
+              for (size_type i = 0; i < d_scratchMultiVec.locallyOwnedSize();
+                   i++)
                 {
-                  subCellPtr =
-                    d_dealiiMatrixFree->get_cell_iterator(macrocell,
-                                                          iSubCell,
-                                                          d_dofHandlerIndex);
-                  dealii::CellId subCellId = subCellPtr->id();
-                  unsigned int   cellIndex = d_cellIdToCellIndexMap[subCellId];
-                  const double * tempVec =
-                    inpRhs.find(iter->first)->second.data() +
-                    cellIndex * fe_eval_density.totalNumberofQuadraturePoints();
-
-                  for (unsigned int q = 0;
-                       q < fe_eval_density.totalNumberofQuadraturePoints();
-                       ++q)
-                    rhoQuads[q][iSubCell] = tempVec[q];
+                  *(d_nonTensorSructuredQuadeRhs[nonTensorStructQuadInRhsCount]
+                      .begin() +
+                    i) = d_scratchMultiVec.data()[i];
                 }
-
-
-              // for (unsigned int q = 0; q < fe_eval_density.n_q_points; ++q)
-              //   {
-              //     fe_eval_density.submit_value(rhoQuads[q], q);
-              //   }
-              fe_eval_density.submitValues(rhoQuads);
-              fe_eval_density.integrate(dealii::EvaluationFlags::values);
-              fe_eval_density.distributeLocalToGlobal(rhs);
+              nonTensorStructQuadInRhsCount += 1;
             }
-          matrixFreeQuadratureComponentRhs++;
-          }
+          else
+            {
+              // dealii::FEEvaluation<
+              // 3,
+              // FEOrderElectro,
+              // C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>()>
+              // fe_eval_density(*d_dealiiMatrixFree,
+              //                 d_dofHandlerIndex,
+              //                 matrixFreeQuadratureComponentRhs);
+
+              basis::DealiiFEEvaluationWrapper<1> fe_eval_density_wrap(
+                d_feOrder,
+                d_num1DQuadPointsRhs[iter->first],
+                *d_dealiiMatrixFree,
+                d_dofHandlerIndex,
+                matrixFreeQuadratureComponentRhs);
+
+              basis::FEEvaluationWrapperBase &fe_eval_density =
+                fe_eval_density_wrap.getFEEvaluationWrapperBase();
+
+              dealii::AlignedVector<dealii::VectorizedArray<double>> rhoQuads(
+                fe_eval_density.totalNumberofQuadraturePoints(),
+                dealii::make_vectorized_array(0.0));
+              for (unsigned int macrocell = 0;
+                   macrocell < d_dealiiMatrixFree->n_cell_batches();
+                   ++macrocell)
+                {
+                  fe_eval_density.reinit(macrocell);
+
+                  std::fill(rhoQuads.begin(),
+                            rhoQuads.end(),
+                            dealii::make_vectorized_array(0.0));
+                  const unsigned int numSubCells =
+                    d_dealiiMatrixFree->n_active_entries_per_cell_batch(
+                      macrocell);
+                  for (unsigned int iSubCell = 0; iSubCell < numSubCells;
+                       ++iSubCell)
+                    {
+                      subCellPtr = d_dealiiMatrixFree->get_cell_iterator(
+                        macrocell, iSubCell, d_dofHandlerIndex);
+                      dealii::CellId subCellId = subCellPtr->id();
+                      unsigned int   cellIndex =
+                        d_cellIdToCellIndexMap[subCellId];
+                      const double *tempVec =
+                        inpRhs.find(iter->first)->second.data() +
+                        cellIndex *
+                          fe_eval_density.totalNumberofQuadraturePoints();
+
+                      for (unsigned int q = 0;
+                           q < fe_eval_density.totalNumberofQuadraturePoints();
+                           ++q)
+                        rhoQuads[q][iSubCell] = tempVec[q];
+                    }
+
+
+                  // for (unsigned int q = 0; q < fe_eval_density.n_q_points;
+                  // ++q)
+                  //   {
+                  //     fe_eval_density.submit_value(rhoQuads[q], q);
+                  //   }
+                  fe_eval_density.submitValues(rhoQuads);
+                  fe_eval_density.integrate(dealii::EvaluationFlags::values);
+                  fe_eval_density.distributeLocalToGlobal(rhs);
+                }
+              matrixFreeQuadratureComponentRhs++;
+            }
           iter++;
         }
 
@@ -893,10 +901,10 @@ namespace dftefe
       //  if (d_isReuseSmearedChargeRhs)
       //    rhs += d_rhsSmearedCharge;
 
-      for(auto &a : d_nonTensorSructuredQuadeRhs)
-      {
-        rhs += a;
-      }
+      for (auto &a : d_nonTensorSructuredQuadeRhs)
+        {
+          rhs += a;
+        }
 
       //  if (d_isStoreSmearedChargeRhs)
       //    d_rhsSmearedCharge.compress(dealii::VectorOperation::add);

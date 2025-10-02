@@ -157,12 +157,15 @@ namespace dftefe
       , d_fieldName(fieldName)
       , d_tciTypes(tciTypes)
     {
-      // Create an unordered_set from the vector, which automatically handles uniqueness
-      std::unordered_set<std::string> uniqueSymbolsSet(atomSymbols.begin(), atomSymbols.end());
-      
+      // Create an unordered_set from the vector, which automatically handles
+      // uniqueness
+      std::unordered_set<std::string> uniqueSymbolsSet(atomSymbols.begin(),
+                                                       atomSymbols.end());
+
       // Create a new vector from the set
-      std::vector<std::string> uniqueAtomsymbols(uniqueSymbolsSet.begin(), uniqueSymbolsSet.end());
-      
+      std::vector<std::string> uniqueAtomsymbols(uniqueSymbolsSet.begin(),
+                                                 uniqueSymbolsSet.end());
+
       for (int i = 0; i < d_tciTypes.size(); i++)
         {
           if (d_tciTypes[i] == "S")
@@ -191,8 +194,8 @@ namespace dftefe
               if (fieldName == "rhoAtom-vlocCorrection" ||
                   fieldName == "rhoAtom-phiAtom")
                 {
-                  atomComb.push_back(
-                    std::string(uniqueAtomsymbols[i] + "-" + uniqueAtomsymbols[j]));
+                  atomComb.push_back(std::string(uniqueAtomsymbols[i] + "-" +
+                                                 uniqueAtomsymbols[j]));
                 }
             }
           if (fieldName == "bSmear-phiAtom")
@@ -200,10 +203,10 @@ namespace dftefe
               atomComb.push_back(std::string(uniqueAtomsymbols[i]));
             }
         }
-        if (fieldName == "sumBZZCorrBSmear-diffVZZCorrVSmear")
-          {
-            atomComb.push_back(std::string("DefaultAtom"));
-          }
+      if (fieldName == "sumBZZCorrBSmear-diffVZZCorrVSmear")
+        {
+          atomComb.push_back(std::string("DefaultAtom"));
+        }
 
       std::vector<double> dGridTmp(0);
 
@@ -214,48 +217,55 @@ namespace dftefe
                                  ".json";
           auto jsonRes = simdjson::padded_string::load(jsonfile);
 
-          if (jsonRes.error()) 
-          {
-            utils::throwException(false, "Failed to load JSON file: " + jsonfile + 
-                                          " (" + simdjson::error_message(jsonRes.error()) + ") from the input JSON data folder.");
-          }
+          if (jsonRes.error())
+            {
+              utils::throwException(false,
+                                    "Failed to load JSON file: " + jsonfile +
+                                      " (" +
+                                      simdjson::error_message(jsonRes.error()) +
+                                      ") from the input JSON data folder.");
+            }
           simdjson::ondemand::document doc = parser.iterate(jsonRes);
 
-          if(fieldName == "bSmear-phiAtom")
-          {
-            std::string_view type;
-            auto typeRes = doc["vlocInfo"]["type"].get(type);
-            if (typeRes) 
+          if (fieldName == "bSmear-phiAtom")
             {
-              utils::throwException(false, "vlocInfo.type not found");
+              std::string_view type;
+              auto             typeRes = doc["vlocInfo"]["type"].get(type);
+              if (typeRes)
+                {
+                  utils::throwException(false, "vlocInfo.type not found");
+                }
+              if (type == "psp")
+                {
+                  std::string_view z_str, tot_pspen, psp_type;
+
+                  auto p1 =
+                    doc["vlocInfo"]["params"][comb]["z_valence"].get(z_str);
+                  auto p2 =
+                    doc["vlocInfo"]["params"][comb]["total_psenergy"].get(
+                      tot_pspen);
+                  auto p3 = doc["vlocInfo"]["params"][comb]["pseudo_type"].get(
+                    psp_type);
+
+                  if (p1)
+                    {
+                      utils::throwException(false, "z_valence not found");
+                    }
+                  if (p2)
+                    {
+                      utils::throwException(false, "total_psenergy not found");
+                    }
+                  if (p3)
+                    {
+                      utils::throwException(false, "pseudo_type not found");
+                    }
+
+                  // convert string to int
+                  d_vLocParams[comb]["z_valence"]      = std::string(z_str);
+                  d_vLocParams[comb]["total_psenergy"] = std::string(tot_pspen);
+                  d_vLocParams[comb]["pseudo_type"]    = std::string(psp_type);
+                }
             }
-            if (type == "psp") 
-            {
-              std::string_view z_str , tot_pspen , psp_type;
-
-              auto p1 = doc["vlocInfo"]["params"][comb]["z_valence"].get(z_str);
-              auto p2 = doc["vlocInfo"]["params"][comb]["total_psenergy"].get(tot_pspen);
-              auto p3 = doc["vlocInfo"]["params"][comb]["pseudo_type"].get(psp_type);
-
-              if (p1) 
-              {
-                utils::throwException(false, "z_valence not found");
-              }
-              if (p2) 
-              {
-                utils::throwException(false, "total_psenergy not found");
-              }
-              if (p3) 
-              {
-                utils::throwException(false, "pseudo_type not found");
-              }
-
-              // convert string to int
-              d_vLocParams[comb]["z_valence"] = std::string(z_str);
-              d_vLocParams[comb]["total_psenergy"] = std::string(tot_pspen);
-              d_vLocParams[comb]["pseudo_type"] = std::string(psp_type);
-            }
-          }
 
           // Check fieldName exists
           simdjson::ondemand::object fieldObj;
@@ -296,28 +306,28 @@ namespace dftefe
                 "d Grid is different for different files in the folder.");
             }
 
-          simdjson::simdjson_result<double> fieldRes1 = doc["rcSmear"].get_double();
+          simdjson::simdjson_result<double> fieldRes1 =
+            doc["rcSmear"].get_double();
 
-          if (fieldRes1.error()) 
-          {
-            utils::throwException(false, "rcSmear not found in JSON file.");
-          } 
-          else 
-          {
-            d_rcSmear = fieldRes1.value();
-          }
+          if (fieldRes1.error())
+            {
+              utils::throwException(false, "rcSmear not found in JSON file.");
+            }
+          else
+            {
+              d_rcSmear = fieldRes1.value();
+            }
 
           fieldRes1 = doc["rcZZCorr"].get_double();
 
-          if (fieldRes1.error()) 
-          {
-            d_rcSmearZZCorr = d_rcSmear;
-          } 
-          else 
-          {
-            d_rcSmearZZCorr = fieldRes1.value();
-          }
-
+          if (fieldRes1.error())
+            {
+              d_rcSmearZZCorr = d_rcSmear;
+            }
+          else
+            {
+              d_rcSmearZZCorr = fieldRes1.value();
+            }
         }
     }
 
@@ -387,34 +397,36 @@ namespace dftefe
     std::string
     AtomTCIASpline::getVLocInfo(std::string atomSymbol, std::string paramName)
     {
-      if(d_fieldName == "bSmear-phiAtom")
-      {
-        auto iter = d_vLocParams.find(atomSymbol);
-        if (iter != d_vLocParams.end())
+      if (d_fieldName == "bSmear-phiAtom")
         {
-          auto iter1 = iter->second.find(paramName);
-          if (iter1 != iter->second.end())
-          {
-            return iter1->second;
-          }
+          auto iter = d_vLocParams.find(atomSymbol);
+          if (iter != d_vLocParams.end())
+            {
+              auto iter1 = iter->second.find(paramName);
+              if (iter1 != iter->second.end())
+                {
+                  return iter1->second;
+                }
+              else
+                {
+                  utils::throwException(false,
+                                        "paramName '" + paramName +
+                                          "' not found in JSON folder files.");
+                  return "";
+                }
+            }
           else
-          {
             utils::throwException(false,
-                                  "paramName '" + paramName + "' not found in JSON folder files.");
-            return "";
-          }
+                                  "atomSymbol Type '" + atomSymbol +
+                                    "' not found in JSON folder.");
+          return "";
         }
-        else
-          utils::throwException(false,
-                                "atomSymbol Type '" + atomSymbol + "' not found in JSON folder.");
-        return "";
-      }
       else
-      {
-        utils::throwException(false,
-                              "getVLocInfo only avalibale for bSmear-phiAtom fieldname.");
-        return "";
-      }
+        {
+          utils::throwException(
+            false, "getVLocInfo only avalibale for bSmear-phiAtom fieldname.");
+          return "";
+        }
     }
 
   } // end of namespace atoms

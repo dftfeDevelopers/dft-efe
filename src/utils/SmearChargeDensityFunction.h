@@ -18,7 +18,7 @@ namespace dftefe
       SmearChargeDensityFunction(
         const std::vector<utils::Point> &atomCoordinates,
         const std::vector<double> &      atomCharges,
-        const double &      smearedChargeRadius);
+        const double &                   smearedChargeRadius);
 
       SmearChargeDensityFunction(const utils::Point &atomCoordinates,
                                  const double        atomCharges,

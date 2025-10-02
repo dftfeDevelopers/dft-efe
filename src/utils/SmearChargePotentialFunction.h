@@ -18,7 +18,7 @@ namespace dftefe
       SmearChargePotentialFunction(
         const std::vector<utils::Point> &atomCoordinates,
         const std::vector<double> &      atomCharges,
-        const double &      smearedChargeRadius);
+        const double &                   smearedChargeRadius);
 
       SmearChargePotentialFunction(const utils::Point &atomCoordinates,
                                    const double        atomCharges,

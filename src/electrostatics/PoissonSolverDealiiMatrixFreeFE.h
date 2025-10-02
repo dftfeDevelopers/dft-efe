@@ -110,7 +110,7 @@ namespace dftefe
           &                                     inpRhs,
         const linearAlgebra::PreconditionerType pcType,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
-                        linAlgOpContext);
+          linAlgOpContext);
 
       /**
        * @brief This constructor creates an instance of a base LinearSolverFunction called PoissonSolverDealiiMatrixFreeFE
@@ -130,7 +130,7 @@ namespace dftefe
           &                                     inpRhs,
         const linearAlgebra::PreconditionerType pcType,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
-                        linAlgOpContext);
+          linAlgOpContext);
 
       void
       reinit(
@@ -246,9 +246,10 @@ namespace dftefe
       utils::ConditionalOStream pcout;
 
       linearAlgebra::MultiVector<
-                        linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
-                                                              ValueTypeOperand>,
-                        memorySpace> d_scratchMultiVec;
+        linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
+                                               ValueTypeOperand>,
+        memorySpace>
+        d_scratchMultiVec;
 
     }; // end of class PoissonSolverDealiiMatrixFreeFE
   }    // namespace electrostatics

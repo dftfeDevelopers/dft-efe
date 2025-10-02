@@ -96,7 +96,9 @@ namespace dftefe
       const std::vector<std::string> d_tciTypes;
       double                         d_rcSmear;
       double                         d_rcSmearZZCorr;
-      std::unordered_map<std::string , std::unordered_map<std::string , std::string>> d_vLocParams;
+      std::unordered_map<std::string,
+                         std::unordered_map<std::string, std::string>>
+        d_vLocParams;
 
       // LRU bookkeeping
       std::list<std::string> d_lruList; // front = most recent, back = least

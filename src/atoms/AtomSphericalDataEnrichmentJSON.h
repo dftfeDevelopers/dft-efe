@@ -57,11 +57,12 @@ namespace dftefe
     {
     public:
       AtomSphericalDataEnrichmentJSON(
-        const std::string                 fileName,
-        const std::vector<std::string> &  fieldNames,
-        const std::vector<std::string> &  metadataNames,
-        const SphericalHarmonicFunctions &sphericalHarmonicFunc,
-        const std::map<std::string, std::string>  additionalParams = std::map<std::string, std::string>());
+        const std::string                        fileName,
+        const std::vector<std::string> &         fieldNames,
+        const std::vector<std::string> &         metadataNames,
+        const SphericalHarmonicFunctions &       sphericalHarmonicFunc,
+        const std::map<std::string, std::string> additionalParams =
+          std::map<std::string, std::string>());
 
       ~AtomSphericalDataEnrichmentJSON() = default;
 
@@ -95,15 +96,14 @@ namespace dftefe
       nSphericalData(std::string fieldName) const override;
 
     private:
-
       void
       getSphericalDataFromJSON(
-        std::vector<std::vector<double>> &                    radialValuesVec,
-        std::vector<std::vector<int>> &                       qNumVec,
-        const std::vector<double> &                           radialPoints,
-        const std::string         &                           fieldName,
-        const std::string         &                           fileName,
-        std::vector<std::pair<int, int>> &                    nlPairs);
+        std::vector<std::vector<double>> &radialValuesVec,
+        std::vector<std::vector<int>> &   qNumVec,
+        const std::vector<double> &       radialPoints,
+        const std::string &               fieldName,
+        const std::string &               fileName,
+        std::vector<std::pair<int, int>> &nlPairs);
 
       std::vector<std::vector<double>> d_occupancies;
       std::vector<std::vector<double>> d_eigenValues;

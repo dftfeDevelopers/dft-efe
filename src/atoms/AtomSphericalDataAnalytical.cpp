@@ -190,7 +190,8 @@ namespace dftefe
       auto it = d_sphericalData.find(fieldName);
       DFTEFE_AssertWithMsg(it != d_sphericalData.end(),
                            std::string("FieldName " + fieldName +
-                             " not found in AtomSphDataAnalytical").c_str());
+                                       " not found in AtomSphDataAnalytical")
+                             .c_str());
       return it->second;
     }
 
@@ -202,11 +203,13 @@ namespace dftefe
       auto it = d_sphericalData.find(fieldName);
       DFTEFE_AssertWithMsg(it != d_sphericalData.end(),
                            std::string("Unable to find the field " + fieldName +
-                            " not found in AtomSphDataAnalytical").c_str());
+                                       " not found in AtomSphDataAnalytical")
+                             .c_str());
       auto iter = d_qNumbersToIdMap.find(fieldName);
       DFTEFE_AssertWithMsg(iter != d_qNumbersToIdMap.end(),
                            std::string("Unable to find the field " + fieldName +
-                            " not found in AtomSphDataAnalytical").c_str());
+                                       " not found in AtomSphDataAnalytical")
+                             .c_str());
       auto iterQNumberToId = (iter->second).find(qNumbers);
       if (iterQNumberToId != (iter->second).end())
         return *((it->second).begin() + iterQNumberToId->second);
@@ -217,9 +220,11 @@ namespace dftefe
             s += std::to_string(qNumbers[i]) + " ";
 
           DFTEFE_AssertWithMsg(false,
-                               std::string("Unable to find the qNumbers " + s + " for " +
-                                " the field " + fieldName +
-                                " not found in AtomSphDataAnalytical").c_str());
+                               std::string(
+                                 "Unable to find the qNumbers " + s + " for " +
+                                 " the field " + fieldName +
+                                 " not found in AtomSphDataAnalytical")
+                                 .c_str());
           return *((it->second).begin() + iterQNumberToId->second);
         }
     }

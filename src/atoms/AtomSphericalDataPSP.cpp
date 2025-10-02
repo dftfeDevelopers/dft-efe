@@ -772,12 +772,14 @@ namespace dftefe
                 {
                   if (radialPoints[i] <= d_PSPFileVLocalMaxTail)
                     {
-                      if (std::abs(radialValues[i] - (-1.0 * constant * std::abs(d_zvalance)/ radialPoints[i])) >
+                      if (std::abs(radialValues[i] -
+                                   (-1.0 * constant * std::abs(d_zvalance) /
+                                    radialPoints[i])) >
                           constant * d_PSPFileVLocalTruncTol)
-                      {
-                        radialPointsWithCutoff.push_back(radialPoints[i]);
-                        radialValuesWithCutoff.push_back(radialValues[i]);
-                      }
+                        {
+                          radialPointsWithCutoff.push_back(radialPoints[i]);
+                          radialValuesWithCutoff.push_back(radialValues[i]);
+                        }
                     }
                 }
 
