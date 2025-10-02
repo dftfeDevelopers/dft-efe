@@ -24,6 +24,7 @@
  */
 
 #include <atoms/AtomSphericalDataEnrichmentJSON.h>
+#include <utils/SmearChargePotentialFunction.h>
 #include <utils/Exceptions.h>
 #include <utils/StringOperations.h>
 #include <sstream>
@@ -36,68 +37,164 @@ namespace dftefe
   {
     namespace
     {
+      int findLastExtremumIndex(const std::vector<double>& f) 
+      {
+        if (f.size() < 3) 
+          utils::throwException(false ,  "Vector f must have at least length 3.");
+        int lastIndex = -1;
+        for (size_t i = 1; i + 1 < f.size(); ++i) 
+        {
+          double slope1 = f[i]   - f[i-1];
+          double slope2 = f[i+1] - f[i];
+          if (slope1 * slope2 < 0) 
+          { 
+            lastIndex = static_cast<int>(i);
+          }
+        }
+        if (lastIndex == -1) 
+          lastIndex = f.size()-1;
+        return lastIndex;
+      }
+
       void
-      getSphericalDataFromJSON(
-        std::vector<std::shared_ptr<SphericalData>> &         sphericalDataVec,
+      getCutoffs(
+        std::vector<std::pair<double, double>> &               cutOffInfoVec,
+        std::vector<std::vector<double>> &                    radialValuesVec, 
+        std::vector<std::vector<int>> &                       qNumVec,
         const std::vector<double> &                           radialPoints,
         const std::string         &                           fieldName,
         const std::string         &                           fileName,
-        std::vector<std::pair<int, int>> &        nlPairs,
-        const SphericalHarmonicFunctions &                    sphericalHarmonicFunc)
+        std::vector<std::pair<int, int>> &                    nlPairs)
       {
-        sphericalDataVec.clear();
-        auto json_res = simdjson::padded_string::load(fileName);
-        if (json_res.error()) {
-            utils::throwException(false ,  "Error loading JSON: " + json_res.error());
-        }
-        simdjson::padded_string json = std::move(json_res).value();
-
-        simdjson::dom::parser parser;
-        simdjson::dom::element doc = parser.parse(json);
-
-        for(int j = 0 ; j < nlPairs.size() ; j++)
-        {
-          for(int m = -nlPairs[j].second ; m <= nlPairs[j].second ; m++)
+        cutOffInfoVec.clear();
+        cutOffInfoVec.resize(qNumVec.size());
+          if(fieldName == "vhartree")
           {
-            std::vector<double> radialValues(0);
-            std::vector<int> qNumbers(0);
-            for(int i = 0 ; i < radialPoints.size() ; i++)
+            for(int i = 0 ; i < qNumVec.size() ; i++)
             {
-              if(fieldName == "orbital")
-              {
-                simdjson::dom::array arr = doc["eigVecsQuad"].at(i).get_array();
-                radialValues.push_back(double(arr.at(0).get_array().at(nlPairs[j].second).get_array().at(nlPairs[j].first)));
-              }
-              else if(fieldName == "vhartree")
-              {
-                radialValues.push_back(double(doc["vhartreeQuad"].at(i)));
-              }
-              else if(fieldName == "density")
-              {
-                radialValues.push_back(double(doc["rhoQuad"].at(0).get_array().at(i)));
-              }
-              else
-              {
-                utils::throwException(false,
-                                      "Incorrect fieldname given.");
-              }                
+              cutOffInfoVec[i] = {1e6,1e6};
             }
+          }
+          if(fieldName == "vtotal" || fieldName == "density")
+          {
+            for(int i = 0 ; i < qNumVec.size() ; i++)
+            {
+              for(int j = radialPoints.size()-1 ; j > 0 ; j--)
+              {
+                if(std::abs(radialValuesVec[i][j]) > 1e-10)
+                {
+                  cutOffInfoVec[i].first = radialPoints[i];
+                  cutOffInfoVec[i].second = 1e6;
+                  break;
+                }
+              }
+            }
+          }
+          if(fieldName == "orbital")
+          {
+            bool useHeurestics = false;
+            auto json_res = simdjson::padded_string::load(fileName);
+            if (json_res.error())
+            {
+              utils::throwException(false ,  "Error loading JSON: " + json_res.error());
+            }
+            simdjson::padded_string json = std::move(json_res).value();
 
-            qNumbers = {nlPairs[j].first , nlPairs[j].second , m};
+            simdjson::dom::parser parser;
+            simdjson::dom::element doc = parser.parse(json);
 
-            double cutoff     = 0;
-            double smoothness = 0;
+            simdjson::simdjson_result<simdjson::dom::element>  typeRes;
+            typeRes = doc["eigVecsCutoff"]; 
+            // Check the error code:
+            if (typeRes.error()) 
+            {
+              useHeurestics = true;
+            }
+            if(!useHeurestics)
+            {
+              std::vector<std::vector<double>> eigVecCutoff;
+              std::vector<std::vector<double>> eigVecSmoothness;
+              simdjson::dom::array rows = typeRes.at(0); // the inner 2D array
+
+              for (simdjson::dom::element row : rows) 
+              {
+                std::vector<double> values;
+                for (simdjson::dom::element val : row.get_array()) 
+                {
+                    values.push_back(double(val));
+                }
+                eigVecCutoff.push_back(std::move(values));
+              }
+
+              typeRes = doc["eigVecsSmoothness"]; 
+              rows = typeRes.at(0); // the inner 2D array
+
+              for (simdjson::dom::element row : rows) 
+              {
+                std::vector<double> values;
+                for (simdjson::dom::element val : row.get_array()) 
+                {
+                    values.push_back(double(val));
+                }
+                eigVecSmoothness.push_back(std::move(values));
+              }
+
+              // use from file
+              for(int i = 0 ; i < qNumVec.size() ; i++)
+              {
+                cutOffInfoVec[i].first = eigVecCutoff[qNumVec[i][1]][qNumVec[i][0]];
+                cutOffInfoVec[i].second = eigVecSmoothness[qNumVec[i][1]][qNumVec[i][0]];
+                std::cout << cutOffInfoVec[i].first << " " << cutOffInfoVec[i].second << "\n";
+              }
+            }
+            else
+            {
+              for(int i = 0 ; i < qNumVec.size() ; i++)
+              {
+                std::vector<double> h(radialPoints.size());
+                std::transform(radialPoints.begin(), radialPoints.end(), radialValuesVec[i].begin(), h.begin(),
+                              [](double ri, double fi){ return ri * ri * fi; });
+                int lastTurningPtId = std::min(findLastExtremumIndex(radialValuesVec[i]) , findLastExtremumIndex(h));
+                int cutoffId = 1e6;
+                for(int j = lastTurningPtId ; j < radialPoints.size() ; j++)
+                {
+                  if(std::abs(radialValuesVec[i][j]) < 1e-2)
+                  {
+                    cutoffId = j;
+                    break;
+                  }
+                }
+                cutOffInfoVec[i].first = radialPoints[cutoffId]*(1.0/3);
+                cutOffInfoVec[i].second = 0.5;
+                std::cout << cutOffInfoVec[i].first << " " << cutOffInfoVec[i].second << "\n";
+              }
+            }
+          }
+      }
+
+      void
+      createSplineFromSphericalData(
+        std::vector<std::shared_ptr<SphericalData>> &         sphericalDataVec,
+        const std::vector<double> &                           radialPoints,
+        std::vector<std::vector<double>> &                    radialValuesVec,
+        std::vector<std::vector<int>> &                       qNumVec,      
+        std::vector<std::pair<double, double>> &               cutOffInfoVec,
+        const SphericalHarmonicFunctions &                    sphericalHarmonicFunc)
+        {
+          for(int i = 0 ; i < radialValuesVec.size() ; i++)
+          {
+            double cutoff     = cutOffInfoVec[i].first;
+            double smoothness = cutOffInfoVec[i].second;
 
             sphericalDataVec.push_back(
-              std::make_shared<SphericalDataNumerical>(qNumbers,
+              std::make_shared<SphericalDataNumerical>(qNumVec[i],
                                                        radialPoints,
-                                                       radialValues,
+                                                       radialValuesVec[i],
                                                        cutoff,
                                                        smoothness,
-                                                       sphericalHarmonicFunc));                                  
+                                                       sphericalHarmonicFunc));
           }
         }
-      }
 
       void
       storeQNumbersToDataIdMap(
@@ -116,13 +213,15 @@ namespace dftefe
       const std::string                 fileName,            
       const std::vector<std::string> &  fieldNames,
       const std::vector<std::string> &  metadataNames,
-      const SphericalHarmonicFunctions &sphericalHarmonicFunc)
+      const SphericalHarmonicFunctions &sphericalHarmonicFunc,
+      const std::map<std::string, std::string>  additionalParams)
       : d_fileName(fileName)
       , d_fieldNames(fieldNames)
       , d_metadataNames(metadataNames)
     {
         auto json_res = simdjson::padded_string::load(d_fileName);
-        if (json_res.error()) {
+        if (json_res.error()) 
+        {
             utils::throwException(false ,  "Error loading JSON: " + json_res.error());
         }
         simdjson::padded_string json = std::move(json_res).value();
@@ -134,13 +233,18 @@ namespace dftefe
       
       utils::throwException(nspin == 1, "The number of spin channels in the JSON data should be one.");
 
+      if (std::find(d_metadataNames.begin(), d_metadataNames.end(), "Z") != d_metadataNames.end()) 
+      {
+        d_metadataNames.push_back("Z");
+      }
+
       std::string_view type;
       //
       // storing meta data
       //
-      for (size_type iMeta = 0; iMeta < metadataNames.size(); ++iMeta)
+      for (size_type iMeta = 0; iMeta < d_metadataNames.size(); ++iMeta)
       {
-        const std::string &metadataName = metadataNames[iMeta];
+        const std::string &metadataName = d_metadataNames[iMeta];
         simdjson::simdjson_result<simdjson::dom::element>  typeRes;
 
         if(metadataName == "symbol" || metadataName == "Z")
@@ -178,11 +282,34 @@ namespace dftefe
         d_metadata[metadataName] = value;
       }
 
+      if(std::find(fieldNames.begin(), fieldNames.end(), "vtotal") != fieldNames.end())
+      {
+        auto iter = additionalParams.find("charge");
+        if (iter != additionalParams.end())
+        {
+          d_atomCharge =  std::stod(iter->second);
+        } 
+        else 
+        {
+          utils::throwException(false , "charge not found in additionalParams.");
+        }
+        utils::throwException((std::abs(std::stod(d_metadata["Z"]))-
+          std::abs(d_atomCharge)) < 1e-12 ,"The atom charge in JSON does not match with the input one.");
+        iter = additionalParams.find("rcsmear");
+        if (iter != additionalParams.end())
+        {
+          d_smearedCharge = std::stod(iter->second);
+        } 
+        else 
+        {
+          utils::throwException(false , "rcsmear not found in additionalParams.");
+        }
+      }
+
       d_occupancies.clear();
       d_eigenValues.clear();
 
-      auto it = std::find(fieldNames.begin(), fieldNames.end(), "orbital");
-      if (it != fieldNames.end()) 
+      if (std::find(fieldNames.begin(), fieldNames.end(), "orbital") != fieldNames.end()) 
       {
         simdjson::simdjson_result<simdjson::dom::element>  typeRes;
          typeRes = doc["eigVals"]; 
@@ -312,16 +439,97 @@ namespace dftefe
           {
             nlPairs.push_back({0 , 0});
           }
-          getSphericalDataFromJSON(sphericalDataVec,
-                                  radialPoints,
-                                  fieldName,
-                                  fileName,
-                                  nlPairs,
-                                  sphericalHarmonicFunc);
+          std::vector<std::vector<double>>                   radialValuesVec;
+          std::vector<std::vector<int>>                      qNumVec;
+          std::vector<std::pair<double, double>>             cutOffInfoVec;
+          getSphericalDataFromJSON(radialValuesVec,
+                                    qNumVec,
+                                    radialPoints,
+                                    fieldName,
+                                    fileName,
+                                    nlPairs);
+          getCutoffs(cutOffInfoVec,
+                    radialValuesVec, 
+                    qNumVec,
+                    radialPoints,
+                    fieldName,
+                    fileName,
+                    nlPairs);
+          createSplineFromSphericalData(sphericalDataVec,
+                                        radialPoints,
+                                        radialValuesVec,
+                                        qNumVec,      
+                                        cutOffInfoVec,
+                                        sphericalHarmonicFunc);
           storeQNumbersToDataIdMap(sphericalDataVec, qNumbersToIdMap);
           d_sphericalData[fieldName]   = sphericalDataVec;
           d_qNumbersToIdMap[fieldName] = qNumbersToIdMap;
         }
+    }
+
+
+    void
+    AtomSphericalDataEnrichmentJSON::getSphericalDataFromJSON(
+      std::vector<std::vector<double>> &                    radialValuesVec, // returns n,l,m pairs where m = -l to l
+      std::vector<std::vector<int>> &                       qNumVec,
+      const std::vector<double> &                           radialPoints,
+      const std::string         &                           fieldName,
+      const std::string         &                           fileName,
+      std::vector<std::pair<int, int>> &                    nlPairs)
+    {
+      radialValuesVec.clear();
+      auto json_res = simdjson::padded_string::load(fileName);
+      if (json_res.error()) {
+          utils::throwException(false ,  "Error loading JSON: " + json_res.error());
+      }
+      simdjson::padded_string json = std::move(json_res).value();
+
+      simdjson::dom::parser parser;
+      simdjson::dom::element doc = parser.parse(json);
+
+      for(int j = 0 ; j < nlPairs.size() ; j++)
+      {
+        for(int m = -nlPairs[j].second ; m <= nlPairs[j].second ; m++)
+        {
+          std::vector<double> radialValues(0);
+          std::vector<int> qNumbers(0);
+          for(int i = 0 ; i < radialPoints.size() ; i++)
+          {
+            if(fieldName == "orbital")
+            {
+              simdjson::dom::array arr = doc["eigVecsQuad"].at(i).get_array();
+              radialValues.push_back(double(arr.at(0).get_array().at(nlPairs[j].second).get_array().at(nlPairs[j].first)));
+            }
+            else if(fieldName == "vhartree" || fieldName == "vtotal")
+            {
+              radialValues.push_back(double(doc["vhartreeQuad"].at(i)));
+            }
+            else if(fieldName == "density")
+            {
+              radialValues.push_back(double(doc["rhoQuad"].at(0).get_array().at(i)));
+            }
+            else
+            {
+              utils::throwException(false,
+                                    "Incorrect fieldname given.");
+            }                
+          }
+          if(fieldName == "vtotal")
+          {
+            std::vector<double> nuclearChargePot(radialPoints.size());
+            
+            const utils::SmearChargePotentialFunction smfuncPot({utils::Point({0,0,0})}, d_atomCharge , d_smearedCharge);
+            
+            for(int i = 0 ; i < radialPoints.size() ; i++)
+            {
+              radialValues[i] += smfuncPot(utils::Point({radialPoints[i],0,0}));
+            }
+          }
+          qNumbers = {nlPairs[j].first , nlPairs[j].second , m};
+          radialValuesVec.push_back(radialValues);
+          qNumVec.push_back(qNumbers);
+        }
+      }
     }
 
     void

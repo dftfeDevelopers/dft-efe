@@ -19,7 +19,6 @@ set(DFT-EFE-ATOMS-SOURCES
     SphericalDataMixed.cpp
     SphericalDataAnalytical.cpp
     AtomSphericalDataAnalytical.cpp
-    simdjson.cpp
     AtomTCIASpline.cpp
    )
 
@@ -38,5 +37,15 @@ if (NOT TARGET dft-efe-utils)
   add_subdirectory(../utils ${CMAKE_CURRENT_BINARY_DIR}/buildUtils)
 endif()
 
-target_link_libraries(dft-efe-atoms PUBLIC dft-efe-utils)
+include(FetchContent)
+ 
+FetchContent_Declare(
+  simdjson
+  GIT_REPOSITORY https://github.com/simdjson/simdjson.git
+  GIT_TAG  tags/v0.9.6
+  GIT_SHALLOW TRUE)
+ 
+FetchContent_MakeAvailable(simdjson)
+
+target_link_libraries(dft-efe-atoms PUBLIC dft-efe-utils simdjson)
 endif()
