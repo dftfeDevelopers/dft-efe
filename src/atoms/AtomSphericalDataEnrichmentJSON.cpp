@@ -43,7 +43,7 @@ namespace dftefe
         if (f.size() < 3)
           utils::throwException(false, "Vector f must have at least length 3.");
         int lastIndex = -1;
-        for (size_t i = 1; i + 1 < f.size(); ++i)
+        for (size_type i = 1; i + 1 < f.size(); ++i)
           {
             double slope1 = f[i] - f[i - 1];
             double slope2 = f[i + 1] - f[i];
@@ -58,130 +58,33 @@ namespace dftefe
       }
 
       void
-      getCutoffs(std::vector<std::pair<double, double>> &cutOffInfoVec,
-                 std::vector<std::vector<double>> &      radialValuesVec,
-                 std::vector<std::vector<int>> &         qNumVec,
-                 const std::vector<double> &             radialPoints,
-                 const std::string &                     fieldName,
-                 const std::string &                     fileName,
-                 std::vector<std::pair<int, int>> &      nlPairs)
+      derivativef(const std::vector<double> &x,
+                  const std::vector<double> &f,
+                  std::vector<double> &      res)
       {
-        cutOffInfoVec.clear();
-        cutOffInfoVec.resize(qNumVec.size());
-        if (fieldName == "vhartree")
+        res.clear();
+        for (size_type j = 0; j < f.size() - 1; j++)
           {
-            for (int i = 0; i < qNumVec.size(); i++)
-              {
-                cutOffInfoVec[i] = {1e6, 1e6};
-              }
+            res.push_back((f[j + 1] - f[j]) / (x[j + 1] - x[j]));
           }
-        if (fieldName == "vtotal" || fieldName == "density")
+        res.push_back(res[f.size() - 2]);
+      }
+
+      void
+      integralxSqfSq(const std::vector<double> &x,
+                     const std::vector<double> &f,
+                     std::vector<double> &      res)
+      {
+        double sum = 0;
+        res.clear();
+        res.push_back(0);
+        for (size_type j = 0; j < f.size() - 1; j++)
           {
-            for (int i = 0; i < qNumVec.size(); i++)
-              {
-                for (int j = radialPoints.size() - 1; j > 0; j--)
-                  {
-                    if (std::abs(radialValuesVec[i][j]) > 1e-10)
-                      {
-                        cutOffInfoVec[i].first  = radialPoints[i];
-                        cutOffInfoVec[i].second = 1e6;
-                        break;
-                      }
-                  }
-              }
-          }
-        if (fieldName == "orbital")
-          {
-            bool useHeurestics = false;
-            auto json_res      = simdjson::padded_string::load(fileName);
-            if (json_res.error())
-              {
-                utils::throwException(false,
-                                      "Error loading JSON: " +
-                                        json_res.error());
-              }
-            simdjson::padded_string json = std::move(json_res).value();
-
-            simdjson::dom::parser  parser;
-            simdjson::dom::element doc = parser.parse(json);
-
-            simdjson::simdjson_result<simdjson::dom::element> typeRes;
-            typeRes = doc["eigVecsCutoff"];
-            // Check the error code:
-            if (typeRes.error())
-              {
-                useHeurestics = true;
-              }
-            if (!useHeurestics)
-              {
-                std::vector<std::vector<double>> eigVecCutoff;
-                std::vector<std::vector<double>> eigVecSmoothness;
-                simdjson::dom::array rows = typeRes.at(0); // the inner 2D array
-
-                for (simdjson::dom::element row : rows)
-                  {
-                    std::vector<double> values;
-                    for (simdjson::dom::element val : row.get_array())
-                      {
-                        values.push_back(double(val));
-                      }
-                    eigVecCutoff.push_back(std::move(values));
-                  }
-
-                typeRes = doc["eigVecsSmoothness"];
-                rows    = typeRes.at(0); // the inner 2D array
-
-                for (simdjson::dom::element row : rows)
-                  {
-                    std::vector<double> values;
-                    for (simdjson::dom::element val : row.get_array())
-                      {
-                        values.push_back(double(val));
-                      }
-                    eigVecSmoothness.push_back(std::move(values));
-                  }
-
-                // use from file
-                for (int i = 0; i < qNumVec.size(); i++)
-                  {
-                    cutOffInfoVec[i].first =
-                      eigVecCutoff[qNumVec[i][1]][qNumVec[i][0]];
-                    cutOffInfoVec[i].second =
-                      eigVecSmoothness[qNumVec[i][1]][qNumVec[i][0]];
-                    std::cout << cutOffInfoVec[i].first << " "
-                              << cutOffInfoVec[i].second << "\n";
-                  }
-              }
-            else
-              {
-                for (int i = 0; i < qNumVec.size(); i++)
-                  {
-                    std::vector<double> h(radialPoints.size());
-                    std::transform(radialPoints.begin(),
-                                   radialPoints.end(),
-                                   radialValuesVec[i].begin(),
-                                   h.begin(),
-                                   [](double ri, double fi) {
-                                     return ri * ri * fi;
-                                   });
-                    int lastTurningPtId =
-                      std::min(findLastExtremumIndex(radialValuesVec[i]),
-                               findLastExtremumIndex(h));
-                    int cutoffId = 1e6;
-                    for (int j = lastTurningPtId; j < radialPoints.size(); j++)
-                      {
-                        if (std::abs(radialValuesVec[i][j]) < 1e-2)
-                          {
-                            cutoffId = j;
-                            break;
-                          }
-                      }
-                    cutOffInfoVec[i].first = radialPoints[cutoffId] * (1.0 / 3);
-                    cutOffInfoVec[i].second = 0.5;
-                    std::cout << cutOffInfoVec[i].first << " "
-                              << cutOffInfoVec[i].second << "\n";
-                  }
-              }
+            sum += 0.5 *
+                   (f[j + 1] * f[j + 1] * x[j + 1] * x[j + 1] +
+                    f[j] * f[j] * x[j] * x[j]) *
+                   (x[j + 1] - x[j]);
+            res.push_back(sum);
           }
       }
 
@@ -235,8 +138,8 @@ namespace dftefe
       auto json_res = simdjson::padded_string::load(d_fileName);
       if (json_res.error())
         {
-          utils::throwException(false,
-                                "Error loading JSON: " + json_res.error());
+          std::string err_msg = simdjson::error_message(json_res.error());
+          utils::throwException(false, "Error loading JSON: " + err_msg);
         }
       simdjson::padded_string json = std::move(json_res).value();
 
@@ -306,29 +209,17 @@ namespace dftefe
       if (std::find(fieldNames.begin(), fieldNames.end(), "vtotal") !=
           fieldNames.end())
         {
-          auto iter = additionalParams.find("charge");
-          if (iter != additionalParams.end())
-            {
-              d_atomCharge = std::stod(iter->second);
-            }
-          else
-            {
-              utils::throwException(false,
-                                    "charge not found in additionalParams.");
-            }
-          utils::throwException(
-            (std::abs(std::stod(d_metadata["Z"])) - std::abs(d_atomCharge)) <
-              1e-12,
-            "The atom charge in JSON does not match with the input one.");
-          iter = additionalParams.find("rcsmear");
+          d_atomCharge = std::stod(d_metadata["Z"]);
+          auto iter    = additionalParams.find("rcsmear");
           if (iter != additionalParams.end())
             {
               d_smearedCharge = std::stod(iter->second);
             }
           else
             {
-              utils::throwException(false,
-                                    "rcsmear not found in additionalParams.");
+              utils::throwException(
+                false,
+                "rcsmear not found in additionalParams. Required for vtotal field");
             }
         }
 
@@ -338,6 +229,17 @@ namespace dftefe
       if (std::find(fieldNames.begin(), fieldNames.end(), "orbital") !=
           fieldNames.end())
         {
+          auto iter = additionalParams.find("PSP/AE");
+          if (iter != additionalParams.end())
+            {
+              d_PSPorAE = iter->second;
+            }
+          else
+            {
+              utils::throwException(
+                false,
+                "PSP/AE not found in additionalParams. Required for orbital field");
+            }
           simdjson::simdjson_result<simdjson::dom::element> typeRes;
           typeRes = doc["eigVals"];
           // Check the error code:
@@ -467,11 +369,6 @@ namespace dftefe
                                  nlPairUnOcc.begin(),
                                  nlPairUnOcc.end());
                 }
-
-              for (auto &i : nlPairs)
-                {
-                  std::cout << i.first << "," << i.second << "\n";
-                }
             }
           else
             {
@@ -517,11 +414,11 @@ namespace dftefe
       std::vector<std::pair<int, int>> &nlPairs)
     {
       radialValuesVec.clear();
-      auto json_res = simdjson::padded_string::load(fileName);
+      auto        json_res = simdjson::padded_string::load(fileName);
+      std::string err_msg  = simdjson::error_message(json_res.error());
       if (json_res.error())
         {
-          utils::throwException(false,
-                                "Error loading JSON: " + json_res.error());
+          utils::throwException(false, "Error loading JSON: " + err_msg);
         }
       simdjson::padded_string json = std::move(json_res).value();
 
@@ -566,7 +463,9 @@ namespace dftefe
                   std::vector<double> nuclearChargePot(radialPoints.size());
 
                   const utils::SmearChargePotentialFunction smfuncPot(
-                    {utils::Point({0, 0, 0})}, d_atomCharge, d_smearedCharge);
+                    {utils::Point({0, 0, 0})},
+                    -1.0 * std::abs(d_atomCharge),
+                    d_smearedCharge);
 
                   for (int i = 0; i < radialPoints.size(); i++)
                     {
@@ -577,6 +476,150 @@ namespace dftefe
               qNumbers = {nlPairs[j].first, nlPairs[j].second, m};
               radialValuesVec.push_back(radialValues);
               qNumVec.push_back(qNumbers);
+            }
+        }
+    }
+
+    void
+    AtomSphericalDataEnrichmentJSON::getCutoffs(
+      std::vector<std::pair<double, double>> &cutOffInfoVec,
+      std::vector<std::vector<double>> &      radialValuesVec,
+      std::vector<std::vector<int>> &         qNumVec,
+      const std::vector<double> &             radialPoints,
+      const std::string &                     fieldName,
+      const std::string &                     fileName,
+      std::vector<std::pair<int, int>> &      nlPairs)
+    {
+      cutOffInfoVec.clear();
+      cutOffInfoVec.resize(qNumVec.size());
+      if (fieldName == "vhartree")
+        {
+          for (int i = 0; i < qNumVec.size(); i++)
+            {
+              cutOffInfoVec[i] = {1e6, 1e6};
+            }
+        }
+      if (fieldName == "vtotal" || fieldName == "density")
+        {
+          for (int i = 0; i < qNumVec.size(); i++)
+            {
+              for (int j = radialPoints.size() - 1; j > 0; j--)
+                {
+                  if (std::abs(radialValuesVec[i][j]) > 1e-10)
+                    {
+                      cutOffInfoVec[i].first  = radialPoints[j];
+                      cutOffInfoVec[i].second = 1e6;
+                      break;
+                    }
+                }
+            }
+        }
+      if (fieldName == "orbital")
+        {
+          bool        useHeurestics = false;
+          auto        json_res      = simdjson::padded_string::load(fileName);
+          std::string err_msg       = simdjson::error_message(json_res.error());
+          if (json_res.error())
+            {
+              utils::throwException(false, "Error loading JSON: " + err_msg);
+            }
+          simdjson::padded_string json = std::move(json_res).value();
+
+          simdjson::dom::parser  parser;
+          simdjson::dom::element doc = parser.parse(json);
+
+          simdjson::simdjson_result<simdjson::dom::element> typeRes;
+          typeRes = doc["eigVecsCutoff"];
+          // Check the error code:
+          if (typeRes.error())
+            {
+              useHeurestics = true;
+            }
+          if (!useHeurestics)
+            {
+              std::vector<std::vector<double>> eigVecCutoff;
+              std::vector<std::vector<double>> eigVecSmoothness;
+              simdjson::dom::array rows = typeRes.at(0); // the inner 2D array
+
+              for (simdjson::dom::element row : rows)
+                {
+                  std::vector<double> values;
+                  for (simdjson::dom::element val : row.get_array())
+                    {
+                      values.push_back(double(val));
+                    }
+                  eigVecCutoff.push_back(std::move(values));
+                }
+
+              typeRes = doc["eigVecsSmoothness"];
+              rows    = typeRes.at(0); // the inner 2D array
+
+              for (simdjson::dom::element row : rows)
+                {
+                  std::vector<double> values;
+                  for (simdjson::dom::element val : row.get_array())
+                    {
+                      values.push_back(double(val));
+                    }
+                  eigVecSmoothness.push_back(std::move(values));
+                }
+
+              // use from file
+              for (int i = 0; i < qNumVec.size(); i++)
+                {
+                  cutOffInfoVec[i].first =
+                    eigVecCutoff[qNumVec[i][1]][qNumVec[i][0]];
+                  cutOffInfoVec[i].second =
+                    eigVecSmoothness[qNumVec[i][1]][qNumVec[i][0]];
+                }
+            }
+          else
+            {
+              for (int i = 0; i < qNumVec.size(); i++)
+                {
+                  std::vector<double> h(radialPoints.size());
+                  std::transform(radialPoints.begin(),
+                                 radialPoints.end(),
+                                 radialValuesVec[i].begin(),
+                                 h.begin(),
+                                 [](double ri, double fi) {
+                                   return ri * ri * fi;
+                                 });
+                  int lastTurningPtId =
+                    std::min(findLastExtremumIndex(radialValuesVec[i]),
+                             findLastExtremumIndex(h));
+                  int                 cutoffId = 1e6;
+                  std::vector<double> der(0), intgl(0);
+                  derivativef(radialPoints, radialValuesVec[i], der);
+                  integralxSqfSq(radialPoints, radialValuesVec[i], intgl);
+                  for (int j = radialPoints.size() - 2; j > lastTurningPtId;
+                       j--)
+                    {
+                      if (std::abs(der[j]) > std::min(intgl[j] * 1e-2, 1e-2))
+                        {
+                          cutoffId = j;
+                          break;
+                        }
+                    }
+                  if (d_PSPorAE == "PSP")
+                    {
+                      cutOffInfoVec[i].first =
+                        radialPoints[cutoffId] * (18. / 118);
+                      cutOffInfoVec[i].second = 0.18;
+                    }
+                  else if (d_PSPorAE == "AE")
+                    {
+                      cutOffInfoVec[i].first =
+                        radialPoints[cutoffId] * (1. / 2);
+                      cutOffInfoVec[i].second = 1.01;
+                    }
+                  else
+                    {
+                      utils::throwException(
+                        false,
+                        "Heuristic cutoffs only defined for PSP/AE type calculation.");
+                    }
+                }
             }
         }
     }

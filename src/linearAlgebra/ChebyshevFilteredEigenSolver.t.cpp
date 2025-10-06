@@ -66,7 +66,7 @@ namespace dftefe
       , d_filteredSubspaceOrtho(nullptr)
       , d_batchSizeSmall(0)
       , d_mpiPatternP2P(mpiPatternP2P)
-      , d_printL2Norms(true)
+      , d_printL2Norms(false)
       , d_orthoType(orthoType)
       , d_elpaScala(&elpaScala)
       , d_isGHEP(isGHEP)

@@ -105,11 +105,21 @@ namespace dftefe
         const std::string &               fileName,
         std::vector<std::pair<int, int>> &nlPairs);
 
+      void
+      getCutoffs(std::vector<std::pair<double, double>> &cutOffInfoVec,
+                 std::vector<std::vector<double>> &      radialValuesVec,
+                 std::vector<std::vector<int>> &         qNumVec,
+                 const std::vector<double> &             radialPoints,
+                 const std::string &                     fieldName,
+                 const std::string &                     fileName,
+                 std::vector<std::pair<int, int>> &      nlPairs);
+
       std::vector<std::vector<double>> d_occupancies;
       std::vector<std::vector<double>> d_eigenValues;
 
-      double d_atomCharge;
-      double d_smearedCharge;
+      double      d_atomCharge;
+      double      d_smearedCharge;
+      std::string d_PSPorAE;
 
       std::string              d_fileName;
       std::vector<std::string> d_fieldNames;

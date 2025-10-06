@@ -1449,6 +1449,19 @@ namespace dftefe
           fieldNamesPSP,
           metadataNames);
 
+      for (int i = 0; i < atomSymbolVec.size(); i++)
+        {
+          if (std::abs(std::stod(d_atomSphericalDataContainerPSP->getMetadata(
+                atomSymbolVec[i], "z_valence"))) -
+                std::abs(atomCharges[i]) >
+              1e-12)
+            {
+              utils::throwException(
+                false,
+                "The input basis file Z does not match with that given in input.");
+            }
+        }
+
       d_isONCVNonLocPSP = false, d_isNlcc = false;
       for (int atomSymbolId = 0; atomSymbolId < atomSymbolVec.size();
            atomSymbolId++)
@@ -1919,6 +1932,19 @@ namespace dftefe
           atomSymbolToPSPFilename,
           fieldNamesPSP,
           metadataNames);
+
+      for (int i = 0; i < atomSymbolVec.size(); i++)
+        {
+          if (std::abs(std::stod(d_atomSphericalDataContainerPSP->getMetadata(
+                atomSymbolVec[i], "z_valence"))) -
+                std::abs(atomCharges[i]) >
+              1e-12)
+            {
+              utils::throwException(
+                false,
+                "The input basis file Z does not match with that given in input.");
+            }
+        }
 
       d_isONCVNonLocPSP = false, d_isNlcc = false;
       for (int atomSymbolId = 0; atomSymbolId < atomSymbolVec.size();
