@@ -43,39 +43,62 @@ using namespace dftefe;
 const utils::MemorySpace Host = utils::MemorySpace::HOST;
 
 template<typename T>
-T readParameter(std::string ParamFile, std::string param, utils::ConditionalOStream &rootCout)
+T readParameter(const std::string &ParamFile,
+                const std::string &param,
+                utils::ConditionalOStream &rootCout,
+                bool throwIfEmpty   = true,
+                bool throwIfMissing = true,
+                T defaultValue      = T{})
 {
-  T t(0);
+  T t = defaultValue;
   std::string line;
-  std::fstream fstream;
-  fstream.open(ParamFile, std::fstream::in);
-  int count = 0;
+  std::fstream fstream(ParamFile, std::fstream::in);
+  bool found = false;
+
   while (std::getline(fstream, line))
   {
-    for (int i = 0; i < line.length(); i++)
+    auto pos = line.find('=');
+    if (pos == std::string::npos) continue;
+
+    std::string key = line.substr(0, pos);
+    // trim spaces
+    key.erase(std::remove_if(key.begin(), key.end(), ::isspace), key.end());
+
+    if (key == param)
     {
-        if (line[i] == ' ')
-        {
-            line.erase(line.begin() + i);
-            i--;
+      found = true;
+      std::string value = line.substr(pos + 1);
+      // trim leading spaces
+      value.erase(value.begin(),
+                  std::find_if(value.begin(), value.end(),
+                               [](unsigned char ch){ return !std::isspace(ch); }));
+
+      if (value.empty()) {
+        if (throwIfEmpty) {
+          utils::throwException(false, "Parameter found but empty: " + param);
         }
-    }
-    std::istringstream iss(line);
-    std::string type;
-    std::getline(iss, type, '=');
-    if (type.compare(param) == 0)
-    {
-      iss >> t;
-      count = 1;
+        t = defaultValue;
+      } else {
+        if constexpr (std::is_same<T, std::string>::value) {
+          t = value;
+        } else {
+          std::istringstream iss(value);
+          iss >> t;
+        }
+      }
       break;
     }
   }
-  if(count == 0)
-  {
-    utils::throwException(false, "The parameter is not found: "+ param);
+
+  if (!found) {
+    if (throwIfMissing) {
+      utils::throwException(false, "The parameter is not found: " + param);
+    }
+    t = defaultValue;
   }
+
   fstream.close();
-  rootCout << "Reading parameter -- " << param << " = "<<t<<std::endl;
+  rootCout << "Reading parameter -- " << param << " = " << t << std::endl;
   return t;
 }
 
@@ -317,12 +340,9 @@ int main(int argc, char** argv)
     utils::throwException(false,
                           "dftefe_path does not exist!");
   }
-  std::string atomDataFile = argv[1];
-  std::string inputFileName = sourceDir + atomDataFile;
-  std::string paramDataFile = argv[2];
+  std::string paramDataFile = argv[1];
   std::string parameterInputFileName = sourceDir + paramDataFile;
 
-  rootCout << "Reading input file: "<<inputFileName<<std::endl;
   rootCout << "Reading parameter file: "<<parameterInputFileName<<std::endl;  
 
   // Read parameters
@@ -353,6 +373,7 @@ int main(int argc, char** argv)
   double atomPartitionTolerance = readParameter<double>(parameterInputFileName, "atomPartitionTolerance", rootCout);
   unsigned int num1DGaussSubdividedSizeElec = readParameter<unsigned int>(parameterInputFileName, "num1DGaussSubdividedSizeElec", rootCout);
   unsigned int gaussSubdividedCopiesElec = readParameter<unsigned int>(parameterInputFileName, "gaussSubdividedCopiesElec", rootCout);
+  
   unsigned int num1DGaussSubdividedSizeEigen = readParameter<unsigned int>(parameterInputFileName, "num1DGaussSubdividedSizeEigen", rootCout);
   unsigned int gaussSubdividedCopiesEigen = readParameter<unsigned int>(parameterInputFileName, "gaussSubdividedCopiesEigen", rootCout);
   bool isNumericalNuclearSolve = readParameter<bool>(parameterInputFileName, "isNumericalNuclearSolve", rootCout);
@@ -360,6 +381,14 @@ int main(int argc, char** argv)
 
   unsigned int num1DGaussSubdividedSizeGrad = readParameter<unsigned int>(parameterInputFileName, "num1DGaussSubdividedSizeGrad", rootCout);
   unsigned int gaussSubdividedCopiesGrad = readParameter<unsigned int>(parameterInputFileName, "gaussSubdividedCopiesGrad", rootCout);
+  std::string coordinatesDataFile = readParameter<std::string>(parameterInputFileName, "coordinatesDataFile", rootCout , false , false);
+  std::string basisDataFile = readParameter<std::string>(parameterInputFileName, "basisDataFile", rootCout , false , false);
+  std::string PSPDataFile = readParameter<std::string>(parameterInputFileName, "PSPDataFile", rootCout , false , false);
+
+  std::string tciaFolder = readParameter<std::string>(parameterInputFileName, "tciaFolder", rootCout , false , false);
+  std::string tciaOutFilePrefix = readParameter<std::string>(parameterInputFileName, "tciaOutFilePrefix", rootCout , false , false);
+
+  const atoms::TCIADataParams  tciaparams{tciaFolder , tciaOutFilePrefix};
 
   unsigned int num1DGaussSubdividedSizeNonLocOperator = 14;
   unsigned int gaussSubdividedCopiesNonLocOperator = 1;
@@ -375,47 +404,82 @@ int main(int argc, char** argv)
   domainVectors[2][2] = zmax;
 
   std::fstream fstream;
-  fstream.open(inputFileName, std::fstream::in);
   
   // read the input file and create atomsymbol vector and atom coordinates vector.
   std::vector<utils::Point> atomCoordinatesVec(0,utils::Point(dim, 0.0));
     std::vector<double> coordinates;
-    std::vector<std::string> pspFilePathVec(0);
   coordinates.resize(dim,0.);
   std::vector<std::string> atomSymbolVec(0);
   std::vector<double> atomChargesVec(0);
-  std::string symbol;
-  std::string pspFilePath;
+  std::string symbol , basisFilePath, pspFilePath;
+  std::map<std::string, double> atomSymbolToChargeMap;
   double valanceNumber;
   atomSymbolVec.resize(0);
   std::string line;
+
+  std::map<std::string, std::string> atomSymbolToBasisFileName;
+  std::vector<std::string> matchString(0);
+  fstream.open(basisDataFile, std::fstream::in);
   while (std::getline(fstream, line)){
       std::stringstream ss(line);
       ss >> symbol; 
-      ss >> valanceNumber; 
-      ss >> pspFilePath;
-      for(unsigned int i=0 ; i<dim ; i++){
-          ss >> coordinates[i]; 
-      }
-      pspFilePathVec.push_back(pspFilePath);
-      atomCoordinatesVec.push_back(coordinates);
-      atomSymbolVec.push_back(symbol);
-      atomChargesVec.push_back((-1.0)*valanceNumber);
+      ss >> basisFilePath; 
+      atomSymbolToBasisFileName[symbol] = basisFilePath;
+      if(std::find(matchString.begin(), matchString.end(), symbol) == matchString.end())
+        matchString.push_back(symbol);
+      else
+        utils::throwException(false, "The atom Symbols were repeated for PSP filenames. ");       
   }
   utils::mpi::MPIBarrier(comm);
   fstream.close();
 
-  std::map<std::string, std::string> atomSymbolToPSPFilename;
-  for (int i = 0 ; i < atomSymbolVec.size() ; i++)
-  {
-      atomSymbolToPSPFilename[atomSymbolVec[i]] = sourceDir + pspFilePathVec[i];
+  std::map<std::string, std::string> atomSymbolToPSPFileName;
+  matchString.clear();
+  fstream.open(PSPDataFile, std::fstream::in);
+  while (std::getline(fstream, line)){
+      std::stringstream ss(line);
+      ss >> symbol;
+      ss >> pspFilePath;
+      atomSymbolToPSPFileName[symbol] = pspFilePath;
+      if(std::find(matchString.begin(), matchString.end(), symbol) == matchString.end())
+        matchString.push_back(symbol);
+      else
+        utils::throwException(false, "The atom Symbols were repeated for PSP filenames. ");               
   }
+  utils::mpi::MPIBarrier(comm);
+  fstream.close();
+
+  fstream.open(coordinatesDataFile, std::fstream::in);
+  while (std::getline(fstream, line)){
+      std::stringstream ss(line);
+      ss >> symbol; 
+      ss >> valanceNumber; 
+      for(unsigned int i=0 ; i<dim ; i++){
+          ss >> coordinates[i]; 
+      }
+      atomCoordinatesVec.push_back(coordinates);
+      atomSymbolVec.push_back(symbol);
+      if(atomSymbolToPSPFileName.find(symbol) == atomSymbolToPSPFileName.end())
+      {
+        utils::throwException(false, "PSP filename does not have the same atom symbol as Coordinate filename.");  
+      }
+      if(atomSymbolToBasisFileName.find(symbol) == atomSymbolToBasisFileName.end())
+      {
+        utils::throwException(false, "Basis filename does not have the same atom symbol as Coordinate filename."); 
+      }
+      atomChargesVec.push_back((-1.0)*valanceNumber);
+      if(atomSymbolToChargeMap.find(symbol) == atomSymbolToChargeMap.end())
+        atomSymbolToChargeMap[symbol] = valanceNumber;
+  }
+  utils::mpi::MPIBarrier(comm);
+  fstream.close();
 
   size_type numElectrons = 0;
   for(auto &i : atomChargesVec)
   {
     numElectrons += (size_type)(std::abs(i));
   }
+  
   // Generate mesh
    std::shared_ptr<basis::CellMappingBase> cellMapping = std::make_shared<basis::LinearCellMappingDealii<dim>>();
 
@@ -432,8 +496,6 @@ int main(int argc, char** argv)
   adaptiveMesh.createMesh(*triangulationBase); 
 
   std::shared_ptr<basis::ParentToChildCellsManagerBase> parentToChildCellsManager = std::make_shared<basis::ParentToChildCellsManagerDealii<dim>>();
-
-  std::vector<double> smearedChargeRadiusVec(atomCoordinatesVec.size(),rc);
 
   // initialize the basis DofHandler
 
@@ -711,7 +773,7 @@ std::shared_ptr<linearAlgebra::OperatorContext<double,
                                           atomCoordinatesVec,
                                           atomChargesVec,
                                           atomSymbolVec,
-                                          smearedChargeRadiusVec,
+                                          rc,
                                           numElectrons,
                                           numWantedEigenvalues,
                                           smearingTemperature,
@@ -734,7 +796,7 @@ std::shared_ptr<linearAlgebra::OperatorContext<double,
                                           feBDElectrostaticsHamiltonian, 
                                           feBDEXCHamiltonian,       
                                           feBDAtomCenterNonLocalOperator,                                                                         
-                                          atomSymbolToPSPFilename,
+                                          atomSymbolToPSPFileName,
                                           linAlgOpContext,
                                           *MContextForInv,
                                           /**MContextForInv,*/
@@ -743,20 +805,15 @@ std::shared_ptr<linearAlgebra::OperatorContext<double,
   }
   else if (!isNumericalNuclearSolve && isDeltaRhoPoissonSolve)
   {
-    std::map<std::string, std::string> atomSymbolToFilename;
-    for (auto i:atomSymbolVec )
-    {
-        atomSymbolToFilename[i] = sourceDir + i + ".xml";
-    }
-  
     std::vector<std::string> fieldNames{"density", "vtotal"};
-    std::vector<std::string> metadataNames{ "symbol", "Z", "charge", "NR", "r" };
+    std::vector<std::string> metadataNames{ "symbol", "Z", "charge", "NR"};
     std::shared_ptr<atoms::AtomSphericalDataContainer>  atomSphericalDataContainer = 
         std::make_shared<atoms::AtomSphericalDataContainer>(
                                                         atoms::AtomSphericalDataType::ENRICHMENT,
-                                                        atomSymbolToFilename,
+                                                        atomSymbolToBasisFileName,
                                                         fieldNames,
-                                                        metadataNames);    
+                                                        metadataNames,
+                                                        std::map<std::string, std::string>({{"rcsmear", std::to_string(rc)}, {"PSP/AE", "PSP"}}));    
 
   std::shared_ptr<utils::ScalarSpatialFunctionReal> smfuncAtTotPot = 
     std::make_shared<AtomicTotalElectrostaticPotentialFunction>(atomSphericalDataContainer,
@@ -779,7 +836,7 @@ std::shared_ptr<linearAlgebra::OperatorContext<double,
                                           atomCoordinatesVec,
                                           atomChargesVec,
                                           atomSymbolVec,
-                                          smearedChargeRadiusVec,
+                                          rc,
                                           numElectrons,
                                           numWantedEigenvalues,
                                           smearingTemperature,
@@ -804,12 +861,14 @@ std::shared_ptr<linearAlgebra::OperatorContext<double,
                                           feBDElectrostaticsHamiltonian, 
                                           feBDEXCHamiltonian,      
                                           feBDAtomCenterNonLocalOperator,                                                                          
-                                          atomSymbolToPSPFilename,
+                                          atomSymbolToPSPFileName,
                                           linAlgOpContext,
                                           *MContextForInv,
                                           /**MContextForInv,*/
                                           *MContext,
-                                          *MInvContext);
+                                          *MInvContext,
+                                          true,
+                                          tciaparams);
   }
   else
   {

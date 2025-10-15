@@ -6,6 +6,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(MAIN_PROJECT_DIR $ENV{DFTEFE_PATH})
 message(${MAIN_PROJECT_DIR})
 
+list(APPEND CMAKE_MODULE_PATH ${MAIN_PROJECT_DIR}/cmake)
+
 include_directories(${MAIN_PROJECT_DIR}/src)
 add_subdirectory(${MAIN_PROJECT_DIR}/src/utils ${MAIN_PROJECT_DIR}/test/basis/lib/buildUtils)
 add_subdirectory(${MAIN_PROJECT_DIR}/src/basis ${MAIN_PROJECT_DIR}/test/basis/lib/buildBasis)

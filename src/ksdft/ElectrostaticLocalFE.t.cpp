@@ -207,15 +207,11 @@ namespace dftefe
       const basis::BasisDofHandler &basisDofHandler =
         feBMTotalCharge->getBasisDofHandler();
 
-      const basis::EFEBasisDofHandler<ValueTypeBasisCoeff,
-                                      ValueTypeBasisData,
-                                      memorySpace,
-                                      dim> &feDofHandler =
-        dynamic_cast<const basis::EFEBasisDofHandler<ValueTypeBasisCoeff,
-                                                     ValueTypeBasisData,
-                                                     memorySpace,
-                                                     dim> &>(basisDofHandler);
-      if (&feDofHandler != nullptr)
+      if (dynamic_cast<const basis::EFEBasisDofHandler<ValueTypeBasisCoeff,
+                                                       ValueTypeBasisData,
+                                                       memorySpace,
+                                                       dim> *>(
+            &basisDofHandler) != nullptr)
         {
           d_useDealiiMatrixFreePoissonSolve = false;
         }
@@ -304,15 +300,11 @@ namespace dftefe
       const basis::BasisDofHandler &basisDofHandler =
         feBMTotalCharge->getBasisDofHandler();
 
-      const basis::EFEBasisDofHandler<ValueTypeBasisCoeff,
-                                      ValueTypeBasisData,
-                                      memorySpace,
-                                      dim> &feDofHandler =
-        dynamic_cast<const basis::EFEBasisDofHandler<ValueTypeBasisCoeff,
-                                                     ValueTypeBasisData,
-                                                     memorySpace,
-                                                     dim> &>(basisDofHandler);
-      if (&feDofHandler != nullptr)
+      if (dynamic_cast<const basis::EFEBasisDofHandler<ValueTypeBasisCoeff,
+                                                       ValueTypeBasisData,
+                                                       memorySpace,
+                                                       dim> *>(
+            &basisDofHandler) != nullptr)
         {
           d_useDealiiMatrixFreePoissonSolve = false;
         }

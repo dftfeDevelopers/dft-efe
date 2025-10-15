@@ -42,18 +42,33 @@ namespace dftefe
       {
         if (f.size() < 3)
           utils::throwException(false, "Vector f must have at least length 3.");
+
+        const double eps =
+          10 * std::numeric_limits<double>::epsilon(); // robust tolerance
         int lastIndex = -1;
-        for (size_type i = 1; i + 1 < f.size(); ++i)
+
+        for (size_t i = 1; i + 1 < f.size(); ++i)
           {
             double slope1 = f[i] - f[i - 1];
             double slope2 = f[i + 1] - f[i];
-            if (slope1 * slope2 < 0)
-              {
-                lastIndex = static_cast<int>(i);
-              }
+
+            // Normalize tolerance relative to local magnitudes
+            double scale = std::max(
+              {std::fabs(f[i - 1]), std::fabs(f[i]), std::fabs(f[i + 1]), 1.0});
+            double tol = eps * scale;
+
+            // Skip near-zero slopes — treat them as flat
+            if (std::fabs(slope1) < tol || std::fabs(slope2) < tol)
+              continue;
+
+            // Detect robust sign change (avoid false flips near zero)
+            if (slope1 * slope2 < -tol * tol)
+              lastIndex = static_cast<int>(i);
           }
+
         if (lastIndex == -1)
-          lastIndex = f.size() - 1;
+          lastIndex = static_cast<int>(f.size() - 1);
+
         return lastIndex;
       }
 
@@ -318,7 +333,8 @@ namespace dftefe
                 {
                   for (int n = 0; n < d_occupancies[l].size(); n++)
                     {
-                      if (d_occupancies[l][n] > 1e-3)
+                      if (d_occupancies[l][n] >
+                          1e-3) // Change here to control number of eid
                         {
                           nlPairs.push_back({n, l});
                           if (d_homoEigenVal < d_eigenValues[l][n])
@@ -578,27 +594,39 @@ namespace dftefe
               for (int i = 0; i < qNumVec.size(); i++)
                 {
                   std::vector<double> h(radialPoints.size());
-                  std::transform(radialPoints.begin(),
-                                 radialPoints.end(),
-                                 radialValuesVec[i].begin(),
-                                 h.begin(),
-                                 [](double ri, double fi) {
-                                   return ri * ri * fi;
-                                 });
+                  for (int j = 0; j < h.size(); j++)
+                    {
+                      h[j] = radialPoints[j] * radialPoints[j] *
+                             radialValuesVec[i][j] * radialValuesVec[i][j];
+                    }
                   int lastTurningPtId =
                     std::min(findLastExtremumIndex(radialValuesVec[i]),
                              findLastExtremumIndex(h));
-                  int                 cutoffId = 1e6;
                   std::vector<double> der(0), intgl(0);
                   derivativef(radialPoints, radialValuesVec[i], der);
                   integralxSqfSq(radialPoints, radialValuesVec[i], intgl);
+                  int cutoffId = 1e6;
                   for (int j = radialPoints.size() - 2; j > lastTurningPtId;
                        j--)
                     {
-                      if (std::abs(der[j]) > std::min(intgl[j] * 1e-2, 1e-2))
+                      if (std::abs(der[j]) > intgl[j] * 1.e-2)
                         {
                           cutoffId = j;
                           break;
+                        }
+                    }
+                  if (std::abs(der[findLastExtremumIndex(der)]) > 5e-1 &&
+                      radialPoints[cutoffId] < 8)
+                    {
+                      for (int j = radialPoints.size() - 2; j > lastTurningPtId;
+                           j--)
+                        {
+                          if (std::abs(der[j]) >
+                              std::min(intgl[j] * 1.e-3, 1.e-3))
+                            {
+                              cutoffId = j;
+                              break;
+                            }
                         }
                     }
                   if (d_PSPorAE == "PSP")

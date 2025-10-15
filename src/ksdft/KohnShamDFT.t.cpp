@@ -400,7 +400,9 @@ namespace dftefe
         feBDKineticHamiltonian,
         linAlgOpContext,
         KSDFTDefaults::CELL_BATCH_SIZE_GRAD_EVAL,
-        KSDFTDefaults::MAX_KINENG_WAVEFN_BATCH_SIZE);
+        numWantedEigenvalues > KSDFTDefaults::MAX_KINENG_WAVEFN_BATCH_SIZE ?
+          KSDFTDefaults::MAX_KINENG_WAVEFN_BATCH_SIZE :
+          numWantedEigenvalues);
 
       d_hamitonianElec =
         std::make_shared<ElectrostaticLocalFE<ValueTypeElectrostaticsBasis,
@@ -731,7 +733,9 @@ namespace dftefe
         feBDKineticHamiltonian,
         linAlgOpContext,
         KSDFTDefaults::CELL_BATCH_SIZE_GRAD_EVAL,
-        KSDFTDefaults::MAX_KINENG_WAVEFN_BATCH_SIZE);
+        numWantedEigenvalues > KSDFTDefaults::MAX_KINENG_WAVEFN_BATCH_SIZE ?
+          KSDFTDefaults::MAX_KINENG_WAVEFN_BATCH_SIZE :
+          numWantedEigenvalues);
 
       d_hamitonianElec =
         std::make_shared<ElectrostaticLocalFE<ValueTypeElectrostaticsBasis,
@@ -1106,7 +1110,9 @@ namespace dftefe
         feBDKineticHamiltonian,
         linAlgOpContext,
         KSDFTDefaults::CELL_BATCH_SIZE_GRAD_EVAL,
-        KSDFTDefaults::MAX_KINENG_WAVEFN_BATCH_SIZE);
+        numWantedEigenvalues > KSDFTDefaults::MAX_KINENG_WAVEFN_BATCH_SIZE ?
+          KSDFTDefaults::MAX_KINENG_WAVEFN_BATCH_SIZE :
+          numWantedEigenvalues);
 
       std::unordered_map<std::string, std::shared_ptr<atoms::AtomTCIASpline>>
         fieldToTCIASplineMap = {};
@@ -1594,7 +1600,9 @@ namespace dftefe
         feBDKineticHamiltonian,
         linAlgOpContext,
         KSDFTDefaults::CELL_BATCH_SIZE_GRAD_EVAL,
-        KSDFTDefaults::MAX_KINENG_WAVEFN_BATCH_SIZE);
+        numWantedEigenvalues > KSDFTDefaults::MAX_KINENG_WAVEFN_BATCH_SIZE ?
+          KSDFTDefaults::MAX_KINENG_WAVEFN_BATCH_SIZE :
+          numWantedEigenvalues);
 
       size_type waveFnBatch =
         numWantedEigenvalues > KSDFTDefaults::MAX_WAVEFN_BATCH_SIZE ?
@@ -2073,7 +2081,9 @@ namespace dftefe
         feBDKineticHamiltonian,
         linAlgOpContext,
         KSDFTDefaults::CELL_BATCH_SIZE_GRAD_EVAL,
-        KSDFTDefaults::MAX_KINENG_WAVEFN_BATCH_SIZE);
+        numWantedEigenvalues > KSDFTDefaults::MAX_KINENG_WAVEFN_BATCH_SIZE ?
+          KSDFTDefaults::MAX_KINENG_WAVEFN_BATCH_SIZE :
+          numWantedEigenvalues);
 
       size_type waveFnBatch =
         numWantedEigenvalues > KSDFTDefaults::MAX_WAVEFN_BATCH_SIZE ?
