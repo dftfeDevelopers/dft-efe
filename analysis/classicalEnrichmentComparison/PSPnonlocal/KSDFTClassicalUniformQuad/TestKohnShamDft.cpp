@@ -370,12 +370,12 @@ int main(int argc, char** argv)
   bool evaluateEnergyEverySCF = readParameter<bool>(parameterInputFileName, "evaluateEnergyEverySCF", rootCout);
   const size_type dim = 3;
 
-  double atomPartitionTolerance = readParameter<double>(parameterInputFileName, "atomPartitionTolerance", rootCout);
   unsigned int num1DGaussSubdividedSizeElec = readParameter<unsigned int>(parameterInputFileName, "num1DGaussSubdividedSizeElec", rootCout);
   unsigned int gaussSubdividedCopiesElec = readParameter<unsigned int>(parameterInputFileName, "gaussSubdividedCopiesElec", rootCout);
   
   unsigned int num1DGaussSubdividedSizeEigen = readParameter<unsigned int>(parameterInputFileName, "num1DGaussSubdividedSizeEigen", rootCout);
   unsigned int gaussSubdividedCopiesEigen = readParameter<unsigned int>(parameterInputFileName, "gaussSubdividedCopiesEigen", rootCout);
+  
   bool isNumericalNuclearSolve = readParameter<bool>(parameterInputFileName, "isNumericalNuclearSolve", rootCout);
   bool isDeltaRhoPoissonSolve = readParameter<bool>(parameterInputFileName, "isDeltaRhoPoissonSolve", rootCout);
 

@@ -78,6 +78,7 @@ namespace dftefe
       , d_eigSolveResNorm(d_numWantedEigenvalues)
       , d_numElectrons(numElectrons)
       , d_rootCout(std::cout)
+      , d_batchSizeSmall(0)
       , d_p(lanczosGuess.getMPIPatternP2P()->mpiCommunicator(),
             "Kohn Sham EigenSolver")
       , d_chebyPolyScalingFactor(1.0)
@@ -589,7 +590,7 @@ namespace dftefe
     {
       std::shared_ptr<linearAlgebra::MultiVector<ValueType, memorySpace>>
         HXBatch = nullptr,
-        MXBatch = nullptr, XBatch = nullptr, residualBatch = nullptr;
+        MXBatch = nullptr, XBatch = nullptr;
 
       size_type numEigenVectors = kohnShamWaveFunctions.getNumberComponents();
       std::vector<double> residualVec(numEigenVectors, 0);

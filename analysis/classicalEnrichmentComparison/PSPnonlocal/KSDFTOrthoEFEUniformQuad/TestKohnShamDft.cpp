@@ -444,6 +444,9 @@ int main(int argc, char** argv)
   std::map<std::string, std::string> atomSymbolToBasisFileName;
   std::vector<std::string> matchString(0);
   fstream.open(basisDataFile, std::fstream::in);
+  if (!fstream.is_open()) {
+      utils::throwException(false, "Error: Could not open a parameter input file '");
+  }
   while (std::getline(fstream, line)){
       std::stringstream ss(line);
       ss >> symbol; 
@@ -460,6 +463,9 @@ int main(int argc, char** argv)
   std::map<std::string, std::string> atomSymbolToPSPFileName;
   matchString.clear();
   fstream.open(PSPDataFile, std::fstream::in);
+  if (!fstream.is_open()) {
+      utils::throwException(false, "Error: Could not open a parameter input file '");
+  }
   while (std::getline(fstream, line)){
       std::stringstream ss(line);
       ss >> symbol;
@@ -474,6 +480,9 @@ int main(int argc, char** argv)
   fstream.close();
 
   fstream.open(coordinatesDataFile, std::fstream::in);
+  if (!fstream.is_open()) {
+      utils::throwException(false, "Error: Could not open a parameter input file '");
+  }
   while (std::getline(fstream, line)){
       std::stringstream ss(line);
       ss >> symbol; 

@@ -30,6 +30,7 @@
 #include <ksdft/KohnShamOperatorContextFE.h>
 #include <ksdft/KohnShamEigenSolver.h>
 #include <basis/OrthoEFEOverlapInverseOpContextGLL.h>
+#include <basis/EFEBasisDataStorageDealii.h>
 #include <utils/PointChargePotentialFunction.h>
 #include <ksdft/DensityCalculator.h>
 #include <ksdft/KohnShamDFT.h>
@@ -346,12 +347,9 @@ int main(int argc, char** argv)
     utils::throwException(false,
                           "dftefe_path does not exist!");
   }
-  std::string atomDataFile = argv[1];
-  std::string inputFileName = sourceDir + atomDataFile;
-  std::string paramDataFile = argv[2];
+  std::string paramDataFile = argv[1];
   std::string parameterInputFileName = sourceDir + paramDataFile;
 
-  rootCout << "Reading input file: "<<inputFileName<<std::endl;
   rootCout << "Reading parameter file: "<<parameterInputFileName<<std::endl;
 
   // Read parameters
@@ -392,13 +390,17 @@ int main(int argc, char** argv)
   bool isNumericalNuclearSolve = readParameter<bool>(parameterInputFileName, "isNumericalNuclearSolve", rootCout);
   bool isDeltaRhoPoissonSolve = readParameter<bool>(parameterInputFileName, "isDeltaRhoPoissonSolve", rootCout);
 
+  std::string coordinatesDataFile = readParameter<std::string>(parameterInputFileName, "coordinatesDataFile", rootCout , false , false);
+  std::string basisDataFile = readParameter<std::string>(parameterInputFileName, "basisDataFile", rootCout , false , false);
+  std::string PSPDataFile = readParameter<std::string>(parameterInputFileName, "PSPDataFile", rootCout , false , false);
+
   std::string tciaFolder = readParameter<std::string>(parameterInputFileName, "tciaFolder", rootCout , false , false);
   std::string tciaOutFilePrefix = readParameter<std::string>(parameterInputFileName, "tciaOutFilePrefix", rootCout , false , false);
 
   const atoms::TCIADataParams  tciaparams{tciaFolder , tciaOutFilePrefix};
 
-  unsigned int num1DGaussSubdividedSizeNonLocOperator = 14;
-  unsigned int gaussSubdividedCopiesNonLocOperator = 1;
+  unsigned int num1DGaussSubdividedSizeNonLocOperator = 15;
+  unsigned int gaussSubdividedCopiesNonLocOperator = 2;
 
   double gridSizeFD = readParameter<double>(parameterInputFileName, "gridSizeFD", rootCout);
   unsigned int dimIdPerturbed = readParameter<unsigned int>(parameterInputFileName, "dimIdPerturbed", rootCout);
@@ -423,43 +425,83 @@ int main(int argc, char** argv)
   p.registerEnd("Reading Parameter file data");
   p.registerStart("Reading XML data");
   std::fstream fstream;
-  fstream.open(inputFileName, std::fstream::in);
-  
   // read the input file and create atomsymbol vector and atom coordinates vector.
   std::vector<utils::Point> atomCoordinatesVec(0,utils::Point(dim, 0.0));
     std::vector<double> coordinates;
-        std::vector<std::string> pspFilePathVec(0) , xmlFileNameVec(0);
   coordinates.resize(dim,0.);
   std::vector<std::string> atomSymbolVec(0);
   std::vector<double> atomChargesVec(0);
-  std::string symbol , xmlFileName;
+  std::string symbol , basisFilePath, pspFilePath;
+  std::map<std::string, double> atomSymbolToChargeMap;
   double valanceNumber;
   atomSymbolVec.resize(0);
   std::string line;
-  std::string pspFilePath;
+
+  std::map<std::string, std::string> atomSymbolToBasisFileName;
+  std::vector<std::string> matchString(0);
+  fstream.open(basisDataFile, std::fstream::in);
+  if (!fstream.is_open()) {
+      utils::throwException(false, "Error: Could not open a parameter input file '");
+  }
   while (std::getline(fstream, line)){
       std::stringstream ss(line);
       ss >> symbol; 
-      ss >> xmlFileName; 
-      ss >> valanceNumber; 
-      ss >> pspFilePath;
-      for(unsigned int i=0 ; i<dim ; i++){
-          ss >> coordinates[i]; 
-      }
-      pspFilePathVec.push_back(pspFilePath);
-      atomCoordinatesVec.push_back(coordinates);
-      atomSymbolVec.push_back(symbol);
-      atomChargesVec.push_back((-1.0)*valanceNumber);
-      xmlFileNameVec.push_back(xmlFileName);
+      ss >> basisFilePath; 
+      atomSymbolToBasisFileName[symbol] = basisFilePath;
+      if(std::find(matchString.begin(), matchString.end(), symbol) == matchString.end())
+        matchString.push_back(symbol);
+      else
+        utils::throwException(false, "The atom Symbols were repeated for PSP filenames. ");       
   }
   utils::mpi::MPIBarrier(comm);
   fstream.close();
 
-  std::map<std::string, std::string> atomSymbolToPSPFilename;
-  for (int i = 0 ; i < atomSymbolVec.size() ; i++)
-  {
-      atomSymbolToPSPFilename[atomSymbolVec[i]] = sourceDir + pspFilePathVec[i];
+  std::map<std::string, std::string> atomSymbolToPSPFileName;
+  matchString.clear();
+  fstream.open(PSPDataFile, std::fstream::in);
+  if (!fstream.is_open()) {
+      utils::throwException(false, "Error: Could not open a parameter input file '");
   }
+  while (std::getline(fstream, line)){
+      std::stringstream ss(line);
+      ss >> symbol;
+      ss >> pspFilePath;
+      atomSymbolToPSPFileName[symbol] = pspFilePath;
+      if(std::find(matchString.begin(), matchString.end(), symbol) == matchString.end())
+        matchString.push_back(symbol);
+      else
+        utils::throwException(false, "The atom Symbols were repeated for PSP filenames. ");               
+  }
+  utils::mpi::MPIBarrier(comm);
+  fstream.close();
+
+  fstream.open(coordinatesDataFile, std::fstream::in);
+  if (!fstream.is_open()) {
+      utils::throwException(false, "Error: Could not open a parameter input file '");
+  }
+  while (std::getline(fstream, line)){
+      std::stringstream ss(line);
+      ss >> symbol; 
+      ss >> valanceNumber; 
+      for(unsigned int i=0 ; i<dim ; i++){
+          ss >> coordinates[i]; 
+      }
+      atomCoordinatesVec.push_back(coordinates);
+      atomSymbolVec.push_back(symbol);
+      if(atomSymbolToPSPFileName.find(symbol) == atomSymbolToPSPFileName.end())
+      {
+        utils::throwException(false, "PSP filename does not have the same atom symbol as Coordinate filename.");  
+      }
+      if(atomSymbolToBasisFileName.find(symbol) == atomSymbolToBasisFileName.end())
+      {
+        utils::throwException(false, "Basis filename does not have the same atom symbol as Coordinate filename."); 
+      }
+      atomChargesVec.push_back((-1.0)*valanceNumber);
+      if(atomSymbolToChargeMap.find(symbol) == atomSymbolToChargeMap.end())
+        atomSymbolToChargeMap[symbol] = valanceNumber;
+  }
+  utils::mpi::MPIBarrier(comm);
+  fstream.close();
 
   std::vector<std::vector<dftefe::utils::Point>> 
     atomCoordinatesVecInGrid(0, std::vector<dftefe::utils::Point>(0,dftefe::utils::Point(dim, 0.0)));
@@ -494,35 +536,34 @@ int main(int argc, char** argv)
     numElectrons += (size_type)(std::abs(i));
   }
 
-  std::map<std::string, std::string> atomSymbolToFilename;
-  for (int i = 0 ; i < atomSymbolVec.size() ; i++)
-  {
-      atomSymbolToFilename[atomSymbolVec[i]] = sourceDir + xmlFileNameVec[i];
-  }
-
   std::vector<std::string> fieldNames{"orbital","vtotal","density"};
-  std::vector<std::string> metadataNames{ "symbol", "Z", "charge", "NR", "r" };
+  std::vector<std::string> metadataNames{ "symbol", "Z", "charge", "NR"};
   std::shared_ptr<atoms::AtomSphericalDataContainer>  atomSphericalDataContainer = 
       std::make_shared<atoms::AtomSphericalDataContainer>(
                                                       atoms::AtomSphericalDataType::ENRICHMENT,
-                                                      atomSymbolToFilename,
+                                                      atomSymbolToBasisFileName,
                                                       fieldNames,
-                                                      metadataNames);
-
-  for (auto i:atomSymbolVec )
+                                                      metadataNames,
+                                                      std::map<std::string, std::string>({{"rcsmear", std::to_string(rc)}, {"PSP/AE", "PSP"}}));
+                                                    
+  for (auto i:atomSymbolToBasisFileName )
   {
-    rootCout << "For atom symbol: "<<i<<std::endl;
-    rootCout << "Reading xml file: "<<atomSymbolToFilename[i]<<std::endl; 
-    rootCout << "Cutoff and smoothness for "<<i<<std::endl; 
+    rootCout << "For atom symbol: "<<i.first<<std::endl;
+    rootCout << "Reading basis file: "<<i.second<<std::endl;
+    rootCout << "Cutoff and smoothness for "<<i.first<<std::endl;
     for(auto j:fieldNames)
     {
       rootCout << " for "<<j<<" : "; 
       for(auto &enrichmentObjId : 
-        atomSphericalDataContainer->getSphericalData(i, j))
+        atomSphericalDataContainer->getSphericalData(i.first, j))
       {
         rootCout << enrichmentObjId->getCutoff() << ","<<enrichmentObjId->getSmoothness()<<"\t";
       }
       rootCout << std::endl;
+    }
+    if(std::abs(std::stod(atomSphericalDataContainer->getMetadata(i.first, "Z"))) - std::abs(atomSymbolToChargeMap[i.first]) > 1e-12)
+    {
+      utils::throwException(false, "The input basis file Z does not match with that given in input.");       
     }
   }
   p.registerEnd("Reading XML data");
@@ -613,6 +654,8 @@ int main(int argc, char** argv)
     triangulationBase, 
     *cellMapping); 
 
+  // Compute QuadratureRuleContainer for GradNi GradNj
+
     std::shared_ptr<quadrature::QuadratureRule> gaussSubdivQuadRuleGrad =
       std::make_shared<quadrature::QuadratureRuleGaussIterated>(dim, num1DGaussSubdividedSizeGrad, gaussSubdividedCopiesGrad);
 
@@ -622,6 +665,77 @@ int main(int argc, char** argv)
       gaussSubdivQuadRuleGrad, 
       triangulationBase, 
       *cellMapping); 
+
+  //   std::vector<std::shared_ptr<const utils::ScalarSpatialFunctionReal>> functionsVec(0);
+  //   unsigned int numfun = 0;
+  //   numfun = 2;
+  //   functionsVec.resize(numfun); 
+  //   std::vector<double> absoluteTolerances(numfun), relativeTolerances(numfun), integralThresholds(numfun);
+  //   for ( unsigned int i=0 ;i < 2 ; i++ )
+  //   {
+  //     functionsVec[i] = std::make_shared<atoms::AtomSevereFunction<dim>>(        
+  //         atomSphericalDataContainer,
+  //         atomSymbolVec,
+  //         atomCoordinatesVec,
+  //         "orbital",
+  //         i);      
+  //   }
+
+  //   for ( unsigned int i=0 ;i < numfun ; i++ )
+  //   {
+  //     absoluteTolerances[i] = 1e-8;
+  //     relativeTolerances[i] = 1e-8;
+  //     integralThresholds[i] = 1e-10;
+  //   }
+
+  //   // std::shared_ptr<quadrature::QuadratureRuleContainer> quadRuleContainerAdaptiveGrad =
+  //   //   std::make_shared<quadrature::QuadratureRuleContainer>
+  //   //   (quadAttrGaussSubdivided, 
+  //   //    feOrderElec+1,
+  //   //    (feOrderElec+1)*2,
+  //   //    3,
+  //   //   triangulationBase, 
+  //   //   *cellMapping,
+  //   //   functionsVec,
+  //   //   absoluteTolerances,
+  //   //   relativeTolerances,
+  //   //   *quadRuleContainerAdaptiveGradRef,
+  //   //   comm);
+  //   quadrature::QuadratureRuleAttributes quadAttrAdaptive(quadrature::QuadratureFamily::ADAPTIVE,false);
+  //   std::shared_ptr<basis::ParentToChildCellsManagerBase> parentToChildCellsManager = std::make_shared<basis::ParentToChildCellsManagerDealii<dim>>();
+
+  //   std::shared_ptr<quadrature::QuadratureRule> baseQuadRule =
+  //     std::make_shared<quadrature::QuadratureRuleGauss>(dim, num1DGaussSubdividedSizeGrad);
+
+  //   std::shared_ptr<quadrature::QuadratureRuleContainer> quadRuleContainerAdaptiveGrad =
+  //     std::make_shared<quadrature::QuadratureRuleContainer>
+  //     (quadAttrAdaptive, 
+  //     baseQuadRule, 
+  //     triangulationBase, 
+  //     *cellMapping, 
+  //     *parentToChildCellsManager,
+  //     functionsVec,
+  //     absoluteTolerances,
+  //     relativeTolerances,
+  //     integralThresholds,
+  //     1e-10,
+  //     200);
+      
+  //   int maxQuad = 0;
+  //   for (int i = 0 ; i < quadRuleContainerAdaptiveGrad->nCells() ; i++)
+  //   {
+  //     if(maxQuad < quadRuleContainerAdaptiveGrad->nCellQuadraturePoints(i))
+  //       maxQuad = quadRuleContainerAdaptiveGrad->nCellQuadraturePoints(i);
+  //   }
+  //   mpierr = utils::mpi::MPIAllreduce<Host>(
+  //     utils::mpi::MPIInPlace,
+  //     &maxQuad,
+  //     1,
+  //      utils::mpi::Types<size_type>::getMPIDatatype(),
+  //     utils::mpi::MPIMax,
+  //     comm);
+
+  // rootCout << "Max num of quadrature points in grad adaptive quadrature in a cell: "<<maxQuad<<"\n";
 
     nQuad = quadRuleContainerAdaptiveOrbital->nQuadraturePoints();
     mpierr = utils::mpi::MPIAllreduce<Host>(
@@ -1055,7 +1169,7 @@ int main(int argc, char** argv)
                                             feBDElectrostaticsHamiltonian, 
                                             feBDEXCHamiltonian,                                                                                
                                             feBDAtomCenterNonLocalOperator,                                                                          
-                                            atomSymbolToPSPFilename,
+                                            atomSymbolToPSPFileName,
                                             linAlgOpContext,
                                             *MContextForInv,
                                             *MContext,
@@ -1110,7 +1224,7 @@ int main(int argc, char** argv)
                                             feBDElectrostaticsHamiltonian, 
                                             feBDEXCHamiltonian,                                                                                
                                           feBDAtomCenterNonLocalOperator,                                                                              
-                                          atomSymbolToPSPFilename,
+                                          atomSymbolToPSPFileName,
                                             linAlgOpContext,
                                             *MContextForInv,
                                            /**MContextForInv,*/

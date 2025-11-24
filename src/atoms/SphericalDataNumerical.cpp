@@ -592,17 +592,17 @@ namespace dftefe
                     (1. / (m * m)) * dQmDPhi(m, phi);
                 }
 
-              if (!(r[i] < d_radiusTolerance && l > 0))
-                {
-                  retVal[0][i] = dYlmDTheta * (1. / r[i]);
-                  retVal[1][i] = dYlmDPhiBysinTheta * (1. / r[i]);
-                }
-              else
-                {
-                  retVal[0][i] = dYlmDTheta * (1. / (r[i] + d_radiusTolerance));
-                  retVal[1][i] =
-                    dYlmDPhiBysinTheta * (1. / (r[i] + d_radiusTolerance));
-                }
+              // if (!(r[i] < d_radiusTolerance && l > 0))
+              //   {
+              retVal[0][i] = dYlmDTheta * (1. / r[i]);
+              retVal[1][i] = dYlmDPhiBysinTheta * (1. / r[i]);
+              //   }
+              // else
+              //   {
+              //     retVal[0][i] = dYlmDTheta * (1. / (r[i]));
+              //     retVal[1][i] =
+              //       dYlmDPhiBysinTheta * (1. / (r[i]));
+              //   }
             }
           else
             {

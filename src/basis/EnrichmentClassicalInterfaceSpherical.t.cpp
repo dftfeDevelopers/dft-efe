@@ -1198,7 +1198,7 @@ namespace dftefe
         !enrichIdVec.empty(),
         "The requested cell does not have any enrichment ids.");
       // unsigned int numEnrichedIdsSkipped = 0;
-      // unsigned int l                     = 0;
+      unsigned int l = 0;
 
       for (int iEnrich = 0; iEnrich < numEnrichIdsInCell;
            iEnrich += 1 /*numEnrichedIdsSkipped*/)
@@ -1227,11 +1227,11 @@ namespace dftefe
             d_atomSphericalDataContainer->getSphericalData(
               d_atomSymbolVec[atomId], d_fieldName);
 
-          // auto quantumNoVec =
-          //   d_atomSphericalDataContainer->getQNumbers(d_atomSymbolVec[atomId],
-          //                                             d_fieldName);
+          auto quantumNoVec =
+            d_atomSphericalDataContainer->getQNumbers(d_atomSymbolVec[atomId],
+                                                      d_fieldName);
 
-          // l = quantumNoVec[localId][1];
+          l = quantumNoVec[localId][1];
 
           auto radialValue = sphericalDataVec[localId]->getRadialValue(rVec);
           auto radialDerivative =
@@ -1252,6 +1252,13 @@ namespace dftefe
               dValueDThetaByr        = radialValue[i] * angularDerivative[0][i];
               double dValueDPhiByrsinTheta = 0.;
               dValueDPhiByrsinTheta = radialValue[i] * angularDerivative[1][i];
+              if ((rVec[i] < 1e-4 && l > 0))
+                {
+                  dValueDThetaByr =
+                    radialDerivative[i] * angularDerivative[0][i] * rVec[i];
+                  dValueDPhiByrsinTheta =
+                    radialDerivative[i] * angularDerivative[1][i] * rVec[i];
+                }
               double theta = thetaVec[i], phi = phiVec[i];
 
               retValue[(iEnrich /*+mCount*/) * numPoints * dim + i * dim + 0] =

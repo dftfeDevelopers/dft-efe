@@ -605,40 +605,56 @@ namespace dftefe
                   std::vector<double> der(0), intgl(0);
                   derivativef(radialPoints, radialValuesVec[i], der);
                   integralxSqfSq(radialPoints, radialValuesVec[i], intgl);
-                  int cutoffId = 1e6;
+                  int cutoffId  = lastTurningPtId;
+                  int cutoffId1 = lastTurningPtId;
                   for (int j = radialPoints.size() - 2; j > lastTurningPtId;
                        j--)
                     {
-                      if (std::abs(der[j]) > intgl[j] * 1.e-2)
+                      if (std::abs(der[j]) > intgl[j] * 5.e-3)
                         {
                           cutoffId = j;
                           break;
                         }
-                    }
-                  if (std::abs(der[findLastExtremumIndex(der)]) > 5e-1 &&
-                      radialPoints[cutoffId] < 8)
-                    {
-                      for (int j = radialPoints.size() - 2; j > lastTurningPtId;
-                           j--)
+                      if (1 - intgl[j] > 1.e-3)
                         {
-                          if (std::abs(der[j]) >
-                              std::min(intgl[j] * 1.e-3, 1.e-3))
-                            {
-                              cutoffId = j;
-                              break;
-                            }
+                          cutoffId1 = j;
+                          break;
                         }
                     }
+                  // if (std::abs(der[findLastExtremumIndex(der)]) > 5e-1 &&
+                  //     radialPoints[std::max(cutoffId, cutoffId1)] < 8)
+                  //   {
+                  //     for (int j = radialPoints.size() - 2; j >
+                  //     lastTurningPtId;
+                  //          j--)
+                  //       {
+                  //         if (std::abs(der[j]) > intgl[j] * 1.e-3)
+                  //           {
+                  //             cutoffId = j;
+                  //             break;
+                  //           }
+                  //       }
+                  //   }
                   if (d_PSPorAE == "PSP")
                     {
-                      cutOffInfoVec[i].first =
-                        radialPoints[cutoffId] * (18. / 118);
-                      cutOffInfoVec[i].second = 0.18;
+                      double smoothness = 1. / 3;
+                      if (radialPoints[std::max(cutoffId, cutoffId1)] > 10.0)
+                        {
+                          cutOffInfoVec[i].first =
+                            10 * (smoothness / (1 + smoothness));
+                        }
+                      else
+                        {
+                          cutOffInfoVec[i].first =
+                            radialPoints[std::max(cutoffId, cutoffId1)] *
+                            (smoothness / (1 + smoothness));
+                        }
+                      cutOffInfoVec[i].second = smoothness;
                     }
                   else if (d_PSPorAE == "AE")
                     {
                       cutOffInfoVec[i].first =
-                        radialPoints[cutoffId] * (1. / 2);
+                        radialPoints[std::max(cutoffId, cutoffId1)] * (1. / 2);
                       cutOffInfoVec[i].second = 1.01;
                     }
                   else
