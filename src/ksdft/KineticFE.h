@@ -30,6 +30,7 @@
 #include <ksdft/Hamiltonian.h>
 #include <ksdft/Energy.h>
 #include <basis/FEBasisDataStorage.h>
+#include <electrostatics/LaplaceOperatorContextFE.h>
 #include <basis/FEBasisOperations.h>
 
 namespace dftefe
@@ -68,7 +69,7 @@ namespace dftefe
         const size_type maxCellBlock,
         const size_type waveFuncBatchSize);
 
-      ~KineticFE();
+      ~KineticFE() = default;
 
       void
       reinit(std::shared_ptr<
@@ -114,13 +115,21 @@ namespace dftefe
       const size_type d_maxCellBlock, d_waveFuncBatchSize;
       std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
         d_linAlgOpContext;
-      quadrature::QuadratureValuesContainer<ValueType, memorySpace> *d_gradPsi;
-      Storage d_cellWiseStorageKineticEnergy;
+      // quadrature::QuadratureValuesContainer<ValueType, memorySpace>
+      // *d_gradPsi;
+      std::shared_ptr<Storage> d_cellWiseStorageKineticEnergy;
 
       std::shared_ptr<linearAlgebra::MultiVector<ValueType, memorySpace>>
-        d_psiBatchSmall, d_psiBatch;
+        d_psiBatchSmall, d_psiBatch, d_YBatch, d_YBatchSmall;
       std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
         d_mpiPatternP2P;
+
+      std::shared_ptr<
+        electrostatics::LaplaceOperatorContextFE<ValueTypeBasisData,
+                                                 ValueTypeBasisCoeff,
+                                                 memorySpace,
+                                                 dim>>
+        d_laplaceOp;
 
     }; // end of class KineticFE
   }    // end of namespace ksdft

@@ -308,6 +308,9 @@ namespace dftefe
               d_unWantedSpectrumUpperBound,
               *d_subspaceBatchOut); /*scratch2*/
 
+          utils::printCurrentMemoryUsage(d_mpiPatternP2P->mpiCommunicator(),
+                                         "During blocked chebyshev filtering");
+
           for (size_type iSize = 0; iSize < eigenVecLocalSize; iSize++)
             memoryTransfer.copy(numEigVecInBatch,
                                 eigenVectors.data() + iSize * numEigenVectors +

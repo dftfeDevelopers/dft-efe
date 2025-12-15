@@ -2494,6 +2494,7 @@ namespace dftefe
       d_rootCout << "Starting SCF iterations....\n";
       while (((norm > d_SCFTol) && (scfIter < d_numMaxSCFIter)))
         {
+          utils::printCurrentMemoryUsage(d_mpiCommDomain, "SCF beginning");
           d_p.reset();
           d_rootCout
             << "************************Begin Self-Consistent-Field Iteration: "

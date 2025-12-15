@@ -725,10 +725,9 @@ namespace dftefe
         d_diagonalInv, 1);
 
       // Now form the enrichment block matrix.
-      std::shared_ptr<utils::MemoryStorage<ValueTypeOperator, memorySpace>>
-        basisOverlapInvEnrichmentBlockExact = std::make_shared<
-          utils::MemoryStorage<ValueTypeOperator, memorySpace>>(
-          d_nglobalEnrichmentIds * d_nglobalEnrichmentIds);
+      // utils::MemoryStorage<ValueTypeOperator, memorySpace>
+      //   basisOverlapInvEnrichmentBlockExact(
+      //     d_nglobalEnrichmentIds * d_nglobalEnrichmentIds);
 
       utils::MemoryStorage<ValueTypeOperator, memorySpace>
         basisOverlapInvEnrichmentBlock(d_nglobalEnrichmentIds *
@@ -746,13 +745,13 @@ namespace dftefe
             {
               for (unsigned int k = 0; k < nCellEnrichmentDofs; k++)
                 {
-                  *(basisOverlapInvEnrichmentBlockExact->data() +
-                    enrichmentVecInCell[j] * d_nglobalEnrichmentIds +
-                    enrichmentVecInCell[k]) +=
-                    *(NiNjInAllCells.data() + cumulativeBasisDataInCells +
-                      (numCellClassicalDofs + nCellEnrichmentDofs) *
-                        (numCellClassicalDofs + j) +
-                      numCellClassicalDofs + k);
+                  // *(basisOverlapInvEnrichmentBlockExact.data() +
+                  //   enrichmentVecInCell[j] * d_nglobalEnrichmentIds +
+                  //   enrichmentVecInCell[k]) +=
+                  //   *(NiNjInAllCells.data() + cumulativeBasisDataInCells +
+                  //     (numCellClassicalDofs + nCellEnrichmentDofs) *
+                  //       (numCellClassicalDofs + j) +
+                  //     numCellClassicalDofs + k);
 
                   basis::EnrichmentIdAttribute eIdAttrj =
                     efeBDH->getEnrichmentIdsPartition()
@@ -779,31 +778,32 @@ namespace dftefe
           cellId += 1;
         }
 
+      // int err = utils::mpi::MPIAllreduce<memorySpace>(
+      //   utils::mpi::MPIInPlace,
+      //   basisOverlapInvEnrichmentBlockExact.data(),
+      //   basisOverlapInvEnrichmentBlockExact.size(),
+      //   utils::mpi::MPIDouble,
+      //   utils::mpi::MPISum,
+      //   d_feBasisManager->getMPIPatternP2P()->mpiCommunicator());
+      // std::pair<bool, std::string> mpiIsSuccessAndMsg =
+      //   utils::mpi::MPIErrIsSuccessAndMsg(err);
+      // utils::throwException(mpiIsSuccessAndMsg.first,
+      //                       "MPI Error:" + mpiIsSuccessAndMsg.second);
+
+      // linearAlgebra::blasLapack::inverse<ValueTypeOperator, memorySpace>(
+      //   d_nglobalEnrichmentIds,
+      //   basisOverlapInvEnrichmentBlockExact.data(),
+      //   *(d_diagonalInv.getLinAlgOpContext()));
+
       int err = utils::mpi::MPIAllreduce<memorySpace>(
-        utils::mpi::MPIInPlace,
-        basisOverlapInvEnrichmentBlockExact->data(),
-        basisOverlapInvEnrichmentBlockExact->size(),
-        utils::mpi::MPIDouble,
-        utils::mpi::MPISum,
-        d_feBasisManager->getMPIPatternP2P()->mpiCommunicator());
-      std::pair<bool, std::string> mpiIsSuccessAndMsg =
-        utils::mpi::MPIErrIsSuccessAndMsg(err);
-      utils::throwException(mpiIsSuccessAndMsg.first,
-                            "MPI Error:" + mpiIsSuccessAndMsg.second);
-
-      linearAlgebra::blasLapack::inverse<ValueTypeOperator, memorySpace>(
-        d_nglobalEnrichmentIds,
-        basisOverlapInvEnrichmentBlockExact->data(),
-        *(d_diagonalInv.getLinAlgOpContext()));
-
-      err = utils::mpi::MPIAllreduce<memorySpace>(
         utils::mpi::MPIInPlace,
         basisOverlapInvEnrichmentBlock.data(),
         basisOverlapInvEnrichmentBlock.size(),
         utils::mpi::MPIDouble,
         utils::mpi::MPISum,
         d_feBasisManager->getMPIPatternP2P()->mpiCommunicator());
-      mpiIsSuccessAndMsg = utils::mpi::MPIErrIsSuccessAndMsg(err);
+      std::pair<bool, std::string> mpiIsSuccessAndMsg =
+        utils::mpi::MPIErrIsSuccessAndMsg(err);
       utils::throwException(mpiIsSuccessAndMsg.first,
                             "MPI Error:" + mpiIsSuccessAndMsg.second);
 
@@ -863,11 +863,11 @@ namespace dftefe
       //     for (int i = 0; i < basisOverlapInvEnrichmentBlock.size(); i++)
       //       {
       //         *(basisOverlapInvEnrichmentBlock.data() + i) =
-      //           *(basisOverlapInvEnrichmentBlockExact->data() + i) -
+      //           *(basisOverlapInvEnrichmentBlockExact.data() + i) -
       //           *(basisOverlapInvEnrichmentBlock.data() + i);
 
-      //         normMInvexact += *(basisOverlapInvEnrichmentBlockExact->data()
-      //         + i) * *(basisOverlapInvEnrichmentBlockExact->data() + i);
+      //         normMInvexact += *(basisOverlapInvEnrichmentBlockExact.data()
+      //         + i) * *(basisOverlapInvEnrichmentBlockExact.data() + i);
       //       }
       //     normMInvexact = std::sqrt(normMInvexact);
 

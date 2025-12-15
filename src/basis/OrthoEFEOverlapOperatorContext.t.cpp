@@ -1489,13 +1489,14 @@ namespace dftefe
       auto itCellLocalIdsBegin =
         d_feBasisManager->locallyOwnedCellLocalDofIdsBegin();
 
+      std::shared_ptr<Storage> basisOverlap;
       OrthoEFEOverlapOperatorContextInternal::computeBasisOverlapMatrix<
         ValueTypeOperator,
         ValueTypeOperand,
         memorySpace,
         dim>(classicalBlockGLLBasisDataStorage,
              enrichmentBlockBasisDataStorage,
-             d_basisOverlap,
+             basisOverlap,
              d_cellStartIdsBasisOverlap,
              d_dofsInCell,
              false);
@@ -1517,7 +1518,7 @@ namespace dftefe
       // Create the diagonal of the classical block matrix which is diagonal for
       // GLL with spectral quadrature
       FECellWiseDataOperations<ValueTypeOperator, memorySpace>::
-        addCellWiseBasisDataToDiagonalData(d_basisOverlap->data(),
+        addCellWiseBasisDataToDiagonalData(basisOverlap->data(),
                                            itCellLocalIdsBegin,
                                            locallyOwnedCellsNumDoFs,
                                            d_diagonal->data());
@@ -1560,7 +1561,7 @@ namespace dftefe
                       // *(basisOverlapEnrichmentBlockExact.data() +
                       //   enrichmentVecInCell[j] * d_nglobalEnrichmentIds +
                       //   enrichmentVecInCell[k]) +=
-                      //   *(d_basisOverlap->data() + cumulativeBasisDataInCells
+                      //   *(basisOverlap->data() + cumulativeBasisDataInCells
                       //   +
                       //     (numCellClassicalDofs + nCellEnrichmentDofs) *
                       //       (numCellClassicalDofs + j) +
@@ -1579,7 +1580,7 @@ namespace dftefe
                           *(basisOverlapEnrichmentBlock.data() +
                             enrichmentVecInCell[j] * d_nglobalEnrichmentIds +
                             enrichmentVecInCell[k]) +=
-                            *(d_basisOverlap->data() +
+                            *(basisOverlap->data() +
                               cumulativeBasisDataInCells +
                               (numCellClassicalDofs + nCellEnrichmentDofs) *
                                 (numCellClassicalDofs + j) +
@@ -1745,10 +1746,7 @@ namespace dftefe
             d_nglobalEnrichmentIds * d_nglobalEnrichmentIds);
 
           std::vector<ValueTypeOperator> basisOverlapEnrichmentBlockSTL(
-            d_nglobalEnrichmentIds * d_nglobalEnrichmentIds, 0),
-            basisOverlapEnrichmentBlockSTLTmp(d_nglobalEnrichmentIds *
-                                                d_nglobalEnrichmentIds,
-                                              0);
+            d_nglobalEnrichmentIds * d_nglobalEnrichmentIds, 0);
 
           size_type cellId                     = 0;
           size_type cumulativeBasisDataInCells = 0;
@@ -1761,10 +1759,10 @@ namespace dftefe
                 {
                   for (unsigned int k = 0; k < nCellEnrichmentDofs; k++)
                     {
-                      *(basisOverlapEnrichmentBlockSTLTmp.data() +
+                      *(basisOverlapEnrichmentBlockSTL.data() +
                         enrichmentVecInCell[j] * d_nglobalEnrichmentIds +
                         enrichmentVecInCell[k]) +=
-                        *(d_basisOverlap->data() + cumulativeBasisDataInCells +
+                        *(basisOverlap->data() + cumulativeBasisDataInCells +
                           (numCellClassicalDofs + nCellEnrichmentDofs) *
                             (numCellClassicalDofs + j) +
                           numCellClassicalDofs + k);
@@ -1776,9 +1774,9 @@ namespace dftefe
             }
 
           int err = utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
-            basisOverlapEnrichmentBlockSTLTmp.data(),
+            utils::mpi::MPIInPlace,
             basisOverlapEnrichmentBlockSTL.data(),
-            basisOverlapEnrichmentBlockSTLTmp.size(),
+            basisOverlapEnrichmentBlockSTL.size(),
             utils::mpi::MPIDouble,
             utils::mpi::MPISum,
             d_feBasisManager->getMPIPatternP2P()->mpiCommunicator());
@@ -1882,6 +1880,7 @@ namespace dftefe
       auto itCellLocalIdsBegin =
         d_feBasisManager->locallyOwnedCellLocalDofIdsBegin();
 
+      std::shared_ptr<Storage> basisOverlap;
       OrthoEFEOverlapOperatorContextInternal::computeBasisOverlapMatrix<
         ValueTypeOperator,
         ValueTypeOperand,
@@ -1889,7 +1888,7 @@ namespace dftefe
         dim>(classicalBlockGLLBasisDataStorage,
              enrichmentBlockEnrichmentBasisDataStorage,
              enrichmentBlockClassicalBasisDataStorage,
-             d_basisOverlap,
+             basisOverlap,
              d_cellStartIdsBasisOverlap,
              d_dofsInCell,
              *linAlgOpContext,
@@ -1912,7 +1911,7 @@ namespace dftefe
       // Create the diagonal of the classical block matrix which is diagonal for
       // GLL with spectral quadrature
       FECellWiseDataOperations<ValueTypeOperator, memorySpace>::
-        addCellWiseBasisDataToDiagonalData(d_basisOverlap->data(),
+        addCellWiseBasisDataToDiagonalData(basisOverlap->data(),
                                            itCellLocalIdsBegin,
                                            locallyOwnedCellsNumDoFs,
                                            d_diagonal->data());
@@ -1968,7 +1967,7 @@ namespace dftefe
                           *(basisOverlapEnrichmentBlock.data() +
                             enrichmentVecInCell[j] * d_nglobalEnrichmentIds +
                             enrichmentVecInCell[k]) +=
-                            *(d_basisOverlap->data() +
+                            *(basisOverlap->data() +
                               cumulativeBasisDataInCells +
                               (numCellClassicalDofs + nCellEnrichmentDofs) *
                                 (numCellClassicalDofs + j) +
@@ -2025,10 +2024,7 @@ namespace dftefe
             d_nglobalEnrichmentIds * d_nglobalEnrichmentIds);
 
           std::vector<ValueTypeOperator> basisOverlapEnrichmentBlockSTL(
-            d_nglobalEnrichmentIds * d_nglobalEnrichmentIds, 0),
-            basisOverlapEnrichmentBlockSTLTmp(d_nglobalEnrichmentIds *
-                                                d_nglobalEnrichmentIds,
-                                              0);
+            d_nglobalEnrichmentIds * d_nglobalEnrichmentIds, 0);
 
           size_type cellId                     = 0;
           size_type cumulativeBasisDataInCells = 0;
@@ -2041,10 +2037,10 @@ namespace dftefe
                 {
                   for (unsigned int k = 0; k < nCellEnrichmentDofs; k++)
                     {
-                      *(basisOverlapEnrichmentBlockSTLTmp.data() +
+                      *(basisOverlapEnrichmentBlockSTL.data() +
                         enrichmentVecInCell[j] * d_nglobalEnrichmentIds +
                         enrichmentVecInCell[k]) +=
-                        *(d_basisOverlap->data() + cumulativeBasisDataInCells +
+                        *(basisOverlap->data() + cumulativeBasisDataInCells +
                           (numCellClassicalDofs + nCellEnrichmentDofs) *
                             (numCellClassicalDofs + j) +
                           numCellClassicalDofs + k);
@@ -2056,9 +2052,9 @@ namespace dftefe
             }
 
           int err = utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
-            basisOverlapEnrichmentBlockSTLTmp.data(),
+            utils::mpi::MPIInPlace,
             basisOverlapEnrichmentBlockSTL.data(),
-            basisOverlapEnrichmentBlockSTLTmp.size(),
+            basisOverlapEnrichmentBlockSTL.size(),
             utils::mpi::MPIDouble,
             utils::mpi::MPISum,
             d_feBasisManager->getMPIPatternP2P()->mpiCommunicator());
@@ -2293,6 +2289,10 @@ namespace dftefe
                                    memorySpace,
                                    dim>::getBasisOverlapInAllCells() const
     {
+      if (d_isMassLumping)
+        utils::throwException(
+          false,
+          "Could not getBasisOverlapInAllCells if Masslumping is done in Overlap Operator. ");
       return *(d_basisOverlap);
     }
 
@@ -2307,6 +2307,10 @@ namespace dftefe
                                    dim>::getBasisOverlapInCell(const size_type
                                                                  cellId) const
     {
+      if (d_isMassLumping)
+        utils::throwException(
+          false,
+          "Could not getBasisOverlapInCell if Masslumping is done in Overlap Operator. ");
       std::shared_ptr<utils::MemoryStorage<ValueTypeOperator, memorySpace>>
                       basisOverlapStorage = d_basisOverlap;
       const size_type sizeToCopy = d_dofsInCell[cellId] * d_dofsInCell[cellId];
@@ -2332,6 +2336,10 @@ namespace dftefe
                             const size_type basisId1,
                             const size_type basisId2) const
     {
+      if (d_isMassLumping)
+        utils::throwException(
+          false,
+          "Could not getBasisOverlap if Masslumping is done in Overlap Operator. ");
       std::shared_ptr<utils::MemoryStorage<ValueTypeOperator, memorySpace>>
         basisOverlapStorage = d_basisOverlap;
       utils::MemoryStorage<ValueTypeOperator, memorySpace> returnValue(1);

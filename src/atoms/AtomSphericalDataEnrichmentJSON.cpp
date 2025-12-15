@@ -194,7 +194,8 @@ namespace dftefe
             {
               utils::throwException(false,
                                     metadataName +
-                                      " metadataName type not found.");
+                                      " metadataName type not found for " +
+                                      fileName + ".");
             }
 
           simdjson::dom::element elem = typeRes.value();
@@ -615,7 +616,7 @@ namespace dftefe
                           cutoffId = j;
                           break;
                         }
-                      if (1 - intgl[j] > 1.e-3)
+                      if (1 - intgl[j] > 5.e-3)
                         {
                           cutoffId1 = j;
                           break;
@@ -653,9 +654,16 @@ namespace dftefe
                     }
                   else if (d_PSPorAE == "AE")
                     {
+                      double smoothness = 1.01;
+                      if (radialPoints[std::max(cutoffId, cutoffId1)] > 10.0)
+                        {
+                          cutOffInfoVec[i].first =
+                            10 * (smoothness / (1 + smoothness));
+                        }
                       cutOffInfoVec[i].first =
-                        radialPoints[std::max(cutoffId, cutoffId1)] * (1. / 2);
-                      cutOffInfoVec[i].second = 1.01;
+                        radialPoints[std::max(cutoffId, cutoffId1)] *
+                        (smoothness / (1 + smoothness));
+                      cutOffInfoVec[i].second = smoothness;
                     }
                   else
                     {

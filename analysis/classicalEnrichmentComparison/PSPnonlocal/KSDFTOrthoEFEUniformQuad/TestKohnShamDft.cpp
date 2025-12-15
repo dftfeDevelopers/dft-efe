@@ -513,6 +513,21 @@ int main(int argc, char** argv)
     numElectrons += (size_type)(std::abs(i));
   }
 
+  if (numWantedEigenvalues <= numElectrons / 2.0 ||
+             numWantedEigenvalues == 0)
+  {
+    rootCout << " Warning: User has requested the number of Kohn-Sham wavefunctions to be less than or"
+          "equal to half the number of electrons in the system. Setting the Kohn-Sham wavefunctions"
+          "to half the number of electrons with a 20 percent buffer to avoid convergence issues in"
+          "SCF iterations" << std::endl;
+    numWantedEigenvalues = (numElectrons / 2.0) + std::max((0.2) * (numElectrons / 2.0), 20.0);
+
+    // start with 17-20% buffer in GPUs to leave room for additional modifications
+    // due to block size restrictions
+
+    rootCout << " Setting the number of Kohn-Sham wave functions to be " << numWantedEigenvalues << std::endl;
+  }
+
   std::vector<std::string> fieldNames{"orbital","vtotal","density"};
   std::vector<std::string> metadataNames{ "symbol", "Z", "charge", "NR" };
   std::shared_ptr<atoms::AtomSphericalDataContainer>  atomSphericalDataContainer = 
@@ -958,6 +973,8 @@ int main(int argc, char** argv)
                                                       linAlgOpContext,
                                                       true); 
 
+  utils::printCurrentMemoryUsage(comm, "Hamiltonian Basis overlap");
+
   //   quadrature::QuadratureRuleAttributes quadAttrGaussEigen(quadrature::QuadratureFamily::GAUSS,true,feOrderEigen + 1);
 
   //   std::shared_ptr<basis::FEBasisDataStorage<double, Host>> cfeBasisDataStorageGaussEigen =
@@ -996,6 +1013,8 @@ int main(int argc, char** argv)
                                                         true);  
 
     p.registerEnd("Hamiltonian Basis overlap eval");
+    utils::printCurrentMemoryUsage(comm, "Hamiltonian Basis overlap , overlap for inv");
+
     p.registerStart("Hamiltonian Basis overlap inverse eval");
 
   std::shared_ptr<linearAlgebra::OperatorContext<double,
@@ -1012,8 +1031,9 @@ int main(int argc, char** argv)
                                                     *cfeBasisDataStorageGLLEigen,
                                                     linAlgOpContext);    
 
-  p.registerEnd("Hamiltonian Basis overlap inverse eval");
-  utils::printCurrentMemoryUsage(comm, "Hamiltonian Basis overlap and inv");
+    p.registerEnd("Hamiltonian Basis overlap inverse eval");
+  utils::printCurrentMemoryUsage(comm, "Hamiltonian Basis overlap , overlap for inv and inv");
+
   p.registerStart("Kohn Sham DFT Class Init");
   ksdft::KohnShamDFT<double,
                                         double,
@@ -1022,6 +1042,8 @@ int main(int argc, char** argv)
                                         Host,
                                         dim>* dftefeSolve = nullptr;
 
+  utils::printCurrentMemoryUsage(comm, "Before Kohn Sham DFT Class Init");
+                                      
   if(isNumericalNuclearSolve && !isDeltaRhoPoissonSolve)
   {
     utils::throwException(false, "Option not there for KohnShamDFT class creation.");                        
@@ -1130,7 +1152,7 @@ int main(int argc, char** argv)
     utils::throwException(false, "Option not there for KohnShamDFT class creation.");
   }
   p.registerEnd("Kohn Sham DFT Class Init"); 
-  utils::printCurrentMemoryUsage(comm, "Kohn Sham DFT Class Init");
+  utils::printCurrentMemoryUsage(comm, "After Kohn Sham DFT Class Init");
   p.print();
 
   pTot.registerEnd("Initilization");   
