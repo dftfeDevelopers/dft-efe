@@ -37,7 +37,7 @@ namespace dftefe
       : d_outputStream(stream)
       , d_activeFlag(active)
     {
-      d_outputStream << std::setprecision(precision);
+      d_outputStream << std::fixed << std::setprecision(precision);
     }
 
     void

@@ -42,6 +42,6 @@ namespace dftefe
       std::complex<float>(0.0, 0.0);
     const char        Types<char>::zero                     = (char)0;
     const std::string Types<std::string>::zero              = "";
-    const size_type   ConditionalOStreamDefaults::PRECISION = 12;
+    const size_type   ConditionalOStreamDefaults::PRECISION = 8;
   } // end of namespace utils
 } // end of namespace dftefe
