@@ -93,7 +93,7 @@ namespace dftefe
                                memorySpace,
                                dim> *d_efebasisDofHandler;
       linearAlgebra::Vector<ValueTypeOperator, memorySpace> d_diagonalInv;
-      size_type d_nglobalEnrichmentIds;
+      global_size_type d_nglobalEnrichmentIds;
       std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
                        d_linAlgOpContext;
       global_size_type d_nglobalIds;

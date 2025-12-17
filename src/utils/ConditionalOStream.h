@@ -56,8 +56,9 @@ namespace dftefe
        */
       ConditionalOStream(
         std::ostream &  stream,
-        const bool      active    = true,
-        const size_type precision = ConditionalOStreamDefaults::PRECISION);
+        const bool      active         = true,
+        const size_type precision      = ConditionalOStreamDefaults::PRECISION,
+        const bool      fixedPrecision = false);
 
       /**
        * @brief Function to set the condition for printing to the output stream

@@ -232,7 +232,7 @@ namespace dftefe
                                ValueTypeOperator,
                                memorySpace,
                                dim> *d_efebasisDofHandler;
-      size_type                      d_nglobalEnrichmentIds;
+      global_size_type               d_nglobalEnrichmentIds;
       bool                           d_isEnrichAtomBlockDiagonalApprox;
       utils::MemoryStorage<ValueTypeOperator, memorySpace>
         d_atomBlockEnrichmentOverlap;

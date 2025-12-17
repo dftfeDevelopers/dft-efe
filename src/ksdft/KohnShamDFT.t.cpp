@@ -2870,6 +2870,10 @@ namespace dftefe
 
       if (!d_evaluateEnergyEverySCF)
         {
+          int rank;
+          utils::mpi::MPICommRank(d_mpiCommDomain, &rank);
+          utils::ConditionalOStream rootCout(std::cout, rank == 0, 16, true);
+
           if (auto hamiltonian = std::dynamic_pointer_cast<
                 ElectrostaticLocalFE<ValueTypeElectrostaticsBasis,
                                      ValueTypeElectrostaticsCoeff,
@@ -2894,7 +2898,7 @@ namespace dftefe
                                       *d_feBMWaveFn,
                                       d_kohnShamWaveFunctions);
           RealType kinEnergy = d_hamitonianKin->getEnergy();
-          d_rootCout << "Kinetic energy: " << kinEnergy << "\n";
+          rootCout << "Kinetic energy: " << kinEnergy << "\n";
 
           if (auto hamiltonian = std::dynamic_pointer_cast<
                 ElectrostaticLocalFE<ValueTypeElectrostaticsBasis,
@@ -2917,7 +2921,7 @@ namespace dftefe
             }
 
           RealType elecEnergy = d_hamitonianElec->getEnergy();
-          d_rootCout << "Electrostatic energy: " << elecEnergy << "\n";
+          rootCout << "Electrostatic energy: " << elecEnergy << "\n";
 
           if (d_isNlcc && d_isONCVNonLocPSP)
             {
@@ -2934,7 +2938,7 @@ namespace dftefe
 
           d_hamitonianXC->evalEnergy(d_mpiCommDomain);
           RealType xcEnergy = d_hamitonianXC->getEnergy();
-          d_rootCout << "LDA EXC energy: " << xcEnergy << "\n";
+          rootCout << "LDA EXC energy: " << xcEnergy << "\n";
 
           // calculate band energy
           RealType bandEnergy = 0;
@@ -2943,11 +2947,11 @@ namespace dftefe
               bandEnergy += 2 * d_occupation[i] * d_kohnShamEnergies[i];
             }
 
-          d_rootCout << "Band energy: " << bandEnergy << "\n";
+          rootCout << "Band energy: " << bandEnergy << "\n";
 
           RealType totalEnergy = kinEnergy + elecEnergy + xcEnergy;
 
-          d_rootCout << "Ground State Energy: " << totalEnergy << "\n";
+          rootCout << "Ground State Energy: " << totalEnergy << "\n";
 
           d_groundStateEnergy = totalEnergy;
 
@@ -2955,9 +2959,9 @@ namespace dftefe
             KohnShamDFTInternal::computeEntropicEnergy(d_occupation,
                                                        d_smearingTemperature);
 
-          d_rootCout << "Entropic Energy: " << entEnergy << "\n";
+          rootCout << "Entropic Energy: " << entEnergy << "\n";
 
-          d_rootCout << "Free Energy: " << totalEnergy - entEnergy << "\n";
+          rootCout << "Free Energy: " << totalEnergy - entEnergy << "\n";
 
           d_freeEnergy = totalEnergy - entEnergy;
         }
