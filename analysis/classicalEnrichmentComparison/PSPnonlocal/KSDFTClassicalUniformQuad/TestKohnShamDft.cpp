@@ -480,6 +480,21 @@ int main(int argc, char** argv)
     numElectrons += (size_type)(std::abs(i));
   }
   
+  if (numWantedEigenvalues <= numElectrons / 2.0 ||
+             numWantedEigenvalues == 0)
+  {
+    rootCout << " Warning: User has requested the number of Kohn-Sham wavefunctions to be less than or"
+          "equal to half the number of electrons in the system. Setting the Kohn-Sham wavefunctions"
+          "to half the number of electrons with a 20 percent buffer to avoid convergence issues in"
+          "SCF iterations" << std::endl;
+    numWantedEigenvalues = (numElectrons / 2.0) + std::max((0.2) * (numElectrons / 2.0), 20.0);
+
+    // start with 17-20% buffer in GPUs to leave room for additional modifications
+    // due to block size restrictions
+
+    rootCout << " Setting the number of Kohn-Sham wave functions to be " << numWantedEigenvalues << std::endl;
+  }
+  
   // Generate mesh
    std::shared_ptr<basis::CellMappingBase> cellMapping = std::make_shared<basis::LinearCellMappingDealii<dim>>();
 

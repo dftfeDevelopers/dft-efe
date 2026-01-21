@@ -1676,8 +1676,12 @@ namespace dftefe
           if (d_isCalculateIntegralDeltaRho)
             {
               /**----------Integral Delta Rho--------**/
-              size_type quadId    = 0;
-              double    normValue = 0.;
+              size_type quadId             = 0;
+              double    normValue          = 0.;
+              size_type quadIdKS           = 0.;
+              double    normValueRhoKS     = 0.;
+              size_type quadIdAtomic       = 0.;
+              double    normValueRhoAtomic = 0.;
               auto      jxwData =
                 d_scratchDensRhoQuad->getQuadratureRuleContainer()->getJxW();
               for (size_type iCell = 0; iCell < d_scratchDensRhoQuad->nCells();
@@ -1694,6 +1698,23 @@ namespace dftefe
                       normValue += *(jxwData.data() + quadId) * j;
                       quadId = quadId + 1;
                     }
+                  d_electronChargeDensity
+                    ->template getCellValues<utils::MemorySpace::HOST>(
+                      iCell, a.data());
+                  for (auto j : a)
+                    {
+                      normValueRhoKS += *(jxwData.data() + quadIdKS) * j;
+                      quadIdKS = quadIdKS + 1;
+                    }
+                  d_atomicElectronChargeDensity
+                    .template getCellValues<utils::MemorySpace::HOST>(iCell,
+                                                                      a.data());
+                  for (auto j : a)
+                    {
+                      normValueRhoAtomic +=
+                        *(jxwData.data() + quadIdAtomic) * j;
+                      quadIdAtomic = quadIdAtomic + 1;
+                    }
                 }
               utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
                 utils::mpi::MPIInPlace,
@@ -1702,8 +1723,23 @@ namespace dftefe
                 utils::mpi::Types<double>::getMPIDatatype(),
                 utils::mpi::MPISum,
                 d_feBMTotalCharge->getMPIPatternP2P()->mpiCommunicator());
-
+              utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
+                utils::mpi::MPIInPlace,
+                &normValueRhoKS,
+                1,
+                utils::mpi::Types<double>::getMPIDatatype(),
+                utils::mpi::MPISum,
+                d_feBMTotalCharge->getMPIPatternP2P()->mpiCommunicator());
+              utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
+                utils::mpi::MPIInPlace,
+                &normValueRhoAtomic,
+                1,
+                utils::mpi::Types<double>::getMPIDatatype(),
+                utils::mpi::MPISum,
+                d_feBMTotalCharge->getMPIPatternP2P()->mpiCommunicator());
               d_rootCout << "Integral Delta Rho: " << normValue << "\n";
+              d_rootCout << "KS Rho: " << normValueRhoKS << "\n";
+              d_rootCout << "Atomic Rho: " << normValueRhoAtomic << "\n";
               /**----------Integral Delta Rho--------**/
             }
 
