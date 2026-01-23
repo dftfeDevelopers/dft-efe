@@ -335,6 +335,8 @@ namespace dftefe
       , d_occupation(numWantedEigenvalues, 0)
       , d_isONCVNonLocPSP(false)
       , d_isNlcc(false)
+      , d_pTotal(feBMWaveFn->getMPIPatternP2P()->mpiCommunicator(),
+                 "Kohn Sham DFT Solve time")
     {
       d_p.registerStart("Pre Init Checks");
       if (dynamic_cast<
@@ -673,6 +675,8 @@ namespace dftefe
       , d_occupation(numWantedEigenvalues, 0)
       , d_isONCVNonLocPSP(false)
       , d_isNlcc(false)
+      , d_pTotal(feBMWaveFn->getMPIPatternP2P()->mpiCommunicator(),
+                 "Kohn Sham DFT Solve time")
     {
       d_p.registerStart("Pre Init Checks");
       if (dynamic_cast<
@@ -1025,6 +1029,8 @@ namespace dftefe
       , d_occupation(numWantedEigenvalues, 0)
       , d_isONCVNonLocPSP(false)
       , d_isNlcc(false)
+      , d_pTotal(feBMWaveFn->getMPIPatternP2P()->mpiCommunicator(),
+                 "Kohn Sham DFT Solve time")
     {
       d_p.registerStart("Pre Init Checks");
       if (dynamic_cast<
@@ -1442,6 +1448,8 @@ namespace dftefe
       , d_p(feBMWaveFn->getMPIPatternP2P()->mpiCommunicator(), "Kohn Sham DFT")
       , d_isResidualChebyshevFilter(isResidualChebyshevFilter)
       , d_occupation(numWantedEigenvalues, 0)
+      , d_pTotal(feBMWaveFn->getMPIPatternP2P()->mpiCommunicator(),
+                 "Kohn Sham DFT Solve time")
     {
       d_p.registerStart("Pre Init Checks");
       const std::vector<std::string> metadataNames =
@@ -1928,6 +1936,8 @@ namespace dftefe
       , d_p(feBMWaveFn->getMPIPatternP2P()->mpiCommunicator(), "Kohn Sham DFT")
       , d_isResidualChebyshevFilter(isResidualChebyshevFilter)
       , d_occupation(numWantedEigenvalues, 0)
+      , d_pTotal(feBMWaveFn->getMPIPatternP2P()->mpiCommunicator(),
+                 "Kohn Sham DFT Solve time")
     {
       d_p.registerStart("Pre Init Checks");
       const std::vector<std::string> metadataNames =
@@ -2503,9 +2513,10 @@ namespace dftefe
           // mix the densities with  Anderson mix if scf > 0
           // Update the history of mixing variables
 
-          d_p.registerStart("Density Mixing");
           if (scfIter > 0)
             {
+              d_p.registerStart("Density Mixing");
+              d_pTotal.registerStart("Density Mixing");
               norm = KohnShamDFTInternal::computeResidualQuadData(
                 d_densityOutQuadValues,
                 d_densityInQuadValues,
@@ -2540,13 +2551,15 @@ namespace dftefe
                 mixingVariable::rho,
                 d_densityInQuadValues.begin(),
                 d_densityInQuadValues.nQuadraturePoints());
+              d_pTotal.registerEnd("Density Mixing");
+              d_p.registerEnd("Density Mixing");
             }
-          d_p.registerEnd("Density Mixing");
 
-          d_p.registerStart("Hamiltonian Reinit");
           // reinit the components of hamiltonian
           if (scfIter > 0)
             {
+              d_pTotal.registerStart("Hamiltonian Reinit");
+              d_p.registerStart("Hamiltonian Reinit");
               // normalize electroncharge density each scf
               RealType totalDensityInQuad =
                 KohnShamDFTInternal::normalizeDensityQuadData(
@@ -2602,8 +2615,9 @@ namespace dftefe
 
               d_hamitonianOperator->reinit(*d_feBMWaveFn,
                                            hamiltonianComponentsVec);
+              d_p.registerEnd("Hamiltonian Reinit");
+              d_pTotal.registerEnd("Hamiltonian Reinit");
             }
-          d_p.registerEnd("Hamiltonian Reinit");
 
           // reinit the chfsi bounds
           if (scfIter > 0)
@@ -2617,6 +2631,7 @@ namespace dftefe
             d_ksEigSolve->setChebyPolyScalingFactor(1.34);
 
           d_p.registerStart("EigenSolve");
+          d_pTotal.registerStart("EigenSolve");
           // Linear Eigen Solve
           linearAlgebra::EigenSolverError err =
             d_ksEigSolve->solve(*d_hamitonianOperator,
@@ -2625,6 +2640,7 @@ namespace dftefe
                                 true,
                                 *d_MContext,
                                 *d_MInvContext);
+          d_pTotal.registerEnd("EigenSolve");
           d_p.registerEnd("EigenSolve");
 
           d_occupation = d_ksEigSolve->getFractionalOccupancy();
@@ -2747,10 +2763,12 @@ namespace dftefe
           */
 
           d_p.registerStart("Density Compute");
+          d_pTotal.registerStart("Density Compute");
           // compute output rho
           d_densCalc->computeRho(d_occupation,
                                  d_kohnShamWaveFunctions,
                                  d_densityOutQuadValues);
+          d_pTotal.registerEnd("Density Compute");
           d_p.registerEnd("Density Compute");
           d_p.print();
 
@@ -2770,6 +2788,7 @@ namespace dftefe
           // check residual in density if else
           if (d_evaluateEnergyEverySCF)
             {
+              d_pTotal.registerStart("Energy Compute");
               if (auto hamiltonian = std::dynamic_pointer_cast<
                     ElectrostaticLocalFE<ValueTypeElectrostaticsBasis,
                                          ValueTypeElectrostaticsCoeff,
@@ -2860,6 +2879,7 @@ namespace dftefe
               d_rootCout << "Free Energy: " << totalEnergy - entEnergy << "\n";
 
               d_freeEnergy = totalEnergy - entEnergy;
+              d_pTotal.registerEnd("Energy Compute");
             }
 
           if (scfIter > 0)
@@ -2870,6 +2890,7 @@ namespace dftefe
 
       if (!d_evaluateEnergyEverySCF)
         {
+          d_pTotal.registerStart("Energy Compute");
           int rank;
           utils::mpi::MPICommRank(d_mpiCommDomain, &rank);
           utils::ConditionalOStream rootCout(std::cout, rank == 0, 16, true);
@@ -2964,6 +2985,7 @@ namespace dftefe
           rootCout << "Free Energy: " << totalEnergy - entEnergy << "\n";
 
           d_freeEnergy = totalEnergy - entEnergy;
+          d_pTotal.registerEnd("Energy Compute");
         }
     }
 
@@ -3007,5 +3029,22 @@ namespace dftefe
       return d_freeEnergy;
     }
 
+    template <typename ValueTypeElectrostaticsCoeff,
+              typename ValueTypeElectrostaticsBasis,
+              typename ValueTypeWaveFunctionCoeff,
+              typename ValueTypeWaveFunctionBasis,
+              utils::MemorySpace memorySpace,
+              size_type          dim>
+    void
+    KohnShamDFT<ValueTypeElectrostaticsCoeff,
+                ValueTypeElectrostaticsBasis,
+                ValueTypeWaveFunctionCoeff,
+                ValueTypeWaveFunctionBasis,
+                memorySpace,
+                dim>::printTotalInScopeTimings()
+    {
+      d_ksEigSolve->printTotalInScopeTimings();
+      d_pTotal.print();
+    }
   } // end of namespace ksdft
 } // end of namespace dftefe

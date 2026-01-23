@@ -1163,6 +1163,7 @@ int main(int argc, char** argv)
   pTot.registerEnd("Kohn Sham DFT Solve");
   pTot.print();
 
+  dftefeSolve->printTotalInScopeTimings();
   delete dftefeSolve;
 
   //gracefully end MPI

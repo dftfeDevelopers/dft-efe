@@ -172,6 +172,9 @@ namespace dftefe
       linearAlgebra::MultiVector<ValueType, memorySpace> &
       getOrthogonalizedFilteredSubspace();
 
+      void
+      printTotalInScopeTimings();
+
     private:
       std::vector<double>
       getLinearEigenSolveResidual(
@@ -214,7 +217,7 @@ namespace dftefe
       linearAlgebra::MultiVector<ValueType, memorySpace>
         *d_filteredSubspaceOrtho;
       linearAlgebra::MultiVector<ValueType, memorySpace> *d_filteredSubspace;
-      utils::Profiler                                     d_p;
+      utils::Profiler                                     d_p, d_pTotal;
       bool       d_isResidualChebyFilter;
       const bool d_storeIntermediateSubspaces;
 

@@ -506,6 +506,9 @@ namespace dftefe
       double
       getFreeEnergy();
 
+      void
+      printTotalInScopeTimings();
+
     private:
       const size_type       d_numWantedEigenvalues;
       std::vector<RealType> d_occupation;
@@ -576,7 +579,7 @@ namespace dftefe
 
       RealType        d_groundStateEnergy;
       bool            d_isSolved;
-      utils::Profiler d_p;
+      utils::Profiler d_p, d_pTotal;
       bool            d_isPSPCalculation;
 
       std::shared_ptr<ElectrostaticExcFE<ValueTypeElectrostaticsCoeff,

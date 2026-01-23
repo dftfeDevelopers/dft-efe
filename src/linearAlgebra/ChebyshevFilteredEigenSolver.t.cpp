@@ -55,6 +55,7 @@ namespace dftefe
         OrthogonalizationType                         orthoType,
         bool storeIntermediateSubspaces)
       : d_p(mpiPatternP2P->mpiCommunicator(), "CHFSI")
+      , d_pTotal(mpiPatternP2P->mpiCommunicator(), "CHFSI Solve Time")
       , d_isResidualChebyFilter(isResidualChebyshevFilter)
       , d_storeIntermediateSubspaces(storeIntermediateSubspaces)
       , d_eigenVecBatchSize(eigenVectorBatchSize)
@@ -210,6 +211,7 @@ namespace dftefe
         }
 
       d_p.registerStart("Chebyshev Filter");
+      d_pTotal.registerStart("Chebyshev Filter");
 
       size_type numEigenVectors   = eigenVectors.getNumberComponents();
       size_type eigenVecLocalSize = eigenVectors.localSize();
@@ -351,10 +353,12 @@ namespace dftefe
         }
 
       d_p.registerEnd("Chebyshev Filter");
+      d_pTotal.registerEnd("Chebyshev Filter");
 
       if (!d_isGHEP)
         {
           d_p.registerStart("OrthoNormalization");
+          d_pTotal.registerStart("OrthoNormalization");
 
           // B orthogonalization required of X -> X_O :
           // /*scratch2->eigenvector*/
@@ -387,18 +391,23 @@ namespace dftefe
               rootCout << "\n";
             }
           d_p.registerEnd("OrthoNormalization");
+          d_pTotal.registerEnd("OrthoNormalization");
 
           // [RR] Perform the Rayleigh–Ritz procedure for filteredSubspaceOrtho
 
           d_p.registerStart("RR Step");
+          d_pTotal.registerStart("RR Step");
           rrerr = d_rr->solve(A,
                               eigenValues,
                               eigenVectors, /*in/out*/
                               computeEigenVectors);
           d_p.registerEnd("RR Step");
+          d_pTotal.registerEnd("RR Step");
         }
       else
         {
+          d_p.registerStart("RR Step");
+          d_pTotal.registerStart("RR Step");
           OrthonormalizationErrorCode err1 =
             OrthonormalizationErrorCode::SUCCESS;
           orthoerr = OrthonormalizationErrorMsg::isSuccessAndMsg(err1);
@@ -411,6 +420,8 @@ namespace dftefe
                               eigenValues,
                               eigenVectors, /*in/out*/
                               computeEigenVectors);
+          d_p.registerEnd("RR Step");
+          d_pTotal.registerEnd("RR Step");
         }
 
       d_p.print();
@@ -486,5 +497,15 @@ namespace dftefe
         }
     }
 
+    template <typename ValueTypeOperator,
+              typename ValueTypeOperand,
+              utils::MemorySpace memorySpace>
+    void
+    ChebyshevFilteredEigenSolver<ValueTypeOperator,
+                                 ValueTypeOperand,
+                                 memorySpace>::printTotalInScopeTimings()
+    {
+      d_pTotal.print();
+    }
   } // end of namespace linearAlgebra
 } // end of namespace dftefe

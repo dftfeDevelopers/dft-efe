@@ -90,6 +90,8 @@ namespace dftefe
       , d_orthoType(orthoType)
       , d_elpaScala(&elpaScala)
       , d_isGHEP(isGHEP)
+      , d_pTotal(lanczosGuess.getMPIPatternP2P()->mpiCommunicator(),
+                 "Kohn Sham EigenSolver Solve Time")
     {
       reinitBasis(lanczosGuess, MLanczos, MInvLanczos);
     }
@@ -250,6 +252,7 @@ namespace dftefe
 
       std::vector<RealType> eigenValuesLanczos(2);
       d_p.registerStart("Lanczos Solve");
+      d_pTotal.registerStart("Lanczos Solve");
       lanczosErr = lanczos.solve(kohnShamOperator,
                                  eigenValuesLanczos,
                                  eigenVectorsLanczos,
@@ -257,6 +260,7 @@ namespace dftefe
                                  *d_MLanczos,
                                  *d_MInvLanczos);
       d_p.registerEnd("Lanczos Solve");
+      d_pTotal.registerEnd("Lanczos Solve");
 
       std::vector<RealType> diagonal(0), subDiagonal(0);
       lanczos.getTridiagonalMatrix(diagonal, subDiagonal);
@@ -307,6 +311,7 @@ namespace dftefe
                      << d_chebyshevPolynomialDegree << "\n";
 
           d_p.registerStart("Reinit CHFSI");
+          d_pTotal.registerStart("Lanczos Solve");
           d_chfsi->reinit(d_wantedSpectrumLowerBound,
                           d_wantedSpectrumUpperBound,
                           eigenValuesLanczos[1] + residual,
@@ -314,6 +319,7 @@ namespace dftefe
                           ksdft::LinearEigenSolverDefaults::ILL_COND_TOL,
                           kohnShamWaveFunctions.getMPIPatternP2P(),
                           kohnShamWaveFunctions.getLinAlgOpContext());
+          d_pTotal.registerStart("Lanczos Solve");
           d_p.registerEnd("Reinit CHFSI");
 
           for (; iPass < d_maxChebyshevFilterPass; iPass++)
@@ -321,6 +327,7 @@ namespace dftefe
               // do chebyshev filetered eigensolve
 
               d_p.registerStart("Solve CHFSI");
+              d_pTotal.registerStart("Solve CHFSI");
               chfsiErr = d_chfsi->solve(kohnShamOperator,
                                         kohnShamEnergies,
                                         kohnShamWaveFunctions,
@@ -329,6 +336,7 @@ namespace dftefe
                                         MInv);
 
               kohnShamWaveFunctions.updateGhostValues();
+              d_pTotal.registerEnd("Solve CHFSI");
               d_p.registerEnd("Solve CHFSI");
 
               /*
@@ -394,6 +402,7 @@ namespace dftefe
               // std::cout << "\n";
 
               d_p.registerStart("Compute chemical potential");
+              d_pTotal.registerStart("Compute chemical potential");
               // Calculate the chemical potential using newton raphson
 
               std::shared_ptr<ksdft::FractionalOccupancyFunction> fOcc =
@@ -434,7 +443,9 @@ namespace dftefe
                                   kohnShamEnergies.data());
 
               d_p.registerEnd("Compute chemical potential");
+              d_pTotal.registerEnd("Compute chemical potential");
               d_p.registerStart("Compute Residuals");
+              d_pTotal.registerStart("Compute Residuals");
 
               size_type numLevelsBelowFermiEnergyResidualConverged = 0;
               if (computeWaveFunctions)
@@ -471,6 +482,7 @@ namespace dftefe
                     << "Not Computing EigenVectors. Linear Eigensolve break condition only satisfied by Max Cheby Filter Pass.";
                 }
               d_p.registerEnd("Compute Residuals");
+              d_pTotal.registerEnd("Compute Residuals");
 
               // *d_waveFunctionSubspaceGuess = kohnShamWaveFunctions;
 
@@ -483,6 +495,7 @@ namespace dftefe
                   d_wantedSpectrumLowerBound = kohnShamEnergies[0];
                   d_wantedSpectrumUpperBound =
                     kohnShamEnergies[d_numWantedEigenvalues - 1];
+                  d_pTotal.registerStart("Reinit CHFSI");
                   d_p.registerStart("Reinit CHFSI");
                   d_chfsi->reinit(
                     d_wantedSpectrumLowerBound,
@@ -493,6 +506,7 @@ namespace dftefe
                     kohnShamWaveFunctions.getMPIPatternP2P(),
                     kohnShamWaveFunctions.getLinAlgOpContext());
                   d_p.registerEnd("Reinit CHFSI");
+                  d_pTotal.registerEnd("Reinit CHFSI");
                 }
             }
           if (!chfsiErr.isSuccess)
@@ -744,6 +758,17 @@ namespace dftefe
         d_isSolved,
         "Cannot call getEigenSolveResidualNorm() before solving the eigenproblem.");
       return *d_filteredSubspaceOrtho;
+    }
+
+    template <typename ValueTypeOperator,
+              typename ValueTypeOperand,
+              utils::MemorySpace memorySpace>
+    void
+    KohnShamEigenSolver<ValueTypeOperator, ValueTypeOperand, memorySpace>::
+      printTotalInScopeTimings()
+    {
+      d_chfsi->printTotalInScopeTimings();
+      d_pTotal.print();
     }
 
   } // namespace ksdft

@@ -139,6 +139,9 @@ namespace dftefe
       MultiVector<ValueType, memorySpace> &
       getOrthogonalizedFilteredSubspace();
 
+      void
+      printTotalInScopeTimings();
+
     private:
       double                                      d_wantedSpectrumLowerBound;
       double                                      d_wantedSpectrumUpperBound;
@@ -163,7 +166,7 @@ namespace dftefe
         OrthonormalizationFunctions<ValueTypeOperator, ValueType, memorySpace>>
         d_ortho;
 
-      utils::Profiler d_p;
+      utils::Profiler d_p, d_pTotal;
       const bool      d_isResidualChebyFilter;
       size_type       d_batchSizeSmall;
 
