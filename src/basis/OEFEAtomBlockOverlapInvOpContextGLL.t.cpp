@@ -725,92 +725,130 @@ namespace dftefe
         d_diagonalInv, 1);
 
       // Now form the enrichment block matrix.
-      std::shared_ptr<utils::MemoryStorage<ValueTypeOperator, memorySpace>>
-        basisOverlapInvEnrichmentBlockExact = std::make_shared<
-          utils::MemoryStorage<ValueTypeOperator, memorySpace>>(
-          d_nglobalEnrichmentIds * d_nglobalEnrichmentIds);
 
-      utils::MemoryStorage<ValueTypeOperator, memorySpace>
-        basisOverlapInvEnrichmentBlock(d_nglobalEnrichmentIds *
-                                         d_nglobalEnrichmentIds,
-                                       0);
+      // utils::MemoryStorage<ValueTypeOperator, memorySpace>
+      //   basisOverlapInvEnrichmentBlockExact(
+      //     d_nglobalEnrichmentIds * d_nglobalEnrichmentIds);
 
-      size_type cellId                     = 0;
-      size_type cumulativeBasisDataInCells = 0;
-      for (auto enrichmentVecInCell :
-           efebasisDofHandler.getEnrichmentIdsPartition()
-             ->overlappingEnrichmentIdsInCells())
-        {
-          size_type nCellEnrichmentDofs = enrichmentVecInCell.size();
-          for (unsigned int j = 0; j < nCellEnrichmentDofs; j++)
-            {
-              for (unsigned int k = 0; k < nCellEnrichmentDofs; k++)
-                {
-                  *(basisOverlapInvEnrichmentBlockExact->data() +
-                    enrichmentVecInCell[j] * d_nglobalEnrichmentIds +
-                    enrichmentVecInCell[k]) +=
-                    *(NiNjInAllCells.data() + cumulativeBasisDataInCells +
-                      (numCellClassicalDofs + nCellEnrichmentDofs) *
-                        (numCellClassicalDofs + j) +
-                      numCellClassicalDofs + k);
+      // utils::MemoryStorage<ValueTypeOperator, memorySpace>
+      //   basisOverlapEnrichmentBlock(d_nglobalEnrichmentIds *
+      //                                    d_nglobalEnrichmentIds,
+      //                                  0);
 
-                  basis::EnrichmentIdAttribute eIdAttrj =
-                    efeBDH->getEnrichmentIdsPartition()
-                      ->getEnrichmentIdAttribute(enrichmentVecInCell[j]);
+      // size_type cellId                     = 0;
+      // size_type cumulativeBasisDataInCells = 0;
+      // for (auto enrichmentVecInCell :
+      //      efebasisDofHandler.getEnrichmentIdsPartition()
+      //        ->overlappingEnrichmentIdsInCells())
+      //   {
+      //     size_type nCellEnrichmentDofs = enrichmentVecInCell.size();
+      //     for (unsigned int j = 0; j < nCellEnrichmentDofs; j++)
+      //       {
+      //         for (unsigned int k = 0; k < nCellEnrichmentDofs; k++)
+      //           {
+      //             // *(basisOverlapInvEnrichmentBlockExact.data() +
+      //             //   enrichmentVecInCell[j] * d_nglobalEnrichmentIds +
+      //             //   enrichmentVecInCell[k]) +=
+      //             //   *(NiNjInAllCells.data() + cumulativeBasisDataInCells +
+      //             //     (numCellClassicalDofs + nCellEnrichmentDofs) *
+      //             //       (numCellClassicalDofs + j) +
+      //             //     numCellClassicalDofs + k);
 
-                  basis::EnrichmentIdAttribute eIdAttrk =
-                    efeBDH->getEnrichmentIdsPartition()
-                      ->getEnrichmentIdAttribute(enrichmentVecInCell[k]);
+      //             basis::EnrichmentIdAttribute eIdAttrj =
+      //               efeBDH->getEnrichmentIdsPartition()
+      //                 ->getEnrichmentIdAttribute(enrichmentVecInCell[j]);
 
-                  if (eIdAttrj.atomId == eIdAttrk.atomId)
-                    {
-                      *(basisOverlapInvEnrichmentBlock.data() +
-                        enrichmentVecInCell[j] * d_nglobalEnrichmentIds +
-                        enrichmentVecInCell[k]) +=
-                        *(NiNjInAllCells.data() + cumulativeBasisDataInCells +
-                          (numCellClassicalDofs + nCellEnrichmentDofs) *
-                            (numCellClassicalDofs + j) +
-                          numCellClassicalDofs + k);
-                    }
-                }
-            }
-          cumulativeBasisDataInCells += utils::mathFunctions::sizeTypePow(
-            (nCellEnrichmentDofs + numCellClassicalDofs), 2);
-          cellId += 1;
-        }
+      //             basis::EnrichmentIdAttribute eIdAttrk =
+      //               efeBDH->getEnrichmentIdsPartition()
+      //                 ->getEnrichmentIdAttribute(enrichmentVecInCell[k]);
 
-      int err = utils::mpi::MPIAllreduce<memorySpace>(
-        utils::mpi::MPIInPlace,
-        basisOverlapInvEnrichmentBlockExact->data(),
-        basisOverlapInvEnrichmentBlockExact->size(),
-        utils::mpi::MPIDouble,
-        utils::mpi::MPISum,
-        d_feBasisManager->getMPIPatternP2P()->mpiCommunicator());
-      std::pair<bool, std::string> mpiIsSuccessAndMsg =
-        utils::mpi::MPIErrIsSuccessAndMsg(err);
-      utils::throwException(mpiIsSuccessAndMsg.first,
-                            "MPI Error:" + mpiIsSuccessAndMsg.second);
+      //             if (eIdAttrj.atomId == eIdAttrk.atomId)
+      //               {
+      //                 *(basisOverlapEnrichmentBlock.data() +
+      //                   enrichmentVecInCell[j] * d_nglobalEnrichmentIds +
+      //                   enrichmentVecInCell[k]) +=
+      //                   *(NiNjInAllCells.data() + cumulativeBasisDataInCells
+      //                   +
+      //                     (numCellClassicalDofs + nCellEnrichmentDofs) *
+      //                       (numCellClassicalDofs + j) +
+      //                     numCellClassicalDofs + k);
+      //               }
+      //           }
+      //       }
+      //     cumulativeBasisDataInCells += utils::mathFunctions::sizeTypePow(
+      //       (nCellEnrichmentDofs + numCellClassicalDofs), 2);
+      //     cellId += 1;
+      //   }
 
-      linearAlgebra::blasLapack::inverse<ValueTypeOperator, memorySpace>(
-        d_nglobalEnrichmentIds,
-        basisOverlapInvEnrichmentBlockExact->data(),
-        *(d_diagonalInv.getLinAlgOpContext()));
+      // // int err = utils::mpi::MPIAllreduce<memorySpace>(
+      // //   utils::mpi::MPIInPlace,
+      // //   basisOverlapInvEnrichmentBlockExact.data(),
+      // //   basisOverlapInvEnrichmentBlockExact.size(),
+      // //   utils::mpi::MPIDouble,
+      // //   utils::mpi::MPISum,
+      // //   d_feBasisManager->getMPIPatternP2P()->mpiCommunicator());
+      // // std::pair<bool, std::string> mpiIsSuccessAndMsg =
+      // //   utils::mpi::MPIErrIsSuccessAndMsg(err);
+      // // utils::throwException(mpiIsSuccessAndMsg.first,
+      // //                       "MPI Error:" + mpiIsSuccessAndMsg.second);
 
-      err = utils::mpi::MPIAllreduce<memorySpace>(
-        utils::mpi::MPIInPlace,
-        basisOverlapInvEnrichmentBlock.data(),
-        basisOverlapInvEnrichmentBlock.size(),
-        utils::mpi::MPIDouble,
-        utils::mpi::MPISum,
-        d_feBasisManager->getMPIPatternP2P()->mpiCommunicator());
-      mpiIsSuccessAndMsg = utils::mpi::MPIErrIsSuccessAndMsg(err);
-      utils::throwException(mpiIsSuccessAndMsg.first,
-                            "MPI Error:" + mpiIsSuccessAndMsg.second);
+      // // linearAlgebra::blasLapack::inverse<ValueTypeOperator, memorySpace>(
+      // //   d_nglobalEnrichmentIds,
+      // //   basisOverlapInvEnrichmentBlockExact.data(),
+      // //   *(d_diagonalInv.getLinAlgOpContext()));
 
-      linearAlgebra::blasLapack::inverse<ValueTypeOperator, memorySpace>(
-        d_nglobalEnrichmentIds,
-        basisOverlapInvEnrichmentBlock.data(),
-        *(d_diagonalInv.getLinAlgOpContext()));
+      // int err = utils::mpi::MPIAllreduce<memorySpace>(
+      //   utils::mpi::MPIInPlace,
+      //   basisOverlapEnrichmentBlock.data(),
+      //   basisOverlapEnrichmentBlock.size(),
+      //   utils::mpi::MPIDouble,
+      //   utils::mpi::MPISum,
+      //   d_feBasisManager->getMPIPatternP2P()->mpiCommunicator());
+      // std::pair<bool, std::string> mpiIsSuccessAndMsg =
+      //   utils::mpi::MPIErrIsSuccessAndMsg(err);
+      // utils::throwException(mpiIsSuccessAndMsg.first,
+      //                       "MPI Error:" + mpiIsSuccessAndMsg.second);
+
+      // global_size_type globalEnrichmentStartId =
+      //   efeBDH->getGlobalRanges()[1].first;
+
+      // std::pair<global_size_type, global_size_type> locOwnEidPair{
+      //   efeBDH->getLocallyOwnedRanges()[1].first - globalEnrichmentStartId,
+      //   efeBDH->getLocallyOwnedRanges()[1].second - globalEnrichmentStartId};
+
+      // global_size_type nlocallyOwnedEnrichmentIds =
+      //   locOwnEidPair.second - locOwnEidPair.first;
+
+      // d_atomBlockEnrichmentOverlapInv.resize(nlocallyOwnedEnrichmentIds *
+      //                                        nlocallyOwnedEnrichmentIds);
+
+      // for (global_size_type i = 0; i < nlocallyOwnedEnrichmentIds; i++)
+      //   {
+      //     for (global_size_type j = 0; j < nlocallyOwnedEnrichmentIds; j++)
+      //       {
+      //         *(d_atomBlockEnrichmentOverlapInv.data() +
+      //           i * nlocallyOwnedEnrichmentIds + j) =
+      //           *(basisOverlapEnrichmentBlock.data() +
+      //             (i + locOwnEidPair.first) * d_nglobalEnrichmentIds +
+      //             (j + locOwnEidPair.first));
+      //       }
+      //   }
+
+
+      std::pair<global_size_type, global_size_type> locOwnPair =
+        efebasisDofHandler.getEnrichmentIdsPartition()
+          ->locallyOwnedEnrichmentIds();
+
+      std::vector<global_size_type> ghostVec =
+        efebasisDofHandler.getEnrichmentIdsPartition()->ghostEnrichmentIds();
+
+      std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
+        mpiPatternP2P =
+          std::make_shared<const utils::mpi::MPIPatternP2P<memorySpace>>(
+            std::vector<std::pair<global_size_type, global_size_type>>{
+              locOwnPair},
+            ghostVec,
+            d_feBasisManager->getMPIPatternP2P()->mpiCommunicator());
 
       global_size_type globalEnrichmentStartId =
         efeBDH->getGlobalRanges()[1].first;
@@ -822,20 +860,99 @@ namespace dftefe
       global_size_type nlocallyOwnedEnrichmentIds =
         locOwnEidPair.second - locOwnEidPair.first;
 
+      size_type nLocalEnrichmentIds =
+        ghostVec.size() + nlocallyOwnedEnrichmentIds;
+
       d_atomBlockEnrichmentOverlapInv.resize(nlocallyOwnedEnrichmentIds *
                                              nlocallyOwnedEnrichmentIds);
 
-      for (global_size_type i = 0; i < nlocallyOwnedEnrichmentIds; i++)
+      // utils::MemoryStorage<ValueTypeOperator, memorySpace>
+      // atomBlockEnrichmentOverlap(nlocallyOwnedEnrichmentIds *
+      //                                     nlocallyOwnedEnrichmentIds);
+
+      global_size_type enrichBatchSize = 5000;
+      for (global_size_type enrichStartId = 0;
+           enrichStartId < d_nglobalEnrichmentIds;
+           enrichStartId += enrichBatchSize)
         {
-          for (global_size_type j = 0; j < nlocallyOwnedEnrichmentIds; j++)
+          const size_type enrichEndId =
+            std::min(enrichStartId + enrichBatchSize, d_nglobalEnrichmentIds);
+          const size_type numEnrichInBatch = enrichEndId - enrichStartId;
+
+          linearAlgebra::MultiVector<ValueType, memorySpace>
+            basisOverlapEnrichmentBlock(mpiPatternP2P,
+                                        linAlgOpContext,
+                                        numEnrichInBatch);
+
+          size_type cellId                     = 0;
+          size_type cumulativeBasisDataInCells = 0;
+          for (auto enrichmentVecInCell :
+               efebasisDofHandler.getEnrichmentIdsPartition()
+                 ->overlappingEnrichmentIdsInCells())
             {
-              *(d_atomBlockEnrichmentOverlapInv.data() +
-                i * nlocallyOwnedEnrichmentIds + j) =
-                *(basisOverlapInvEnrichmentBlock.data() +
-                  (i + locOwnEidPair.first) * d_nglobalEnrichmentIds +
-                  (j + locOwnEidPair.first));
+              size_type nCellEnrichmentDofs = enrichmentVecInCell.size();
+              for (unsigned int j = 0; j < nCellEnrichmentDofs; j++)
+                {
+                  for (unsigned int k = 0; k < nCellEnrichmentDofs; k++)
+                    {
+                      if (enrichmentVecInCell[k] >= enrichStartId &&
+                          enrichmentVecInCell[k] < enrichEndId)
+                        {
+                          basis::EnrichmentIdAttribute eIdAttrj =
+                            efeBDH->getEnrichmentIdsPartition()
+                              ->getEnrichmentIdAttribute(
+                                enrichmentVecInCell[j]);
+
+                          basis::EnrichmentIdAttribute eIdAttrk =
+                            efeBDH->getEnrichmentIdsPartition()
+                              ->getEnrichmentIdAttribute(
+                                enrichmentVecInCell[k]);
+
+                          if (eIdAttrj.atomId == eIdAttrk.atomId)
+                            {
+                              *(basisOverlapEnrichmentBlock.data() +
+                                mpiPatternP2P->globalToLocal(
+                                  enrichmentVecInCell[j]) *
+                                  numEnrichInBatch +
+                                (enrichmentVecInCell[k] - enrichStartId)) +=
+                                *(NiNjInAllCells.data() +
+                                  cumulativeBasisDataInCells +
+                                  (numCellClassicalDofs + nCellEnrichmentDofs) *
+                                    (numCellClassicalDofs + j) +
+                                  numCellClassicalDofs + k);
+                            }
+                        }
+                    }
+                }
+              cumulativeBasisDataInCells += utils::mathFunctions::sizeTypePow(
+                (nCellEnrichmentDofs + numCellClassicalDofs), 2);
+              cellId += 1;
+            }
+
+          basisOverlapEnrichmentBlock.accumulateAddLocallyOwned();
+
+          for (global_size_type i = 0; i < nlocallyOwnedEnrichmentIds; i++)
+            {
+              for (global_size_type j = 0; j < nlocallyOwnedEnrichmentIds; j++)
+                {
+                  if ((j + locOwnEidPair.first) >= enrichStartId &&
+                      (j + locOwnEidPair.first) < enrichEndId)
+                    *(d_atomBlockEnrichmentOverlapInv.data() +
+                      i * nlocallyOwnedEnrichmentIds + j) =
+                      *(basisOverlapEnrichmentBlock.data() +
+                        mpiPatternP2P->globalToLocal(i + locOwnEidPair.first) *
+                          numEnrichInBatch +
+                        (j + locOwnEidPair.first) - enrichStartId);
+                }
             }
         }
+
+      if (nlocallyOwnedEnrichmentIds > 0)
+        linearAlgebra::LapackError ret =
+          linearAlgebra::blasLapack::inverse<ValueTypeOperator, memorySpace>(
+            nlocallyOwnedEnrichmentIds,
+            d_atomBlockEnrichmentOverlapInv.data(),
+            *(d_diagonalInv.getLinAlgOpContext()));
 
       int rank;
       utils::mpi::MPICommRank(
@@ -863,11 +980,11 @@ namespace dftefe
       //     for (int i = 0; i < basisOverlapInvEnrichmentBlock.size(); i++)
       //       {
       //         *(basisOverlapInvEnrichmentBlock.data() + i) =
-      //           *(basisOverlapInvEnrichmentBlockExact->data() + i) -
+      //           *(basisOverlapInvEnrichmentBlockExact.data() + i) -
       //           *(basisOverlapInvEnrichmentBlock.data() + i);
 
-      //         normMInvexact += *(basisOverlapInvEnrichmentBlockExact->data()
-      //         + i) * *(basisOverlapInvEnrichmentBlockExact->data() + i);
+      //         normMInvexact += *(basisOverlapInvEnrichmentBlockExact.data()
+      //         + i) * *(basisOverlapInvEnrichmentBlockExact.data() + i);
       //       }
       //     normMInvexact = std::sqrt(normMInvexact);
 

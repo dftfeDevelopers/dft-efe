@@ -1092,10 +1092,32 @@ namespace dftefe
         }
       **/
 
+      for (size_type i = 0; i < d_nglobalEnrichmentIds; i++)
+        {
+          if (std::abs(*(basisOverlapEnrichmentBlockSTL.data() +
+                         i * d_nglobalEnrichmentIds + i)) < 1e-10)
+            {
+              utils::throwException(
+                false,
+                "One of diagonal elements of M is very small : " +
+                  std::to_string(i));
+            }
+        }
+
       linearAlgebra::blasLapack::inverse<ValueTypeOperator, memorySpace>(
         d_nglobalEnrichmentIds,
         basisOverlapEnrichmentBlockSTL.data(),
         *(d_diagonalInv.getLinAlgOpContext()));
+
+      for (size_type i = 0; i < d_nglobalEnrichmentIds; i++)
+        {
+          if (std::abs(*(basisOverlapEnrichmentBlockSTL.data() +
+                         i * d_nglobalEnrichmentIds + i)) > 1e10)
+            {
+              utils::throwException(
+                false, "One of diagonal elements of MInv is very large.");
+            }
+        }
 
       /**
       rootCout << "Enrichment Block Inverse Matrix: " << std::endl;

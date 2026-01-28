@@ -20,25 +20,18 @@
  ******************************************************************************/
 
 /*
- * @author Avirup Sircar
+ * @author Bikash Kanungo
  */
 
-#ifndef dftefeAtomSphericalDataPSP_h
-#define dftefeAtomSphericalDataPSP_h
+#ifndef dftefeAtomSphericalDataEnrichment_h
+#define dftefeAtomSphericalDataEnrichment_h
 
 #include <utils/TypeConfig.h>
 #include <atoms/SphericalData.h>
 #include <atoms/AtomSphericalData.h>
-#include <atoms/SphericalDataNumerical.h>
-#include <atoms/SphericalDataMixed.h>
-#include <utils/PointChargePotentialFunction.h>
 #include <memory>
 #include <unordered_map>
 #include <map>
-#include <libxml/parser.h>
-#include <libxml/xpath.h>
-#include <libxml/tree.h>
-#include <libxml/xpathInternals.h>
 #include <vector>
 #include <string>
 namespace dftefe
@@ -60,26 +53,18 @@ namespace dftefe
      * \f$m\f$. See https://en.wikipedia.org/wiki/Spherical_harmonics for more
      * details on spherical harmonics.
      */
-    class AtomSphericalDataPSP : public AtomSphericalData
+    class AtomSphericalDataEnrichmentJSON : public AtomSphericalData
     {
     public:
-      struct XPathInfo
-      {
-        xmlDocPtr   doc;
-        std::string fileName;
-        std::string xpath;
-        std::string ns;
-        std::string nsHRef;
-      };
+      AtomSphericalDataEnrichmentJSON(
+        const std::string                        fileName,
+        const std::vector<std::string> &         fieldNames,
+        const std::vector<std::string> &         metadataNames,
+        const SphericalHarmonicFunctions &       sphericalHarmonicFunc,
+        const std::map<std::string, std::string> additionalParams =
+          std::map<std::string, std::string>());
 
-    public:
-      AtomSphericalDataPSP(
-        const std::string                 fileName,
-        const std::vector<std::string> &  fieldNames,
-        const std::vector<std::string> &  metadataNames,
-        const SphericalHarmonicFunctions &sphericalHarmonicFunc);
-
-      ~AtomSphericalDataPSP() = default;
+      ~AtomSphericalDataEnrichmentJSON() = default;
 
       void
       addFieldName(const std::string fieldName) override;
@@ -112,14 +97,31 @@ namespace dftefe
 
     private:
       void
-      getSphericalDataFromXMLNode(
-        std::vector<std::shared_ptr<SphericalData>> &sphericalDataVec,
-        const std::vector<double> &                  radialPoints,
-        XPathInfo &                                  xPathInfo,
-        const std::string &                          fieldName,
-        const SphericalHarmonicFunctions &           sphericalHarmonicFunc);
+      getSphericalDataFromJSON(
+        std::vector<std::vector<double>> &radialValuesVec,
+        std::vector<std::vector<int>> &   qNumVec,
+        const std::vector<double> &       radialPoints,
+        const std::string &               fieldName,
+        const std::string &               fileName,
+        std::vector<std::pair<int, int>> &nlPairs);
 
-      std::string              d_fileName, d_rootElementName;
+      void
+      getCutoffs(std::vector<std::pair<double, double>> &cutOffInfoVec,
+                 std::vector<std::vector<double>> &      radialValuesVec,
+                 std::vector<std::vector<int>> &         qNumVec,
+                 const std::vector<double> &             radialPoints,
+                 const std::string &                     fieldName,
+                 const std::string &                     fileName,
+                 std::vector<std::pair<int, int>> &      nlPairs);
+
+      std::vector<std::vector<double>> d_occupancies;
+      std::vector<std::vector<double>> d_eigenValues;
+
+      double      d_atomCharge;
+      double      d_smearedCharge;
+      std::string d_PSPorAE;
+
+      std::string              d_fileName;
       std::vector<std::string> d_fieldNames;
       std::vector<std::string> d_metadataNames;
       std::unordered_map<std::string,
@@ -128,16 +130,7 @@ namespace dftefe
       std::unordered_map<std::string, std::map<std::vector<int>, size_type>>
                                                    d_qNumbersToIdMap;
       std::unordered_map<std::string, std::string> d_metadata;
-      double                                       d_zvalance;
-      const double d_PSPFileVLocalMaxTail, d_PSPFileVLocalTruncTol;
-      int          d_lmax;
-      int          d_numProj;
-      std::shared_ptr<utils::ScalarSpatialFunctionReal>
-        d_scalarSpatialFnAfterRadialGrid;
-
-      std::vector<double>               d_radialPoints;
-      const SphericalHarmonicFunctions &d_sphericalHarmonicFunc;
     };
   } // end of namespace atoms
 } // end of namespace dftefe
-#endif // dftefeAtomSphericalDataPSP_h
+#endif // dftefeAtomSphericalDataEnrichment_h

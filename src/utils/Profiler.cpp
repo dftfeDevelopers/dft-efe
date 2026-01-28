@@ -310,7 +310,8 @@ namespace dftefe
     }
 
     void
-    printCurrentMemoryUsage(const MPI_Comm &mpiComm, const std::string message)
+    printCurrentMemoryUsage(const utils::mpi::MPIComm &mpiComm,
+                            const std::string          message)
     {
       int rank;
       mpi::MPICommRank(mpiComm, &rank);

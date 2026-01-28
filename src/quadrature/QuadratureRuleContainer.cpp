@@ -397,14 +397,25 @@ namespace dftefe
         std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
       timer["Initialization"] += duration.count();
 
-      std::vector<size_type> orderVec(0);
-      std::vector<size_type> iterVec(0);
-      std::vector<size_type> quadPointsVec(0);
+      std::vector<size_type>       orderVec(0);
+      std::vector<size_type>       iterVec(0);
+      std::vector<size_type>       quadPointsVec(0);
+      int                          rank;
+      int                          err = utils::mpi::MPICommRank(comm, &rank);
+      std::pair<bool, std::string> mpiIsSuccessAndMsg =
+        utils::mpi::MPIErrIsSuccessAndMsg(err);
+      utils::throwException(mpiIsSuccessAndMsg.first,
+                            "MPI Error:" + mpiIsSuccessAndMsg.second);
+
+      utils::ConditionalOStream rootCout(std::cout);
+      rootCout.setCondition(rank == 0);
 
       for (size_type i = order1DMin; i <= order1DMax; i++)
         {
           for (size_type j = 1; j <= copies1DMax; j++)
             {
+              rootCout << "Computing for Order Number " << i
+                       << ", and Copy Number " << j << std::endl;
               start = std::chrono::high_resolution_clock::now();
               QuadratureRuleGaussIterated iteratedGaussQuadratureRule(d_dim,
                                                                       i,
@@ -534,73 +545,47 @@ namespace dftefe
                       std::min_element(std::begin(quadPointsVec),
                                        std::end(quadPointsVec)));
 
-      int                          nProcs;
-      int                          err = utils::mpi::MPICommSize(comm, &nProcs);
-      std::pair<bool, std::string> mpiIsSuccessAndMsg =
-        utils::mpi::MPIErrIsSuccessAndMsg(err);
-      utils::throwException(mpiIsSuccessAndMsg.first,
-                            "MPI Error:" + mpiIsSuccessAndMsg.second);
-
-      int rank;
-      err                = utils::mpi::MPICommRank(comm, &rank);
+      int nProcs;
+      err                = utils::mpi::MPICommSize(comm, &nProcs);
       mpiIsSuccessAndMsg = utils::mpi::MPIErrIsSuccessAndMsg(err);
       utils::throwException(mpiIsSuccessAndMsg.first,
                             "MPI Error:" + mpiIsSuccessAndMsg.second);
 
-      std::vector<size_type> optimumOrderInAllProcs(nProcs, 0),
-        optimumOrderInAllProcsTmp(nProcs, 0);
-      std::vector<size_type> optimumIterInAllProcs(nProcs, 0),
-        optimumIterInAllProcsTmp(nProcs, 0);
-      std::vector<size_type> optimumQuadPointsInAllProcs(nProcs, 0),
-        optimumQuadPointsInAllProcsTmp(nProcs, 0);
+      std::vector<size_type> optimumOrderIterQuadPtsInAllProcs(3 * nProcs, 0);
 
-      optimumOrderInAllProcsTmp[rank] = orderVec[smallestNQuadPointInProcIndex];
-      optimumIterInAllProcsTmp[rank]  = iterVec[smallestNQuadPointInProcIndex];
-      optimumQuadPointsInAllProcsTmp[rank] =
+      optimumOrderIterQuadPtsInAllProcs[rank] =
+        orderVec[smallestNQuadPointInProcIndex];
+      optimumOrderIterQuadPtsInAllProcs[rank + nProcs] =
+        iterVec[smallestNQuadPointInProcIndex];
+      optimumOrderIterQuadPtsInAllProcs[rank + 2 * nProcs] =
         quadPointsVec[smallestNQuadPointInProcIndex];
 
       err = utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
-        optimumOrderInAllProcsTmp.data(),
-        optimumOrderInAllProcs.data(),
-        optimumOrderInAllProcsTmp.size(),
-        utils::mpi::MPIUnsigned,
+        utils::mpi::MPIInPlace,
+        optimumOrderIterQuadPtsInAllProcs.data(),
+        optimumOrderIterQuadPtsInAllProcs.size(),
+        utils::mpi::Types<size_type>::getMPIDatatype(),
         utils::mpi::MPISum,
         comm);
+
       mpiIsSuccessAndMsg = utils::mpi::MPIErrIsSuccessAndMsg(err);
       utils::throwException(mpiIsSuccessAndMsg.first,
                             "MPI Error:" + mpiIsSuccessAndMsg.second);
 
-      err = utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
-        optimumIterInAllProcsTmp.data(),
-        optimumIterInAllProcs.data(),
-        optimumIterInAllProcsTmp.size(),
-        utils::mpi::MPIUnsigned,
-        utils::mpi::MPISum,
-        comm);
-      mpiIsSuccessAndMsg = utils::mpi::MPIErrIsSuccessAndMsg(err);
-      utils::throwException(mpiIsSuccessAndMsg.first,
-                            "MPI Error:" + mpiIsSuccessAndMsg.second);
+      rootCout << "Computed optimal Quadrature for all procs. " << std::endl;
 
-      err = utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
-        optimumQuadPointsInAllProcsTmp.data(),
-        optimumQuadPointsInAllProcs.data(),
-        optimumQuadPointsInAllProcsTmp.size(),
-        utils::mpi::MPIUnsigned,
-        utils::mpi::MPISum,
-        comm);
-      mpiIsSuccessAndMsg = utils::mpi::MPIErrIsSuccessAndMsg(err);
-      utils::throwException(mpiIsSuccessAndMsg.first,
-                            "MPI Error:" + mpiIsSuccessAndMsg.second);
-
-      size_type largestNQuadPointInAllProcsIndex =
-        std::distance(std::begin(optimumQuadPointsInAllProcs),
-                      std::max_element(std::begin(optimumQuadPointsInAllProcs),
-                                       std::end(optimumQuadPointsInAllProcs)));
+      size_type largestNQuadPointInAllProcsIndex = std::distance(
+        std::begin(optimumOrderIterQuadPtsInAllProcs),
+        std::max_element(std::begin(optimumOrderIterQuadPtsInAllProcs) +
+                           2 * nProcs,
+                         std::end(optimumOrderIterQuadPtsInAllProcs)));
 
       size_type order =
-        optimumOrderInAllProcs[largestNQuadPointInAllProcsIndex];
+        optimumOrderIterQuadPtsInAllProcs[largestNQuadPointInAllProcsIndex -
+                                          2 * nProcs];
       size_type copies =
-        optimumIterInAllProcs[largestNQuadPointInAllProcsIndex];
+        optimumOrderIterQuadPtsInAllProcs[largestNQuadPointInAllProcsIndex -
+                                          nProcs];
       stop = std::chrono::high_resolution_clock::now();
       duration =
         std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
@@ -613,13 +598,11 @@ namespace dftefe
                                                             order,
                                                             copies);
 
-      utils::ConditionalOStream rootCout(std::cout);
-      rootCout.setCondition(rank == 0);
       rootCout
         << "Chosen pairs for Gauss Subdivided with optimized algorithm Quadrature are: "
         << order << "," << copies << " Num Quad Pts: "
-        << optimumQuadPointsInAllProcs[largestNQuadPointInAllProcsIndex]
-        << std::endl;
+        << optimumOrderIterQuadPtsInAllProcs[largestNQuadPointInAllProcsIndex]
+        << " per cell." << std::endl;
 
       d_quadratureRuleVec =
         std::vector<std::shared_ptr<const QuadratureRule>>(d_numCells,

@@ -47,10 +47,12 @@ namespace dftefe
         {"rhoatom", "PP_RHOATOM"}};
 
     const std::vector<std::string> AtomSphDataPSPDefaults::METADATANAMES{
+      "pseudo_type",
       "element",
       "z_valence",
       "l_max",
       "number_of_wfc",
+      "total_psenergy",
       "number_of_proj",
       "core_correction",
       "dij"};

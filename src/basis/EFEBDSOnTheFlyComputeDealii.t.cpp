@@ -881,13 +881,13 @@ namespace dftefe
                     for (unsigned int iNode = 0; iNode < numEnrichmentIdsInCell;
                          iNode++)
                       {
-                        // const std::vector<double> &enrichGradAtQuadPts =
-                        //   efeBDH->getEnrichmentDerivative(cellIndex,
-                        //                                   iNode,
-                        //                                   quadRealPointsVec);
                         for (unsigned int qPoint = 0; qPoint < nQuadPointInCell;
                              qPoint++)
                           {
+                            // auto shapeGrad = efeBDH->getEnrichmentDerivative(
+                            //   cellIndex,
+                            //   iNode,
+                            //   quadRealPointsVec[qPoint]);
                             // enriched gradient function call
                             for (unsigned int iDim = 0; iDim < dim; iDim++)
                               {
@@ -896,14 +896,14 @@ namespace dftefe
                                   cumulativeEnrichQuadxDof * dim +
                                   qPoint * dim * numEnrichmentIdsInCell +
                                   iDim * numEnrichmentIdsInCell + iNode;
-                                *it =
-                                  *(enrichGradAtQuadPts.data() +
-                                    nQuadPointInCell * iNode * dim +
-                                    qPoint * dim + iDim)
-                                  /*enrichGradAtQuadPts[qPoint * dim + iDim]*/
-                                  - *(iter +
-                                      numEnrichmentIdsInCell * dim * qPoint +
-                                      iDim * numEnrichmentIdsInCell + iNode);
+                                *it = *(enrichGradAtQuadPts.data() +
+                                        nQuadPointInCell * iNode * dim +
+                                        qPoint * dim + iDim)
+                                      /*shapeGrad[iDim]*/
+                                      -
+                                      *(iter +
+                                        numEnrichmentIdsInCell * dim * qPoint +
+                                        iDim * numEnrichmentIdsInCell + iNode);
                               }
                           }
                       }

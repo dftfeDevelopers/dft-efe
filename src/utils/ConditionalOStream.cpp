@@ -33,11 +33,15 @@ namespace dftefe
   {
     ConditionalOStream::ConditionalOStream(std::ostream &  stream,
                                            const bool      active,
-                                           const size_type precision)
+                                           const size_type precision,
+                                           const bool      fixedPrecision)
       : d_outputStream(stream)
       , d_activeFlag(active)
     {
-      d_outputStream << std::setprecision(precision);
+      if (fixedPrecision)
+        d_outputStream << std::fixed << std::setprecision(precision);
+      else
+        d_outputStream << std::setprecision(precision);
     }
 
     void

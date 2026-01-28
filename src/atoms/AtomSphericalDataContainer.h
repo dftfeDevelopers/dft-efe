@@ -75,7 +75,9 @@ namespace dftefe
         const std::map<std::string, std::string> &atomSymbolToFilename,
         const std::vector<std::string> &          fieldNames,
         const std::vector<std::string> &          metadataNames,
-        const bool                                isSplineHarmonicEval = true);
+        const std::map<std::string, std::string>  additionalParams =
+          std::map<std::string, std::string>(), // additionalParams["rcSmear"]
+        const bool isSplineHarmonicEval = true);
 
       AtomSphericalDataContainer(
         const std::map<std::string,

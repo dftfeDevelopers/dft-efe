@@ -86,8 +86,8 @@ namespace dftefe
         const std::vector<double> &      atomCharges,
         const std::vector<std::string> & atomSymbolVec,
         const std::shared_ptr<atoms::AtomSphericalDataContainer>
-                                   atomSphericalDataContainerPSP,
-        const std::vector<double> &smearedChargeRadius,
+                      atomSphericalDataContainerPSP,
+        const double &smearedChargeRadius,
         const quadrature::QuadratureValuesContainer<RealType, memorySpace>
           &                                               electronChargeDensity,
         std::shared_ptr<const basis::FEBasisManager<ValueTypeBasisCoeff,
@@ -126,8 +126,8 @@ namespace dftefe
         const std::vector<double> &      atomCharges,
         const std::vector<std::string> & atomSymbolVec,
         const std::shared_ptr<atoms::AtomSphericalDataContainer>
-                                   atomSphericalDataContainerPSP,
-        const std::vector<double> &smearedChargeRadius,
+                      atomSphericalDataContainerPSP,
+        const double &smearedChargeRadius,
         // const quadrature::QuadratureValuesContainer<RealType, memorySpace>
         //   &atomicElectronChargeDensity,
         // const quadrature::QuadratureValuesContainer<ValueTypeBasisCoeff,
@@ -169,7 +169,10 @@ namespace dftefe
                         linAlgOpContext,
         const size_type maxCellBlock,
         const size_type maxWaveFnBlock,
-        const bool      useDealiiMatrixFreePoissonSolve = true);
+        const std::unordered_map<std::string,
+                                 std::shared_ptr<atoms::AtomTCIASpline>>
+                   fieldToTCIASplineMap            = {},
+        const bool useDealiiMatrixFreePoissonSolve = true);
 
       ~ElectrostaticONCVNonLocFE() = default;
 

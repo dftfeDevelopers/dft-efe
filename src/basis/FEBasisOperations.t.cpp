@@ -1061,9 +1061,9 @@ namespace dftefe
 
       std::shared_ptr<const quadrature::QuadratureRuleContainer>
         quadRuleContainer = d_feBasisDataStorage->getQuadratureRuleContainer();
-      quadValuesContainer.reinit(quadRuleContainer,
-                                 numComponents,
-                                 ValueTypeUnion());
+      // quadValuesContainer.reinit(quadRuleContainer,
+      //                            numComponents,
+      //                            ValueTypeUnion());
 
       const quadrature::QuadratureFamily quadratureFamily =
         quadratureRuleAttributes.getQuadratureFamily();
@@ -1346,9 +1346,9 @@ namespace dftefe
 
       std::shared_ptr<const quadrature::QuadratureRuleContainer>
         quadRuleContainer = d_feBasisDataStorage->getQuadratureRuleContainer();
-      quadValuesContainer.reinit(quadRuleContainer,
-                                 numComponents * dim,
-                                 ValueTypeUnion());
+      // quadValuesContainer.reinit(quadRuleContainer,
+      //                            numComponents * dim,
+      //                            ValueTypeUnion());
 
       const quadrature::QuadratureFamily quadratureFamily =
         quadratureRuleAttributes.getQuadratureFamily();

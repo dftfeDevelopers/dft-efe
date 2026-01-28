@@ -29,29 +29,41 @@
 #include<iostream>
 int main()
 {
-  std::string atomFileName = "TestAtom.xml";
-  std::vector<std::string> fieldNames{ "density", "vhartree", "vnuclear", "vtotal", "orbital" };
-  std::vector<std::string> metadataNames{ "symbol", "Z", "charge", "NR", "r" };
-  std::vector<int> qNumbers{1, 0, 0};
-  dftefe::atoms::AtomSphericalData atomTest(atomFileName, fieldNames, metadataNames);
-  auto sphericalDataObj = atomTest.getSphericalData("vnuclear", qNumbers);
+  // std::string atomFileName = "TestAtom.xml";
+  // std::vector<std::string> fieldNames{ "density", "vhartree", "vnuclear", "vtotal", "orbital" };
+  // std::vector<std::string> metadataNames{ "symbol", "Z", "charge", "NR", "r" };
+  // std::vector<int> qNumbers{1, 0, 0};
+  // dftefe::atoms::AtomSphericalData atomTest(atomFileName, fieldNames, metadataNames);
+  // auto sphericalDataObj = atomTest.getSphericalData("vnuclear", qNumbers);
+  // std::vector<double> pointvec{0, 0, 2.};
+  // std::vector<double> originvec{0. ,0. ,0.};
+  // dftefe::utils::Point point(pointvec);
+  // dftefe::utils::Point origin(originvec);
+  // std::cout<<sphericalDataObj->getValue(point,origin)<<"\n";
+  // // std::cout<<sphericalDataObj->getGradientValue(point,origin)[1]<<"\n";
+  // // std::cout<<sphericalDataObj->getGradientValue(point,origin)[2]<<"\n";
+
+  //     fieldNames.clear();
+  //   fieldNames.push_back("exp");
+  //   std::map<std::string , std::vector<std::vector<int>>> fieldToQuantumNumbersVec{{"exp" , {{1,0,0}}}};
+  //   std::map<std::string , std::vector<std::shared_ptr<dftefe::utils::ScalarSpatialFunctionReal>>> 
+  //     fieldToScalarSpatialFnRealVec{{"exp" , {std::make_shared<dftefe::utils::ExpModX>(0 , -1)}}};
+  // dftefe::atoms::AtomSphericalDataAnalytical atomTest1
+  //   (fieldToQuantumNumbersVec, fieldToScalarSpatialFnRealVec , fieldNames, sphericalHarmonicFunctions);
+  // for(int i = 0 ; i < 50 ; i++)
+  //  std::cout << i*0.5 << "\t" << atomTest1.getSphericalData("exp",{1,0,0})->getValue(dftefe::utils::Point({i*0.5,0,0}),
+  //    dftefe::utils::Point({0,0,0}))<<std::endl;
+
+  std::string atomFileName = "pseudodojo.Si.json";
+  std::vector<std::string> fieldNames{ "density", "vhartree", "orbital" }; //, "vnuclear", "vtotal",
+  std::vector<std::string> metadataNames{ "symbol", "Z", "charge", "NR" }; // , "r"
+  std::vector<int> qNumbers{0, 0, 0};
+  dftefe::atoms::AtomSphericalDataEnrichmentJSON atomTest(atomFileName, fieldNames, metadataNames);
+  auto sphericalDataObj = atomTest.getSphericalData("vhartree", qNumbers);
   std::vector<double> pointvec{0, 0, 2.};
   std::vector<double> originvec{0. ,0. ,0.};
   dftefe::utils::Point point(pointvec);
   dftefe::utils::Point origin(originvec);
   std::cout<<sphericalDataObj->getValue(point,origin)<<"\n";
-  // std::cout<<sphericalDataObj->getGradientValue(point,origin)[1]<<"\n";
-  // std::cout<<sphericalDataObj->getGradientValue(point,origin)[2]<<"\n";
-
-      fieldNames.clear();
-    fieldNames.push_back("exp");
-    std::map<std::string , std::vector<std::vector<int>>> fieldToQuantumNumbersVec{{"exp" , {{1,0,0}}}};
-    std::map<std::string , std::vector<std::shared_ptr<dftefe::utils::ScalarSpatialFunctionReal>>> 
-      fieldToScalarSpatialFnRealVec{{"exp" , {std::make_shared<dftefe::utils::ExpModX>(0 , -1)}}};
-  dftefe::atoms::AtomSphericalDataAnalytical atomTest1
-    (fieldToQuantumNumbersVec, fieldToScalarSpatialFnRealVec , fieldNames, sphericalHarmonicFunctions);
-  for(int i = 0 ; i < 50 ; i++)
-   std::cout << i*0.5 << "\t" << atomTest1.getSphericalData("exp",{1,0,0})->getValue(dftefe::utils::Point({i*0.5,0,0}),
-     dftefe::utils::Point({0,0,0}))<<std::endl;
 
 }

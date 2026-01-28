@@ -286,19 +286,19 @@ namespace dftefe
       int count = 0;
       for (size_type iCell = 0; iCell < electronChargeDensity.nCells(); iCell++)
         {
+          std::vector<RealType> a(
+            electronChargeDensity.getQuadratureRuleContainer()
+              ->nCellQuadraturePoints(iCell));
           for (int quadId = 0;
                quadId < electronChargeDensity.getQuadratureRuleContainer()
                           ->nCellQuadraturePoints(iCell);
                quadId++)
             {
-              RealType  a = *(vxRho.data() + count) + *(vcRho.data() + count);
-              RealType *b = &a;
-              d_xcPotentialQuad
-                ->template setCellQuadValues<utils::MemorySpace::HOST>(iCell,
-                                                                       quadId,
-                                                                       b);
+              a[quadId] = *(vxRho.data() + count) + *(vcRho.data() + count);
               count += 1;
             }
+          d_xcPotentialQuad->template setCellValues<utils::MemorySpace::HOST>(
+            iCell, a.data());
         }
     }
 
@@ -346,20 +346,20 @@ namespace dftefe
       for (size_type iCell = 0; iCell < d_electronChargeDensity->nCells();
            iCell++)
         {
+          std::vector<RealType> a(
+            d_electronChargeDensity->getQuadratureRuleContainer()
+              ->nCellQuadraturePoints(iCell));
           size_type quadId = 0;
           for (int quadId = 0;
                quadId < d_electronChargeDensity->getQuadratureRuleContainer()
                           ->nCellQuadraturePoints(iCell);
                quadId++)
             {
-              RealType  a = *(exRho.data() + count) + *(ecRho.data() + count);
-              RealType *b = &a;
-              d_xcPotentialQuad
-                ->template setCellQuadValues<utils::MemorySpace::HOST>(iCell,
-                                                                       quadId,
-                                                                       b);
+              a[quadId] = *(exRho.data() + count) + *(ecRho.data() + count);
               count += 1;
             }
+          d_xcPotentialQuad->template setCellValues<utils::MemorySpace::HOST>(
+            iCell, a.data());
         }
 
       RealType totalEnergy =

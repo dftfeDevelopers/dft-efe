@@ -33,6 +33,38 @@ namespace dftefe
   {
     namespace KohnShamDFTInternal
     {
+      double
+      computeEntropicEnergy(const std::vector<double> &partialOccupancies,
+                            const double               temperature)
+      {
+        double          entropy        = 0.0;
+        const size_type numEigenValues = partialOccupancies.size();
+
+        for (size_type i = 0; i < numEigenValues; ++i)
+          {
+            double partialOccupancy = partialOccupancies[i];
+
+            double fTimeslogf, oneminusfTimeslogoneminusf;
+
+            if (std::abs(partialOccupancy - 1.0) <= 1e-07 ||
+                std::abs(partialOccupancy) <= 1e-07)
+              {
+                fTimeslogf                 = 0.0;
+                oneminusfTimeslogoneminusf = 0.0;
+              }
+            else
+              {
+                fTimeslogf = partialOccupancy * log(partialOccupancy);
+                oneminusfTimeslogoneminusf =
+                  (1.0 - partialOccupancy) * log(1.0 - partialOccupancy);
+              }
+            entropy += -2.0 * Constants::BOLTZMANN_CONST_HARTREE *
+                       (fTimeslogf + oneminusfTimeslogoneminusf);
+          }
+
+        return temperature * entropy;
+      }
+
       template <typename RealType, utils::MemorySpace memorySpace>
       RealType
       computeResidualQuadData(
@@ -214,7 +246,7 @@ namespace dftefe
       KohnShamDFT(
         const std::vector<utils::Point> &atomCoordinates,
         const std::vector<double> &      atomCharges,
-        const std::vector<double> &      smearedChargeRadius,
+        const double &                   smearedChargeRadius,
         const size_type                  numElectrons,
         const size_type                  numWantedEigenvalues,
         const double                     smearingTemperature,
@@ -284,10 +316,10 @@ namespace dftefe
       , d_kohnShamEnergies(numWantedEigenvalues, 0.0)
       , d_SCFTol(scfDensityResidualNormTolerance)
       , d_rootCout(std::cout)
-      , d_waveFunctionSubspaceGuess(feBMWaveFn->getMPIPatternP2P(),
-                                    linAlgOpContext,
-                                    numWantedEigenvalues)
-      , d_kohnShamWaveFunctions(d_waveFunctionSubspaceGuess, (ValueType)0.0)
+      , d_kohnShamWaveFunctions(feBMWaveFn->getMPIPatternP2P(),
+                                linAlgOpContext,
+                                numWantedEigenvalues,
+                                (ValueType)0.0)
       , d_lanczosGuess(feBMWaveFn->getMPIPatternP2P(),
                        linAlgOpContext,
                        0.0,
@@ -296,9 +328,15 @@ namespace dftefe
       , d_feBDEXCHamiltonian(feBDEXCHamiltonian)
       , d_isSolved(false)
       , d_groundStateEnergy(0)
+      , d_freeEnergy(0)
+      , d_smearingTemperature(smearingTemperature)
       , d_p(feBMWaveFn->getMPIPatternP2P()->mpiCommunicator(), "Kohn Sham DFT")
       , d_isResidualChebyshevFilter(isResidualChebyshevFilter)
       , d_occupation(numWantedEigenvalues, 0)
+      , d_isONCVNonLocPSP(false)
+      , d_isNlcc(false)
+      , d_pTotal(feBMWaveFn->getMPIPatternP2P()->mpiCommunicator(),
+                 "Kohn Sham DFT Solve time")
     {
       d_p.registerStart("Pre Init Checks");
       if (dynamic_cast<
@@ -318,7 +356,7 @@ namespace dftefe
           d_isOEFEBasis = false;
 
       KohnShamDFTInternal::generateRandNormDistMultivec(
-        d_waveFunctionSubspaceGuess);
+        d_kohnShamWaveFunctions);
       utils::throwException(electronChargeDensityInput.getNumberComponents() ==
                               1,
                             "Electron density should have only one component.");
@@ -364,7 +402,9 @@ namespace dftefe
         feBDKineticHamiltonian,
         linAlgOpContext,
         KSDFTDefaults::CELL_BATCH_SIZE_GRAD_EVAL,
-        KSDFTDefaults::MAX_KINENG_WAVEFN_BATCH_SIZE);
+        numWantedEigenvalues > KSDFTDefaults::MAX_KINENG_WAVEFN_BATCH_SIZE ?
+          KSDFTDefaults::MAX_KINENG_WAVEFN_BATCH_SIZE :
+          numWantedEigenvalues);
 
       d_hamitonianElec =
         std::make_shared<ElectrostaticLocalFE<ValueTypeElectrostaticsBasis,
@@ -434,9 +474,9 @@ namespace dftefe
       d_lanczosGuess.updateGhostValues();
       feBMWaveFn->getConstraints().distributeParentToChild(d_lanczosGuess, 1);
 
-      d_waveFunctionSubspaceGuess.updateGhostValues();
+      d_kohnShamWaveFunctions.updateGhostValues();
       feBMWaveFn->getConstraints().distributeParentToChild(
-        d_waveFunctionSubspaceGuess, numWantedEigenvalues);
+        d_kohnShamWaveFunctions, numWantedEigenvalues);
 
       if (elpa_init(ELPA_API_VERSION) != ELPA_OK)
         {
@@ -468,7 +508,7 @@ namespace dftefe
                        fracOccupancyTolerance,
                        eigenSolveResidualTolerance,
                        1,
-                       d_waveFunctionSubspaceGuess,
+                       numWantedEigenvalues,
                        d_lanczosGuess,
                        *d_elpaScala,
                        false,
@@ -495,7 +535,7 @@ namespace dftefe
         fracOccupancyTolerance,
         eigenSolveResidualTolerance,
         maxChebyshevFilterPass,
-        d_waveFunctionSubspaceGuess,
+        numWantedEigenvalues,
         d_lanczosGuess,
         *d_elpaScala,
         isResidualChebyshevFilter,
@@ -539,7 +579,7 @@ namespace dftefe
       KohnShamDFT(
         const std::vector<utils::Point> &atomCoordinates,
         const std::vector<double> &      atomCharges,
-        const std::vector<double> &      smearedChargeRadius,
+        const double &                   smearedChargeRadius,
         const size_type                  numElectrons,
         const size_type                  numWantedEigenvalues,
         const double                     smearingTemperature,
@@ -616,10 +656,10 @@ namespace dftefe
       , d_kohnShamEnergies(numWantedEigenvalues, 0.0)
       , d_SCFTol(scfDensityResidualNormTolerance)
       , d_rootCout(std::cout)
-      , d_waveFunctionSubspaceGuess(feBMWaveFn->getMPIPatternP2P(),
-                                    linAlgOpContext,
-                                    numWantedEigenvalues)
-      , d_kohnShamWaveFunctions(d_waveFunctionSubspaceGuess, (ValueType)0.0)
+      , d_kohnShamWaveFunctions(feBMWaveFn->getMPIPatternP2P(),
+                                linAlgOpContext,
+                                numWantedEigenvalues,
+                                (ValueType)0.0)
       , d_lanczosGuess(feBMWaveFn->getMPIPatternP2P(),
                        linAlgOpContext,
                        0.0,
@@ -628,9 +668,15 @@ namespace dftefe
       , d_feBDEXCHamiltonian(feBDEXCHamiltonian)
       , d_isSolved(false)
       , d_groundStateEnergy(0)
+      , d_freeEnergy(0)
+      , d_smearingTemperature(smearingTemperature)
       , d_p(feBMWaveFn->getMPIPatternP2P()->mpiCommunicator(), "Kohn Sham DFT")
       , d_isResidualChebyshevFilter(isResidualChebyshevFilter)
       , d_occupation(numWantedEigenvalues, 0)
+      , d_isONCVNonLocPSP(false)
+      , d_isNlcc(false)
+      , d_pTotal(feBMWaveFn->getMPIPatternP2P()->mpiCommunicator(),
+                 "Kohn Sham DFT Solve time")
     {
       d_p.registerStart("Pre Init Checks");
       if (dynamic_cast<
@@ -644,7 +690,7 @@ namespace dftefe
         d_isOEFEBasis = false;
 
       KohnShamDFTInternal::generateRandNormDistMultivec(
-        d_waveFunctionSubspaceGuess);
+        d_kohnShamWaveFunctions);
       utils::throwException(electronChargeDensityInput.getNumberComponents() ==
                               1,
                             "Electron density should have only one component.");
@@ -691,7 +737,9 @@ namespace dftefe
         feBDKineticHamiltonian,
         linAlgOpContext,
         KSDFTDefaults::CELL_BATCH_SIZE_GRAD_EVAL,
-        KSDFTDefaults::MAX_KINENG_WAVEFN_BATCH_SIZE);
+        numWantedEigenvalues > KSDFTDefaults::MAX_KINENG_WAVEFN_BATCH_SIZE ?
+          KSDFTDefaults::MAX_KINENG_WAVEFN_BATCH_SIZE :
+          numWantedEigenvalues);
 
       d_hamitonianElec =
         std::make_shared<ElectrostaticLocalFE<ValueTypeElectrostaticsBasis,
@@ -764,9 +812,9 @@ namespace dftefe
       d_lanczosGuess.updateGhostValues();
       feBMWaveFn->getConstraints().distributeParentToChild(d_lanczosGuess, 1);
 
-      d_waveFunctionSubspaceGuess.updateGhostValues();
+      d_kohnShamWaveFunctions.updateGhostValues();
       feBMWaveFn->getConstraints().distributeParentToChild(
-        d_waveFunctionSubspaceGuess, numWantedEigenvalues);
+        d_kohnShamWaveFunctions, numWantedEigenvalues);
 
       if (elpa_init(ELPA_API_VERSION) != ELPA_OK)
         {
@@ -798,7 +846,7 @@ namespace dftefe
                        fracOccupancyTolerance,
                        eigenSolveResidualTolerance,
                        1,
-                       d_waveFunctionSubspaceGuess,
+                       numWantedEigenvalues,
                        d_lanczosGuess,
                        *d_elpaScala,
                        false,
@@ -825,7 +873,7 @@ namespace dftefe
         fracOccupancyTolerance,
         eigenSolveResidualTolerance,
         maxChebyshevFilterPass,
-        d_waveFunctionSubspaceGuess,
+        numWantedEigenvalues,
         d_lanczosGuess,
         *d_elpaScala,
         isResidualChebyshevFilter,
@@ -870,7 +918,8 @@ namespace dftefe
         /* Atom related info */
         const std::vector<utils::Point> &atomCoordinates,
         const std::vector<double> &      atomCharges,
-        const std::vector<double> &      smearedChargeRadius,
+        const std::vector<std::string> & atomSymbolVec,
+        const double &                   smearedChargeRadius,
         const size_type                  numElectrons,
         /* SCF related info */
         const size_type numWantedEigenvalues,
@@ -941,7 +990,9 @@ namespace dftefe
         const OpContext &MContextForInv,
         const OpContext &MContext,
         const OpContext &MInvContext,
-        bool             isResidualChebyshevFilter)
+        bool             isResidualChebyshevFilter,
+        /* TCI related info */
+        const atoms::TCIADataParams &params)
       : d_mixingHistory(mixingHistory)
       , d_mixingParameter(mixingParameter)
       , d_isAdaptiveAndersonMixingParameter(isAdaptiveAndersonMixingParameter)
@@ -959,10 +1010,10 @@ namespace dftefe
       , d_kohnShamEnergies(numWantedEigenvalues, 0.0)
       , d_SCFTol(scfDensityResidualNormTolerance)
       , d_rootCout(std::cout)
-      , d_waveFunctionSubspaceGuess(feBMWaveFn->getMPIPatternP2P(),
-                                    linAlgOpContext,
-                                    numWantedEigenvalues)
-      , d_kohnShamWaveFunctions(d_waveFunctionSubspaceGuess, (ValueType)0.0)
+      , d_kohnShamWaveFunctions(feBMWaveFn->getMPIPatternP2P(),
+                                linAlgOpContext,
+                                numWantedEigenvalues,
+                                (ValueType)0.0)
       , d_lanczosGuess(feBMWaveFn->getMPIPatternP2P(),
                        linAlgOpContext,
                        0.0,
@@ -971,9 +1022,15 @@ namespace dftefe
       , d_feBDEXCHamiltonian(feBDEXCHamiltonian)
       , d_isSolved(false)
       , d_groundStateEnergy(0)
+      , d_freeEnergy(0)
+      , d_smearingTemperature(smearingTemperature)
       , d_p(feBMWaveFn->getMPIPatternP2P()->mpiCommunicator(), "Kohn Sham DFT")
       , d_isResidualChebyshevFilter(isResidualChebyshevFilter)
       , d_occupation(numWantedEigenvalues, 0)
+      , d_isONCVNonLocPSP(false)
+      , d_isNlcc(false)
+      , d_pTotal(feBMWaveFn->getMPIPatternP2P()->mpiCommunicator(),
+                 "Kohn Sham DFT Solve time")
     {
       d_p.registerStart("Pre Init Checks");
       if (dynamic_cast<
@@ -991,7 +1048,7 @@ namespace dftefe
           feBDElectronicChargeRhs->getQuadratureRuleContainer(), 1, 0.0);
 
       KohnShamDFTInternal::generateRandNormDistMultivec(
-        d_waveFunctionSubspaceGuess);
+        d_kohnShamWaveFunctions);
       utils::throwException(d_densityInQuadValues.getNumberComponents() == 1,
                             "Electron density should have only one component.");
 
@@ -1059,7 +1116,71 @@ namespace dftefe
         feBDKineticHamiltonian,
         linAlgOpContext,
         KSDFTDefaults::CELL_BATCH_SIZE_GRAD_EVAL,
-        KSDFTDefaults::MAX_KINENG_WAVEFN_BATCH_SIZE);
+        numWantedEigenvalues > KSDFTDefaults::MAX_KINENG_WAVEFN_BATCH_SIZE ?
+          KSDFTDefaults::MAX_KINENG_WAVEFN_BATCH_SIZE :
+          numWantedEigenvalues);
+
+      std::unordered_map<std::string, std::shared_ptr<atoms::AtomTCIASpline>>
+        fieldToTCIASplineMap = {};
+      if (params.folderName != "")
+        {
+          d_rootCout
+            << "\nTCIA Data provided , using that for atomic data energy contributions.\n";
+
+          fieldToTCIASplineMap["rhoAtom-phiAtom"] =
+            std::make_shared<atoms::AtomTCIASpline>("rhoAtom-phiAtom",
+                                                    params,
+                                                    atomSymbolVec,
+                                                    std::vector<std::string>{
+                                                      "S"},
+                                                    1000);
+
+          fieldToTCIASplineMap["rhoAtom-vlocCorrection"] =
+            std::make_shared<atoms::AtomTCIASpline>("rhoAtom-vlocCorrection",
+                                                    params,
+                                                    atomSymbolVec,
+                                                    std::vector<std::string>{
+                                                      "S"},
+                                                    1000);
+
+          fieldToTCIASplineMap["bSmear-phiAtom"] =
+            std::make_shared<atoms::AtomTCIASpline>("bSmear-phiAtom",
+                                                    params,
+                                                    atomSymbolVec,
+                                                    std::vector<std::string>{
+                                                      "S"},
+                                                    1000);
+
+          bool useEZZCorr = false;
+          for (auto i : fieldToTCIASplineMap)
+            {
+              double smearedChargeRadiusZZCorr =
+                i.second->smearedChargeRadiusZZCorr();
+              double smearedChargeRadius = i.second->smearedChargeRadius();
+              if (std::abs(smearedChargeRadiusZZCorr - smearedChargeRadius) >
+                  1e-12)
+                {
+                  useEZZCorr = true;
+                  d_rootCout
+                    << "\nOne of the smeared charge radiuses is > 0.7, using the energy correction due to spreaded nuclear charges.\n\n";
+                  break;
+                }
+            }
+
+          if (useEZZCorr)
+            fieldToTCIASplineMap["sumBZZCorrBSmear-diffVZZCorrVSmear"] =
+              std::make_shared<atoms::AtomTCIASpline>(
+                "sumBZZCorrBSmear-diffVZZCorrVSmear",
+                params,
+                std::vector<std::string>{"DefaultAtom"},
+                std::vector<std::string>{"S"},
+                1000);
+        }
+      else
+        {
+          d_rootCout
+            << "\nTCIA Data not provided , using bSmear quad rule for atomic data energy contributions.\n\n";
+        }
 
       d_hamitonianElec =
         std::make_shared<ElectrostaticLocalFE<ValueTypeElectrostaticsBasis,
@@ -1068,6 +1189,7 @@ namespace dftefe
                                               memorySpace,
                                               dim>>(
           atomCoordinates,
+          atomSymbolVec,
           atomCharges,
           smearedChargeRadius,
           // d_densityOutQuadValues,  /*NOTE: Atomic density input should not be
@@ -1082,7 +1204,8 @@ namespace dftefe
           feBDElectrostaticsHamiltonian,
           externalPotentialFunction,
           linAlgOpContext,
-          KSDFTDefaults::CELL_BATCH_SIZE);
+          KSDFTDefaults::CELL_BATCH_SIZE,
+          fieldToTCIASplineMap);
       d_hamitonianXC =
         std::make_shared<ExchangeCorrelationFE<ValueTypeWaveFunctionBasis,
                                                ValueTypeWaveFunctionCoeff,
@@ -1133,9 +1256,9 @@ namespace dftefe
       d_lanczosGuess.updateGhostValues();
       feBMWaveFn->getConstraints().distributeParentToChild(d_lanczosGuess, 1);
 
-      d_waveFunctionSubspaceGuess.updateGhostValues();
+      d_kohnShamWaveFunctions.updateGhostValues();
       feBMWaveFn->getConstraints().distributeParentToChild(
-        d_waveFunctionSubspaceGuess, numWantedEigenvalues);
+        d_kohnShamWaveFunctions, numWantedEigenvalues);
 
       if (elpa_init(ELPA_API_VERSION) != ELPA_OK)
         {
@@ -1166,7 +1289,7 @@ namespace dftefe
                        fracOccupancyTolerance,
                        eigenSolveResidualTolerance,
                        1,
-                       d_waveFunctionSubspaceGuess,
+                       numWantedEigenvalues,
                        d_lanczosGuess,
                        *d_elpaScala,
                        false,
@@ -1193,7 +1316,7 @@ namespace dftefe
         fracOccupancyTolerance,
         eigenSolveResidualTolerance,
         maxChebyshevFilterPass,
-        d_waveFunctionSubspaceGuess,
+        numWantedEigenvalues,
         d_lanczosGuess,
         *d_elpaScala,
         isResidualChebyshevFilter,
@@ -1239,7 +1362,7 @@ namespace dftefe
         const std::vector<utils::Point> &atomCoordinates,
         const std::vector<double> &      atomCharges,
         const std::vector<std::string> & atomSymbolVec,
-        const std::vector<double> &      smearedChargeRadius,
+        const double &                   smearedChargeRadius,
         const size_type                  numElectrons,
         const size_type                  numWantedEigenvalues,
         const double                     smearingTemperature,
@@ -1308,10 +1431,10 @@ namespace dftefe
       , d_kohnShamEnergies(numWantedEigenvalues, 0.0)
       , d_SCFTol(scfDensityResidualNormTolerance)
       , d_rootCout(std::cout)
-      , d_waveFunctionSubspaceGuess(feBMWaveFn->getMPIPatternP2P(),
-                                    linAlgOpContext,
-                                    numWantedEigenvalues)
-      , d_kohnShamWaveFunctions(d_waveFunctionSubspaceGuess, (ValueType)0.0)
+      , d_kohnShamWaveFunctions(feBMWaveFn->getMPIPatternP2P(),
+                                linAlgOpContext,
+                                numWantedEigenvalues,
+                                (ValueType)0.0)
       , d_lanczosGuess(feBMWaveFn->getMPIPatternP2P(),
                        linAlgOpContext,
                        0.0,
@@ -1320,9 +1443,13 @@ namespace dftefe
       , d_feBDEXCHamiltonian(feBDEXCHamiltonian)
       , d_isSolved(false)
       , d_groundStateEnergy(0)
+      , d_freeEnergy(0)
+      , d_smearingTemperature(smearingTemperature)
       , d_p(feBMWaveFn->getMPIPatternP2P()->mpiCommunicator(), "Kohn Sham DFT")
       , d_isResidualChebyshevFilter(isResidualChebyshevFilter)
       , d_occupation(numWantedEigenvalues, 0)
+      , d_pTotal(feBMWaveFn->getMPIPatternP2P()->mpiCommunicator(),
+                 "Kohn Sham DFT Solve time")
     {
       d_p.registerStart("Pre Init Checks");
       const std::vector<std::string> metadataNames =
@@ -1335,6 +1462,19 @@ namespace dftefe
           atomSymbolToPSPFilename,
           fieldNamesPSP,
           metadataNames);
+
+      for (int i = 0; i < atomSymbolVec.size(); i++)
+        {
+          if (std::abs(std::stod(d_atomSphericalDataContainerPSP->getMetadata(
+                atomSymbolVec[i], "z_valence"))) -
+                std::abs(atomCharges[i]) >
+              1e-12)
+            {
+              utils::throwException(
+                false,
+                "The input basis file Z does not match with that given in input.");
+            }
+        }
 
       d_isONCVNonLocPSP = false, d_isNlcc = false;
       for (int atomSymbolId = 0; atomSymbolId < atomSymbolVec.size();
@@ -1397,7 +1537,7 @@ namespace dftefe
         d_isOEFEBasis = false;
 
       KohnShamDFTInternal::generateRandNormDistMultivec(
-        d_waveFunctionSubspaceGuess);
+        d_kohnShamWaveFunctions);
       utils::throwException(d_densityInQuadValues.getNumberComponents() == 1,
                             "Electron density should have only one component.");
 
@@ -1468,7 +1608,9 @@ namespace dftefe
         feBDKineticHamiltonian,
         linAlgOpContext,
         KSDFTDefaults::CELL_BATCH_SIZE_GRAD_EVAL,
-        KSDFTDefaults::MAX_KINENG_WAVEFN_BATCH_SIZE);
+        numWantedEigenvalues > KSDFTDefaults::MAX_KINENG_WAVEFN_BATCH_SIZE ?
+          KSDFTDefaults::MAX_KINENG_WAVEFN_BATCH_SIZE :
+          numWantedEigenvalues);
 
       size_type waveFnBatch =
         numWantedEigenvalues > KSDFTDefaults::MAX_WAVEFN_BATCH_SIZE ?
@@ -1600,9 +1742,9 @@ namespace dftefe
       d_lanczosGuess.updateGhostValues();
       feBMWaveFn->getConstraints().distributeParentToChild(d_lanczosGuess, 1);
 
-      d_waveFunctionSubspaceGuess.updateGhostValues();
+      d_kohnShamWaveFunctions.updateGhostValues();
       feBMWaveFn->getConstraints().distributeParentToChild(
-        d_waveFunctionSubspaceGuess, numWantedEigenvalues);
+        d_kohnShamWaveFunctions, numWantedEigenvalues);
 
       if (elpa_init(ELPA_API_VERSION) != ELPA_OK)
         {
@@ -1634,7 +1776,7 @@ namespace dftefe
                        fracOccupancyTolerance,
                        eigenSolveResidualTolerance,
                        1,
-                       d_waveFunctionSubspaceGuess,
+                       numWantedEigenvalues,
                        d_lanczosGuess,
                        *d_elpaScala,
                        false,
@@ -1661,7 +1803,7 @@ namespace dftefe
         fracOccupancyTolerance,
         eigenSolveResidualTolerance,
         maxChebyshevFilterPass,
-        d_waveFunctionSubspaceGuess,
+        numWantedEigenvalues,
         d_lanczosGuess,
         *d_elpaScala,
         isResidualChebyshevFilter,
@@ -1702,7 +1844,7 @@ namespace dftefe
         const std::vector<utils::Point> &atomCoordinates,
         const std::vector<double> &      atomCharges,
         const std::vector<std::string> & atomSymbolVec,
-        const std::vector<double> &      smearedChargeRadius,
+        const double &                   smearedChargeRadius,
         const size_type                  numElectrons,
         const size_type                  numWantedEigenvalues,
         const double                     smearingTemperature,
@@ -1759,7 +1901,9 @@ namespace dftefe
         const OpContext &MContextForInv,
         const OpContext &MContext,
         const OpContext &MInvContext,
-        bool             isResidualChebyshevFilter)
+        bool             isResidualChebyshevFilter,
+        /* TCI related info */
+        const atoms::TCIADataParams &params)
       : d_mixingHistory(mixingHistory)
       , d_mixingParameter(mixingParameter)
       , d_isAdaptiveAndersonMixingParameter(isAdaptiveAndersonMixingParameter)
@@ -1775,10 +1919,10 @@ namespace dftefe
       , d_kohnShamEnergies(numWantedEigenvalues, 0.0)
       , d_SCFTol(scfDensityResidualNormTolerance)
       , d_rootCout(std::cout)
-      , d_waveFunctionSubspaceGuess(feBMWaveFn->getMPIPatternP2P(),
-                                    linAlgOpContext,
-                                    numWantedEigenvalues)
-      , d_kohnShamWaveFunctions(d_waveFunctionSubspaceGuess, (ValueType)0.0)
+      , d_kohnShamWaveFunctions(feBMWaveFn->getMPIPatternP2P(),
+                                linAlgOpContext,
+                                numWantedEigenvalues,
+                                (ValueType)0.0)
       , d_lanczosGuess(feBMWaveFn->getMPIPatternP2P(),
                        linAlgOpContext,
                        0.0,
@@ -1787,9 +1931,13 @@ namespace dftefe
       , d_feBDEXCHamiltonian(feBDEXCHamiltonian)
       , d_isSolved(false)
       , d_groundStateEnergy(0)
+      , d_freeEnergy(0)
+      , d_smearingTemperature(smearingTemperature)
       , d_p(feBMWaveFn->getMPIPatternP2P()->mpiCommunicator(), "Kohn Sham DFT")
       , d_isResidualChebyshevFilter(isResidualChebyshevFilter)
       , d_occupation(numWantedEigenvalues, 0)
+      , d_pTotal(feBMWaveFn->getMPIPatternP2P()->mpiCommunicator(),
+                 "Kohn Sham DFT Solve time")
     {
       d_p.registerStart("Pre Init Checks");
       const std::vector<std::string> metadataNames =
@@ -1802,6 +1950,19 @@ namespace dftefe
           atomSymbolToPSPFilename,
           fieldNamesPSP,
           metadataNames);
+
+      for (int i = 0; i < atomSymbolVec.size(); i++)
+        {
+          if (std::abs(std::stod(d_atomSphericalDataContainerPSP->getMetadata(
+                atomSymbolVec[i], "z_valence"))) -
+                std::abs(atomCharges[i]) >
+              1e-12)
+            {
+              utils::throwException(
+                false,
+                "The input basis file Z does not match with that given in input.");
+            }
+        }
 
       d_isONCVNonLocPSP = false, d_isNlcc = false;
       for (int atomSymbolId = 0; atomSymbolId < atomSymbolVec.size();
@@ -1863,7 +2024,7 @@ namespace dftefe
         d_isOEFEBasis = false;
 
       KohnShamDFTInternal::generateRandNormDistMultivec(
-        d_waveFunctionSubspaceGuess);
+        d_kohnShamWaveFunctions);
       utils::throwException(d_densityInQuadValues.getNumberComponents() == 1,
                             "Electron density should have only one component.");
 
@@ -1930,12 +2091,131 @@ namespace dftefe
         feBDKineticHamiltonian,
         linAlgOpContext,
         KSDFTDefaults::CELL_BATCH_SIZE_GRAD_EVAL,
-        KSDFTDefaults::MAX_KINENG_WAVEFN_BATCH_SIZE);
+        numWantedEigenvalues > KSDFTDefaults::MAX_KINENG_WAVEFN_BATCH_SIZE ?
+          KSDFTDefaults::MAX_KINENG_WAVEFN_BATCH_SIZE :
+          numWantedEigenvalues);
 
       size_type waveFnBatch =
         numWantedEigenvalues > KSDFTDefaults::MAX_WAVEFN_BATCH_SIZE ?
           KSDFTDefaults::MAX_WAVEFN_BATCH_SIZE :
           numWantedEigenvalues;
+
+      std::unordered_map<std::string, std::shared_ptr<atoms::AtomTCIASpline>>
+        fieldToTCIASplineMap = {};
+      if (params.folderName != "")
+        {
+          d_rootCout
+            << "\nTCIA Data provided , using that for atomic data energy contributions.\n";
+
+          fieldToTCIASplineMap["rhoAtom-phiAtom"] =
+            std::make_shared<atoms::AtomTCIASpline>("rhoAtom-phiAtom",
+                                                    params,
+                                                    atomSymbolVec,
+                                                    std::vector<std::string>{
+                                                      "S"},
+                                                    1000);
+
+          fieldToTCIASplineMap["rhoAtom-vlocCorrection"] =
+            std::make_shared<atoms::AtomTCIASpline>("rhoAtom-vlocCorrection",
+                                                    params,
+                                                    atomSymbolVec,
+                                                    std::vector<std::string>{
+                                                      "S"},
+                                                    1000);
+
+          fieldToTCIASplineMap["bSmear-phiAtom"] =
+            std::make_shared<atoms::AtomTCIASpline>("bSmear-phiAtom",
+                                                    params,
+                                                    atomSymbolVec,
+                                                    std::vector<std::string>{
+                                                      "S"},
+                                                    1000);
+
+          bool useEZZCorr = false;
+          for (auto i : fieldToTCIASplineMap)
+            {
+              double smearedChargeRadiusZZCorr =
+                i.second->smearedChargeRadiusZZCorr();
+              double smearedChargeRadius = i.second->smearedChargeRadius();
+
+              if (std::abs(smearedChargeRadiusZZCorr - smearedChargeRadius) >
+                  1e-12)
+                {
+                  useEZZCorr = true;
+                  d_rootCout
+                    << "\nOne of the smeared charge radiuses is > 0.7, using the energy correction due to spreaded nuclear charges.\n\n";
+                  break;
+                }
+            }
+
+          if (useEZZCorr)
+            fieldToTCIASplineMap["sumBZZCorrBSmear-diffVZZCorrVSmear"] =
+              std::make_shared<atoms::AtomTCIASpline>(
+                "sumBZZCorrBSmear-diffVZZCorrVSmear",
+                params,
+                std::vector<std::string>{"DefaultAtom"},
+                std::vector<std::string>{"S"},
+                1000);
+
+          for (auto i : fieldToTCIASplineMap)
+            {
+              double smearedChargeRadiusZZCorr =
+                i.second->smearedChargeRadiusZZCorr();
+              if (std::abs(smearedChargeRadiusZZCorr - smearedChargeRadius) >
+                  1e-12)
+                {
+                  utils::throwException(
+                    false,
+                    "The TCIA data smearedChargeRadiusZZCorr " +
+                      std::to_string(smearedChargeRadiusZZCorr) +
+                      " does not match with input smearedChargeRadius " +
+                      std::to_string(smearedChargeRadius));
+                }
+            }
+
+          for (int atomSymbolId = 0; atomSymbolId < atomSymbolVec.size();
+               atomSymbolId++)
+            {
+              if (d_atomSphericalDataContainerPSP->getMetadata(
+                    atomSymbolVec[atomSymbolId], "pseudo_type") !=
+                  fieldToTCIASplineMap["bSmear-phiAtom"]->getVLocInfo(
+                    atomSymbolVec[atomSymbolId], "pseudo_type"))
+                {
+                  utils::throwException(
+                    false,
+                    "The PSP upf file pseudo_type does not match the UPF file used"
+                    " for TCIA data generation for atomSymbol " +
+                      atomSymbolVec[atomSymbolId] + ".");
+                }
+              if (d_atomSphericalDataContainerPSP->getMetadata(
+                    atomSymbolVec[atomSymbolId], "z_valence") !=
+                  fieldToTCIASplineMap["bSmear-phiAtom"]->getVLocInfo(
+                    atomSymbolVec[atomSymbolId], "z_valence"))
+                {
+                  utils::throwException(
+                    false,
+                    "The PSP upf file z_valence does not match the UPF file used"
+                    " for TCIA data generation for atomSymbol " +
+                      atomSymbolVec[atomSymbolId] + ".");
+                }
+              if (d_atomSphericalDataContainerPSP->getMetadata(
+                    atomSymbolVec[atomSymbolId], "total_psenergy") !=
+                  fieldToTCIASplineMap["bSmear-phiAtom"]->getVLocInfo(
+                    atomSymbolVec[atomSymbolId], "total_psenergy"))
+                {
+                  utils::throwException(
+                    false,
+                    "The PSP upf file total_psenergy does not match the UPF file used"
+                    " for TCIA data generation for atomSymbol " +
+                      atomSymbolVec[atomSymbolId] + ".");
+                }
+            }
+        }
+      else
+        {
+          d_rootCout
+            << "\nTCIA Data not provided , using bSmear quad rule for atomic data energy contributions.\n\n";
+        }
 
       d_hamitonianElec =
         std::make_shared<ElectrostaticONCVNonLocFE<ValueTypeElectrostaticsBasis,
@@ -1963,7 +2243,8 @@ namespace dftefe
           feBDAtomCenterNonLocalOperator,
           linAlgOpContext,
           KSDFTDefaults::CELL_BATCH_SIZE,
-          waveFnBatch);
+          waveFnBatch,
+          fieldToTCIASplineMap);
 
       if (d_isNlcc && d_isONCVNonLocPSP)
         {
@@ -2066,9 +2347,9 @@ namespace dftefe
       d_lanczosGuess.updateGhostValues();
       feBMWaveFn->getConstraints().distributeParentToChild(d_lanczosGuess, 1);
 
-      d_waveFunctionSubspaceGuess.updateGhostValues();
+      d_kohnShamWaveFunctions.updateGhostValues();
       feBMWaveFn->getConstraints().distributeParentToChild(
-        d_waveFunctionSubspaceGuess, numWantedEigenvalues);
+        d_kohnShamWaveFunctions, numWantedEigenvalues);
 
       if (elpa_init(ELPA_API_VERSION) != ELPA_OK)
         {
@@ -2100,7 +2381,7 @@ namespace dftefe
                        fracOccupancyTolerance,
                        eigenSolveResidualTolerance,
                        1,
-                       d_waveFunctionSubspaceGuess,
+                       numWantedEigenvalues,
                        d_lanczosGuess,
                        *d_elpaScala,
                        false,
@@ -2127,7 +2408,7 @@ namespace dftefe
         fracOccupancyTolerance,
         eigenSolveResidualTolerance,
         maxChebyshevFilterPass,
-        d_waveFunctionSubspaceGuess,
+        numWantedEigenvalues,
         d_lanczosGuess,
         *d_elpaScala,
         isResidualChebyshevFilter,
@@ -2223,6 +2504,7 @@ namespace dftefe
       d_rootCout << "Starting SCF iterations....\n";
       while (((norm > d_SCFTol) && (scfIter < d_numMaxSCFIter)))
         {
+          utils::printCurrentMemoryUsage(d_mpiCommDomain, "SCF beginning");
           d_p.reset();
           d_rootCout
             << "************************Begin Self-Consistent-Field Iteration: "
@@ -2231,9 +2513,10 @@ namespace dftefe
           // mix the densities with  Anderson mix if scf > 0
           // Update the history of mixing variables
 
-          d_p.registerStart("Density Mixing");
           if (scfIter > 0)
             {
+              d_p.registerStart("Density Mixing");
+              d_pTotal.registerStart("Density Mixing");
               norm = KohnShamDFTInternal::computeResidualQuadData(
                 d_densityOutQuadValues,
                 d_densityInQuadValues,
@@ -2268,13 +2551,15 @@ namespace dftefe
                 mixingVariable::rho,
                 d_densityInQuadValues.begin(),
                 d_densityInQuadValues.nQuadraturePoints());
+              d_pTotal.registerEnd("Density Mixing");
+              d_p.registerEnd("Density Mixing");
             }
-          d_p.registerEnd("Density Mixing");
 
-          d_p.registerStart("Hamiltonian Reinit");
           // reinit the components of hamiltonian
           if (scfIter > 0)
             {
+              d_pTotal.registerStart("Hamiltonian Reinit");
+              d_p.registerStart("Hamiltonian Reinit");
               // normalize electroncharge density each scf
               RealType totalDensityInQuad =
                 KohnShamDFTInternal::normalizeDensityQuadData(
@@ -2330,8 +2615,9 @@ namespace dftefe
 
               d_hamitonianOperator->reinit(*d_feBMWaveFn,
                                            hamiltonianComponentsVec);
+              d_p.registerEnd("Hamiltonian Reinit");
+              d_pTotal.registerEnd("Hamiltonian Reinit");
             }
-          d_p.registerEnd("Hamiltonian Reinit");
 
           // reinit the chfsi bounds
           if (scfIter > 0)
@@ -2345,6 +2631,7 @@ namespace dftefe
             d_ksEigSolve->setChebyPolyScalingFactor(1.34);
 
           d_p.registerStart("EigenSolve");
+          d_pTotal.registerStart("EigenSolve");
           // Linear Eigen Solve
           linearAlgebra::EigenSolverError err =
             d_ksEigSolve->solve(*d_hamitonianOperator,
@@ -2353,6 +2640,7 @@ namespace dftefe
                                 true,
                                 *d_MContext,
                                 *d_MInvContext);
+          d_pTotal.registerEnd("EigenSolve");
           d_p.registerEnd("EigenSolve");
 
           d_occupation = d_ksEigSolve->getFractionalOccupancy();
@@ -2475,10 +2763,12 @@ namespace dftefe
           */
 
           d_p.registerStart("Density Compute");
+          d_pTotal.registerStart("Density Compute");
           // compute output rho
           d_densCalc->computeRho(d_occupation,
                                  d_kohnShamWaveFunctions,
                                  d_densityOutQuadValues);
+          d_pTotal.registerEnd("Density Compute");
           d_p.registerEnd("Density Compute");
           d_p.print();
 
@@ -2498,6 +2788,7 @@ namespace dftefe
           // check residual in density if else
           if (d_evaluateEnergyEverySCF)
             {
+              d_pTotal.registerStart("Energy Compute");
               if (auto hamiltonian = std::dynamic_pointer_cast<
                     ElectrostaticLocalFE<ValueTypeElectrostaticsBasis,
                                          ValueTypeElectrostaticsCoeff,
@@ -2579,6 +2870,16 @@ namespace dftefe
               d_rootCout << "Ground State Energy: " << totalEnergy << "\n";
 
               d_groundStateEnergy = totalEnergy;
+
+              RealType entEnergy = KohnShamDFTInternal::computeEntropicEnergy(
+                d_occupation, d_smearingTemperature);
+
+              d_rootCout << "Entropic Energy: " << entEnergy << "\n";
+
+              d_rootCout << "Free Energy: " << totalEnergy - entEnergy << "\n";
+
+              d_freeEnergy = totalEnergy - entEnergy;
+              d_pTotal.registerEnd("Energy Compute");
             }
 
           if (scfIter > 0)
@@ -2589,6 +2890,11 @@ namespace dftefe
 
       if (!d_evaluateEnergyEverySCF)
         {
+          d_pTotal.registerStart("Energy Compute");
+          int rank;
+          utils::mpi::MPICommRank(d_mpiCommDomain, &rank);
+          utils::ConditionalOStream rootCout(std::cout, rank == 0, 16, true);
+
           if (auto hamiltonian = std::dynamic_pointer_cast<
                 ElectrostaticLocalFE<ValueTypeElectrostaticsBasis,
                                      ValueTypeElectrostaticsCoeff,
@@ -2613,7 +2919,7 @@ namespace dftefe
                                       *d_feBMWaveFn,
                                       d_kohnShamWaveFunctions);
           RealType kinEnergy = d_hamitonianKin->getEnergy();
-          d_rootCout << "Kinetic energy: " << kinEnergy << "\n";
+          rootCout << "Kinetic energy: " << kinEnergy << "\n";
 
           if (auto hamiltonian = std::dynamic_pointer_cast<
                 ElectrostaticLocalFE<ValueTypeElectrostaticsBasis,
@@ -2636,7 +2942,7 @@ namespace dftefe
             }
 
           RealType elecEnergy = d_hamitonianElec->getEnergy();
-          d_rootCout << "Electrostatic energy: " << elecEnergy << "\n";
+          rootCout << "Electrostatic energy: " << elecEnergy << "\n";
 
           if (d_isNlcc && d_isONCVNonLocPSP)
             {
@@ -2653,7 +2959,7 @@ namespace dftefe
 
           d_hamitonianXC->evalEnergy(d_mpiCommDomain);
           RealType xcEnergy = d_hamitonianXC->getEnergy();
-          d_rootCout << "LDA EXC energy: " << xcEnergy << "\n";
+          rootCout << "LDA EXC energy: " << xcEnergy << "\n";
 
           // calculate band energy
           RealType bandEnergy = 0;
@@ -2662,13 +2968,24 @@ namespace dftefe
               bandEnergy += 2 * d_occupation[i] * d_kohnShamEnergies[i];
             }
 
-          d_rootCout << "Band energy: " << bandEnergy << "\n";
+          rootCout << "Band energy: " << bandEnergy << "\n";
 
           RealType totalEnergy = kinEnergy + elecEnergy + xcEnergy;
 
-          d_rootCout << "Ground State Energy: " << totalEnergy << "\n";
+          rootCout << "Ground State Energy: " << totalEnergy << "\n";
 
           d_groundStateEnergy = totalEnergy;
+
+          RealType entEnergy =
+            KohnShamDFTInternal::computeEntropicEnergy(d_occupation,
+                                                       d_smearingTemperature);
+
+          rootCout << "Entropic Energy: " << entEnergy << "\n";
+
+          rootCout << "Free Energy: " << totalEnergy - entEnergy << "\n";
+
+          d_freeEnergy = totalEnergy - entEnergy;
+          d_pTotal.registerEnd("Energy Compute");
         }
     }
 
@@ -2692,5 +3009,42 @@ namespace dftefe
       return d_groundStateEnergy;
     }
 
+    template <typename ValueTypeElectrostaticsCoeff,
+              typename ValueTypeElectrostaticsBasis,
+              typename ValueTypeWaveFunctionCoeff,
+              typename ValueTypeWaveFunctionBasis,
+              utils::MemorySpace memorySpace,
+              size_type          dim>
+    double
+    KohnShamDFT<ValueTypeElectrostaticsCoeff,
+                ValueTypeElectrostaticsBasis,
+                ValueTypeWaveFunctionCoeff,
+                ValueTypeWaveFunctionBasis,
+                memorySpace,
+                dim>::getFreeEnergy()
+    {
+      utils::throwException(
+        d_isSolved,
+        "Cannot call ksdft getFreeEnergy() before solving the KS problem.");
+      return d_freeEnergy;
+    }
+
+    template <typename ValueTypeElectrostaticsCoeff,
+              typename ValueTypeElectrostaticsBasis,
+              typename ValueTypeWaveFunctionCoeff,
+              typename ValueTypeWaveFunctionBasis,
+              utils::MemorySpace memorySpace,
+              size_type          dim>
+    void
+    KohnShamDFT<ValueTypeElectrostaticsCoeff,
+                ValueTypeElectrostaticsBasis,
+                ValueTypeWaveFunctionCoeff,
+                ValueTypeWaveFunctionBasis,
+                memorySpace,
+                dim>::printTotalInScopeTimings()
+    {
+      d_ksEigSolve->printTotalInScopeTimings();
+      d_pTotal.print();
+    }
   } // end of namespace ksdft
 } // end of namespace dftefe

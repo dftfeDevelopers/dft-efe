@@ -549,9 +549,11 @@ namespace dftefe
       global_size_type maxEnrich = 0;
       global_size_type minEnrich = 0;
       global_size_type avgEnrich = 0;
-      cell                       = d_triangulation->beginLocal();
-      endc                       = d_triangulation->endLocal();
-      cellIndex                  = 0;
+      global_size_type maxTotalEnrichInProc =
+        d_enrichmentIdsPartition->nLocalEnrichmentIds();
+      cell      = d_triangulation->beginLocal();
+      endc      = d_triangulation->endLocal();
+      cellIndex = 0;
       for (; cell != endc; cell++)
         {
           global_size_type numEnrichInCell =
@@ -587,20 +589,29 @@ namespace dftefe
         &avgEnrich,
         1,
         utils::mpi::Types<global_size_type>::getMPIDatatype(),
-        utils::mpi::MPISum,
+        utils::mpi::MPIMax,
         comm);
 
-      avgEnrich /= numProcs;
+      utils::mpi::MPIAllreduce<memorySpace>(
+        utils::mpi::MPIInPlace,
+        &maxTotalEnrichInProc,
+        1,
+        utils::mpi::Types<global_size_type>::getMPIDatatype(),
+        utils::mpi::MPIMax,
+        comm);
 
       rootCout << "Maximum " << fieldName
-               << " Enrichment Ids In a Cell in Processor: " << maxEnrich
+               << " Enrichment Ids In a Cell in a Processor: " << maxEnrich
                << "\n";
       rootCout << "Minimum " << fieldName
-               << " Enrichment Ids In a Cell in Processor: " << minEnrich
+               << " Enrichment Ids In a Cell in a Processor: " << minEnrich
                << "\n";
-      rootCout << "Average " << fieldName
-               << " Enrichment Ids In a Cell In Processor: " << avgEnrich
+      rootCout << "Max Average " << fieldName
+               << " Enrichment Ids In a Cell in a Processor: " << avgEnrich
                << "\n";
+      rootCout << "Maximum " << fieldName
+               << " Total Enrichment Ids In a Processor: "
+               << maxTotalEnrichInProc << "\n";
 
       rootCout
         << "Completed creating Orthogonalized EnrichmentClassicalInterfaceSpherical for "
@@ -725,8 +736,10 @@ namespace dftefe
       global_size_type maxEnrich = 0;
       global_size_type minEnrich = 0;
       global_size_type avgEnrich = 0;
-      size_type        cellIndex = 0;
-      cell                       = d_triangulation->beginLocal();
+      global_size_type maxTotalEnrichInProc =
+        d_enrichmentIdsPartition->nLocalEnrichmentIds();
+      size_type cellIndex = 0;
+      cell                = d_triangulation->beginLocal();
       for (; cell != endc; cell++)
         {
           global_size_type numEnrichInCell =
@@ -765,15 +778,27 @@ namespace dftefe
         utils::mpi::MPISum,
         comm);
 
+      utils::mpi::MPIAllreduce<memorySpace>(
+        utils::mpi::MPIInPlace,
+        &maxTotalEnrichInProc,
+        1,
+        utils::mpi::Types<global_size_type>::getMPIDatatype(),
+        utils::mpi::MPIMax,
+        comm);
+
       avgEnrich /= numProcs;
 
       rootCout << "Maximum " << fieldName
-               << " Enrichment Ids In a Processor: " << maxEnrich << "\n";
+               << " Enrichment Ids In a Cell in Processor: " << maxEnrich
+               << "\n";
       rootCout << "Minimum " << fieldName
                << " Enrichment Ids In a Cell in Processor: " << minEnrich
                << "\n";
       rootCout << "Average " << fieldName
-               << " Enrichment Ids In a Processor: " << avgEnrich << "\n";
+               << " Enrichment Ids In a Cell Processor: " << avgEnrich << "\n";
+      rootCout << "Maximum " << fieldName
+               << " Total Enrichment Ids In a Processor: "
+               << maxTotalEnrichInProc << "\n";
 
       rootCout
         << "Completed creating Pristine EnrichmentClassicalInterfaceSpherical for "
@@ -1198,7 +1223,7 @@ namespace dftefe
         !enrichIdVec.empty(),
         "The requested cell does not have any enrichment ids.");
       // unsigned int numEnrichedIdsSkipped = 0;
-      // unsigned int l                     = 0;
+      unsigned int l = 0;
 
       for (int iEnrich = 0; iEnrich < numEnrichIdsInCell;
            iEnrich += 1 /*numEnrichedIdsSkipped*/)
@@ -1227,11 +1252,11 @@ namespace dftefe
             d_atomSphericalDataContainer->getSphericalData(
               d_atomSymbolVec[atomId], d_fieldName);
 
-          // auto quantumNoVec =
-          //   d_atomSphericalDataContainer->getQNumbers(d_atomSymbolVec[atomId],
-          //                                             d_fieldName);
+          auto quantumNoVec =
+            d_atomSphericalDataContainer->getQNumbers(d_atomSymbolVec[atomId],
+                                                      d_fieldName);
 
-          // l = quantumNoVec[localId][1];
+          l = quantumNoVec[localId][1];
 
           auto radialValue = sphericalDataVec[localId]->getRadialValue(rVec);
           auto radialDerivative =
@@ -1252,6 +1277,13 @@ namespace dftefe
               dValueDThetaByr        = radialValue[i] * angularDerivative[0][i];
               double dValueDPhiByrsinTheta = 0.;
               dValueDPhiByrsinTheta = radialValue[i] * angularDerivative[1][i];
+              if ((rVec[i] < 1e-4 && l > 0))
+                {
+                  dValueDThetaByr =
+                    radialDerivative[i] * angularDerivative[0][i] * rVec[i];
+                  dValueDPhiByrsinTheta =
+                    radialDerivative[i] * angularDerivative[1][i] * rVec[i];
+                }
               double theta = thetaVec[i], phi = phiVec[i];
 
               retValue[(iEnrich /*+mCount*/) * numPoints * dim + i * dim + 0] =

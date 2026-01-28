@@ -11,6 +11,7 @@ set(DFT-EFE-ATOMS-SOURCES
     SphericalHarmonicFunctions.cpp
     SmoothCutoffFunctions.cpp
     AtomSphericalDataEnrichment.cpp
+    AtomSphericalDataEnrichmentJSON.cpp
     AtomSphericalDataContainer.cpp
     BoostAutoDiff.cpp
     AtomSevereFunction.cpp
@@ -18,6 +19,7 @@ set(DFT-EFE-ATOMS-SOURCES
     SphericalDataMixed.cpp
     SphericalDataAnalytical.cpp
     AtomSphericalDataAnalytical.cpp
+    AtomTCIASpline.cpp
    )
 
 add_library(dft-efe-atoms SHARED ${DFT-EFE-ATOMS-SOURCES})
@@ -35,5 +37,15 @@ if (NOT TARGET dft-efe-utils)
   add_subdirectory(../utils ${CMAKE_CURRENT_BINARY_DIR}/buildUtils)
 endif()
 
-target_link_libraries(dft-efe-atoms PUBLIC dft-efe-utils)
+include(FetchContent)
+
+FetchContent_Declare(
+  simdjson
+  GIT_REPOSITORY https://github.com/simdjson/simdjson.git
+  GIT_TAG  tags/v0.9.6
+  GIT_SHALLOW TRUE)
+
+FetchContent_MakeAvailable(simdjson)
+
+target_link_libraries(dft-efe-atoms PUBLIC dft-efe-utils simdjson)
 endif()

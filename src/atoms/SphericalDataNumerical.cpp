@@ -153,7 +153,10 @@ namespace dftefe
                                       l, std::abs(m), theta) +
                        cos(theta) * dPlmDTheta_theta +
                        sin(theta) * l * (l + 1) * plm_theta) *
-                      (1 / (m * m)) * dQmDPhi(m, phi);
+                      (1. / (m * m)) * dQmDPhi(m, phi);
+                    // if(l == 2 && (m==2))
+                    // std::cout << dYlmDPhiBysinTheta << " "  <<
+                    // -2*sqrt(15./(32.*M_PI))*sin(theta)*sin(2*phi) << "\n";
                   }
 
                 auto dValueDR = (radialDerivativeValue * cutoffValue +
@@ -586,20 +589,20 @@ namespace dftefe
                                     l, std::abs(m), theta) +
                      cos(theta) * dPlmDTheta_theta +
                      sin(theta) * l * (l + 1) * plm_theta) *
-                    (1 / (m * m)) * dQmDPhi(m, phi);
+                    (1. / (m * m)) * dQmDPhi(m, phi);
                 }
 
-              if (!(r[i] < d_radiusTolerance && l > 0))
-                {
-                  retVal[0][i] = dYlmDTheta * (1 / r[i]);
-                  retVal[1][i] = dYlmDPhiBysinTheta * (1 / r[i]);
-                }
-              else
-                {
-                  retVal[0][i] = dYlmDTheta * (1 / (r[i] + d_radiusTolerance));
-                  retVal[1][i] =
-                    dYlmDPhiBysinTheta * (1 / (r[i] + d_radiusTolerance));
-                }
+              // if (!(r[i] < d_radiusTolerance && l > 0))
+              //   {
+              retVal[0][i] = dYlmDTheta * (1. / r[i]);
+              retVal[1][i] = dYlmDPhiBysinTheta * (1. / r[i]);
+              //   }
+              // else
+              //   {
+              //     retVal[0][i] = dYlmDTheta * (1. / (r[i]));
+              //     retVal[1][i] =
+              //       dYlmDPhiBysinTheta * (1. / (r[i]));
+              //   }
             }
           else
             {

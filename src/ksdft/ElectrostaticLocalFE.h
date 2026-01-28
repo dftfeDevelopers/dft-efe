@@ -38,6 +38,8 @@
 #include <linearAlgebra/CGLinearSolver.h>
 #include <utils/ConditionalOStream.h>
 #include <electrostatics/PoissonSolverDealiiMatrixFreeFE.h>
+#include <atoms/AtomTCIASpline.h>
+#include "Defaults.h"
 
 namespace dftefe
 {
@@ -80,7 +82,7 @@ namespace dftefe
       ElectrostaticLocalFE(
         const std::vector<utils::Point> &atomCoordinates,
         const std::vector<double> &      atomCharges,
-        const std::vector<double> &      smearedChargeRadius,
+        const double &                   smearedChargeRadius,
         const quadrature::QuadratureValuesContainer<RealType, memorySpace>
           &                                               electronChargeDensity,
         std::shared_ptr<const basis::FEBasisManager<ValueTypeBasisCoeff,
@@ -109,7 +111,7 @@ namespace dftefe
       ElectrostaticLocalFE(
         const std::vector<utils::Point> &atomCoordinates,
         const std::vector<double> &      atomCharges,
-        const std::vector<double> &      smearedChargeRadius,
+        const double &                   smearedChargeRadius,
         const quadrature::QuadratureValuesContainer<RealType, memorySpace>
           &                                               electronChargeDensity,
         std::shared_ptr<const basis::FEBasisManager<ValueTypeBasisCoeff,
@@ -144,8 +146,9 @@ namespace dftefe
       // with analytical vself energy cancellation
       ElectrostaticLocalFE(
         const std::vector<utils::Point> &atomCoordinates,
+        const std::vector<std::string> & atomSymbols,
         const std::vector<double> &      atomCharges,
-        const std::vector<double> &      smearedChargeRadius,
+        const double &                   smearedChargeRadius,
         // const quadrature::QuadratureValuesContainer<RealType, memorySpace>
         //   &atomicElectronChargeDensity,
         // const quadrature::QuadratureValuesContainer<ValueTypeBasisCoeff,
@@ -180,8 +183,11 @@ namespace dftefe
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
                         linAlgOpContext,
         const size_type maxCellBlock,
-        const bool      useDealiiMatrixFreePoissonSolve = true,
-        const bool      calculateIntegralDeltaRho       = false);
+        const std::unordered_map<std::string,
+                                 std::shared_ptr<atoms::AtomTCIASpline>>
+                   fieldToTCIASplineMap            = {},
+        const bool useDealiiMatrixFreePoissonSolve = true,
+        const bool calculateIntegralDeltaRho       = false);
 
 
       ~ElectrostaticLocalFE();
@@ -320,7 +326,7 @@ namespace dftefe
       void
       deleteStorages();
 
-      const bool                d_useDealiiMatrixFreePoissonSolve;
+      bool                      d_useDealiiMatrixFreePoissonSolve;
       const bool                d_isCalculateIntegralDeltaRho;
       bool                      d_isNumericalVSelfSolve;
       bool                      d_isDeltaRhoSolve;
@@ -329,7 +335,7 @@ namespace dftefe
       std::vector<utils::Point> d_atomCoordinates;
       const size_type           d_numAtoms;
       const std::vector<double> d_atomCharges;
-      const std::vector<double> d_smearedChargeRadius;
+      const double              d_smearedChargeRadius;
       RealType                  d_energy;
       RealType                  d_nuclearSelfEnergy;
 
@@ -430,6 +436,14 @@ namespace dftefe
 
       RealType d_integralPhiAtxbSmear, d_intRhoAtPhiAt,
         d_correctionEnergyAtomic;
+
+      std::vector<std::string> d_atomSymbolVec;
+      const std::unordered_map<std::string,
+                               std::shared_ptr<atoms::AtomTCIASpline>>
+             d_fieldToTCIASplineMap;
+      bool   d_isTCIEnabled;
+      double d_integralDiffVZZCorrVSmearxSumBZZCorrBSmear;
+      double d_integralAtRho;
 
     }; // end of class ElectrostaticLocalFE
   }    // end of namespace ksdft

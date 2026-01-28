@@ -27,7 +27,7 @@
 #include <utils/Exceptions.h>
 #include <map>
 #include <string>
-#include <atoms/AtomSphericalDataEnrichment.h>
+#include <atoms/AtomSphericalDataEnrichmentJSON.h>
 #include <atoms/AtomSphericalDataPSP.h>
 #include <atoms/AtomSphericalDataAnalytical.h>
 #include <atoms/SphericalData.h>
@@ -42,6 +42,7 @@ namespace dftefe
       const std::map<std::string, std::string> &atomSymbolToFilename,
       const std::vector<std::string> &          fieldNames,
       const std::vector<std::string> &          metadataNames,
+      const std::map<std::string, std::string>  additionalParams,
       const bool                                isAssocLegendreSplineEval)
       : d_atomSymbolToFilename(atomSymbolToFilename)
       , d_fieldNames(fieldNames)
@@ -59,11 +60,12 @@ namespace dftefe
             {
               d_mapAtomSymbolToAtomSphericalData.insert(
                 {iter->first,
-                 std::make_shared<AtomSphericalDataEnrichment>(
+                 std::make_shared<AtomSphericalDataEnrichmentJSON>(
                    iter->second,
                    d_fieldNames,
                    d_metadataNames,
-                   *d_SphericalHarmonicFunctions)});
+                   *d_SphericalHarmonicFunctions,
+                   additionalParams)});
             }
         }
       else if (atomSphericalDataType == AtomSphericalDataType::PSEUDOPOTENTIAL)

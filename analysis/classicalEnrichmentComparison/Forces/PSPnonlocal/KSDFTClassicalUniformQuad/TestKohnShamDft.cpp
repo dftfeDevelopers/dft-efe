@@ -2,10 +2,10 @@
 #include <basis/TriangulationDealiiParallel.h>
 #include <basis/CellMappingBase.h>
 #include <basis/LinearCellMappingDealii.h>
-#include <basis/EFEBasisDofHandlerDealii.h>
-#include <basis/EFEBDSOnTheFlyComputeDealii.h>
+#include <basis/CFEBasisDofHandlerDealii.h>
+#include <basis/CFEBDSOnTheFlyComputeDealii.h>
 #include <basis/FEBasisOperations.h>
-#include <basis/EFEConstraintsLocalDealii.h>
+#include <basis/CFEConstraintsLocalDealii.h>
 #include <basis/FEBasisManager.h>
 #include <quadrature/QuadratureAttributes.h>
 #include <quadrature/QuadratureRuleGauss.h>
@@ -28,8 +28,7 @@
 #include <ksdft/ExchangeCorrelationFE.h>
 #include <ksdft/KohnShamOperatorContextFE.h>
 #include <ksdft/KohnShamEigenSolver.h>
-#include <basis/OrthoEFEOverlapInverseOpContextGLL.h>
-#include <basis/OEFEAtomBlockOverlapInvOpContextGLL.h>
+#include <basis/CFEOverlapInverseOpContextGLL.h>
 #include <utils/PointChargePotentialFunction.h>
 #include <ksdft/DensityCalculator.h>
 #include <ksdft/KohnShamDFT.h>
@@ -106,118 +105,118 @@ T readParameter(const std::string &ParamFile,
   return t;
 }
 
-class RhoFunction : public utils::ScalarSpatialFunctionReal
-{
-private:
-    std::shared_ptr<const atoms::AtomSphericalDataContainer>
-                              d_atomSphericalDataContainer;
-    std::vector<std::string>  d_atomSymbolVec;
-    std::vector<utils::Point> d_atomCoordinatesVec;
-    std::vector<double> d_atomChargesVec;
-    double d_ylm00;
+  class RhoFunction : public utils::ScalarSpatialFunctionReal
+  {
+  private:
+      std::shared_ptr<const atoms::AtomSphericalDataContainer>
+                                d_atomSphericalDataContainer;
+      std::vector<std::string>  d_atomSymbolVec;
+      std::vector<utils::Point> d_atomCoordinatesVec;
+      std::vector<double> d_atomChargesVec;
+      double d_ylm00;
 
-public:
-  RhoFunction(
-    std::shared_ptr<const atoms::AtomSphericalDataContainer>
+  public:
+    RhoFunction(
+      std::shared_ptr<const atoms::AtomSphericalDataContainer>
+                                         atomSphericalDataContainer,
+        const std::vector<std::string> & atomSymbol,
+        const std::vector<double> &      atomCharges,
+        const std::vector<utils::Point> &atomCoordinates)
+      : d_atomSphericalDataContainer(atomSphericalDataContainer)
+      , d_atomSymbolVec(atomSymbol)
+      , d_atomCoordinatesVec(atomCoordinates)
+      , d_atomChargesVec(atomCharges)
+      , d_ylm00(atoms::Clm(0, 0) * atoms::Dm(0) * atoms::Qm(0, 0))
+      {}
+
+    double
+    operator()(const utils::Point &point) const
+    {
+      double   retValue = 0;
+      for (size_type atomId = 0 ; atomId < d_atomCoordinatesVec.size() ; atomId++)
+        {
+          utils::Point origin(d_atomCoordinatesVec[atomId]);
+          for(auto &enrichmentObjId : 
+            d_atomSphericalDataContainer->getSphericalData(d_atomSymbolVec[atomId], "density"))
+          {
+            retValue = retValue + std::abs(enrichmentObjId->getValue(point, origin) * (1/d_ylm00));
+          }
+        }
+      return retValue;
+    }
+    std::vector<double>
+    operator()(const std::vector<utils::Point> &points) const
+    {
+      std::vector<double> ret(0);
+      ret.resize(points.size());
+      for (size_type atomId = 0 ; atomId < d_atomCoordinatesVec.size() ; atomId++)
+        {
+          utils::Point origin(d_atomCoordinatesVec[atomId]);
+          auto vec = d_atomSphericalDataContainer->getSphericalData(d_atomSymbolVec[atomId], "density");
+          for(auto &enrichmentObjId : vec)
+          for (unsigned int i = 0 ; i < points.size() ; i++)            
+          {
+            ret[i] = ret[i] + std::abs(enrichmentObjId->getValue(points[i], origin) * (1/d_ylm00));
+          }
+        }
+      return ret;
+    }
+  };
+
+  class AtomicTotalElectrostaticPotentialFunction : public utils::ScalarSpatialFunctionReal
+  {
+  private:
+      std::shared_ptr<const atoms::AtomSphericalDataContainer>
+                                d_atomSphericalDataContainer;
+      std::vector<std::string>  d_atomSymbolVec;
+      std::vector<utils::Point> d_atomCoordinatesVec;
+      double d_ylm00;
+
+  public:
+    AtomicTotalElectrostaticPotentialFunction(
+      std::shared_ptr<const atoms::AtomSphericalDataContainer>
                                         atomSphericalDataContainer,
-      const std::vector<std::string> & atomSymbol,
-      const std::vector<double> &      atomCharges,
-      const std::vector<utils::Point> &atomCoordinates)
-    : d_atomSphericalDataContainer(atomSphericalDataContainer)
-    , d_atomSymbolVec(atomSymbol)
-    , d_atomCoordinatesVec(atomCoordinates)
-    , d_atomChargesVec(atomCharges)
-    , d_ylm00(atoms::Clm(0, 0) * atoms::Dm(0) * atoms::Qm(0, 0))
-    {}
+        const std::vector<std::string> & atomSymbol,
+        const std::vector<utils::Point> &atomCoordinates)
+      : d_atomSphericalDataContainer(atomSphericalDataContainer)
+      , d_atomSymbolVec(atomSymbol)
+      , d_atomCoordinatesVec(atomCoordinates)
+      , d_ylm00(atoms::Clm(0, 0) * atoms::Dm(0) * atoms::Qm(0, 0))
+      {}
 
-  double
-  operator()(const utils::Point &point) const
-  {
-    double   retValue = 0;
-    for (size_type atomId = 0 ; atomId < d_atomCoordinatesVec.size() ; atomId++)
-      {
-        utils::Point origin(d_atomCoordinatesVec[atomId]);
-        for(auto &enrichmentObjId : 
-          d_atomSphericalDataContainer->getSphericalData(d_atomSymbolVec[atomId], "density"))
+    double
+    operator()(const utils::Point &point) const
+    {
+      double   retValue = 0;
+      for (size_type atomId = 0 ; atomId < d_atomCoordinatesVec.size() ; atomId++)
         {
-          retValue = retValue + std::abs(enrichmentObjId->getValue(point, origin) * (1/d_ylm00));
+          utils::Point origin(d_atomCoordinatesVec[atomId]);
+          for(auto &enrichmentObjId : 
+            d_atomSphericalDataContainer->getSphericalData(d_atomSymbolVec[atomId], "vtotal"))
+          {
+            retValue = retValue + enrichmentObjId->getValue(point, origin) * (1/d_ylm00);
+          }
         }
-      }
-    return retValue;
-  }
-  std::vector<double>
-  operator()(const std::vector<utils::Point> &points) const
-  {
-    std::vector<double> ret(0);
-    ret.resize(points.size());
-    for (size_type atomId = 0 ; atomId < d_atomCoordinatesVec.size() ; atomId++)
-      {
-        utils::Point origin(d_atomCoordinatesVec[atomId]);
-        auto vec = d_atomSphericalDataContainer->getSphericalData(d_atomSymbolVec[atomId], "density");
-        for(auto &enrichmentObjId : vec)
-        for (unsigned int i = 0 ; i < points.size() ; i++)            
+      return retValue;
+    }
+    std::vector<double>
+    operator()(const std::vector<utils::Point> &points) const
+    {
+      std::vector<double> ret(0);
+      ret.resize(points.size());
+      for (size_type atomId = 0 ; atomId < d_atomCoordinatesVec.size() ; atomId++)
         {
-          ret[i] = ret[i] + std::abs(enrichmentObjId->getValue(points[i], origin) * (1/d_ylm00));
+          utils::Point origin(d_atomCoordinatesVec[atomId]);
+          auto vec = d_atomSphericalDataContainer->getSphericalData(d_atomSymbolVec[atomId], "vtotal");
+          for(auto &enrichmentObjId : vec)
+          for (unsigned int i = 0 ; i < points.size() ; i++)            
+          {
+            ret[i] = ret[i] + enrichmentObjId->getValue(points[i], origin) * (1/d_ylm00);
+          }
         }
-      }
-    return ret;
-  }
-};
-
-class AtomicTotalElectrostaticPotentialFunction : public utils::ScalarSpatialFunctionReal
-{
-private:
-    std::shared_ptr<const atoms::AtomSphericalDataContainer>
-                              d_atomSphericalDataContainer;
-    std::vector<std::string>  d_atomSymbolVec;
-    std::vector<utils::Point> d_atomCoordinatesVec;
-    double d_ylm00;
-
-public:
-  AtomicTotalElectrostaticPotentialFunction(
-    std::shared_ptr<const atoms::AtomSphericalDataContainer>
-                                      atomSphericalDataContainer,
-      const std::vector<std::string> & atomSymbol,
-      const std::vector<utils::Point> &atomCoordinates)
-    : d_atomSphericalDataContainer(atomSphericalDataContainer)
-    , d_atomSymbolVec(atomSymbol)
-    , d_atomCoordinatesVec(atomCoordinates)
-    , d_ylm00(atoms::Clm(0, 0) * atoms::Dm(0) * atoms::Qm(0, 0))
-    {}
-
-  double
-  operator()(const utils::Point &point) const
-  {
-    double   retValue = 0;
-    for (size_type atomId = 0 ; atomId < d_atomCoordinatesVec.size() ; atomId++)
-      {
-        utils::Point origin(d_atomCoordinatesVec[atomId]);
-        for(auto &enrichmentObjId : 
-          d_atomSphericalDataContainer->getSphericalData(d_atomSymbolVec[atomId], "vtotal"))
-        {
-          retValue = retValue + enrichmentObjId->getValue(point, origin) * (1/d_ylm00);
-        }
-      }
-    return retValue;
-  }
-  std::vector<double>
-  operator()(const std::vector<utils::Point> &points) const
-  {
-    std::vector<double> ret(0);
-    ret.resize(points.size());
-    for (size_type atomId = 0 ; atomId < d_atomCoordinatesVec.size() ; atomId++)
-      {
-        utils::Point origin(d_atomCoordinatesVec[atomId]);
-        auto vec = d_atomSphericalDataContainer->getSphericalData(d_atomSymbolVec[atomId], "vtotal");
-        for(auto &enrichmentObjId : vec)
-        for (unsigned int i = 0 ; i < points.size() ; i++)            
-        {
-          ret[i] = ret[i] + enrichmentObjId->getValue(points[i], origin) * (1/d_ylm00);
-        }
-      }
-    return ret;
-  }
-};
+      return ret;
+    }
+  };
 
   template <typename ValueTypeBasisData,
             utils::MemorySpace memorySpace,
@@ -256,8 +255,8 @@ public:
 
     std::map<global_size_type, utils::Point> dofCoords;
     basisDofHandler.getBasisCenters(dofCoords);
-    dftefe::utils::Point nodeLoc(dim,0.0);
-    for (dftefe::global_size_type iDof = numLocallyOwnedRanges[0].first; iDof < numLocallyOwnedRanges[0].second ; iDof++)
+    utils::Point nodeLoc(dim,0.0);
+    for (global_size_type iDof = numLocallyOwnedRanges[0].first; iDof < numLocallyOwnedRanges[0].second ; iDof++)
       {
         nodeLoc = dofCoords.find(iDof)->second;
         double dist = 0;
@@ -298,9 +297,10 @@ int main(int argc, char** argv)
 
   utils::mpi::MPIComm comm = utils::mpi::MPICommWorld;
 
-  utils::Profiler pTot(comm, "Total Statistics");
+  utils::Profiler pTot(comm, "Total Statistics") , pTotFDForce(comm, "Total Statistics Force");
   utils::Profiler p(comm, "Initilization Breakdown Statistics");
-  pTot.registerStart("Initilization");
+  pTotFDForce.registerStart("Total Wall Time for FD Force.");
+  // pTot.registerStart("Initilization");
 
     // Get the rank of the process
   int rank;
@@ -329,7 +329,7 @@ int main(int argc, char** argv)
     <Host>>(blasQueuePtr, lapackQueuePtr);
 
   p.registerStart("Reading Parameter file data");
-  rootCout<<" Entering test kohn sham dft ortho enrichment \n";
+  rootCout<<" Entering test kohn sham dft classical \n";
   rootCout << "Number of processes: "<<numProcs<<"\n";
 
   char* dftefe_path = getenv("DFTEFE_PATH");
@@ -375,19 +375,17 @@ int main(int argc, char** argv)
   bool evaluateEnergyEverySCF = readParameter<bool>(parameterInputFileName, "evaluateEnergyEverySCF", rootCout);
   const size_type dim = 3;
 
-  double atomPartitionTolerance = readParameter<double>(parameterInputFileName, "atomPartitionTolerance", rootCout);
   unsigned int num1DGaussSubdividedSizeElec = readParameter<unsigned int>(parameterInputFileName, "num1DGaussSubdividedSizeElec", rootCout);
   unsigned int gaussSubdividedCopiesElec = readParameter<unsigned int>(parameterInputFileName, "gaussSubdividedCopiesElec", rootCout);
   
   unsigned int num1DGaussSubdividedSizeEigen = readParameter<unsigned int>(parameterInputFileName, "num1DGaussSubdividedSizeEigen", rootCout);
   unsigned int gaussSubdividedCopiesEigen = readParameter<unsigned int>(parameterInputFileName, "gaussSubdividedCopiesEigen", rootCout);
   
-  unsigned int num1DGaussSubdividedSizeGrad = readParameter<unsigned int>(parameterInputFileName, "num1DGaussSubdividedSizeGrad", rootCout);
-  unsigned int gaussSubdividedCopiesGrad = readParameter<unsigned int>(parameterInputFileName, "gaussSubdividedCopiesGrad", rootCout);
-  
   bool isNumericalNuclearSolve = readParameter<bool>(parameterInputFileName, "isNumericalNuclearSolve", rootCout);
   bool isDeltaRhoPoissonSolve = readParameter<bool>(parameterInputFileName, "isDeltaRhoPoissonSolve", rootCout);
 
+  unsigned int num1DGaussSubdividedSizeGrad = readParameter<unsigned int>(parameterInputFileName, "num1DGaussSubdividedSizeGrad", rootCout);
+  unsigned int gaussSubdividedCopiesGrad = readParameter<unsigned int>(parameterInputFileName, "gaussSubdividedCopiesGrad", rootCout);
   std::string coordinatesDataFile = readParameter<std::string>(parameterInputFileName, "coordinatesDataFile", rootCout , false , false);
   std::string basisDataFile = readParameter<std::string>(parameterInputFileName, "basisDataFile", rootCout , false , false);
   std::string PSPDataFile = readParameter<std::string>(parameterInputFileName, "PSPDataFile", rootCout , false , false);
@@ -397,36 +395,31 @@ int main(int argc, char** argv)
 
   const atoms::TCIADataParams  tciaparams{tciaFolder , tciaOutFilePrefix};
 
-  unsigned int num1DGaussSubdividedSizeNonLocOperator = 14;
-  unsigned int gaussSubdividedCopiesNonLocOperator = 1;
+  unsigned int num1DGaussSubdividedSizeNonLocOperator = 15;
+  unsigned int gaussSubdividedCopiesNonLocOperator = 2;
+
+  double gridSizeFD = readParameter<double>(parameterInputFileName, "gridSizeFD", rootCout);
+  unsigned int dimIdPerturbed = readParameter<unsigned int>(parameterInputFileName, "dimIdPerturbed", rootCout);
+  unsigned int atomIdPerturbed = readParameter<unsigned int>(parameterInputFileName, "atomIdPerturbed", rootCout);
+  size_type numDimPerturbed = 1;
+  size_type numAtomPerturbed = 1;
 
   // Set up Triangulation
     std::shared_ptr<basis::TriangulationBase> triangulationBase =
         std::make_shared<basis::TriangulationDealiiParallel<dim>>(comm);
   std::vector<bool>                 isPeriodicFlags(dim, false);
   std::vector<utils::Point> domainVectors(dim, utils::Point(dim, 0.0));
+  
+  std::vector<double> gradientStencil{1./12 ,	-2./3 ,	2./3 ,	-1./12};
+  //std::vector<double> gradientStencil{-1./60 ,	3./20 ,	-3./4 , 	3./4 ,	-3./20 ,	1./60};
+  int stencilType = gradientStencil.size() + 1;
 
   domainVectors[0][0] = xmax;
   domainVectors[1][1] = ymax;
   domainVectors[2][2] = zmax;
 
-  // //Uniform mesh creation
-  // std::vector<unsigned int>         subdivisions = {10, 10, 10};
-  // std::vector<double> origin(0);
-  // origin.resize(dim);
-  // for(unsigned int i = 0 ; i < dim ; i++)
-  //   origin[i] = -domainVectors[i][i]*0.5;
-
-  // // initialize the triangulation
-  // triangulationBase->initializeTriangulationConstruction();
-  // triangulationBase->createUniformParallelepiped(subdivisions,
-  //                                                domainVectors,
-  //                                                isPeriodicFlags);
-  // triangulationBase->shiftTriangulation(utils::Point(origin));
-  // triangulationBase->finalizeTriangulationConstruction();
-
   p.registerEnd("Reading Parameter file data");
-  p.registerStart("Reading Other Input data");
+  p.registerStart("Reading XML data");
   std::fstream fstream;
   
   // read the input file and create atomsymbol vector and atom coordinates vector.
@@ -444,9 +437,6 @@ int main(int argc, char** argv)
   std::map<std::string, std::string> atomSymbolToBasisFileName;
   std::vector<std::string> matchString(0);
   fstream.open(basisDataFile, std::fstream::in);
-  if (!fstream.is_open()) {
-      utils::throwException(false, "Error: Could not open a parameter input file '");
-  }
   while (std::getline(fstream, line)){
       std::stringstream ss(line);
       ss >> symbol; 
@@ -463,9 +453,6 @@ int main(int argc, char** argv)
   std::map<std::string, std::string> atomSymbolToPSPFileName;
   matchString.clear();
   fstream.open(PSPDataFile, std::fstream::in);
-  if (!fstream.is_open()) {
-      utils::throwException(false, "Error: Could not open a parameter input file '");
-  }
   while (std::getline(fstream, line)){
       std::stringstream ss(line);
       ss >> symbol;
@@ -480,9 +467,6 @@ int main(int argc, char** argv)
   fstream.close();
 
   fstream.open(coordinatesDataFile, std::fstream::in);
-  if (!fstream.is_open()) {
-      utils::throwException(false, "Error: Could not open a parameter input file '");
-  }
   while (std::getline(fstream, line)){
       std::stringstream ss(line);
       ss >> symbol; 
@@ -507,58 +491,40 @@ int main(int argc, char** argv)
   utils::mpi::MPIBarrier(comm);
   fstream.close();
 
+  std::vector<std::vector<utils::Point>> 
+    atomCoordinatesVecInGrid(0, std::vector<utils::Point>(0,utils::Point(dim, 0.0)));
+
+  atomCoordinatesVecInGrid.push_back(atomCoordinatesVec);
+  for(unsigned int perturbDim = 0 ; perturbDim < numDimPerturbed ; perturbDim ++)
+  {
+    for(unsigned int perturbAtomId = 0 ; perturbAtomId < numAtomPerturbed ; perturbAtomId++ )
+    {
+      for(int gridPt = -int((stencilType-1)/2) ; gridPt <= int((stencilType-1)/2) ; gridPt++)
+      {
+        std::vector<utils::Point> coordinatesVec(atomCoordinatesVec.size(),utils::Point(dim, 0.0));
+        for (unsigned int atomId = 0 ; atomId < atomCoordinatesVec.size() ; atomId++)
+        {
+          for (unsigned int iDim = 0 ; iDim < dim ; iDim ++)
+          {
+            if(atomId == atomIdPerturbed && iDim == dimIdPerturbed)
+              coordinatesVec[atomId][iDim] = atomCoordinatesVec[atomId][iDim] + gridPt*gridSizeFD;
+            else
+              coordinatesVec[atomId][iDim] = atomCoordinatesVec[atomId][iDim];
+          }
+        }
+        if(gridPt!=0)
+        atomCoordinatesVecInGrid.push_back(coordinatesVec);
+      }
+    }
+  }
+  
   size_type numElectrons = 0;
   for(auto &i : atomChargesVec)
   {
     numElectrons += (size_type)(std::abs(i));
   }
 
-  if (numWantedEigenvalues <= numElectrons / 2.0 ||
-             numWantedEigenvalues == 0)
-  {
-    rootCout << " Warning: User has requested the number of Kohn-Sham wavefunctions to be less than or"
-          "equal to half the number of electrons in the system. Setting the Kohn-Sham wavefunctions"
-          "to half the number of electrons with a 20 percent buffer to avoid convergence issues in"
-          "SCF iterations" << std::endl;
-    numWantedEigenvalues = (numElectrons / 2.0) + std::max((0.2) * (numElectrons / 2.0), 20.0);
-
-    // start with 17-20% buffer in GPUs to leave room for additional modifications
-    // due to block size restrictions
-
-    rootCout << " Setting the number of Kohn-Sham wave functions to be " << numWantedEigenvalues << std::endl;
-  }
-
-  std::vector<std::string> fieldNames{"orbital","vtotal","density"};
-  std::vector<std::string> metadataNames{ "symbol", "Z", "charge", "NR" };
-  std::shared_ptr<atoms::AtomSphericalDataContainer>  atomSphericalDataContainer = 
-      std::make_shared<atoms::AtomSphericalDataContainer>(
-                                                      atoms::AtomSphericalDataType::ENRICHMENT,
-                                                      atomSymbolToBasisFileName,
-                                                      fieldNames,
-                                                      metadataNames,
-                                                      std::map<std::string, std::string>({{"rcsmear", std::to_string(rc)}, {"PSP/AE", "PSP"}}));
-                                                    
-  for (auto i:atomSymbolToBasisFileName )
-  {
-    rootCout << "For atom symbol: "<<i.first<<std::endl;
-    rootCout << "Reading basis file: "<<i.second<<std::endl;
-    rootCout << "Cutoff and smoothness for "<<i.first<<std::endl;
-    for(auto j:fieldNames)
-    {
-      rootCout << " for "<<j<<" : "; 
-      for(auto &enrichmentObjId : 
-        atomSphericalDataContainer->getSphericalData(i.first, j))
-      {
-        rootCout << enrichmentObjId->getCutoff() << ","<<enrichmentObjId->getSmoothness()<<"\t";
-      }
-      rootCout << std::endl;
-    }
-    if(std::abs(std::stod(atomSphericalDataContainer->getMetadata(i.first, "Z"))) - std::abs(atomSymbolToChargeMap[i.first]) > 1e-12)
-    {
-      utils::throwException(false, "The input basis file Z does not match with that given in input.");       
-    }
-  }
-  p.registerEnd("Reading Other Input data");
+  p.registerEnd("Reading XML data");
 
   // Generate mesh
    std::shared_ptr<basis::CellMappingBase> cellMapping = std::make_shared<basis::LinearCellMappingDealii<dim>>();
@@ -580,10 +546,9 @@ int main(int argc, char** argv)
   utils::printCurrentMemoryUsage(comm, "Create Mesh");
 
     p.registerStart("Quadrature Rule Creation");
-    //quadrature::QuadratureRuleAttributes quadAttrAdaptive(quadrature::QuadratureFamily::ADAPTIVE,false);
 
-    quadrature::QuadratureRuleAttributes quadAttrGllElec(quadrature::QuadratureFamily::GLL,true,feOrderElec + 1);
-  
+  // Set up the quadrature rule
+
     std::shared_ptr<quadrature::QuadratureRule> gaussSubdivQuadRuleElec =
       std::make_shared<quadrature::QuadratureRuleGaussIterated>(dim, num1DGaussSubdividedSizeElec, gaussSubdividedCopiesElec);
 
@@ -614,27 +579,23 @@ int main(int argc, char** argv)
       utils::mpi::MPIMax,
       comm);
     rootCout << "Maximum Number of quadrature points in a processor: "<< nQuadMax<<"\n";
-    rootCout << "Number of quadrature points in gauss subdivided quadrature: "<< nQuad<<"\n";
+  rootCout << "Number of quadrature points in gauss subdivided quadrature: "<< nQuad<<"\n";
 
-  //Set up quadAttr for Rhs and OverlapMatrix
-  
-  quadrature::QuadratureRuleAttributes quadAttrGllEigen(quadrature::QuadratureFamily::GLL,true,feOrderEigen + 1);
+    //Set up quadAttr for Rhs and OverlapMatrix
+    
+    quadrature::QuadratureRuleAttributes quadAttrGllEigen(quadrature::QuadratureFamily::GLL,true,feOrderEigen + 1);
 
-  // Set up base quadrature rule for adaptive quadrature 
+    // Set up base quadrature rule for adaptive quadrature 
 
-  std::shared_ptr<quadrature::QuadratureRule> baseQuadRuleEigen = std::make_shared<quadrature::QuadratureRuleGauss>(dim, feOrderEigen + 1);
-    // feOrderEigen > feOrderElec ? std::make_shared<quadrature::QuadratureRuleGauss>(dim, feOrderEigen + 1) : 
-    //   std::make_shared<quadrature::QuadratureRuleGauss>(dim, feOrderElec + 1);
+    std::shared_ptr<quadrature::QuadratureRule> gaussSubdivQuadRuleEigen =
+      std::make_shared<quadrature::QuadratureRuleGaussIterated>(dim, num1DGaussSubdividedSizeEigen, gaussSubdividedCopiesEigen);
 
-  std::shared_ptr<quadrature::QuadratureRule> gaussSubdivQuadRuleEigen =
-    std::make_shared<quadrature::QuadratureRuleGaussIterated>(dim, num1DGaussSubdividedSizeEigen, gaussSubdividedCopiesEigen);
-
-  std::shared_ptr<quadrature::QuadratureRuleContainer> quadRuleContainerAdaptiveOrbital =  /*quadRuleContainerGaussSubdividedElec;*/
-    std::make_shared<quadrature::QuadratureRuleContainer>
-    (quadAttrGaussSubdivided, 
-    gaussSubdivQuadRuleEigen, 
-    triangulationBase, 
-    *cellMapping); 
+    std::shared_ptr<quadrature::QuadratureRuleContainer> quadRuleContainerAdaptiveOrbital =  /*quadRuleContainerGaussSubdividedElec;*/
+      std::make_shared<quadrature::QuadratureRuleContainer>
+      (quadAttrGaussSubdivided, 
+      gaussSubdivQuadRuleEigen, 
+      triangulationBase, 
+      *cellMapping); 
 
   std::shared_ptr<quadrature::QuadratureRule> gaussSubdivQuadRuleNonLocOperator =
     std::make_shared<quadrature::QuadratureRuleGaussIterated>(dim, num1DGaussSubdividedSizeNonLocOperator, 
@@ -647,37 +608,29 @@ int main(int argc, char** argv)
     triangulationBase, 
     *cellMapping); 
 
-  std::shared_ptr<quadrature::QuadratureRule> gaussSubdivQuadRuleGrad =
-    std::make_shared<quadrature::QuadratureRuleGaussIterated>(dim, num1DGaussSubdividedSizeGrad, gaussSubdividedCopiesGrad);
+    std::shared_ptr<quadrature::QuadratureRule> gaussSubdivQuadRuleGrad =
+      std::make_shared<quadrature::QuadratureRuleGaussIterated>(dim, num1DGaussSubdividedSizeGrad, gaussSubdividedCopiesGrad);
 
-  std::shared_ptr<quadrature::QuadratureRuleContainer> quadRuleContainerAdaptiveGrad =  
-    std::make_shared<quadrature::QuadratureRuleContainer>
-    (quadAttrGaussSubdivided, 
-    gaussSubdivQuadRuleGrad, 
-    triangulationBase, 
-    *cellMapping); 
+    std::shared_ptr<quadrature::QuadratureRuleContainer> quadRuleContainerAdaptiveGrad =  
+      std::make_shared<quadrature::QuadratureRuleContainer>
+      (quadAttrGaussSubdivided, 
+      gaussSubdivQuadRuleGrad, 
+      triangulationBase, 
+      *cellMapping); 
 
-  nQuad = quadRuleContainerAdaptiveOrbital->nQuadraturePoints();
-  mpierr = utils::mpi::MPIAllreduce<Host>(
-    utils::mpi::MPIInPlace,
-    &nQuad,
-    1,
-      utils::mpi::Types<size_type>::getMPIDatatype(),
-    utils::mpi::MPISum,
-    comm);
+    nQuad = quadRuleContainerAdaptiveOrbital->nQuadraturePoints();
+    mpierr = utils::mpi::MPIAllreduce<Host>(
+      utils::mpi::MPIInPlace,
+      &nQuad,
+      1,
+       utils::mpi::Types<size_type>::getMPIDatatype(),
+      utils::mpi::MPISum,
+      comm);
 
-  rootCout << "Number of quadrature points in wave function adaptive quadrature: "<<nQuad<<"\n";
+  rootCout << "Number of quadrature points in wave function quadrature: "<<nQuad<<"\n";
 
   p.registerEnd("Quadrature Rule Creation");
     utils::printCurrentMemoryUsage(comm, "Quadrature Rule Creation");
-  p.registerStart("Ortho EFE basis manager creation");
-
-  // Make orthogonalized EFE basis for all the fields
-
-  // 1. Make CFEBDSOnTheFlyComputeDealii object for Rhs (ADAPTIVE with GAUSS and fns are N_i^2 - make quadrulecontainer), overlapmatrix (GLL).
-  // 2. Make EnrichmentClassicalInterface object for Orthogonalized enrichment.
-  // 3. Input to the EFEBasisDofHandler(eci, feOrder).
-  // 4. Make EFEBasisDataStorage with input as quadratureContainer.
 
     // Set the CFE basis manager and handler for bassiInterfaceCoeffcient distributed vector
   std::shared_ptr<basis::FEBasisDofHandler<double, Host,dim>> cfeBasisDofHandlerElec =  
@@ -685,6 +638,12 @@ int main(int argc, char** argv)
 
   std::shared_ptr<basis::FEBasisDofHandler<double, Host,dim>> cfeBasisDofHandlerEigen =  
    std::make_shared<basis::CFEBasisDofHandlerDealii<double, Host,dim>>(triangulationBase, feOrderEigen, comm);
+
+  // initialize the basis Manager
+
+  std::shared_ptr<basis::FEBasisDofHandler<double, Host,dim>> basisDofHandlerTotalPot = cfeBasisDofHandlerElec;
+
+  std::shared_ptr<basis::FEBasisDofHandler<double, Host,dim>> basisDofHandlerWaveFn =  cfeBasisDofHandlerEigen;
 
   rootCout << "Total Number of classical dofs electrostatics: " << cfeBasisDofHandlerElec->nGlobalNodes() << "\n";
   rootCout << "Total Number of classical dofs eigensolve: " << cfeBasisDofHandlerEigen->nGlobalNodes() << "\n";
@@ -698,7 +657,7 @@ int main(int argc, char** argv)
     getNumClassicalDofsInSystemExcludingVacuum<double, Host, dim>(atomCoordinatesVec,
       *cfeBasisDofHandlerEigen,
       comm) << "\n";
-
+        
   basis::BasisStorageAttributesBoolMap basisAttrMap;
   basisAttrMap[basis::BasisStorageAttributes::StoreValues] = true;
   basisAttrMap[basis::BasisStorageAttributes::StoreGradient] = false;
@@ -708,24 +667,11 @@ int main(int argc, char** argv)
   basisAttrMap[basis::BasisStorageAttributes::StoreJxW] = true;
 
     // Set up the CFE Basis Data Storage for Overlap Matrix
-    std::shared_ptr<basis::FEBasisDataStorage<double, Host>> cfeBasisDataStorageGLLElec =
-      std::make_shared<basis::CFEBDSOnTheFlyComputeDealii<double, double,Host, dim>>
-      (cfeBasisDofHandlerElec, quadAttrGllElec, basisAttrMap, ksdft::KSDFTDefaults::CELL_BATCH_SIZE_GRAD_EVAL, *linAlgOpContext);
-
     std::shared_ptr<basis::FEBasisDataStorage<double, Host>> cfeBasisDataStorageGLLEigen =
       std::make_shared<basis::CFEBDSOnTheFlyComputeDealii<double, double,Host, dim>>
       (cfeBasisDofHandlerEigen, quadAttrGllEigen, basisAttrMap, ksdft::KSDFTDefaults::CELL_BATCH_SIZE_GRAD_EVAL, *linAlgOpContext);
 
-  // evaluate basis data
-  cfeBasisDataStorageGLLElec->evaluateBasisData(quadAttrGllElec, basisAttrMap);
   cfeBasisDataStorageGLLEigen->evaluateBasisData(quadAttrGllEigen, basisAttrMap);
-
-    // Set up the CFE Basis Data Storage for Rhs
-    std::shared_ptr<basis::FEBasisDataStorage<double, Host>> cfeBasisDataStorageGaussSubdividedElec =
-      std::make_shared<basis::CFEBDSOnTheFlyComputeDealii<double, double,Host, dim>>
-      (cfeBasisDofHandlerElec, quadAttrGaussSubdivided, basisAttrMap, ksdft::KSDFTDefaults::CELL_BATCH_SIZE_GRAD_EVAL, *linAlgOpContext);
-  // evaluate basis data
-  cfeBasisDataStorageGaussSubdividedElec->evaluateBasisData(quadAttrGaussSubdivided, quadRuleContainerGaussSubdividedElec, basisAttrMap);
 
     // Set the CFE basis manager and handler for bassiInterfaceCoeffcient distributed vector
 
@@ -743,75 +689,6 @@ int main(int argc, char** argv)
   // evaluate basis data
   cfeBasisDataStorageAdaptiveOrbital->evaluateBasisData(quadAttrGaussSubdivided, quadRuleContainerAdaptiveOrbital, basisAttrMap);
 
-  std::shared_ptr<basis::EnrichmentClassicalInterfaceSpherical
-                          <double, Host, dim>>
-        enrichClassIntfceTotalPot = nullptr;
-
-    // Create the enrichmentClassicalInterface object for wavefn
-  std::shared_ptr<basis::EnrichmentClassicalInterfaceSpherical
-                          <double, Host, dim>>
-    enrichClassIntfceOrbital = std::make_shared<basis::EnrichmentClassicalInterfaceSpherical
-                          <double, Host, dim>>
-                          (cfeBasisDataStorageGLLEigen,
-                          cfeBasisDataStorageAdaptiveOrbital,
-                          atomSphericalDataContainer,
-                          atomPartitionTolerance,
-                          atomSymbolVec,
-                          atomCoordinatesVec,
-                          "orbital",
-                          linAlgOpContext,
-                          comm);
-
-  // initialize the basis Manager
-
-  std::shared_ptr<basis::FEBasisDofHandler<double, Host,dim>> basisDofHandlerTotalPot = nullptr;
-  if (!isDeltaRhoPoissonSolve)
-  {
-    enrichClassIntfceTotalPot = std::make_shared<basis::EnrichmentClassicalInterfaceSpherical
-                        <double, Host, dim>>
-                        (cfeBasisDataStorageGLLElec,
-                        cfeBasisDataStorageGaussSubdividedElec,
-                        atomSphericalDataContainer,
-                        atomPartitionTolerance,
-                        atomSymbolVec,
-                        atomCoordinatesVec,
-                        "vtotal",
-                        linAlgOpContext,
-                        comm);
-     basisDofHandlerTotalPot =  
-      std::make_shared<basis::EFEBasisDofHandlerDealii<double, double,Host,dim>>(
-        enrichClassIntfceTotalPot, comm);
-  }
-  else
-    basisDofHandlerTotalPot = cfeBasisDofHandlerElec;
-
-  std::shared_ptr<basis::FEBasisDofHandler<double, Host,dim>> basisDofHandlerWaveFn =  
-    std::make_shared<basis::EFEBasisDofHandlerDealii<double, double,Host,dim>>(
-      enrichClassIntfceOrbital, comm);
-
-  /*
-  utils::ConditionalOStream allCout(std::cout);
-  for(int iProc = 0 ; iProc < numProcs ; iProc++)
-  {
-    if(rank == iProc)
-    {
-      allCout << rank << "\tNumber of Cells: " << 
-        basisDofHandlerTotalPot->nLocallyOwnedCells() 
-          << "\tElec Dofs: " << basisDofHandlerTotalPot->nLocalNodes() 
-            << "\tEigen Dofs: " << basisDofHandlerWaveFn->nLocalNodes()
-              << std::flush << std::endl;
-    }
-    utils::mpi::MPIBarrier(comm);
-  }
-  utils::mpi::MPIBarrier(comm);
-  */
-
-  p.registerEnd("Ortho EFE basis manager creation");
-  utils::printCurrentMemoryUsage(comm, "Ortho EFE basis manager creation");
-
-  rootCout << "Total Number of dofs electrostatics: " << basisDofHandlerTotalPot->nGlobalNodes() << "\n";
-  rootCout << "Total Number of dofs eigensolve: " << basisDofHandlerWaveFn->nGlobalNodes() << "\n";
-
   // Set up the quadrature rule
 
   p.registerStart("Electrostatics basis grad datastorage eval");
@@ -825,43 +702,30 @@ int main(int argc, char** argv)
 
    quadrature::QuadratureRuleAttributes quadAttrGaussElectro(quadrature::QuadratureFamily::GAUSS,true,feOrderElec + 1);
 
-  // Set up Adaptive quadrature for EFE Basis Data Storage
+  // Set up Adaptive quadrature for CFE Basis Data Storage
   std::shared_ptr<basis::FEBasisDataStorage<double, Host>> feBDTotalChargeStiffnessMatrix = nullptr;
-  if (!isDeltaRhoPoissonSolve)
-    feBDTotalChargeStiffnessMatrix =
-    std::make_shared<basis::EFEBDSOnTheFlyComputeDealii<double, double, Host,dim>>
-    (basisDofHandlerTotalPot, quadAttrGaussSubdivided, basisAttrMap, ksdft::KSDFTDefaults::CELL_BATCH_SIZE_GRAD_EVAL, *linAlgOpContext);
-  else
-    feBDTotalChargeStiffnessMatrix =
-    std::make_shared<basis::CFEBDSOnTheFlyComputeDealii<double, double, Host,dim>>
-    (basisDofHandlerTotalPot, quadAttrGaussElectro, basisAttrMap, ksdft::KSDFTDefaults::CELL_BATCH_SIZE_GRAD_EVAL, *linAlgOpContext);
+  feBDTotalChargeStiffnessMatrix =
+  std::make_shared<basis::CFEBDSOnTheFlyComputeDealii<double, double, Host,dim>>
+  (basisDofHandlerTotalPot, quadAttrGaussElectro, basisAttrMap, ksdft::KSDFTDefaults::CELL_BATCH_SIZE_GRAD_EVAL, *linAlgOpContext);
 
-  if (!isDeltaRhoPoissonSolve)
-    feBDTotalChargeStiffnessMatrix->evaluateBasisData(quadAttrGaussSubdivided, quadRuleContainerAdaptiveGrad, basisAttrMap);
-  else 
-    feBDTotalChargeStiffnessMatrix->evaluateBasisData(quadAttrGaussElectro, basisAttrMap);
+  feBDTotalChargeStiffnessMatrix->evaluateBasisData(quadAttrGaussElectro, basisAttrMap);
 
   p.registerEnd("Electrostatics basis grad datastorage eval");
   utils::printCurrentMemoryUsage(comm, "Electrostatics basis grad datastorage eval");
   p.registerStart("Electrostatics basis bsmear datastorage eval");
 
-  basisAttrMap[basis::BasisStorageAttributes::StoreValues] = true;
-  basisAttrMap[basis::BasisStorageAttributes::StoreGradient] = false;
-  basisAttrMap[basis::BasisStorageAttributes::StoreHessian] = false;
-  basisAttrMap[basis::BasisStorageAttributes::StoreOverlap] = false;
-  basisAttrMap[basis::BasisStorageAttributes::StoreGradNiGradNj] = false;
-  basisAttrMap[basis::BasisStorageAttributes::StoreJxW] = true;
+    basisAttrMap[basis::BasisStorageAttributes::StoreValues] = true;
+    basisAttrMap[basis::BasisStorageAttributes::StoreGradient] = false;
+    basisAttrMap[basis::BasisStorageAttributes::StoreHessian] = false;
+    basisAttrMap[basis::BasisStorageAttributes::StoreOverlap] = false;
+    basisAttrMap[basis::BasisStorageAttributes::StoreGradNiGradNj] = false;
+    basisAttrMap[basis::BasisStorageAttributes::StoreJxW] = true;
 
   std::shared_ptr<basis::FEBasisDataStorage<double, Host>> feBDNucChargeRhs = nullptr;
-  if (!isDeltaRhoPoissonSolve)
-    feBDNucChargeRhs =   
-      std::make_shared<basis::EFEBDSOnTheFlyComputeDealii<double, double, Host,dim>>
-      (basisDofHandlerTotalPot, quadAttrGaussSubdivided, basisAttrMap, ksdft::KSDFTDefaults::CELL_BATCH_SIZE_GRAD_EVAL, *linAlgOpContext);
-  else
-    feBDNucChargeRhs =   
-      std::make_shared<basis::CFEBDSOnTheFlyComputeDealii<double, double, Host,dim>>
-      (basisDofHandlerTotalPot, quadAttrGaussSubdivided, basisAttrMap, ksdft::KSDFTDefaults::CELL_BATCH_SIZE_GRAD_EVAL, *linAlgOpContext);
-  
+  feBDNucChargeRhs =   
+    std::make_shared<basis::CFEBDSOnTheFlyComputeDealii<double, double, Host,dim>>
+    (basisDofHandlerTotalPot, quadAttrGaussSubdivided, basisAttrMap, ksdft::KSDFTDefaults::CELL_BATCH_SIZE_GRAD_EVAL, *linAlgOpContext);
+
   feBDNucChargeRhs->evaluateBasisData(quadAttrGaussSubdivided, quadRuleContainerGaussSubdividedElec, basisAttrMap);
 
   p.registerEnd("Electrostatics basis bsmear datastorage eval");
@@ -869,14 +733,9 @@ int main(int argc, char** argv)
   p.registerStart("Electrostatics basis rho datastorage eval");
 
   std::shared_ptr<basis::FEBasisDataStorage<double, Host>> feBDElecChargeRhs = nullptr;
-  if (!isDeltaRhoPoissonSolve)
-    feBDElecChargeRhs =   
-      std::make_shared<basis::EFEBDSOnTheFlyComputeDealii<double, double, Host,dim>>
-      (basisDofHandlerTotalPot, quadAttrGaussSubdivided, basisAttrMap, ksdft::KSDFTDefaults::CELL_BATCH_SIZE_GRAD_EVAL, *linAlgOpContext);
-  else
-    feBDElecChargeRhs =   
-      std::make_shared<basis::CFEBDSOnTheFlyComputeDealii<double, double, Host,dim>>
-      (basisDofHandlerTotalPot, quadAttrGaussSubdivided, basisAttrMap, ksdft::KSDFTDefaults::CELL_BATCH_SIZE_GRAD_EVAL, *linAlgOpContext);
+  feBDElecChargeRhs =   
+    std::make_shared<basis::CFEBDSOnTheFlyComputeDealii<double, double, Host,dim>>
+    (basisDofHandlerTotalPot, quadAttrGaussSubdivided, basisAttrMap, ksdft::KSDFTDefaults::CELL_BATCH_SIZE_GRAD_EVAL, *linAlgOpContext);
 
   feBDElecChargeRhs->evaluateBasisData(quadAttrGaussSubdivided, quadRuleContainerAdaptiveOrbital, basisAttrMap);
 
@@ -891,11 +750,11 @@ int main(int argc, char** argv)
   basisAttrMap[basis::BasisStorageAttributes::StoreGradNiGradNj] = false;
   basisAttrMap[basis::BasisStorageAttributes::StoreJxW] = true;
 
-  std::shared_ptr<basis::FEBasisDataStorage<double, Host>> efeBasisDataAdaptiveOrbital =
-    std::make_shared<basis::EFEBDSOnTheFlyComputeDealii<double, double, Host,dim>>
+  std::shared_ptr<basis::FEBasisDataStorage<double, Host>> cfeBasisDataAdaptiveOrbital =
+    std::make_shared<basis::CFEBDSOnTheFlyComputeDealii<double, double, Host,dim>>
       (basisDofHandlerWaveFn, quadAttrGaussSubdivided, basisAttrMap, ksdft::KSDFTDefaults::CELL_BATCH_SIZE_GRAD_EVAL, *linAlgOpContext);
 
-  efeBasisDataAdaptiveOrbital->evaluateBasisData(quadAttrGaussSubdivided, quadRuleContainerAdaptiveOrbital, basisAttrMap);
+  cfeBasisDataAdaptiveOrbital->evaluateBasisData(quadAttrGaussSubdivided, quadRuleContainerAdaptiveOrbital, basisAttrMap);
 
   basisAttrMap[basis::BasisStorageAttributes::StoreValues] = true;
   basisAttrMap[basis::BasisStorageAttributes::StoreGradient] = false;
@@ -905,7 +764,7 @@ int main(int argc, char** argv)
   basisAttrMap[basis::BasisStorageAttributes::StoreJxW] = true;
 
   std::shared_ptr<basis::FEBasisDataStorage<double, Host>> feBDAtomCenterNonLocalOperator =
-    std::make_shared<basis::EFEBDSOnTheFlyComputeDealii<double, double, Host,dim>>
+    std::make_shared<basis::CFEBDSOnTheFlyComputeDealii<double, double, Host,dim>>
       (basisDofHandlerWaveFn, quadAttrGaussSubdivided, basisAttrMap, ksdft::KSDFTDefaults::CELL_BATCH_SIZE_GRAD_EVAL, *linAlgOpContext);
 
   feBDAtomCenterNonLocalOperator->evaluateBasisData(quadAttrGaussSubdivided, quadRuleContainerAdaptiveAtomCenterNonLocalOperator, basisAttrMap);
@@ -922,24 +781,23 @@ int main(int argc, char** argv)
   basisAttrMap[basis::BasisStorageAttributes::StoreGradNiGradNj] = false;
   basisAttrMap[basis::BasisStorageAttributes::StoreJxW] = true;
 
-  std::shared_ptr<basis::FEBasisDataStorage<double, Host>> efeBasisDataAdaptiveGrad =
-    std::make_shared<basis::EFEBDSOnTheFlyComputeDealii<double, double, Host,dim>>
+  std::shared_ptr<basis::FEBasisDataStorage<double, Host>> cfeBasisDataAdaptiveGrad =
+    std::make_shared<basis::CFEBDSOnTheFlyComputeDealii<double, double, Host,dim>>
       (basisDofHandlerWaveFn, quadAttrGaussSubdivided, basisAttrMap, ksdft::KSDFTDefaults::CELL_BATCH_SIZE_GRAD_EVAL, *linAlgOpContext);
 
-   efeBasisDataAdaptiveGrad->evaluateBasisData(quadAttrGaussSubdivided, quadRuleContainerAdaptiveGrad, basisAttrMap);
+  cfeBasisDataAdaptiveGrad->evaluateBasisData(quadAttrGaussSubdivided, quadRuleContainerAdaptiveGrad, basisAttrMap);
 
-    std::shared_ptr<const basis::FEBasisDataStorage<double, Host>> feBDElectrostaticsHamiltonian = efeBasisDataAdaptiveOrbital;
-    std::shared_ptr<const basis::FEBasisDataStorage<double,Host>> feBDKineticHamiltonian =  efeBasisDataAdaptiveGrad;
-    std::shared_ptr<const basis::FEBasisDataStorage<double, Host>> feBDEXCHamiltonian = efeBasisDataAdaptiveOrbital;
+    std::shared_ptr<const basis::FEBasisDataStorage<double, Host>> feBDElectrostaticsHamiltonian = cfeBasisDataAdaptiveOrbital;
+    std::shared_ptr<const basis::FEBasisDataStorage<double,Host>> feBDKineticHamiltonian =  cfeBasisDataAdaptiveGrad;
+    std::shared_ptr<const basis::FEBasisDataStorage<double, Host>> feBDEXCHamiltonian = cfeBasisDataAdaptiveOrbital;
 
-    p.registerEnd("Orbital Grad basis datastorage eval");
+  p.registerEnd("Orbital Grad basis datastorage eval");
     utils::printCurrentMemoryUsage(comm, "Orbital Grad basis datastorage eval");
-    p.print();
 
     std::shared_ptr<const utils::ScalarSpatialFunctionReal>
           zeroFunction = std::make_shared
             <utils::ScalarZeroFunctionReal>();
-
+            
     std::shared_ptr<const basis::FEBasisManager
       <double, double, Host,dim>>
     basisManagerWaveFn = std::make_shared
@@ -956,83 +814,63 @@ int main(int argc, char** argv)
 
   // Create OperatorContext for Basisoverlap
 
-  std::shared_ptr<const basis::OrthoEFEOverlapOperatorContext<double,
+  std::shared_ptr<const basis::CFEOverlapOperatorContext<double,
                                                 double,
                                                 Host,
                                                 dim>> MContext =
-  std::make_shared<basis::OrthoEFEOverlapOperatorContext<double,
+  std::make_shared<basis::CFEOverlapOperatorContext<double,
                                                       double,
                                                       Host,
                                                       dim>>(
                                                       *basisManagerWaveFn,
                                                       *cfeBasisDataStorageAdaptiveOrbital,
-                                                      *efeBasisDataAdaptiveOrbital,
-                                                      *cfeBasisDataStorageAdaptiveOrbital,
                                                       ksdft::KSDFTDefaults::CELL_BATCH_SIZE,
                                                       numWantedEigenvalues,
-                                                      linAlgOpContext,
-                                                      true); 
+                                                      linAlgOpContext);
 
-  utils::printCurrentMemoryUsage(comm, "Hamiltonian Basis overlap");
-
-  //   quadrature::QuadratureRuleAttributes quadAttrGaussEigen(quadrature::QuadratureFamily::GAUSS,true,feOrderEigen + 1);
-
-  //   std::shared_ptr<basis::FEBasisDataStorage<double, Host>> cfeBasisDataStorageGaussEigen =
-  //     std::make_shared<basis::CFEBDSOnTheFlyComputeDealii<double, double,Host, dim>>
-  //     (cfeBasisDofHandlerEigen, quadAttrGaussEigen, basisAttrMap, ksdft::KSDFTDefaults::CELL_BATCH_SIZE_GRAD_EVAL, *linAlgOpContext);
-
-  // cfeBasisDataStorageGaussEigen->evaluateBasisData(quadAttrGaussEigen , basisAttrMap);
-
-  //   std::shared_ptr<const basis::OrthoEFEOverlapOperatorContext<double,
-  //                                                 double,
-  //                                                 Host,
-  //                                                 dim>> MContextTestGauss =
-  //   std::make_shared<basis::OrthoEFEOverlapOperatorContext<double,
-  //                                                       double,
-  //                                                       Host,
-  //                                                       dim>>(
-  //                                                       *basisManagerWaveFn,
-  //                                                       *cfeBasisDataStorageGaussEigen,
-  //                                                       *efeBasisDataAdaptiveOrbital,
-  //                                                       /**cfeBasisDataStorageGLLEigen,*/
-  //                                                       numWantedEigenvalues * ksdft::KSDFTDefaults::CELL_BATCH_SIZE,);  
-
-    std::shared_ptr<const basis::OrthoEFEOverlapOperatorContext<double,
+    std::shared_ptr<const basis::CFEOverlapOperatorContext<double,
                                                   double,
                                                   Host,
                                                   dim>> MContextForInv =
-    std::make_shared<basis::OrthoEFEOverlapOperatorContext<double,
+    std::make_shared<basis::CFEOverlapOperatorContext<double,
                                                         double,
                                                         Host,
                                                         dim>>(
                                                         *basisManagerWaveFn,
                                                         *cfeBasisDataStorageGLLEigen,
-                                                        *efeBasisDataAdaptiveOrbital,
-                                                        *cfeBasisDataStorageGLLEigen,
-                                                        linAlgOpContext,
-                                                        true);  
+                                                        linAlgOpContext);  
 
     p.registerEnd("Hamiltonian Basis overlap eval");
-    utils::printCurrentMemoryUsage(comm, "Hamiltonian Basis overlap , overlap for inv");
-
     p.registerStart("Hamiltonian Basis overlap inverse eval");
 
   std::shared_ptr<linearAlgebra::OperatorContext<double,
                                                    double,
                                                    Host>> MInvContext =
-    std::make_shared<basis::/*OrthoEFEOverlapInverseOpContextGLL*/OEFEAtomBlockOverlapInvOpContextGLL<double,
+    std::make_shared<basis::CFEOverlapInverseOpContextGLL<double,
                                                    double,
                                                    Host,
                                                    dim>>
                                                    (*basisManagerWaveFn,
-                                                    /**MContext,*/
-                                                    *cfeBasisDataStorageGLLEigen,
-                                                    *efeBasisDataAdaptiveOrbital,
                                                     *cfeBasisDataStorageGLLEigen,
                                                     linAlgOpContext);    
 
-    p.registerEnd("Hamiltonian Basis overlap inverse eval");
-  utils::printCurrentMemoryUsage(comm, "Hamiltonian Basis overlap , overlap for inv and inv");
+  p.registerEnd("Hamiltonian Basis overlap inverse eval");
+  utils::printCurrentMemoryUsage(comm, "Hamiltonian Basis overlap and inv");
+
+  std::vector<double> energyInPerturbIds(atomCoordinatesVecInGrid.size(),0);
+  for(unsigned int perturbId = 0 ; perturbId < atomCoordinatesVecInGrid.size() ; perturbId++ )
+  {
+
+    rootCout << "\nAtom Locations Displacement: \n";
+    int count = 0;
+    for(auto j : atomCoordinatesVecInGrid[perturbId])
+    {
+      rootCout << atomSymbolVec[count] << "\t" << j[0] - atomCoordinatesVec[count][0] << "\t" << j[1] - atomCoordinatesVec[count][1] << "\t" << j[2] - atomCoordinatesVec[count][2];
+      rootCout << "\n";
+      count ++;
+    }
+
+  utils::printCurrentMemoryUsage(comm, "CFE basis manager creation");
 
   p.registerStart("Kohn Sham DFT Class Init");
   ksdft::KohnShamDFT<double,
@@ -1042,8 +880,6 @@ int main(int argc, char** argv)
                                         Host,
                                         dim>* dftefeSolve = nullptr;
 
-  utils::printCurrentMemoryUsage(comm, "Before Kohn Sham DFT Class Init");
-                                      
   if(isNumericalNuclearSolve && !isDeltaRhoPoissonSolve)
   {
     utils::throwException(false, "Option not there for KohnShamDFT class creation.");                        
@@ -1057,51 +893,62 @@ int main(int argc, char** argv)
                                           double,
                                           Host,
                                           dim>(
-                                          atomCoordinatesVec,
-                                          atomChargesVec,
-                                          atomSymbolVec,
-                                          rc,
-                                          numElectrons,
-                                          numWantedEigenvalues,
-                                          smearingTemperature,
-                                          fermiEnergyTolerance,
-                                          fracOccupancyTolerance,
-                                          eigenSolveResidualTolerance,
-                                          scfDensityResidualNormTolerance,
-                                          maxChebyshevFilterPass,
-                                          maxSCFIter,
-                                          evaluateEnergyEverySCF,
-                                          mixingHistory,
-                                          mixingParameter,
-                                          isAdaptiveAndersonMixingParameter,
-                                          basisManagerTotalPot,
-                                          basisManagerWaveFn,
-                                          feBDTotalChargeStiffnessMatrix,
-                                          feBDNucChargeRhs, 
-                                          feBDElecChargeRhs,  
-                                          feBDKineticHamiltonian,     
-                                          feBDElectrostaticsHamiltonian, 
-                                          feBDEXCHamiltonian,      
-                                          feBDAtomCenterNonLocalOperator,                                                                          
-                                          atomSymbolToPSPFileName,
-                                          linAlgOpContext,
-                                          *MContextForInv,
-                                          *MContext,
-                                          /**MContextForInv,*/
-                                          *MInvContext);
+                                            atomCoordinatesVecInGrid[perturbId],
+                                            atomChargesVec,
+                                            atomSymbolVec,
+                                            rc,
+                                            numElectrons,
+                                            numWantedEigenvalues,
+                                            smearingTemperature,
+                                            fermiEnergyTolerance,
+                                            fracOccupancyTolerance,
+                                            eigenSolveResidualTolerance,
+                                            scfDensityResidualNormTolerance,
+                                            maxChebyshevFilterPass,
+                                            maxSCFIter,
+                                            evaluateEnergyEverySCF,
+                                            mixingHistory,
+                                            mixingParameter,
+                                            isAdaptiveAndersonMixingParameter,
+                                            basisManagerTotalPot,
+                                            basisManagerWaveFn,
+                                            feBDTotalChargeStiffnessMatrix,
+                                            feBDNucChargeRhs, 
+                                            feBDElecChargeRhs,  
+                                            feBDKineticHamiltonian,     
+                                            feBDElectrostaticsHamiltonian, 
+                                            feBDEXCHamiltonian,                                                                                
+                                            feBDAtomCenterNonLocalOperator,                                                                          
+                                            atomSymbolToPSPFileName,
+                                            linAlgOpContext,
+                                            *MContextForInv,
+                                            *MContext,
+                                            /**MContextForInv,*/
+                                            *MInvContext);
   }
   else if (!isNumericalNuclearSolve && isDeltaRhoPoissonSolve)
   {
+
+    std::vector<std::string> fieldNames{"vtotal","density"};
+    std::vector<std::string> metadataNames{ "symbol", "Z", "charge", "NR"};
+    std::shared_ptr<atoms::AtomSphericalDataContainer>  atomSphericalDataContainer = 
+        std::make_shared<atoms::AtomSphericalDataContainer>(
+                                                        atoms::AtomSphericalDataType::ENRICHMENT,
+                                                        atomSymbolToBasisFileName,
+                                                        fieldNames,
+                                                        metadataNames,
+                                                        std::map<std::string, std::string>({{"rcsmear", std::to_string(rc)}, {"PSP/AE", "PSP"}}));    
+
     std::shared_ptr<utils::ScalarSpatialFunctionReal> smfuncAtTotPot = 
       std::make_shared<AtomicTotalElectrostaticPotentialFunction>(atomSphericalDataContainer,
                       atomSymbolVec,
-                      atomCoordinatesVec);
+                      atomCoordinatesVecInGrid[perturbId]);
 
-  std::shared_ptr<utils::ScalarSpatialFunctionReal> elecChargeDens = 
-    std::make_shared<RhoFunction>(atomSphericalDataContainer,
-                    atomSymbolVec,
-                    atomChargesVec,
-                    atomCoordinatesVec);                      
+    std::shared_ptr<utils::ScalarSpatialFunctionReal> elecChargeDens = 
+      std::make_shared<RhoFunction>(atomSphericalDataContainer,
+                      atomSymbolVec,
+                      atomChargesVec,
+                      atomCoordinatesVecInGrid[perturbId]);                      
 
     dftefeSolve =
      new ksdft::KohnShamDFT<double,
@@ -1110,61 +957,94 @@ int main(int argc, char** argv)
                                           double,
                                           Host,
                                           dim>(
-                                          atomCoordinatesVec,
-                                          atomChargesVec,
-                                          atomSymbolVec,
-                                          rc,
-                                          numElectrons,
-                                          numWantedEigenvalues,
-                                          smearingTemperature,
-                                          fermiEnergyTolerance,
-                                          fracOccupancyTolerance,
-                                          eigenSolveResidualTolerance,
-                                          scfDensityResidualNormTolerance,
-                                          maxChebyshevFilterPass,
-                                          maxSCFIter,
-                                          evaluateEnergyEverySCF,
-                                          mixingHistory,
-                                          mixingParameter,
-                                          isAdaptiveAndersonMixingParameter,
-                                          *smfuncAtTotPot,
-                                          *elecChargeDens,
-                                          basisManagerTotalPot,
-                                          basisManagerWaveFn,
-                                          feBDTotalChargeStiffnessMatrix,
-                                          feBDNucChargeRhs, 
-                                          feBDElecChargeRhs,  
-                                          feBDKineticHamiltonian,     
-                                          feBDElectrostaticsHamiltonian, 
-                                          feBDEXCHamiltonian,  
+                                          atomCoordinatesVecInGrid[perturbId],
+                                            atomChargesVec,
+                                            atomSymbolVec,
+                                            rc,
+                                            numElectrons,
+                                            numWantedEigenvalues,
+                                            smearingTemperature,
+                                            fermiEnergyTolerance,
+                                            fracOccupancyTolerance,
+                                            eigenSolveResidualTolerance,
+                                            scfDensityResidualNormTolerance,
+                                            maxChebyshevFilterPass,
+                                            maxSCFIter,
+                                            evaluateEnergyEverySCF,
+                                            mixingHistory,
+                                            mixingParameter,
+                                            isAdaptiveAndersonMixingParameter,
+                                            *smfuncAtTotPot,
+                                            *elecChargeDens,
+                                            basisManagerTotalPot,
+                                            basisManagerWaveFn,
+                                            feBDTotalChargeStiffnessMatrix,
+                                            feBDNucChargeRhs, 
+                                            feBDElecChargeRhs,  
+                                            feBDKineticHamiltonian,     
+                                            feBDElectrostaticsHamiltonian, 
+                                            feBDEXCHamiltonian,                                                                                
                                           feBDAtomCenterNonLocalOperator,                                                                              
                                           atomSymbolToPSPFileName,
-                                          linAlgOpContext,
-                                          *MContextForInv,
-                                          /**MContextForInv,*/
-                                          *MContext,
-                                          *MInvContext,
-                                          true,
-                                          tciaparams);
+                                            linAlgOpContext,
+                                            *MContextForInv,
+                                           /**MContextForInv,*/
+                                            *MContext,
+                                            *MInvContext,
+                                            true,
+                                            tciaparams);
+    }
+    else
+    {
+      utils::throwException(false, "Option not there for KohnShamDFT class creation.");
+    }
+    p.registerEnd("Kohn Sham DFT Class Init"); 
+    utils::printCurrentMemoryUsage(comm, "Kohn Sham DFT Class Init");
+    p.print();
+    // pTot.registerEnd("Initilization");   
+    // pTot.registerStart("Kohn Sham DFT Solve");
+    dftefeSolve->solve(); 
+    // pTot.registerEnd("Kohn Sham DFT Solve");               
+
+    energyInPerturbIds[perturbId] = dftefeSolve->getFreeEnergy();
+
+    // pTot.print();
+    p.reset();
+    // pTot.reset();
+    delete dftefeSolve;
   }
-  else
+
+  std::vector<double> force(numDimPerturbed*numAtomPerturbed,0);
+  unsigned int count = 0;
+  for(unsigned int perturbDim = 0 ; perturbDim < numDimPerturbed ; perturbDim ++)
   {
-    utils::throwException(false, "Option not there for KohnShamDFT class creation.");
+    for(unsigned int perturbAtomId = 0 ; perturbAtomId < numAtomPerturbed ; perturbAtomId++ )
+    {
+      unsigned int index = (numAtomPerturbed*perturbDim + perturbAtomId)*4 + 1;
+      rootCout << "The energies calculated by perturbation to atom "<< atomIdPerturbed <<
+      " along Dim " << dimIdPerturbed <<" are: ";
+      for(int i = 0 ; i < (stencilType-1) ; i++)
+      {
+        rootCout << energyInPerturbIds[index + i] << ", ";
+        force[count] += -1.0 * energyInPerturbIds[index + i] * gradientStencil[i]/gridSizeFD;
+      }
+      rootCout <<"\n";
+      count+=1;
+    }
   }
-  p.registerEnd("Kohn Sham DFT Class Init"); 
-  utils::printCurrentMemoryUsage(comm, "After Kohn Sham DFT Class Init");
-  p.print();
 
-  pTot.registerEnd("Initilization");   
-  pTot.registerStart("Kohn Sham DFT Solve");
+  for(unsigned int perturbDim = 0 ; perturbDim < numDimPerturbed ; perturbDim ++)
+  {
+    for(unsigned int perturbAtomId = 0 ; perturbAtomId < numAtomPerturbed ; perturbAtomId++ )
+    {
+      unsigned int index = (numAtomPerturbed*perturbDim + perturbAtomId) + 1;
+      rootCout << "The force calculated by perturbation to atom "<< atomIdPerturbed <<
+      " along Dim " << dimIdPerturbed <<" is: "<< force[numAtomPerturbed*perturbDim + perturbAtomId]<<"\n";
+    }
+  }
 
-  dftefeSolve->solve(); 
-
-  pTot.registerEnd("Kohn Sham DFT Solve");
-  pTot.print();
-
-  dftefeSolve->printTotalInScopeTimings();
-  delete dftefeSolve;
+  pTotFDForce.registerEnd("Total Wall Time for FD Force.");
+  pTotFDForce.print();
 
   //gracefully end MPI
 

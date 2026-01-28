@@ -298,7 +298,8 @@ namespace dftefe
       , d_metadataNames(metadataNames)
       , d_scalarSpatialFnAfterRadialGrid(nullptr)
       , d_sphericalHarmonicFunc(sphericalHarmonicFunc)
-      , d_PSPVLocalCutoff(10.0001) // bohr
+      , d_PSPFileVLocalMaxTail(10.0001) // bohr
+      , d_PSPFileVLocalTruncTol(1.0e-7)
     {
 #if defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
       xmlDocPtr ptrToXmlDoc;
@@ -769,10 +770,16 @@ namespace dftefe
 
               for (int i = 0; i < radialValues.size(); i++)
                 {
-                  if (radialPoints[i] <= d_PSPVLocalCutoff)
+                  if (radialPoints[i] <= d_PSPFileVLocalMaxTail)
                     {
-                      radialPointsWithCutoff.push_back(radialPoints[i]);
-                      radialValuesWithCutoff.push_back(radialValues[i]);
+                      if (std::abs(radialValues[i] -
+                                   (-1.0 * constant * std::abs(d_zvalance) /
+                                    radialPoints[i])) >
+                          constant * d_PSPFileVLocalTruncTol)
+                        {
+                          radialPointsWithCutoff.push_back(radialPoints[i]);
+                          radialValuesWithCutoff.push_back(radialValues[i]);
+                        }
                     }
                 }
 

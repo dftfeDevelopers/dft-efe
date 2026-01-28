@@ -45,8 +45,8 @@ namespace dftefe
     enum class OrthogonalizationType
     {
       CHOLESKY_GRAMSCHMIDT,
-      MULTIPASS_LOWDIN,
       MULTIPASS_CGS,
+      MULTIPASS_LOWDIN,
     };
 
     /**
@@ -88,15 +88,18 @@ namespace dftefe
        * @brief Constructor
        */
       ChebyshevFilteredEigenSolver(
-        const double                                wantedSpectrumLowerBound,
-        const double                                wantedSpectrumUpperBound,
-        const double                                unWantedSpectrumUpperBound,
-        const double                                polynomialDegree,
-        const double                                illConditionTolerance,
-        MultiVector<ValueTypeOperand, memorySpace> &eigenSubspaceGuess,
-        const ElpaScalapackManager &                elpaScala,
+        const double wantedSpectrumLowerBound,
+        const double wantedSpectrumUpperBound,
+        const double unWantedSpectrumUpperBound,
+        const double polynomialDegree,
+        const double illConditionTolerance,
+        std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
+                                                      mpiPatternP2P,
+        std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext,
+        const ElpaScalapackManager &                  elpaScala,
         bool                  isResidualChebyshevFilter = true,
         const size_type       eigenVectorBatchSize      = 0,
+        bool                  isGHEP                    = true,
         OrthogonalizationType orthoType =
           OrthogonalizationType::CHOLESKY_GRAMSCHMIDT,
         bool storeIntermediateSubspaces = false);
@@ -113,7 +116,9 @@ namespace dftefe
              const double unWantedSpectrumUpperBound,
              const double polynomialDegree,
              const double illConditionTolerance,
-             MultiVector<ValueTypeOperand, memorySpace> &eigenSubspaceGuess);
+             std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
+                                                           mpiPatternP2P,
+             std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext);
 
       EigenSolverError
       solve(const OpContext &                    A,
@@ -133,6 +138,9 @@ namespace dftefe
 
       MultiVector<ValueType, memorySpace> &
       getOrthogonalizedFilteredSubspace();
+
+      void
+      printTotalInScopeTimings();
 
     private:
       double                                      d_wantedSpectrumLowerBound;
@@ -158,7 +166,7 @@ namespace dftefe
         OrthonormalizationFunctions<ValueTypeOperator, ValueType, memorySpace>>
         d_ortho;
 
-      utils::Profiler d_p;
+      utils::Profiler d_p, d_pTotal;
       const bool      d_isResidualChebyFilter;
       size_type       d_batchSizeSmall;
 
@@ -168,6 +176,8 @@ namespace dftefe
       OrthogonalizationType d_orthoType;
 
       const ElpaScalapackManager *d_elpaScala;
+
+      const bool d_isGHEP;
 
     }; // end of class ChebyshevFilteredEigenSolver
   }    // end of namespace linearAlgebra

@@ -80,7 +80,7 @@ namespace dftefe
         /* Atom related info */
         const std::vector<utils::Point> &atomCoordinates,
         const std::vector<double> &      atomCharges,
-        const std::vector<double> &      smearedChargeRadius,
+        const double &                   smearedChargeRadius,
         const size_type                  numElectrons,
         /* SCF related info */
         const size_type numWantedEigenvalues,
@@ -158,7 +158,7 @@ namespace dftefe
         /* Atom related info */
         const std::vector<utils::Point> &atomCoordinates,
         const std::vector<double> &      atomCharges,
-        const std::vector<double> &      smearedChargeRadius,
+        const double &                   smearedChargeRadius,
         const size_type                  numElectrons,
         /* SCF related info */
         const size_type numWantedEigenvalues,
@@ -243,7 +243,8 @@ namespace dftefe
         /* Atom related info */
         const std::vector<utils::Point> &atomCoordinates,
         const std::vector<double> &      atomCharges,
-        const std::vector<double> &      smearedChargeRadius,
+        const std::vector<std::string> & atomSymbolVec,
+        const double &                   smearedChargeRadius,
         const size_type                  numElectrons,
         /* SCF related info */
         const size_type numWantedEigenvalues,
@@ -324,7 +325,9 @@ namespace dftefe
           linearAlgebra::IdentityOperatorContext<ValueTypeOperator,
                                                  ValueTypeOperand,
                                                  memorySpace>(),
-        bool isResidualChebyshevFilter = true);
+        bool isResidualChebyshevFilter = true,
+        /* TCI related info */
+        const atoms::TCIADataParams &params = TCIADataDefaults::TCIA_PARAMS);
 
       //// used if analytical vself canellation route taken with PSP
       KohnShamDFT(
@@ -332,7 +335,7 @@ namespace dftefe
         const std::vector<utils::Point> &atomCoordinates,
         const std::vector<double> &      atomCharges,
         const std::vector<std::string> & atomSymbolVec,
-        const std::vector<double> &      smearedChargeRadius,
+        const double &                   smearedChargeRadius,
         const size_type                  numElectrons,
         /* SCF related info */
         const size_type numWantedEigenvalues,
@@ -413,7 +416,7 @@ namespace dftefe
         const std::vector<utils::Point> &atomCoordinates,
         const std::vector<double> &      atomCharges,
         const std::vector<std::string> & atomSymbolVec,
-        const std::vector<double> &      smearedChargeRadius,
+        const double &                   smearedChargeRadius,
         const size_type                  numElectrons,
         /* SCF related info */
         const size_type numWantedEigenvalues,
@@ -488,7 +491,9 @@ namespace dftefe
           linearAlgebra::IdentityOperatorContext<ValueTypeOperator,
                                                  ValueTypeOperand,
                                                  memorySpace>(),
-        bool isResidualChebyshevFilter = true);
+        bool isResidualChebyshevFilter = true,
+        /* TCI related info */
+        const atoms::TCIADataParams &params = TCIADataDefaults::TCIA_PARAMS);
 
       ~KohnShamDFT();
 
@@ -497,6 +502,12 @@ namespace dftefe
 
       double
       getGroundStateEnergy();
+
+      double
+      getFreeEnergy();
+
+      void
+      printTotalInScopeTimings();
 
     private:
       const size_type       d_numWantedEigenvalues;
@@ -558,7 +569,7 @@ namespace dftefe
       linearAlgebra::Vector<ValueTypeWaveFunctionCoeff, memorySpace>
         d_lanczosGuess;
       linearAlgebra::MultiVector<ValueTypeWaveFunctionCoeff, memorySpace>
-                      d_waveFunctionSubspaceGuess, d_kohnShamWaveFunctions;
+                      d_kohnShamWaveFunctions;
       const size_type d_numElectrons;
 
       std::shared_ptr<
@@ -568,7 +579,7 @@ namespace dftefe
 
       RealType        d_groundStateEnergy;
       bool            d_isSolved;
-      utils::Profiler d_p;
+      utils::Profiler d_p, d_pTotal;
       bool            d_isPSPCalculation;
 
       std::shared_ptr<ElectrostaticExcFE<ValueTypeElectrostaticsCoeff,
@@ -591,6 +602,8 @@ namespace dftefe
         d_atomicTotalElecPotNuclearQuad, d_atomicTotalElecPotElectronicQuad;
 
       std::shared_ptr<linearAlgebra::ElpaScalapackManager> d_elpaScala;
+
+      double d_smearingTemperature, d_freeEnergy;
 
     }; // end of KohnShamDFT
   }    // end of namespace ksdft
