@@ -2,6 +2,7 @@
 #define dftefeTypeConfig_h
 
 #include <complex>
+#include <cstdint>
 
 namespace dftefe
 {

@@ -182,61 +182,61 @@ namespace dftefe
       template <typename ValueType1, typename ValueType2>
       using scalar_type = typeInternal::scalar_type<ValueType1, ValueType2>;
 
-      template <dftefe::utils::MemorySpace memorySpace>
-      struct BlasQueueTypedef
-      {
-        typedef void TYPE; //  default
-      };
+      // template <dftefe::utils::MemorySpace memorySpace>
+      // struct BlasQueueTypedef
+      // {
+      //   typedef void TYPE; //  default
+      // };
 
-      // template specified mapping
-      template <>
-      struct BlasQueueTypedef<dftefe::utils::MemorySpace::HOST>
-      {
-        typedef int TYPE;
-      };
+      // // template specified mapping
+      // template <>
+      // struct BlasQueueTypedef<dftefe::utils::MemorySpace::HOST>
+      // {
+      //   typedef int TYPE;
+      // };
 
-      template <>
-      struct BlasQueueTypedef<dftefe::utils::MemorySpace::HOST_PINNED>
-      {
-        typedef int TYPE;
-      };
+      // template <>
+      // struct BlasQueueTypedef<dftefe::utils::MemorySpace::HOST_PINNED>
+      // {
+      //   typedef int TYPE;
+      // };
 
-      template <>
-      struct BlasQueueTypedef<dftefe::utils::MemorySpace::DEVICE>
-      {
-        typedef int TYPE;
-      };
+      // template <>
+      // struct BlasQueueTypedef<dftefe::utils::MemorySpace::DEVICE>
+      // {
+      //   typedef int TYPE;
+      // };
 
-      template <dftefe::utils::MemorySpace memorySpace>
-      using BlasQueue = typename BlasQueueTypedef<memorySpace>::TYPE;
+      // template <dftefe::utils::MemorySpace memorySpace>
+      // using BlasQueue = typename BlasQueueTypedef<memorySpace>::TYPE;
 
-      template <dftefe::utils::MemorySpace memorySpace>
-      struct LapackQueueTypedef
-      {
-        typedef void LAPACKTYPE; //  default
-      };
+      // template <dftefe::utils::MemorySpace memorySpace>
+      // struct LapackQueueTypedef
+      // {
+      //   typedef void LAPACKTYPE; //  default
+      // };
 
-      // template specified mapping
-      template <>
-      struct LapackQueueTypedef<dftefe::utils::MemorySpace::HOST>
-      {
-        typedef int LAPACKTYPE;
-      };
+      // // template specified mapping
+      // template <>
+      // struct LapackQueueTypedef<dftefe::utils::MemorySpace::HOST>
+      // {
+      //   typedef int LAPACKTYPE;
+      // };
 
-      template <>
-      struct LapackQueueTypedef<dftefe::utils::MemorySpace::HOST_PINNED>
-      {
-        typedef int LAPACKTYPE;
-      };
+      // template <>
+      // struct LapackQueueTypedef<dftefe::utils::MemorySpace::HOST_PINNED>
+      // {
+      //   typedef int LAPACKTYPE;
+      // };
 
-      template <>
-      struct LapackQueueTypedef<dftefe::utils::MemorySpace::DEVICE>
-      {
-        typedef int LAPACKTYPE;
-      };
+      // template <>
+      // struct LapackQueueTypedef<dftefe::utils::MemorySpace::DEVICE>
+      // {
+      //   typedef int LAPACKTYPE;
+      // };
 
-      template <dftefe::utils::MemorySpace memorySpace>
-      using LapackQueue = typename LapackQueueTypedef<memorySpace>::LAPACKTYPE;
+      // template <dftefe::utils::MemorySpace memorySpace>
+      // using LapackQueue = typename LapackQueueTypedef<memorySpace>::LAPACKTYPE;
 
     } // namespace blasLapack
 

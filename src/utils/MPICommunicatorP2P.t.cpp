@@ -41,8 +41,14 @@ namespace dftefe
         const size_type                                   blockSize)
         : d_mpiPatternP2P(mpiPatternP2P)
         , d_blockSize(blockSize)
+        , d_commPrecision(communicationPrecision::standard)
       {
+        d_commProtocol = communicationProtocol::mpiHost;
         d_mpiCommunicator = d_mpiPatternP2P->mpiCommunicator();
+#if defined(DFTEFE_WITH_DEVICE) && defined(DFTEFE_WITH_DEVICE_AWARE_MPI) 
+        if (memorySpace == MemorySpace::DEVICE)
+          d_commProtocol = communicationProtocol::mpiDevice;
+#endif
         d_targetDataBuffer.resize(
           d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs().size() *
             blockSize,
@@ -57,8 +63,9 @@ namespace dftefe
           d_mpiPatternP2P->getGhostProcIds().size() +
           d_mpiPatternP2P->getTargetProcIds().size());
 
-#if defined(DFTEFE_WITH_DEVICE) && !defined(DFTEFE_WITH_DEVICE_AWARE_MPI)
-        if (memorySpace == MemorySpace::DEVICE)
+#if defined(DFTEFE_WITH_DEVICE) 
+        if constexpr (memorySpace == MemorySpace::DEVICE)
+         if (d_commProtocol == communicationProtocol::mpiHost)
           {
             d_ghostDataCopyHostPinned.resize(d_mpiPatternP2P->localGhostSize() *
                                                blockSize,
@@ -68,9 +75,55 @@ namespace dftefe
                 blockSize,
               0.0);
           }
-#endif // defined(DFTEFE_WITH_DEVICE) && !defined(DFTEFE_WITH_DEVICE_AWARE_MPI)
+#endif // defined(DFTEFE_WITH_DEVICE)
       }
 
+      template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+      void
+      MPICommunicatorP2P<ValueType, memorySpace>::setCommunicationPrecision(
+        communicationPrecision precision)
+      {
+        // Prevents explicit reduction of precision to FP32 or BF16 when running
+        // on CPUs
+        if constexpr (memorySpace == MemorySpace::HOST)
+          return;
+        if (d_commPrecision == precision)
+          return;
+        d_commPrecision = precision;
+        if (precision == communicationPrecision::standard)
+          {
+            if (d_targetDataBuffer.size() !=
+                d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs().size() *
+                  d_blockSize)
+              d_targetDataBuffer.resize(
+                d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs().size() *
+                  d_blockSize,
+                0.0);
+
+#ifdef DFTEFE_WITH_DEVICE
+            if constexpr (memorySpace == MemorySpace::DEVICE)
+              if (d_commProtocol == communicationProtocol::mpiHost)
+                {
+                  if (d_ghostDataCopyHostPinned.size() !=
+                      d_mpiPatternP2P->localGhostSize() * d_blockSize)
+                    d_ghostDataCopyHostPinned.resize(
+                      d_mpiPatternP2P->localGhostSize() * d_blockSize, 0.0);
+
+                  if (d_sendRecvBufferHostPinned.size() !=
+                      d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs()
+                          .size() *
+                        d_blockSize)
+                    d_sendRecvBufferHostPinned.resize(
+                      d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs()
+                          .size() * d_blockSize, 0.0);
+                }
+#endif
+          }
+          else
+          {
+            throwException(false, "Only Standard Precision Communication Implemented in DFTEFE.");
+          }
+      }
 
       template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
       void
@@ -92,13 +145,18 @@ namespace dftefe
       {
 #ifdef DFTEFE_WITH_MPI
         // initiate non-blocking receives from ghost processors
+        if (d_commPrecision == communicationPrecision::standard)
+          {
         ValueType *recvArrayStartPtr = d_ghostDataBuffer.begin();
 
-#  if defined(DFTEFE_WITH_DEVICE) && !defined(DFTEFE_WITH_DEVICE_AWARE_MPI)
-        if (memorySpace == MemorySpace::DEVICE)
-          recvArrayStartPtr = d_ghostDataCopyHostPinned.begin();
-#  endif // defined(DFTEFE_WITH_DEVICE) && //
-         // !defined(DFTEFE_WITH_DEVICE_AWARE_MPI)
+#ifdef DFTEFE_WITH_DEVICE
+        if constexpr (memorySpace == MemorySpace::DEVICE)
+        {
+          if (d_commProtocol == communicationProtocol::mpiHost)
+            recvArrayStartPtr = d_ghostDataCopyHostPinned.begin();
+          dftefe::utils::deviceSynchronize();
+        }
+#  endif // defined(DFTEFE_WITH_DEVICE)
 
         for (size_type i = 0; i < (d_mpiPatternP2P->getGhostProcIds()).size();
              ++i)
@@ -160,9 +218,12 @@ namespace dftefe
         // initiate non-blocking sends to target processors
         ValueType *sendArrayStartPtr = d_targetDataBuffer.begin();
 
-#  if defined(DFTEFE_WITH_DEVICE) && !defined(DFTEFE_WITH_DEVICE_AWARE_MPI)
-        if (memorySpace == MemorySpace::DEVICE)
+#ifdef DFTEFE_WITH_DEVICE
+        if constexpr (memorySpace == MemorySpace::DEVICE)
           {
+            dftefe::utils::deviceSynchronize();
+            if (d_commProtocol == communicationProtocol::mpiHost)
+              {                    
             MemoryTransfer<MemorySpace::HOST_PINNED, memorySpace>
               memoryTransfer;
             memoryTransfer.copy(d_sendRecvBufferHostPinned.size(),
@@ -170,9 +231,9 @@ namespace dftefe
                                 d_targetDataBuffer.begin());
 
             sendArrayStartPtr = d_sendRecvBufferHostPinned.begin();
+              }
           }
-#  endif // defined(DFTEFE_WITH_DEVICE) &&
-         // !defined(DFTEFE_WITH_DEVICE_AWARE_MPI)
+#  endif // defined(DFTEFE_WITH_DEVICE)
 
         for (size_type i = 0; i < (d_mpiPatternP2P->getTargetProcIds()).size();
              ++i)
@@ -217,6 +278,11 @@ namespace dftefe
               d_mpiPatternP2P->getNumOwnedIndicesForTargetProcs().data()[i] *
               d_blockSize;
           }
+        }
+        else
+        {
+          throwException(false, "Only Standard Precision Communication Implemented in DFTEFE.");
+        }
 #endif // DFTEFE_WITH_MPI
       }
 
@@ -237,9 +303,12 @@ namespace dftefe
               MPIErrorCodeHandler::getIsSuccessAndMessage(err);
             throwException(isSuccessAndMessage.first,
                            isSuccessAndMessage.second);
-
-#  if defined(DFTEFE_WITH_DEVICE) && !defined(DFTEFE_WITH_DEVICE_AWARE_MPI)
-            if (memorySpace == MemorySpace::DEVICE)
+          }                           
+        if (d_commPrecision == communicationPrecision::standard)
+          {
+#ifdef DFTEFE_WITH_DEVICE
+          if constexpr (memorySpace == MemorySpace::DEVICE)
+            if (d_commProtocol == communicationProtocol::mpiHost)
               {
                 MemoryTransfer<memorySpace, MemorySpace::HOST_PINNED>
                   memoryTransfer;
@@ -247,8 +316,11 @@ namespace dftefe
                                     d_ghostDataBuffer.data(),
                                     d_ghostDataCopyHostPinned.data());
               }
-#  endif // defined(DFTEFE_WITH_DEVICE) && //
-         // !defined(DFTEFE_WITH_DEVICE_AWARE_MPI)
+            else
+            {
+              throwException(false, "Only Standard Precision Communication Implemented in DFTEFE.");
+            }
+#  endif // defined(DFTEFE_WITH_DEVICE)
 
             // Copy ghost buffer receieved to the ghost part of the data.
             // Set the starting reference of the destination to the ghost part
@@ -268,6 +340,10 @@ namespace dftefe
                                         ghostLocalIndicesForGhostProcsPtr,
                                         numGhostIndices,
                                         d_blockSize);
+          }
+          else
+          {
+            throwException(false, "Only Standard Precision Communication Implemented in DFTEFE.");
           }
 #endif // DFTEFE_WITH_MPI
       }
@@ -292,12 +368,17 @@ namespace dftefe
       {
 #ifdef DFTEFE_WITH_MPI
         // initiate non-blocking receives from target processors
+        if (d_commPrecision == communicationPrecision::standard)
+          {
         ValueType *recvArrayStartPtr = d_targetDataBuffer.begin();
-#  if defined(DFTEFE_WITH_DEVICE) && !defined(DFTEFE_WITH_DEVICE_AWARE_MPI)
-        if (memorySpace == MemorySpace::DEVICE)
-          recvArrayStartPtr = d_sendRecvBufferHostPinned.begin();
-#  endif // defined(DFTEFE_WITH_DEVICE) && //
-         // !defined(DFTEFE_WITH_DEVICE_AWARE_MPI)
+#ifdef DFTEFE_WITH_DEVICE
+            if constexpr (memorySpace == MemorySpace::DEVICE)
+              {
+                if (d_commProtocol == communicationProtocol::mpiHost)
+                  recvArrayStartPtr = d_sendRecvBufferHostPinned.begin();
+                dftefe::utils::deviceSynchronize();
+              }
+#  endif // defined(DFTEFE_WITH_DEVICE) 
 
         for (size_type i = 0; i < (d_mpiPatternP2P->getTargetProcIds()).size();
              ++i)
@@ -360,9 +441,10 @@ namespace dftefe
         // initiate non-blocking sends to ghost processors
         ValueType *sendArrayStartPtr = d_ghostDataBuffer.data();
 
-#  if defined(DFTEFE_WITH_DEVICE) && !defined(DFTEFE_WITH_DEVICE_AWARE_MPI)
-        if (memorySpace == MemorySpace::DEVICE)
-          {
+#ifdef DFTEFE_WITH_DEVICE
+            if constexpr (memorySpace == MemorySpace::DEVICE)
+              if (d_commProtocol == communicationProtocol::mpiHost)
+                {
             MemoryTransfer<MemorySpace::HOST_PINNED, memorySpace>
               memoryTransfer;
             memoryTransfer.copy(d_ghostDataCopyHostPinned.size(),
@@ -371,8 +453,7 @@ namespace dftefe
 
             sendArrayStartPtr = d_ghostDataCopyHostPinned.begin();
           }
-#  endif // defined(DFTEFE_WITH_DEVICE) &&
-         // !defined(DFTEFE_WITH_DEVICE_AWARE_MPI)
+#  endif // defined(DFTEFE_WITH_DEVICE)
 
         for (size_type i = 0; i < (d_mpiPatternP2P->getGhostProcIds()).size();
              ++i)
@@ -416,6 +497,11 @@ namespace dftefe
                d_mpiPatternP2P->getGhostLocalIndicesRanges().data()[2 * i]) *
               d_blockSize;
           }
+        }
+        else
+        {
+          throwException(false, "Only Standard Precision Communication Implemented in DFTEFE.");
+        }
 #endif // DFTEFE_WITH_MPI
       }
 
@@ -438,19 +524,20 @@ namespace dftefe
               MPIErrorCodeHandler::getIsSuccessAndMessage(err);
             throwException(isSuccessAndMessage.first,
                            isSuccessAndMessage.second);
-
-#  if defined(DFTEFE_WITH_DEVICE) && !defined(DFTEFE_WITH_DEVICE_AWARE_MPI)
-            if (memorySpace == MemorySpace::DEVICE)
-              {
+          }
+        if (d_commPrecision == communicationPrecision::standard)
+          {
+#ifdef DFTEFE_WITH_DEVICE
+            if constexpr (memorySpace == MemorySpace::DEVICE)
+              if (d_commProtocol == communicationProtocol::mpiHost)
+                {
                 MemoryTransfer<MemorySpace::HOST_PINNED, memorySpace>
                   memoryTransfer;
                 memoryTransfer.copy(d_sendRecvBufferHostPinned.size(),
                                     d_sendRecvBufferHostPinned.data(),
                                     d_targetDataBuffer.data());
               }
-#  endif // defined(DFTEFE_WITH_DEVICE) &&
-         // !defined(DFTEFE_WITH_DEVICE_AWARE_MPI)
-          }
+#  endif // defined(DFTEFE_WITH_DEVICE)
 
         // accumulate add into locally owned entries from recv buffer
         const size_type *ownedLocalIndicesForTargetProcsPtr =
@@ -465,6 +552,15 @@ namespace dftefe
                                    ownedLocalIndicesForTargetProcsPtr,
                                    numTotalOwnedIndicesForTargetProcs,
                                    d_blockSize);
+          }
+          else
+          {
+            throwException(false, "Only Standard Precision Communication Implemented in DFTEFE.");
+          }
+#ifdef DFTEFE_WITH_DEVICE
+        if constexpr (memorySpace == MemorySpace::DEVICE)
+          dftefe::utils::deviceSynchronize();
+#endif
 #endif // DFTEFE_WITH_MPI
       }
 

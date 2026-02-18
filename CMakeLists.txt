@@ -13,11 +13,40 @@ if(ENABLE_MPI)
 	set(DFTEFE_MPI_LIBRARIES ${MPI_CXX_LIBRARIES})
 endif()
 
-if(ENABLE_CUDA)
-	add_compile_definitions(DFTEFE_WITH_DEVICE)
-	add_compile_definitions(DFTEFE_WITH_DEVICE_CUDA)
-	enable_language(CUDA)
-endif()
+IF (ENABLE_GPU)
+    IF ("${GPU_LANG}" STREQUAL "cuda")
+      enable_language(CUDA)
+    ELSEIF ("${GPU_LANG}" STREQUAL "hip")
+      enable_language(HIP)
+    ELSEIF ("${GPU_LANG}" STREQUAL "sycl")
+    ELSE ()
+      MESSAGE(FATAL_ERROR "\n"
+    "*** Could not find valid GPU_LANG=cuda/hip/sycl ***\n\n"
+    )
+    ENDIF()
+#
+#Set GPU compilation flag
+#
+  add_compile_definitions(DFTEFE_WITH_DEVICE)
+
+  IF ("${GPU_VENDOR}" STREQUAL "nvidia")
+    add_compile_definitions(DFTEFE_WITH_DEVICE_NVIDIA)
+    add_compile_definitions(DFTEFE_WITH_DEVICE_LANG_CUDA)
+  ELSEIF ("${GPU_VENDOR}" STREQUAL "amd")
+    add_compile_definitions(DFTEFE_WITH_DEVICE_AMD)
+    add_compile_definitions(DFTEFE_WITH_DEVICE_LANG_HIP)
+  ELSEIF ("${GPU_VENDOR}" STREQUAL "intel")
+    add_compile_definitions(DFTEFE_WITH_DEVICE_INTEL)
+    add_compile_definitions(DFTEFE_WITH_DEVICE_MKL)
+    add_compile_definitions(DFTEFE_WITH_DEVICE_LANG_SYCL)
+  ENDIF()
+ENDIF()
+
+# if(ENABLE_CUDA)
+# 	add_compile_definitions(DFTEFE_WITH_DEVICE)
+# 	add_compile_definitions(DFTEFE_WITH_DEVICE_CUDA)
+# 	enable_language(CUDA)
+# endif()
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_BINARY_DIR}/cmake)
 

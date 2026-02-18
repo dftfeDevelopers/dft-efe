@@ -33,33 +33,57 @@ namespace dftefe
 {
   namespace linearAlgebra
   {
+    enum class TensorOpDataType
+    {
+      FP32,
+      TF32,
+      BF16,
+      FP16
+    };
+
     template <utils::MemorySpace memorySpace>
     class LinAlgOpContext
     {
     public:
-      LinAlgOpContext(
-        std::shared_ptr<blasLapack::BlasQueue<memorySpace>>   blasQueue,
-        std::shared_ptr<blasLapack::LapackQueue<memorySpace>> lapackQueue);
+      LinAlgOpContext();
 
       ~LinAlgOpContext() = default;
 
       void
-      setBlasQueue(
-        std::shared_ptr<blasLapack::BlasQueue<memorySpace>> blasQueue);
+      setTensorOpDataType(TensorOpDataType opType)
+      {
+        d_opType = opType;
+      }
 
-      void
-      setLapackQueue(
-        std::shared_ptr<blasLapack::LapackQueue<memorySpace>> lapackQueue);
+      TensorOpDataType
+      getTensorOpDataType()
+      {
+        return d_opType;
+      }
 
-      blasLapack::BlasQueue<memorySpace> &
-      getBlasQueue() const;
+      static utils::deviceBlasStatus_t
+      setBlasStream(utils::deviceStream_t streamId);
 
-      blasLapack::LapackQueue<memorySpace> &
-      getLapackQueue() const;
+      utils::deviceBlasHandle_t &
+      getDeviceBlasHandle();
 
     private:
-      std::shared_ptr<blasLapack::BlasQueue<memorySpace>>   d_blasQueue;
-      std::shared_ptr<blasLapack::LapackQueue<memorySpace>> d_lapackQueue;
+#  ifdef DFTEFE_WITH_DEVICE_AMD
+      void
+      initialize();
+#  endif
+
+      inline static utils::deviceBlasHandle_t d_deviceBlasHandle;
+      inline static utils::deviceStream_t     d_streamId;
+
+      /// storage for deviceblas handle
+      TensorOpDataType d_opType;
+
+      utils::deviceBlasStatus_t
+      create();
+
+      utils::deviceBlasStatus_t
+      destroy();
 
     }; // end of LinAlgOpContext
   }    // end of namespace linearAlgebra

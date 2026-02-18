@@ -10,7 +10,7 @@ namespace dftefe
     {
     public:
       static void
-      initialize(int world_rank);
+      setupDevice(const int &mpi_rank);
     };
   } // namespace utils
 

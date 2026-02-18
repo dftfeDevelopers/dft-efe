@@ -219,7 +219,7 @@ namespace dftefe
        * That is, src[i*C + j] must be a valid memory access for all i's and j's
        */
       static void
-      copyToDiscontiguosMemory(const ValueType *src,
+      copyToDiscontiguousMemory(const ValueType *src,
                                ValueType *      dst,
                                const size_type *discontIds,
                                const size_type  N,
@@ -254,7 +254,7 @@ namespace dftefe
        * That is, src[i*C + j] must be a valid memory access for all i's and j's
        */
       static void
-      addToDiscontiguosMemory(const ValueType *src,
+      addToDiscontiguousMemory(const ValueType *src,
                               ValueType *      dst,
                               const size_type *discontIds,
                               const size_type  N,

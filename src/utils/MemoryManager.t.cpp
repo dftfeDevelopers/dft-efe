@@ -39,14 +39,18 @@ namespace dftefe
     MemoryManager<ValueType, MemorySpace::HOST>::allocate(size_type   size,
                                                           ValueType **ptr)
     {
-      *ptr = new ValueType[size];
+      if (size > 0)
+        *ptr = new ValueType[size];
+      else
+        *ptr = nullptr;
     }
 
     template <typename ValueType>
     void
     MemoryManager<ValueType, MemorySpace::HOST>::deallocate(ValueType *ptr)
     {
-      delete[] ptr;
+      if (ptr != nullptr)
+        delete[] ptr;
     }
 
     template <typename ValueType>
@@ -55,7 +59,8 @@ namespace dftefe
                                                      ValueType *ptr,
                                                      ValueType  val)
     {
-      std::fill(ptr, ptr + size, val);
+      if (size != 0)
+        std::fill(ptr, ptr + size, val);
     }
 
     template <typename ValueType>
@@ -63,7 +68,8 @@ namespace dftefe
     MemoryManager<ValueType, MemorySpace::HOST>::setZero(size_type  size,
                                                          ValueType *ptr)
     {
-      std::memset(ptr, (ValueType)0, size * sizeof(ValueType));
+      if (size != 0)
+        std::memset(ptr, (ValueType)0, size * sizeof(ValueType));
     }
 
 #ifdef DFTEFE_WITH_DEVICE
@@ -73,7 +79,10 @@ namespace dftefe
       size_type   size,
       ValueType **ptr)
     {
-      hostPinnedMalloc((void **)ptr, size * sizeof(ValueType));
+      if (size > 0)
+        hostPinnedMalloc((void **)ptr, size * sizeof(ValueType));
+      else
+        *ptr = nullptr;      
     }
 
     template <typename ValueType>
@@ -91,7 +100,8 @@ namespace dftefe
                                                             ValueType *ptr,
                                                             ValueType  val)
     {
-      std::fill(ptr, ptr + size, val);
+      if (size > 0)
+        std::fill(ptr, ptr + size, val);
     }
 
     template <typename ValueType>
@@ -99,7 +109,8 @@ namespace dftefe
     MemoryManager<ValueType, MemorySpace::HOST_PINNED>::setZero(size_type  size,
                                                                 ValueType *ptr)
     {
-      std::memset(ptr, (ValueType)0, size * sizeof(ValueType));
+      if (size > 0)
+        std::memset(ptr, (ValueType)0, size * sizeof(ValueType));
     }
 
     template <typename ValueType>
@@ -107,14 +118,18 @@ namespace dftefe
     MemoryManager<ValueType, MemorySpace::DEVICE>::allocate(size_type   size,
                                                             ValueType **ptr)
     {
-      deviceMalloc((void **)ptr, size * sizeof(ValueType));
+      if (size > 0)
+        deviceMalloc((void **)ptr, size * sizeof(ValueType));
+      else
+        *ptr = nullptr;      
     }
 
     template <typename ValueType>
     void
     MemoryManager<ValueType, MemorySpace::DEVICE>::deallocate(ValueType *ptr)
     {
-      deviceFree(ptr);
+      if (ptr != nullptr)
+        deviceFree(ptr);
     }
 
     template <typename ValueType>
@@ -123,7 +138,8 @@ namespace dftefe
                                                        ValueType *ptr,
                                                        ValueType  val)
     {
-      deviceSetValue(ptr, val, size);
+      if (size > 0)
+        deviceSetValue(ptr, val, size);
     }
 
     template <typename ValueType>
@@ -131,7 +147,8 @@ namespace dftefe
     MemoryManager<ValueType, MemorySpace::DEVICE>::setZero(size_type  size,
                                                            ValueType *ptr)
     {
-      deviceSetValue(ptr, (ValueType)0, size);
+      if (size > 0)
+        deviceSetValue(ptr, (ValueType)0, size);
     }
 
 #endif // DFTEFE_WITH_DEVICE

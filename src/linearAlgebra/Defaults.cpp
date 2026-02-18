@@ -60,11 +60,7 @@ namespace dftefe
      */
     std::shared_ptr<linearAlgebra::LinAlgOpContext<utils::MemorySpace::HOST>>
       LINALG_OP_CONTXT_HOST = std::make_shared<
-        linearAlgebra::LinAlgOpContext<utils::MemorySpace::HOST>>(
-        std::make_shared<
-          linearAlgebra::blasLapack::BlasQueue<utils::MemorySpace::HOST>>(0),
-        std::make_shared<
-          linearAlgebra::blasLapack::LapackQueue<utils::MemorySpace::HOST>>(0));
+        linearAlgebra::LinAlgOpContext<utils::MemorySpace::HOST>>();
 
     /**
      * @brief Setting all the RayleighRitzRDefaults

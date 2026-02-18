@@ -39,6 +39,17 @@ namespace dftefe
   {
     namespace mpi
     {
+      enum class communicationProtocol
+      {
+        mpiHost,
+        mpiDevice
+      };
+
+      enum class communicationPrecision
+      {
+        standard // same as valueType
+      };
+
       template <typename ValueType, MemorySpace memorySpace>
       class MPICommunicatorP2P
       {
@@ -79,6 +90,9 @@ namespace dftefe
         int
         getBlockSize() const;
 
+        void
+        setCommunicationPrecision(communicationPrecision precision);
+
       private:
         std::shared_ptr<const MPIPatternP2P<memorySpace>> d_mpiPatternP2P;
 
@@ -100,6 +114,9 @@ namespace dftefe
         std::vector<MPIRequest> d_requestsUpdateGhostValues;
         std::vector<MPIRequest> d_requestsAccumulateAddLocallyOwned;
         MPIComm                 d_mpiCommunicator;
+
+        communicationProtocol  d_commProtocol;
+        communicationPrecision d_commPrecision;
       };
 
     } // namespace mpi

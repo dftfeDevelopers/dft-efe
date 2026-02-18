@@ -4,6 +4,22 @@ if (NOT TARGET dft-efe-linalg)
         set(CMAKE_CXX_STANDARD_REQUIRED ON)
     endif ()
 
+    IF (ENABLE_GPU)
+    add_compile_definitions(DFTEFE_WITH_DEVICE)
+
+    IF ("${GPU_VENDOR}" STREQUAL "nvidia")
+        add_compile_definitions(DFTEFE_WITH_DEVICE_NVIDIA)
+        add_compile_definitions(DFTEFE_WITH_DEVICE_LANG_CUDA)
+    ELSEIF ("${GPU_VENDOR}" STREQUAL "amd")
+        add_compile_definitions(DFTEFE_WITH_DEVICE_AMD)
+        add_compile_definitions(DFTEFE_WITH_DEVICE_LANG_HIP)
+    ELSEIF ("${GPU_VENDOR}" STREQUAL "intel")
+        add_compile_definitions(DFTEFE_WITH_DEVICE_INTEL)
+        add_compile_definitions(DFTEFE_WITH_DEVICE_MKL)
+        add_compile_definitions(DFTEFE_WITH_DEVICE_LANG_SYCL)
+    ENDIF()
+    ENDIF()
+
     # Add source files here
     set(DFT-EFE-LINALG-SOURCES
 	    Defaults.cpp
@@ -32,7 +48,8 @@ if (NOT TARGET dft-efe-linalg)
         ProcessGrid.cpp
         ScalapackWrapper.cpp
         ElpaScalapackOperations.cpp
-        ElpaScalapackManager.cpp)
+        ElpaScalapackManager.cpp
+        BlasAPIWrapperDevice.cpp)
 
     add_library(dft-efe-linalg SHARED ${DFT-EFE-LINALG-SOURCES})
 
@@ -48,17 +65,16 @@ if (NOT TARGET dft-efe-linalg)
         endif ()
     endif ()
 
-
-    if (ENABLE_CUDA)
-        enable_language(CUDA)
-        add_compile_definitions(DFTEFE_WITH_DEVICE)
-        add_compile_definitions(DFTEFE_WITH_DEVICE_CUDA)
-        set_target_properties(dft-efe-linalg PROPERTIES
-                CUDA_STANDARD 14
-                CUDA_STANDARD_REQUIRED ON)
-        find_package(CUDAToolkit REQUIRED)
-        target_link_libraries(dft-efe-linalg PUBLIC CUDA::cublas)
-    endif ()
+    # if (ENABLE_CUDA)
+    #     enable_language(CUDA)
+    #     add_compile_definitions(DFTEFE_WITH_DEVICE)
+    #     add_compile_definitions(DFTEFE_WITH_DEVICE_CUDA)
+    #     set_target_properties(dft-efe-linalg PROPERTIES
+    #             CUDA_STANDARD 14
+    #             CUDA_STANDARD_REQUIRED ON)
+    #     find_package(CUDAToolkit REQUIRED)
+    #     target_link_libraries(dft-efe-linalg PUBLIC CUDA::cublas)
+    # endif ()
 
     if (NOT TARGET dft-efe-utils)
         add_subdirectory(../utils ${CMAKE_CURRENT_BINARY_DIR}/buildUtils)

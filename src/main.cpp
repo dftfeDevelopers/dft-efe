@@ -49,7 +49,7 @@ main(int argc, char **argv)
   const bool useDevice = false;
   if (useDevice)
     {
-      dftefe::utils::DeviceUtils::initialize(world_rank);
+      dftefe::utils::DeviceUtils::setupDevice(world_rank);
     }
   printf("This is gpu code");
 #endif

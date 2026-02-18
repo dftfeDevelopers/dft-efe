@@ -23,46 +23,128 @@
  * @author Ian C. Lin, Sambit Das
  */
 
+#include <utils/DeviceUtils.h>
+#include <utils/DeviceTypeConfig.h>
+#include <utils/DeviceKernelLauncherHelpers.h>
+#include <utils/DeviceAPICalls.h>
+#include <utils/DeviceDataTypeOverloads.h>
+#include <utils/DeviceTypeConfigHalfPrec.h>
+#ifdef DFTEFE_WITH_DEVICE_INTEL
+#  include <oneapi/mkl.hpp>
+#  include <oneapi/mkl/blas.hpp>
+#endif
+#ifdef DFTEFE_WITH_DEVICE_AMD
+#  define HIPBLAS_V2
+#  include <rocblas.h>
+#  include <hipblas.h>
+#  include <hipblas/hipblas-version.h>
+#endif
+#ifdef DFTEFE_WITH_DEVICE_NVIDIA
+#  include <cublas_v2.h>
+#endif
+
+#ifdef DFTEFE_WITH_DEVICE_NVIDIA
+#  ifdef DFTEFE_WITH_64BIT_INT
+#    define DFTEFE_DEVICE_BLAS_INT(type, name) cublas##type##name##_64
+#  else
+#    define DFTEFE_DEVICE_BLAS_INT(type, name) cublas##type##name
+#  endif
+#  define DFTEFE_DEVICE_BLAS(type, name) cublas##type##name
+#elif defined(DFTEFE_WITH_DEVICE_AMD)
+#  ifdef DFTEFE_WITH_64BIT_INT
+#    define DFTEFE_DEVICE_BLAS_INT(type, name) hipblas##type##name##_64
+#  else
+#    define DFTEFE_DEVICE_BLAS_INT(type, name) hipblas##type##name
+#  endif
+#  define DFTEFE_DEVICE_BLAS(type, name) hipblas##type##name
+#elif defined(DFTEFE_WITH_DEVICE_INTEL)
+#  define DFTEFE_DEVICE_BLAS_INT(type, name) \
+    oneapi::mkl::blas::column_major::name
+#else
+#  error \
+    "No device backend defined (DFTEFE_WITH_DEVICE_NVIDIA or DFTEFE_WITH_DEVICE_AMD)"
+#endif
+
 namespace dftefe
 {
   namespace linearAlgebra
   {
-    template <utils::MemorySpace memorySpace>
-    LinAlgOpContext<memorySpace>::LinAlgOpContext(
-      std::shared_ptr<blasLapack::BlasQueue<memorySpace>>   blasQueue,
-      std::shared_ptr<blasLapack::LapackQueue<memorySpace>> lapackQueue)
-      : d_blasQueue(blasQueue)
-      , d_lapackQueue(lapackQueue)
-    {}
+    #ifdef DFTEFE_WITH_DEVICE_AMD
+      template <>
+        void
+        LinAlgOpContext<utils::MemorySpace::DEVICE>::initialize()
+        {
+          rocblas_initialize();
+        }
+    #endif
 
     template <utils::MemorySpace memorySpace>
-    void
-    LinAlgOpContext<memorySpace>::setBlasQueue(
-      std::shared_ptr<blasLapack::BlasQueue<memorySpace>> blasQueue)
+    LinAlgOpContext<memorySpace>::LinAlgOpContext()
     {
-      d_blasQueue = blasQueue;
+      #ifdef DFTEFE_WITH_DEVICE_AMD
+            initialize();
+      #endif
+
+      utils::deviceBlasStatus_t status;
+      status     = create();
+      d_opType   = TensorOpDataType::FP32;
+      d_streamId = utils::defaultStream;
+      status     = setBlasStream(d_streamId);
     }
 
     template <utils::MemorySpace memorySpace>
-    blasLapack::BlasQueue<memorySpace> &
-    LinAlgOpContext<memorySpace>::getBlasQueue() const
+    utils::deviceBlasHandle_t &
+    LinAlgOpContext<memorySpace>::getDeviceBlasHandle()
     {
-      return *d_blasQueue;
+      return d_deviceBlasHandle;
     }
 
     template <utils::MemorySpace memorySpace>
-    void
-    LinAlgOpContext<memorySpace>::setLapackQueue(
-      std::shared_ptr<blasLapack::LapackQueue<memorySpace>> lapackQueue)
+    utils::deviceBlasStatus_t
+    LinAlgOpContext<memorySpace>::setBlasStream(
+      utils::deviceStream_t streamId)
     {
-      d_lapackQueue = lapackQueue;
+      d_streamId = streamId;
+#if defined(DFTEFE_WITH_DEVICE_LANG_CUDA) || defined(DFTEFE_WITH_DEVICE_LANG_HIP)
+      utils::deviceBlasStatus_t status =
+        DFTEFE_DEVICE_BLAS(, SetStream)(d_deviceBlasHandle, d_streamId);
+      DEVICEBLAS_API_CHECK(status);
+#elif defined(DFTEFE_WITH_DEVICE_LANG_SYCL)
+      d_deviceBlasHandle = utils::queueRegistry.find(streamId)->second;
+      utils::deviceBlasStatus_t status = utils::deviceBlasSuccess;
+#endif
+      return status;
     }
 
     template <utils::MemorySpace memorySpace>
-    blasLapack::LapackQueue<memorySpace> &
-    LinAlgOpContext<memorySpace>::getLapackQueue() const
+    utils::deviceBlasStatus_t
+    LinAlgOpContext<memorySpace>::create()
     {
-      return *d_lapackQueue;
+#if defined(DFTEFE_WITH_DEVICE_LANG_CUDA) || defined(DFTEFE_WITH_DEVICE_LANG_HIP)
+      utils::deviceBlasStatus_t status =
+        DFTEFE_DEVICE_BLAS(, Create)(&d_deviceBlasHandle);
+      DEVICEBLAS_API_CHECK(status);
+#elif defined(DFTEFE_WITH_DEVICE_LANG_SYCL)
+      d_streamId = utils::defaultStream;
+      d_deviceBlasHandle =
+        utils::queueRegistry.find(utils::defaultStream)->second;
+      utils::deviceBlasStatus_t status = utils::deviceBlasSuccess;
+#endif
+      return status;
+    }
+
+    template <utils::MemorySpace memorySpace>    
+    utils::deviceBlasStatus_t
+    LinAlgOpContext<memorySpace>::destroy()
+    {
+#if defined(DFTEFE_WITH_DEVICE_LANG_CUDA) || defined(DFTEFE_WITH_DEVICE_LANG_HIP)
+      utils::deviceBlasStatus_t status =
+        DFTEFE_DEVICE_BLAS(, Destroy)(d_deviceBlasHandle);
+      DEVICEBLAS_API_CHECK(status);
+#elif defined(DFTEFE_WITH_DEVICE_LANG_SYCL)
+      utils::deviceBlasStatus_t status = utils::deviceBlasSuccess;
+#endif
+      return status;
     }
 
   } // end of namespace linearAlgebra
