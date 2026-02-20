@@ -29,7 +29,6 @@ if (NOT TARGET dft-efe-linalg)
         LapackAPIWrapperHost.cpp
         BlasLapack.cpp
         BlasLapackKernels.cpp
-        BlasLapackKernels.cu
         LinAlgOpContext.cpp
         VectorAttributes.cpp
 	    Vector.cpp

@@ -29,10 +29,16 @@
 #      include "DeviceTypeConfig.sycl.h"
 #    endif
 #else
+namespace dftefe
+{
+  namespace utils
+  {
     typedef int   deviceError_t;
     typedef int  deviceStream_t;
     typedef int   deviceEvent_t;
     static deviceStream_t  defaultStream  = 0;
+  }
+}
 #endif   // DFTEFE_WITH_DEVICE
 #  endif // dftefeDeviceTypeConfig_h
 

@@ -4,6 +4,22 @@ if(NOT DEFINED CMAKE_CXX_STANDARD)
     set(CMAKE_CXX_STANDARD_REQUIRED ON)
 endif()
 
+IF (ENABLE_GPU)
+add_compile_definitions(DFTEFE_WITH_DEVICE)
+
+IF ("${GPU_VENDOR}" STREQUAL "nvidia")
+	add_compile_definitions(DFTEFE_WITH_DEVICE_NVIDIA)
+	add_compile_definitions(DFTEFE_WITH_DEVICE_LANG_CUDA)
+ELSEIF ("${GPU_VENDOR}" STREQUAL "amd")
+	add_compile_definitions(DFTEFE_WITH_DEVICE_AMD)
+	add_compile_definitions(DFTEFE_WITH_DEVICE_LANG_HIP)
+ELSEIF ("${GPU_VENDOR}" STREQUAL "intel")
+	add_compile_definitions(DFTEFE_WITH_DEVICE_INTEL)
+	add_compile_definitions(DFTEFE_WITH_DEVICE_MKL)
+	add_compile_definitions(DFTEFE_WITH_DEVICE_LANG_SYCL)
+ENDIF()
+ENDIF()
+
 # Add source files here
 set(DFT-EFE-KSDFT-SOURCES
 	Defaults.cpp

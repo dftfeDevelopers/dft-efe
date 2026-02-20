@@ -23,12 +23,7 @@
  * @author Ian C. Lin, Sambit Das
  */
 
-#include <utils/DeviceUtils.h>
-#include <utils/DeviceTypeConfig.h>
-#include <utils/DeviceKernelLauncherHelpers.h>
-#include <utils/DeviceAPICalls.h>
-#include <utils/DeviceDataTypeOverloads.h>
-#include <utils/DeviceTypeConfigHalfPrec.h>
+#include <linearAlgebra/LinAlgOpContext.h>
 #ifdef DFTEFE_WITH_DEVICE_INTEL
 #  include <oneapi/mkl.hpp>
 #  include <oneapi/mkl/blas.hpp>
@@ -61,7 +56,7 @@
 #  define DFTEFE_DEVICE_BLAS_INT(type, name) \
     oneapi::mkl::blas::column_major::name
 #else
-#  error \
+  #error \
     "No device backend defined (DFTEFE_WITH_DEVICE_NVIDIA or DFTEFE_WITH_DEVICE_AMD)"
 #endif
 
@@ -79,38 +74,50 @@ namespace dftefe
     #endif
 
     template <utils::MemorySpace memorySpace>
-    LinAlgOpContext<memorySpace>::LinAlgOpContext()
+    LinAlgOpContext<memorySpace>::LinAlgOpContext(size_type numBlasStreams)
+    : d_numBlasStreams(numBlasStreams)
     {
       #ifdef DFTEFE_WITH_DEVICE_AMD
             initialize();
       #endif
 
       utils::deviceBlasStatus_t status;
-      status     = create();
       d_opType   = TensorOpDataType::FP32;
-      d_streamId = utils::defaultStream;
-      status     = setBlasStream(d_streamId);
-    }
+      d_stream = utils::defaultStream;
+      status     = create(d_deviceBlasHandle);
+      status     = setBlasStream(d_deviceBlasHandle, d_stream);
 
-    template <utils::MemorySpace memorySpace>
-    utils::deviceBlasHandle_t &
-    LinAlgOpContext<memorySpace>::getDeviceBlasHandle()
-    {
-      return d_deviceBlasHandle;
+      d_streams.resize(d_numBlasStreams);
+      d_deviceBlasHandles.resize(d_numBlasStreams);
+
+#if defined(DFTEFE_WITH_DEVICE)
+      for (size_type i = 0; i < d_numBlasStreams; ++i)
+      {
+        utils::deviceStreamCreate(d_streams[i]);
+        status = create(d_deviceBlasHandles[i]);
+        status = setBlasStream(d_deviceBlasHandles[i], d_streams[i]);
+      }
+#endif
     }
 
     template <utils::MemorySpace memorySpace>
     utils::deviceBlasStatus_t
-    LinAlgOpContext<memorySpace>::setBlasStream(
-      utils::deviceStream_t streamId)
+    LinAlgOpContext<memorySpace>::setBlasStream(utils::deviceStream_t streamId)
     {
-      d_streamId = streamId;
+      return setBlasStream(d_deviceBlasHandle, streamId);
+    }
+    
+    template <utils::MemorySpace memorySpace>
+    utils::deviceBlasStatus_t
+    LinAlgOpContext<memorySpace>::setBlasStream(
+     utils::deviceBlasHandle_t handleId , utils::deviceStream_t streamId)
+    {
 #if defined(DFTEFE_WITH_DEVICE_LANG_CUDA) || defined(DFTEFE_WITH_DEVICE_LANG_HIP)
       utils::deviceBlasStatus_t status =
-        DFTEFE_DEVICE_BLAS(, SetStream)(d_deviceBlasHandle, d_streamId);
+        DFTEFE_DEVICE_BLAS(, SetStream)(handleId, streamId);
       DEVICEBLAS_API_CHECK(status);
 #elif defined(DFTEFE_WITH_DEVICE_LANG_SYCL)
-      d_deviceBlasHandle = utils::queueRegistry.find(streamId)->second;
+      handleId = utils::queueRegistry.find(streamId)->second;
       utils::deviceBlasStatus_t status = utils::deviceBlasSuccess;
 #endif
       return status;
@@ -118,15 +125,13 @@ namespace dftefe
 
     template <utils::MemorySpace memorySpace>
     utils::deviceBlasStatus_t
-    LinAlgOpContext<memorySpace>::create()
+    LinAlgOpContext<memorySpace>::create(utils::deviceBlasHandle_t handleId)
     {
 #if defined(DFTEFE_WITH_DEVICE_LANG_CUDA) || defined(DFTEFE_WITH_DEVICE_LANG_HIP)
-      utils::deviceBlasStatus_t status =
-        DFTEFE_DEVICE_BLAS(, Create)(&d_deviceBlasHandle);
+      utils::deviceBlasStatus_t status = DFTEFE_DEVICE_BLAS(, Create)(&handleId);
       DEVICEBLAS_API_CHECK(status);
 #elif defined(DFTEFE_WITH_DEVICE_LANG_SYCL)
-      d_streamId = utils::defaultStream;
-      d_deviceBlasHandle =
+      handleId =
         utils::queueRegistry.find(utils::defaultStream)->second;
       utils::deviceBlasStatus_t status = utils::deviceBlasSuccess;
 #endif
@@ -135,11 +140,10 @@ namespace dftefe
 
     template <utils::MemorySpace memorySpace>    
     utils::deviceBlasStatus_t
-    LinAlgOpContext<memorySpace>::destroy()
+    LinAlgOpContext<memorySpace>::destroy(utils::deviceBlasHandle_t handleId)
     {
 #if defined(DFTEFE_WITH_DEVICE_LANG_CUDA) || defined(DFTEFE_WITH_DEVICE_LANG_HIP)
-      utils::deviceBlasStatus_t status =
-        DFTEFE_DEVICE_BLAS(, Destroy)(d_deviceBlasHandle);
+      utils::deviceBlasStatus_t status = DFTEFE_DEVICE_BLAS(, Destroy)(handleId);
       DEVICEBLAS_API_CHECK(status);
 #elif defined(DFTEFE_WITH_DEVICE_LANG_SYCL)
       utils::deviceBlasStatus_t status = utils::deviceBlasSuccess;

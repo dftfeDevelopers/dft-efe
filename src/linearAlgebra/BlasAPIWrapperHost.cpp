@@ -414,7 +414,7 @@ namespace dftefe
           return izamax_(&nTmp, x, &incxTmp);
         }
 
-        template <typename ValueType1, typename ValueType2>
+        template <typename ValueType1, typename ValueType2, utils::MemorySpace memorySpace>
         void
         axpy(const size_type                            n,
              const scalar_type<ValueType1, ValueType2>  alpha,
@@ -422,7 +422,7 @@ namespace dftefe
              const size_type                            incx,
              ValueType2 *                               y,
              const size_type                            incy,
-             LinAlgOpContext<utils::MemorySpace::HOST> &context)
+             LinAlgOpContext<memorySpace> &context)
         {
           utils::throwException(
             "axpy not yet implemented in BlasWrapperAPIHost");
@@ -602,6 +602,58 @@ namespace dftefe
           std::complex<double> *                                        y,
           const size_type                                               incy,
           LinAlgOpContext<utils::MemorySpace::HOST> &context);
+
+        template <typename ValueType1, typename ValueType2>
+        void
+        axpy(const size_type                            n,
+             const scalar_type<ValueType1, ValueType2>  alpha,
+             ValueType1 const *                         x,
+             const size_type                            incx,
+             ValueType2 *                               y,
+             const size_type                            incy,
+             LinAlgOpContext<utils::MemorySpace::HOST_PINNED> &context)
+        {
+            LinAlgOpContext<utils::MemorySpace::HOST> hostContext;
+            return axpy<ValueType1, ValueType2, utils::MemorySpace::HOST>(n, alpha, x, incx, y, incy, hostContext);
+        }
+
+      template void axpy<double,double,utils::MemorySpace::HOST_PINNED>(
+          size_type,
+          const scalar_type<double,double>,
+          const double*,
+          size_type,
+          double*,
+          size_type,
+          LinAlgOpContext<utils::MemorySpace::HOST_PINNED>&);
+
+      template void axpy<float,float,utils::MemorySpace::HOST_PINNED>(
+          size_type,
+          const scalar_type<float,float>,
+          const float*,
+          size_type,
+          float*,
+          size_type,
+          LinAlgOpContext<utils::MemorySpace::HOST_PINNED>&);
+
+      template void axpy<std::complex<double>,std::complex<double>,utils::MemorySpace::HOST_PINNED>(
+          size_type,
+          const scalar_type<std::complex<double>,std::complex<double>>,
+          const std::complex<double>*,
+          size_type,
+          std::complex<double>*,
+          size_type,
+          LinAlgOpContext<utils::MemorySpace::HOST_PINNED>&);
+
+      template void axpy<std::complex<float>,std::complex<float>,utils::MemorySpace::HOST_PINNED>(
+          size_type,
+          const scalar_type<std::complex<float>,std::complex<float>>,
+          const std::complex<float>*,
+          size_type,
+          std::complex<float>*,
+          size_type,
+          LinAlgOpContext<utils::MemorySpace::HOST_PINNED>&);
+
+
       } // namespace blasWrapper
 
     } // namespace blasLapack

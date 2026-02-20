@@ -548,7 +548,7 @@ namespace dftefe
              LinAlgOpContext<utils::MemorySpace::DEVICE> &context)
         {
           utils::throwException(
-            "axpy not yet implemented in BlasWrapperAPIHost");
+            "axpy not yet implemented in BlasWrapperAPIDEVICE");
         }
 
         template <>
@@ -599,6 +599,60 @@ namespace dftefe
                                                               incyTmp));
         }
 
+        template <>
+        void
+        axpy<std::complex<float>,
+            std::complex<float>,
+            utils::MemorySpace::DEVICE>(
+          const size_type                                              n,
+          const scalar_type<std::complex<float>, std::complex<float>>  alpha,
+          std::complex<float> const *                                  x,
+          const size_type                                              incx,
+          std::complex<float> *                                        y,
+          const size_type                                              incy,
+          LinAlgOpContext<utils::MemorySpace::DEVICE> &context)
+        {
+          unsigned int nTmp    = n;
+          unsigned int incxTmp = incx;
+          unsigned int incyTmp = incy;
+
+          DEVICEBLAS_API_CHECK(
+            DFTEFE_DEVICE_BLAS_INT(C, axpy)(
+              context.getDeviceBlasHandle(),
+              nTmp,
+              makeDataTypeDeviceBlasCompatible(&alpha),
+              makeDataTypeDeviceBlasCompatible(x),
+              incxTmp,
+              makeDataTypeDeviceBlasCompatible(y),
+              incyTmp));
+        }
+
+        template <>
+        void
+        axpy<float, float, utils::MemorySpace::DEVICE>(
+          const size_type                            n,
+          const scalar_type<float, float>            alpha,
+          float const *                              x,
+          const size_type                            incx,
+          float *                                    y,
+          const size_type                            incy,
+          LinAlgOpContext<utils::MemorySpace::DEVICE> &context)
+        {
+          unsigned int nTmp    = n;
+          unsigned int incxTmp = incx;
+          unsigned int incyTmp = incy;
+
+          DEVICEBLAS_API_CHECK(
+            DFTEFE_DEVICE_BLAS_INT(S, axpy)(
+              context.getDeviceBlasHandle(),
+              nTmp,
+              &alpha,
+              x,
+              incxTmp,
+              y,
+              incyTmp));
+        }
+
         template void
         axpy<double, double, utils::MemorySpace::DEVICE>(
           const size_type                            n,
@@ -620,6 +674,29 @@ namespace dftefe
           std::complex<double> *                                        y,
           const size_type                                               incy,
           LinAlgOpContext<utils::MemorySpace::DEVICE> &context);
+
+        template void
+        axpy<float, float, utils::MemorySpace::DEVICE>(
+          const size_type                            n,
+          const scalar_type<float, float>            alpha,
+          float const *                              x,
+          const size_type                            incx,
+          float *                                    y,
+          const size_type                            incy,
+          LinAlgOpContext<utils::MemorySpace::DEVICE> &context);
+
+        template void
+        axpy<std::complex<float>,
+             std::complex<float>,
+             utils::MemorySpace::DEVICE>(
+          const size_type                                             n,
+          const scalar_type<std::complex<float>, std::complex<float>> alpha,
+          std::complex<float> const *                                 x,
+          const size_type                                             incx,
+          std::complex<float> *                                       y,
+          const size_type                                             incy,
+          LinAlgOpContext<utils::MemorySpace::DEVICE> &                 context);
+
       } // namespace blasWrapper
 
     } // namespace blasLapack
