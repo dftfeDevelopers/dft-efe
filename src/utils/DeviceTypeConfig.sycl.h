@@ -27,7 +27,7 @@ namespace dftefe
   namespace utils
   {
     typedef std::error_code      deviceError_t;
-    typedef dftefe::uInt          deviceStream_t;
+    typedef dftefe::uInt         deviceStream_t;
     typedef sycl::event          deviceEvent_t;
     typedef std::complex<double> deviceDoubleComplex;
     typedef std::complex<float>  deviceFloatComplex;
@@ -65,7 +65,7 @@ namespace dftefe
     static deviceStream_t            defaultStream = 0;
     inline std::vector<sycl::device> allSyclGPUDevices =
       sycl::device::get_devices(sycl::info::device_type::gpu);
-    inline dftefe::uInt   syclDeviceId = 0;
+    inline dftefe::uInt  syclDeviceId = 0;
     inline sycl::device  syclDevice   = allSyclGPUDevices[syclDeviceId];
     inline sycl::context syclContext{syclDevice};
     inline std::map<dftefe::uInt, sycl::queue> queueRegistry{

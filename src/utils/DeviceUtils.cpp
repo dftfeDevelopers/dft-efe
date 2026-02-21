@@ -29,7 +29,7 @@ namespace dftefe
       // dftefe::utils::getDevice(&device);
       // std::cout<< "Device Id currently used is "<<device<< " for taskId:
       // "<<dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD)<<std::endl;
-      dftefe::utils::deviceReset();      
+      dftefe::utils::deviceReset();
     }
   } // namespace utils
 

@@ -34,9 +34,9 @@ namespace dftefe
       template <typename ValueType>
       void
       setValueKernel(sycl::nd_item<1> ind,
-                     ValueType       *devPtr,
+                     ValueType *      devPtr,
                      ValueType        value,
-                     size_type      size)
+                     size_type        size)
       {
         const size_type globalThreadId = ind.get_global_id(0);
         size_type       n_workgroups   = ind.get_group_range(0);
@@ -69,9 +69,10 @@ namespace dftefe
     {
       try
         {
-          *free = dftefe::utils::queueRegistry.find(dftefe::utils::defaultStream)
-                    ->second.get_device()
-                    .get_info<sycl::info::device::local_mem_size>();
+          *free =
+            dftefe::utils::queueRegistry.find(dftefe::utils::defaultStream)
+              ->second.get_device()
+              .get_info<sycl::info::device::local_mem_size>();
           *total =
             dftefe::utils::queueRegistry.find(dftefe::utils::defaultStream)
               ->second.get_device()
@@ -145,7 +146,8 @@ namespace dftefe
       deviceEvent_t event =
         dftefe::utils::queueRegistry.find(dftefe::utils::defaultStream)
           ->second.parallel_for(
-            sycl::nd_range<1>(total_workitems, dftefe::utils::DEVICE_BLOCK_SIZE),
+            sycl::nd_range<1>(total_workitems,
+                              dftefe::utils::DEVICE_BLOCK_SIZE),
             [=](sycl::nd_item<1> ind) {
               setValueKernel(ind,
                              makeDataTypeDeviceCompatible(devPtr),
@@ -170,7 +172,7 @@ namespace dftefe
     template void
     deviceSetValue(unsigned long int *devPtr,
                    unsigned long int  value,
-                   size_type        size);
+                   size_type          size);
 
     template void
     deviceSetValue(double *devPtr, double value, size_type size);
@@ -181,12 +183,12 @@ namespace dftefe
     template void
     deviceSetValue(std::complex<float> *devPtr,
                    std::complex<float>  value,
-                   size_type          size);
+                   size_type            size);
 
     template void
     deviceSetValue(std::complex<double> *devPtr,
                    std::complex<double>  value,
-                   size_type           size);
+                   size_type             size);
 
     template void
     deviceSetValue(uint16_t *devPtr, uint16_t value, size_type size);
@@ -194,7 +196,7 @@ namespace dftefe
     template void
     deviceSetValue(std::complex<uint16_t> *devPtr,
                    std::complex<uint16_t>  value,
-                   size_type             size);
+                   size_type               size);
 
 
     deviceError_t
@@ -280,12 +282,12 @@ namespace dftefe
     }
 
     deviceError_t
-    deviceMemcpyD2H_2D(void       *dst,
-                       size_type dpitch,
+    deviceMemcpyD2H_2D(void *      dst,
+                       size_type   dpitch,
                        const void *src,
-                       size_type spitch,
-                       size_type width,
-                       size_type height)
+                       size_type   spitch,
+                       size_type   width,
+                       size_type   height)
     {
       // dftefe::utils::deviceStream_t queue{sycl::gpu_selector_v};
       // deviceEvent_t event = queue.sycl::_V1::queue::ext_oneapi_memcpy2d(dst,
@@ -295,12 +297,12 @@ namespace dftefe
 
 
     deviceError_t
-    deviceMemcpyD2D_2D(void       *dst,
-                       size_type dpitch,
+    deviceMemcpyD2D_2D(void *      dst,
+                       size_type   dpitch,
                        const void *src,
-                       size_type spitch,
-                       size_type width,
-                       size_type height)
+                       size_type   spitch,
+                       size_type   width,
+                       size_type   height)
     {
       // dftefe::utils::deviceStream_t queue{sycl::gpu_selector_v};
       // deviceEvent_t event = queue.sycl::_V1::queue::ext_oneapi_memcpy2d(dst,
@@ -309,12 +311,12 @@ namespace dftefe
     }
 
     deviceError_t
-    deviceMemcpyH2D_2D(void       *dst,
-                       size_type dpitch,
+    deviceMemcpyH2D_2D(void *      dst,
+                       size_type   dpitch,
                        const void *src,
-                       size_type spitch,
-                       size_type width,
-                       size_type height)
+                       size_type   spitch,
+                       size_type   width,
+                       size_type   height)
     {
       // dftefe::utils::deviceStream_t queue{sycl::gpu_selector_v};
       // deviceEvent_t event = queue.sycl::_V1::queue::ext_oneapi_memcpy2d(dst,
@@ -331,16 +333,16 @@ namespace dftefe
     }
 
     deviceError_t
-    deviceMemcpyAsyncD2H(void          *dst,
-                         const void    *src,
-                         size_type    count,
+    deviceMemcpyAsyncD2H(void *         dst,
+                         const void *   src,
+                         size_type      count,
                          deviceStream_t stream)
     {
       try
         {
           dftefe::utils::queueRegistry.find(stream)->second.memcpy(dst,
-                                                                  src,
-                                                                  count);
+                                                                   src,
+                                                                   count);
         }
       catch (const dftefe::utils::deviceError_t &e)
         {
@@ -350,16 +352,16 @@ namespace dftefe
     }
 
     deviceError_t
-    deviceMemcpyAsyncD2D(void          *dst,
-                         const void    *src,
-                         size_type    count,
+    deviceMemcpyAsyncD2D(void *         dst,
+                         const void *   src,
+                         size_type      count,
                          deviceStream_t stream)
     {
       try
         {
           dftefe::utils::queueRegistry.find(stream)->second.memcpy(dst,
-                                                                  src,
-                                                                  count);
+                                                                   src,
+                                                                   count);
         }
       catch (const dftefe::utils::deviceError_t &e)
         {
@@ -369,16 +371,16 @@ namespace dftefe
     }
 
     deviceError_t
-    deviceMemcpyAsyncH2D(void          *dst,
-                         const void    *src,
-                         size_type    count,
+    deviceMemcpyAsyncH2D(void *         dst,
+                         const void *   src,
+                         size_type      count,
                          deviceStream_t stream)
     {
       try
         {
           dftefe::utils::queueRegistry.find(stream)->second.memcpy(dst,
-                                                                  src,
-                                                                  count);
+                                                                   src,
+                                                                   count);
         }
       catch (const dftefe::utils::deviceError_t &e)
         {
@@ -451,7 +453,7 @@ namespace dftefe
 
     deviceError_t
     deviceStreamWaitEvent(deviceStream_t &stream,
-                          deviceEvent_t  &event,
+                          deviceEvent_t & event,
                           unsigned int    flags)
     {
       dftefe::utils::queueRegistry.find(stream)

@@ -26,7 +26,6 @@ namespace dftefe
 {
   namespace utils
   {
-
     template <typename T1, typename T2>
     inline void
     atomicAddWrapper(T1 *addr, T2 value)

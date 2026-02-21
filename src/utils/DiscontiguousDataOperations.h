@@ -220,10 +220,10 @@ namespace dftefe
        */
       static void
       copyToDiscontiguousMemory(const ValueType *src,
-                               ValueType *      dst,
-                               const size_type *discontIds,
-                               const size_type  N,
-                               const size_type  nComponents);
+                                ValueType *      dst,
+                                const size_type *discontIds,
+                                const size_type  N,
+                                const size_type  nComponents);
 
       /**
        * @brief Function to add a source array \p x to a destination array \p y,
@@ -255,10 +255,10 @@ namespace dftefe
        */
       static void
       addToDiscontiguousMemory(const ValueType *src,
-                              ValueType *      dst,
-                              const size_type *discontIds,
-                              const size_type  N,
-                              const size_type  nComponents);
+                               ValueType *      dst,
+                               const size_type *discontIds,
+                               const size_type  N,
+                               const size_type  nComponents);
     }; // end of class DiscontiguousDataOperations for DEVICE
 #endif // DFTEFE_WITH_DEVICE
 

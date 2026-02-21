@@ -45,6 +45,7 @@
                       __LINE__,                              \
                       __sycl_err.what());                    \
         }                                                    \
-  } while (0)
+    }                                                        \
+  while (0)
 
 #endif // dftefeDeviceExceptions_syclh

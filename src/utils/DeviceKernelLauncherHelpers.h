@@ -62,40 +62,44 @@ namespace dftefe
 #    endif
 #    ifdef DFTEFE_WITH_DEVICE_LANG_CUDA
 #      define DFTEFE_LAUNCH_KERNEL(kernel, grid, block, stream, ...) \
-        do                                                          \
-          {                                                         \
-            kernel<<<grid, block, 0, stream>>>(__VA_ARGS__);        \
-        } while (0)
+        do                                                           \
+          {                                                          \
+            kernel<<<grid, block, 0, stream>>>(__VA_ARGS__);         \
+          }                                                          \
+        while (0)
 #    elif defined(DFTEFE_WITH_DEVICE_LANG_HIP)
-#      define DFTEFE_LAUNCH_KERNEL(kernel, grid, block, stream, ...)          \
+#      define DFTEFE_LAUNCH_KERNEL(kernel, grid, block, stream, ...)         \
         do                                                                   \
           {                                                                  \
             hipLaunchKernelGGL(                                              \
               HIP_KERNEL_NAME(kernel), grid, block, 0, stream, __VA_ARGS__); \
-        } while (0)
+          }                                                                  \
+        while (0)
 #    elif defined(DFTEFE_WITH_DEVICE_LANG_SYCL)
 #      define DFTEFE_LAUNCH_KERNEL(kernel, grid, block, stream, ...)        \
-        do                                                                 \
-          {                                                                \
+        do                                                                  \
+          {                                                                 \
             dftefe::utils::queueRegistry.find(stream)->second.parallel_for( \
-              sycl::nd_range<1>((grid) * (block), block),                  \
-              [=](sycl::nd_item<1> ind) { kernel(ind, __VA_ARGS__); });    \
-        } while (0)
+              sycl::nd_range<1>((grid) * (block), block),                   \
+              [=](sycl::nd_item<1> ind) { kernel(ind, __VA_ARGS__); });     \
+          }                                                                 \
+        while (0)
 #    else
 #      error \
         "No device backend defined (DFTEFE_WITH_DEVICE_LANG_CUDA or DFTEFE_WITH_DEVICE_LANG_HIP or DFTEFE_WITH_DEVICE_LANG_SYCL)"
 #    endif
 
 #    ifdef DFTEFE_WITH_DEVICE_LANG_CUDA
-#      define DFTEFE_LAUNCH_KERNEL_SMEM_D(                                  \
+#      define DFTEFE_LAUNCH_KERNEL_SMEM_D(                                 \
         kernel, grid, block, smemtype, smemcount, stream, ...)             \
         do                                                                 \
           {                                                                \
             kernel<<<grid, block, smemcount * sizeof(smemtype), stream>>>( \
               __VA_ARGS__);                                                \
-        } while (0)
+          }                                                                \
+        while (0)
 #    elif defined(DFTEFE_WITH_DEVICE_LANG_HIP)
-#      define DFTEFE_LAUNCH_KERNEL_SMEM_D(                      \
+#      define DFTEFE_LAUNCH_KERNEL_SMEM_D(                     \
         kernel, grid, block, smemtype, smemcount, stream, ...) \
         do                                                     \
           {                                                    \
@@ -105,13 +109,14 @@ namespace dftefe
                                smemcount * sizeof(smemtype),   \
                                stream,                         \
                                __VA_ARGS__);                   \
-        } while (0)
+          }                                                    \
+        while (0)
 #    elif defined(DFTEFE_WITH_DEVICE_LANG_SYCL)
-#      define DFTEFE_LAUNCH_KERNEL_SMEM_D(                                    \
+#      define DFTEFE_LAUNCH_KERNEL_SMEM_D(                                   \
         kernel, grid, block, smemtype, smemcount, stream, ...)               \
         do                                                                   \
           {                                                                  \
-            dftefe::utils::queueRegistry.find(stream)->second.submit(         \
+            dftefe::utils::queueRegistry.find(stream)->second.submit(        \
               [=](sycl::handler &cgh) {                                      \
                 sycl::local_accessor<smemtype, 1> SMem_acc(smemcount, cgh);  \
                 cgh.parallel_for(sycl::nd_range<1>((grid) * (block), block), \
@@ -121,33 +126,36 @@ namespace dftefe
                                           __VA_ARGS__);                      \
                                  });                                         \
               });                                                            \
-        } while (0)
+          }                                                                  \
+        while (0)
 #    else
 #      error \
         "No device backend defined (DFTEFE_WITH_DEVICE_LANG_CUDA or DFTEFE_WITH_DEVICE_LANG_HIP or DFTEFE_WITH_DEVICE_LANG_SYCL)"
 #    endif
 
 #    ifdef DFTEFE_WITH_DEVICE_LANG_CUDA
-#      define DFTEFE_LAUNCH_KERNEL_SMEM_S(                      \
+#      define DFTEFE_LAUNCH_KERNEL_SMEM_S(                     \
         kernel, grid, block, smemtype, smemcount, stream, ...) \
         do                                                     \
           {                                                    \
             kernel<<<grid, block, 0, stream>>>(__VA_ARGS__);   \
-        } while (0)
+          }                                                    \
+        while (0)
 #    elif defined(DFTEFE_WITH_DEVICE_LANG_HIP)
-#      define DFTEFE_LAUNCH_KERNEL_SMEM_S(                                    \
+#      define DFTEFE_LAUNCH_KERNEL_SMEM_S(                                   \
         kernel, grid, block, smemtype, smemcount, stream, ...)               \
         do                                                                   \
           {                                                                  \
             hipLaunchKernelGGL(                                              \
               HIP_KERNEL_NAME(kernel), grid, block, 0, stream, __VA_ARGS__); \
-        } while (0)
+          }                                                                  \
+        while (0)
 #    elif defined(DFTEFE_WITH_DEVICE_LANG_SYCL)
-#      define DFTEFE_LAUNCH_KERNEL_SMEM_S(                                    \
+#      define DFTEFE_LAUNCH_KERNEL_SMEM_S(                                   \
         kernel, grid, block, smemtype, smemcount, stream, ...)               \
         do                                                                   \
           {                                                                  \
-            dftefe::utils::queueRegistry.find(stream)->second.submit(         \
+            dftefe::utils::queueRegistry.find(stream)->second.submit(        \
               [=](sycl::handler &cgh) {                                      \
                 sycl::local_accessor<smemtype, 1> SMem_acc(smemcount, cgh);  \
                 cgh.parallel_for(sycl::nd_range<1>((grid) * (block), block), \
@@ -157,7 +165,8 @@ namespace dftefe
                                           __VA_ARGS__);                      \
                                  });                                         \
               });                                                            \
-        } while (0)
+          }                                                                  \
+        while (0)
 #    else
 #      error \
         "No device backend defined (DFTEFE_WITH_DEVICE_LANG_CUDA or DFTEFE_WITH_DEVICE_LANG_HIP or DFTEFE_WITH_DEVICE_LANG_SYCL)"
@@ -169,23 +178,23 @@ namespace dftefe
 
 #    if defined(DFTEFE_WITH_DEVICE_LANG_CUDA) || \
       defined(DFTEFE_WITH_DEVICE_LANG_HIP)
-#      define DFTEFE_CREATE_KERNEL(RET, NAME, BODY, ...)    \
-        __global__ RET NAME(__VA_ARGS__)                   \
-        {                                                  \
+#      define DFTEFE_CREATE_KERNEL(RET, NAME, BODY, ...) \
+        __global__ RET NAME(__VA_ARGS__)                 \
+        {                                                \
           const size_type globalThreadId =               \
-            blockIdx.x * blockDim.x + threadIdx.x;         \
+            blockIdx.x * blockDim.x + threadIdx.x;       \
           const size_type nThreadsPerBlock = blockDim.x; \
           const size_type nThreadBlock     = gridDim.x;  \
-          BODY                                             \
+          BODY                                           \
         }
 #    elif defined(DFTEFE_WITH_DEVICE_LANG_SYCL)
-#      define DFTEFE_CREATE_KERNEL(RET, NAME, BODY, ...)                \
-        RET NAME(sycl::nd_item<1> ind, __VA_ARGS__)                    \
-        {                                                              \
+#      define DFTEFE_CREATE_KERNEL(RET, NAME, BODY, ...)             \
+        RET NAME(sycl::nd_item<1> ind, __VA_ARGS__)                  \
+        {                                                            \
           const size_type globalThreadId   = ind.get_global_id(0);   \
           const size_type nThreadsPerBlock = ind.get_local_range(0); \
           const size_type nThreadBlock     = ind.get_group_range(0); \
-          BODY                                                         \
+          BODY                                                       \
         }
 #    else
 #      error \
@@ -195,27 +204,27 @@ namespace dftefe
 #    if defined(DFTEFE_WITH_DEVICE_LANG_CUDA) || \
       defined(DFTEFE_WITH_DEVICE_LANG_HIP)
 #      define DFTEFE_CREATE_KERNEL_SMEM_D(SMEMTYPE, RET, NAME, BODY, ...) \
-        __global__ RET NAME(__VA_ARGS__)                                 \
-        {                                                                \
-          extern __shared__ SMEMTYPE smem[];                             \
-          const size_type          globalThreadId =                    \
-            blockIdx.x * blockDim.x + threadIdx.x;                       \
-          const size_type threadId         = threadIdx.x;              \
-          const size_type blockId          = blockIdx.x;               \
-          const size_type nThreadsPerBlock = blockDim.x;               \
-          const size_type nThreadBlock     = gridDim.x;                \
-          BODY                                                           \
+        __global__ RET NAME(__VA_ARGS__)                                  \
+        {                                                                 \
+          extern __shared__ SMEMTYPE smem[];                              \
+          const size_type            globalThreadId =                     \
+            blockIdx.x * blockDim.x + threadIdx.x;                        \
+          const size_type threadId         = threadIdx.x;                 \
+          const size_type blockId          = blockIdx.x;                  \
+          const size_type nThreadsPerBlock = blockDim.x;                  \
+          const size_type nThreadBlock     = gridDim.x;                   \
+          BODY                                                            \
         }
 #    elif defined(DFTEFE_WITH_DEVICE_LANG_SYCL)
 #      define DFTEFE_CREATE_KERNEL_SMEM_D(SMEMTYPE, RET, NAME, BODY, ...) \
-        RET NAME(sycl::nd_item<1> ind, SMEMTYPE *smem, __VA_ARGS__)      \
-        {                                                                \
-          const size_type globalThreadId   = ind.get_global_id(0);     \
-          const size_type threadId         = ind.get_local_id(0);      \
-          const size_type blockId          = ind.get_group(0);         \
-          const size_type nThreadsPerBlock = ind.get_local_range(0);   \
-          const size_type nThreadBlock     = ind.get_group_range(0);   \
-          BODY                                                           \
+        RET NAME(sycl::nd_item<1> ind, SMEMTYPE *smem, __VA_ARGS__)       \
+        {                                                                 \
+          const size_type globalThreadId   = ind.get_global_id(0);        \
+          const size_type threadId         = ind.get_local_id(0);         \
+          const size_type blockId          = ind.get_group(0);            \
+          const size_type nThreadsPerBlock = ind.get_local_range(0);      \
+          const size_type nThreadBlock     = ind.get_group_range(0);      \
+          BODY                                                            \
         }
 #    else
 #      error \
@@ -224,30 +233,30 @@ namespace dftefe
 
 #    if defined(DFTEFE_WITH_DEVICE_LANG_CUDA) || \
       defined(DFTEFE_WITH_DEVICE_LANG_HIP)
-#      define DFTEFE_CREATE_KERNEL_SMEM_S(                   \
-        SMEMTYPE, SMEMCOUNT, RET, NAME, BODY, ...)          \
-        __global__ RET NAME(__VA_ARGS__)                    \
-        {                                                   \
-          __shared__ SMEMTYPE smem[SMEMCOUNT];              \
-          const size_type   globalThreadId =              \
-            blockIdx.x * blockDim.x + threadIdx.x;          \
+#      define DFTEFE_CREATE_KERNEL_SMEM_S(                \
+        SMEMTYPE, SMEMCOUNT, RET, NAME, BODY, ...)        \
+        __global__ RET NAME(__VA_ARGS__)                  \
+        {                                                 \
+          __shared__ SMEMTYPE smem[SMEMCOUNT];            \
+          const size_type     globalThreadId =            \
+            blockIdx.x * blockDim.x + threadIdx.x;        \
           const size_type threadId         = threadIdx.x; \
           const size_type blockId          = blockIdx.x;  \
           const size_type nThreadsPerBlock = blockDim.x;  \
           const size_type nThreadBlock     = gridDim.x;   \
-          BODY                                              \
+          BODY                                            \
         }
 #    elif defined(DFTEFE_WITH_DEVICE_LANG_SYCL)
-#      define DFTEFE_CREATE_KERNEL_SMEM_S(                              \
-        SMEMTYPE, SMEMCOUNT, RET, NAME, BODY, ...)                     \
-        RET NAME(sycl::nd_item<1> ind, SMEMTYPE *smem, __VA_ARGS__)    \
-        {                                                              \
+#      define DFTEFE_CREATE_KERNEL_SMEM_S(                           \
+        SMEMTYPE, SMEMCOUNT, RET, NAME, BODY, ...)                   \
+        RET NAME(sycl::nd_item<1> ind, SMEMTYPE *smem, __VA_ARGS__)  \
+        {                                                            \
           const size_type globalThreadId   = ind.get_global_id(0);   \
           const size_type threadId         = ind.get_local_id(0);    \
           const size_type blockId          = ind.get_group(0);       \
           const size_type nThreadsPerBlock = ind.get_local_range(0); \
           const size_type nThreadBlock     = ind.get_group_range(0); \
-          BODY                                                         \
+          BODY                                                       \
         }
 #    else
 #      error \

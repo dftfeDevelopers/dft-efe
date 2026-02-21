@@ -77,36 +77,36 @@ namespace dftefe
      * @param count The memory size in bytes of the array
      */
     deviceError_t
-    deviceMemcpyD2H_2D(void       *dst,
-                       size_type dpitch,
+    deviceMemcpyD2H_2D(void *      dst,
+                       size_type   dpitch,
                        const void *src,
-                       size_type spitch,
-                       size_type width,
-                       size_type height);
+                       size_type   spitch,
+                       size_type   width,
+                       size_type   height);
 
     /**
      * @brief Copy 2D array from device to device
      * @param count The memory size in bytes of the array
      */
     deviceError_t
-    deviceMemcpyD2D_2D(void       *dst,
-                       size_type dpitch,
+    deviceMemcpyD2D_2D(void *      dst,
+                       size_type   dpitch,
                        const void *src,
-                       size_type spitch,
-                       size_type width,
-                       size_type height);
+                       size_type   spitch,
+                       size_type   width,
+                       size_type   height);
 
     /**
      * @brief Copy 2D array from host to device
      * @param count The memory size in bytes of the array
      */
     deviceError_t
-    deviceMemcpyH2D_2D(void       *dst,
-                       size_type dpitch,
+    deviceMemcpyH2D_2D(void *      dst,
+                       size_type   dpitch,
                        const void *src,
-                       size_type spitch,
-                       size_type width,
-                       size_type height);
+                       size_type   spitch,
+                       size_type   width,
+                       size_type   height);
 
     /**
      * @brief HOST-DEVICE synchronization
@@ -119,9 +119,9 @@ namespace dftefe
      * @param count The memory size in bytes of the array
      */
     deviceError_t
-    deviceMemcpyAsyncD2H(void          *dst,
-                         const void    *src,
-                         size_type    count,
+    deviceMemcpyAsyncD2H(void *         dst,
+                         const void *   src,
+                         size_type      count,
                          deviceStream_t stream = dftefe::utils::defaultStream);
 
     /**
@@ -129,9 +129,9 @@ namespace dftefe
      * @param count The memory size in bytes of the array
      */
     deviceError_t
-    deviceMemcpyAsyncD2D(void          *dst,
-                         const void    *src,
-                         size_type    count,
+    deviceMemcpyAsyncD2D(void *         dst,
+                         const void *   src,
+                         size_type      count,
                          deviceStream_t stream = dftefe::utils::defaultStream);
 
     /**
@@ -139,9 +139,9 @@ namespace dftefe
      * @param count The memory size in bytes of the array
      */
     deviceError_t
-    deviceMemcpyAsyncH2D(void          *dst,
-                         const void    *src,
-                         size_type    count,
+    deviceMemcpyAsyncH2D(void *         dst,
+                         const void *   src,
+                         size_type      count,
                          deviceStream_t stream = dftefe::utils::defaultStream);
 
 
@@ -169,7 +169,7 @@ namespace dftefe
 
     deviceError_t
     deviceStreamWaitEvent(deviceStream_t &stream,
-                          deviceEvent_t  &event,
+                          deviceEvent_t & event,
                           unsigned int    flags = 0);
 
   } // namespace utils

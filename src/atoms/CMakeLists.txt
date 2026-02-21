@@ -39,11 +39,14 @@ endif()
 
 include(FetchContent)
 
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
 FetchContent_Declare(
   simdjson
   GIT_REPOSITORY https://github.com/simdjson/simdjson.git
-  GIT_TAG  tags/v0.9.6
-  GIT_SHALLOW TRUE)
+  GIT_TAG v4.3.0
+  GIT_SHALLOW TRUE
+)
 
 FetchContent_MakeAvailable(simdjson)
 

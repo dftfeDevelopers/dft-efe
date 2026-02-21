@@ -108,13 +108,13 @@ template parameter instead. Available typedefs LogicError - std::logic_error
 #endif
 
 #if defined(DFTEFE_WITH_DEVICE)
-#ifdef DFTEFE_WITH_DEVICE_LANG_CUDA
-#  include <utils/DeviceExceptions.cu.h>
-#elif DFTEFE_WITH_DEVICE_LANG_HIP
-#  include <DeviceExceptions.hip.h>
-#elif DFTEFE_WITH_DEVICE_LANG_SYCL
-#  include <DeviceExceptions.sycl.h>
-#endif
+#  ifdef DFTEFE_WITH_DEVICE_LANG_CUDA
+#    include <utils/DeviceExceptions.cu.h>
+#  elif DFTEFE_WITH_DEVICE_LANG_HIP
+#    include <DeviceExceptions.hip.h>
+#  elif DFTEFE_WITH_DEVICE_LANG_SYCL
+#    include <DeviceExceptions.sycl.h>
+#  endif
 #endif
 
 namespace dftefe

@@ -68,7 +68,7 @@ namespace dftefe
       }
 
       static utils::deviceBlasStatus_t
-      setBlasStream(utils::deviceStream_t streamId);
+      setBlasStream(utils::deviceStream_t &streamId);
 
       static utils::deviceBlasHandle_t &
       getDeviceBlasHandle()
@@ -76,46 +76,49 @@ namespace dftefe
         return d_deviceBlasHandle;
       }
 
-      size_type numBlasStreams() const 
-      { 
-        return d_numBlasStreams; 
+      size_type
+      numBlasStreams() const
+      {
+        return d_numBlasStreams;
       }
 
-      static utils::deviceStream_t* getBlasStreamsVec() 
-      { 
+      static utils::deviceStream_t *
+      getBlasStreamsVec()
+      {
         return d_streams.data();
       }
 
-      static utils::deviceBlasHandle_t*
+      static utils::deviceBlasHandle_t *
       getDeviceBlasHandlesVec()
       {
         return d_deviceBlasHandles.data();
       }
 
     private:
-#  ifdef DFTEFE_WITH_DEVICE_AMD
+#ifdef DFTEFE_WITH_DEVICE_AMD
       void
       initialize();
-#  endif
+#endif
 
-      size_type d_numBlasStreams;
+      size_type                                            d_numBlasStreams;
       inline static std::vector<utils::deviceBlasHandle_t> d_deviceBlasHandles;
-      inline static std::vector<utils::deviceStream_t> d_streams;
+      inline static std::vector<utils::deviceStream_t>     d_streams;
 
       inline static utils::deviceBlasHandle_t d_deviceBlasHandle;
-      inline static utils::deviceStream_t d_stream;
+      inline static utils::deviceStream_t     d_stream;
 
       /// storage for deviceblas handle
       TensorOpDataType d_opType;
 
       static utils::deviceBlasStatus_t
-      setBlasStream(utils::deviceBlasHandle_t handleId , utils::deviceStream_t streamId);
+      setBlasStream(utils::deviceBlasHandle_t &handleId,
+                    utils::deviceStream_t &    streamId);
 
       utils::deviceBlasStatus_t
-      create(utils::deviceBlasHandle_t handleId);
+      create(utils::deviceBlasHandle_t &handleId);
 
       utils::deviceBlasStatus_t
-      destroy(utils::deviceBlasHandle_t handleId);
+      destroy(utils::deviceBlasHandle_t &handleId);
 
     }; // end of LinAlgOpContext
   }    // end of namespace linearAlgebra

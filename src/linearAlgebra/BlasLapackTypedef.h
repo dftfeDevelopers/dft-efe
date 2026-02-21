@@ -236,7 +236,8 @@ namespace dftefe
       // };
 
       // template <dftefe::utils::MemorySpace memorySpace>
-      // using LapackQueue = typename LapackQueueTypedef<memorySpace>::LAPACKTYPE;
+      // using LapackQueue = typename
+      // LapackQueueTypedef<memorySpace>::LAPACKTYPE;
 
     } // namespace blasLapack
 

@@ -50,8 +50,7 @@ namespace dftefe
               const size_type blockId      = i / blockSize;
               const size_type intraBlockId = i - blockId * blockSize;
               dftefe::utils::copyValue(
-                dst + i,
-                src[discontIds[blockId] * blockSize + intraBlockId]);
+                dst + i, src[discontIds[blockId] * blockSize + intraBlockId]);
             }
         },
         const size_type  N,
@@ -70,9 +69,9 @@ namespace dftefe
             {
               const size_type blockId      = i / blockSize;
               const size_type intraBlockId = i - blockId * blockSize;
-              dftefe::utils::copyValue(
-                dst + discontIds[blockId] * blockSize + intraBlockId,
-                src[i]);
+              dftefe::utils::copyValue(dst + discontIds[blockId] * blockSize +
+                                         intraBlockId,
+                                       src[i]);
             }
         },
         const size_type  N,
@@ -122,11 +121,11 @@ namespace dftefe
                 add_imag, dftefe::utils::imagPartDevice(src[i]));
             }
         },
-        const size_type  N,
-        const size_type  blockSize,
+        const size_type                          N,
+        const size_type                          blockSize,
         const dftefe::utils::deviceFloatComplex *src,
         dftefe::utils::deviceFloatComplex *      dst,
-        const size_type *discontIds);
+        const size_type *                        discontIds);
 
       template <>
       DFTEFE_CREATE_KERNEL(
@@ -149,11 +148,11 @@ namespace dftefe
                 add_imag, dftefe::utils::imagPartDevice(src[i]));
             }
         },
-        const size_type  N,
-        const size_type  blockSize,
+        const size_type                           N,
+        const size_type                           blockSize,
         const dftefe::utils::deviceDoubleComplex *src,
         dftefe::utils::deviceDoubleComplex *      dst,
-        const size_type *discontIds);
+        const size_type *                         discontIds);
 
     } // namespace
 
@@ -166,15 +165,16 @@ namespace dftefe
                                   const size_type  N,
                                   const size_type  blockSize)
     {
-      DFTEFE_LAUNCH_KERNEL(copyFromDiscontiguousMemoryDeviceKernel,
-                          (N * blockSize) / dftefe::utils::DEVICE_BLOCK_SIZE + 1,
-                          dftefe::utils::DEVICE_BLOCK_SIZE,
-                          dftefe::utils::defaultStream,
-                          N,
-                          blockSize,
-                          dftefe::utils::makeDataTypeDeviceCompatible(src),
-                          dftefe::utils::makeDataTypeDeviceCompatible(dst),
-                          dftefe::utils::makeDataTypeDeviceCompatible(discontIds));
+      DFTEFE_LAUNCH_KERNEL(
+        copyFromDiscontiguousMemoryDeviceKernel,
+        (N * blockSize) / dftefe::utils::DEVICE_BLOCK_SIZE + 1,
+        dftefe::utils::DEVICE_BLOCK_SIZE,
+        dftefe::utils::defaultStream,
+        N,
+        blockSize,
+        dftefe::utils::makeDataTypeDeviceCompatible(src),
+        dftefe::utils::makeDataTypeDeviceCompatible(dst),
+        dftefe::utils::makeDataTypeDeviceCompatible(discontIds));
     }
 
     template <typename ValueType>
@@ -186,15 +186,16 @@ namespace dftefe
                                 const size_type  N,
                                 const size_type  blockSize)
     {
-      DFTEFE_LAUNCH_KERNEL(copyToDiscontiguousMemoryDeviceKernel,
-                          (N * blockSize) / dftefe::utils::DEVICE_BLOCK_SIZE + 1,
-                          dftefe::utils::DEVICE_BLOCK_SIZE,
-                          dftefe::utils::defaultStream,
-                          N,
-                          blockSize,
-                          dftefe::utils::makeDataTypeDeviceCompatible(src),
-                          dftefe::utils::makeDataTypeDeviceCompatible(dst),
-                          dftefe::utils::makeDataTypeDeviceCompatible(discontIds));
+      DFTEFE_LAUNCH_KERNEL(
+        copyToDiscontiguousMemoryDeviceKernel,
+        (N * blockSize) / dftefe::utils::DEVICE_BLOCK_SIZE + 1,
+        dftefe::utils::DEVICE_BLOCK_SIZE,
+        dftefe::utils::defaultStream,
+        N,
+        blockSize,
+        dftefe::utils::makeDataTypeDeviceCompatible(src),
+        dftefe::utils::makeDataTypeDeviceCompatible(dst),
+        dftefe::utils::makeDataTypeDeviceCompatible(discontIds));
     }
 
     template <typename ValueType>
@@ -206,15 +207,16 @@ namespace dftefe
                                const size_type  N,
                                const size_type  blockSize)
     {
-      DFTEFE_LAUNCH_KERNEL(addToDiscontiguousMemoryDeviceKernel,
-                          (N * blockSize) / dftefe::utils::DEVICE_BLOCK_SIZE + 1,
-                          dftefe::utils::DEVICE_BLOCK_SIZE,
-                          dftefe::utils::defaultStream,
-                          N,
-                          blockSize,
-                          dftefe::utils::makeDataTypeDeviceCompatible(src),
-                          dftefe::utils::makeDataTypeDeviceCompatible(dst),
-                          dftefe::utils::makeDataTypeDeviceCompatible(discontIds));
+      DFTEFE_LAUNCH_KERNEL(
+        addToDiscontiguousMemoryDeviceKernel,
+        (N * blockSize) / dftefe::utils::DEVICE_BLOCK_SIZE + 1,
+        dftefe::utils::DEVICE_BLOCK_SIZE,
+        dftefe::utils::defaultStream,
+        N,
+        blockSize,
+        dftefe::utils::makeDataTypeDeviceCompatible(src),
+        dftefe::utils::makeDataTypeDeviceCompatible(dst),
+        dftefe::utils::makeDataTypeDeviceCompatible(discontIds));
     }
 
     template class DiscontiguousDataOperations<

@@ -82,7 +82,7 @@ namespace dftefe
       if (size > 0)
         hostPinnedMalloc((void **)ptr, size * sizeof(ValueType));
       else
-        *ptr = nullptr;      
+        *ptr = nullptr;
     }
 
     template <typename ValueType>
@@ -121,7 +121,7 @@ namespace dftefe
       if (size > 0)
         deviceMalloc((void **)ptr, size * sizeof(ValueType));
       else
-        *ptr = nullptr;      
+        *ptr = nullptr;
     }
 
     template <typename ValueType>

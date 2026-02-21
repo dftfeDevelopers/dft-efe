@@ -102,7 +102,8 @@ namespace dftefe
 
 #ifdef DFTEFE_WITH_DEVICE
     template <typename ValueType>
-    class FECellWiseDataOperations<ValueType, dftefe::utils::MemorySpace::DEVICE>
+    class FECellWiseDataOperations<ValueType,
+                                   dftefe::utils::MemorySpace::DEVICE>
     {
     public:
       static void
@@ -110,9 +111,9 @@ namespace dftefe
         const ValueType *data,
         const size_type  numComponents,
         const size_type *cellLocalIdsStartPtr,
-        const typename BasisManager<ValueType,
-                           dftefe::utils::MemorySpace::DEVICE>::SizeTypeVector
-          &numCellDofs,
+        const typename BasisManager<
+          ValueType,
+          dftefe::utils::MemorySpace::DEVICE>::SizeTypeVector &numCellDofs,
         dftefe::utils::MemoryStorage<ValueType,
                                      dftefe::utils::MemorySpace::DEVICE>
           &cellWiseStorage);
@@ -124,17 +125,19 @@ namespace dftefe
           &              cellWiseStorage,
         const size_type  numComponents,
         const size_type *cellLocalIdsStartPtr,
-        const typename BasisManager<ValueType,
-                           dftefe::utils::MemorySpace::DEVICE>::SizeTypeVector
-          &        numCellDofs,
-        ValueType *data);
+        const typename BasisManager<
+          ValueType,
+          dftefe::utils::MemorySpace::DEVICE>::SizeTypeVector &numCellDofs,
+        ValueType *                                            data);
 
       static void
       addCellWiseBasisDataToDiagonalData(
         const ValueType *cellWiseBasisData,
         const size_type *cellLocalIdsStartPtr,
-        const utils::MemoryStorage<size_type, dftefe::utils::MemorySpace::DEVICE> &numCellDofs,
-        ValueType *                                         data);
+        const utils::MemoryStorage<size_type,
+                                   dftefe::utils::MemorySpace::DEVICE>
+          &        numCellDofs,
+        ValueType *data);
 
       static void
       reshapeCellWiseData(const ValueType *cellWiseData,

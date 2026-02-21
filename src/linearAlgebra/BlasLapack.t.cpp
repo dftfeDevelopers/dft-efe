@@ -384,101 +384,25 @@ namespace dftefe
                             const size_type *                         lddc,
                             LinAlgOpContext<memorySpace> &            context)
       {
-        size_type cumulativeA = 0;
-        size_type cumulativeB = 0;
-        size_type cumulativeC = 0;
-        constexpr bool isDevice = (memorySpace == dftefe::utils::MemorySpace::DEVICE);
-        if constexpr (isDevice)
-        {
-          const size_type numStreams = context.numBlasStreams();
-          auto* streams  = context.getBlasStreamsVec(); 
-          auto* handles  = context.getDeviceBlasHandlesVec();  
-
-          for (size_type ibatch = 0; ibatch < numMats; ++ibatch)
-          {
-              if (m[ibatch] > 0 && n[ibatch] > 0 && k[ibatch] > 0)
-              {
-                  size_type sid = ibatch % numStreams;
-
-                  blasWrapper::gemm<ValueType1, ValueType2, memorySpace>(
-                      transA[ibatch],
-                      transB[ibatch],
-                      m[ibatch],
-                      n[ibatch],
-                      k[ibatch],
-                      alpha,
-                      dA + cumulativeA,
-                      ldda[ibatch],
-                      dB + cumulativeB,
-                      lddb[ibatch],
-                      beta,
-                      dC + cumulativeC,
-                      lddc[ibatch],
-                      handles[sid]);  
-              }
-
-              cumulativeA += stridea[ibatch];
-              cumulativeB += strideb[ibatch];
-              cumulativeC += stridec[ibatch];
-          }
-
-          // optional global sync (or let caller manage it)
-          for (int s = 0; s < numStreams; ++s)
-              utils::deviceSynchronize(streams[s]);
-        }
-        else
-        {
-        for (size_type ibatch = 0; ibatch < numMats; ++ibatch)
-          {
-            if (*(m + ibatch) > 0 && *(n + ibatch) > 0 && *(k + ibatch) > 0)
-              blasWrapper::gemm<ValueType1, ValueType2, memorySpace>(
-                *(transA + ibatch),
-                *(transB + ibatch),
-                *(m + ibatch),
-                *(n + ibatch),
-                *(k + ibatch),
-                alpha,
-                dA + cumulativeA,
-                *(ldda + ibatch),
-                dB + cumulativeB,
-                *(lddb + ibatch),
-                beta,
-                dC + cumulativeC,
-                *(lddc + ibatch),
-                context);
-
-            cumulativeA += *(stridea + ibatch);
-            cumulativeB += *(strideb + ibatch);
-            cumulativeC += *(stridec + ibatch);
-          }
-        }
-      }
-
-      template <typename ValueType1, typename ValueType2>
-      void
-      gemmStridedVarBatched(
-        const size_type                                      numMats,
-        const char *                                         transA,
-        const char *                                         transB,
-        const size_type *                                    stridea,
-        const size_type *                                    strideb,
-        const size_type *                                    stridec,
-        const size_type *                                    m,
-        const size_type *                                    n,
-        const size_type *                                    k,
-        const scalar_type<ValueType1, ValueType2>            alpha,
-        const ValueType1 *                                   dA,
-        const size_type *                                    ldda,
-        const ValueType2 *                                   dB,
-        const size_type *                                    lddb,
-        const scalar_type<ValueType1, ValueType2>            beta,
-        scalar_type<ValueType1, ValueType2> *                dC,
-        const size_type *                                    lddc,
-        LinAlgOpContext<dftefe::utils::MemorySpace::DEVICE> &context)
-      {
-        utils::throwException(
-          false,
-          "blasLapack::gemmStridedVarBatched() is not implemented for dftefe::utils::MemorySpace::DEVICE .... ");
+        blasWrapper::gemmStridedVarBatched<ValueType1, ValueType2, memorySpace>(
+          numMats,
+          transA,
+          transB,
+          stridea,
+          strideb,
+          stridec,
+          m,
+          n,
+          k,
+          alpha,
+          dA,
+          ldda,
+          dB,
+          lddb,
+          beta,
+          dC,
+          lddc,
+          context);
       }
 
       // ------------ lapack calls -------

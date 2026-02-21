@@ -17,28 +17,27 @@
 /*
  * @author Ian C. Lin., Sambit Das
  */
-#  ifndef dftefeDeviceTypeConfig_h
-#    define dftefeDeviceTypeConfig_h
+#ifndef dftefeDeviceTypeConfig_h
+#define dftefeDeviceTypeConfig_h
 
 #ifdef DFTEFE_WITH_DEVICE
-#    ifdef DFTEFE_WITH_DEVICE_LANG_CUDA
-#      include "DeviceTypeConfig.cu.h"
-#    elif DFTEFE_WITH_DEVICE_LANG_HIP
-#      include "DeviceTypeConfig.hip.h"
-#    elif DFTEFE_WITH_DEVICE_LANG_SYCL
-#      include "DeviceTypeConfig.sycl.h"
-#    endif
+#  ifdef DFTEFE_WITH_DEVICE_LANG_CUDA
+#    include "DeviceTypeConfig.cu.h"
+#  elif DFTEFE_WITH_DEVICE_LANG_HIP
+#    include "DeviceTypeConfig.hip.h"
+#  elif DFTEFE_WITH_DEVICE_LANG_SYCL
+#    include "DeviceTypeConfig.sycl.h"
+#  endif
 #else
 namespace dftefe
 {
   namespace utils
   {
-    typedef int   deviceError_t;
-    typedef int  deviceStream_t;
-    typedef int   deviceEvent_t;
-    static deviceStream_t  defaultStream  = 0;
-  }
-}
-#endif   // DFTEFE_WITH_DEVICE
-#  endif // dftefeDeviceTypeConfig_h
-
+    typedef int           deviceError_t;
+    typedef int           deviceStream_t;
+    typedef int           deviceEvent_t;
+    static deviceStream_t defaultStream = 0;
+  } // namespace utils
+} // namespace dftefe
+#endif // DFTEFE_WITH_DEVICE
+#endif // dftefeDeviceTypeConfig_h

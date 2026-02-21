@@ -30,7 +30,8 @@
                  hipGetErrorString(e));            \
           exit(EXIT_FAILURE);                      \
         }                                          \
-  } while (0)
+    }                                              \
+  while (0)
 
 #define DEVICEBLAS_API_CHECK(expr)                                                    \
   {                                                                                   \

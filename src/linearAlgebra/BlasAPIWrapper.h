@@ -57,6 +57,29 @@ namespace dftefe
              const size_type                           ldc,
              LinAlgOpContext<memorySpace> &            context);
 
+        template <typename ValueType1,
+                  typename ValueType2,
+                  dftefe::utils::MemorySpace memorySpace>
+        void
+        gemmStridedVarBatched(const size_type                           numMats,
+                              const char *                              transA,
+                              const char *                              transB,
+                              const size_type *                         stridea,
+                              const size_type *                         strideb,
+                              const size_type *                         stridec,
+                              const size_type *                         m,
+                              const size_type *                         n,
+                              const size_type *                         k,
+                              const scalar_type<ValueType1, ValueType2> alpha,
+                              const ValueType1 *                        dA,
+                              const size_type *                         ldda,
+                              const ValueType2 *                        dB,
+                              const size_type *                         lddb,
+                              const scalar_type<ValueType1, ValueType2> beta,
+                              scalar_type<ValueType1, ValueType2> *     dC,
+                              const size_type *                         lddc,
+                              LinAlgOpContext<memorySpace> &context);
+
         template <typename ValueType, typename utils::MemorySpace memorySpace>
         real_type<ValueType>
         asum(const size_type               n,
