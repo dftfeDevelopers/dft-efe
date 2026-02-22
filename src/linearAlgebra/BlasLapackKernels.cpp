@@ -92,7 +92,8 @@ namespace dftefe
         const size_type                      size,
         const ValueType1                     alpha,
         const ValueType2 *                   x,
-        scalar_type<ValueType1, ValueType2> *z)
+        scalar_type<ValueType1, ValueType2> *z,
+        LinAlgOpContext<memorySpace> &       context)
       {
         for (size_type i = 0; i < size; ++i)
           {
@@ -111,7 +112,8 @@ namespace dftefe
         const ValueType2 *                   x,
         const ScalarOp &                     opalpha,
         const ScalarOp &                     opx,
-        scalar_type<ValueType1, ValueType2> *z)
+        scalar_type<ValueType1, ValueType2> *z,
+        LinAlgOpContext<memorySpace> &       context)
       {
         if (opalpha == ScalarOp::Identity && opx == ScalarOp::Identity)
           {
@@ -167,7 +169,8 @@ namespace dftefe
         const size_type                      size,
         const ValueType1                     alpha,
         const ValueType2 *                   x,
-        scalar_type<ValueType1, ValueType2> *z)
+        scalar_type<ValueType1, ValueType2> *z,
+        LinAlgOpContext<memorySpace> &       context)
       {
         for (size_type i = 0; i < size; ++i)
           {
@@ -184,7 +187,8 @@ namespace dftefe
         hadamardProduct(const size_type                      size,
                         const ValueType1 *                   x,
                         const ValueType2 *                   y,
-                        scalar_type<ValueType1, ValueType2> *z)
+                        scalar_type<ValueType1, ValueType2> *z,
+                        LinAlgOpContext<memorySpace> &       context)
       {
         for (size_type i = 0; i < size; ++i)
           {
@@ -192,29 +196,6 @@ namespace dftefe
                    ((scalar_type<ValueType1, ValueType2>)y[i]);
           }
       }
-
-      // template <typename ValueType1,
-      //           typename ValueType2,
-      //           dftefe::utils::MemorySpace memorySpace>
-      // void
-      // KernelsTwoValueTypes<ValueType1, ValueType2, memorySpace>::
-      //   blockedHadamardProduct(const size_type                      vecSize,
-      //                   const size_type                      numComponents,
-      //                   const ValueType1 *                   blockedInput,
-      //                   const ValueType2 * singleVectorInput,
-      //                   scalar_type<ValueType1, ValueType2> *blockedOutput)
-      // {
-      //   for (size_type i = 0; i < vecSize; ++i)
-      //     {
-      //       for (size_type j = 0; j < numComponents; ++j)
-      //       {
-      //         blockedOutput[i * numComponents+j] =
-      //           ((scalar_type<ValueType1, ValueType2>)blockedInput[i *
-      //           numComponents+j]) *
-      //           ((scalar_type<ValueType1, ValueType2>)singleVectorInput[i]);
-      //       }
-      //     }
-      // }
 
       template <typename ValueType1,
                 typename ValueType2,
@@ -226,7 +207,8 @@ namespace dftefe
                         const ValueType2 *                   y,
                         const ScalarOp &                     opx,
                         const ScalarOp &                     opy,
-                        scalar_type<ValueType1, ValueType2> *z)
+                        scalar_type<ValueType1, ValueType2> *z,
+                        LinAlgOpContext<memorySpace> &       context)
       {
         if (opx == ScalarOp::Identity && opy == ScalarOp::Identity)
           {
@@ -312,7 +294,8 @@ namespace dftefe
                                         scalarOpB,
                                         (dC + cumulativeC +
                                          icolA * *(n + ibatch) * numrows +
-                                         icolB * numrows));
+                                         icolB * numrows),
+                                        context);
                       }
                   }
                 cumulativeA += *(stridea + ibatch);
@@ -338,7 +321,8 @@ namespace dftefe
                                scalarOpB,
                                (dC + cumulativeC +
                                 irowB * *(m + ibatch) * *(n + ibatch) +
-                                icolA * *(n + ibatch)));
+                                icolA * *(n + ibatch)),
+                               context);
                       }
                   }
                 cumulativeA += *(stridea + ibatch);
@@ -359,7 +343,8 @@ namespace dftefe
                          const size_type                      sizeK,
                          const ValueType1 *                   A,
                          const ValueType2 *                   B,
-                         scalar_type<ValueType1, ValueType2> *Z)
+                         scalar_type<ValueType1, ValueType2> *Z,
+                         LinAlgOpContext<memorySpace> &       context)
       {
         if (layout == Layout::ColMajor)
           {
@@ -385,81 +370,14 @@ namespace dftefe
                 typename ValueType2,
                 dftefe::utils::MemorySpace memorySpace>
       void
-      KernelsTwoValueTypes<ValueType1, ValueType2, memorySpace>::
-        khatriRaoProductStridedVarBatched(
-          const Layout                         layout,
-          const size_type                      numMats,
-          const size_type *                    stridea,
-          const size_type *                    strideb,
-          const size_type *                    stridec,
-          const size_type *                    m,
-          const size_type *                    n,
-          const size_type *                    k,
-          const ValueType1 *                   dA,
-          const ValueType2 *                   dB,
-          scalar_type<ValueType1, ValueType2> *dC,
-          LinAlgOpContext<memorySpace> &       context)
-      {
-        size_type cumulativeA = 0, cumulativeB = 0, cumulativeC = 0;
-        for (size_type ibatch = 0; ibatch < numMats; ++ibatch)
-          {
-            khatriRaoProduct(layout,
-                             *(m + ibatch),
-                             *(n + ibatch),
-                             *(k + ibatch),
-                             (dA + cumulativeA),
-                             (dB + cumulativeB),
-                             (dC + cumulativeC));
-            cumulativeA += *(stridea + ibatch);
-            cumulativeB += *(strideb + ibatch);
-            cumulativeC += *(stridec + ibatch);
-          }
-      }
-
-      template <typename ValueType1,
-                typename ValueType2,
-                dftefe::utils::MemorySpace memorySpace>
-      void
-      KernelsTwoValueTypes<ValueType1, ValueType2, memorySpace>::
-        transposedKhatriRaoProduct(const Layout                         layout,
-                                   const size_type                      sizeI,
-                                   const size_type                      sizeJ,
-                                   const size_type                      sizeK,
-                                   const ValueType1 *                   A,
-                                   const ValueType2 *                   B,
-                                   scalar_type<ValueType1, ValueType2> *Z)
-      {
-        if (layout == Layout::ColMajor)
-          {
-            for (size_type i = 0; i < sizeI; ++i)
-              for (size_type j = 0; j < sizeJ; ++j)
-                for (size_type k = 0; k < sizeK; ++k)
-                  Z[i * sizeJ * sizeK + j * sizeK + k] =
-                    ((scalar_type<ValueType1, ValueType2>)A[i * sizeK + k]) *
-                    ((scalar_type<ValueType1, ValueType2>)B[j * sizeK + k]);
-          }
-        else if (layout == Layout::RowMajor)
-          {
-            for (size_type k = 0; k < sizeK; ++k)
-              for (size_type i = 0; i < sizeI; ++i)
-                for (size_type j = 0; j < sizeJ; ++j)
-                  Z[k * sizeI * sizeJ + j * sizeJ + i] =
-                    ((scalar_type<ValueType1, ValueType2>)A[k * sizeI + i]) *
-                    ((scalar_type<ValueType1, ValueType2>)B[k * sizeJ + j]);
-          }
-      }
-
-      template <typename ValueType1,
-                typename ValueType2,
-                dftefe::utils::MemorySpace memorySpace>
-      void
       KernelsTwoValueTypes<ValueType1, ValueType2, memorySpace>::axpby(
         const size_type                           size,
         const scalar_type<ValueType1, ValueType2> alpha,
         const ValueType1 *                        x,
         const scalar_type<ValueType1, ValueType2> beta,
         const ValueType2 *                        y,
-        scalar_type<ValueType1, ValueType2> *     z)
+        scalar_type<ValueType1, ValueType2> *     z,
+        LinAlgOpContext<memorySpace> &       context)
       {
         for (size_type i = 0; i < size; ++i)
           {
@@ -483,7 +401,8 @@ namespace dftefe
         const scalar_type<ValueType1, ValueType2>  beta1,
         const scalar_type<ValueType1, ValueType2> *beta,
         const ValueType2 *                         y,
-        scalar_type<ValueType1, ValueType2> *      z)
+        scalar_type<ValueType1, ValueType2> *      z,
+        LinAlgOpContext<memorySpace> &       context)
       {
         for (size_type i = 0; i < size; ++i)
           {
@@ -593,9 +512,10 @@ namespace dftefe
       template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
       std::vector<double>
       KernelsOneValueType<ValueType, memorySpace>::amaxsMultiVector(
-        const size_type  vecSize,
-        const size_type  numVec,
-        const ValueType *multiVecData)
+                        const size_type                     vecSize,
+                       const size_type                     numVec,
+                       ValueType const *             multiVecData,
+                       LinAlgOpContext<memorySpace> &context)
       {
         std::vector<double> amaxs(numVec, 0);
 

@@ -49,7 +49,7 @@ namespace dftefe
 
 
         return KernelsOneValueType<ValueType, memorySpace>::amaxsMultiVector(
-          vecSize, numVec, multiVecData);
+          vecSize, numVec, multiVecData, context);
       }
 
       template <typename ValueType1,
@@ -82,7 +82,7 @@ namespace dftefe
                   LinAlgOpContext<memorySpace> &       context)
       {
         KernelsTwoValueTypes<ValueType1, ValueType2, memorySpace>::reciprocalX(
-          n, alpha, x, y);
+          n, alpha, x, y, context);
       }
 
       template <typename ValueType1,
@@ -98,7 +98,8 @@ namespace dftefe
         KernelsTwoValueTypes<ValueType1, ValueType2, memorySpace>::ascale(n,
                                                                           alpha,
                                                                           x,
-                                                                          z);
+                                                                          z,
+                                                                          context);
       }
 
       template <typename ValueType1,
@@ -112,27 +113,8 @@ namespace dftefe
                       LinAlgOpContext<memorySpace> &       context)
       {
         KernelsTwoValueTypes<ValueType1, ValueType2, memorySpace>::
-          hadamardProduct(n, x, y, z);
+          hadamardProduct(n, x, y, z, context);
       }
-
-      // template <typename ValueType1,
-      //           typename ValueType2,
-      //           dftefe::utils::MemorySpace memorySpace>
-      // void
-      //   blockedHadamardProduct(const size_type                      vecSize,
-      //                   const size_type                      numComponents,
-      //                   const ValueType1 *                   blockedInput,
-      //                   const ValueType2 * singleVectorInput,
-      //                   scalar_type<ValueType1, ValueType2> *blockedOutput,
-      //                   LinAlgOpContext<memorySpace> &       context)
-      // {
-      //   KernelsTwoValueTypes<ValueType1, ValueType2, memorySpace>::
-      //   blockedHadamardProduct(vecSize,
-      //                   numComponents,
-      //                   blockedInput,
-      //                   singleVectorInput,
-      //                   blockedOutput);
-      // }
 
       template <typename ValueType1,
                 typename ValueType2,
@@ -147,7 +129,7 @@ namespace dftefe
                       LinAlgOpContext<memorySpace> &       context)
       {
         KernelsTwoValueTypes<ValueType1, ValueType2, memorySpace>::
-          hadamardProduct(n, x, y, opx, opy, z);
+          hadamardProduct(n, x, y, opx, opy, z, context);
       }
 
       template <typename ValueType1,
@@ -200,7 +182,7 @@ namespace dftefe
                        LinAlgOpContext<memorySpace> &       context)
       {
         KernelsTwoValueTypes<ValueType1, ValueType2, memorySpace>::
-          khatriRaoProduct(layout, sizeI, sizeJ, sizeK, A, B, Z);
+          khatriRaoProduct(layout, sizeI, sizeJ, sizeK, A, B, Z, context);
       }
 
       template <typename ValueType1,
@@ -217,7 +199,7 @@ namespace dftefe
                                  LinAlgOpContext<memorySpace> &       context)
       {
         KernelsTwoValueTypes<ValueType1, ValueType2, memorySpace>::
-          transposedKhatriRaoProduct(layout, sizeI, sizeJ, sizeK, A, B, Z);
+          transposedKhatriRaoProduct(layout, sizeI, sizeJ, sizeK, A, B, Z, context);
       }
 
 
@@ -234,7 +216,7 @@ namespace dftefe
             LinAlgOpContext<memorySpace> &            context)
       {
         KernelsTwoValueTypes<ValueType1, ValueType2, memorySpace>::axpby(
-          n, alpha, x, beta, y, z);
+          n, alpha, x, beta, y, z, context);
       }
 
       template <typename ValueType1,
@@ -253,7 +235,7 @@ namespace dftefe
                    LinAlgOpContext<memorySpace> &             context)
       {
         KernelsTwoValueTypes<ValueType1, ValueType2, memorySpace>::axpbyBlocked(
-          n, blockSize, alpha1, alpha, x, beta1, beta, y, z);
+          n, blockSize, alpha1, alpha, x, beta1, beta, y, z, context);
       }
 
 

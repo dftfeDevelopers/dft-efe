@@ -66,8 +66,8 @@ namespace dftefe
       template <typename ValueType,
                 typename dftefe::utils::MemorySpace memorySpace>
       std::vector<double>
-      amaxsMultiVector(size_type                     vecSize,
-                       size_type                     numVec,
+      amaxsMultiVector(const size_type                     vecSize,
+                       const size_type                     numVec,
                        ValueType const *             multiVecData,
                        LinAlgOpContext<memorySpace> &context);
 
@@ -267,43 +267,6 @@ namespace dftefe
                        const ValueType2 *                   B,
                        scalar_type<ValueType1, ValueType2> *Z,
                        LinAlgOpContext<memorySpace> &       context);
-
-
-      /**
-       * @brief Template for performing
-       * In column major storage format:
-       * \f$ {\bf Z}={\bf A} \odot {\bf B} = a_1 \otimes b_1
-       * \quad a_2 \otimes b_2 \cdots \a_K \otimes b_K \f$, where \f${\bf A}\f$
-       * is  \f$K \times I\f$ matrix, \f${\bf B}\f$ is \f$K \times J\f$, and \f$
-       * {\bf Z} \f$ is \f$ K\times (IJ) \f$ matrix. \f$ a_1 \cdots \a_K \f$
-       * are the rows of \f${\bf A}\f$
-       * In row major storage format:
-       * \f$ {\bf Z}^T={\bf A}^T \odot {\bf B}^T = a_1 \otimes b_1
-       * \quad a_2 \otimes b_2 \cdots \a_K \otimes b_K \f$, where \f${\bf A}\f$
-       * is  \f$I \times K\f$ matrix, \f${\bf B}\f$ is \f$J \times K\f$, and \f$
-       * {\bf Z} \f$ is \f$ (IJ)\times K \f$ matrix. \f$ a_1 \cdots \a_K \f$
-       * are the columns of \f${\bf A}\f$
-       * @param[in] layout Layout::ColMajor or Layout::RowMajor
-       * @param[in] size size I
-       * @param[in] size size J
-       * @param[in] size size K
-       * @param[in] X array
-       * @param[in] Y array
-       * @param[out] Z array
-       */
-      template <typename ValueType1,
-                typename ValueType2,
-                typename dftefe::utils::MemorySpace memorySpace>
-      void
-      transposedKhatriRaoProduct(const Layout                         layout,
-                                 size_type                            sizeI,
-                                 size_type                            sizeJ,
-                                 size_type                            sizeK,
-                                 const ValueType1 *                   A,
-                                 const ValueType2 *                   B,
-                                 scalar_type<ValueType1, ValueType2> *Z,
-                                 LinAlgOpContext<memorySpace> &       context);
-
 
       /**
        * @brief Template for performing \f$ z = \alpha x + \beta y \f$

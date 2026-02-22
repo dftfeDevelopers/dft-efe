@@ -47,8 +47,43 @@ if (NOT TARGET dft-efe-linalg)
         ProcessGrid.cpp
         ScalapackWrapper.cpp
         ElpaScalapackOperations.cpp
-        ElpaScalapackManager.cpp
-        BlasAPIWrapperDevice.cpp)
+        ElpaScalapackManager.cpp)
+
+    IF (ENABLE_GPU)
+    IF ("${GPU_LANG}" STREQUAL "cuda")
+    SET(DFT-EFE-LINALG-DEVICE-SOURCES
+        BlasAPIWrapperDevice.cpp
+        BlasLapackKernelsDevice.cpp
+        )
+    ELSEIF ("${GPU_LANG}" STREQUAL "hip")
+    SET(DFT-EFE-LINALG-DEVICE-SOURCES
+        BlasAPIWrapperDevice.cpp
+        BlasLapackKernelsDevice.cpp
+        )
+    ELSEIF ("${GPU_LANG}" STREQUAL "sycl")
+    SET(DFT-EFE-LINALG-DEVICE-SOURCES
+        BlasAPIWrapperDevice.cpp
+        BlasLapackKernelsDevice.cpp
+        )
+    ENDIF()
+    ENDIF()
+
+    IF (ENABLE_GPU)
+        IF ("${GPU_LANG}" STREQUAL "cuda")
+        set_source_files_properties(${DFT-EFE-LINALG-DEVICE-SOURCES} PROPERTIES LANGUAGE CUDA)
+        ELSEIF ("${GPU_LANG}" STREQUAL "hip")
+        set_source_files_properties(${DFT-EFE-LINALG-DEVICE-SOURCES} PROPERTIES LANGUAGE HIP)
+        IF ("${GPU_VENDOR}" STREQUAL "amd")
+            ADD_DEFINITIONS(-D__HIP_PLATFORM_AMD__)
+        ELSEIF ("${GPU_VENDOR}" STREQUAL "nvidia")
+            ADD_DEFINITIONS(-D__HIP_PLATFORM_NVIDIA__)
+        ENDIF()
+        ELSEIF ("${GPU_LANG}" STREQUAL "sycl")
+        set_source_files_properties(${DFT-EFE-LINALG-DEVICE-SOURCES} PROPERTIES COMPILE_FLAGS ${CMAKE_SYCL_FLAGS})
+        ENDIF()
+
+    LIST(APPEND DFT-EFE-LINALG-SOURCES ${DFT-EFE-LINALG-DEVICE-SOURCES})
+    ENDIF()
 
     add_library(dft-efe-linalg SHARED ${DFT-EFE-LINALG-SOURCES})
 

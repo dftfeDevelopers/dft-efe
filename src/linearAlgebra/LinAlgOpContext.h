@@ -70,6 +70,12 @@ namespace dftefe
       static utils::deviceBlasStatus_t
       setBlasStream(utils::deviceStream_t &streamId);
 
+      static utils::deviceStream_t &
+      getBlasStream()
+      {
+        return d_stream;
+      }
+
       static utils::deviceBlasHandle_t &
       getDeviceBlasHandle()
       {
