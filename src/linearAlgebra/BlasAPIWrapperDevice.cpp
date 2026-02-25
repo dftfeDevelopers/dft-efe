@@ -593,7 +593,7 @@ namespace dftefe
         {
           bool uniform = true;
           if (numMats > 1)
-          {
+            {
               const auto m0      = m[0];
               const auto n0      = n[0];
               const auto k0      = k[0];
@@ -607,26 +607,20 @@ namespace dftefe
               const auto transB0 = transB[0];
 
               for (size_type i = 1; i < numMats; ++i)
-              {
-                  if (m[i]      != m0  ||
-                      n[i]      != n0  ||
-                      k[i]      != k0  ||
-                      stridea[i]!= sa0 ||
-                      strideb[i]!= sb0 ||
-                      stridec[i]!= sc0 ||
-                      ldda[i]   != lda0||
-                      lddb[i]   != ldb0||
-                      lddc[i]   != ldc0||
-                      transA[i] != transA0 ||
+                {
+                  if (m[i] != m0 || n[i] != n0 || k[i] != k0 ||
+                      stridea[i] != sa0 || strideb[i] != sb0 ||
+                      stridec[i] != sc0 || ldda[i] != lda0 || lddb[i] != ldb0 ||
+                      lddc[i] != ldc0 || transA[i] != transA0 ||
                       transB[i] != transB0)
-                  {
+                    {
                       uniform = false;
                       break;
-                  }
-              }
-          }
+                    }
+                }
+            }
           if (uniform)
-          {
+            {
               utils::deviceBlasOperation_t transa, transb;
               if (transA[0] == 'N')
                 transa = utils::DEVICEBLAS_OP_N;
@@ -644,111 +638,114 @@ namespace dftefe
                 {
                   // Assert Statement
                 }
-          
-        #if defined(DFTEFE_WITH_DEVICE_LANG_CUDA) || defined(DFTEFE_WITH_DEVICE_LANG_HIP)
-              utils::deviceBlasStatus_t status =
-                DFTEFE_DEVICE_BLAS_INT(D, gemmStridedBatched)(context.getDeviceBlasHandlesVec()[0],
-                                                              transa,
-                                                              transb,
-                                                              m[0],
-                                                              n[0],
-                                                              k[0],
-                                                              &alpha,
-                                                              dA,
-                                                              ldda[0],
-                                                              stridea[0],
-                                                              dB,
-                                                              lddb[0],
-                                                              strideb[0],
-                                                              &beta,
-                                                              dC,
-                                                              lddc[0],
-                                                              stridec[0],
-                                                              numMats);
+
+#  if defined(DFTEFE_WITH_DEVICE_LANG_CUDA) || \
+    defined(DFTEFE_WITH_DEVICE_LANG_HIP)
+              utils::deviceBlasStatus_t status = DFTEFE_DEVICE_BLAS_INT(
+                D, gemmStridedBatched)(context.getDeviceBlasHandlesVec()[0],
+                                       transa,
+                                       transb,
+                                       m[0],
+                                       n[0],
+                                       k[0],
+                                       &alpha,
+                                       dA,
+                                       ldda[0],
+                                       stridea[0],
+                                       dB,
+                                       lddb[0],
+                                       strideb[0],
+                                       &beta,
+                                       dC,
+                                       lddc[0],
+                                       stridec[0],
+                                       numMats);
               DEVICEBLAS_API_CHECK(status);
-        #elif defined(DFTEFE_WITH_DEVICE_LANG_SYCL)
-              DEVICEBLAS_API_CHECK(
-                DFTEFE_DEVICE_BLAS_INT(D, gemm_batch)(context.getDeviceBlasHandlesVec()[0],
-                                                    transa,
-                                                    transb,
-                                                    m[0],
-                                                    n[0],
-                                                    k[0],
-                                                    &alpha,
-                                                    dA,
-                                                    ldda[0],
-                                                    stridea[0],
-                                                    dB,
-                                                    lddb[0],
-                                                    strideb[0],
-                                                    &beta,
-                                                    dC,
-                                                    lddc[0],
-                                                    stridec[0],
-                                                    numMats));
-        #endif
-          }
+#  elif defined(DFTEFE_WITH_DEVICE_LANG_SYCL)
+              DEVICEBLAS_API_CHECK(DFTEFE_DEVICE_BLAS_INT(D, gemm_batch)(
+                context.getDeviceBlasHandlesVec()[0],
+                transa,
+                transb,
+                m[0],
+                n[0],
+                k[0],
+                &alpha,
+                dA,
+                ldda[0],
+                stridea[0],
+                dB,
+                lddb[0],
+                strideb[0],
+                &beta,
+                dC,
+                lddc[0],
+                stridec[0],
+                numMats));
+#  endif
+            }
           else
-          {
-          size_type       cumulativeA = 0;
-          size_type       cumulativeB = 0;
-          size_type       cumulativeC = 0;
-          const size_type numStreams  = context.numBlasStreams();
-          auto *          streams     = context.getBlasStreamsVec();
-          auto *          handles     = context.getDeviceBlasHandlesVec();
-
-          for (size_type ibatch = 0; ibatch < numMats; ++ibatch)
             {
-              if (m[ibatch] > 0 && n[ibatch] > 0 && k[ibatch] > 0)
-                {
-                  size_type sid = ibatch % numStreams;
+              size_type       cumulativeA = 0;
+              size_type       cumulativeB = 0;
+              size_type       cumulativeC = 0;
+              const size_type numStreams  = context.numBlasStreams();
+              auto *          streams     = context.getBlasStreamsVec();
+              auto *          handles     = context.getDeviceBlasHandlesVec();
 
-                  utils::deviceBlasOperation_t transa, transb;
-                  if (transA[ibatch] == 'N')
-                    transa = utils::DEVICEBLAS_OP_N;
-                  else if (transA[ibatch] == 'T')
-                    transa = utils::DEVICEBLAS_OP_T;
-                  else if (transA[ibatch] == 'C')
-                    transa = utils::DEVICEBLAS_OP_C;
-                  else
+              for (size_type ibatch = 0; ibatch < numMats; ++ibatch)
+                {
+                  if (m[ibatch] > 0 && n[ibatch] > 0 && k[ibatch] > 0)
                     {
-                      throw std::invalid_argument("Incorrect transA in gemm ");
+                      size_type sid = ibatch % numStreams;
+
+                      utils::deviceBlasOperation_t transa, transb;
+                      if (transA[ibatch] == 'N')
+                        transa = utils::DEVICEBLAS_OP_N;
+                      else if (transA[ibatch] == 'T')
+                        transa = utils::DEVICEBLAS_OP_T;
+                      else if (transA[ibatch] == 'C')
+                        transa = utils::DEVICEBLAS_OP_C;
+                      else
+                        {
+                          throw std::invalid_argument(
+                            "Incorrect transA in gemm ");
+                        }
+                      if (transB[ibatch] == 'N')
+                        transb = utils::DEVICEBLAS_OP_N;
+                      else if (transB[ibatch] == 'T')
+                        transb = utils::DEVICEBLAS_OP_T;
+                      else if (transB[ibatch] == 'C')
+                        transb = utils::DEVICEBLAS_OP_C;
+                      else
+                        {
+                          throw std::invalid_argument(
+                            "Incorrect transB in gemm ");
+                        }
+                      DEVICEBLAS_API_CHECK(
+                        DFTEFE_DEVICE_BLAS_INT(D, gemm)(handles[sid],
+                                                        transa,
+                                                        transb,
+                                                        m[ibatch],
+                                                        n[ibatch],
+                                                        k[ibatch],
+                                                        &alpha,
+                                                        dA + cumulativeA,
+                                                        ldda[ibatch],
+                                                        dB + cumulativeB,
+                                                        lddb[ibatch],
+                                                        &beta,
+                                                        dC + cumulativeC,
+                                                        lddc[ibatch]));
                     }
-                  if (transB[ibatch] == 'N')
-                    transb = utils::DEVICEBLAS_OP_N;
-                  else if (transB[ibatch] == 'T')
-                    transb = utils::DEVICEBLAS_OP_T;
-                  else if (transB[ibatch] == 'C')
-                    transb = utils::DEVICEBLAS_OP_C;
-                  else
-                    {
-                      throw std::invalid_argument("Incorrect transB in gemm ");
-                    }
-                  DEVICEBLAS_API_CHECK(
-                    DFTEFE_DEVICE_BLAS_INT(D, gemm)(handles[sid],
-                                                    transa,
-                                                    transb,
-                                                    m[ibatch],
-                                                    n[ibatch],
-                                                    k[ibatch],
-                                                    &alpha,
-                                                    dA + cumulativeA,
-                                                    ldda[ibatch],
-                                                    dB + cumulativeB,
-                                                    lddb[ibatch],
-                                                    &beta,
-                                                    dC + cumulativeC,
-                                                    lddc[ibatch]));
+
+                  cumulativeA += stridea[ibatch];
+                  cumulativeB += strideb[ibatch];
+                  cumulativeC += stridec[ibatch];
                 }
 
-              cumulativeA += stridea[ibatch];
-              cumulativeB += strideb[ibatch];
-              cumulativeC += stridec[ibatch];
+              for (int s = 0; s < numStreams; ++s)
+                utils::deviceStreamSynchronize(streams[s]);
             }
-
-          for (int s = 0; s < numStreams; ++s)
-            utils::deviceStreamSynchronize(streams[s]);
-          }
         }
 
         template <>
@@ -777,7 +774,7 @@ namespace dftefe
         {
           bool uniform = true;
           if (numMats > 1)
-          {
+            {
               const auto m0      = m[0];
               const auto n0      = n[0];
               const auto k0      = k[0];
@@ -791,33 +788,27 @@ namespace dftefe
               const auto transB0 = transB[0];
 
               for (size_type i = 1; i < numMats; ++i)
-              {
-                  if (m[i]      != m0  ||
-                      n[i]      != n0  ||
-                      k[i]      != k0  ||
-                      stridea[i]!= sa0 ||
-                      strideb[i]!= sb0 ||
-                      stridec[i]!= sc0 ||
-                      ldda[i]   != lda0||
-                      lddb[i]   != ldb0||
-                      lddc[i]   != ldc0||
-                      transA[i] != transA0 ||
+                {
+                  if (m[i] != m0 || n[i] != n0 || k[i] != k0 ||
+                      stridea[i] != sa0 || strideb[i] != sb0 ||
+                      stridec[i] != sc0 || ldda[i] != lda0 || lddb[i] != ldb0 ||
+                      lddc[i] != ldc0 || transA[i] != transA0 ||
                       transB[i] != transB0)
-                  {
+                    {
                       uniform = false;
                       break;
-                  }
-              }
-          }
+                    }
+                }
+            }
           if (uniform)
-          {
+            {
               utils::deviceBlasOperation_t transa, transb;
               if (transA[0] == 'N')
                 transa = utils::DEVICEBLAS_OP_N;
               else if (transA[0] == 'T')
                 transa = utils::DEVICEBLAS_OP_T;
               else if (transA[0] == 'C')
-                transa = utils::DEVICEBLAS_OP_C;              
+                transa = utils::DEVICEBLAS_OP_C;
               else
                 {
                   // Assert Statement
@@ -832,111 +823,114 @@ namespace dftefe
                 {
                   // Assert Statement
                 }
-          
-        #if defined(DFTEFE_WITH_DEVICE_LANG_CUDA) || defined(DFTEFE_WITH_DEVICE_LANG_HIP)
-              utils::deviceBlasStatus_t status =
-                DFTEFE_DEVICE_BLAS_INT(Z, gemmStridedBatched)(context.getDeviceBlasHandlesVec()[0],
-                                                              transa,
-                                                              transb,
-                                                              m[0],
-                                                              n[0],
-                                                              k[0],
-                                                              makeDataTypeDeviceBlasCompatible(&alpha),
-                                                              makeDataTypeDeviceBlasCompatible(dA),
-                                                              ldda[0],
-                                                              stridea[0],
-                                                              makeDataTypeDeviceBlasCompatible(dB),
-                                                              lddb[0],
-                                                              strideb[0],
-                                                              makeDataTypeDeviceBlasCompatible(&beta),
-                                                              makeDataTypeDeviceBlasCompatible(dC),
-                                                              lddc[0],
-                                                              stridec[0],
-                                                              numMats);
+
+#  if defined(DFTEFE_WITH_DEVICE_LANG_CUDA) || \
+    defined(DFTEFE_WITH_DEVICE_LANG_HIP)
+              utils::deviceBlasStatus_t status = DFTEFE_DEVICE_BLAS_INT(
+                Z, gemmStridedBatched)(context.getDeviceBlasHandlesVec()[0],
+                                       transa,
+                                       transb,
+                                       m[0],
+                                       n[0],
+                                       k[0],
+                                       makeDataTypeDeviceBlasCompatible(&alpha),
+                                       makeDataTypeDeviceBlasCompatible(dA),
+                                       ldda[0],
+                                       stridea[0],
+                                       makeDataTypeDeviceBlasCompatible(dB),
+                                       lddb[0],
+                                       strideb[0],
+                                       makeDataTypeDeviceBlasCompatible(&beta),
+                                       makeDataTypeDeviceBlasCompatible(dC),
+                                       lddc[0],
+                                       stridec[0],
+                                       numMats);
               DEVICEBLAS_API_CHECK(status);
-        #elif defined(DFTEFE_WITH_DEVICE_LANG_SYCL)
-              DEVICEBLAS_API_CHECK(
-                DFTEFE_DEVICE_BLAS_INT(Z, gemm_batch)(context.getDeviceBlasHandlesVec()[0],
-                                                    transa,
-                                                    transb,
-                                                    m[0],
-                                                    n[0],
-                                                    k[0],
-                                                    makeDataTypeDeviceBlasCompatible(&alpha),
-                                                    makeDataTypeDeviceBlasCompatible(dA),
-                                                    ldda[0],
-                                                    stridea[0],
-                                                    makeDataTypeDeviceBlasCompatible(dB),
-                                                    lddb[0],
-                                                    strideb[0],
-                                                    makeDataTypeDeviceBlasCompatible(&beta),
-                                                    makeDataTypeDeviceBlasCompatible(dC),
-                                                    lddc[0],
-                                                    stridec[0],
-                                                    numMats));
-        #endif
-          }
+#  elif defined(DFTEFE_WITH_DEVICE_LANG_SYCL)
+              DEVICEBLAS_API_CHECK(DFTEFE_DEVICE_BLAS_INT(Z, gemm_batch)(
+                context.getDeviceBlasHandlesVec()[0],
+                transa,
+                transb,
+                m[0],
+                n[0],
+                k[0],
+                makeDataTypeDeviceBlasCompatible(&alpha),
+                makeDataTypeDeviceBlasCompatible(dA),
+                ldda[0],
+                stridea[0],
+                makeDataTypeDeviceBlasCompatible(dB),
+                lddb[0],
+                strideb[0],
+                makeDataTypeDeviceBlasCompatible(&beta),
+                makeDataTypeDeviceBlasCompatible(dC),
+                lddc[0],
+                stridec[0],
+                numMats));
+#  endif
+            }
           else
-          {
-          size_type       cumulativeA = 0;
-          size_type       cumulativeB = 0;
-          size_type       cumulativeC = 0;
-          const size_type numStreams  = context.numBlasStreams();
-          auto *          streams     = context.getBlasStreamsVec();
-          auto *          handles     = context.getDeviceBlasHandlesVec();
-
-          for (size_type ibatch = 0; ibatch < numMats; ++ibatch)
             {
-              if (m[ibatch] > 0 && n[ibatch] > 0 && k[ibatch] > 0)
-                {
-                  size_type sid = ibatch % numStreams;
+              size_type       cumulativeA = 0;
+              size_type       cumulativeB = 0;
+              size_type       cumulativeC = 0;
+              const size_type numStreams  = context.numBlasStreams();
+              auto *          streams     = context.getBlasStreamsVec();
+              auto *          handles     = context.getDeviceBlasHandlesVec();
 
-                  utils::deviceBlasOperation_t transa, transb;
-                  if (transA[ibatch] == 'N')
-                    transa = utils::DEVICEBLAS_OP_N;
-                  else if (transA[ibatch] == 'T')
-                    transa = utils::DEVICEBLAS_OP_T;
-                  else if (transA[ibatch] == 'C')
-                    transa = utils::DEVICEBLAS_OP_C;
-                  else
+              for (size_type ibatch = 0; ibatch < numMats; ++ibatch)
+                {
+                  if (m[ibatch] > 0 && n[ibatch] > 0 && k[ibatch] > 0)
                     {
-                      throw std::invalid_argument("Incorrect transA in gemm ");
+                      size_type sid = ibatch % numStreams;
+
+                      utils::deviceBlasOperation_t transa, transb;
+                      if (transA[ibatch] == 'N')
+                        transa = utils::DEVICEBLAS_OP_N;
+                      else if (transA[ibatch] == 'T')
+                        transa = utils::DEVICEBLAS_OP_T;
+                      else if (transA[ibatch] == 'C')
+                        transa = utils::DEVICEBLAS_OP_C;
+                      else
+                        {
+                          throw std::invalid_argument(
+                            "Incorrect transA in gemm ");
+                        }
+                      if (transB[ibatch] == 'N')
+                        transb = utils::DEVICEBLAS_OP_N;
+                      else if (transB[ibatch] == 'T')
+                        transb = utils::DEVICEBLAS_OP_T;
+                      else if (transB[ibatch] == 'C')
+                        transb = utils::DEVICEBLAS_OP_C;
+                      else
+                        {
+                          throw std::invalid_argument(
+                            "Incorrect transB in gemm ");
+                        }
+                      DEVICEBLAS_API_CHECK(DFTEFE_DEVICE_BLAS_INT(Z, gemm)(
+                        handles[sid],
+                        transa,
+                        transb,
+                        m[ibatch],
+                        n[ibatch],
+                        k[ibatch],
+                        makeDataTypeDeviceBlasCompatible(&alpha),
+                        makeDataTypeDeviceBlasCompatible(dA + cumulativeA),
+                        ldda[ibatch],
+                        makeDataTypeDeviceBlasCompatible(dB + cumulativeB),
+                        lddb[ibatch],
+                        makeDataTypeDeviceBlasCompatible(&beta),
+                        makeDataTypeDeviceBlasCompatible(dC + cumulativeC),
+                        lddc[ibatch]));
                     }
-                  if (transB[ibatch] == 'N')
-                    transb = utils::DEVICEBLAS_OP_N;
-                  else if (transB[ibatch] == 'T')
-                    transb = utils::DEVICEBLAS_OP_T;
-                  else if (transB[ibatch] == 'C')
-                    transb = utils::DEVICEBLAS_OP_C;
-                  else
-                    {
-                      throw std::invalid_argument("Incorrect transB in gemm ");
-                    }
-                  DEVICEBLAS_API_CHECK(DFTEFE_DEVICE_BLAS_INT(Z, gemm)(
-                    handles[sid],
-                    transa,
-                    transb,
-                    m[ibatch],
-                    n[ibatch],
-                    k[ibatch],
-                    makeDataTypeDeviceBlasCompatible(&alpha),
-                    makeDataTypeDeviceBlasCompatible(dA + cumulativeA),
-                    ldda[ibatch],
-                    makeDataTypeDeviceBlasCompatible(dB + cumulativeB),
-                    lddb[ibatch],
-                    makeDataTypeDeviceBlasCompatible(&beta),
-                    makeDataTypeDeviceBlasCompatible(dC + cumulativeC),
-                    lddc[ibatch]));
+
+                  cumulativeA += stridea[ibatch];
+                  cumulativeB += strideb[ibatch];
+                  cumulativeC += stridec[ibatch];
                 }
 
-              cumulativeA += stridea[ibatch];
-              cumulativeB += strideb[ibatch];
-              cumulativeC += stridec[ibatch];
+              for (int s = 0; s < numStreams; ++s)
+                utils::deviceStreamSynchronize(streams[s]);
             }
-
-          for (int s = 0; s < numStreams; ++s)
-            utils::deviceStreamSynchronize(streams[s]);
-          }
         }
 
 

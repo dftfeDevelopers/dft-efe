@@ -56,7 +56,7 @@ namespace dftefe
           &columnConstraintsAccumulated,
         const utils::MemoryStorage<double, memorySpace>
           &columnConstraintsValues,
-        const utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>
+        const utils::MemoryStorage<double, memorySpace>
           &                                          constraintsInhomogenities,
         linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext);
 
@@ -82,7 +82,8 @@ namespace dftefe
           &             vectorData,
         const size_type blockSize,
         const utils::MemoryStorage<size_type, memorySpace>
-          &rowConstraintsIdsLocal);
+          &                                          rowConstraintsIdsLocal,
+        linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext);
 
 
       static void
@@ -91,8 +92,9 @@ namespace dftefe
           &             vectorData,
         const size_type blockSize,
         const utils::MemoryStorage<size_type, memorySpace>
-          &                       rowConstraintsIdsLocal,
-        const ValueTypeBasisCoeff alpha);
+          &                                          rowConstraintsIdsLocal,
+        const ValueTypeBasisCoeff                    alpha,
+        linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext);
     };
 
 
@@ -122,8 +124,7 @@ namespace dftefe
           &columnConstraintsAccumulated,
         const utils::MemoryStorage<double, dftefe::utils::MemorySpace::DEVICE>
           &columnConstraintsValues,
-        const utils::MemoryStorage<ValueTypeBasisCoeff,
-                                   dftefe::utils::MemorySpace::DEVICE>
+        const utils::MemoryStorage<double, dftefe::utils::MemorySpace::DEVICE>
           &constraintsInhomogenities,
         linearAlgebra::LinAlgOpContext<dftefe::utils::MemorySpace::DEVICE>
           &linAlgOpContext);
@@ -159,7 +160,22 @@ namespace dftefe
         const size_type blockSize,
         const utils::MemoryStorage<size_type,
                                    dftefe::utils::MemorySpace::DEVICE>
-          &rowConstraintsIdsLocal);
+          &rowConstraintsIdsLocal,
+        linearAlgebra::LinAlgOpContext<dftefe::utils::MemorySpace::DEVICE>
+          &linAlgOpContext);
+
+      static void
+      constraintsSetConstrainedNodes(
+        linearAlgebra::MultiVector<ValueTypeBasisCoeff,
+                                   dftefe::utils::MemorySpace::DEVICE>
+          &             vectorData,
+        const size_type blockSize,
+        const utils::MemoryStorage<size_type,
+                                   dftefe::utils::MemorySpace::DEVICE>
+          &                       rowConstraintsIdsLocal,
+        const ValueTypeBasisCoeff alpha,
+        linearAlgebra::LinAlgOpContext<dftefe::utils::MemorySpace::DEVICE>
+          &linAlgOpContext);
     };
 #endif
 

@@ -48,7 +48,7 @@ namespace dftefe
           &columnConstraintsAccumulated,
         const utils::MemoryStorage<double, memorySpace>
           &columnConstraintsValues,
-        const utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>
+        const utils::MemoryStorage<double, memorySpace>
           &                                          constraintsInhomogenities,
         linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext)
     {
@@ -178,7 +178,8 @@ namespace dftefe
           &             vectorData,
         const size_type blockSize,
         const utils::MemoryStorage<size_type, memorySpace>
-          &rowConstraintsIdsLocal)
+          &                                          rowConstraintsIdsLocal,
+        linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext)
     {
       for (unsigned int i = 0; i < rowConstraintsIdsLocal.size(); ++i)
         {
@@ -201,8 +202,9 @@ namespace dftefe
           &             vectorData,
         const size_type blockSize,
         const utils::MemoryStorage<size_type, memorySpace>
-          &                       rowConstraintsIdsLocal,
-        const ValueTypeBasisCoeff alpha)
+          &                                          rowConstraintsIdsLocal,
+        const ValueTypeBasisCoeff                    alpha,
+        linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext)
     {
       for (unsigned int i = 0; i < rowConstraintsIdsLocal.size(); ++i)
         {

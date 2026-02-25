@@ -28,7 +28,7 @@ set(DFT-EFE-BASIS-SOURCES
 	ParentToChildCellsManagerDealii.cpp
 	TriangulationDealiiParallel.cpp
 	ConstraintsInternal.cpp
-	ConstraintsInternal.cu
+	#ConstraintsInternal.cu
 	CFEConstraintsLocalDealii.cpp
 	CFEBasisDofHandlerDealii.cpp
 	FEBasisManager.cpp
@@ -54,6 +54,39 @@ set(DFT-EFE-BASIS-SOURCES
 	OEFEAtomBlockOverlapInvOpContextGLL.cpp
 	AtomCenterNonLocalOpContextFE.cpp
 	)
+
+IF (ENABLE_GPU)
+IF ("${GPU_LANG}" STREQUAL "cuda")
+SET(DFT-EFE-BASIS-DEVICE-SOURCES
+	ConstraintsInternalDeviceKernels.cpp
+	)
+ELSEIF ("${GPU_LANG}" STREQUAL "hip")
+SET(DFT-EFE-BASIS-DEVICE-SOURCES
+	ConstraintsInternalDeviceKernels.cpp
+	)
+ELSEIF ("${GPU_LANG}" STREQUAL "sycl")
+SET(DFT-EFE-BASIS-DEVICE-SOURCES
+	ConstraintsInternalDeviceKernels.cpp
+	)
+ENDIF()
+ENDIF()
+
+IF (ENABLE_GPU)
+	IF ("${GPU_LANG}" STREQUAL "cuda")
+	set_source_files_properties(${DFT-EFE-BASIS-DEVICE-SOURCES} PROPERTIES LANGUAGE CUDA)
+	ELSEIF ("${GPU_LANG}" STREQUAL "hip")
+	set_source_files_properties(${DFT-EFE-BASIS-DEVICE-SOURCES} PROPERTIES LANGUAGE HIP)
+	IF ("${GPU_VENDOR}" STREQUAL "amd")
+		ADD_DEFINITIONS(-D__HIP_PLATFORM_AMD__)
+	ELSEIF ("${GPU_VENDOR}" STREQUAL "nvidia")
+		ADD_DEFINITIONS(-D__HIP_PLATFORM_NVIDIA__)
+	ENDIF()
+	ELSEIF ("${GPU_LANG}" STREQUAL "sycl")
+	set_source_files_properties(${DFT-EFE-BASIS-DEVICE-SOURCES} PROPERTIES COMPILE_FLAGS ${CMAKE_SYCL_FLAGS})
+	ENDIF()
+
+LIST(APPEND DFT-EFE-BASIS-SOURCES ${DFT-EFE-BASIS-DEVICE-SOURCES})
+ENDIF()
 
 add_library(dft-efe-basis SHARED ${DFT-EFE-BASIS-SOURCES})
 

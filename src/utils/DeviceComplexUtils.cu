@@ -1,4 +1,4 @@
-#ifdef DFTEFE_WITH_DEVICE
+#ifdef DFTEFE_WITH_DEVICE_CUDA
 
 #  include <utils/DeviceComplexUtils.cuh>
 #  include <utils/DeviceKernelLauncher.h>

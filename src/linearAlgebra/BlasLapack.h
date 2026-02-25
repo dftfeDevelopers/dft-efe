@@ -66,8 +66,8 @@ namespace dftefe
       template <typename ValueType,
                 typename dftefe::utils::MemorySpace memorySpace>
       std::vector<double>
-      amaxsMultiVector(const size_type                     vecSize,
-                       const size_type                     numVec,
+      amaxsMultiVector(const size_type               vecSize,
+                       const size_type               numVec,
                        ValueType const *             multiVecData,
                        LinAlgOpContext<memorySpace> &context);
 

@@ -95,11 +95,8 @@ namespace dftefe
              scalar_type<ValueType1, ValueType2> *z,
              LinAlgOpContext<memorySpace> &       context)
       {
-        KernelsTwoValueTypes<ValueType1, ValueType2, memorySpace>::ascale(n,
-                                                                          alpha,
-                                                                          x,
-                                                                          z,
-                                                                          context);
+        KernelsTwoValueTypes<ValueType1, ValueType2, memorySpace>::ascale(
+          n, alpha, x, z, context);
       }
 
       template <typename ValueType1,
@@ -199,7 +196,8 @@ namespace dftefe
                                  LinAlgOpContext<memorySpace> &       context)
       {
         KernelsTwoValueTypes<ValueType1, ValueType2, memorySpace>::
-          transposedKhatriRaoProduct(layout, sizeI, sizeJ, sizeK, A, B, Z, context);
+          transposedKhatriRaoProduct(
+            layout, sizeI, sizeJ, sizeK, A, B, Z, context);
       }
 
 

@@ -377,7 +377,7 @@ namespace dftefe
         const scalar_type<ValueType1, ValueType2> beta,
         const ValueType2 *                        y,
         scalar_type<ValueType1, ValueType2> *     z,
-        LinAlgOpContext<memorySpace> &       context)
+        LinAlgOpContext<memorySpace> &            context)
       {
         for (size_type i = 0; i < size; ++i)
           {
@@ -402,7 +402,7 @@ namespace dftefe
         const scalar_type<ValueType1, ValueType2> *beta,
         const ValueType2 *                         y,
         scalar_type<ValueType1, ValueType2> *      z,
-        LinAlgOpContext<memorySpace> &       context)
+        LinAlgOpContext<memorySpace> &             context)
       {
         for (size_type i = 0; i < size; ++i)
           {
@@ -512,10 +512,10 @@ namespace dftefe
       template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
       std::vector<double>
       KernelsOneValueType<ValueType, memorySpace>::amaxsMultiVector(
-                        const size_type                     vecSize,
-                       const size_type                     numVec,
-                       ValueType const *             multiVecData,
-                       LinAlgOpContext<memorySpace> &context)
+        const size_type               vecSize,
+        const size_type               numVec,
+        ValueType const *             multiVecData,
+        LinAlgOpContext<memorySpace> &context)
       {
         std::vector<double> amaxs(numVec, 0);
 

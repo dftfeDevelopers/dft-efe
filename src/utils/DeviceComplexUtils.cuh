@@ -1,4 +1,4 @@
-#ifdef DFTEFE_WITH_DEVICE
+#ifdef DFTEFE_WITH_DEVICE_CUDA
 
 #  ifndef dftefeDeviceComplexUtils_cuh
 #    define dftefeDeviceComplexUtils_cuh
@@ -33,4 +33,4 @@ namespace dftefe
 
 #  endif // dftefeDeviceComplexUtils_cuh
 
-#endif // DFTEFE_WITH_DEVICE
+#endif // DFTEFE_WITH_DEVICE_CUDA
