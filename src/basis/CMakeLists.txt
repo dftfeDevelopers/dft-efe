@@ -53,6 +53,7 @@ set(DFT-EFE-BASIS-SOURCES
 	DealiiFEEvaluationWrapper.cpp
 	OEFEAtomBlockOverlapInvOpContextGLL.cpp
 	AtomCenterNonLocalOpContextFE.cpp
+	FECellWiseDataOperations.cpp
 	)
 
 IF (ENABLE_GPU)

@@ -151,5 +151,4 @@ namespace dftefe
 #endif
   } // end of namespace basis
 } // end of namespace dftefe
-#include <basis/FECellWiseDataOperations.t.cpp>
 #endif // dftefeFECellWiseDataOperations_h
