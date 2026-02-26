@@ -29,7 +29,7 @@
 #include <utils/TypeConfig.h>
 #include <utils/MemorySpaceType.h>
 #include <utils/MemoryStorage.h>
-#include <basis/Field.h>
+#include <basis/BasisManager.h>
 #include <basis/BasisDataStorage.h>
 namespace dftefe
 {
@@ -114,15 +114,11 @@ namespace dftefe
         const typename BasisManager<
           ValueType,
           dftefe::utils::MemorySpace::DEVICE>::SizeTypeVector &numCellDofs,
-        dftefe::utils::MemoryStorage<ValueType,
-                                     dftefe::utils::MemorySpace::DEVICE>
-          &cellWiseStorage);
+        ValueType *itCellWiseStorageBegin);
 
       static void
       addCellWiseDataToFieldData(
-        const dftefe::utils::MemoryStorage<ValueType,
-                                           dftefe::utils::MemorySpace::DEVICE>
-          &              cellWiseStorage,
+        const ValueType *itCellWiseStorageBegin,
         const size_type  numComponents,
         const size_type *cellLocalIdsStartPtr,
         const typename BasisManager<
@@ -140,11 +136,14 @@ namespace dftefe
         ValueType *data);
 
       static void
-      reshapeCellWiseData(const ValueType *cellWiseData,
-                          const size_type  numVec,
-                          const size_type  vecSize,
-                          const size_type  numCells,
-                          ValueType *      data);
+      reshapeCellWiseData(
+        const dftefe::utils::MemoryStorage<ValueType,
+                                           utils::MemorySpace::DEVICE>
+          &             cellWiseStorage,
+        const size_type numComponents,
+        const utils::MemoryStorage<size_type, utils::MemorySpace::DEVICE>
+          &        numCellVecs,
+        ValueType *data);
 
 
     }; // end of class FECellWiseDataOperations

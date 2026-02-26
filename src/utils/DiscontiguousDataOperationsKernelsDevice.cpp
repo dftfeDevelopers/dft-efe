@@ -91,7 +91,7 @@ namespace dftefe
               const size_type blockId      = i / blockSize;
               const size_type intraBlockId = i - blockId * blockSize;
               dftefe::utils::atomicAddWrapper(
-                &dst[discontIds[blockId] * blockSize + intraBlockId], src[i]);
+                dst + discontIds[blockId] * blockSize + intraBlockId, src[i]);
             }
         },
         const size_type  N,
@@ -112,7 +112,7 @@ namespace dftefe
               const size_type intraBlockId = i - blockId * blockSize;
 
               auto *add_real = reinterpret_cast<float *>(
-                &dst[discontIds[blockId] * blockSize + intraBlockId]);
+                dst + discontIds[blockId] * blockSize + intraBlockId);
               auto *add_imag = add_real + 1;
 
               dftefe::utils::atomicAddWrapper(
@@ -139,7 +139,7 @@ namespace dftefe
               const size_type intraBlockId = i - blockId * blockSize;
 
               auto *add_real = reinterpret_cast<double *>(
-                &dst[discontIds[blockId] * blockSize + intraBlockId]);
+                dst + discontIds[blockId] * blockSize + intraBlockId);
               auto *add_imag = add_real + 1;
 
               dftefe::utils::atomicAddWrapper(

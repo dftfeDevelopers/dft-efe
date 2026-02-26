@@ -39,7 +39,7 @@ namespace dftefe
         &                                           numCellDofs,
       utils::MemoryStorage<ValueType, memorySpace> &cellWiseStorage)
     {
-      auto            itCellWiseStorageBegin = cellWiseStorage.begin();
+      auto itCellWiseStorageBegin = cellWiseStorage.begin();
       copyFieldToCellWiseData(data,
                               numComponents,
                               cellLocalIdsStartPtr,
@@ -119,12 +119,12 @@ namespace dftefe
           &        numCellDofs,
         ValueType *data)
     {
-      auto            itCellWiseStorageBegin = cellWiseStorage.begin();
+      auto itCellWiseStorageBegin = cellWiseStorage.begin();
       addCellWiseDataToFieldData(itCellWiseStorageBegin,
-                                  numComponents,
-                                  cellLocalIdsStartPtr,
-                                  numCellDofs,
-                                  data);
+                                 numComponents,
+                                 cellLocalIdsStartPtr,
+                                 numCellDofs,
+                                 data);
     }
 
 
@@ -187,18 +187,14 @@ namespace dftefe
         }
     }
 
-    template class FECellWiseDataOperations<
-      double,
-      dftefe::utils::MemorySpace::HOST>;
-    template class FECellWiseDataOperations<
-      float,
-      dftefe::utils::MemorySpace::HOST>;
-    template class FECellWiseDataOperations<
-      std::complex<double>,
-      dftefe::utils::MemorySpace::HOST>;
-    template class FECellWiseDataOperations<
-      std::complex<float>,
-      dftefe::utils::MemorySpace::HOST>;
+    template class FECellWiseDataOperations<double,
+                                            dftefe::utils::MemorySpace::HOST>;
+    template class FECellWiseDataOperations<float,
+                                            dftefe::utils::MemorySpace::HOST>;
+    template class FECellWiseDataOperations<std::complex<double>,
+                                            dftefe::utils::MemorySpace::HOST>;
+    template class FECellWiseDataOperations<std::complex<float>,
+                                            dftefe::utils::MemorySpace::HOST>;
 
 #ifdef DFTEFE_WITH_DEVICE
     template class FECellWiseDataOperations<

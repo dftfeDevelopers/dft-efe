@@ -178,8 +178,7 @@ namespace dftefe
           &             vectorData,
         const size_type blockSize,
         const utils::MemoryStorage<size_type, memorySpace>
-          &                                          rowConstraintsIdsLocal,
-        linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext)
+          &rowConstraintsIdsLocal)
     {
       for (unsigned int i = 0; i < rowConstraintsIdsLocal.size(); ++i)
         {
@@ -202,9 +201,8 @@ namespace dftefe
           &             vectorData,
         const size_type blockSize,
         const utils::MemoryStorage<size_type, memorySpace>
-          &                                          rowConstraintsIdsLocal,
-        const ValueTypeBasisCoeff                    alpha,
-        linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext)
+          &                       rowConstraintsIdsLocal,
+        const ValueTypeBasisCoeff alpha)
     {
       for (unsigned int i = 0; i < rowConstraintsIdsLocal.size(); ++i)
         {

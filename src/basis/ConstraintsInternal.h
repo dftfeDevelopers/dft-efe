@@ -82,8 +82,7 @@ namespace dftefe
           &             vectorData,
         const size_type blockSize,
         const utils::MemoryStorage<size_type, memorySpace>
-          &                                          rowConstraintsIdsLocal,
-        linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext);
+          &rowConstraintsIdsLocal);
 
 
       static void
@@ -92,9 +91,8 @@ namespace dftefe
           &             vectorData,
         const size_type blockSize,
         const utils::MemoryStorage<size_type, memorySpace>
-          &                                          rowConstraintsIdsLocal,
-        const ValueTypeBasisCoeff                    alpha,
-        linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext);
+          &                       rowConstraintsIdsLocal,
+        const ValueTypeBasisCoeff alpha);
     };
 
 
@@ -160,9 +158,7 @@ namespace dftefe
         const size_type blockSize,
         const utils::MemoryStorage<size_type,
                                    dftefe::utils::MemorySpace::DEVICE>
-          &rowConstraintsIdsLocal,
-        linearAlgebra::LinAlgOpContext<dftefe::utils::MemorySpace::DEVICE>
-          &linAlgOpContext);
+          &rowConstraintsIdsLocal);
 
       static void
       constraintsSetConstrainedNodes(
@@ -173,9 +169,7 @@ namespace dftefe
         const utils::MemoryStorage<size_type,
                                    dftefe::utils::MemorySpace::DEVICE>
           &                       rowConstraintsIdsLocal,
-        const ValueTypeBasisCoeff alpha,
-        linearAlgebra::LinAlgOpContext<dftefe::utils::MemorySpace::DEVICE>
-          &linAlgOpContext);
+        const ValueTypeBasisCoeff alpha);
     };
 #endif
 
