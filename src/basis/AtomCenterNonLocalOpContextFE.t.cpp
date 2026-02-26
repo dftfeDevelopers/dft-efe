@@ -425,6 +425,8 @@ namespace dftefe
           cellIndex++;
         }
       d_cellWiseC.resize(cellWiseCSize);
+      dftefe::utils::MemoryStorage<ValueTypeOperator, utils::MemorySpace::HOST>
+        cellWiseCHost(cellWiseCSize);
 
       d_maxProjInCell =
         *std::max_element(d_numProjsInCells.begin(), d_numProjsInCells.end());
@@ -469,11 +471,21 @@ namespace dftefe
                     }
                 }
 
-              utils::MemoryStorage<ValueTypeOperator, utils::MemorySpace::HOST>
-                basisData(numDofsInCell * nQuadsInCell);
+              utils::MemoryStorage<ValueTypeOperator, memorySpace> basisData(
+                numDofsInCell * nQuadsInCell);
 
               feBasisDataStorage.getBasisDataInCellRange(
                 std::make_pair(cellIndex, cellIndex + 1), basisData);
+
+              dftefe::utils::MemoryStorage<ValueTypeOperator,
+                                           utils::MemorySpace::HOST>
+                basisDataHost(numDofsInCell * nQuadsInCell);
+
+              utils::MemoryTransfer<utils::MemorySpace::HOST, memorySpace>
+                memoryTransfer;
+              memoryTransfer.copy(basisData.size(),
+                                  basisDataHost.data(),
+                                  basisData.data());
 
               linearAlgebra::blasLapack::gemm<ValueTypeOperator,
                                               ValueTypeOperator,
@@ -486,12 +498,13 @@ namespace dftefe
                 (ValueTypeOperator)1.0,
                 projectorQuadStorageJxW.data(),
                 nQuadsInCell,
-                basisData.data(),
+                basisDataHost.data(),
                 numDofsInCell,
                 (ValueTypeOperator)0.0,
-                d_cellWiseC.data() + cumulativeDofxProj,
+                cellWiseCHost.data() + cumulativeDofxProj,
                 numProjsInCell,
-                *linAlgOpContext);
+                *dftefe::linearAlgebra::LinAlgOpContextDefaults::
+                  LINALG_OP_CONTXT_HOST);
 
               // //std::cout << cellIndex<<" -> ";
               // for(int iDof = 0 ; iDof < numDofsInCell ; iDof++)
@@ -501,6 +514,12 @@ namespace dftefe
           cumulativeDofxProj += numDofsInCell * numProjsInCell;
           cellIndex++;
         }
+
+      utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>
+        memoryTransfer;
+      memoryTransfer.copy(d_cellWiseC.size(),
+                          d_cellWiseC.data(),
+                          cellWiseCHost.data());
 
       // Create mpiPatternP2P for locOwned and ghost Projectors
       d_mpiPatternP2PProj =
@@ -700,12 +719,13 @@ namespace dftefe
               linearAlgebra::blasLapack::hadamardProduct<
                 ValueTypeOperator,
                 ValueTypeOperator,
-                utils::MemorySpace::HOST>(numPoints,
-                                          radialValue.data(),
-                                          angularValue.data(),
-                                          retValue.data() +
-                                            (iProj + mCount) * numPoints,
-                                          *d_linAlgOpContext);
+                utils::MemorySpace::HOST>(
+                numPoints,
+                radialValue.data(),
+                angularValue.data(),
+                retValue.data() + (iProj + mCount) * numPoints,
+                *dftefe::linearAlgebra::LinAlgOpContextDefaults::
+                  LINALG_OP_CONTXT_HOST);
             }
           numProjIdsSkipped = (2 * l + 1);
         }

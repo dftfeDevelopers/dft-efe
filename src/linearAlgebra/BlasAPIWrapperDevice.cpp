@@ -1138,6 +1138,132 @@ namespace dftefe
           const size_type                                             incy,
           LinAlgOpContext<utils::MemorySpace::DEVICE> &               context);
 
+        template <typename ValueType>
+        size_type
+        iamax(const size_type                              n,
+              ValueType const *                            x,
+              const size_type                              incx,
+              LinAlgOpContext<utils::MemorySpace::DEVICE> &context)
+        {
+          utils::throwException(
+            false, "The input valuetypes are not supported by iamax");
+          return 0;
+        }
+
+        template <>
+        size_type
+        iamax<float, utils::MemorySpace::DEVICE>(
+          const size_type                              n,
+          float const *                                x,
+          const size_type                              incx,
+          LinAlgOpContext<utils::MemorySpace::DEVICE> &context)
+        {
+          unsigned int nTmp    = n;
+          unsigned int incxTmp = incx;
+
+          int result = 0; // cuBLAS uses int for the index
+
+          DEVICEBLAS_API_CHECK(DFTEFE_DEVICE_BLAS_INT(Is, amax)(
+            context.getDeviceBlasHandle(), nTmp, x, incxTmp, &result));
+
+          return static_cast<size_type>(result);
+        }
+
+        template <>
+        size_type
+        iamax<double, utils::MemorySpace::DEVICE>(
+          const size_type                              n,
+          double const *                               x,
+          const size_type                              incx,
+          LinAlgOpContext<utils::MemorySpace::DEVICE> &context)
+        {
+          unsigned int nTmp    = n;
+          unsigned int incxTmp = incx;
+
+          int result = 0; // cuBLAS uses int for the index
+
+          DEVICEBLAS_API_CHECK(DFTEFE_DEVICE_BLAS_INT(Id, amax)(
+            context.getDeviceBlasHandle(), nTmp, x, incxTmp, &result));
+
+          return static_cast<size_type>(result);
+        }
+
+        template <>
+        size_type
+        iamax<std::complex<float>, utils::MemorySpace::DEVICE>(
+          const size_type                              n,
+          std::complex<float> const *                  x,
+          const size_type                              incx,
+          LinAlgOpContext<utils::MemorySpace::DEVICE> &context)
+        {
+          unsigned int nTmp    = n;
+          unsigned int incxTmp = incx;
+
+          int result = 0; // cuBLAS uses int for the index
+
+          DEVICEBLAS_API_CHECK(
+            DFTEFE_DEVICE_BLAS_INT(Ic,
+                                   amax)(context.getDeviceBlasHandle(),
+                                         nTmp,
+                                         makeDataTypeDeviceBlasCompatible(x),
+                                         incxTmp,
+                                         &result));
+
+          return static_cast<size_type>(result);
+        }
+
+        template <>
+        size_type
+        iamax<std::complex<double>, utils::MemorySpace::DEVICE>(
+          const size_type                              n,
+          std::complex<double> const *                 x,
+          const size_type                              incx,
+          LinAlgOpContext<utils::MemorySpace::DEVICE> &context)
+        {
+          unsigned int nTmp    = n;
+          unsigned int incxTmp = incx;
+
+          int result = 0; // cuBLAS uses int for the index
+
+          DEVICEBLAS_API_CHECK(
+            DFTEFE_DEVICE_BLAS_INT(Iz,
+                                   amax)(context.getDeviceBlasHandle(),
+                                         nTmp,
+                                         makeDataTypeDeviceBlasCompatible(x),
+                                         incxTmp,
+                                         &result));
+
+          return static_cast<size_type>(result);
+        }
+
+        template size_type
+        iamax<float, utils::MemorySpace::DEVICE>(
+          const size_type                              n,
+          float const *                                x,
+          const size_type                              incx,
+          LinAlgOpContext<utils::MemorySpace::DEVICE> &context);
+
+        template size_type
+        iamax<double, utils::MemorySpace::DEVICE>(
+          const size_type                              n,
+          double const *                               x,
+          const size_type                              incx,
+          LinAlgOpContext<utils::MemorySpace::DEVICE> &context);
+
+        template size_type
+        iamax<std::complex<float>, utils::MemorySpace::DEVICE>(
+          const size_type                              n,
+          std::complex<float> const *                  x,
+          const size_type                              incx,
+          LinAlgOpContext<utils::MemorySpace::DEVICE> &context);
+
+        template size_type
+        iamax<std::complex<double>, utils::MemorySpace::DEVICE>(
+          const size_type                              n,
+          std::complex<double> const *                 x,
+          const size_type                              incx,
+          LinAlgOpContext<utils::MemorySpace::DEVICE> &context);
+
       } // namespace blasWrapper
 
     } // namespace blasLapack

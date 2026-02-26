@@ -251,6 +251,9 @@ namespace dftefe
         memorySpace>
         d_scratchMultiVec;
 
+      dftefe::utils::MemoryStorage<ValueTypeOperator, utils::MemorySpace::HOST>
+        d_scratchMultiVecHost;
+
     }; // end of class PoissonSolverDealiiMatrixFreeFE
   }    // namespace electrostatics
 } // end of namespace dftefe

@@ -27,6 +27,7 @@
 #include <quadrature/QuadratureValuesContainer.h>
 #include <basis/CFEOverlapInverseOpContextGLL.h>
 #include <utils/ScalarSpatialFunction.h>
+#include <linearAlgebra/Defaults.h>
 #include <algorithm>
 #include <set>
 #include <string>
@@ -1194,7 +1195,7 @@ namespace dftefe
             radialValue.data(),
             angularValue.data(),
             retValue.data() + (iEnrich /*+mCount*/) * numPoints,
-            *getLinAlgOpContext());
+            *linearAlgebra::LinAlgOpContextDefaults::LINALG_OP_CONTXT_HOST);
           //   }
           // numEnrichedIdsSkipped = (2 * l + 1);
         }

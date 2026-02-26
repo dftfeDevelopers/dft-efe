@@ -58,8 +58,9 @@ namespace dftefe
     /**
      * @brief Setting all the LinAlgOpContextDefaults
      */
-    std::shared_ptr<linearAlgebra::LinAlgOpContext<utils::MemorySpace::HOST>>
-      LINALG_OP_CONTXT_HOST = std::make_shared<
+    const std::shared_ptr<
+      linearAlgebra::LinAlgOpContext<utils::MemorySpace::HOST>>
+      LinAlgOpContextDefaults::LINALG_OP_CONTXT_HOST = std::make_shared<
         linearAlgebra::LinAlgOpContext<utils::MemorySpace::HOST>>();
 
     /**

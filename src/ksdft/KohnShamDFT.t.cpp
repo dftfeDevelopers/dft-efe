@@ -2543,7 +2543,8 @@ namespace dftefe
               // Compute the mixing coefficients
               d_mixingScheme.computeAndersonMixingCoeff(
                 std::vector<mixingVariable>{mixingVariable::rho},
-                *d_linAlgOpContext);
+                *dftefe::linearAlgebra::LinAlgOpContextDefaults::
+                  LINALG_OP_CONTXT_HOST);
 
               // update the mixing variables
               // get next input density

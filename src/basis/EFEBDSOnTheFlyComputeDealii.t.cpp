@@ -31,6 +31,7 @@
 #include <deal.II/base/quadrature.h>
 #include <deal.II/base/quadrature_lib.h>
 #include <deal.II/fe/fe_values.h>
+#include <linearAlgebra/Defaults.h>
 #include <quadrature/QuadratureAttributes.h>
 #include <basis/ParentToChildCellsManagerDealii.h>
 #include <basis/CFEBDSOnTheFlyComputeDealii.h>
@@ -289,7 +290,7 @@ namespace dftefe
           (ValueTypeBasisData)0.0,
           classicalComponentInQuadValues.data(),
           numEnrichmentIdsInCell,
-          *efeBDH->getEnrichmentClassicalInterface()->getLinAlgOpContext());
+          *linearAlgebra::LinAlgOpContextDefaults::LINALG_OP_CONTXT_HOST);
       }
 
       template <typename ValueTypeBasisCoeff,
@@ -339,7 +340,7 @@ namespace dftefe
           classicalComponentInQuadGradients
             .data(), // saved as cell->quad->dim->enrichid
           numEnrichmentIdsInCell,
-          *efeBDH->getEnrichmentClassicalInterface()->getLinAlgOpContext());
+          *linearAlgebra::LinAlgOpContextDefaults::LINALG_OP_CONTXT_HOST);
       }
 
       //
@@ -858,8 +859,8 @@ namespace dftefe
                                basisJacobianInvQuadStorageTmp.data(),
                                cellStartIdsBasisJacobianInvQuadStorage,
                                basisGradientParaCellClassQuadStorageTmp.data(),
-                               *efeBDH->getEnrichmentClassicalInterface()
-                                  ->getLinAlgOpContext(),
+                               *linearAlgebra::LinAlgOpContextDefaults::
+                                 LINALG_OP_CONTXT_HOST,
                                tmpGradientInCell.begin());
 
                         getClassicalComponentBasisGradInCellAtQuadOEFE<

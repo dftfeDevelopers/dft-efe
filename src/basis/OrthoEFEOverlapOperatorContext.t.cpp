@@ -28,6 +28,7 @@
 #include <basis/FECellWiseDataOperations.h>
 #include <utils/OptimizedIndexSet.h>
 #include <unordered_map>
+#include <linearAlgebra/Defaults.h>
 #include <vector>
 #include <basis/EnrichmentClassicalInterfaceSpherical.h>
 
@@ -496,7 +497,8 @@ namespace dftefe
                   (ValueTypeOperator)0.0,
                   classicalComponentInQuadValuesEC.data(),
                   numEnrichmentIdsInCell,
-                  *eci->getLinAlgOpContext());
+                  *linearAlgebra::LinAlgOpContextDefaults::
+                    LINALG_OP_CONTXT_HOST);
 
 
                 dftefe::utils::MemoryStorage<ValueTypeOperator, memorySpace>
@@ -523,7 +525,8 @@ namespace dftefe
                   (ValueTypeOperator)0.0,
                   classicalComponentInQuadValuesEE.data(),
                   numEnrichmentIdsInCell,
-                  *eci->getLinAlgOpContext());
+                  *linearAlgebra::LinAlgOpContextDefaults::
+                    LINALG_OP_CONTXT_HOST);
 
                 const std::vector<double> &enrichValAtQuadPts =
                   eefeBDH->getEnrichmentValue(cellIndex, quadRealPointsVec);

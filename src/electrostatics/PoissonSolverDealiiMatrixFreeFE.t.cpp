@@ -127,6 +127,9 @@ namespace dftefe
                           linAlgOpContext,
                           d_numComponents,
                           ValueType())
+      , d_scratchMultiVecHost(d_scratchMultiVec.localSize() *
+                                d_scratchMultiVec.numVectors(),
+                              ValueType())
     {
       int rank;
       utils::mpi::MPICommRank(this->getMPIComm(), &rank);
@@ -483,10 +486,16 @@ namespace dftefe
     {
       solution.setValue(0.0);
 
-      for (size_type i = 0; i < solution.locallyOwnedSize(); i++)
-        {
-          solution.data()[i] = *(d_x.begin() + i);
-        }
+      utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>
+        memoryTransfer;
+      memoryTransfer.copy(solution.locallyOwnedSize(),
+                          solution.data(),
+                          d_x.begin());
+
+      // for (size_type i = 0; i < solution.locallyOwnedSize(); i++)
+      //   {
+      //     solution.data()[i] = *(d_x.begin() + i);
+      //   }
 
       solution.updateGhostValues();
 
@@ -817,12 +826,18 @@ namespace dftefe
                 *d_feBasisManagerHomo,
                 d_scratchMultiVec);
 
+              utils::MemoryTransfer<utils::MemorySpace::HOST, memorySpace>
+                memoryTransfer;
+              memoryTransfer.copy(d_scratchMultiVecHost.size(),
+                                  d_scratchMultiVecHost.data(),
+                                  d_scratchMultiVec.data());
+
               for (size_type i = 0; i < d_scratchMultiVec.locallyOwnedSize();
                    i++)
                 {
                   *(d_nonTensorSructuredQuadeRhs[nonTensorStructQuadInRhsCount]
                       .begin() +
-                    i) = d_scratchMultiVec.data()[i];
+                    i) = d_scratchMultiVecHost.data()[i];
                 }
               nonTensorStructQuadInRhsCount += 1;
             }

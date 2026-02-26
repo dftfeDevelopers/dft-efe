@@ -333,6 +333,50 @@ namespace dftefe
         dftefe::utils::makeDataTypeDeviceCompatible(data));
     }
 
+
+    template <typename ValueType>
+    void
+    FECellWiseDataOperations<ValueType, utils::MemorySpace::DEVICE>::
+      copyFieldToCellWiseData(
+        const ValueType *data,
+        const size_type  numComponents,
+        const size_type *cellLocalIdsStartPtr,
+        const typename BasisManager<ValueType,
+                                    utils::MemorySpace::DEVICE>::SizeTypeVector
+          &numCellDofs,
+        utils::MemoryStorage<ValueType, utils::MemorySpace::DEVICE>
+          &cellWiseStorage)
+    {
+      auto itCellWiseStorageBegin = cellWiseStorage.begin();
+      copyFieldToCellWiseData(data,
+                              numComponents,
+                              cellLocalIdsStartPtr,
+                              numCellDofs,
+                              itCellWiseStorageBegin);
+    }
+
+    template <typename ValueType>
+    void
+    FECellWiseDataOperations<ValueType, utils::MemorySpace::DEVICE>::
+      addCellWiseDataToFieldData(
+        const utils::MemoryStorage<ValueType, utils::MemorySpace::DEVICE>
+          &              cellWiseStorage,
+        const size_type  numComponents,
+        const size_type *cellLocalIdsStartPtr,
+        const typename BasisManager<ValueType,
+                                    utils::MemorySpace::DEVICE>::SizeTypeVector
+          &        numCellDofs,
+        ValueType *data)
+    {
+      auto itCellWiseStorageBegin = cellWiseStorage.begin();
+      addCellWiseDataToFieldData(itCellWiseStorageBegin,
+                                 numComponents,
+                                 cellLocalIdsStartPtr,
+                                 numCellDofs,
+                                 data);
+    }
+
+
     template <typename ValueType>
     void
     FECellWiseDataOperations<ValueType, utils::MemorySpace::DEVICE>::

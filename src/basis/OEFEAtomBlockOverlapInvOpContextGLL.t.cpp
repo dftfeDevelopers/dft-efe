@@ -28,6 +28,7 @@
 #include <cmath>
 #include <memory>
 #include <algorithm>
+#include <linearAlgebra/Defaults.h>
 #include <numeric>
 // #include <mkl.h>
 #include <utils/ConditionalOStream.h>
@@ -264,7 +265,8 @@ namespace dftefe
                   (ValueTypeOperator)0.0,
                   classicalComponentInQuadValuesEC.data(),
                   numEnrichmentIdsInCell,
-                  *eci->getLinAlgOpContext());
+                  *linearAlgebra::LinAlgOpContextDefaults::
+                    LINALG_OP_CONTXT_HOST);
 
                 utils::MemoryStorage<ValueTypeOperator, memorySpace>
                   basisValInCellEE = enrichmentBlockEnrichmentBasisDataStorage
@@ -289,7 +291,8 @@ namespace dftefe
                   (ValueTypeOperator)0.0,
                   classicalComponentInQuadValuesEE.data(),
                   numEnrichmentIdsInCell,
-                  *eci->getLinAlgOpContext());
+                  *linearAlgebra::LinAlgOpContextDefaults::
+                    LINALG_OP_CONTXT_HOST);
 
                 const std::vector<double> &enrichValAtQuadPts =
                   efeBDH->getEnrichmentValue(cellIndex, quadRealPointsVec);

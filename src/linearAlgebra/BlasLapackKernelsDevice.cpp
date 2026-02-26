@@ -249,7 +249,7 @@ namespace dftefe
                 ValueType1 A_val = dA[i * K + k];
                 ValueType2 B_val = dB[j * K + k];
 
-                dC[ijk] = utils::mult(std::conj(A_val), B_val);
+                dC[ijk] = utils::mult(utils::conj(A_val), B_val);
               }
           },
           const size_type   M,
@@ -276,7 +276,7 @@ namespace dftefe
                 ValueType1 A_val = dA[i * K + k];
                 ValueType2 B_val = dB[j * K + k];
 
-                dC[ijk] = utils::mult(A_val, std::conj(B_val));
+                dC[ijk] = utils::mult(A_val, utils::conj(B_val));
               }
           },
           const size_type   M,
@@ -303,7 +303,7 @@ namespace dftefe
                 ValueType1 A_val = dA[i * K + k];
                 ValueType2 B_val = dB[j * K + k];
 
-                dC[ijk] = utils::mult(std::conj(A_val), std::conj(B_val));
+                dC[ijk] = utils::mult(utils::conj(A_val), utils::conj(B_val));
               }
           },
           const size_type   M,
@@ -357,7 +357,7 @@ namespace dftefe
                 ValueType1 A_val = dA[k * M + i];
                 ValueType2 B_val = dB[k * N + j];
 
-                dC[kij] = utils::mult(std::conj(A_val), B_val);
+                dC[kij] = utils::mult(utils::conj(A_val), B_val);
               }
           },
           const size_type   M,
@@ -384,7 +384,7 @@ namespace dftefe
                 ValueType1 A_val = dA[k * M + i];
                 ValueType2 B_val = dB[k * N + j];
 
-                dC[kij] = utils::mult(A_val, std::conj(B_val));
+                dC[kij] = utils::mult(A_val, utils::conj(B_val));
               }
           },
           const size_type   M,
@@ -411,7 +411,7 @@ namespace dftefe
                 ValueType1 A_val = dA[k * M + i];
                 ValueType2 B_val = dB[k * N + j];
 
-                dC[kij] = utils::mult(std::conj(A_val), std::conj(B_val));
+                dC[kij] = utils::mult(utils::conj(A_val), utils::conj(B_val));
               }
           },
           const size_type   M,
@@ -547,21 +547,22 @@ namespace dftefe
 
       template <typename ValueType1, typename ValueType2>
       void
-      scaleStridedVarBatched(
-        const size_type                              numMats,
-        const Layout                                 layout,
-        const ScalarOp &                             scalarOpA,
-        const ScalarOp &                             scalarOpB,
-        const size_type *                            stridea,
-        const size_type *                            strideb,
-        const size_type *                            stridec,
-        const size_type *                            m,
-        const size_type *                            n,
-        const size_type *                            k,
-        const ValueType1 *                           dA,
-        const ValueType2 *                           dB,
-        scalar_type<ValueType1, ValueType2> *        dC,
-        LinAlgOpContext<utils::MemorySpace::DEVICE> &context)
+      KernelsTwoValueTypes<ValueType1, ValueType2, utils::MemorySpace::DEVICE>::
+        scaleStridedVarBatched(
+          const size_type                              numMats,
+          const Layout                                 layout,
+          const ScalarOp &                             scalarOpA,
+          const ScalarOp &                             scalarOpB,
+          const size_type *                            stridea,
+          const size_type *                            strideb,
+          const size_type *                            stridec,
+          const size_type *                            m,
+          const size_type *                            n,
+          const size_type *                            k,
+          const ValueType1 *                           dA,
+          const ValueType2 *                           dB,
+          scalar_type<ValueType1, ValueType2> *        dC,
+          LinAlgOpContext<utils::MemorySpace::DEVICE> &context)
       {
         size_type       cumulativeA = 0;
         size_type       cumulativeB = 0;
@@ -827,19 +828,20 @@ namespace dftefe
           }
       }
 
-      template <typename ValueType1,
-                typename ValueType2>
+      template <typename ValueType1, typename ValueType2>
       void
-      axpbyBlocked(const size_type size,      // vecsize
-                   const size_type blockSize, // numvec
-                   const scalar_type<ValueType1, ValueType2>            alpha1,
-                   const scalar_type<ValueType1, ValueType2> *          alpha,
-                   const ValueType1 *                                   x,
-                   const scalar_type<ValueType1, ValueType2>            beta1,
-                   const scalar_type<ValueType1, ValueType2> *          beta,
-                   const ValueType2 *                                   y,
-                   scalar_type<ValueType1, ValueType2> *                z,
-                   LinAlgOpContext<dftefe::utils::MemorySpace::DEVICE> &context)
+      KernelsTwoValueTypes<ValueType1, ValueType2, utils::MemorySpace::DEVICE>::
+        axpbyBlocked(
+          const size_type                            size,      // vecsize
+          const size_type                            blockSize, // numvec
+          const scalar_type<ValueType1, ValueType2>  alpha1,
+          const scalar_type<ValueType1, ValueType2> *alpha,
+          const ValueType1 *                         x,
+          const scalar_type<ValueType1, ValueType2>  beta1,
+          const scalar_type<ValueType1, ValueType2> *beta,
+          const ValueType2 *                         y,
+          scalar_type<ValueType1, ValueType2> *      z,
+          LinAlgOpContext<dftefe::utils::MemorySpace::DEVICE> &context)
       {
         DFTEFE_LAUNCH_KERNEL(axpbyBlockedDeviceKernel,
                              (size * blockSize) / utils::DEVICE_BLOCK_SIZE + 1,
@@ -847,24 +849,25 @@ namespace dftefe
                              context.getBlasStream(),
                              size,      // vecsize
                              blockSize, // numvec
-                             alpha1,
-                             alpha,
-                             x,
-                             beta1,
-                             beta,
-                             y,
-                             z);
+                             utils::makeDataTypeDeviceCompatible(alpha1),
+                             utils::makeDataTypeDeviceCompatible(alpha),
+                             utils::makeDataTypeDeviceCompatible(x),
+                             utils::makeDataTypeDeviceCompatible(beta1),
+                             utils::makeDataTypeDeviceCompatible(beta),
+                             utils::makeDataTypeDeviceCompatible(y),
+                             utils::makeDataTypeDeviceCompatible(z));
       }
 
       template <typename ValueType1, typename ValueType2>
       void
-      ascale(size_type                                            size,
-             ValueType1                                           alpha,
-             const ValueType2 *                                   x,
-             const ScalarOp &                                     opalpha,
-             const ScalarOp &                                     opx,
-             scalar_type<ValueType1, ValueType2> *                z,
-             LinAlgOpContext<dftefe::utils::MemorySpace::DEVICE> &context)
+      KernelsTwoValueTypes<ValueType1, ValueType2, utils::MemorySpace::DEVICE>::
+        ascale(size_type                                            size,
+               ValueType1                                           alpha,
+               const ValueType2 *                                   x,
+               const ScalarOp &                                     opalpha,
+               const ScalarOp &                                     opx,
+               scalar_type<ValueType1, ValueType2> *                z,
+               LinAlgOpContext<dftefe::utils::MemorySpace::DEVICE> &context)
       {
         utils::throwException(
           false,

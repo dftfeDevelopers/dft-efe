@@ -5,6 +5,16 @@ if (NOT TARGET dft-efe-linalg)
     endif ()
 
     IF (ENABLE_GPU)
+    IF ("${GPU_LANG}" STREQUAL "cuda")
+      enable_language(CUDA)
+    ELSEIF ("${GPU_LANG}" STREQUAL "hip")
+      enable_language(HIP)
+    ELSEIF ("${GPU_LANG}" STREQUAL "sycl")
+    ELSE ()
+      MESSAGE(FATAL_ERROR "\n"
+    "*** Could not find valid GPU_LANG=cuda/hip/sycl ***\n\n"
+    )
+    ENDIF()
     add_compile_definitions(DFTEFE_WITH_DEVICE)
 
     IF ("${GPU_VENDOR}" STREQUAL "nvidia")
