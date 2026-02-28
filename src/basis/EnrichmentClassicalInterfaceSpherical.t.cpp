@@ -274,6 +274,12 @@ namespace dftefe
               numEnrichInBatch,
               (ValueTypeBasisData)0.0);
 
+          quadrature::QuadratureValuesContainer<ValueTypeBasisData, utils::MemorySpace::HOST>
+            quadValuesEnrichmentFunctionHost(
+              cfeBasisDataStorageRhs->getQuadratureRuleContainer(),
+              numEnrichInBatch,
+              (ValueTypeBasisData)0.0);
+
           const size_type numLocallyOwnedCells =
             d_cfeBasisDofHandler->nLocallyOwnedCells();
           std::vector<size_type> nQuadPointsInCell(0);
@@ -282,7 +288,7 @@ namespace dftefe
           auto locallyOwnedCellIter =
             d_cfeBasisDofHandler->beginLocallyOwnedCells();
           ValueTypeBasisData *quadValuesEnrichmentFunctionPtr =
-            quadValuesEnrichmentFunction.begin();
+            quadValuesEnrichmentFunctionHost.begin();
           size_type cumulativeQuadEnrichInCell = 0;
           for (; locallyOwnedCellIter !=
                  d_cfeBasisDofHandler->endLocallyOwnedCells();
@@ -349,6 +355,12 @@ namespace dftefe
               cumulativeQuadEnrichInCell += nQuadPointInCell * numEnrichInBatch;
               cellIndex = cellIndex + 1;
             }
+
+          utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>
+            memoryTransfer;
+          memoryTransfer.copy(quadValuesEnrichmentFunction.nEntries(),
+                              quadValuesEnrichmentFunction.begin(),
+                              quadValuesEnrichmentFunctionHost.begin());
 
           // Create OperatorContext for CFEBasisoverlap
           std::shared_ptr<

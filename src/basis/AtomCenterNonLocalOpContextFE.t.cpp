@@ -70,54 +70,34 @@ namespace dftefe
         std::vector<char> transA(numCellsInBlock, 'N');
         std::vector<char> transB(numCellsInBlock, isCConjTransX ? 'C' : 'N');
 
-        utils::MemoryStorage<size_type, memorySpace> mSizes(numCellsInBlock);
-        utils::MemoryStorage<size_type, memorySpace> nSizes(numCellsInBlock);
-        utils::MemoryStorage<size_type, memorySpace> kSizes(numCellsInBlock);
-        utils::MemoryStorage<size_type, memorySpace> ldaSizes(numCellsInBlock);
-        utils::MemoryStorage<size_type, memorySpace> ldbSizes(numCellsInBlock);
-        utils::MemoryStorage<size_type, memorySpace> ldcSizes(numCellsInBlock);
-        utils::MemoryStorage<size_type, memorySpace> strideA(numCellsInBlock);
-        utils::MemoryStorage<size_type, memorySpace> strideB(numCellsInBlock);
-        utils::MemoryStorage<size_type, memorySpace> strideC(numCellsInBlock);
-
-        std::vector<size_type> mSizesSTL(numCellsInBlock, 0);
-        std::vector<size_type> nSizesSTL(numCellsInBlock, 0);
-        std::vector<size_type> kSizesSTL(numCellsInBlock, 0);
-        std::vector<size_type> ldaSizesSTL(numCellsInBlock, 0);
-        std::vector<size_type> ldbSizesSTL(numCellsInBlock, 0);
-        std::vector<size_type> ldcSizesSTL(numCellsInBlock, 0);
-        std::vector<size_type> strideASTL(numCellsInBlock, 0);
-        std::vector<size_type> strideBSTL(numCellsInBlock, 0);
-        std::vector<size_type> strideCSTL(numCellsInBlock, 0);
+        std::vector<size_type> mSizes(numCellsInBlock, 0);
+        std::vector<size_type> nSizes(numCellsInBlock, 0);
+        std::vector<size_type> kSizes(numCellsInBlock, 0);
+        std::vector<size_type> ldaSizes(numCellsInBlock, 0);
+        std::vector<size_type> ldbSizes(numCellsInBlock, 0);
+        std::vector<size_type> ldcSizes(numCellsInBlock, 0);
+        std::vector<size_type> strideA(numCellsInBlock, 0);
+        std::vector<size_type> strideB(numCellsInBlock, 0);
+        std::vector<size_type> strideC(numCellsInBlock, 0);
 
         for (size_type iCell = 0; iCell < numCellsInBlock; ++iCell)
           {
-            mSizesSTL[iCell] = numVecs;
-            nSizesSTL[iCell] = numCellYLocalIds
+            mSizes[iCell] = numVecs;
+            nSizes[iCell] = numCellYLocalIds
               [iCell + cellStartId]; // !isCConjTransX ? numCellDofs[iCell]
                                      // : numCellProjectors[iCell] ;
-            kSizesSTL[iCell] =
+            kSizes[iCell] =
               numCellXLocalIds[iCell + cellStartId]; // !isCConjTransX ?
                                                      // numCellProjectors[iCell]
                                                      // : numCellDofs[iCell];
-            ldaSizesSTL[iCell] = mSizesSTL[iCell];
-            ldbSizesSTL[iCell] =
-              isCConjTransX ? nSizesSTL[iCell] : kSizesSTL[iCell];
-            ldcSizesSTL[iCell] = mSizesSTL[iCell];
-            strideASTL[iCell]  = mSizesSTL[iCell] * kSizesSTL[iCell];
-            strideBSTL[iCell]  = kSizesSTL[iCell] * nSizesSTL[iCell];
-            strideCSTL[iCell]  = mSizesSTL[iCell] * nSizesSTL[iCell];
+            ldaSizes[iCell] = mSizes[iCell];
+            ldbSizes[iCell] =
+              isCConjTransX ? nSizes[iCell] : kSizes[iCell];
+            ldcSizes[iCell] = mSizes[iCell];
+            strideA[iCell]  = mSizes[iCell] * kSizes[iCell];
+            strideB[iCell]  = kSizes[iCell] * nSizes[iCell];
+            strideC[iCell]  = mSizes[iCell] * nSizes[iCell];
           }
-
-        mSizes.copyFrom(mSizesSTL);
-        nSizes.copyFrom(nSizesSTL);
-        kSizes.copyFrom(kSizesSTL);
-        ldaSizes.copyFrom(ldaSizesSTL);
-        ldbSizes.copyFrom(ldbSizesSTL);
-        ldcSizes.copyFrom(ldcSizesSTL);
-        strideA.copyFrom(strideASTL);
-        strideB.copyFrom(strideBSTL);
-        strideC.copyFrom(strideCSTL);
 
         const ValueTypeOperator *A = xCellValues;
 
@@ -213,18 +193,28 @@ namespace dftefe
                       numCellXLocalIds.begin() + cellEndId,
                       cellsInBlockNumXLocalIdsSTL.begin());
 
+          const size_type numCumulativeXLocalIdsCellsInBlock =
+            std::accumulate(cellsInBlockNumXLocalIdsSTL.begin(),
+                            cellsInBlockNumXLocalIdsSTL.end(),
+                            0);
+
             std::vector<size_type> cellsInBlockNumYLocalIdsSTL(numCellsInBlock);
             std::copy(numCellYLocalIds.begin() + cellStartId,
                       numCellYLocalIds.begin() + cellEndId,
                       cellsInBlockNumYLocalIdsSTL.begin());
 
-            utils::MemoryStorage<size_type, memorySpace>
-              cellsInBlockNumXLocalIds(numCellsInBlock);
-            cellsInBlockNumXLocalIds.copyFrom(cellsInBlockNumXLocalIdsSTL);
+          const size_type numCumulativeYLocalIdsCellsInBlock =
+            std::accumulate(cellsInBlockNumYLocalIdsSTL.begin(),
+                            cellsInBlockNumYLocalIdsSTL.end(),
+                            0);
 
-            utils::MemoryStorage<size_type, memorySpace>
-              cellsInBlockNumYLocalIds(numCellsInBlock);
-            cellsInBlockNumYLocalIds.copyFrom(cellsInBlockNumYLocalIdsSTL);
+            // utils::MemoryStorage<size_type, memorySpace>
+            //   cellsInBlockNumXLocalIds(numCellsInBlock);
+            // cellsInBlockNumXLocalIds.copyFrom(cellsInBlockNumXLocalIdsSTL);
+
+            // utils::MemoryStorage<size_type, memorySpace>
+            //   cellsInBlockNumYLocalIds(numCellsInBlock);
+            // cellsInBlockNumYLocalIds.copyFrom(cellsInBlockNumYLocalIdsSTL);
 
             // copy x to cell-wise data
             basis::FECellWiseDataOperations<ValueTypeOperand, memorySpace>::
@@ -232,7 +222,8 @@ namespace dftefe
                                       numVecs,
                                       cellLocalIdsStartPtrX +
                                         cellLocalIdsOffsetX,
-                                      cellsInBlockNumXLocalIds,
+                                      //cellsInBlockNumXLocalIds,
+                                      numCumulativeXLocalIdsCellsInBlock,
                                       xCellValues);
 
             cellWiseGEMM(std::make_pair(cellStartId, cellEndId),
@@ -252,7 +243,8 @@ namespace dftefe
                                                        numVecs,
                                                        cellLocalIdsStartPtrY +
                                                          cellLocalIdsOffsetY,
-                                                       cellsInBlockNumYLocalIds,
+                                                       //cellsInBlockNumYLocalIds,
+                                                       numCumulativeYLocalIdsCellsInBlock,
                                                        y);
 
             for (size_type iCell = 0; iCell < numCellsInBlock; ++iCell)
@@ -938,9 +930,14 @@ namespace dftefe
                     d_numProjsInCells.begin() + cellRange.second,
                     cellsInBlockLocalIdsSTL.begin());
 
-          utils::MemoryStorage<size_type, memorySpace> cellsInBlockLocalIds(
-            numCellsInBlock);
-          cellsInBlockLocalIds.copyFrom(cellsInBlockLocalIdsSTL);
+          const size_type numCumulativeLocalIdsCellsInBlock =
+            std::accumulate(cellsInBlockLocalIdsSTL.begin(),
+                            cellsInBlockLocalIdsSTL.end(),
+                            0);
+
+          // utils::MemoryStorage<size_type, memorySpace> cellsInBlockLocalIds(
+          //   numCellsInBlock);
+          // cellsInBlockLocalIds.copyFrom(cellsInBlockLocalIdsSTL);
 
           basis::FECellWiseDataOperations<
             linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
@@ -950,7 +947,8 @@ namespace dftefe
               d_CXCellValues,
               d_CX->getNumberComponents(),
               d_locallyOwnedCellLocalProjectorIds.begin() + cellLocalIdsOffsetY,
-              cellsInBlockLocalIds,
+              //cellsInBlockLocalIds,
+              numCumulativeLocalIdsCellsInBlock,
               d_CX->data());
         }
       else
@@ -1034,16 +1032,22 @@ namespace dftefe
                     d_numProjsInCells.begin() + cellRange.second,
                     cellsInBlockLocalIdsSTL.begin());
 
-          utils::MemoryStorage<size_type, memorySpace> cellsInBlockLocalIds(
-            numCellsInBlock);
-          cellsInBlockLocalIds.copyFrom(cellsInBlockLocalIdsSTL);
+          const size_type numCumulativeLocalIdsCellsInBlock =
+            std::accumulate(cellsInBlockLocalIdsSTL.begin(),
+                            cellsInBlockLocalIdsSTL.end(),
+                            0);
+
+          // utils::MemoryStorage<size_type, memorySpace> cellsInBlockLocalIds(
+          //   numCellsInBlock);
+          // cellsInBlockLocalIds.copyFrom(cellsInBlockLocalIdsSTL);
 
           basis::FECellWiseDataOperations<ValueTypeOperand, memorySpace>::
             copyFieldToCellWiseData(
               d_CX->data(),
               d_CX->getNumberComponents(),
               d_locallyOwnedCellLocalProjectorIds.begin() + cellLocalIdsOffsetX,
-              cellsInBlockLocalIds,
+              //cellsInBlockLocalIds,
+              numCumulativeLocalIdsCellsInBlock,
               d_CXCellValues);
 
           AtomCenterNonLocalOpContextFEInternal::cellWiseGEMM(

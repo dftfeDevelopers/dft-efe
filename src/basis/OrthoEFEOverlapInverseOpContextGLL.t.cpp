@@ -986,12 +986,18 @@ namespace dftefe
       linearAlgebra::Vector<ValueTypeOperator, memorySpace> diagonal(
         d_feBasisManager->getMPIPatternP2P(), linAlgOpContext);
 
+      const size_type numCumulativeDofsCells =
+        std::accumulate(locallyOwnedCellsNumDoFsSTL.begin(),
+                        locallyOwnedCellsNumDoFsSTL.end(),
+                        0);
+
       // Create the diagonal of the classical block matrix which is diagonal for
       // GLL with spectral quadrature
       FECellWiseDataOperations<ValueTypeOperator, memorySpace>::
         addCellWiseBasisDataToDiagonalData(NiNjInAllCells.data(),
                                            itCellLocalIdsBegin,
                                            locallyOwnedCellsNumDoFs,
+                                           numCumulativeDofsCells,
                                            diagonal.data());
 
       // function to do a static condensation to send the constraint nodes to

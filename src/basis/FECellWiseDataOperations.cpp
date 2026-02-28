@@ -35,15 +35,16 @@ namespace dftefe
       const ValueType *data,
       const size_type  numComponents,
       const size_type *cellLocalIdsStartPtr,
-      const typename BasisManager<ValueType, memorySpace>::SizeTypeVector
-        &                                           numCellDofs,
+      // const typename BasisManager<ValueType, memorySpace>::SizeTypeVector
+      //   &                                           numCellDofs,
+      const size_type totalCellDofs,
       utils::MemoryStorage<ValueType, memorySpace> &cellWiseStorage)
     {
       auto itCellWiseStorageBegin = cellWiseStorage.begin();
       copyFieldToCellWiseData(data,
                               numComponents,
                               cellLocalIdsStartPtr,
-                              numCellDofs,
+                              totalCellDofs,
                               itCellWiseStorageBegin);
     }
 
@@ -53,25 +54,36 @@ namespace dftefe
       const ValueType *data,
       const size_type  numComponents,
       const size_type *cellLocalIdsStartPtr,
-      const typename BasisManager<ValueType, memorySpace>::SizeTypeVector
-        &        numCellDofs,
+      // const typename BasisManager<ValueType, memorySpace>::SizeTypeVector
+      //   &        numCellDofs,
+      const size_type totalCellDofs,
       ValueType *itCellWiseStorageBegin)
     {
-      const size_type numCells           = numCellDofs.size();
-      size_type       cumulativeCellDofs = 0;
-      for (size_type iCell = 0; iCell < numCells; ++iCell)
+      // const size_type numCells           = numCellDofs.size();
+      // size_type       cumulativeCellDofs = 0;
+      // for (size_type iCell = 0; iCell < numCells; ++iCell)
+      //   {
+      //     const size_type cellDofs = *(numCellDofs.data() + iCell);
+      //     for (size_type iDof = 0; iDof < cellDofs; ++iDof)
+      //       {
+      //         const size_type localId =
+      //           *(cellLocalIdsStartPtr + cumulativeCellDofs + iDof);
+      //         auto srcPtr = data + localId * numComponents;
+      //         auto dstPtr = itCellWiseStorageBegin +
+      //                       (cumulativeCellDofs + iDof) * numComponents;
+      //         std::copy(srcPtr, srcPtr + numComponents, dstPtr);
+      //       }
+      //     cumulativeCellDofs += cellDofs;
+      //   }
+
+      for (size_type iCellDof = 0; iCellDof < totalCellDofs; ++iCellDof)
         {
-          const size_type cellDofs = *(numCellDofs.data() + iCell);
-          for (size_type iDof = 0; iDof < cellDofs; ++iDof)
-            {
-              const size_type localId =
-                *(cellLocalIdsStartPtr + cumulativeCellDofs + iDof);
-              auto srcPtr = data + localId * numComponents;
-              auto dstPtr = itCellWiseStorageBegin +
-                            (cumulativeCellDofs + iDof) * numComponents;
-              std::copy(srcPtr, srcPtr + numComponents, dstPtr);
-            }
-          cumulativeCellDofs += cellDofs;
+          const size_type localId =
+            *(cellLocalIdsStartPtr + iCellDof);
+          auto srcPtr = data + localId * numComponents;
+          auto dstPtr = itCellWiseStorageBegin +
+                        (iCellDof) * numComponents;
+          std::copy(srcPtr, srcPtr + numComponents, dstPtr);
         }
     }
 
@@ -82,29 +94,44 @@ namespace dftefe
         const ValueType *itCellWiseStorageBegin,
         const size_type  numComponents,
         const size_type *cellLocalIdsStartPtr,
-        const typename BasisManager<ValueType, memorySpace>::SizeTypeVector
-          &        numCellDofs,
+        // const typename BasisManager<ValueType, memorySpace>::SizeTypeVector
+        //   &        numCellDofs,
+        const size_type totalCellDofs,
         ValueType *data)
     {
-      const size_type numCells           = numCellDofs.size();
-      size_type       cumulativeCellDofs = 0;
-      for (size_type iCell = 0; iCell < numCells; ++iCell)
-        {
-          const size_type cellDofs = *(numCellDofs.data() + iCell);
-          for (size_type iDof = 0; iDof < cellDofs; ++iDof)
-            {
-              const size_type localId =
-                *(cellLocalIdsStartPtr + cumulativeCellDofs + iDof);
-              auto srcPtr = itCellWiseStorageBegin +
-                            (cumulativeCellDofs + iDof) * numComponents;
-              auto dstPtr = data + localId * numComponents;
+      // const size_type numCells           = numCellDofs.size();
+      // size_type       cumulativeCellDofs = 0;
+      // for (size_type iCell = 0; iCell < numCells; ++iCell)
+      //   {
+      //     const size_type cellDofs = *(numCellDofs.data() + iCell);
+      //     for (size_type iDof = 0; iDof < cellDofs; ++iDof)
+      //       {
+      //         const size_type localId =
+      //           *(cellLocalIdsStartPtr + cumulativeCellDofs + iDof);
+      //         auto srcPtr = itCellWiseStorageBegin +
+      //                       (cumulativeCellDofs + iDof) * numComponents;
+      //         auto dstPtr = data + localId * numComponents;
 
-              for (size_type iComp = 0; iComp < numComponents; iComp++)
-                {
-                  *(dstPtr + iComp) += *(srcPtr + iComp);
-                }
+      //         for (size_type iComp = 0; iComp < numComponents; iComp++)
+      //           {
+      //             *(dstPtr + iComp) += *(srcPtr + iComp);
+      //           }
+      //       }
+      //     cumulativeCellDofs += cellDofs;
+      //   }
+            
+      for (size_type iCellDof = 0; iCellDof < totalCellDofs; ++iCellDof)
+        {
+          const size_type localId =
+            *(cellLocalIdsStartPtr + iCellDof);
+          auto srcPtr = itCellWiseStorageBegin +
+                        (iCellDof) * numComponents;
+          auto dstPtr = data + localId * numComponents;
+
+          for (size_type iComp = 0; iComp < numComponents; iComp++)
+            {
+              *(dstPtr + iComp) += *(srcPtr + iComp);
             }
-          cumulativeCellDofs += cellDofs;
         }
     }
 
@@ -115,15 +142,16 @@ namespace dftefe
         const utils::MemoryStorage<ValueType, memorySpace> &cellWiseStorage,
         const size_type                                     numComponents,
         const size_type *cellLocalIdsStartPtr,
-        const typename BasisManager<ValueType, memorySpace>::SizeTypeVector
-          &        numCellDofs,
+        // const typename BasisManager<ValueType, memorySpace>::SizeTypeVector
+        //   &        numCellDofs,
+        const size_type totalCellDofs,
         ValueType *data)
     {
       auto itCellWiseStorageBegin = cellWiseStorage.begin();
       addCellWiseDataToFieldData(itCellWiseStorageBegin,
                                  numComponents,
                                  cellLocalIdsStartPtr,
-                                 numCellDofs,
+                                 totalCellDofs,
                                  data);
     }
 
@@ -135,6 +163,7 @@ namespace dftefe
         const ValueType *cellWiseBasisDataBegin,
         const size_type *cellLocalIdsStartPtr,
         const utils::MemoryStorage<size_type, memorySpace> &numCellDofs,
+        const size_type totalCellDofs,
         ValueType *                                         data)
     {
       const size_type numCells                 = numCellDofs.size();

@@ -179,7 +179,7 @@ namespace dftefe
               size_type diagIndex =
                 cumulativeDofsSquare + iDof * cellDofs + iDof;
               size_type localId = cellLocalIdsStartPtr[index];
-              atomicAdd(data + localId, cellWiseBasisDataBegin[diagIndex]);
+              dftefe::utils::atomicAddWrapper(data + localId, cellWiseBasisDataBegin[diagIndex]);
             }
         },
         const ValueType *cellWiseBasisDataBegin,
@@ -286,14 +286,9 @@ namespace dftefe
         const ValueType *data,
         const size_type  numComponents,
         const size_type *cellLocalIdsStartPtr,
-        const typename BasisManager<ValueType,
-                                    utils::MemorySpace::DEVICE>::SizeTypeVector
-          &        numCellDofs,
+        const size_type totalCellDofs,
         ValueType *itCellWiseStorageBegin)
     {
-      size_type totalCellDofs = 0;
-      for (size_type i = 0; i < numCellDofs.size(); ++i)
-        totalCellDofs += *(numCellDofs.data() + i);
       DFTEFE_LAUNCH_KERNEL(
         copyFieldToCellWiseDataDeviceKernel,
         (totalCellDofs * numComponents) / dftefe::utils::DEVICE_BLOCK_SIZE + 1,
@@ -313,14 +308,9 @@ namespace dftefe
         const ValueType *itCellWiseStorageBegin,
         const size_type  numComponents,
         const size_type *cellLocalIdsStartPtr,
-        const typename BasisManager<ValueType,
-                                    utils::MemorySpace::DEVICE>::SizeTypeVector
-          &        numCellDofs,
+        const size_type totalCellDofs,
         ValueType *data)
     {
-      size_type totalCellDofs = 0;
-      for (size_type i = 0; i < numCellDofs.size(); ++i)
-        totalCellDofs += *(numCellDofs.data() + i);
       DFTEFE_LAUNCH_KERNEL(
         addCellWiseDataToFieldDataDeviceKernel,
         (totalCellDofs * numComponents) / dftefe::utils::DEVICE_BLOCK_SIZE + 1,
@@ -341,9 +331,7 @@ namespace dftefe
         const ValueType *data,
         const size_type  numComponents,
         const size_type *cellLocalIdsStartPtr,
-        const typename BasisManager<ValueType,
-                                    utils::MemorySpace::DEVICE>::SizeTypeVector
-          &numCellDofs,
+        const size_type totalCellDofs,
         utils::MemoryStorage<ValueType, utils::MemorySpace::DEVICE>
           &cellWiseStorage)
     {
@@ -351,7 +339,7 @@ namespace dftefe
       copyFieldToCellWiseData(data,
                               numComponents,
                               cellLocalIdsStartPtr,
-                              numCellDofs,
+                              totalCellDofs,
                               itCellWiseStorageBegin);
     }
 
@@ -363,16 +351,14 @@ namespace dftefe
           &              cellWiseStorage,
         const size_type  numComponents,
         const size_type *cellLocalIdsStartPtr,
-        const typename BasisManager<ValueType,
-                                    utils::MemorySpace::DEVICE>::SizeTypeVector
-          &        numCellDofs,
+        const size_type totalCellDofs,
         ValueType *data)
     {
       auto itCellWiseStorageBegin = cellWiseStorage.begin();
       addCellWiseDataToFieldData(itCellWiseStorageBegin,
                                  numComponents,
                                  cellLocalIdsStartPtr,
-                                 numCellDofs,
+                                 totalCellDofs,
                                  data);
     }
 
@@ -385,11 +371,9 @@ namespace dftefe
         const size_type *cellLocalIdsStartPtr,
         const utils::MemoryStorage<size_type, utils::MemorySpace::DEVICE>
           &        numCellDofs,
+        const size_type totalCellDofs,
         ValueType *data)
     {
-      size_type totalCellDofs = 0;
-      for (size_type i = 0; i < numCellDofs.size(); ++i)
-        totalCellDofs += *(numCellDofs.data() + i);
       DFTEFE_LAUNCH_KERNEL(
         addCellWiseBasisDataToDiagonalDataDeviceKernel,
         (totalCellDofs) / dftefe::utils::DEVICE_BLOCK_SIZE + 1,

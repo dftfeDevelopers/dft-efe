@@ -79,15 +79,15 @@ namespace dftefe
 
         std::vector<char>      transA(numMats, 'N');
         std::vector<char>      transB(numMats, 'N');
-        std::vector<size_type> mSizesTmp(numMats, 0);
-        std::vector<size_type> nSizesTmp(numMats, 0);
-        std::vector<size_type> kSizesTmp(numMats, 0);
-        std::vector<size_type> ldaSizesTmp(numMats, 0);
-        std::vector<size_type> ldbSizesTmp(numMats, 0);
-        std::vector<size_type> ldcSizesTmp(numMats, 0);
-        std::vector<size_type> strideATmp(numMats, 0);
-        std::vector<size_type> strideBTmp(numMats, 0);
-        std::vector<size_type> strideCTmp(numMats, 0);
+        std::vector<size_type> mSizes(numMats, 0);
+        std::vector<size_type> nSizes(numMats, 0);
+        std::vector<size_type> kSizes(numMats, 0);
+        std::vector<size_type> ldaSizes(numMats, 0);
+        std::vector<size_type> ldbSizes(numMats, 0);
+        std::vector<size_type> ldcSizes(numMats, 0);
+        std::vector<size_type> strideA(numMats, 0);
+        std::vector<size_type> strideB(numMats, 0);
+        std::vector<size_type> strideC(numMats, 0);
 
         for (size_type iCell = cellRange.first; iCell < cellRange.second;
              ++iCell)
@@ -96,36 +96,17 @@ namespace dftefe
               {
                 size_type index =
                   (iCell - cellRange.first) * nQuadPointsInCell[iCell] + iQuad;
-                mSizesTmp[index]   = classicalDofsInCell;
-                nSizesTmp[index]   = dim;
-                kSizesTmp[index]   = dim;
-                ldaSizesTmp[index] = mSizesTmp[index];
-                ldbSizesTmp[index] = kSizesTmp[index];
-                ldcSizesTmp[index] = dofsInCell[iCell];
-                strideATmp[index]  = mSizesTmp[index] * kSizesTmp[index];
-                strideBTmp[index]  = kSizesTmp[index] * nSizesTmp[index];
-                strideCTmp[index]  = dofsInCell[iCell] * nSizesTmp[index];
+                mSizes[index]   = classicalDofsInCell;
+                nSizes[index]   = dim;
+                kSizes[index]   = dim;
+                ldaSizes[index] = mSizes[index];
+                ldbSizes[index] = kSizes[index];
+                ldcSizes[index] = dofsInCell[iCell];
+                strideA[index]  = mSizes[index] * kSizes[index];
+                strideB[index]  = kSizes[index] * nSizes[index];
+                strideC[index]  = dofsInCell[iCell] * nSizes[index];
               }
           }
-
-        utils::MemoryStorage<size_type, memorySpace> mSizes(numMats);
-        utils::MemoryStorage<size_type, memorySpace> nSizes(numMats);
-        utils::MemoryStorage<size_type, memorySpace> kSizes(numMats);
-        utils::MemoryStorage<size_type, memorySpace> ldaSizes(numMats);
-        utils::MemoryStorage<size_type, memorySpace> ldbSizes(numMats);
-        utils::MemoryStorage<size_type, memorySpace> ldcSizes(numMats);
-        utils::MemoryStorage<size_type, memorySpace> strideA(numMats);
-        utils::MemoryStorage<size_type, memorySpace> strideB(numMats);
-        utils::MemoryStorage<size_type, memorySpace> strideC(numMats);
-        memoryTransfer.copy(numMats, mSizes.data(), mSizesTmp.data());
-        memoryTransfer.copy(numMats, nSizes.data(), nSizesTmp.data());
-        memoryTransfer.copy(numMats, kSizes.data(), kSizesTmp.data());
-        memoryTransfer.copy(numMats, ldaSizes.data(), ldaSizesTmp.data());
-        memoryTransfer.copy(numMats, ldbSizes.data(), ldbSizesTmp.data());
-        memoryTransfer.copy(numMats, ldcSizes.data(), ldcSizesTmp.data());
-        memoryTransfer.copy(numMats, strideA.data(), strideATmp.data());
-        memoryTransfer.copy(numMats, strideB.data(), strideBTmp.data());
-        memoryTransfer.copy(numMats, strideC.data(), strideCTmp.data());
 
         ValueTypeBasisData alpha = 1.0;
         ValueTypeBasisData beta  = 0.0;

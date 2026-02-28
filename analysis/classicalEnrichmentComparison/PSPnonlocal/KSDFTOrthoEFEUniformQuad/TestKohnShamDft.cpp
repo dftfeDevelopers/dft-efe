@@ -18,6 +18,7 @@
 #include <utils/MemoryStorage.h>
 #include <vector>
 #include <cmath>
+#include <filesystem>
 #include <memory>
 #include <linearAlgebra/LinearSolverFunction.h>
 #include <electrostatics/PoissonLinearSolverFunctionFE.h>
@@ -325,19 +326,28 @@ int main(int argc, char** argv)
   rootCout<<" Entering test kohn sham dft ortho enrichment \n";
   rootCout << "Number of processes: "<<numProcs<<"\n";
 
-  char* dftefe_path = getenv("DFTEFE_PATH");
+  //char* dftefe_path = getenv("DFTEFE_PATH");
   std::string sourceDir;
   // if executes if a non null value is returned
   // otherwise else executes
-  if (dftefe_path != NULL) 
-  {
-    sourceDir = (std::string)dftefe_path + "/analysis/classicalEnrichmentComparison/";
+
+  try {
+      // Get the current working directory
+      std::filesystem::path currentPath = std::filesystem::current_path();
+      sourceDir = currentPath.string();
+  } catch (std::filesystem::filesystem_error const& ex) {
+      std::cout << "Error: " << ex.what() << std::endl;
   }
-  else
-  {
-    utils::throwException(false,
-                          "dftefe_path does not exist!");
-  }
+
+  // if (dftefe_path != NULL) 
+  // {
+  //   sourceDir = (std::string)dftefe_path + "/analysis/classicalEnrichmentComparison/";
+  // }
+  // else
+  // {
+  //   utils::throwException(false,
+  //                         "dftefe_path does not exist!");
+  // }
   std::string paramDataFile = argv[1];
   std::string parameterInputFileName = sourceDir + paramDataFile;
 

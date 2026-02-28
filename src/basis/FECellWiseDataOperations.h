@@ -47,8 +47,9 @@ namespace dftefe
         const ValueType *data,
         const size_type  numComponents,
         const size_type *cellLocalIdsStartPtr,
-        const typename BasisManager<ValueType, memorySpace>::SizeTypeVector
-          &                                                   numCellDofs,
+        // const typename BasisManager<ValueType, memorySpace>::SizeTypeVector
+        //   &                                                   numCellDofs,
+        const size_type totalCellDofs,
         dftefe::utils::MemoryStorage<ValueType, memorySpace> &cellWiseStorage);
 
       static void
@@ -56,8 +57,9 @@ namespace dftefe
         const ValueType *data,
         const size_type  numComponents,
         const size_type *cellLocalIdsStartPtr,
-        const typename BasisManager<ValueType, memorySpace>::SizeTypeVector
-          &        numCellDofs,
+        // const typename BasisManager<ValueType, memorySpace>::SizeTypeVector
+        //   &        numCellDofs,
+        const size_type totalCellDofs,
         ValueType *itCellWiseStorageBegin);
 
       // TODO: Add numStrideCellWiseStorageDofs (max of numCellDofs over all
@@ -68,8 +70,9 @@ namespace dftefe
           &              cellWiseStorage,
         const size_type  numComponents,
         const size_type *cellLocalIdsStartPtr,
-        const typename BasisManager<ValueType, memorySpace>::SizeTypeVector
-          &        numCellDofs,
+        // const typename BasisManager<ValueType, memorySpace>::SizeTypeVector
+        //   &        numCellDofs,
+        const size_type totalCellDofs,
         ValueType *data);
 
       static void
@@ -77,8 +80,9 @@ namespace dftefe
         const ValueType *itCellWiseStorageBegin,
         const size_type  numComponents,
         const size_type *cellLocalIdsStartPtr,
-        const typename BasisManager<ValueType, memorySpace>::SizeTypeVector
-          &        numCellDofs,
+        // const typename BasisManager<ValueType, memorySpace>::SizeTypeVector
+        //   &        numCellDofs,
+        const size_type totalCellDofs,
         ValueType *data);
 
       static void
@@ -86,6 +90,7 @@ namespace dftefe
         const ValueType *cellWiseBasisData,
         const size_type *cellLocalIdsStartPtr,
         const utils::MemoryStorage<size_type, memorySpace> &numCellDofs,
+        const size_type totalCellDofs,
         ValueType *                                         data);
 
       static void
@@ -114,9 +119,7 @@ namespace dftefe
         const ValueType *data,
         const size_type  numComponents,
         const size_type *cellLocalIdsStartPtr,
-        const typename BasisManager<
-          ValueType,
-          dftefe::utils::MemorySpace::DEVICE>::SizeTypeVector &numCellDofs,
+        const size_type totalCellDofs,
         dftefe::utils::MemoryStorage<ValueType,
                                      dftefe::utils::MemorySpace::DEVICE>
           &cellWiseStorage);
@@ -126,9 +129,7 @@ namespace dftefe
         const ValueType *data,
         const size_type  numComponents,
         const size_type *cellLocalIdsStartPtr,
-        const typename BasisManager<
-          ValueType,
-          dftefe::utils::MemorySpace::DEVICE>::SizeTypeVector &numCellDofs,
+        const size_type totalCellDofs,
         ValueType *itCellWiseStorageBegin);
 
       static void
@@ -136,9 +137,7 @@ namespace dftefe
         const ValueType *itCellWiseStorageBegin,
         const size_type  numComponents,
         const size_type *cellLocalIdsStartPtr,
-        const typename BasisManager<
-          ValueType,
-          dftefe::utils::MemorySpace::DEVICE>::SizeTypeVector &numCellDofs,
+        const size_type totalCellDofs,
         ValueType *                                            data);
 
       // TODO: Add numStrideCellWiseStorageDofs (max of numCellDofs over all
@@ -150,9 +149,7 @@ namespace dftefe
           &              cellWiseStorage,
         const size_type  numComponents,
         const size_type *cellLocalIdsStartPtr,
-        const typename BasisManager<
-          ValueType,
-          dftefe::utils::MemorySpace::DEVICE>::SizeTypeVector &numCellDofs,
+        const size_type totalCellDofs,
         ValueType *                                            data);
 
       static void
@@ -162,6 +159,7 @@ namespace dftefe
         const utils::MemoryStorage<size_type,
                                    dftefe::utils::MemorySpace::DEVICE>
           &        numCellDofs,
+        const size_type totalCellDofs,
         ValueType *data);
 
       static void

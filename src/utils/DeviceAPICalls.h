@@ -172,6 +172,7 @@ namespace dftefe
                           deviceEvent_t & event,
                           unsigned int    flags = 0);
 
+    void printPointerLocation(const void* ptr);
   } // namespace utils
 } // namespace dftefe
 

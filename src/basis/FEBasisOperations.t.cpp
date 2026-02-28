@@ -261,42 +261,23 @@ namespace dftefe
                   linearAlgebra::blasLapack::ScalarOp::Identity;
                 linearAlgebra::blasLapack::ScalarOp scalarOpB =
                   linearAlgebra::blasLapack::ScalarOp::Identity;
-                std::vector<size_type> mTmp(numCellsInBlock, 0);
-                std::vector<size_type> nTmp(numCellsInBlock, 0);
-                std::vector<size_type> kTmp(numCellsInBlock, 0);
-                std::vector<size_type> stATmp(numCellsInBlock, 0);
-                std::vector<size_type> stBTmp(numCellsInBlock, 0);
-                std::vector<size_type> stCTmp(numCellsInBlock, 0);
+                std::vector<size_type> m(numCellsInBlock, 0);
+                std::vector<size_type> n(numCellsInBlock, 0);
+                std::vector<size_type> k(numCellsInBlock, 0);
+                std::vector<size_type> stA(numCellsInBlock, 0);
+                std::vector<size_type> stB(numCellsInBlock, 0);
+                std::vector<size_type> stC(numCellsInBlock, 0);
 
                 for (size_type iCell = 0; iCell < numCellsInBlock; iCell++)
                   {
-                    mTmp[iCell]   = 1; // only for fxJxW numComponents = 1
-                    nTmp[iCell]   = numCellsInBlockDofs[iCell];
-                    kTmp[iCell]   = numCellsInBlockQuad[iCell];
-                    stATmp[iCell] = mTmp[iCell] * kTmp[iCell];
+                    m[iCell]   = 1; // only for fxJxW numComponents = 1
+                    n[iCell]   = numCellsInBlockDofs[iCell];
+                    k[iCell]   = numCellsInBlockQuad[iCell];
+                    stA[iCell] = m[iCell] * k[iCell];
                     if (!zeroStrideBasisVal)
-                      stBTmp[iCell] = nTmp[iCell] * kTmp[iCell];
-                    stCTmp[iCell] = mTmp[iCell] * nTmp[iCell] * kTmp[iCell];
+                      stB[iCell] = n[iCell] * k[iCell];
+                    stC[iCell] = m[iCell] * n[iCell] * k[iCell];
                   }
-
-                utils::MemoryStorage<size_type, memorySpace> mSize(
-                  numCellsInBlock);
-                utils::MemoryStorage<size_type, memorySpace> nSize(
-                  numCellsInBlock);
-                utils::MemoryStorage<size_type, memorySpace> kSize(
-                  numCellsInBlock);
-                utils::MemoryStorage<size_type, memorySpace> stA(
-                  numCellsInBlock);
-                utils::MemoryStorage<size_type, memorySpace> stB(
-                  numCellsInBlock);
-                utils::MemoryStorage<size_type, memorySpace> stC(
-                  numCellsInBlock);
-                memoryTransfer.copy(numCellsInBlock, mSize.data(), mTmp.data());
-                memoryTransfer.copy(numCellsInBlock, nSize.data(), nTmp.data());
-                memoryTransfer.copy(numCellsInBlock, kSize.data(), kTmp.data());
-                memoryTransfer.copy(numCellsInBlock, stA.data(), stATmp.data());
-                memoryTransfer.copy(numCellsInBlock, stB.data(), stBTmp.data());
-                memoryTransfer.copy(numCellsInBlock, stC.data(), stCTmp.data());
 
                 if (!zeroStrideBasisVal || cellStartId == 0)
                   feBasisDataStorage->getBasisDataInCellRange(
@@ -313,9 +294,9 @@ namespace dftefe
                                stA.data(),
                                stB.data(),
                                stC.data(),
-                               mSize.data(),
-                               nSize.data(),
-                               kSize.data(),
+                               m.data(),
+                               n.data(),
+                               k.data(),
                                fxJxW.data() + quadCellsInBlockOffSet,
                                basisDataInCellRange.data(),
                                fxJxWxNBlock.data(),
@@ -324,75 +305,29 @@ namespace dftefe
                 /*--------- Do the integration -----------------*/
                 std::vector<char>      transA(numCellsInBlock, 'N');
                 std::vector<char>      transB(numCellsInBlock, 'C');
-                std::vector<size_type> mSizesTmp(numCellsInBlock, 0);
-                std::vector<size_type> nSizesTmp(numCellsInBlock, 0);
-                std::vector<size_type> kSizesTmp(numCellsInBlock, 0);
-                std::vector<size_type> ldaSizesTmp(numCellsInBlock, 0);
-                std::vector<size_type> ldbSizesTmp(numCellsInBlock, 0);
-                std::vector<size_type> ldcSizesTmp(numCellsInBlock, 0);
-                std::vector<size_type> strideATmp(numCellsInBlock, 0);
-                std::vector<size_type> strideBTmp(numCellsInBlock, 0);
-                std::vector<size_type> strideCTmp(numCellsInBlock, 0);
+                std::vector<size_type> mSizes(numCellsInBlock, 0);
+                std::vector<size_type> nSizes(numCellsInBlock, 0);
+                std::vector<size_type> kSizes(numCellsInBlock, 0);
+                std::vector<size_type> ldaSizes(numCellsInBlock, 0);
+                std::vector<size_type> ldbSizes(numCellsInBlock, 0);
+                std::vector<size_type> ldcSizes(numCellsInBlock, 0);
+                std::vector<size_type> strideA(numCellsInBlock, 0);
+                std::vector<size_type> strideB(numCellsInBlock, 0);
+                std::vector<size_type> strideC(numCellsInBlock, 0);
 
                 for (size_type iCell = 0; iCell < numCellsInBlock; ++iCell)
                   {
-                    mSizesTmp[iCell]   = numCellsInBlockDofs[iCell];
-                    nSizesTmp[iCell]   = numCellsInBlockDofs[iCell];
-                    kSizesTmp[iCell]   = numCellsInBlockQuad[iCell];
-                    ldaSizesTmp[iCell] = mSizesTmp[iCell];
-                    ldbSizesTmp[iCell] = nSizesTmp[iCell];
-                    ldcSizesTmp[iCell] = mSizesTmp[iCell];
+                    mSizes[iCell]   = numCellsInBlockDofs[iCell];
+                    nSizes[iCell]   = numCellsInBlockDofs[iCell];
+                    kSizes[iCell]   = numCellsInBlockQuad[iCell];
+                    ldaSizes[iCell] = mSizes[iCell];
+                    ldbSizes[iCell] = nSizes[iCell];
+                    ldcSizes[iCell] = mSizes[iCell];
                     if (!zeroStrideBasisVal)
-                      strideATmp[iCell] = mSizesTmp[iCell] * kSizesTmp[iCell];
-                    strideBTmp[iCell] = kSizesTmp[iCell] * nSizesTmp[iCell];
-                    strideCTmp[iCell] = mSizesTmp[iCell] * nSizesTmp[iCell];
+                      strideA[iCell] = mSizes[iCell] * kSizes[iCell];
+                    strideB[iCell] = kSizes[iCell] * nSizes[iCell];
+                    strideC[iCell] = mSizes[iCell] * nSizes[iCell];
                   }
-
-                utils::MemoryStorage<size_type, memorySpace> mSizes(
-                  numCellsInBlock);
-                utils::MemoryStorage<size_type, memorySpace> nSizes(
-                  numCellsInBlock);
-                utils::MemoryStorage<size_type, memorySpace> kSizes(
-                  numCellsInBlock);
-                utils::MemoryStorage<size_type, memorySpace> ldaSizes(
-                  numCellsInBlock);
-                utils::MemoryStorage<size_type, memorySpace> ldbSizes(
-                  numCellsInBlock);
-                utils::MemoryStorage<size_type, memorySpace> ldcSizes(
-                  numCellsInBlock);
-                utils::MemoryStorage<size_type, memorySpace> strideA(
-                  numCellsInBlock);
-                utils::MemoryStorage<size_type, memorySpace> strideB(
-                  numCellsInBlock);
-                utils::MemoryStorage<size_type, memorySpace> strideC(
-                  numCellsInBlock);
-                memoryTransfer.copy(numCellsInBlock,
-                                    mSizes.data(),
-                                    mSizesTmp.data());
-                memoryTransfer.copy(numCellsInBlock,
-                                    nSizes.data(),
-                                    nSizesTmp.data());
-                memoryTransfer.copy(numCellsInBlock,
-                                    kSizes.data(),
-                                    kSizesTmp.data());
-                memoryTransfer.copy(numCellsInBlock,
-                                    ldaSizes.data(),
-                                    ldaSizesTmp.data());
-                memoryTransfer.copy(numCellsInBlock,
-                                    ldbSizes.data(),
-                                    ldbSizesTmp.data());
-                memoryTransfer.copy(numCellsInBlock,
-                                    ldcSizes.data(),
-                                    ldcSizesTmp.data());
-                memoryTransfer.copy(numCellsInBlock,
-                                    strideA.data(),
-                                    strideATmp.data());
-                memoryTransfer.copy(numCellsInBlock,
-                                    strideB.data(),
-                                    strideBTmp.data());
-                memoryTransfer.copy(numCellsInBlock,
-                                    strideC.data(),
-                                    strideCTmp.data());
 
                 ValueTypeUnion alpha = 1.0;
                 ValueTypeUnion beta  = 0.0;
@@ -567,41 +502,22 @@ namespace dftefe
                   linearAlgebra::blasLapack::ScalarOp::Identity;
                 linearAlgebra::blasLapack::ScalarOp scalarOpB =
                   linearAlgebra::blasLapack::ScalarOp::Identity;
-                std::vector<size_type> mTmp(numCellsInBlock, 0);
-                std::vector<size_type> nTmp(numCellsInBlock, 0);
-                std::vector<size_type> kTmp(numCellsInBlock, 0);
-                std::vector<size_type> stATmp(numCellsInBlock, 0);
-                std::vector<size_type> stBTmp(numCellsInBlock, 0);
-                std::vector<size_type> stCTmp(numCellsInBlock, 0);
+                std::vector<size_type> m(numCellsInBlock, 0);
+                std::vector<size_type> n(numCellsInBlock, 0);
+                std::vector<size_type> k(numCellsInBlock, 0);
+                std::vector<size_type> stA(numCellsInBlock, 0);
+                std::vector<size_type> stB(numCellsInBlock, 0);
+                std::vector<size_type> stC(numCellsInBlock, 0);
 
                 for (size_type iCell = 0; iCell < numCellsInBlock; iCell++)
                   {
-                    mTmp[iCell]   = 1;
-                    nTmp[iCell]   = numCellsInBlockDofs[iCell] * dim;
-                    kTmp[iCell]   = numCellsInBlockQuad[iCell];
-                    stATmp[iCell] = mTmp[iCell] * kTmp[iCell];
-                    stBTmp[iCell] = nTmp[iCell] * kTmp[iCell];
-                    stCTmp[iCell] = mTmp[iCell] * nTmp[iCell] * kTmp[iCell];
+                    m[iCell]   = 1;
+                    n[iCell]   = numCellsInBlockDofs[iCell] * dim;
+                    k[iCell]   = numCellsInBlockQuad[iCell];
+                    stA[iCell] = m[iCell] * k[iCell];
+                    stB[iCell] = n[iCell] * k[iCell];
+                    stC[iCell] = m[iCell] * n[iCell] * k[iCell];
                   }
-
-                utils::MemoryStorage<size_type, memorySpace> mSize(
-                  numCellsInBlock);
-                utils::MemoryStorage<size_type, memorySpace> nSize(
-                  numCellsInBlock);
-                utils::MemoryStorage<size_type, memorySpace> kSize(
-                  numCellsInBlock);
-                utils::MemoryStorage<size_type, memorySpace> stA(
-                  numCellsInBlock);
-                utils::MemoryStorage<size_type, memorySpace> stB(
-                  numCellsInBlock);
-                utils::MemoryStorage<size_type, memorySpace> stC(
-                  numCellsInBlock);
-                memoryTransfer.copy(numCellsInBlock, mSize.data(), mTmp.data());
-                memoryTransfer.copy(numCellsInBlock, nSize.data(), nTmp.data());
-                memoryTransfer.copy(numCellsInBlock, kSize.data(), kTmp.data());
-                memoryTransfer.copy(numCellsInBlock, stA.data(), stATmp.data());
-                memoryTransfer.copy(numCellsInBlock, stB.data(), stBTmp.data());
-                memoryTransfer.copy(numCellsInBlock, stC.data(), stCTmp.data());
 
                 linearAlgebra::blasLapack::scaleStridedVarBatched<
                   ValueTypeBasisData,
@@ -614,9 +530,9 @@ namespace dftefe
                   stA.data(),
                   stB.data(),
                   stC.data(),
-                  mSize.data(),
-                  nSize.data(),
-                  kSize.data(),
+                  m.data(),
+                  n.data(),
+                  k.data(),
                   jxwStorage.data() +
                     quadRuleContainer->getCellQuadStartId(cellStartId),
                   basisGradientDataInCellRange.data(),
@@ -650,75 +566,29 @@ namespace dftefe
       */
                 std::vector<char>      transA(numCellsInBlock, 'N');
                 std::vector<char>      transB(numCellsInBlock, 'C');
-                std::vector<size_type> mSizesTmp(numCellsInBlock, 0);
-                std::vector<size_type> nSizesTmp(numCellsInBlock, 0);
-                std::vector<size_type> kSizesTmp(numCellsInBlock, 0);
-                std::vector<size_type> ldaSizesTmp(numCellsInBlock, 0);
-                std::vector<size_type> ldbSizesTmp(numCellsInBlock, 0);
-                std::vector<size_type> ldcSizesTmp(numCellsInBlock, 0);
-                std::vector<size_type> strideATmp(numCellsInBlock, 0);
-                std::vector<size_type> strideBTmp(numCellsInBlock, 0);
-                std::vector<size_type> strideCTmp(numCellsInBlock, 0);
+                std::vector<size_type> mSizes(numCellsInBlock, 0);
+                std::vector<size_type> nSizes(numCellsInBlock, 0);
+                std::vector<size_type> kSizes(numCellsInBlock, 0);
+                std::vector<size_type> ldaSizes(numCellsInBlock, 0);
+                std::vector<size_type> ldbSizes(numCellsInBlock, 0);
+                std::vector<size_type> ldcSizes(numCellsInBlock, 0);
+                std::vector<size_type> strideA(numCellsInBlock, 0);
+                std::vector<size_type> strideB(numCellsInBlock, 0);
+                std::vector<size_type> strideC(numCellsInBlock, 0);
 
                 for (size_type iCell = 0; iCell < numCellsInBlock; iCell++)
                   {
                     size_type index    = iCell;
-                    mSizesTmp[index]   = numCellsInBlockDofs[iCell];
-                    nSizesTmp[index]   = numCellsInBlockDofs[iCell];
-                    kSizesTmp[index]   = numCellsInBlockQuad[iCell] * dim;
-                    ldaSizesTmp[index] = mSizesTmp[index];
-                    ldbSizesTmp[index] = nSizesTmp[index];
-                    ldcSizesTmp[index] = mSizesTmp[index];
-                    strideATmp[index]  = mSizesTmp[index] * kSizesTmp[index];
-                    strideBTmp[index]  = kSizesTmp[index] * nSizesTmp[index];
-                    strideCTmp[index]  = mSizesTmp[index] * nSizesTmp[index];
+                    mSizes[index]   = numCellsInBlockDofs[iCell];
+                    nSizes[index]   = numCellsInBlockDofs[iCell];
+                    kSizes[index]   = numCellsInBlockQuad[iCell] * dim;
+                    ldaSizes[index] = mSizes[index];
+                    ldbSizes[index] = nSizes[index];
+                    ldcSizes[index] = mSizes[index];
+                    strideA[index]  = mSizes[index] * kSizes[index];
+                    strideB[index]  = kSizes[index] * nSizes[index];
+                    strideC[index]  = mSizes[index] * nSizes[index];
                   }
-
-                utils::MemoryStorage<size_type, memorySpace> mSizes(
-                  numCellsInBlock);
-                utils::MemoryStorage<size_type, memorySpace> nSizes(
-                  numCellsInBlock);
-                utils::MemoryStorage<size_type, memorySpace> kSizes(
-                  numCellsInBlock);
-                utils::MemoryStorage<size_type, memorySpace> ldaSizes(
-                  numCellsInBlock);
-                utils::MemoryStorage<size_type, memorySpace> ldbSizes(
-                  numCellsInBlock);
-                utils::MemoryStorage<size_type, memorySpace> ldcSizes(
-                  numCellsInBlock);
-                utils::MemoryStorage<size_type, memorySpace> strideA(
-                  numCellsInBlock);
-                utils::MemoryStorage<size_type, memorySpace> strideB(
-                  numCellsInBlock);
-                utils::MemoryStorage<size_type, memorySpace> strideC(
-                  numCellsInBlock);
-                memoryTransfer.copy(numCellsInBlock,
-                                    mSizes.data(),
-                                    mSizesTmp.data());
-                memoryTransfer.copy(numCellsInBlock,
-                                    nSizes.data(),
-                                    nSizesTmp.data());
-                memoryTransfer.copy(numCellsInBlock,
-                                    kSizes.data(),
-                                    kSizesTmp.data());
-                memoryTransfer.copy(numCellsInBlock,
-                                    ldaSizes.data(),
-                                    ldaSizesTmp.data());
-                memoryTransfer.copy(numCellsInBlock,
-                                    ldbSizes.data(),
-                                    ldbSizesTmp.data());
-                memoryTransfer.copy(numCellsInBlock,
-                                    ldcSizes.data(),
-                                    ldcSizesTmp.data());
-                memoryTransfer.copy(numCellsInBlock,
-                                    strideA.data(),
-                                    strideATmp.data());
-                memoryTransfer.copy(numCellsInBlock,
-                                    strideB.data(),
-                                    strideBTmp.data());
-                memoryTransfer.copy(numCellsInBlock,
-                                    strideC.data(),
-                                    strideCTmp.data());
 
                 ValueTypeBasisData alpha = 1.0;
                 ValueTypeBasisData beta  = 0.0;
@@ -778,55 +648,18 @@ namespace dftefe
 
                 // for (size_type iCell = 0; iCell < numCellsInBlock; iCell++)
                 //   {
-                //     mSizesTmp[iCell] = 1;
-                //     nSizesTmp[iCell] =
+                //     mSizes[iCell] = 1;
+                //     nSizes[iCell] =
                 //       numCellsInBlockDofs[iCell] *
                 //       numCellsInBlockDofs[iCell];
-                //     kSizesTmp[iCell]   = dim;
-                //     ldaSizesTmp[iCell] = kSizesTmp[iCell];
-                //     ldbSizesTmp[iCell] = nSizesTmp[iCell];
-                //     ldcSizesTmp[iCell] = mSizesTmp[iCell];
-                //     strideATmp[iCell]  = 0;
-                //     strideBTmp[iCell]  = kSizesTmp[iCell] * nSizesTmp[iCell];
-                //     strideCTmp[iCell]  = mSizesTmp[iCell] * nSizesTmp[iCell];
+                //     kSizes[iCell]   = dim;
+                //     ldaSizes[iCell] = kSizes[iCell];
+                //     ldbSizes[iCell] = nSizes[iCell];
+                //     ldcSizes[iCell] = mSizes[iCell];
+                //     strideA[iCell]  = 0;
+                //     strideB[iCell]  = kSizes[iCell] * nSizes[iCell];
+                //     strideC[iCell]  = mSizes[iCell] * nSizes[iCell];
                 //   }
-
-                // mSizes.resize(numCellsInBlock);
-                // nSizes.resize(numCellsInBlock);
-                // kSizes.resize(numCellsInBlock);
-                // ldaSizes.resize(numCellsInBlock);
-                // ldbSizes.resize(numCellsInBlock);
-                // ldcSizes.resize(numCellsInBlock);
-                // strideA.resize(numCellsInBlock);
-                // strideB.resize(numCellsInBlock);
-                // strideC.resize(numCellsInBlock);
-                // memoryTransfer.copy(numCellsInBlock,
-                //                     mSizes.data(),
-                //                     mSizesTmp.data());
-                // memoryTransfer.copy(numCellsInBlock,
-                //                     nSizes.data(),
-                //                     nSizesTmp.data());
-                // memoryTransfer.copy(numCellsInBlock,
-                //                     kSizes.data(),
-                //                     kSizesTmp.data());
-                // memoryTransfer.copy(numCellsInBlock,
-                //                     ldaSizes.data(),
-                //                     ldaSizesTmp.data());
-                // memoryTransfer.copy(numCellsInBlock,
-                //                     ldbSizes.data(),
-                //                     ldbSizesTmp.data());
-                // memoryTransfer.copy(numCellsInBlock,
-                //                     ldcSizes.data(),
-                //                     ldcSizesTmp.data());
-                // memoryTransfer.copy(numCellsInBlock,
-                //                     strideA.data(),
-                //                     strideATmp.data());
-                // memoryTransfer.copy(numCellsInBlock,
-                //                     strideB.data(),
-                //                     strideBTmp.data());
-                // memoryTransfer.copy(numCellsInBlock,
-                //                     strideC.data(),
-                //                     strideCTmp.data());
 
                 // ValueTypeBasisData *C =
                 //   cellWiseFEData.begin() + gradNigradNjStartOffset;
@@ -1152,79 +985,46 @@ namespace dftefe
           utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>
             memoryTransfer;
 
-          utils::MemoryStorage<size_type, memorySpace>
-            numCellsInBlockDofsMemSpace(numCellsInBlock);
-          memoryTransfer.copy(numCellsInBlock,
-                              numCellsInBlockDofsMemSpace.data(),
-                              numCellsInBlockDofs.data());
+          // utils::MemoryStorage<size_type, memorySpace>
+          //   numCellsInBlockDofsMemSpace(numCellsInBlock);
+          // memoryTransfer.copy(numCellsInBlock,
+          //                     numCellsInBlockDofsMemSpace.data(),
+          //                     numCellsInBlockDofs.data());
           FECellWiseDataOperations<ValueTypeBasisCoeff, memorySpace>::
             copyFieldToCellWiseData(vectorData.begin(),
                                     numComponents,
                                     itCellLocalIdsBegin + cellLocalIdsOffset,
-                                    numCellsInBlockDofsMemSpace,
+                                    //numCellsInBlockDofsMemSpace,
+                                    numCumulativeDofsCellsInBlock,
                                     fieldCellValues);
 
           std::vector<char>      transA(numCellsInBlock, 'N');
           std::vector<char>      transB(numCellsInBlock, 'N');
-          std::vector<size_type> mSizesTmp(numCellsInBlock, 0);
-          std::vector<size_type> nSizesTmp(numCellsInBlock, 0);
-          std::vector<size_type> kSizesTmp(numCellsInBlock, 0);
-          std::vector<size_type> ldaSizesTmp(numCellsInBlock, 0);
-          std::vector<size_type> ldbSizesTmp(numCellsInBlock, 0);
-          std::vector<size_type> ldcSizesTmp(numCellsInBlock, 0);
-          std::vector<size_type> strideATmp(numCellsInBlock, 0);
-          std::vector<size_type> strideBTmp(numCellsInBlock, 0);
-          std::vector<size_type> strideCTmp(numCellsInBlock, 0);
+          std::vector<size_type> mSizes(numCellsInBlock, 0);
+          std::vector<size_type> nSizes(numCellsInBlock, 0);
+          std::vector<size_type> kSizes(numCellsInBlock, 0);
+          std::vector<size_type> ldaSizes(numCellsInBlock, 0);
+          std::vector<size_type> ldbSizes(numCellsInBlock, 0);
+          std::vector<size_type> ldcSizes(numCellsInBlock, 0);
+          std::vector<size_type> strideA(numCellsInBlock, 0);
+          std::vector<size_type> strideB(numCellsInBlock, 0);
+          std::vector<size_type> strideC(numCellsInBlock, 0);
 
           for (size_type iCell = 0; iCell < numCellsInBlock; ++iCell)
             {
               const size_type cellId = cellStartId + iCell;
-              mSizesTmp[iCell]       = numComponents;
-              nSizesTmp[iCell] =
+              mSizes[iCell]       = numComponents;
+              nSizes[iCell] =
                 quadValuesContainer.nCellQuadraturePoints(cellId);
-              kSizesTmp[iCell]   = numCellsInBlockDofs[iCell];
-              ldaSizesTmp[iCell] = mSizesTmp[iCell];
-              ldbSizesTmp[iCell] = kSizesTmp[iCell];
-              ldcSizesTmp[iCell] = mSizesTmp[iCell];
+              kSizes[iCell]   = numCellsInBlockDofs[iCell];
+              ldaSizes[iCell] = mSizes[iCell];
+              ldbSizes[iCell] = kSizes[iCell];
+              ldcSizes[iCell] = mSizes[iCell];
               if (!zeroStrideB)
-                strideBTmp[iCell] = kSizesTmp[iCell] * nSizesTmp[iCell];
-              strideCTmp[iCell] = mSizesTmp[iCell] * nSizesTmp[iCell];
-              strideATmp[iCell] = mSizesTmp[iCell] * kSizesTmp[iCell];
+                strideB[iCell] = kSizes[iCell] * nSizes[iCell];
+              strideC[iCell] = mSizes[iCell] * nSizes[iCell];
+              strideA[iCell] = mSizes[iCell] * kSizes[iCell];
             }
-
-          utils::MemoryStorage<size_type, memorySpace> mSizes(numCellsInBlock);
-          utils::MemoryStorage<size_type, memorySpace> nSizes(numCellsInBlock);
-          utils::MemoryStorage<size_type, memorySpace> kSizes(numCellsInBlock);
-          utils::MemoryStorage<size_type, memorySpace> ldaSizes(
-            numCellsInBlock);
-          utils::MemoryStorage<size_type, memorySpace> ldbSizes(
-            numCellsInBlock);
-          utils::MemoryStorage<size_type, memorySpace> ldcSizes(
-            numCellsInBlock);
-          utils::MemoryStorage<size_type, memorySpace> strideA(numCellsInBlock);
-          utils::MemoryStorage<size_type, memorySpace> strideB(numCellsInBlock);
-          utils::MemoryStorage<size_type, memorySpace> strideC(numCellsInBlock);
-          memoryTransfer.copy(numCellsInBlock, mSizes.data(), mSizesTmp.data());
-          memoryTransfer.copy(numCellsInBlock, nSizes.data(), nSizesTmp.data());
-          memoryTransfer.copy(numCellsInBlock, kSizes.data(), kSizesTmp.data());
-          memoryTransfer.copy(numCellsInBlock,
-                              ldaSizes.data(),
-                              ldaSizesTmp.data());
-          memoryTransfer.copy(numCellsInBlock,
-                              ldbSizes.data(),
-                              ldbSizesTmp.data());
-          memoryTransfer.copy(numCellsInBlock,
-                              ldcSizes.data(),
-                              ldcSizesTmp.data());
-          memoryTransfer.copy(numCellsInBlock,
-                              strideA.data(),
-                              strideATmp.data());
-          memoryTransfer.copy(numCellsInBlock,
-                              strideB.data(),
-                              strideBTmp.data());
-          memoryTransfer.copy(numCellsInBlock,
-                              strideC.data(),
-                              strideCTmp.data());
 
           ValueTypeUnion                               alpha = 1.0;
           ValueTypeUnion                               beta  = 0.0;
@@ -1268,9 +1068,9 @@ namespace dftefe
             {
               // if (!zeroStrideB)
               //   {
-              //     AStartOffset += mSizesTmp[iCell] * kSizesTmp[iCell];
+              //     AStartOffset += mSizes[iCell] * kSizes[iCell];
               //   }
-              CStartOffset += mSizesTmp[iCell] * nSizesTmp[iCell];
+              CStartOffset += mSizes[iCell] * nSizes[iCell];
               cellLocalIdsOffset += numCellDofs[cellStartId + iCell];
             }
         }
@@ -1433,79 +1233,46 @@ namespace dftefe
           utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>
             memoryTransfer;
 
-          utils::MemoryStorage<size_type, memorySpace>
-            numCellsInBlockDofsMemSpace(numCellsInBlock);
-          memoryTransfer.copy(numCellsInBlock,
-                              numCellsInBlockDofsMemSpace.data(),
-                              numCellsInBlockDofs.data());
+          // utils::MemoryStorage<size_type, memorySpace>
+          //   numCellsInBlockDofsMemSpace(numCellsInBlock);
+          // memoryTransfer.copy(numCellsInBlock,
+          //                     numCellsInBlockDofsMemSpace.data(),
+          //                     numCellsInBlockDofs.data());
           FECellWiseDataOperations<ValueTypeBasisCoeff, memorySpace>::
             copyFieldToCellWiseData(vectorData.begin(),
                                     numComponents,
                                     itCellLocalIdsBegin + cellLocalIdsOffset,
-                                    numCellsInBlockDofsMemSpace,
+                                    //numCellsInBlockDofsMemSpace,
+                                    numCumulativeDofsCellsInBlock,
                                     fieldCellValues);
 
           std::vector<char>      transA(numCellsInBlock, 'N');
           std::vector<char>      transB(numCellsInBlock, 'N');
-          std::vector<size_type> mSizesTmp(numCellsInBlock, 0);
-          std::vector<size_type> nSizesTmp(numCellsInBlock, 0);
-          std::vector<size_type> kSizesTmp(numCellsInBlock, 0);
-          std::vector<size_type> ldaSizesTmp(numCellsInBlock, 0);
-          std::vector<size_type> ldbSizesTmp(numCellsInBlock, 0);
-          std::vector<size_type> ldcSizesTmp(numCellsInBlock, 0);
-          std::vector<size_type> strideATmp(numCellsInBlock, 0);
-          std::vector<size_type> strideBTmp(numCellsInBlock, 0);
-          std::vector<size_type> strideCTmp(numCellsInBlock, 0);
+          std::vector<size_type> mSizes(numCellsInBlock, 0);
+          std::vector<size_type> nSizes(numCellsInBlock, 0);
+          std::vector<size_type> kSizes(numCellsInBlock, 0);
+          std::vector<size_type> ldaSizes(numCellsInBlock, 0);
+          std::vector<size_type> ldbSizes(numCellsInBlock, 0);
+          std::vector<size_type> ldcSizes(numCellsInBlock, 0);
+          std::vector<size_type> strideA(numCellsInBlock, 0);
+          std::vector<size_type> strideB(numCellsInBlock, 0);
+          std::vector<size_type> strideC(numCellsInBlock, 0);
 
           for (size_type iCell = 0; iCell < numCellsInBlock; ++iCell)
             {
               const size_type cellId = cellStartId + iCell;
               size_type       index  = iCell;
-              mSizesTmp[index]       = numComponents;
-              nSizesTmp[index] =
+              mSizes[index]       = numComponents;
+              nSizes[index] =
                 quadValuesContainer.nCellQuadraturePoints(cellId) * dim;
-              kSizesTmp[index]   = numCellsInBlockDofs[iCell];
-              ldaSizesTmp[index] = mSizesTmp[index];
-              ldbSizesTmp[index] = kSizesTmp[index];
-              ldcSizesTmp[index] = mSizesTmp[index];
-              strideATmp[index]  = mSizesTmp[index] * kSizesTmp[index];
-              strideCTmp[index]  = mSizesTmp[index] * nSizesTmp[index];
-              strideBTmp[index]  = kSizesTmp[index] * nSizesTmp[index];
+              kSizes[index]   = numCellsInBlockDofs[iCell];
+              ldaSizes[index] = mSizes[index];
+              ldbSizes[index] = kSizes[index];
+              ldcSizes[index] = mSizes[index];
+              strideA[index]  = mSizes[index] * kSizes[index];
+              strideC[index]  = mSizes[index] * nSizes[index];
+              strideB[index]  = kSizes[index] * nSizes[index];
             }
-
-          utils::MemoryStorage<size_type, memorySpace> mSizes(numCellsInBlock);
-          utils::MemoryStorage<size_type, memorySpace> nSizes(numCellsInBlock);
-          utils::MemoryStorage<size_type, memorySpace> kSizes(numCellsInBlock);
-          utils::MemoryStorage<size_type, memorySpace> ldaSizes(
-            numCellsInBlock);
-          utils::MemoryStorage<size_type, memorySpace> ldbSizes(
-            numCellsInBlock);
-          utils::MemoryStorage<size_type, memorySpace> ldcSizes(
-            numCellsInBlock);
-          utils::MemoryStorage<size_type, memorySpace> strideA(numCellsInBlock);
-          utils::MemoryStorage<size_type, memorySpace> strideB(numCellsInBlock);
-          utils::MemoryStorage<size_type, memorySpace> strideC(numCellsInBlock);
-          memoryTransfer.copy(numCellsInBlock, mSizes.data(), mSizesTmp.data());
-          memoryTransfer.copy(numCellsInBlock, nSizes.data(), nSizesTmp.data());
-          memoryTransfer.copy(numCellsInBlock, kSizes.data(), kSizesTmp.data());
-          memoryTransfer.copy(numCellsInBlock,
-                              ldaSizes.data(),
-                              ldaSizesTmp.data());
-          memoryTransfer.copy(numCellsInBlock,
-                              ldbSizes.data(),
-                              ldbSizesTmp.data());
-          memoryTransfer.copy(numCellsInBlock,
-                              ldcSizes.data(),
-                              ldcSizesTmp.data());
-          memoryTransfer.copy(numCellsInBlock,
-                              strideA.data(),
-                              strideATmp.data());
-          memoryTransfer.copy(numCellsInBlock,
-                              strideB.data(),
-                              strideBTmp.data());
-          memoryTransfer.copy(numCellsInBlock,
-                              strideC.data(),
-                              strideCTmp.data());
 
           ValueTypeUnion                               alpha = 1.0;
           ValueTypeUnion                               beta  = 0.0;
@@ -1548,8 +1315,8 @@ namespace dftefe
               // for (size_type iDim = 0; iDim < dim; iDim++)
               //   {
               size_type index = iCell; // * dim + iDim;
-              // AStartOffset += mSizesTmp[index] * kSizesTmp[index];
-              CStartOffset += mSizesTmp[index] * nSizesTmp[index];
+              // AStartOffset += mSizes[index] * kSizes[index];
+              CStartOffset += mSizes[index] * nSizes[index];
               //}
               cellLocalIdsOffset += numCellDofs[cellStartId + iCell];
             }
@@ -1716,62 +1483,31 @@ namespace dftefe
                 numCellsInBlock, 'N');
               std::vector<char> transB(
                 numCellsInBlock, 'T');
-              std::vector<size_type> mSizesTmp(numCellsInBlock, 0);
-              std::vector<size_type> nSizesTmp(numCellsInBlock, 0);
-              std::vector<size_type> kSizesTmp(numCellsInBlock, 0);
-              std::vector<size_type> ldaSizesTmp(numCellsInBlock, 0);
-              std::vector<size_type> ldbSizesTmp(numCellsInBlock, 0);
-              std::vector<size_type> ldcSizesTmp(numCellsInBlock, 0);
-              std::vector<size_type> strideATmp(numCellsInBlock, 0);
-              std::vector<size_type> strideBTmp(numCellsInBlock, 0);
-              std::vector<size_type> strideCTmp(numCellsInBlock, 0);
+              std::vector<size_type> mSizes(numCellsInBlock, 0);
+              std::vector<size_type> nSizes(numCellsInBlock, 0);
+              std::vector<size_type> kSizes(numCellsInBlock, 0);
+              std::vector<size_type> ldaSizes(numCellsInBlock, 0);
+              std::vector<size_type> ldbSizes(numCellsInBlock, 0);
+              std::vector<size_type> ldcSizes(numCellsInBlock, 0);
+              std::vector<size_type> strideA(numCellsInBlock, 0);
+              std::vector<size_type> strideB(numCellsInBlock, 0);
+              std::vector<size_type> strideC(numCellsInBlock, 0);
 
               for (size_type iCell = 0; iCell < numCellsInBlock; ++iCell)
                 {
                   const size_type cellId = cellStartId + iCell;
-                  mSizesTmp[iCell]       = numComponents;
-                  nSizesTmp[iCell] =
+                  mSizes[iCell]       = numComponents;
+                  nSizes[iCell] =
                     quadRuleContainer->nCellQuadraturePoints(cellId);
-                  kSizesTmp[iCell]   = numCellsInBlockDofs[iCell];
-                  ldaSizesTmp[iCell] = mSizesTmp[iCell];
-                  ldbSizesTmp[iCell] = nSizesTmp[iCell];
-                  ldcSizesTmp[iCell] = mSizesTmp[iCell];
-                  strideATmp[iCell]  = mSizesTmp[iCell] * kSizesTmp[iCell];
-                  strideCTmp[iCell]  = mSizesTmp[iCell] * nSizesTmp[iCell];
-                  strideBTmp[iCell]  = kSizesTmp[iCell] * nSizesTmp[iCell] *
+                  kSizes[iCell]   = numCellsInBlockDofs[iCell];
+                  ldaSizes[iCell] = mSizes[iCell];
+                  ldbSizes[iCell] = nSizes[iCell];
+                  ldcSizes[iCell] = mSizes[iCell];
+                  strideA[iCell]  = mSizes[iCell] * kSizes[iCell];
+                  strideC[iCell]  = mSizes[iCell] * nSizes[iCell];
+                  strideB[iCell]  = kSizes[iCell] * nSizes[iCell] *
     dim;
                 }
-
-              utils::MemoryStorage<size_type, memorySpace>
-    mSizes(numCellsInBlock); utils::MemoryStorage<size_type, memorySpace>
-    nSizes(numCellsInBlock); utils::MemoryStorage<size_type, memorySpace>
-    kSizes(numCellsInBlock); utils::MemoryStorage<size_type, memorySpace>
-    ldaSizes( numCellsInBlock); utils::MemoryStorage<size_type, memorySpace>
-    ldbSizes( numCellsInBlock); utils::MemoryStorage<size_type, memorySpace>
-    ldcSizes( numCellsInBlock); utils::MemoryStorage<size_type, memorySpace>
-    strideA(numCellsInBlock); utils::MemoryStorage<size_type, memorySpace>
-    strideB(numCellsInBlock); utils::MemoryStorage<size_type, memorySpace>
-    strideC(numCellsInBlock); memoryTransfer.copy(numCellsInBlock,
-    mSizes.data(), mSizesTmp.data()); memoryTransfer.copy(numCellsInBlock,
-    nSizes.data(), nSizesTmp.data()); memoryTransfer.copy(numCellsInBlock,
-    kSizes.data(), kSizesTmp.data()); memoryTransfer.copy(numCellsInBlock,
-                                  ldaSizes.data(),
-                                  ldaSizesTmp.data());
-              memoryTransfer.copy(numCellsInBlock,
-                                  ldbSizes.data(),
-                                  ldbSizesTmp.data());
-              memoryTransfer.copy(numCellsInBlock,
-                                  ldcSizes.data(),
-                                  ldcSizesTmp.data());
-              memoryTransfer.copy(numCellsInBlock,
-                                  strideA.data(),
-                                  strideATmp.data());
-              memoryTransfer.copy(numCellsInBlock,
-                                  strideB.data(),
-                                  strideBTmp.data());
-              memoryTransfer.copy(numCellsInBlock,
-                                  strideC.data(),
-                                  strideCTmp.data());
 
               ValueTypeUnion                               alpha = 1.0;
               ValueTypeUnion                               beta  = 0.0;
@@ -1823,7 +1559,7 @@ namespace dftefe
               for (size_type iCell = 0; iCell < numCellsInBlock; ++iCell)
                 {
                   for (size_type iDim = 0; iDim < dim; iDim++)
-                    BStartOffset[iDim] += kSizesTmp[iCell] * nSizesTmp[iCell] *
+                    BStartOffset[iDim] += kSizes[iCell] * nSizes[iCell] *
     dim; cellLocalIdsOffset += numCellDofs[cellStartId + iCell];
                 }
               quadValueContainerStartOffset +=
@@ -1999,11 +1735,11 @@ namespace dftefe
           utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>
             memoryTransfer;
 
-          utils::MemoryStorage<size_type, memorySpace>
-            numCellsInBlockDofsMemSpace(numCellsInBlock);
-          memoryTransfer.copy(numCellsInBlock,
-                              numCellsInBlockDofsMemSpace.data(),
-                              numCellsInBlockDofs.data());
+          // utils::MemoryStorage<size_type, memorySpace>
+          //   numCellsInBlockDofsMemSpace(numCellsInBlock);
+          // memoryTransfer.copy(numCellsInBlock,
+          //                     numCellsInBlockDofsMemSpace.data(),
+          //                     numCellsInBlockDofs.data());
           std::vector<size_type> numCellsInBlockQuad(numCellsInBlock, 0);
           std::copy(numCellQuad.begin() + cellStartId,
                     numCellQuad.begin() + cellEndId,
@@ -2039,25 +1775,66 @@ namespace dftefe
           //                               ValueTypeBasisData());
           /** --- Storages --------- **/
 
-          // TransposedKhatriRao product for inp and JxW
-          size_type cumulativeA = 0, cumulativeB = 0, cumulativeC = 0;
+          linearAlgebra::blasLapack::ScalarOp scalarOpA =
+            linearAlgebra::blasLapack::ScalarOp::Identity;
+          linearAlgebra::blasLapack::ScalarOp scalarOpB =
+            linearAlgebra::blasLapack::ScalarOp::Identity;
+          std::vector<size_type> mSize(numCellsInBlock, 0);
+          std::vector<size_type> nSize(numCellsInBlock, 0);
+          std::vector<size_type> kSize(numCellsInBlock, 0);
+          std::vector<size_type> stA(numCellsInBlock, 0);
+          std::vector<size_type> stB(numCellsInBlock, 0);
+          std::vector<size_type> stC(numCellsInBlock, 0);
+
           for (size_type iCell = 0; iCell < numCellsInBlock; iCell++)
             {
-              linearAlgebra::blasLapack::khatriRaoProduct(
-                layout,
-                1,
-                numComponents,
-                numCellsInBlockQuad[iCell],
-                jxwStorage.data() +
-                  quadRuleContainer->getCellQuadStartId(cellStartId) +
-                  cumulativeA,
-                inp.begin(cellStartId) + cumulativeB,
-                inpJxW.data() + cumulativeC,
-                linAlgOpContext);
-              cumulativeA += numCellsInBlockQuad[iCell];
-              cumulativeB += numCellsInBlockQuad[iCell] * numComponents;
-              cumulativeC += numCellsInBlockQuad[iCell] * numComponents;
+              mSize[iCell]   = 1;
+              nSize[iCell]   = numComponents;
+              kSize[iCell]   = numCellsInBlockQuad[iCell];
+              stA[iCell] = mSize[iCell] * kSize[iCell];
+              stB[iCell] = nSize[iCell] * kSize[iCell];
+              stC[iCell] = mSize[iCell] * nSize[iCell] * kSize[iCell];
             }
+
+          linearAlgebra::blasLapack::scaleStridedVarBatched<
+            ValueTypeBasisData,
+            ValueTypeBasisData,
+            memorySpace>(
+            numCellsInBlock,
+            layout,
+            scalarOpA,
+            scalarOpB,
+            stA.data(),
+            stB.data(),
+            stC.data(),
+            mSize.data(),
+            nSize.data(),
+            kSize.data(),
+            jxwStorage.data() +
+              quadRuleContainer->getCellQuadStartId(cellStartId),
+            inp.begin(cellStartId),
+            inpJxW.data(),
+            linAlgOpContext);
+
+          // // TransposedKhatriRao product for inp and JxW
+          // size_type cumulativeA = 0, cumulativeB = 0, cumulativeC = 0;
+          // for (size_type iCell = 0; iCell < numCellsInBlock; iCell++)
+          //   {
+          //     linearAlgebra::blasLapack::khatriRaoProduct(
+          //       layout,
+          //       1,
+          //       numComponents,
+          //       numCellsInBlockQuad[iCell],
+          //       jxwStorage.data() +
+          //         quadRuleContainer->getCellQuadStartId(cellStartId) +
+          //         cumulativeA,
+          //       inp.begin(cellStartId) + cumulativeB,
+          //       inpJxW.data() + cumulativeC,
+          //       linAlgOpContext);
+          //     cumulativeA += numCellsInBlockQuad[iCell];
+          //     cumulativeB += numCellsInBlockQuad[iCell] * numComponents;
+          //     cumulativeC += numCellsInBlockQuad[iCell] * numComponents;
+          //   }
 
           /**
           // Blocked Hadamard product for inp and JxW
@@ -2075,64 +1852,30 @@ namespace dftefe
           // TODO check if these are right ?? Why is the B Transposed
           std::vector<char>      transA(numCellsInBlock, 'N');
           std::vector<char>      transB(numCellsInBlock, 'T');
-          std::vector<size_type> mSizesTmp(numCellsInBlock, 0);
-          std::vector<size_type> nSizesTmp(numCellsInBlock, 0);
-          std::vector<size_type> kSizesTmp(numCellsInBlock, 0);
-          std::vector<size_type> ldaSizesTmp(numCellsInBlock, 0);
-          std::vector<size_type> ldbSizesTmp(numCellsInBlock, 0);
-          std::vector<size_type> ldcSizesTmp(numCellsInBlock, 0);
-          std::vector<size_type> strideATmp(numCellsInBlock, 0);
-          std::vector<size_type> strideBTmp(numCellsInBlock, 0);
-          std::vector<size_type> strideCTmp(numCellsInBlock, 0);
+          std::vector<size_type> mSizes(numCellsInBlock, 0);
+          std::vector<size_type> nSizes(numCellsInBlock, 0);
+          std::vector<size_type> kSizes(numCellsInBlock, 0);
+          std::vector<size_type> ldaSizes(numCellsInBlock, 0);
+          std::vector<size_type> ldbSizes(numCellsInBlock, 0);
+          std::vector<size_type> ldcSizes(numCellsInBlock, 0);
+          std::vector<size_type> strideA(numCellsInBlock, 0);
+          std::vector<size_type> strideB(numCellsInBlock, 0);
+          std::vector<size_type> strideC(numCellsInBlock, 0);
 
           for (size_type iCell = 0; iCell < numCellsInBlock; ++iCell)
             {
               const size_type cellId = cellStartId + iCell;
-              mSizesTmp[iCell]       = numComponents;
-              nSizesTmp[iCell]       = numCellsInBlockDofs[iCell];
-              kSizesTmp[iCell]       = numCellsInBlockQuad[iCell];
-              ldaSizesTmp[iCell]     = mSizesTmp[iCell];
-              ldbSizesTmp[iCell]     = nSizesTmp[iCell];
-              ldcSizesTmp[iCell]     = mSizesTmp[iCell];
-              strideATmp[iCell]      = mSizesTmp[iCell] * kSizesTmp[iCell];
-              strideCTmp[iCell]      = mSizesTmp[iCell] * nSizesTmp[iCell];
+              mSizes[iCell]       = numComponents;
+              nSizes[iCell]       = numCellsInBlockDofs[iCell];
+              kSizes[iCell]       = numCellsInBlockQuad[iCell];
+              ldaSizes[iCell]     = mSizes[iCell];
+              ldbSizes[iCell]     = nSizes[iCell];
+              ldcSizes[iCell]     = mSizes[iCell];
+              strideA[iCell]      = mSizes[iCell] * kSizes[iCell];
+              strideC[iCell]      = mSizes[iCell] * nSizes[iCell];
               if (!zeroStrideB)
-                strideBTmp[iCell] = kSizesTmp[iCell] * nSizesTmp[iCell];
+                strideB[iCell] = kSizes[iCell] * nSizes[iCell];
             }
-
-          utils::MemoryStorage<size_type, memorySpace> mSizes(numCellsInBlock);
-          utils::MemoryStorage<size_type, memorySpace> nSizes(numCellsInBlock);
-          utils::MemoryStorage<size_type, memorySpace> kSizes(numCellsInBlock);
-          utils::MemoryStorage<size_type, memorySpace> ldaSizes(
-            numCellsInBlock);
-          utils::MemoryStorage<size_type, memorySpace> ldbSizes(
-            numCellsInBlock);
-          utils::MemoryStorage<size_type, memorySpace> ldcSizes(
-            numCellsInBlock);
-          utils::MemoryStorage<size_type, memorySpace> strideA(numCellsInBlock);
-          utils::MemoryStorage<size_type, memorySpace> strideB(numCellsInBlock);
-          utils::MemoryStorage<size_type, memorySpace> strideC(numCellsInBlock);
-          memoryTransfer.copy(numCellsInBlock, mSizes.data(), mSizesTmp.data());
-          memoryTransfer.copy(numCellsInBlock, nSizes.data(), nSizesTmp.data());
-          memoryTransfer.copy(numCellsInBlock, kSizes.data(), kSizesTmp.data());
-          memoryTransfer.copy(numCellsInBlock,
-                              ldaSizes.data(),
-                              ldaSizesTmp.data());
-          memoryTransfer.copy(numCellsInBlock,
-                              ldbSizes.data(),
-                              ldbSizesTmp.data());
-          memoryTransfer.copy(numCellsInBlock,
-                              ldcSizes.data(),
-                              ldcSizesTmp.data());
-          memoryTransfer.copy(numCellsInBlock,
-                              strideA.data(),
-                              strideATmp.data());
-          memoryTransfer.copy(numCellsInBlock,
-                              strideB.data(),
-                              strideBTmp.data());
-          memoryTransfer.copy(numCellsInBlock,
-                              strideC.data(),
-                              strideCTmp.data());
 
           ValueTypeUnion alpha = 1.0;
           ValueTypeUnion beta  = 0.0;
@@ -2173,16 +1916,17 @@ namespace dftefe
             addCellWiseDataToFieldData(outputFieldCellValues,
                                        numComponents,
                                        itCellLocalIdsBegin + cellLocalIdsOffset,
-                                       numCellsInBlockDofsMemSpace,
+                                       //numCellsInBlockDofsMemSpace,
+                                       numCumulativeDofsCellsInBlock,
                                        vectorData.begin());
 
           for (size_type iCell = 0; iCell < numCellsInBlock; ++iCell)
             {
               // if (!zeroStrideB)
               //   {
-              //     BStartOffset += kSizesTmp[iCell] * nSizesTmp[iCell];
+              //     BStartOffset += kSizes[iCell] * nSizes[iCell];
               //   }
-              CStartOffset += mSizesTmp[iCell] * nSizesTmp[iCell];
+              CStartOffset += mSizes[iCell] * nSizes[iCell];
               cellLocalIdsOffset += numCellDofs[cellStartId + iCell];
             }
         }

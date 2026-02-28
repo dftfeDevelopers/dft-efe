@@ -377,6 +377,12 @@ namespace dftefe
       DEVICE_API_CHECK(err);
       return err;
     }
+
+    void printPointerLocation(const void* ptr)
+    {
+      utils::throwException(false, "Not implemenented");
+    }
+
   } // namespace utils
 } // namespace dftefe
 #endif

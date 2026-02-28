@@ -68,11 +68,17 @@ namespace dftefe
           numLocallyOwnedCells);
         locallyOwnedCellsNumDoFs.copyFrom(locallyOwnedCellsNumDoFsSTL);
 
+        const size_type numCumulativeDofsCells =
+          std::accumulate(locallyOwnedCellsNumDoFsSTL.begin(),
+                          locallyOwnedCellsNumDoFsSTL.end(),
+                          0);
+
         basis::FECellWiseDataOperations<ValueTypeOperator, memorySpace>::
           addCellWiseBasisDataToDiagonalData(
             AXContext->getBasisGradNiGradNjInAllCells()->data(),
             itCellLocalIdsBegin,
             locallyOwnedCellsNumDoFs,
+            numCumulativeDofsCells,
             diagonal.data());
 
         // function to do a static condensation to send the constraint nodes to
@@ -592,15 +598,16 @@ namespace dftefe
       size_type numComponents = solution.getNumberComponents();
       solution.setValue(0.0);
 
-      for (size_type i = 0; i < solution.locallyOwnedSize(); i++)
-        {
-          for (size_type j = 0; j < numComponents; j++)
-            {
-              solution.data()[i * numComponents + j] =
-                d_x.data()[i * numComponents + j] +
-                d_fieldInHomoDBCVec.data()[i * numComponents + j];
-            }
-        }
+      solution = d_x;
+      // for (size_type i = 0; i < solution.locallyOwnedSize(); i++)
+      //   {
+      //     for (size_type j = 0; j < numComponents; j++)
+      //       {
+      //         solution.data()[i * numComponents + j] =
+      //           d_x.data()[i * numComponents + j] +
+      //           d_fieldInHomoDBCVec.data()[i * numComponents + j];
+      //       }
+      //   }
 
       solution.updateGhostValues();
 

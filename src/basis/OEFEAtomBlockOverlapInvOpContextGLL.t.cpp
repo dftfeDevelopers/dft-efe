@@ -691,6 +691,11 @@ namespace dftefe
         numLocallyOwnedCells);
       locallyOwnedCellsNumDoFs.template copyFrom(locallyOwnedCellsNumDoFsSTL);
 
+      const size_type numCumulativeDofsCells =
+        std::accumulate(locallyOwnedCellsNumDoFsSTL.begin(),
+                        locallyOwnedCellsNumDoFsSTL.end(),
+                        0);
+
       linearAlgebra::Vector<ValueTypeOperator, memorySpace> diagonal(
         d_feBasisManager->getMPIPatternP2P(), linAlgOpContext);
 
@@ -700,6 +705,7 @@ namespace dftefe
         addCellWiseBasisDataToDiagonalData(NiNjInAllCells.data(),
                                            itCellLocalIdsBegin,
                                            locallyOwnedCellsNumDoFs,
+                                           numCumulativeDofsCells,
                                            diagonal.data());
 
       // function to do a static condensation to send the constraint nodes to
