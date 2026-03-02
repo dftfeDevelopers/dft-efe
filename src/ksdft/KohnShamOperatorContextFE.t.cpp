@@ -798,35 +798,35 @@ namespace dftefe
                                       numVecs,
                                       cellLocalIdsStartPtrX +
                                         cellLocalIdsOffset,
-                                      //cellsInBlockNumDoFs,
+                                      // cellsInBlockNumDoFs,
                                       cellsInBlockNumCumulativeDoFs,
                                       xCellValues);
 
             std::vector<char> transA(numCellsInBlock, 'N');
             std::vector<char> transB(numCellsInBlock, 'N');
 
-        std::vector<size_type> mSizes(numCellsInBlock, 0);
-        std::vector<size_type> nSizes(numCellsInBlock, 0);
-        std::vector<size_type> kSizes(numCellsInBlock, 0);
-        std::vector<size_type> ldaSizes(numCellsInBlock, 0);
-        std::vector<size_type> ldbSizes(numCellsInBlock, 0);
-        std::vector<size_type> ldcSizes(numCellsInBlock, 0);
-        std::vector<size_type> strideA(numCellsInBlock, 0);
-        std::vector<size_type> strideB(numCellsInBlock, 0);
-        std::vector<size_type> strideC(numCellsInBlock, 0);
+            std::vector<size_type> mSizes(numCellsInBlock, 0);
+            std::vector<size_type> nSizes(numCellsInBlock, 0);
+            std::vector<size_type> kSizes(numCellsInBlock, 0);
+            std::vector<size_type> ldaSizes(numCellsInBlock, 0);
+            std::vector<size_type> ldbSizes(numCellsInBlock, 0);
+            std::vector<size_type> ldcSizes(numCellsInBlock, 0);
+            std::vector<size_type> strideA(numCellsInBlock, 0);
+            std::vector<size_type> strideB(numCellsInBlock, 0);
+            std::vector<size_type> strideC(numCellsInBlock, 0);
 
-        for (size_type iCell = 0; iCell < numCellsInBlock; ++iCell)
-          {
-            mSizes[iCell]   = numVecs;
-            nSizes[iCell]   = cellsInBlockNumDoFsSTL[iCell];
-            kSizes[iCell]   = cellsInBlockNumDoFsSTL[iCell];
-            ldaSizes[iCell] = mSizes[iCell];
-            ldbSizes[iCell] = kSizes[iCell];
-            ldcSizes[iCell] = mSizes[iCell];
-            strideA[iCell]  = mSizes[iCell] * kSizes[iCell];
-            strideB[iCell]  = kSizes[iCell] * nSizes[iCell];
-            strideC[iCell]  = mSizes[iCell] * nSizes[iCell];
-          }
+            for (size_type iCell = 0; iCell < numCellsInBlock; ++iCell)
+              {
+                mSizes[iCell]   = numVecs;
+                nSizes[iCell]   = cellsInBlockNumDoFsSTL[iCell];
+                kSizes[iCell]   = cellsInBlockNumDoFsSTL[iCell];
+                ldaSizes[iCell] = mSizes[iCell];
+                ldbSizes[iCell] = kSizes[iCell];
+                ldcSizes[iCell] = mSizes[iCell];
+                strideA[iCell]  = mSizes[iCell] * kSizes[iCell];
+                strideB[iCell]  = kSizes[iCell] * nSizes[iCell];
+                strideC[iCell]  = mSizes[iCell] * nSizes[iCell];
+              }
 
             // allocate memory for cell-wise data for y
             // utils::MemoryStorage<
@@ -875,13 +875,14 @@ namespace dftefe
             basis::FECellWiseDataOperations<
               linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
                                                      ValueTypeOperand>,
-              memorySpace>::addCellWiseDataToFieldData(yCellValues,
-                                                       numVecs,
-                                                       cellLocalIdsStartPtrY +
-                                                         cellLocalIdsOffset,
-                                                       //cellsInBlockNumDoFs,
-                                                       cellsInBlockNumCumulativeDoFs,
-                                                       y);
+              memorySpace>::
+              addCellWiseDataToFieldData(yCellValues,
+                                         numVecs,
+                                         cellLocalIdsStartPtrY +
+                                           cellLocalIdsOffset,
+                                         // cellsInBlockNumDoFs,
+                                         cellsInBlockNumCumulativeDoFs,
+                                         y);
 
             for (size_type iCell = 0; iCell < numCellsInBlock; ++iCell)
               {
@@ -998,7 +999,7 @@ namespace dftefe
                                       numVecs,
                                       cellLocalIdsStartPtrX +
                                         cellLocalIdsOffset,
-                                      //cellsInBlockNumDoFs,
+                                      // cellsInBlockNumDoFs,
                                       cellsInBlockNumCumulativeDoFs,
                                       xCellValues.data() +
                                         cellLocalIdsOffset * numVecs);
@@ -1053,28 +1054,28 @@ namespace dftefe
             std::vector<char> transA(numCellsInBlock, 'N');
             std::vector<char> transB(numCellsInBlock, 'N');
 
-        std::vector<size_type> mSizes(numCellsInBlock, 0);
-        std::vector<size_type> nSizes(numCellsInBlock, 0);
-        std::vector<size_type> kSizes(numCellsInBlock, 0);
-        std::vector<size_type> ldaSizes(numCellsInBlock, 0);
-        std::vector<size_type> ldbSizes(numCellsInBlock, 0);
-        std::vector<size_type> ldcSizes(numCellsInBlock, 0);
-        std::vector<size_type> strideA(numCellsInBlock, 0);
-        std::vector<size_type> strideB(numCellsInBlock, 0);
-        std::vector<size_type> strideC(numCellsInBlock, 0);
+            std::vector<size_type> mSizes(numCellsInBlock, 0);
+            std::vector<size_type> nSizes(numCellsInBlock, 0);
+            std::vector<size_type> kSizes(numCellsInBlock, 0);
+            std::vector<size_type> ldaSizes(numCellsInBlock, 0);
+            std::vector<size_type> ldbSizes(numCellsInBlock, 0);
+            std::vector<size_type> ldcSizes(numCellsInBlock, 0);
+            std::vector<size_type> strideA(numCellsInBlock, 0);
+            std::vector<size_type> strideB(numCellsInBlock, 0);
+            std::vector<size_type> strideC(numCellsInBlock, 0);
 
-        for (size_type iCell = 0; iCell < numCellsInBlock; ++iCell)
-          {
-            mSizes[iCell]   = numVecs;
-            nSizes[iCell]   = cellsInBlockNumDoFsSTL[iCell];
-            kSizes[iCell]   = cellsInBlockNumDoFsSTL[iCell];
-            ldaSizes[iCell] = mSizes[iCell];
-            ldbSizes[iCell] = kSizes[iCell];
-            ldcSizes[iCell] = mSizes[iCell];
-            strideA[iCell]  = mSizes[iCell] * kSizes[iCell];
-            strideB[iCell]  = kSizes[iCell] * nSizes[iCell];
-            strideC[iCell]  = mSizes[iCell] * nSizes[iCell];
-          }
+            for (size_type iCell = 0; iCell < numCellsInBlock; ++iCell)
+              {
+                mSizes[iCell]   = numVecs;
+                nSizes[iCell]   = cellsInBlockNumDoFsSTL[iCell];
+                kSizes[iCell]   = cellsInBlockNumDoFsSTL[iCell];
+                ldaSizes[iCell] = mSizes[iCell];
+                ldbSizes[iCell] = kSizes[iCell];
+                ldcSizes[iCell] = mSizes[iCell];
+                strideA[iCell]  = mSizes[iCell] * kSizes[iCell];
+                strideB[iCell]  = kSizes[iCell] * nSizes[iCell];
+                strideC[iCell]  = mSizes[iCell] * nSizes[iCell];
+              }
 
             linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
                                                    ValueTypeOperand>
@@ -1118,13 +1119,14 @@ namespace dftefe
             basis::FECellWiseDataOperations<
               linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
                                                      ValueTypeOperand>,
-              memorySpace>::addCellWiseDataToFieldData(yCellValues,
-                                                       numVecs,
-                                                       cellLocalIdsStartPtrY +
-                                                         cellLocalIdsOffset,
-                                                       //cellsInBlockNumDoFs,
-                                                       cellsInBlockNumCumulativeDoFs,
-                                                       y);
+              memorySpace>::
+              addCellWiseDataToFieldData(yCellValues,
+                                         numVecs,
+                                         cellLocalIdsStartPtrY +
+                                           cellLocalIdsOffset,
+                                         // cellsInBlockNumDoFs,
+                                         cellsInBlockNumCumulativeDoFs,
+                                         y);
 
             for (size_type iCell = 0; iCell < numCellsInBlock; ++iCell)
               {

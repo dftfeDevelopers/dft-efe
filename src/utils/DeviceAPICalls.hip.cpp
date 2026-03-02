@@ -378,7 +378,8 @@ namespace dftefe
       return err;
     }
 
-    void printPointerLocation(const void* ptr)
+    void
+    printPointerLocation(const void *ptr)
     {
       utils::throwException(false, "Not implemenented");
     }

@@ -274,7 +274,8 @@ namespace dftefe
               numEnrichInBatch,
               (ValueTypeBasisData)0.0);
 
-          quadrature::QuadratureValuesContainer<ValueTypeBasisData, utils::MemorySpace::HOST>
+          quadrature::QuadratureValuesContainer<ValueTypeBasisData,
+                                                utils::MemorySpace::HOST>
             quadValuesEnrichmentFunctionHost(
               cfeBasisDataStorageRhs->getQuadratureRuleContainer(),
               numEnrichInBatch,

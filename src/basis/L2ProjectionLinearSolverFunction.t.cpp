@@ -57,8 +57,8 @@ namespace dftefe
 
         // access cell-wise discrete Laplace operator
 
-        utils::MemoryStorage<size_type, utils::MemorySpace::HOST> locallyOwnedCellsNumDoFsSTL(numLocallyOwnedCells,
-                                                           0);
+        utils::MemoryStorage<size_type, utils::MemorySpace::HOST>
+          locallyOwnedCellsNumDoFsSTL(numLocallyOwnedCells, 0);
         std::copy(numCellDofs.begin(),
                   numCellDofs.begin() + numLocallyOwnedCells,
                   locallyOwnedCellsNumDoFsSTL.begin());

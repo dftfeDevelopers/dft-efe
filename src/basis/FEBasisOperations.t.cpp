@@ -578,7 +578,7 @@ namespace dftefe
 
                 for (size_type iCell = 0; iCell < numCellsInBlock; iCell++)
                   {
-                    size_type index    = iCell;
+                    size_type index = iCell;
                     mSizes[index]   = numCellsInBlockDofs[iCell];
                     nSizes[index]   = numCellsInBlockDofs[iCell];
                     kSizes[index]   = numCellsInBlockQuad[iCell] * dim;
@@ -994,7 +994,7 @@ namespace dftefe
             copyFieldToCellWiseData(vectorData.begin(),
                                     numComponents,
                                     itCellLocalIdsBegin + cellLocalIdsOffset,
-                                    //numCellsInBlockDofsMemSpace,
+                                    // numCellsInBlockDofsMemSpace,
                                     numCumulativeDofsCellsInBlock,
                                     fieldCellValues);
 
@@ -1013,10 +1013,9 @@ namespace dftefe
           for (size_type iCell = 0; iCell < numCellsInBlock; ++iCell)
             {
               const size_type cellId = cellStartId + iCell;
-              mSizes[iCell]       = numComponents;
-              nSizes[iCell] =
-                quadValuesContainer.nCellQuadraturePoints(cellId);
-              kSizes[iCell]   = numCellsInBlockDofs[iCell];
+              mSizes[iCell]          = numComponents;
+              nSizes[iCell] = quadValuesContainer.nCellQuadraturePoints(cellId);
+              kSizes[iCell] = numCellsInBlockDofs[iCell];
               ldaSizes[iCell] = mSizes[iCell];
               ldbSizes[iCell] = kSizes[iCell];
               ldcSizes[iCell] = mSizes[iCell];
@@ -1242,7 +1241,7 @@ namespace dftefe
             copyFieldToCellWiseData(vectorData.begin(),
                                     numComponents,
                                     itCellLocalIdsBegin + cellLocalIdsOffset,
-                                    //numCellsInBlockDofsMemSpace,
+                                    // numCellsInBlockDofsMemSpace,
                                     numCumulativeDofsCellsInBlock,
                                     fieldCellValues);
 
@@ -1262,7 +1261,7 @@ namespace dftefe
             {
               const size_type cellId = cellStartId + iCell;
               size_type       index  = iCell;
-              mSizes[index]       = numComponents;
+              mSizes[index]          = numComponents;
               nSizes[index] =
                 quadValuesContainer.nCellQuadraturePoints(cellId) * dim;
               kSizes[index]   = numCellsInBlockDofs[iCell];
@@ -1788,18 +1787,17 @@ namespace dftefe
 
           for (size_type iCell = 0; iCell < numCellsInBlock; iCell++)
             {
-              mSize[iCell]   = 1;
-              nSize[iCell]   = numComponents;
-              kSize[iCell]   = numCellsInBlockQuad[iCell];
-              stA[iCell] = mSize[iCell] * kSize[iCell];
-              stB[iCell] = nSize[iCell] * kSize[iCell];
-              stC[iCell] = mSize[iCell] * nSize[iCell] * kSize[iCell];
+              mSize[iCell] = 1;
+              nSize[iCell] = numComponents;
+              kSize[iCell] = numCellsInBlockQuad[iCell];
+              stA[iCell]   = mSize[iCell] * kSize[iCell];
+              stB[iCell]   = nSize[iCell] * kSize[iCell];
+              stC[iCell]   = mSize[iCell] * nSize[iCell] * kSize[iCell];
             }
 
-          linearAlgebra::blasLapack::scaleStridedVarBatched<
-            ValueTypeBasisData,
-            ValueTypeBasisData,
-            memorySpace>(
+          linearAlgebra::blasLapack::scaleStridedVarBatched<ValueTypeBasisData,
+                                                            ValueTypeBasisData,
+                                                            memorySpace>(
             numCellsInBlock,
             layout,
             scalarOpA,
@@ -1865,14 +1863,14 @@ namespace dftefe
           for (size_type iCell = 0; iCell < numCellsInBlock; ++iCell)
             {
               const size_type cellId = cellStartId + iCell;
-              mSizes[iCell]       = numComponents;
-              nSizes[iCell]       = numCellsInBlockDofs[iCell];
-              kSizes[iCell]       = numCellsInBlockQuad[iCell];
-              ldaSizes[iCell]     = mSizes[iCell];
-              ldbSizes[iCell]     = nSizes[iCell];
-              ldcSizes[iCell]     = mSizes[iCell];
-              strideA[iCell]      = mSizes[iCell] * kSizes[iCell];
-              strideC[iCell]      = mSizes[iCell] * nSizes[iCell];
+              mSizes[iCell]          = numComponents;
+              nSizes[iCell]          = numCellsInBlockDofs[iCell];
+              kSizes[iCell]          = numCellsInBlockQuad[iCell];
+              ldaSizes[iCell]        = mSizes[iCell];
+              ldbSizes[iCell]        = nSizes[iCell];
+              ldcSizes[iCell]        = mSizes[iCell];
+              strideA[iCell]         = mSizes[iCell] * kSizes[iCell];
+              strideC[iCell]         = mSizes[iCell] * nSizes[iCell];
               if (!zeroStrideB)
                 strideB[iCell] = kSizes[iCell] * nSizes[iCell];
             }
@@ -1916,7 +1914,7 @@ namespace dftefe
             addCellWiseDataToFieldData(outputFieldCellValues,
                                        numComponents,
                                        itCellLocalIdsBegin + cellLocalIdsOffset,
-                                       //numCellsInBlockDofsMemSpace,
+                                       // numCellsInBlockDofsMemSpace,
                                        numCumulativeDofsCellsInBlock,
                                        vectorData.begin());
 

@@ -84,7 +84,7 @@ namespace dftefe
         const utils::MemoryStorage<ValueTypeOperator, memorySpace>
           &basisDataInAllCells = feBasisDataStorage.getBasisDataInAllCells();
 
-        size_type cumulativeQuadPoints = 0, cumulativeDofQuadPointsOffset = 0; 
+        size_type cumulativeQuadPoints = 0, cumulativeDofQuadPointsOffset = 0;
         bool      isConstantDofsAndQuadPointsInCell = false;
         quadrature::QuadratureFamily quadFamily =
           feBasisDataStorage.getQuadratureRuleContainer()
@@ -97,9 +97,9 @@ namespace dftefe
           isConstantDofsAndQuadPointsInCell = true;
 
         utils::MemoryStorage<ValueTypeOperator, utils::MemorySpace::HOST>
-         basisDataInAllCellsHost(basisDataInAllCells.size());
+          basisDataInAllCellsHost(basisDataInAllCells.size());
 
-         basisDataInAllCellsHost.copyFrom(basisDataInAllCells);
+        basisDataInAllCellsHost.copyFrom(basisDataInAllCells);
 
         for (; locallyOwnedCellIter != feBDH->endLocallyOwnedCells();
              ++locallyOwnedCellIter)
@@ -118,9 +118,10 @@ namespace dftefe
             size_type stride = 0;
             size_type m = 1, n = dofsPerCell, k = nQuadPointInCell;
 
-            linearAlgebra::blasLapack::scaleStridedVarBatched<ValueTypeOperator,
-                                                              ValueTypeOperator,
-                                                              utils::MemorySpace::HOST>(
+            linearAlgebra::blasLapack::scaleStridedVarBatched<
+              ValueTypeOperator,
+              ValueTypeOperator,
+              utils::MemorySpace::HOST>(
               1,
               linearAlgebra::blasLapack::Layout::ColMajor,
               linearAlgebra::blasLapack::ScalarOp::Identity,
@@ -136,22 +137,23 @@ namespace dftefe
               JxWxNCellConj.data(),
               *linearAlgebra::LinAlgOpContextDefaults::LINALG_OP_CONTXT_HOST);
 
-            linearAlgebra::blasLapack::
-              gemm<ValueTypeOperand, ValueTypeOperand, utils::MemorySpace::HOST>(
-                'N',
-                'T',
-                dofsPerCell,
-                dofsPerCell,
-                nQuadPointInCell,
-                (ValueTypeOperand)1.0,
-                JxWxNCellConj.data(),
-                dofsPerCell,
-                basisDataInAllCellsHost.data() + cumulativeDofQuadPointsOffset,
-                dofsPerCell,
-                (ValueTypeOperand)0.0,
-                basisOverlapTmp.data() + cumulativeBasisOverlapId,
-                dofsPerCell,
-                *linearAlgebra::LinAlgOpContextDefaults::LINALG_OP_CONTXT_HOST);
+            linearAlgebra::blasLapack::gemm<ValueTypeOperand,
+                                            ValueTypeOperand,
+                                            utils::MemorySpace::HOST>(
+              'N',
+              'T',
+              dofsPerCell,
+              dofsPerCell,
+              nQuadPointInCell,
+              (ValueTypeOperand)1.0,
+              JxWxNCellConj.data(),
+              dofsPerCell,
+              basisDataInAllCellsHost.data() + cumulativeDofQuadPointsOffset,
+              dofsPerCell,
+              (ValueTypeOperand)0.0,
+              basisOverlapTmp.data() + cumulativeBasisOverlapId,
+              dofsPerCell,
+              *linearAlgebra::LinAlgOpContextDefaults::LINALG_OP_CONTXT_HOST);
 
             // const ValueTypeOperator *cumulativeDofQuadPoints =
             //   basisDataInAllCells.data() + cumulativeDofQuadPointsOffset;
@@ -258,7 +260,7 @@ namespace dftefe
                                       numVecs,
                                       cellLocalIdsStartPtrX +
                                         cellLocalIdsOffset,
-                                      //cellsInBlockNumDoFs,
+                                      // cellsInBlockNumDoFs,
                                       cellsInBlockNumCumulativeDoFs,
                                       xCellValues);
 
@@ -335,13 +337,14 @@ namespace dftefe
             basis::FECellWiseDataOperations<
               linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
                                                      ValueTypeOperand>,
-              memorySpace>::addCellWiseDataToFieldData(yCellValues,
-                                                       numVecs,
-                                                       cellLocalIdsStartPtrY +
-                                                         cellLocalIdsOffset,
-                                                       //cellsInBlockNumDoFs,
-                                                       cellsInBlockNumCumulativeDoFs,
-                                                       y);
+              memorySpace>::
+              addCellWiseDataToFieldData(yCellValues,
+                                         numVecs,
+                                         cellLocalIdsStartPtrY +
+                                           cellLocalIdsOffset,
+                                         // cellsInBlockNumDoFs,
+                                         cellsInBlockNumCumulativeDoFs,
+                                         y);
 
             for (size_type iCell = 0; iCell < numCellsInBlock; ++iCell)
               {
@@ -459,7 +462,7 @@ namespace dftefe
         std::accumulate(locallyOwnedCellsNumDoFsSTL.begin(),
                         locallyOwnedCellsNumDoFsSTL.end(),
                         0);
-                        
+
       FECellWiseDataOperations<ValueTypeOperator, memorySpace>::
         addCellWiseBasisDataToDiagonalData(d_basisOverlap->data(),
                                            itCellLocalIdsBegin,

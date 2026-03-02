@@ -460,8 +460,9 @@ namespace dftefe
         ->second.ext_oneapi_submit_barrier({event});
       return dftefe::utils::deviceSuccess;
     }
-    
-    void printPointerLocation(const void* ptr)
+
+    void
+    printPointerLocation(const void *ptr)
     {
       utils::throwException(false, "Not implemenented");
     }

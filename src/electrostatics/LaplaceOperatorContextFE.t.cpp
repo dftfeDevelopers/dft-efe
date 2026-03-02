@@ -102,7 +102,7 @@ namespace dftefe
                                       numVecs,
                                       cellLocalIdsStartPtrX +
                                         cellLocalIdsOffset,
-                                      //cellsInBlockNumDoFs,
+                                      // cellsInBlockNumDoFs,
                                       cellsInBlockNumCumulativeDoFs,
                                       xCellValues);
 
@@ -179,13 +179,14 @@ namespace dftefe
             basis::FECellWiseDataOperations<
               linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
                                                      ValueTypeOperand>,
-              memorySpace>::addCellWiseDataToFieldData(yCellValues,
-                                                       numVecs,
-                                                       cellLocalIdsStartPtrY +
-                                                         cellLocalIdsOffset,
-                                                       //cellsInBlockNumDoFs,
-                                                       cellsInBlockNumCumulativeDoFs,
-                                                       y);
+              memorySpace>::
+              addCellWiseDataToFieldData(yCellValues,
+                                         numVecs,
+                                         cellLocalIdsStartPtrY +
+                                           cellLocalIdsOffset,
+                                         // cellsInBlockNumDoFs,
+                                         cellsInBlockNumCumulativeDoFs,
+                                         y);
 
             for (size_type iCell = 0; iCell < numCellsInBlock; ++iCell)
               {

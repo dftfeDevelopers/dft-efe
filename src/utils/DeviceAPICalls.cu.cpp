@@ -349,30 +349,32 @@ namespace dftefe
       return err;
     }
 
-    void printPointerLocation(const void* ptr)
+    void
+    printPointerLocation(const void *ptr)
     {
-        cudaPointerAttributes attr;
-        cudaError_t err = cudaPointerGetAttributes(&attr, ptr);
+      cudaPointerAttributes attr;
+      cudaError_t           err = cudaPointerGetAttributes(&attr, ptr);
 
-        if (err != cudaSuccess)
+      if (err != cudaSuccess)
         {
-            std::cout << "Not a CUDA pointer (likely host memory)\n"<<std::flush;
-            return;
+          std::cout << "Not a CUDA pointer (likely host memory)\n"
+                    << std::flush;
+          return;
         }
 
-    #if CUDART_VERSION >= 10000
-        if (attr.type == cudaMemoryTypeDevice)
-            std::cout << "Device memory\n"<<std::flush;
-        else if (attr.type == cudaMemoryTypeHost)
-            std::cout << "Host (pinned) memory\n"<<std::flush;
-        else
-            std::cout << "Unknown CUDA memory type\n"<<std::flush;
-    #else
-        if (attr.memoryType == cudaMemoryTypeDevice)
-            std::cout << "Device memory\n"<<std::flush;
-        else if (attr.memoryType == cudaMemoryTypeHost)
-            std::cout << "Host memory\n"<<std::flush;
-    #endif
+#  if CUDART_VERSION >= 10000
+      if (attr.type == cudaMemoryTypeDevice)
+        std::cout << "Device memory\n" << std::flush;
+      else if (attr.type == cudaMemoryTypeHost)
+        std::cout << "Host (pinned) memory\n" << std::flush;
+      else
+        std::cout << "Unknown CUDA memory type\n" << std::flush;
+#  else
+      if (attr.memoryType == cudaMemoryTypeDevice)
+        std::cout << "Device memory\n" << std::flush;
+      else if (attr.memoryType == cudaMemoryTypeHost)
+        std::cout << "Host memory\n" << std::flush;
+#  endif
     }
   } // namespace utils
 } // namespace dftefe

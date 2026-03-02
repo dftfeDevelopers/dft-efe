@@ -87,7 +87,7 @@ namespace dftefe
           {
             for (size_type iQuad = 0; iQuad < nQuadPointsInCell[iCell]; ++iQuad)
               {
-                size_type index    = iCell * nQuadPointsInCell[iCell] + iQuad;
+                size_type index = iCell * nQuadPointsInCell[iCell] + iQuad;
                 mSizes[index]   = dofsInCell[iCell];
                 nSizes[index]   = dim;
                 kSizes[index]   = dim;

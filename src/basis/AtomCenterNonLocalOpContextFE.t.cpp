@@ -91,8 +91,7 @@ namespace dftefe
                                                      // numCellProjectors[iCell]
                                                      // : numCellDofs[iCell];
             ldaSizes[iCell] = mSizes[iCell];
-            ldbSizes[iCell] =
-              isCConjTransX ? nSizes[iCell] : kSizes[iCell];
+            ldbSizes[iCell] = isCConjTransX ? nSizes[iCell] : kSizes[iCell];
             ldcSizes[iCell] = mSizes[iCell];
             strideA[iCell]  = mSizes[iCell] * kSizes[iCell];
             strideB[iCell]  = kSizes[iCell] * nSizes[iCell];
@@ -193,20 +192,20 @@ namespace dftefe
                       numCellXLocalIds.begin() + cellEndId,
                       cellsInBlockNumXLocalIdsSTL.begin());
 
-          const size_type numCumulativeXLocalIdsCellsInBlock =
-            std::accumulate(cellsInBlockNumXLocalIdsSTL.begin(),
-                            cellsInBlockNumXLocalIdsSTL.end(),
-                            0);
+            const size_type numCumulativeXLocalIdsCellsInBlock =
+              std::accumulate(cellsInBlockNumXLocalIdsSTL.begin(),
+                              cellsInBlockNumXLocalIdsSTL.end(),
+                              0);
 
             std::vector<size_type> cellsInBlockNumYLocalIdsSTL(numCellsInBlock);
             std::copy(numCellYLocalIds.begin() + cellStartId,
                       numCellYLocalIds.begin() + cellEndId,
                       cellsInBlockNumYLocalIdsSTL.begin());
 
-          const size_type numCumulativeYLocalIdsCellsInBlock =
-            std::accumulate(cellsInBlockNumYLocalIdsSTL.begin(),
-                            cellsInBlockNumYLocalIdsSTL.end(),
-                            0);
+            const size_type numCumulativeYLocalIdsCellsInBlock =
+              std::accumulate(cellsInBlockNumYLocalIdsSTL.begin(),
+                              cellsInBlockNumYLocalIdsSTL.end(),
+                              0);
 
             // utils::MemoryStorage<size_type, memorySpace>
             //   cellsInBlockNumXLocalIds(numCellsInBlock);
@@ -222,7 +221,7 @@ namespace dftefe
                                       numVecs,
                                       cellLocalIdsStartPtrX +
                                         cellLocalIdsOffsetX,
-                                      //cellsInBlockNumXLocalIds,
+                                      // cellsInBlockNumXLocalIds,
                                       numCumulativeXLocalIdsCellsInBlock,
                                       xCellValues);
 
@@ -239,13 +238,14 @@ namespace dftefe
             basis::FECellWiseDataOperations<
               linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
                                                      ValueTypeOperand>,
-              memorySpace>::addCellWiseDataToFieldData(yCellValues,
-                                                       numVecs,
-                                                       cellLocalIdsStartPtrY +
-                                                         cellLocalIdsOffsetY,
-                                                       //cellsInBlockNumYLocalIds,
-                                                       numCumulativeYLocalIdsCellsInBlock,
-                                                       y);
+              memorySpace>::
+              addCellWiseDataToFieldData(yCellValues,
+                                         numVecs,
+                                         cellLocalIdsStartPtrY +
+                                           cellLocalIdsOffsetY,
+                                         // cellsInBlockNumYLocalIds,
+                                         numCumulativeYLocalIdsCellsInBlock,
+                                         y);
 
             for (size_type iCell = 0; iCell < numCellsInBlock; ++iCell)
               {
@@ -947,7 +947,7 @@ namespace dftefe
               d_CXCellValues,
               d_CX->getNumberComponents(),
               d_locallyOwnedCellLocalProjectorIds.begin() + cellLocalIdsOffsetY,
-              //cellsInBlockLocalIds,
+              // cellsInBlockLocalIds,
               numCumulativeLocalIdsCellsInBlock,
               d_CX->data());
         }
@@ -1046,7 +1046,7 @@ namespace dftefe
               d_CX->data(),
               d_CX->getNumberComponents(),
               d_locallyOwnedCellLocalProjectorIds.begin() + cellLocalIdsOffsetX,
-              //cellsInBlockLocalIds,
+              // cellsInBlockLocalIds,
               numCumulativeLocalIdsCellsInBlock,
               d_CXCellValues);
 

@@ -50,6 +50,9 @@ namespace dftefe
         std::vector<size_type> &cellStartIdsBasisOverlap,
         std::vector<size_type> &dofsInCellVec)
       {
+        utils::throwException(
+          memorySpace == utils::MemorySpace::DEVICE,
+          "Make chnages in computeBasisOverlapMatrix for Device in PristineEFEOverlap.");
         std::shared_ptr<const EFEBasisDofHandler<ValueTypeOperand,
                                                  ValueTypeOperator,
                                                  memorySpace,
@@ -166,6 +169,9 @@ namespace dftefe
         std::vector<size_type> &cellStartIdsBasisOverlap,
         std::vector<size_type> &dofsInCellVec)
       {
+        utils::throwException(
+          memorySpace == utils::MemorySpace::DEVICE,
+          "Make chnages in computeBasisOverlapMatrix for Device in PristineEFEOverlap.");
         std::shared_ptr<
           const FEBasisDofHandler<ValueTypeOperand, memorySpace, dim>>
           cfeBDH = std::dynamic_pointer_cast<
@@ -398,7 +404,7 @@ namespace dftefe
                                       numVecs,
                                       cellLocalIdsStartPtrX +
                                         cellLocalIdsOffset,
-                                      //cellsInBlockNumDoFs,
+                                      // cellsInBlockNumDoFs,
                                       cellsInBlockNumCumulativeDoFs,
                                       xCellValues);
 
@@ -475,13 +481,14 @@ namespace dftefe
             basis::FECellWiseDataOperations<
               linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
                                                      ValueTypeOperand>,
-              memorySpace>::addCellWiseDataToFieldData(yCellValues,
-                                                       numVecs,
-                                                       cellLocalIdsStartPtrY +
-                                                         cellLocalIdsOffset,
-                                                       //cellsInBlockNumDoFs,
-                                                       cellsInBlockNumCumulativeDoFs,
-                                                       y);
+              memorySpace>::
+              addCellWiseDataToFieldData(yCellValues,
+                                         numVecs,
+                                         cellLocalIdsStartPtrY +
+                                           cellLocalIdsOffset,
+                                         // cellsInBlockNumDoFs,
+                                         cellsInBlockNumCumulativeDoFs,
+                                         y);
 
             for (size_type iCell = 0; iCell < numCellsInBlock; ++iCell)
               {
