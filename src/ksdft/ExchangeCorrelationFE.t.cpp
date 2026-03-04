@@ -47,14 +47,14 @@ namespace dftefe
                                          ValueTypeBasisCoeff,
                                          memorySpace,
                                          dim>::RealType,
-          memorySpace> &field,
+          memorySpaceHost> &field,
         const quadrature::QuadratureValuesContainer<
           typename ExchangeCorrelationFE<ValueTypeBasisData,
                                          ValueTypeBasisCoeff,
                                          memorySpace,
                                          dim>::RealType,
-          memorySpace> &                                             rho,
-        const utils::MemoryStorage<ValueTypeBasisData, memorySpace> &jxwStorage,
+          memorySpaceHost> &                                             rho,
+        const ValueTypeBasisData *     jxwStorageIter,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
                                    linAlgOpContext,
         const utils::mpi::MPIComm &comm)
@@ -67,7 +67,6 @@ namespace dftefe
         RealType        value                = 0;
         const RealType *fieldIter            = field.begin();
         const RealType *rhoIter              = rho.begin();
-        const RealType *jxwStorageIter       = jxwStorage.data();
         size_type       cumulativeQuadInCell = 0;
 
         for (size_type iCell = 0; iCell < field.nCells(); iCell++)
@@ -140,7 +139,7 @@ namespace dftefe
                           memorySpace,
                           dim>::
       ExchangeCorrelationFE(
-        const quadrature::QuadratureValuesContainer<RealType, memorySpace>
+        const quadrature::QuadratureValuesContainer<RealType, memorySpaceHost>
           &electronChargeDensity,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
@@ -219,6 +218,9 @@ namespace dftefe
     {
       d_feBasisDataStorage = feBasisDataStorage;
       d_xcPotentialQuad    = std::make_shared<
+        quadrature::QuadratureValuesContainer<RealType, memorySpaceHost>>(
+        feBasisDataStorage->getQuadratureRuleContainer(), 1);
+      d_xcPotentialQuadMemspace    = std::make_shared<
         quadrature::QuadratureValuesContainer<RealType, memorySpace>>(
         feBasisDataStorage->getQuadratureRuleContainer(), 1);
       d_feBasisOp =
@@ -253,7 +255,7 @@ namespace dftefe
                           memorySpace,
                           dim>::
       reinitField(
-        const quadrature::QuadratureValuesContainer<RealType, memorySpace>
+        const quadrature::QuadratureValuesContainer<RealType, memorySpaceHost>
           &electronChargeDensity) /*Assumes rho has 1 component*/
     {
       d_electronChargeDensity = &electronChargeDensity;
@@ -276,7 +278,7 @@ namespace dftefe
       utils::MemoryStorage<RealType, utils::MemorySpace::HOST> vcRho(lenRho),
         vxRho(lenRho);
 
-      utils::MemoryTransfer<utils::MemorySpace::HOST, memorySpace>
+      utils::MemoryTransfer<utils::MemorySpace::HOST, memorySpaceHost>
         memoryTransfer;
       memoryTransfer.copy(lenRho, d_rho->data(), electronChargeDensity.begin());
 
@@ -300,6 +302,12 @@ namespace dftefe
           d_xcPotentialQuad->template setCellValues<utils::MemorySpace::HOST>(
             iCell, a.data());
         }
+
+        utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>
+          memoryTransferH2M;
+        memoryTransferH2M.copy(d_xcPotentialQuad->nEntries(),
+                            d_xcPotentialQuadMemspace->data(),
+                            d_xcPotentialQuad->data());
     }
 
     template <typename ValueTypeBasisData,
@@ -316,7 +324,7 @@ namespace dftefe
                                      basis::realspace::VectorMathOp::MULT,
                                      basis::realspace::VectorMathOp::MULT,
                                      basis::realspace::LinearLocalOp::IDENTITY,
-                                     *d_xcPotentialQuad,
+                                     *d_xcPotentialQuadMemspace,
                                      cellWiseStorage,
                                      *d_linAlgOpContext);
     }
@@ -331,7 +339,7 @@ namespace dftefe
                           memorySpace,
                           dim>::evalEnergy(const utils::mpi::MPIComm &comm)
     {
-      auto jxwStorage = d_feBasisDataStorage->getJxWInAllCells();
+      auto jxwStorage = d_feBasisDataStorage->getQuadratureRuleContainer()->getJxW();
 
       size_type lenRho = d_electronChargeDensity->getQuadratureRuleContainer()
                            ->nQuadraturePoints();
@@ -369,7 +377,7 @@ namespace dftefe
           memorySpace,
           dim>(*d_xcPotentialQuad,
                *d_electronChargeDensity,
-               jxwStorage,
+               jxwStorage.data(),
                d_linAlgOpContext,
                comm);
 
@@ -407,7 +415,7 @@ namespace dftefe
                           memorySpace,
                           dim>::getFunctionalDerivative() const
     {
-      return *d_xcPotentialQuad;
+      return *d_xcPotentialQuadMemspace;
     }
 
     template <typename ValueTypeBasisData,

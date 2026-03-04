@@ -30,6 +30,7 @@
 #include <string>
 #include <utils/MathConstants.h>
 #include <atoms/AtomTCIASpline.h>
+#include <utils/MemorySpaceType.h>
 #include <linearAlgebra/LinearAlgebraTypes.h>
 
 namespace dftefe
@@ -172,5 +173,8 @@ namespace dftefe
     }; // end of class AtomTCIADataDefaults
 
   } // end of namespace ksdft
+
+  static constexpr utils::MemorySpace memorySpaceHost = utils::MemorySpace::HOST;  
+
 } // end of namespace dftefe
 #endif // dftefeDFTDefaults_h

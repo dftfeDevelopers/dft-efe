@@ -1,0 +1,78 @@
+/******************************************************************************
+ * Copyright (c) 2021.                                                        *
+ * The Regents of the University of Michigan and DFT-EFE developers.          *
+ *                                                                            *
+ * This file is part of the DFT-EFE code.                                     *
+ *                                                                            *
+ * DFT-EFE is free software: you can redistribute it and/or modify            *
+ *   it under the terms of the Lesser GNU General Public License as           *
+ *   published by the Free Software Foundation, either version 3 of           *
+ *   the License, or (at your option) any later version.                      *
+ *                                                                            *
+ * DFT-EFE is distributed in the hope that it will be useful, but             *
+ *   WITHOUT ANY WARRANTY; without even the implied warranty                  *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.                     *
+ *   See the Lesser GNU General Public License for more details.              *
+ *                                                                            *
+ * You should have received a copy of the GNU Lesser General Public           *
+ *   License at the top level of DFT-EFE distribution.  If not, see           *
+ *   <https://www.gnu.org/licenses/>.                                         *
+ ******************************************************************************/
+
+/*
+ * @author Avirup Sircar
+ */
+
+#ifndef dftefeDensityCalculatorKernels_h
+#define dftefeDensityCalculatorKernels_h
+
+#include <utils/MemorySpaceType.h>
+#include <linearAlgebra/MultiVector.h>
+#include <quadrature/QuadratureValuesContainer.h>
+
+namespace dftefe
+{
+  namespace ksdft
+  {
+    template <typename ValueType,
+                typename RealType, 
+                utils::MemorySpace memorySpace>
+    class DensityCalculatorKernels
+    {
+    public:
+      static void
+      computeRhoInBatch(
+        const utils::MemoryStorage<RealType, memorySpace> &occupationInBatch,
+        quadrature::QuadratureValuesContainer<ValueType, memorySpace>
+          &psiBatchQuad,
+        quadrature::QuadratureValuesContainer<RealType, memorySpace>
+          &modPsiSqBatchQuad,
+        std::shared_ptr<const quadrature::QuadratureRuleContainer>
+          quadRuleContainer,
+        quadrature::QuadratureValuesContainer<RealType, memorySpace> &rhoBatch,
+        linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext);
+    }; // end of class DensityCalculatorKernels
+
+
+#ifdef DFTEFE_WITH_DEVICE
+    template <typename ValueType, typename RealType>
+    class DensityCalculatorKernels<ValueType, RealType,
+                                   utils::MemorySpace::DEVICE>
+    {
+    public:
+      static void
+      computeRhoInBatch(
+        const utils::MemoryStorage<RealType, utils::MemorySpace::DEVICE> &occupationInBatch,
+        quadrature::QuadratureValuesContainer<ValueType, utils::MemorySpace::DEVICE>
+          &psiBatchQuad,
+        quadrature::QuadratureValuesContainer<RealType, utils::MemorySpace::DEVICE>
+          &modPsiSqBatchQuad,
+        std::shared_ptr<const quadrature::QuadratureRuleContainer>
+          quadRuleContainer,
+        quadrature::QuadratureValuesContainer<RealType, utils::MemorySpace::DEVICE> &rhoBatch,
+        linearAlgebra::LinAlgOpContext<utils::MemorySpace::DEVICE> &linAlgOpContext);
+    }; // end of class DensityCalculatorKernels
+#endif
+  } // end of namespace basis
+} // end of namespace dftefe
+#endif // dftefeDensityCalculatorKernels_h

@@ -54,15 +54,15 @@ namespace dftefe
                                    ValueTypeWaveFnBasisData,
                                    memorySpace,
                                    dim>::RealType,
-          memorySpace> &field,
+          memorySpaceHost> &field,
         const quadrature::QuadratureValuesContainer<
           typename ElectrostaticFE<ValueTypeBasisData,
                                    ValueTypeBasisCoeff,
                                    ValueTypeWaveFnBasisData,
                                    memorySpace,
                                    dim>::RealType,
-          memorySpace> &                                             rho,
-        const utils::MemoryStorage<ValueTypeBasisData, memorySpace> &jxwStorage,
+          memorySpaceHost> &                                             rho,
+        const utils::MemoryStorage<ValueTypeBasisData, memorySpaceHost> &jxwStorage,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
                                    linAlgOpContext,
         const utils::mpi::MPIComm &comm)
@@ -154,20 +154,20 @@ namespace dftefe
         const std::vector<utils::Point> &atomCoordinates,
         const std::vector<double> &      atomCharges,
         const double &                   smearedChargeRadius,
-        const quadrature::QuadratureValuesContainer<RealType, memorySpace>
+        const quadrature::QuadratureValuesContainer<RealType, memorySpaceHost>
           &                                               electronChargeDensity,
         std::shared_ptr<const basis::FEBasisManager<ValueTypeBasisCoeff,
                                                     ValueTypeBasisData,
-                                                    memorySpace,
+                                                    memorySpaceHost,
                                                     dim>> feBMTotalCharge,
         std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpaceHost>>
           feBDTotalChargeStiffnessMatrix,
         std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpaceHost>>
           feBDNuclearChargeRhs,
         std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpaceHost>>
           feBDElectronicChargeRhs,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeWaveFnBasisData,
@@ -176,7 +176,7 @@ namespace dftefe
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
                         linAlgOpContext,
         const size_type maxCellBlock,
-        const bool      useDealiiMatrixFreePoissonSolve)
+        bool            useDealiiMatrixFreePoissonSolve)
       : d_atomCharges(atomCharges)
       , d_numAtoms(atomCoordinates.size())
       , d_smearedChargeRadius(smearedChargeRadius)
@@ -197,6 +197,7 @@ namespace dftefe
       , d_atomicTotalElecPotElectronicQuad(nullptr)
       , d_isCalculateIntegralDeltaRho(false)
       , d_isTCIEnabled(false)
+      , d_linAlgOpContextHost(linearAlgebra::LinAlgOpContextDefaults::LINALG_OP_CONTXT_HOST)
     {
       int rank;
       utils::mpi::MPICommRank(
@@ -209,7 +210,7 @@ namespace dftefe
 
       if (dynamic_cast<const basis::EFEBasisDofHandler<ValueTypeBasisCoeff,
                                                        ValueTypeBasisData,
-                                                       memorySpace,
+                                                       memorySpaceHost,
                                                        dim> *>(
             &basisDofHandler) != nullptr)
         {
@@ -241,26 +242,26 @@ namespace dftefe
         const std::vector<utils::Point> &atomCoordinates,
         const std::vector<double> &      atomCharges,
         const double &                   smearedChargeRadius,
-        const quadrature::QuadratureValuesContainer<RealType, memorySpace>
+        const quadrature::QuadratureValuesContainer<RealType, memorySpaceHost>
           &                                               electronChargeDensity,
         std::shared_ptr<const basis::FEBasisManager<ValueTypeBasisCoeff,
                                                     ValueTypeBasisData,
-                                                    memorySpace,
+                                                    memorySpaceHost,
                                                     dim>> feBMTotalCharge,
         std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpaceHost>>
           feBDTotalChargeStiffnessMatrix,
         std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpaceHost>>
           feBDNuclearChargeRhs,
         std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpaceHost>>
           feBDElectronicChargeRhs,
         std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpaceHost>>
           feBDNuclChargeStiffnessMatrixNumSol,
         std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpaceHost>>
           feBDNuclChargeRhsNumSol,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeWaveFnBasisData,
@@ -269,7 +270,7 @@ namespace dftefe
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
                         linAlgOpContext,
         const size_type maxCellBlock,
-        const bool      useDealiiMatrixFreePoissonSolve)
+        bool            useDealiiMatrixFreePoissonSolve)
       : d_atomCharges(atomCharges)
       , d_numAtoms(atomCoordinates.size())
       , d_smearedChargeRadius(smearedChargeRadius)
@@ -302,7 +303,7 @@ namespace dftefe
 
       if (dynamic_cast<const basis::EFEBasisDofHandler<ValueTypeBasisCoeff,
                                                        ValueTypeBasisData,
-                                                       memorySpace,
+                                                       memorySpaceHost,
                                                        dim> *>(
             &basisDofHandler) != nullptr)
         {
@@ -337,32 +338,24 @@ namespace dftefe
         const std::vector<std::string> & atomSymbols,
         const std::vector<double> &      atomCharges,
         const double &                   smearedChargeRadius,
-        // const quadrature::QuadratureValuesContainer<RealType, memorySpace>
-        //   &atomicElectronChargeDensity,
-        // const quadrature::QuadratureValuesContainer<ValueTypeBasisCoeff,
-        //                                             memorySpace>
-        //   &atomicTotalElecPotNuclearQuad,
-        // const quadrature::QuadratureValuesContainer<ValueTypeBasisCoeff,
-        //                                             memorySpace>
-        //   &atomicTotalElecPotElectronicQuad,
         const utils::ScalarSpatialFunctionReal
           &atomicTotalElectroPotentialFunction,
         const utils::ScalarSpatialFunctionReal
           &atomicElectronicChargeDensityFunction,
         std::shared_ptr<const basis::FEBasisManager<ValueTypeBasisCoeff,
                                                     ValueTypeBasisData,
-                                                    memorySpace,
+                                                    memorySpaceHost,
                                                     dim>>
           feBMTotalCharge, // will be same as bc of totalCharge -
                            // atomicTotalCharge
         std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpaceHost>>
           feBDTotalChargeStiffnessMatrix,
         std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpaceHost>>
           feBDNuclearChargeRhs,
         std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpaceHost>>
           feBDElectronicChargeRhs,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeWaveFnBasisData,
@@ -408,9 +401,6 @@ namespace dftefe
       d_rootCout.setCondition(rank == 0);
 
       reinitBasis(atomCoordinates,
-                  // atomicElectronChargeDensity,
-                  // atomicTotalElecPotNuclearQuad,
-                  // atomicTotalElecPotElectronicQuad,
                   atomicTotalElectroPotentialFunction,
                   atomicElectronicChargeDensityFunction,
                   feBMTotalCharge,
@@ -464,6 +454,11 @@ namespace dftefe
           delete d_scratchPotHamQuad;
           d_scratchPotHamQuad = nullptr;
         }
+      if (d_potentialHamQuadMemspace != nullptr)
+        {
+          delete d_potentialHamQuadMemspace;
+          d_potentialHamQuadMemspace = nullptr;
+        }
       if (d_correctionPotHamQuad != nullptr)
         {
           delete d_correctionPotHamQuad;
@@ -510,22 +505,22 @@ namespace dftefe
         const std::vector<utils::Point>                        & atomCoordinates,
         std::shared_ptr<const basis::FEBasisManager<ValueTypeBasisCoeff,
                                                     ValueTypeBasisData,
-                                                    memorySpace,
+                                                    memorySpaceHost,
                                                     dim>> feBMTotalCharge,
         std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpaceHost>>
           feBDTotalChargeStiffnessMatrix,
         std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpaceHost>>
           feBDNuclearChargeRhs,
         std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpaceHost>>
           feBDElectronicChargeRhs,
         std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpaceHost>>
           feBDNuclChargeStiffnessMatrixNumSol,
         std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpaceHost>>
           feBDNuclChargeRhsNumSol,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeWaveFnBasisData,
@@ -573,14 +568,14 @@ namespace dftefe
       d_feBasisOpNuclear =
         std::make_shared<basis::FEBasisOperations<ValueTypeBasisCoeff,
                                                   ValueTypeBasisData,
-                                                  memorySpace,
+                                                  memorySpaceHost,
                                                   dim>>(d_feBDNuclearChargeRhs,
                                                         d_maxCellBlock,
                                                         d_numComponents);
       d_feBasisOpElectronic =
         std::make_shared<basis::FEBasisOperations<ValueTypeBasisCoeff,
                                                   ValueTypeBasisData,
-                                                  memorySpace,
+                                                  memorySpaceHost,
                                                   dim>>(
           d_feBDElectronicChargeRhs, d_maxCellBlock, d_numComponents);
 
@@ -605,45 +600,49 @@ namespace dftefe
 
       /*-----Getting V_effNiNj -------*/
       d_scratchPotHamQuad =
+        new quadrature::QuadratureValuesContainer<ValueType, memorySpaceHost>(
+          quadRuleContainerHam, d_numComponents);
+
+      d_potentialHamQuadMemspace =
         new quadrature::QuadratureValuesContainer<ValueType, memorySpace>(
           quadRuleContainerHam, d_numComponents);
 
       d_correctionPotHamQuad =
-        new quadrature::QuadratureValuesContainer<ValueType, memorySpace>(
+        new quadrature::QuadratureValuesContainer<ValueType, memorySpaceHost>(
           quadRuleContainerHam, d_numComponents);
       /*-----Getting V_effNiNj -------*/
 
       // create nuclear and electron charge densities
       d_scratchDensNuclearQuad =
-        new quadrature::QuadratureValuesContainer<RealType, memorySpace>(
+        new quadrature::QuadratureValuesContainer<RealType, memorySpaceHost>(
           quadRuleContainerNucl, d_numComponents);
 
       d_scratchPotNuclearQuad =
-        new quadrature::QuadratureValuesContainer<ValueType, memorySpace>(
+        new quadrature::QuadratureValuesContainer<ValueType, memorySpaceHost>(
           quadRuleContainerNucl, d_numComponents);
 
       d_scratchDensRhoQuad =
-        new quadrature::QuadratureValuesContainer<RealType, memorySpace>(
+        new quadrature::QuadratureValuesContainer<RealType, memorySpaceHost>(
           quadRuleContainerElec, d_numComponents);
 
       d_scratchPotRhoQuad = d_scratchPotHamQuad;
-      // new quadrature::QuadratureValuesContainer<ValueType, memorySpace>(
+      // new quadrature::QuadratureValuesContainer<ValueType, memorySpaceHost>(
       //   quadRuleContainerElec, d_numComponents);
 
       d_correctionPotRhoQuad = d_correctionPotHamQuad;
-      // new quadrature::QuadratureValuesContainer<ValueType, memorySpace>(
+      // new quadrature::QuadratureValuesContainer<ValueType, memorySpaceHost>(
       //   quadRuleContainerElec, d_numComponents);
 
       // Init the phi_el multivector
       d_totalChargePotential =
-        new linearAlgebra::MultiVector<ValueType, memorySpace>(
+        new linearAlgebra::MultiVector<ValueType, memorySpaceHost>(
           d_feBMTotalCharge->getMPIPatternP2P(),
-          d_linAlgOpContext,
+          d_linAlgOpContextHost,
           d_numComponents);
 
       // get the input quadraturevaluescontainer for poisson solve
       d_nuclearChargesDensity =
-        new quadrature::QuadratureValuesContainer<RealType, memorySpace>(
+        new quadrature::QuadratureValuesContainer<RealType, memorySpaceHost>(
           quadRuleContainerNucl, d_numComponents);
 
       const utils::SmearChargeDensityFunction smfunc(d_atomCoordinates,
@@ -687,7 +686,7 @@ namespace dftefe
       quadrature::scale((RealType)std::abs(totalAtomCharges /
                                            d_totNuclearChargeQuad),
                         *d_nuclearChargesDensity,
-                        *d_linAlgOpContext);
+                        *d_linAlgOpContextHost);
 
       d_rootCout << "Integral of nuclear charges over domain: "
                  << d_totNuclearChargeQuad << "\n";
@@ -710,7 +709,7 @@ namespace dftefe
                           (ValueType)1.0,
                           *d_correctionPotHamQuad,
                           *d_correctionPotHamQuad,
-                          *d_linAlgOpContext);
+                          *d_linAlgOpContextHost);
         }
 
       for (size_type iCell = 0; iCell < quadRuleContainerHam->nCells(); iCell++)
@@ -737,7 +736,7 @@ namespace dftefe
                       (ValueType)1.0,
                       *d_scratchPotHamQuad,
                       *d_correctionPotHamQuad,
-                      *d_linAlgOpContext);
+                      *d_linAlgOpContextHost);
 
       /*
             for (unsigned int iAtom = 0; iAtom < d_numAtoms; iAtom++)
@@ -751,7 +750,7 @@ namespace dftefe
                                 (ValueType)1.0,
                                 *d_scratchPotRhoQuad,
                                 *d_scratchPotRhoQuad,
-                                *d_linAlgOpContext);
+                                *d_linAlgOpContextHost);
               }
 
             for (size_type iCell = 0; iCell < quadRuleContainerElec->nCells();
@@ -778,14 +777,14 @@ namespace dftefe
                             (ValueType)1.0,
                             *d_correctionPotRhoQuad,
                             *d_correctionPotRhoQuad,
-                            *d_linAlgOpContext);
+                            *d_linAlgOpContextHost);
       */
 
       computeNuclearSelfEnergy();
 
       std::map<
         std::string,
-        const quadrature::QuadratureValuesContainer<RealType, memorySpace> &>
+        const quadrature::QuadratureValuesContainer<RealType, memorySpaceHost> &>
         inpRhsMap;
 
       d_feBasisDataStorageRhsMap = {{"bSmear", d_feBDNuclearChargeRhs},
@@ -797,28 +796,28 @@ namespace dftefe
         d_linearSolverFunction = std::make_shared<
           electrostatics::PoissonLinearSolverFunctionFE<ValueTypeBasisData,
                                                         ValueTypeBasisCoeff,
-                                                        memorySpace,
+                                                        memorySpaceHost,
                                                         dim>>(
           d_feBMTotalCharge,
           d_feBDTotalChargeStiffnessMatrix,
           d_feBasisDataStorageRhsMap,
           inpRhsMap,
           ksdft::PoissonProblemDefaults::PC_TYPE,
-          d_linAlgOpContext,
+          d_linAlgOpContextHost,
           ksdft::KSDFTDefaults::CELL_BATCH_SIZE_GRAD_EVAL,
           d_numComponents);
       else
         d_poissonSolverDealiiMatFree = std::make_shared<
           electrostatics::PoissonSolverDealiiMatrixFreeFE<ValueTypeBasisData,
                                                           ValueTypeBasisCoeff,
-                                                          memorySpace,
+                                                          memorySpaceHost,
                                                           dim>>(
           d_feBMTotalCharge,
           d_feBDTotalChargeStiffnessMatrix,
           d_feBasisDataStorageRhsMap,
           inpRhsMap,
           ksdft::PoissonProblemDefaults::PC_TYPE,
-          d_linAlgOpContext);
+          d_linAlgOpContextHost);
     }
 
     template <typename ValueTypeBasisData,
@@ -836,16 +835,16 @@ namespace dftefe
         const std::vector<utils::Point> &                 atomCoordinates,
         std::shared_ptr<const basis::FEBasisManager<ValueTypeBasisCoeff,
                                                     ValueTypeBasisData,
-                                                    memorySpace,
+                                                    memorySpaceHost,
                                                     dim>> feBMTotalCharge,
         std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpaceHost>>
           feBDTotalChargeStiffnessMatrix,
         std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpaceHost>>
           feBDNuclearChargeRhs,
         std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpaceHost>>
           feBDElectronicChargeRhs,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeWaveFnBasisData,
@@ -877,14 +876,14 @@ namespace dftefe
       d_feBasisOpNuclear =
         std::make_shared<basis::FEBasisOperations<ValueTypeBasisCoeff,
                                                   ValueTypeBasisData,
-                                                  memorySpace,
+                                                  memorySpaceHost,
                                                   dim>>(d_feBDNuclearChargeRhs,
                                                         d_maxCellBlock,
                                                         d_numComponents);
       d_feBasisOpElectronic =
         std::make_shared<basis::FEBasisOperations<ValueTypeBasisCoeff,
                                                   ValueTypeBasisData,
-                                                  memorySpace,
+                                                  memorySpaceHost,
                                                   dim>>(
           d_feBDElectronicChargeRhs, d_maxCellBlock, d_numComponents);
 
@@ -909,46 +908,50 @@ namespace dftefe
 
       /*-----Getting V_effNiNj -------*/
       d_scratchPotHamQuad =
+        new quadrature::QuadratureValuesContainer<ValueType, memorySpaceHost>(
+          quadRuleContainerHam, d_numComponents);
+
+      d_potentialHamQuadMemspace =
         new quadrature::QuadratureValuesContainer<ValueType, memorySpace>(
           quadRuleContainerHam, d_numComponents);
 
       d_correctionPotHamQuad =
-        new quadrature::QuadratureValuesContainer<ValueType, memorySpace>(
+        new quadrature::QuadratureValuesContainer<ValueType, memorySpaceHost>(
           quadRuleContainerHam, d_numComponents);
       /*-----Getting V_effNiNj -------*/
 
       // create nuclear and electron charge densities and total charge potential
       // with correction
       d_scratchDensNuclearQuad =
-        new quadrature::QuadratureValuesContainer<RealType, memorySpace>(
+        new quadrature::QuadratureValuesContainer<RealType, memorySpaceHost>(
           quadRuleContainerNucl, d_numComponents);
 
       d_scratchPotNuclearQuad =
-        new quadrature::QuadratureValuesContainer<ValueType, memorySpace>(
+        new quadrature::QuadratureValuesContainer<ValueType, memorySpaceHost>(
           quadRuleContainerNucl, d_numComponents);
 
       d_scratchDensRhoQuad =
-        new quadrature::QuadratureValuesContainer<RealType, memorySpace>(
+        new quadrature::QuadratureValuesContainer<RealType, memorySpaceHost>(
           quadRuleContainerElec, d_numComponents);
 
       d_scratchPotRhoQuad = d_scratchPotHamQuad;
-      // new quadrature::QuadratureValuesContainer<ValueType, memorySpace>(
+      // new quadrature::QuadratureValuesContainer<ValueType, memorySpaceHost>(
       //   quadRuleContainerElec, d_numComponents);
 
       d_correctionPotRhoQuad = d_correctionPotHamQuad;
-      // new quadrature::QuadratureValuesContainer<ValueType, memorySpace>(
+      // new quadrature::QuadratureValuesContainer<ValueType, memorySpaceHost>(
       //   quadRuleContainerElec, d_numComponents);
 
       // get the input quadraturevaluescontainer for poisson solve
       d_nuclearChargesDensity =
-        new quadrature::QuadratureValuesContainer<RealType, memorySpace>(
+        new quadrature::QuadratureValuesContainer<RealType, memorySpaceHost>(
           quadRuleContainerNucl, d_numComponents);
 
       // Init the phi_el multivector
       d_totalChargePotential =
-        new linearAlgebra::MultiVector<ValueType, memorySpace>(
+        new linearAlgebra::MultiVector<ValueType, memorySpaceHost>(
           d_feBMTotalCharge->getMPIPatternP2P(),
-          d_linAlgOpContext,
+          d_linAlgOpContextHost,
           d_numComponents);
 
       const utils::SmearChargeDensityFunction smfunc(d_atomCoordinates,
@@ -992,7 +995,7 @@ namespace dftefe
       quadrature::scale((RealType)std::abs(totalAtomCharges /
                                            d_totNuclearChargeQuad),
                         *d_nuclearChargesDensity,
-                        *d_linAlgOpContext);
+                        *d_linAlgOpContextHost);
 
       d_rootCout << "Integral of nuclear charges over domain: "
                  << d_totNuclearChargeQuad << "\n";
@@ -1048,7 +1051,7 @@ namespace dftefe
       d_scratchDensNuclearQuad->setValue(0);
       std::map<
         std::string,
-        const quadrature::QuadratureValuesContainer<RealType, memorySpace> &>
+        const quadrature::QuadratureValuesContainer<RealType, memorySpaceHost> &>
         inpRhsMap;
 
       d_feBasisDataStorageRhsMap = {{"bSmear", d_feBDNuclearChargeRhs},
@@ -1060,28 +1063,28 @@ namespace dftefe
         d_linearSolverFunction = std::make_shared<
           electrostatics::PoissonLinearSolverFunctionFE<ValueTypeBasisData,
                                                         ValueTypeBasisCoeff,
-                                                        memorySpace,
+                                                        memorySpaceHost,
                                                         dim>>(
           d_feBMTotalCharge,
           d_feBDTotalChargeStiffnessMatrix,
           d_feBasisDataStorageRhsMap,
           inpRhsMap,
           ksdft::PoissonProblemDefaults::PC_TYPE,
-          d_linAlgOpContext,
+          d_linAlgOpContextHost,
           ksdft::KSDFTDefaults::CELL_BATCH_SIZE_GRAD_EVAL,
           d_numComponents);
       else
         d_poissonSolverDealiiMatFree = std::make_shared<
           electrostatics::PoissonSolverDealiiMatrixFreeFE<ValueTypeBasisData,
                                                           ValueTypeBasisCoeff,
-                                                          memorySpace,
+                                                          memorySpaceHost,
                                                           dim>>(
           d_feBMTotalCharge,
           d_feBDTotalChargeStiffnessMatrix,
           d_feBasisDataStorageRhsMap,
           inpRhsMap,
           ksdft::PoissonProblemDefaults::PC_TYPE,
-          d_linAlgOpContext);
+          d_linAlgOpContextHost);
     }
 
     template <typename ValueTypeBasisData,
@@ -1097,30 +1100,22 @@ namespace dftefe
                          dim>::
       reinitBasis(
         const std::vector<utils::Point> &atomCoordinates,
-        // const quadrature::QuadratureValuesContainer<RealType, memorySpace>
-        //   &atomicElectronChargeDensity,
-        // const quadrature::QuadratureValuesContainer<ValueTypeBasisCoeff,
-        //                                             memorySpace>
-        //   &atomicTotalElecPotNuclearQuad,
-        // const quadrature::QuadratureValuesContainer<ValueTypeBasisCoeff,
-        //                                             memorySpace>
-        //   &atomicTotalElecPotElectronicQuad,
         const utils::ScalarSpatialFunctionReal
           &atomicTotalElectroPotentialFunction,
         const utils::ScalarSpatialFunctionReal
           &atomicElectronicChargeDensityFunction,
         std::shared_ptr<const basis::FEBasisManager<ValueTypeBasisCoeff,
                                                     ValueTypeBasisData,
-                                                    memorySpace,
+                                                    memorySpaceHost,
                                                     dim>> feBMTotalCharge,
         std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpaceHost>>
           feBDTotalChargeStiffnessMatrix,
         std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpaceHost>>
           feBDNuclearChargeRhs,
         std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpaceHost>>
           feBDElectronicChargeRhs,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeWaveFnBasisData,
@@ -1157,14 +1152,14 @@ namespace dftefe
       d_feBasisOpNuclear =
         std::make_shared<basis::FEBasisOperations<ValueTypeBasisCoeff,
                                                   ValueTypeBasisData,
-                                                  memorySpace,
+                                                  memorySpaceHost,
                                                   dim>>(d_feBDNuclearChargeRhs,
                                                         d_maxCellBlock,
                                                         d_numComponents);
       d_feBasisOpElectronic =
         std::make_shared<basis::FEBasisOperations<ValueTypeBasisCoeff,
                                                   ValueTypeBasisData,
-                                                  memorySpace,
+                                                  memorySpaceHost,
                                                   dim>>(
           d_feBDElectronicChargeRhs, d_maxCellBlock, d_numComponents);
 
@@ -1189,25 +1184,29 @@ namespace dftefe
 
       /*-----Getting V_effNiNj -------*/
       d_scratchPotHamQuad =
-        new quadrature::QuadratureValuesContainer<ValueType, memorySpace>(
+        new quadrature::QuadratureValuesContainer<ValueType, memorySpaceHost>(
           quadRuleContainerHam, d_numComponents);
 
-      d_correctionPotHamQuad =
+      d_potentialHamQuadMemspace =
         new quadrature::QuadratureValuesContainer<ValueType, memorySpace>(
+          quadRuleContainerHam, d_numComponents);
+          
+      d_correctionPotHamQuad =
+        new quadrature::QuadratureValuesContainer<ValueType, memorySpaceHost>(
           quadRuleContainerHam, d_numComponents);
       /*-----Getting V_effNiNj -------*/
       // create nuclear and electron charge densities and total charge potential
       // with correction
       d_scratchDensNuclearQuad =
-        new quadrature::QuadratureValuesContainer<RealType, memorySpace>(
+        new quadrature::QuadratureValuesContainer<RealType, memorySpaceHost>(
           quadRuleContainerNucl, d_numComponents);
 
       d_scratchPotNuclearQuad =
-        new quadrature::QuadratureValuesContainer<ValueType, memorySpace>(
+        new quadrature::QuadratureValuesContainer<ValueType, memorySpaceHost>(
           quadRuleContainerNucl, d_numComponents);
 
       d_scratchDensRhoQuad =
-        new quadrature::QuadratureValuesContainer<RealType, memorySpace>(
+        new quadrature::QuadratureValuesContainer<RealType, memorySpaceHost>(
           quadRuleContainerElec, d_numComponents);
 
       d_scratchPotRhoQuad = d_scratchPotHamQuad;
@@ -1216,28 +1215,28 @@ namespace dftefe
 
       // get the input quadraturevaluescontainer for poisson solve
       d_nuclearChargesDensity =
-        new quadrature::QuadratureValuesContainer<RealType, memorySpace>(
+        new quadrature::QuadratureValuesContainer<RealType, memorySpaceHost>(
           quadRuleContainerNucl, d_numComponents);
 
       // Init the phi_el multivector
       d_totalChargePotential =
-        new linearAlgebra::MultiVector<ValueType, memorySpace>(
+        new linearAlgebra::MultiVector<ValueType, memorySpaceHost>(
           d_feBMTotalCharge->getMPIPatternP2P(),
-          d_linAlgOpContext,
+          d_linAlgOpContextHost,
           d_numComponents);
 
       //----- Atomic storages init ----
       d_atomicElectronChargeDensity =
-        quadrature::QuadratureValuesContainer<RealType, memorySpace>(
+        quadrature::QuadratureValuesContainer<RealType, memorySpaceHost>(
           feBDElectronicChargeRhs->getQuadratureRuleContainer(), 1, 0.0);
 
       // d_atomicElectronChargeDensityNucQuad =
-      //   quadrature::QuadratureValuesContainer<RealType, memorySpace>(
+      //   quadrature::QuadratureValuesContainer<RealType, memorySpaceHost>(
       //     feBDNuclearChargeRhs->getQuadratureRuleContainer(), 1, 0.0);
 
       d_atomicTotalElecPotElectronicQuad =
         new quadrature::QuadratureValuesContainer<ValueTypeBasisCoeff,
-                                                  memorySpace>(
+                                                  memorySpaceHost>(
           feBDElectronicChargeRhs->getQuadratureRuleContainer(), 1, 0.0);
 
       //----- Atomic storages init ----
@@ -1351,7 +1350,7 @@ namespace dftefe
       quadrature::scale((RealType)std::abs(totalAtomCharges /
                                            totNuclearChargeQuad),
                         *d_nuclearChargesDensity,
-                        *d_linAlgOpContext);
+                        *d_linAlgOpContextHost);
 
       d_rootCout << "Integral of nuclear charges over domain: "
                  << totNuclearChargeQuad << "\n";
@@ -1575,7 +1574,7 @@ namespace dftefe
       d_scratchDensNuclearQuad->setValue(0);
       std::map<
         std::string,
-        const quadrature::QuadratureValuesContainer<RealType, memorySpace> &>
+        const quadrature::QuadratureValuesContainer<RealType, memorySpaceHost> &>
         inpRhsMap;
 
       d_feBasisDataStorageRhsMap = {{"deltarho", d_feBDElectronicChargeRhs}};
@@ -1585,28 +1584,28 @@ namespace dftefe
         d_linearSolverFunction = std::make_shared<
           electrostatics::PoissonLinearSolverFunctionFE<ValueTypeBasisData,
                                                         ValueTypeBasisCoeff,
-                                                        memorySpace,
+                                                        memorySpaceHost,
                                                         dim>>(
           d_feBMTotalCharge,
           d_feBDTotalChargeStiffnessMatrix,
           d_feBasisDataStorageRhsMap,
           inpRhsMap,
           ksdft::PoissonProblemDefaults::PC_TYPE,
-          d_linAlgOpContext,
+          d_linAlgOpContextHost,
           ksdft::KSDFTDefaults::CELL_BATCH_SIZE_GRAD_EVAL,
           d_numComponents);
       else
         d_poissonSolverDealiiMatFree = std::make_shared<
           electrostatics::PoissonSolverDealiiMatrixFreeFE<ValueTypeBasisData,
                                                           ValueTypeBasisCoeff,
-                                                          memorySpace,
+                                                          memorySpaceHost,
                                                           dim>>(
           d_feBMTotalCharge,
           d_feBDTotalChargeStiffnessMatrix,
           d_feBasisDataStorageRhsMap,
           inpRhsMap,
           ksdft::PoissonProblemDefaults::PC_TYPE,
-          d_linAlgOpContext);
+          d_linAlgOpContextHost);
     }
 
     template <typename ValueTypeBasisData,
@@ -1621,7 +1620,7 @@ namespace dftefe
                          memorySpace,
                          dim>::
       reinitField(
-        const quadrature::QuadratureValuesContainer<RealType, memorySpace>
+        const quadrature::QuadratureValuesContainer<RealType, memorySpaceHost>
           &electronChargeDensity)
     {
       if (d_isDeltaRhoSolve)
@@ -1658,20 +1657,20 @@ namespace dftefe
 
           d_electronChargeDensity = &electronChargeDensity;
 
-          // quadrature::QuadratureValuesContainer<RealType, memorySpace>
+          // quadrature::QuadratureValuesContainer<RealType, memorySpaceHost>
           // electronChargeDensityScaled(
           //           electronChargeDensity);
 
           // quadrature::scale((RealType)std::abs(d_integralAtRho/normValue),
           //                   electronChargeDensityScaled,
-          //                   *d_linAlgOpContext);
+          //                   *d_linAlgOpContextHost);
 
           quadrature::add((RealType)1.0,
                           *d_electronChargeDensity,
                           (RealType)(-1.0),
                           d_atomicElectronChargeDensity,
                           *d_scratchDensRhoQuad,
-                          *d_linAlgOpContext);
+                          *d_linAlgOpContextHost);
 
           if (d_isCalculateIntegralDeltaRho)
             {
@@ -1746,13 +1745,13 @@ namespace dftefe
           // Scale by 4\pi
           quadrature::scale((RealType)(4 * utils::mathConstants::pi),
                             *d_scratchDensRhoQuad,
-                            *d_linAlgOpContext);
+                            *d_linAlgOpContextHost);
 
           /*---- solve poisson problem for delta rho system ---*/
 
           std::map<std::string,
                    const quadrature::QuadratureValuesContainer<RealType,
-                                                               memorySpace> &>
+                                                               memorySpaceHost> &>
             inpRhsMap = {{"deltarho", *d_scratchDensRhoQuad}};
 
           utils::Profiler p(
@@ -1773,11 +1772,11 @@ namespace dftefe
               std::shared_ptr<
                 linearAlgebra::LinearSolverImpl<ValueTypeBasisData,
                                                 ValueTypeBasisCoeff,
-                                                memorySpace>>
+                                                memorySpaceHost>>
                 CGSolve = std::make_shared<
                   linearAlgebra::CGLinearSolver<ValueTypeBasisData,
                                                 ValueTypeBasisCoeff,
-                                                memorySpace>>(
+                                                memorySpaceHost>>(
                   ksdft::PoissonProblemDefaults::MAX_ITER,
                   ksdft::PoissonProblemDefaults::ABSOLUTE_TOL,
                   ksdft::PoissonProblemDefaults::RELATIVE_TOL,
@@ -1807,19 +1806,19 @@ namespace dftefe
           quadrature::scale((RealType)(4 * utils::mathConstants::pi),
                             electronChargeDensity,
                             *d_scratchDensRhoQuad,
-                            *d_linAlgOpContext);
+                            *d_linAlgOpContextHost);
 
           // Scale by 4\pi
           quadrature::scale((RealType)(4 * utils::mathConstants::pi),
                             *d_nuclearChargesDensity,
                             *d_scratchDensNuclearQuad,
-                            *d_linAlgOpContext);
+                            *d_linAlgOpContextHost);
 
           /*---- solve poisson problem for b+rho system ---*/
 
           std::map<std::string,
                    const quadrature::QuadratureValuesContainer<RealType,
-                                                               memorySpace> &>
+                                                               memorySpaceHost> &>
             inpRhsMap = {{"bSmear", *d_scratchDensNuclearQuad},
                          {"rho", *d_scratchDensRhoQuad}};
 
@@ -1841,11 +1840,11 @@ namespace dftefe
               std::shared_ptr<
                 linearAlgebra::LinearSolverImpl<ValueTypeBasisData,
                                                 ValueTypeBasisCoeff,
-                                                memorySpace>>
+                                                memorySpaceHost>>
                 CGSolve = std::make_shared<
                   linearAlgebra::CGLinearSolver<ValueTypeBasisData,
                                                 ValueTypeBasisCoeff,
-                                                memorySpace>>(
+                                                memorySpaceHost>>(
                   ksdft::PoissonProblemDefaults::MAX_ITER,
                   ksdft::PoissonProblemDefaults::ABSOLUTE_TOL,
                   ksdft::PoissonProblemDefaults::RELATIVE_TOL,
@@ -1895,21 +1894,28 @@ namespace dftefe
                         *d_atomicTotalElecPotElectronicQuad,
                         (ValueType)1.0,
                         *d_scratchPotHamQuad,
-                        *d_linAlgOpContext);
+                        *d_linAlgOpContextHost);
 
       quadrature::add((ValueType)1.0,
                       *d_scratchPotHamQuad,
                       (ValueType)1.0,
                       *d_correctionPotHamQuad,
                       *d_scratchPotHamQuad,
-                      *d_linAlgOpContext);
+                      *d_linAlgOpContextHost);
+
+      utils::MemoryTransfer<memorySpace, memorySpaceHost>
+        memoryTransfer;
+
+      memoryTransfer.copy(d_scratchPotHamQuad->nEntries(),
+                          d_potentialHamQuadMemspace->data(),
+                          d_scratchPotHamQuad->data());
 
       d_feBasisOpHamiltonian->computeFEMatrices(
         basis::realspace::LinearLocalOp::IDENTITY,
         basis::realspace::VectorMathOp::MULT,
         basis::realspace::VectorMathOp::MULT,
         basis::realspace::LinearLocalOp::IDENTITY,
-        *d_scratchPotHamQuad,
+        *d_potentialHamQuadMemspace,
         cellWiseStorage,
         *d_linAlgOpContext);
     }
@@ -1927,18 +1933,18 @@ namespace dftefe
                          dim>::
       nuclearPotentialSolve(
         std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpaceHost>>
           feBDNuclearChargeStiffnessMatrix,
         std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpaceHost>>
           feBDNuclearChargeRhs)
     {
       // Solve poisson problem for individual atoms
       std::shared_ptr<
-        const basis::FEBasisDofHandler<ValueTypeBasisCoeff, memorySpace, dim>>
+        const basis::FEBasisDofHandler<ValueTypeBasisCoeff, memorySpaceHost, dim>>
         feBDHNuclearCharge = std::dynamic_pointer_cast<
           const basis::
-            FEBasisDofHandler<ValueTypeBasisCoeff, memorySpace, dim>>(
+            FEBasisDofHandler<ValueTypeBasisCoeff, memorySpaceHost, dim>>(
           feBDNuclearChargeRhs->getBasisDofHandler());
       utils::throwException(
         feBDHNuclearCharge != nullptr,
@@ -1952,14 +1958,14 @@ namespace dftefe
       std::shared_ptr<
         electrostatics::PoissonLinearSolverFunctionFE<ValueTypeBasisData,
                                                       ValueTypeBasisCoeff,
-                                                      memorySpace,
+                                                      memorySpaceHost,
                                                       dim>>
         linearSolverFunctionNuclear = nullptr;
 
       std::shared_ptr<
         electrostatics::PoissonSolverDealiiMatrixFreeFE<ValueTypeBasisData,
                                                         ValueTypeBasisCoeff,
-                                                        memorySpace,
+                                                        memorySpaceHost,
                                                         dim>>
         poissonSolverDealiiMatFree = nullptr;
 
@@ -1976,7 +1982,7 @@ namespace dftefe
           d_feBMNuclearCharge[iAtom] =
             std::make_shared<basis::FEBasisManager<ValueTypeBasisCoeff,
                                                    ValueTypeBasisData,
-                                                   memorySpace,
+                                                   memorySpaceHost,
                                                    dim>>(feBDHNuclearCharge,
                                                          smfunc);
 
@@ -2022,7 +2028,7 @@ namespace dftefe
                                                d_atomCharges[iAtom] /
                                                d_nuclearChargeQuad[iAtom]),
                             *d_scratchDensNuclearQuad,
-                            *d_linAlgOpContext);
+                            *d_linAlgOpContextHost);
 
           utils::Profiler p(
             d_feBMTotalCharge->getMPIPatternP2P()->mpiCommunicator(),
@@ -2035,13 +2041,13 @@ namespace dftefe
                   electrostatics::PoissonLinearSolverFunctionFE<
                     ValueTypeBasisData,
                     ValueTypeBasisCoeff,
-                    memorySpace,
+                    memorySpaceHost,
                     dim>>(d_feBMNuclearCharge[iAtom],
                           feBDNuclearChargeStiffnessMatrix,
                           feBDNuclearChargeRhs,
                           *d_scratchDensNuclearQuad,
                           ksdft::PoissonProblemDefaults::PC_TYPE,
-                          d_linAlgOpContext,
+                          d_linAlgOpContextHost,
                           ksdft::KSDFTDefaults::CELL_BATCH_SIZE_GRAD_EVAL,
                           d_numComponents);
               else
@@ -2049,13 +2055,13 @@ namespace dftefe
                   electrostatics::PoissonSolverDealiiMatrixFreeFE<
                     ValueTypeBasisData,
                     ValueTypeBasisCoeff,
-                    memorySpace,
+                    memorySpaceHost,
                     dim>>(d_feBMNuclearCharge[iAtom],
                           feBDNuclearChargeStiffnessMatrix,
                           feBDNuclearChargeRhs,
                           *d_scratchDensNuclearQuad,
                           ksdft::PoissonProblemDefaults::PC_TYPE,
-                          d_linAlgOpContext);
+                          d_linAlgOpContextHost);
             }
           else
             {
@@ -2076,11 +2082,11 @@ namespace dftefe
               std::shared_ptr<
                 linearAlgebra::LinearSolverImpl<ValueTypeBasisData,
                                                 ValueTypeBasisCoeff,
-                                                memorySpace>>
+                                                memorySpaceHost>>
                 CGSolve = std::make_shared<
                   linearAlgebra::CGLinearSolver<ValueTypeBasisData,
                                                 ValueTypeBasisCoeff,
-                                                memorySpace>>(
+                                                memorySpaceHost>>(
                   ksdft::PoissonProblemDefaults::MAX_ITER,
                   ksdft::PoissonProblemDefaults::ABSOLUTE_TOL,
                   ksdft::PoissonProblemDefaults::RELATIVE_TOL,
@@ -2096,9 +2102,9 @@ namespace dftefe
           p.print();
 
           d_nuclearChargesPotential[iAtom] =
-            new linearAlgebra::MultiVector<ValueType, memorySpace>(
+            new linearAlgebra::MultiVector<ValueType, memorySpaceHost>(
               d_feBMNuclearCharge[iAtom]->getMPIPatternP2P(),
-              d_linAlgOpContext,
+              d_linAlgOpContextHost,
               d_numComponents);
 
           if (!d_useDealiiMatrixFreePoissonSolve)
@@ -2166,11 +2172,11 @@ namespace dftefe
               quadrature::scale((RealType)std::abs(d_atomCharges[iAtom] /
                                                    d_nuclearChargeQuad[iAtom]),
                                 *d_scratchDensNuclearQuad,
-                                *d_linAlgOpContext);
+                                *d_linAlgOpContextHost);
 
               basis::FEBasisOperations<ValueTypeBasisCoeff,
                                        ValueTypeBasisData,
-                                       memorySpace,
+                                       memorySpaceHost,
                                        dim>
                 feBasisOp(d_feBDNuclChargeRhsNumSol,
                           d_maxCellBlock,
@@ -2185,11 +2191,11 @@ namespace dftefe
                   ValueTypeBasisData,
                   ValueTypeBasisCoeff,
                   ValueTypeWaveFnBasisData,
-                  memorySpace,
+                  memorySpaceHost,
                   dim>(*d_scratchPotNuclearQuad,
                        *d_scratchDensNuclearQuad,
                        jxwStorageNucl,
-                       d_linAlgOpContext,
+                       d_linAlgOpContextHost,
                        d_feBMNuclearCharge[iAtom]
                          ->getMPIPatternP2P()
                          ->mpiCommunicator());
@@ -2352,11 +2358,11 @@ namespace dftefe
               ValueTypeBasisData,
               ValueTypeBasisCoeff,
               ValueTypeWaveFnBasisData,
-              memorySpace,
+              memorySpaceHost,
               dim>(*d_scratchPotRhoQuad,
                    *d_electronChargeDensity,
                    d_feBDElectronicChargeRhs->getJxWInAllCells(),
-                   d_linAlgOpContext,
+                   d_linAlgOpContextHost,
                    d_feBMTotalCharge->getMPIPatternP2P()->mpiCommunicator());
 
           RealType integralPhixbSmear =
@@ -2364,11 +2370,11 @@ namespace dftefe
               ValueTypeBasisData,
               ValueTypeBasisCoeff,
               ValueTypeWaveFnBasisData,
-              memorySpace,
+              memorySpaceHost,
               dim>(*d_scratchPotNuclearQuad,
                    *d_nuclearChargesDensity,
                    d_feBDNuclearChargeRhs->getJxWInAllCells(),
-                   d_linAlgOpContext,
+                   d_linAlgOpContextHost,
                    d_feBMTotalCharge->getMPIPatternP2P()->mpiCommunicator());
 
           totalEnergy = (integralPhixRho + integralPhixbSmear) * 0.5;
@@ -2380,11 +2386,11 @@ namespace dftefe
               ValueTypeBasisData,
               ValueTypeBasisCoeff,
               ValueTypeWaveFnBasisData,
-              memorySpace,
+              memorySpaceHost,
               dim>(*d_scratchPotNuclearQuad,
                    *d_nuclearChargesDensity,
                    d_feBDNuclearChargeRhs->getJxWInAllCells(),
-                   d_linAlgOpContext,
+                   d_linAlgOpContextHost,
                    d_feBMTotalCharge->getMPIPatternP2P()->mpiCommunicator());
 
           // RealType intRhoAtDelPhi =
@@ -2396,7 +2402,7 @@ namespace dftefe
           //     dim>(*d_scratchPotNuclearQuad,
           //          d_atomicElectronChargeDensityNucQuad,
           //          d_feBDNuclearChargeRhs->getJxWInAllCells(),
-          //          d_linAlgOpContext,
+          //          d_linAlgOpContextHost,
           //          d_feBMTotalCharge->getMPIPatternP2P()->mpiCommunicator());
 
           quadrature::add((ValueType)1.0,
@@ -2404,7 +2410,7 @@ namespace dftefe
                           (ValueType)-1.0,
                           d_atomicElectronChargeDensity,
                           *d_scratchDensRhoQuad,
-                          *d_linAlgOpContext);
+                          *d_linAlgOpContextHost);
 
           d_feBasisOpElectronic->interpolate(*d_totalChargePotential,
                                              *d_feBMTotalCharge,
@@ -2415,29 +2421,29 @@ namespace dftefe
               ValueTypeBasisData,
               ValueTypeBasisCoeff,
               ValueTypeWaveFnBasisData,
-              memorySpace,
+              memorySpaceHost,
               dim>(*d_scratchPotRhoQuad,
                    d_atomicElectronChargeDensity,
                    d_feBDElectronicChargeRhs->getJxWInAllCells(),
-                   d_linAlgOpContext,
+                   d_linAlgOpContextHost,
                    d_feBMTotalCharge->getMPIPatternP2P()->mpiCommunicator());
 
           quadrature::add((ValueType)1.0,
                           *d_atomicTotalElecPotElectronicQuad,
                           (ValueType)1.0,
                           *d_scratchPotRhoQuad,
-                          *d_linAlgOpContext);
+                          *d_linAlgOpContextHost);
 
           RealType intDelRhoPhiTot =
             ElectrostaticLocalFEInternal::getIntegralFieldTimesRho<
               ValueTypeBasisData,
               ValueTypeBasisCoeff,
               ValueTypeWaveFnBasisData,
-              memorySpace,
+              memorySpaceHost,
               dim>(*d_scratchPotRhoQuad,
                    *d_scratchDensRhoQuad,
                    d_feBDElectronicChargeRhs->getJxWInAllCells(),
-                   d_linAlgOpContext,
+                   d_linAlgOpContextHost,
                    d_feBMTotalCharge->getMPIPatternP2P()->mpiCommunicator());
 
           totalEnergy = (d_integralPhiAtxbSmear + integralDelPhixbSmear +
@@ -2464,11 +2470,11 @@ namespace dftefe
               ValueTypeBasisData,
               ValueTypeBasisCoeff,
               ValueTypeWaveFnBasisData,
-              memorySpace,
+              memorySpaceHost,
               dim>(*d_correctionPotRhoQuad,
                    *d_scratchDensRhoQuad, // delRho from above
                    d_feBDElectronicChargeRhs->getJxWInAllCells(),
-                   d_linAlgOpContext,
+                   d_linAlgOpContextHost,
                    d_feBMTotalCharge->getMPIPatternP2P()->mpiCommunicator());
 
           correctionEnergy = correctionEnergyDelta + d_correctionEnergyAtomic;
@@ -2484,11 +2490,11 @@ namespace dftefe
               ValueTypeBasisData,
               ValueTypeBasisCoeff,
               ValueTypeWaveFnBasisData,
-              memorySpace,
+              memorySpaceHost,
               dim>(*d_correctionPotRhoQuad,
                    *d_electronChargeDensity,
                    d_feBDElectronicChargeRhs->getJxWInAllCells(),
-                   d_linAlgOpContext,
+                   d_linAlgOpContextHost,
                    d_feBMTotalCharge->getMPIPatternP2P()->mpiCommunicator());
         }
 
@@ -2541,16 +2547,23 @@ namespace dftefe
                         *d_atomicTotalElecPotElectronicQuad,
                         (ValueType)1.0,
                         *d_scratchPotHamQuad,
-                        *d_linAlgOpContext);
+                        *d_linAlgOpContextHost);
 
       quadrature::add((ValueType)1.0,
                       *d_scratchPotHamQuad,
                       (ValueType)1.0,
                       *d_correctionPotHamQuad,
                       *d_scratchPotHamQuad,
-                      *d_linAlgOpContext);
+                      *d_linAlgOpContextHost);
 
-      return *d_scratchPotHamQuad;
+      utils::MemoryTransfer<memorySpace, memorySpaceHost>
+        memoryTransfer;
+
+      memoryTransfer.copy(d_scratchPotHamQuad->nEntries(),
+                          d_potentialHamQuadMemspace->data(),
+                          d_scratchPotHamQuad->data()); 
+
+      return *d_potentialHamQuadMemspace;
     }
 
     template <typename ValueTypeBasisData,

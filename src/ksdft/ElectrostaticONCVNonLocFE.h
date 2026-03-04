@@ -88,24 +88,24 @@ namespace dftefe
         const std::shared_ptr<atoms::AtomSphericalDataContainer>
                       atomSphericalDataContainerPSP,
         const double &smearedChargeRadius,
-        const quadrature::QuadratureValuesContainer<RealType, memorySpace>
+        const quadrature::QuadratureValuesContainer<RealType, memorySpaceHost>
           &                                               electronChargeDensity,
         std::shared_ptr<const basis::FEBasisManager<ValueTypeBasisCoeff,
                                                     ValueTypeBasisData,
-                                                    memorySpace,
+                                                    memorySpaceHost,
                                                     dim>> feBMTotalCharge,
         std::shared_ptr<const basis::FEBasisManager<ValueTypeWaveFnCoeff,
                                                     ValueTypeWaveFnBasis,
                                                     memorySpace,
                                                     dim>> feBMWaveFn,
         std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpaceHost>>
           feBDTotalChargeStiffnessMatrix,
         std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpaceHost>>
           feBDNuclearChargeRhs,
         std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpaceHost>>
           feBDElectronicChargeRhs,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeWaveFnBasis, memorySpace>>
@@ -128,21 +128,13 @@ namespace dftefe
         const std::shared_ptr<atoms::AtomSphericalDataContainer>
                       atomSphericalDataContainerPSP,
         const double &smearedChargeRadius,
-        // const quadrature::QuadratureValuesContainer<RealType, memorySpace>
-        //   &atomicElectronChargeDensity,
-        // const quadrature::QuadratureValuesContainer<ValueTypeBasisCoeff,
-        //                                             memorySpace>
-        //   &atomicTotalElecPotNuclearQuad,
-        // const quadrature::QuadratureValuesContainer<ValueTypeBasisCoeff,
-        //                                             memorySpace>
-        //   &atomicTotalElecPotElectronicQuad,
         const utils::ScalarSpatialFunctionReal
           &atomicTotalElectroPotentialFunction,
         const utils::ScalarSpatialFunctionReal
           &atomicElectronicChargeDensityFunction,
         std::shared_ptr<const basis::FEBasisManager<ValueTypeBasisCoeff,
                                                     ValueTypeBasisData,
-                                                    memorySpace,
+                                                    memorySpaceHost,
                                                     dim>>
           feBMTotalCharge, // will be same as bc of totalCharge -
                            // atomicTotalCharge
@@ -151,13 +143,13 @@ namespace dftefe
                                                     memorySpace,
                                                     dim>> feBMWaveFn,
         std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpaceHost>>
           feBDTotalChargeStiffnessMatrix,
         std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpaceHost>>
           feBDNuclearChargeRhs,
         std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpaceHost>>
           feBDElectronicChargeRhs,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeWaveFnBasis, memorySpace>>
@@ -182,20 +174,20 @@ namespace dftefe
         const std::vector<utils::Point> &                 atomCoordinates,
         std::shared_ptr<const basis::FEBasisManager<ValueTypeBasisCoeff,
                                                     ValueTypeBasisData,
-                                                    memorySpace,
+                                                    memorySpaceHost,
                                                     dim>> feBMTotalCharge,
         std::shared_ptr<const basis::FEBasisManager<ValueTypeWaveFnCoeff,
                                                     ValueTypeWaveFnBasis,
                                                     memorySpace,
                                                     dim>> feBMWaveFn,
         std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpaceHost>>
           feBDTotalChargeStiffnessMatrix,
         std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpaceHost>>
           feBDNuclearChargeRhs,
         std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpaceHost>>
           feBDElectronicChargeRhs,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeWaveFnBasis, memorySpace>>
@@ -209,34 +201,26 @@ namespace dftefe
       void
       reinitBasis(
         const std::vector<utils::Point> &atomCoordinates,
-        // const quadrature::QuadratureValuesContainer<RealType, memorySpace>
-        //   &atomicElectronChargeDensity,
-        // const quadrature::QuadratureValuesContainer<ValueTypeBasisCoeff,
-        //                                             memorySpace>
-        //   &atomicTotalElecPotNuclearQuad,
-        // const quadrature::QuadratureValuesContainer<ValueTypeBasisCoeff,
-        //                                             memorySpace>
-        //   &atomicTotalElecPotElectronicQuad,
         const utils::ScalarSpatialFunctionReal
           &atomicTotalElectroPotentialFunction,
         const utils::ScalarSpatialFunctionReal
           &atomicElectronicChargeDensityFunction,
         std::shared_ptr<const basis::FEBasisManager<ValueTypeBasisCoeff,
                                                     ValueTypeBasisData,
-                                                    memorySpace,
+                                                    memorySpaceHost,
                                                     dim>> feBMTotalCharge,
         std::shared_ptr<const basis::FEBasisManager<ValueTypeWaveFnCoeff,
                                                     ValueTypeWaveFnBasis,
                                                     memorySpace,
                                                     dim>> feBMWaveFn,
         std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpaceHost>>
           feBDTotalChargeStiffnessMatrix,
         std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpaceHost>>
           feBDNuclearChargeRhs,
         std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpaceHost>>
           feBDElectronicChargeRhs,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeWaveFnBasis, memorySpace>>
@@ -247,7 +231,7 @@ namespace dftefe
 
       void
       reinitField(
-        const quadrature::QuadratureValuesContainer<RealType, memorySpace>
+        const quadrature::QuadratureValuesContainer<RealType, memorySpaceHost>
           &electronChargeDensity);
 
       void

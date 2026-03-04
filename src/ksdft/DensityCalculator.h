@@ -29,6 +29,7 @@
 #include <linearAlgebra/MultiVector.h>
 #include <basis/FEBasisDataStorage.h>
 #include <basis/FEBasisOperations.h>
+#include "Defaults.h"
 
 namespace dftefe
 {
@@ -85,7 +86,7 @@ namespace dftefe
         const std::vector<RealType> &occupation,
         const linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
           &                                                           waveFunc,
-        quadrature::QuadratureValuesContainer<RealType, memorySpace> &rho);
+        quadrature::QuadratureValuesContainer<RealType, memorySpaceHost> &rho);
 
     private:
       std::shared_ptr<const quadrature::QuadratureRuleContainer>
@@ -107,12 +108,20 @@ namespace dftefe
       quadrature::QuadratureValuesContainer<ValueType, memorySpace>
         *d_psiBatchQuad;
 
+      quadrature::QuadratureValuesContainer<RealType, memorySpace>
+        d_modPsiSqBatchQuad;
+
       quadrature::QuadratureValuesContainer<RealType, memorySpace> *d_rhoBatch;
+
+      quadrature::QuadratureValuesContainer<RealType, memorySpace> *d_rhoMemspace;
 
       linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace> *d_psiBatch;
 
       quadrature::QuadratureValuesContainer<ValueType, memorySpace>
         *d_psiBatchSmallQuad;
+
+      quadrature::QuadratureValuesContainer<RealType, memorySpace>
+        d_modPsiSqBatchSmallQuad;
 
       linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
         *d_psiBatchSmall;

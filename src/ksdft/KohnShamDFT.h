@@ -97,14 +97,14 @@ namespace dftefe
         const double    mixingParameter,
         const bool      isAdaptiveAndersonMixingParameter,
         /* Electron density related info */
-        const quadrature::QuadratureValuesContainer<RealType, memorySpace>
+        const quadrature::QuadratureValuesContainer<RealType, memorySpaceHost>
           &electronChargeDensityInput,
         /* Basis related info */
         /* Field boundary */
         std::shared_ptr<
           const basis::FEBasisManager<ValueTypeElectrostaticsCoeff,
                                       ValueTypeElectrostaticsBasis,
-                                      memorySpace,
+                                      memorySpaceHost,
                                       dim>>               feBMTotalCharge,
         std::shared_ptr<const basis::FEBasisManager<ValueTypeWaveFunctionCoeff,
                                                     ValueTypeWaveFunctionBasis,
@@ -113,14 +113,14 @@ namespace dftefe
         /* Field data storages poisson solves*/
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeElectrostaticsBasis,
-                                          memorySpace>>
+                                          memorySpaceHost>>
           feBDTotalChargeStiffnessMatrix,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeElectrostaticsBasis,
-                                          memorySpace>> feBDNuclearChargeRhs,
+                                          memorySpaceHost>> feBDNuclearChargeRhs,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeElectrostaticsBasis,
-                                          memorySpace>> feBDElectronicChargeRhs,
+                                          memorySpaceHost>> feBDElectronicChargeRhs,
         /* Field data storages eigen solve*/
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeWaveFunctionBasis,
@@ -175,14 +175,14 @@ namespace dftefe
         const double    mixingParameter,
         const bool      isAdaptiveAndersonMixingParameter,
         /* Electron density related info */
-        const quadrature::QuadratureValuesContainer<RealType, memorySpace>
+        const quadrature::QuadratureValuesContainer<RealType, memorySpaceHost>
           &electronChargeDensityInput,
         /* Basis related info */
         /* Field boundary */
         std::shared_ptr<
           const basis::FEBasisManager<ValueTypeElectrostaticsCoeff,
                                       ValueTypeElectrostaticsBasis,
-                                      memorySpace,
+                                      memorySpaceHost,
                                       dim>>               feBMTotalCharge,
         std::shared_ptr<const basis::FEBasisManager<ValueTypeWaveFunctionCoeff,
                                                     ValueTypeWaveFunctionBasis,
@@ -191,21 +191,21 @@ namespace dftefe
         /* Field data storages poisson solves */
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeElectrostaticsBasis,
-                                          memorySpace>>
+                                          memorySpaceHost>>
           feBDTotalChargeStiffnessMatrix,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeElectrostaticsBasis,
-                                          memorySpace>> feBDNuclearChargeRhs,
+                                          memorySpaceHost>> feBDNuclearChargeRhs,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeElectrostaticsBasis,
-                                          memorySpace>> feBDElectronicChargeRhs,
+                                          memorySpaceHost>> feBDElectronicChargeRhs,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeElectrostaticsBasis,
-                                          memorySpace>>
+                                          memorySpaceHost>>
           feBDNuclChargeStiffnessMatrixNumSol,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeElectrostaticsBasis,
-                                          memorySpace>> feBDNuclChargeRhsNumSol,
+                                          memorySpaceHost>> feBDNuclChargeRhsNumSol,
         /* Field data storages eigen solve*/
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeWaveFunctionBasis,
@@ -260,17 +260,6 @@ namespace dftefe
         const size_type mixingHistory,
         const double    mixingParameter,
         const bool      isAdaptiveAndersonMixingParameter,
-        // /* Basis related info */
-        // const quadrature::QuadratureValuesContainer<RealType, memorySpace>
-        //   &electronChargeDensityInput,
-        // /* Atomic Field for delta rho */
-        // const quadrature::QuadratureValuesContainer<
-        //   ValueTypeElectrostaticsCoeff,
-        //   memorySpace> &atomicTotalElecPotNuclearQuad,
-        // const quadrature::QuadratureValuesContainer<
-        //   ValueTypeElectrostaticsCoeff,
-        //   memorySpace> &atomicTotalElecPotElectronicQuad,
-        /* Atomic Field for delta rho ; Here vTotal atomic scalar sp fn.*/
         const utils::ScalarSpatialFunctionReal
           &atomicTotalElectroPotentialFunction,
         const utils::ScalarSpatialFunctionReal
@@ -279,7 +268,7 @@ namespace dftefe
         std::shared_ptr<
           const basis::FEBasisManager<ValueTypeElectrostaticsCoeff,
                                       ValueTypeElectrostaticsBasis,
-                                      memorySpace,
+                                      memorySpaceHost,
                                       dim>>               feBMTotalCharge,
         std::shared_ptr<const basis::FEBasisManager<ValueTypeWaveFunctionCoeff,
                                                     ValueTypeWaveFunctionBasis,
@@ -288,14 +277,14 @@ namespace dftefe
         /* Field data storages poisson solves*/
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeElectrostaticsBasis,
-                                          memorySpace>>
+                                          memorySpaceHost>>
           feBDTotalChargeStiffnessMatrix,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeElectrostaticsBasis,
-                                          memorySpace>> feBDNuclearChargeRhs,
+                                          memorySpaceHost>> feBDNuclearChargeRhs,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeElectrostaticsBasis,
-                                          memorySpace>> feBDElectronicChargeRhs,
+                                          memorySpaceHost>> feBDElectronicChargeRhs,
         /* Field data storages eigen solve*/
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeWaveFunctionBasis,
@@ -356,7 +345,7 @@ namespace dftefe
         std::shared_ptr<
           const basis::FEBasisManager<ValueTypeElectrostaticsCoeff,
                                       ValueTypeElectrostaticsBasis,
-                                      memorySpace,
+                                      memorySpaceHost,
                                       dim>>               feBMTotalCharge,
         std::shared_ptr<const basis::FEBasisManager<ValueTypeWaveFunctionCoeff,
                                                     ValueTypeWaveFunctionBasis,
@@ -365,14 +354,14 @@ namespace dftefe
         /* Field data storages poisson solves*/
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeElectrostaticsBasis,
-                                          memorySpace>>
+                                          memorySpaceHost>>
           feBDTotalChargeStiffnessMatrix,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeElectrostaticsBasis,
-                                          memorySpace>> feBDNuclearChargeRhs,
+                                          memorySpaceHost>> feBDNuclearChargeRhs,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeElectrostaticsBasis,
-                                          memorySpace>> feBDElectronicChargeRhs,
+                                          memorySpaceHost>> feBDElectronicChargeRhs,
         /* Field data storages eigen solve*/
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeWaveFunctionBasis,
@@ -441,7 +430,7 @@ namespace dftefe
         std::shared_ptr<
           const basis::FEBasisManager<ValueTypeElectrostaticsCoeff,
                                       ValueTypeElectrostaticsBasis,
-                                      memorySpace,
+                                      memorySpaceHost,
                                       dim>>               feBMTotalCharge,
         std::shared_ptr<const basis::FEBasisManager<ValueTypeWaveFunctionCoeff,
                                                     ValueTypeWaveFunctionBasis,
@@ -450,14 +439,14 @@ namespace dftefe
         /* Field data storages poisson solves*/
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeElectrostaticsBasis,
-                                          memorySpace>>
+                                          memorySpaceHost>>
           feBDTotalChargeStiffnessMatrix,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeElectrostaticsBasis,
-                                          memorySpace>> feBDNuclearChargeRhs,
+                                          memorySpaceHost>> feBDNuclearChargeRhs,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeElectrostaticsBasis,
-                                          memorySpace>> feBDElectronicChargeRhs,
+                                          memorySpaceHost>> feBDElectronicChargeRhs,
         /* Field data storages eigen solve*/
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeWaveFunctionBasis,
@@ -513,7 +502,7 @@ namespace dftefe
       const size_type       d_numWantedEigenvalues;
       std::vector<RealType> d_occupation;
       const double          d_SCFTol;
-      utils::MemoryStorage<RealType, utils::MemorySpace::HOST> d_jxwDataHost;
+      std::vector<RealType> d_jxwDataHost;
       std::shared_ptr<
         KohnShamEigenSolver<ValueTypeOperator, ValueTypeOperand, memorySpace>>
         d_ksEigSolve;
@@ -557,7 +546,7 @@ namespace dftefe
       double                    d_mixingParameter;
       bool                      d_isAdaptiveAndersonMixingParameter;
       bool                      d_evaluateEnergyEverySCF;
-      quadrature::QuadratureValuesContainer<RealType, memorySpace>
+      quadrature::QuadratureValuesContainer<RealType, memorySpaceHost>
         d_densityInQuadValues, d_densityOutQuadValues,
         d_densityResidualQuadValues, d_coreCorrDensUPF, d_coreCorrectedDensity;
       size_type                        d_numMaxSCFIter;
@@ -597,12 +586,9 @@ namespace dftefe
 
       bool d_isONCVNonLocPSP, d_isNlcc;
 
-      quadrature::QuadratureValuesContainer<ValueTypeElectrostaticsCoeff,
-                                            memorySpace>
-        d_atomicTotalElecPotNuclearQuad, d_atomicTotalElecPotElectronicQuad;
-
       std::shared_ptr<linearAlgebra::ElpaScalapackManager> d_elpaScala;
-
+      std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpaceHost>>
+      d_linAlgOpContextHost;    
       double d_smearingTemperature, d_freeEnergy;
 
     }; // end of KohnShamDFT

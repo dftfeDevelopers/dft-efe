@@ -63,7 +63,7 @@ namespace dftefe
        * @brief Constructor
        */
       ExchangeCorrelationFE(
-        const quadrature::QuadratureValuesContainer<RealType, memorySpace>
+        const quadrature::QuadratureValuesContainer<RealType, memorySpaceHost>
           &electronChargeDensity,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
@@ -82,7 +82,7 @@ namespace dftefe
 
       void
       reinitField(
-        const quadrature::QuadratureValuesContainer<RealType, memorySpace>
+        const quadrature::QuadratureValuesContainer<RealType, memorySpaceHost>
           &electronChargeDensity);
 
       void
@@ -121,9 +121,12 @@ namespace dftefe
 
     private:
       std::shared_ptr<
-        quadrature::QuadratureValuesContainer<RealType, memorySpace>>
+        quadrature::QuadratureValuesContainer<RealType, memorySpaceHost>>
         d_xcPotentialQuad;
-      const quadrature::QuadratureValuesContainer<RealType, memorySpace>
+      std::shared_ptr<
+        quadrature::QuadratureValuesContainer<RealType, memorySpace>>
+        d_xcPotentialQuadMemspace;
+      const quadrature::QuadratureValuesContainer<RealType, memorySpaceHost>
         *d_electronChargeDensity;
       std::shared_ptr<
         const basis::FEBasisDofHandler<ValueTypeBasisCoeff, memorySpace, dim>>

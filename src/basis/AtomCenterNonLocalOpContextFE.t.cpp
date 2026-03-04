@@ -523,7 +523,8 @@ namespace dftefe
 
       // create the d_locallyOwnedCellLocalProjectorIds
       d_locallyOwnedCellLocalProjectorIds.resize(d_totProjInProc);
-      size_type *ptr         = d_locallyOwnedCellLocalProjectorIds.data();
+      dftefe::utils::MemoryStorage<size_type, utils::MemorySpace::HOST> locallyOwnedCellLocalProjectorIdsHost(d_totProjInProc);
+      size_type *ptr         = locallyOwnedCellLocalProjectorIdsHost.data();
       d_numLocallyOwnedCells = feBasisDofHandler->nLocallyOwnedCells();
       size_type cumulativeProjectors = 0;
       for (size_type iCell = 0; iCell < d_numLocallyOwnedCells; ++iCell)
@@ -538,6 +539,9 @@ namespace dftefe
             }
           cumulativeProjectors += numCellProjectors;
         }
+      memoryTransfer.copy(locallyOwnedCellLocalProjectorIdsHost.size(),
+                          d_locallyOwnedCellLocalProjectorIds.data(),
+                          locallyOwnedCellLocalProjectorIdsHost.data());
 
       // Initilize the d_CX
       d_CX =

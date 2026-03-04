@@ -626,6 +626,8 @@ namespace dftefe
                 transa = utils::DEVICEBLAS_OP_N;
               else if (transA[0] == 'T')
                 transa = utils::DEVICEBLAS_OP_T;
+              else if (transA[0] == 'C')
+                transa = utils::DEVICEBLAS_OP_C;
               else
                 {
                   // Assert Statement
@@ -634,6 +636,8 @@ namespace dftefe
                 transb = utils::DEVICEBLAS_OP_N;
               else if (transB[0] == 'T')
                 transb = utils::DEVICEBLAS_OP_T;
+              else if (transB[0] == 'C')
+                transb = utils::DEVICEBLAS_OP_C;
               else
                 {
                   // Assert Statement
