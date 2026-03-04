@@ -187,11 +187,6 @@ namespace dftefe
       std::vector<ValueTypeOperand> initialGuessSTL(
         d_initialGuess.locallyOwnedSize());
 
-      utils::MemoryTransfer<utils::MemorySpace::HOST, memorySpace>::copy(
-        d_initialGuess.locallyOwnedSize(),
-        initialGuessSTL.data(),
-        d_initialGuess.data());
-
       LanczosExtremeEigenSolverInternal::generate<ValueTypeOperand>
         generateNumber;
       // todo - implement random class in utils and modify this
@@ -264,7 +259,7 @@ namespace dftefe
         krylovSubspOrthoVecMemStorage(0);
 
       // memory for the eigenVectors
-      utils::MemoryStorage<ValueType, memorySpace> eigenVectorsKrylovSubspace(
+      utils::MemoryStorage<ValueType, utils::MemorySpace::HOST> eigenVectorsKrylovSubspace(
         0);
       utils::MemoryStorage<ValueType, memorySpace>
         wantedEigenVectorsKrylovSubspace(0);
@@ -395,11 +390,11 @@ namespace dftefe
 
               if (d_isAdaptiveSolve || iter == d_maxKrylovSubspaceSize)
                 {
-                  utils::MemoryStorage<RealType, memorySpace> eigenValuesIter(
+                  utils::MemoryStorage<RealType, utils::MemorySpace::HOST> eigenValuesIter(
                     alphaVec.size());
                   eigenValuesIter.template copyFrom<utils::MemorySpace::HOST>(
                     alphaVec.data());
-                  utils::MemoryStorage<RealType, memorySpace> betaVecTemp(
+                  utils::MemoryStorage<RealType, utils::MemorySpace::HOST> betaVecTemp(
                     betaVec.size() - 1);
                   betaVecTemp.template copyFrom<utils::MemorySpace::HOST>(
                     betaVec.data(), betaVec.size() - 1, 0, 0);
@@ -410,14 +405,14 @@ namespace dftefe
                         krylovSubspaceSize * krylovSubspaceSize,
                         utils::Types<ValueType>::zero);
                       LapackError lapackReturn =
-                        blasLapack::steqr<ValueType, memorySpace>(
+                        blasLapack::steqr<ValueType, utils::MemorySpace::HOST>(
                           'V',
                           krylovSubspaceSize,
                           eigenValuesIter.data(),
                           betaVecTemp.data(),
                           eigenVectorsKrylovSubspace.data(),
                           krylovSubspaceSize,
-                          *d_initialGuess.getLinAlgOpContext());
+                          *LinAlgOpContextDefaults::LINALG_OP_CONTXT_HOST);
 
                       if (lapackReturn.err ==
                           LapackErrorCode::FAILED_REAL_TRIDIAGONAL_EIGENPROBLEM)
@@ -432,14 +427,14 @@ namespace dftefe
                   else
                     {
                       LapackError lapackReturn =
-                        blasLapack::steqr<ValueType, memorySpace>(
+                        blasLapack::steqr<ValueType, utils::MemorySpace::HOST>(
                           'N',
                           krylovSubspaceSize,
                           eigenValuesIter.data(),
                           betaVecTemp.data(),
                           eigenVectorsKrylovSubspace.data(),
                           krylovSubspaceSize,
-                          *d_initialGuess.getLinAlgOpContext());
+                          *LinAlgOpContextDefaults::LINALG_OP_CONTXT_HOST);
 
                       if (lapackReturn.err ==
                           LapackErrorCode::FAILED_REAL_TRIDIAGONAL_EIGENPROBLEM)
@@ -532,7 +527,7 @@ namespace dftefe
           // std::cout << "krylovSubspOrthoVec: \n";
           for (size_type vecId = 0; vecId < krylovSubspaceSize; vecId++)
             {
-              utils::MemoryTransfer<memorySpace, memorySpace>::copy(
+              utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
                 q.locallyOwnedSize(),
                 krylovSubspOrthoVecMemStorage.data() +
                   vecId * q.locallyOwnedSize(),
@@ -559,12 +554,12 @@ namespace dftefe
           //   std::cout << "]\n";
           // }
 
-          utils::MemoryTransfer<memorySpace, memorySpace>::copy(
+          utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
             d_numLowerExtermeEigenValues * krylovSubspaceSize,
             wantedEigenVectorsKrylovSubspace.data(),
             eigenVectorsKrylovSubspace.data());
 
-          utils::MemoryTransfer<memorySpace, memorySpace>::copy(
+          utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
             d_numUpperExtermeEigenValues * krylovSubspaceSize,
             wantedEigenVectorsKrylovSubspace.data() +
               d_numLowerExtermeEigenValues * krylovSubspaceSize,

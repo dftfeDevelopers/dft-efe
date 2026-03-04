@@ -28,6 +28,7 @@
 #include <basis/CFEOverlapInverseOpContextGLL.h>
 #include <utils/ScalarSpatialFunction.h>
 #include <linearAlgebra/Defaults.h>
+#include <linearAlgebra/LinearAlgebraTypes.h>
 #include <algorithm>
 #include <set>
 #include <string>
@@ -413,8 +414,15 @@ namespace dftefe
                 L2ProjectionDefaults::DIVERGENCE_TOL,
                 profiler);
 
-          CGSolve->solve(*linearSolverFunction);
+          linearAlgebra::LinearSolverError errLS = CGSolve->solve(*linearSolverFunction);
           linearSolverFunction->getSolution(*basisInterfaceCoeff);
+
+          if (errLS.err != linearAlgebra::LinearSolverErrorCode::SUCCESS)
+          {
+            rootCout << errLS.msg << std::endl << std::flush;
+            utils::throwException(
+              false, "CG solve for orthogonalization was not successful.");
+          }
 
           /**
           // Can also do via the M^(-1) route withot solving CG.
@@ -691,11 +699,6 @@ namespace dftefe
           locallyOwnedCellsInTriangulation++;
         }
 
-      utils::throwException(
-        d_cfeBasisDofHandler->nLocallyOwnedCells() ==
-          locallyOwnedCellsInTriangulation,
-        "locallyOwnedCellsInTriangulation does not match to that in dofhandler in EnrichmentClassicalInterface()");
-
       std::vector<double> minbound;
       std::vector<double> maxbound;
       maxbound.resize(dim, 0);
@@ -766,7 +769,7 @@ namespace dftefe
           cellIndex++;
         }
 
-      avgEnrich /= d_cfeBasisDofHandler->nLocallyOwnedCells();
+      avgEnrich /= locallyOwnedCellsInTriangulation;
 
       utils::mpi::MPIAllreduce<memorySpace>(
         utils::mpi::MPIInPlace,

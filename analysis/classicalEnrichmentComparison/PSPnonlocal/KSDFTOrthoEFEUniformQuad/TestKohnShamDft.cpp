@@ -1173,7 +1173,7 @@ int main(int argc, char** argv)
   dftefeSolve->printTotalInScopeTimings();
   delete dftefeSolve;
 
-  //gracefully end MPI
+  // gracefully end MPI
 
   int mpiFinalFlag = 0;
   utils::mpi::MPIFinalized(&mpiFinalFlag);

@@ -619,7 +619,7 @@ namespace dftefe
                     }
                 }
             }
-          if (uniform)
+          if (uniform && m[0] > 0 && n[0] > 0 && k[0] > 0)
             {
               utils::deviceBlasOperation_t transa, transb;
               if (transA[0] == 'N')
@@ -804,7 +804,7 @@ namespace dftefe
                     }
                 }
             }
-          if (uniform)
+          if (uniform && m[0] > 0 && n[0] > 0 && k[0] > 0)
             {
               utils::deviceBlasOperation_t transa, transb;
               if (transA[0] == 'N')

@@ -2514,9 +2514,12 @@ namespace dftefe
       d_rootCout << "Electrostatic energy with guess density: " << elecEnergy
                  << "\n";
 
+      utils::MemoryStorage<RealType, memorySpaceHost> jxwDataHost(d_jxwDataHost.size());
+      jxwDataHost.copyFrom(d_jxwDataHost);
+
       d_mixingScheme.addMixingVariable(
         mixingVariable::rho,
-        d_jxwDataHost,
+        jxwDataHost,
         true, // call MPI REDUCE while computing dot products
         d_mixingParameter,
         d_isAdaptiveAndersonMixingParameter);
