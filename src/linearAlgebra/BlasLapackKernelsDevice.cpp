@@ -25,7 +25,7 @@ namespace dftefe
             for (size_type i = globalThreadId; i < size;
                  i += nThreadsPerBlock * nThreadBlock)
               {
-                z[i] = utils::mult(alpha, x[i]);
+                dftefe::utils::copyValue(z + i , utils::mult(alpha, x[i]));
               }
           },
           const size_type   size,
@@ -41,7 +41,7 @@ namespace dftefe
             for (size_type i = globalThreadId; i < size;
                  i += nThreadsPerBlock * nThreadBlock)
               {
-                z[i] = utils::div(alpha, x[i]);
+                dftefe::utils::copyValue(z + i , utils::div(alpha, x[i]));
               }
           },
           const size_type   size,
@@ -57,7 +57,7 @@ namespace dftefe
             for (size_type i = globalThreadId; i < size;
                  i += nThreadsPerBlock * nThreadBlock)
               {
-                z[i] = utils::mult(x[i], y[i]);
+                dftefe::utils::copyValue(z + i , utils::mult(x[i], y[i]));
               }
           },
           const size_type   size,
@@ -73,7 +73,7 @@ namespace dftefe
             for (size_type i = globalThreadId; i < size;
                  i += nThreadsPerBlock * nThreadBlock)
               {
-                z[i] = utils::mult(utils::conj(x[i]), y[i]);
+                dftefe::utils::copyValue(z + i , utils::mult(utils::conj(x[i]), y[i]));
               }
           },
           const size_type   size,
@@ -89,7 +89,7 @@ namespace dftefe
             for (size_type i = globalThreadId; i < size;
                  i += nThreadsPerBlock * nThreadBlock)
               {
-                z[i] = utils::mult(utils::conj(x[i]), utils::conj(y[i]));
+                dftefe::utils::copyValue(z + i , utils::mult(utils::conj(x[i]), utils::conj(y[i])));
               }
           },
           const size_type   size,
@@ -110,7 +110,7 @@ namespace dftefe
                 const size_type ijRem = kij - k * sizeI * sizeJ;
                 const size_type i     = ijRem / sizeJ;
                 const size_type j     = ijRem - i * sizeJ;
-                Z[kij] = utils::mult(A[k * sizeI + i], B[k * sizeJ + j]);
+                dftefe::utils::copyValue(Z + kij , utils::mult(A[k * sizeI + i], B[k * sizeJ + j]));
               }
           },
           const size_type   sizeI,
@@ -133,7 +133,7 @@ namespace dftefe
                 const size_type ikRem = jik - j * sizeK * sizeI;
                 const size_type i     = ikRem / sizeK;
                 const size_type k     = ikRem - i * sizeK;
-                Z[jik] = utils::mult(A[i * sizeK + k], B[j * sizeK + k]);
+                dftefe::utils::copyValue(Z + jik , utils::mult(A[i * sizeK + k], B[j * sizeK + k]));
               }
           },
           const size_type   sizeI,
@@ -151,8 +151,8 @@ namespace dftefe
             for (size_type i = globalThreadId; i < size;
                  i += nThreadsPerBlock * nThreadBlock)
               {
-                z[i] =
-                  utils::add(utils::mult(alpha, x[i]), utils::mult(beta, y[i]));
+                 dftefe::utils::copyValue(z + i ,
+                  utils::add(utils::mult(alpha, x[i]), utils::mult(beta, y[i])));
               }
           },
           const size_type   size,
@@ -171,7 +171,7 @@ namespace dftefe
                  i += nThreadsPerBlock * nThreadBlock)
               {
                 const double temp = utils::abs(x[i]);
-                y[i]              = temp * temp;
+                dftefe::utils::copyValue(y + i , temp * temp);
               }
           },
           const size_type  size,
@@ -191,8 +191,8 @@ namespace dftefe
                 size_type        sizeId = index % blockSize;
                 const ValueType3 coeff1 = utils::mult(alpha1, alpha[sizeId]);
                 const ValueType3 coeff2 = utils::mult(beta1, beta[sizeId]);
-                z[index] = utils::add(utils::mult(coeff1, x[index]),
-                                      utils::mult(coeff2, y[index]));
+                dftefe::utils::copyValue(z + index , utils::add(utils::mult(coeff1, x[index]),
+                                      utils::mult(coeff2, y[index])));
               }
           },
           const size_type   size,      // vecsize
@@ -222,7 +222,7 @@ namespace dftefe
                 ValueType1 A_val = dA[i * K + k];
                 ValueType2 B_val = dB[j * K + k];
 
-                dC[ijk] = utils::mult(A_val, B_val);
+                dftefe::utils::copyValue(dC + ijk , utils::mult(A_val, B_val));
               }
           },
           const size_type   M,
@@ -249,7 +249,7 @@ namespace dftefe
                 ValueType1 A_val = dA[i * K + k];
                 ValueType2 B_val = dB[j * K + k];
 
-                dC[ijk] = utils::mult(utils::conj(A_val), B_val);
+                dftefe::utils::copyValue(dC + ijk , utils::mult(utils::conj(A_val), B_val));
               }
           },
           const size_type   M,
@@ -276,7 +276,7 @@ namespace dftefe
                 ValueType1 A_val = dA[i * K + k];
                 ValueType2 B_val = dB[j * K + k];
 
-                dC[ijk] = utils::mult(A_val, utils::conj(B_val));
+                dftefe::utils::copyValue(dC + ijk , utils::mult(A_val, utils::conj(B_val)));
               }
           },
           const size_type   M,
@@ -303,7 +303,7 @@ namespace dftefe
                 ValueType1 A_val = dA[i * K + k];
                 ValueType2 B_val = dB[j * K + k];
 
-                dC[ijk] = utils::mult(utils::conj(A_val), utils::conj(B_val));
+                dftefe::utils::copyValue(dC + ijk , utils::mult(utils::conj(A_val), utils::conj(B_val)));
               }
           },
           const size_type   M,
@@ -330,7 +330,7 @@ namespace dftefe
                 ValueType1 A_val = dA[k * M + i];
                 ValueType2 B_val = dB[k * N + j];
 
-                dC[kij] = utils::mult(A_val, B_val);
+                dftefe::utils::copyValue(dC + kij , utils::mult(A_val, B_val));
               }
           },
           const size_type   M,
@@ -357,7 +357,7 @@ namespace dftefe
                 ValueType1 A_val = dA[k * M + i];
                 ValueType2 B_val = dB[k * N + j];
 
-                dC[kij] = utils::mult(utils::conj(A_val), B_val);
+                dftefe::utils::copyValue(dC + kij , utils::mult(utils::conj(A_val), B_val));
               }
           },
           const size_type   M,
@@ -384,7 +384,7 @@ namespace dftefe
                 ValueType1 A_val = dA[k * M + i];
                 ValueType2 B_val = dB[k * N + j];
 
-                dC[kij] = utils::mult(A_val, utils::conj(B_val));
+                dftefe::utils::copyValue(dC + kij , utils::mult(A_val, utils::conj(B_val)));
               }
           },
           const size_type   M,
@@ -411,7 +411,7 @@ namespace dftefe
                 ValueType1 A_val = dA[k * M + i];
                 ValueType2 B_val = dB[k * N + j];
 
-                dC[kij] = utils::mult(utils::conj(A_val), utils::conj(B_val));
+                dftefe::utils::copyValue(dC + kij , utils::mult(utils::conj(A_val), utils::conj(B_val)));
               }
           },
           const size_type   M,

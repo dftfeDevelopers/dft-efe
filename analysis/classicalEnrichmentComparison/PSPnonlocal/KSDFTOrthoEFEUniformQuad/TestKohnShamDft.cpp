@@ -285,6 +285,19 @@ public:
 // memoryspace - HOST
 int main(int argc, char** argv)
 {
+
+#  ifdef DFTEFE_WITH_DEVICE
+      std::cout << "\nDFTEFE with GPU support, " << std::flush;
+#    ifdef DFTEFE_WITH_DEVICE_LANG_CUDA
+      std::cout << "using CUDA, "<< std::flush;
+#    elif DFTEFE_WITH_DEVICE_LANG_HIP
+      std::cout << "using HIP, "<< std::flush;
+#    endif
+#    endif
+#    ifdef DFTEFE_WITH_DEVICE_AWARE_MPI
+      std::cout << "DFTEFE with device-aware MPI support, \n"<< std::flush;
+#    endif
+
   // argv[1] = "H_Atom.in"
   // argv[2] = "KSDFTClassical/param.in"
   //initialize MPI

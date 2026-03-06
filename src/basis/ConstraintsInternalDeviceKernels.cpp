@@ -161,7 +161,7 @@ namespace dftefe
                 constraintRowSizesAccumulated[blockIndex];
               const size_type xVecStartingIdRow =
                 constrainedRowId * contiguousBlockSize + intraBlockIndex;
-              xVec[xVecStartingIdRow + intraBlockIndex] =
+              xVec[xVecStartingIdRow] =
                 inhomogenities[blockIndex];
               for (size_type i = 0; i < numberColumns; ++i)
                 {
@@ -207,7 +207,7 @@ namespace dftefe
                 constraintRowSizesAccumulated[blockIndex];
               const size_type xVecStartingIdRow =
                 constrainedRowId * contiguousBlockSize + intraBlockIndex;
-              xVec[xVecStartingIdRow + intraBlockIndex] =
+              xVec[xVecStartingIdRow] =
                 inhomogenities[blockIndex];
               for (size_type i = 0; i < numberColumns; ++i)
                 {
@@ -226,13 +226,13 @@ namespace dftefe
         },
         const size_type  contiguousBlockSize,
         double *         xVec,
-        const size_type *constraintLocalRowIds,
-        const size_type  numConstraints,
-        const size_type *constraintRowSizes,
-        const size_type *constraintRowSizesAccumulated,
-        const size_type *constraintLocalColumnIds,
-        const double *   constraintColumnValues,
-        const double *   inhomogenities);
+        const size_type *constraintLocalRowIds, // rowConstraintsIdsLocal.data(),
+        const size_type  numConstraints, // rowConstraintsIdsLocal.size()
+        const size_type *constraintRowSizes, // rowConstraintsSizes.data()
+        const size_type *constraintRowSizesAccumulated, //  columnConstraintsAccumulated.data()
+        const size_type *constraintLocalColumnIds, // columnConstraintsIdsLocal.data(),
+        const double *   constraintColumnValues, // columnConstraintsValues.data(),
+        const double *   inhomogenities); // constraintsInhomogenities.data()
 
       template <>
       DFTEFE_CREATE_KERNEL(
@@ -253,8 +253,7 @@ namespace dftefe
                 constraintRowSizesAccumulated[blockIndex];
               const size_type xVecStartingIdRow =
                 constrainedRowId * contiguousBlockSize + intraBlockIndex;
-              dftefe::utils::copyValue(xVec + xVecStartingIdRow +
-                                         intraBlockIndex,
+              dftefe::utils::copyValue(xVec + xVecStartingIdRow,
                                        inhomogenities[blockIndex]);
               for (size_type i = 0; i < numberColumns; ++i)
                 {
@@ -306,8 +305,7 @@ namespace dftefe
                 constraintRowSizesAccumulated[blockIndex];
               const size_type xVecStartingIdRow =
                 constrainedRowId * contiguousBlockSize + intraBlockIndex;
-              dftefe::utils::copyValue(xVec + xVecStartingIdRow +
-                                         intraBlockIndex,
+              dftefe::utils::copyValue(xVec + xVecStartingIdRow,
                                        inhomogenities[blockIndex]);
               for (size_type i = 0; i < numberColumns; ++i)
                 {

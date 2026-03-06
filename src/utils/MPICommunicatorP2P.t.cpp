@@ -324,6 +324,7 @@ namespace dftefe
           {
 #  ifdef DFTEFE_WITH_DEVICE
             if constexpr (memorySpace == MemorySpace::DEVICE)
+            {
               if (d_commProtocol == communicationProtocol::mpiHost)
                 {
                   MemoryTransfer<memorySpace, MemorySpace::HOST_PINNED>
@@ -332,12 +333,7 @@ namespace dftefe
                                       d_ghostDataBuffer.data(),
                                       d_ghostDataCopyHostPinned.data());
                 }
-              else
-                {
-                  throwException(
-                    false,
-                    "Only Standard Precision Communication Implemented in DFTEFE.");
-                }
+              }
 #  endif // defined(DFTEFE_WITH_DEVICE)
 
             // Copy ghost buffer receieved to the ghost part of the data.
@@ -365,6 +361,10 @@ namespace dftefe
               false,
               "Only Standard Precision Communication Implemented in DFTEFE.");
           }
+// #  ifdef DFTEFE_WITH_DEVICE
+//         if constexpr (memorySpace == MemorySpace::DEVICE)
+//           dftefe::utils::deviceSynchronize();
+// #  endif
 #endif // DFTEFE_WITH_MPI
       }
 
@@ -470,6 +470,7 @@ namespace dftefe
 
 #  ifdef DFTEFE_WITH_DEVICE
             if constexpr (memorySpace == MemorySpace::DEVICE)
+            {
               if (d_commProtocol == communicationProtocol::mpiHost)
                 {
                   MemoryTransfer<MemorySpace::HOST_PINNED, memorySpace>
@@ -480,6 +481,7 @@ namespace dftefe
 
                   sendArrayStartPtr = d_ghostDataCopyHostPinned.begin();
                 }
+            }
 #  endif // defined(DFTEFE_WITH_DEVICE)
 
             for (size_type i = 0;
@@ -569,11 +571,11 @@ namespace dftefe
             if constexpr (memorySpace == MemorySpace::DEVICE)
               if (d_commProtocol == communicationProtocol::mpiHost)
                 {
-                  MemoryTransfer<MemorySpace::HOST_PINNED, memorySpace>
+                  MemoryTransfer<memorySpace, MemorySpace::HOST_PINNED>
                     memoryTransfer;
                   memoryTransfer.copy(d_sendRecvBufferHostPinned.size(),
-                                      d_sendRecvBufferHostPinned.data(),
-                                      d_targetDataBuffer.data());
+                                      d_targetDataBuffer.data(),
+                                      d_sendRecvBufferHostPinned.data());
                 }
 #  endif // defined(DFTEFE_WITH_DEVICE)
 
