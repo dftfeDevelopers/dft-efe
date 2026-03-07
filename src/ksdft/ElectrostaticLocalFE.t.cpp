@@ -198,6 +198,7 @@ namespace dftefe
       , d_isCalculateIntegralDeltaRho(false)
       , d_isTCIEnabled(false)
       , d_linAlgOpContextHost(linearAlgebra::LinAlgOpContextDefaults::LINALG_OP_CONTXT_HOST)
+      , d_potentialHamQuadMemspace(nullptr)
     {
       int rank;
       utils::mpi::MPICommRank(
@@ -291,6 +292,7 @@ namespace dftefe
       , d_atomicTotalElecPotElectronicQuad(nullptr)
       , d_isCalculateIntegralDeltaRho(false)
       , d_isTCIEnabled(false)
+      , d_potentialHamQuadMemspace(nullptr)
     {
       int rank;
       utils::mpi::MPICommRank(
@@ -393,6 +395,7 @@ namespace dftefe
       , d_fieldToTCIASplineMap(fieldToTCIASplineMap)
       , d_isTCIEnabled(!d_fieldToTCIASplineMap.empty() ? true : false)
       , d_integralAtRho(0.)
+      , d_potentialHamQuadMemspace(nullptr)
     {
       int rank;
       utils::mpi::MPICommRank(

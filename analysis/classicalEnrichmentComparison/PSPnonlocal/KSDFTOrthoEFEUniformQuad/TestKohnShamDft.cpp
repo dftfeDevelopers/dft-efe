@@ -285,19 +285,6 @@ public:
 // memoryspace - HOST
 int main(int argc, char** argv)
 {
-
-#  ifdef DFTEFE_WITH_DEVICE
-      std::cout << "\nDFTEFE with GPU support, " << std::flush;
-#    ifdef DFTEFE_WITH_DEVICE_LANG_CUDA
-      std::cout << "using CUDA, "<< std::flush;
-#    elif DFTEFE_WITH_DEVICE_LANG_HIP
-      std::cout << "using HIP, "<< std::flush;
-#    endif
-#    endif
-#    ifdef DFTEFE_WITH_DEVICE_AWARE_MPI
-      std::cout << "DFTEFE with device-aware MPI support, \n"<< std::flush;
-#    endif
-
   // argv[1] = "H_Atom.in"
   // argv[2] = "KSDFTClassical/param.in"
   //initialize MPI
@@ -324,6 +311,21 @@ int main(int argc, char** argv)
   utils::ConditionalOStream rootCout(std::cout);
   rootCout.setCondition(rank == 0);
 
+  if constexpr (memorySpace == dftefe::utils::MemorySpace::DEVICE)
+  {
+  #  ifdef DFTEFE_WITH_DEVICE
+        rootCout << "\nDFTEFE with GPU support, " << std::flush;
+  #    ifdef DFTEFE_WITH_DEVICE_LANG_CUDA
+        rootCout << "using CUDA, "<< std::flush;
+  #    elif DFTEFE_WITH_DEVICE_LANG_HIP
+        rootCout << "using HIP, "<< std::flush;
+  #    endif
+  #    endif
+  #    ifdef DFTEFE_WITH_DEVICE_AWARE_MPI
+        rootCout << "DFTEFE with device-aware MPI support, \n"<< std::flush;
+  #    endif
+  }
+
     // Get nProcs
     int numProcs;
     utils::mpi::MPICommSize(comm, &numProcs);
@@ -333,7 +335,7 @@ int main(int argc, char** argv)
   std::shared_ptr<linearAlgebra::LinAlgOpContext
     <memorySpace>> linAlgOpContext = 
     std::make_shared<linearAlgebra::LinAlgOpContext
-    <memorySpace>>(50);
+    <memorySpace>>(1);
 
   std::shared_ptr<linearAlgebra::LinAlgOpContext
     <Host>> linAlgOpContextHost = 

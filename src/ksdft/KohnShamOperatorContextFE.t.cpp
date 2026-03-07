@@ -1168,6 +1168,8 @@ namespace dftefe
       , d_linAlgOpContext(linAlgOpContext)
       , d_useOptimizedImplement(useOptimizedImplement)
       , d_electroONCVHamiltonian(nullptr)
+      , d_XCellValues(std::make_shared<utils::MemoryStorage<ValueTypeOperand, memorySpace>>(0))
+      , d_hamiltonianInAllCells(0)
     {
       reinit(feBasisManager, hamiltonianComponentsVec);
 
@@ -1209,7 +1211,12 @@ namespace dftefe
 
       d_feBasisManager = &feBasisManager;
 
-      d_hamiltonianInAllCells.resize(cellWiseDataSize, (ValueTypeOperator)0);
+      if(d_hamiltonianInAllCells.size() != cellWiseDataSize)
+      {
+        d_hamiltonianInAllCells.resize(cellWiseDataSize, (ValueTypeOperator)0);
+      }
+      else
+        d_hamiltonianInAllCells.setValue((ValueTypeOperator)0);
 
       HamiltonianComponentsOperations<ValueTypeOperator, memorySpace> op;
 
@@ -1244,8 +1251,15 @@ namespace dftefe
           size_type maxDofInCell =
             *std::max_element(numCellDofs.begin(), numCellDofs.end());
 
-          d_XCellValues = utils::MemoryStorage<ValueTypeOperand, memorySpace>(
-            d_maxWaveFnBatch * numLocallyOwnedCells * maxDofInCell);
+          if(d_XCellValues->size() != d_maxWaveFnBatch * numLocallyOwnedCells * maxDofInCell)
+          {
+            d_XCellValues = std::make_shared<utils::MemoryStorage<ValueTypeOperand, memorySpace>>(
+              d_maxWaveFnBatch * numLocallyOwnedCells * maxDofInCell);
+          }
+          else
+          {
+            d_XCellValues->setValue((ValueTypeOperand)0);
+          }
         }
     }
 
@@ -1332,7 +1346,7 @@ namespace dftefe
           d_electroONCVHamiltonian,
           X.begin(),
           Y.begin(),
-          d_XCellValues,
+          *d_XCellValues,
           numVecs,
           numLocallyOwnedCells,
           numCellDofs,

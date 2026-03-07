@@ -92,7 +92,7 @@ namespace dftefe
               index += nThreadsPerBlock * nThreadBlock)
             {
               const utils::deviceFloatComplex psi = psiBatchQuad[index];
-              rhoBatch[index] = (RealType)(utils::realPartDevice(psi) *
+              modPsiSqBatchQuadIter[index] = (RealType)(utils::realPartDevice(psi) *
                                 utils::realPartDevice(psi) +
                               utils::imagPartDevice(psi) *
                                 utils::imagPartDevice(psi));
@@ -101,7 +101,7 @@ namespace dftefe
         const size_type numVectors,
         const size_type quadPtsInCellsBlockSize,
         dftefe::utils::deviceFloatComplex *psiBatchQuad,
-        RealType           *rhoBatch);
+        RealType           *modPsiSqBatchQuadIter);
     } // namespace
 
     template <typename ValueType, typename RealType>
@@ -135,30 +135,18 @@ namespace dftefe
           utils::makeDataTypeDeviceCompatible(psiBatchQuadIter),
           utils::makeDataTypeDeviceCompatible(modPsiSqBatchQuadIter));
 
-        const double      alpha = 1.0;
-        const double      beta  = 1.0;
-
-        // BLASWrapperPtr->xgemv('T',
-        //                       vectorsBlockSize,
-        //                       cellsBlockSize * nQuadsPerCell,
-        //                       &scalarCoeffAlphaRho,
-        //                       rhoCellsWfcContributions,
-        //                       vectorsBlockSize,
-        //                       partialOccupVec,
-        //                       1,
-        //                       &scalarCoeffBetaRho,
-        //                       rho + cellRange.first * nQuadsPerCell,
-        //                       1);
+        const RealType      alpha = 2.0; // 2 for spin up and down
+        const RealType      beta  = 0.0;
 
         linearAlgebra::blasLapack::gemm<RealType, RealType, utils::MemorySpace::DEVICE>(
-          'T',
+          'N',
           'N',
           1,
           quadPtsInCellsBlockSize,
           numPsiInBatch,
           alpha,
           occupationInBatch.data(),
-          numPsiInBatch,
+          1,
           modPsiSqBatchQuad.begin(),
           numPsiInBatch,
           beta,

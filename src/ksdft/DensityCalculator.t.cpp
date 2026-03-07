@@ -176,6 +176,10 @@ namespace dftefe
           &                                                           waveFunc,
         quadrature::QuadratureValuesContainer<RealType, memorySpaceHost> &rho)
     {
+
+      // if constexpr (memorySpace == utils::MemorySpace::DEVICE)
+      //   utils::deviceSynchronize(); // DFTFE has it WHy?
+
       d_rhoMemspace->setValue((RealType)0);
 
       utils::MemoryTransfer<memorySpace, memorySpace> memoryTransfer;
@@ -198,9 +202,9 @@ namespace dftefe
 
           utils::MemoryStorage<RealType, memorySpace> occupationInBatch(numPsiInBatch, 0);
 
-          std::copy(occMemspace.data() + psiStartId,
-                    occMemspace.data() + psiEndId,
-                    occupationInBatch.begin());
+          memoryTransfer.copy(numPsiInBatch,
+                    occupationInBatch.begin(),
+                    occMemspace.data() + psiStartId);
 
           /*
            * Use scratch space for case where "numPsiInBatch <
@@ -289,7 +293,7 @@ namespace dftefe
                   ValueTypeBasisCoeff());
 
               if constexpr (memorySpace == utils::MemorySpace::DEVICE)
-                d_modPsiSqBatchQuad = quadrature::QuadratureValuesContainer<RealType, memorySpace>(
+                d_modPsiSqBatchSmallQuad = quadrature::QuadratureValuesContainer<RealType, memorySpace>(
                     d_quadRuleContainer, numPsiInBatch);
 
               for (size_type iSize = 0; iSize < waveFunc.localSize(); iSize++)

@@ -646,7 +646,7 @@ namespace dftefe
 #  if defined(DFTEFE_WITH_DEVICE_LANG_CUDA) || \
     defined(DFTEFE_WITH_DEVICE_LANG_HIP)
               utils::deviceBlasStatus_t status = DFTEFE_DEVICE_BLAS_INT(
-                D, gemmStridedBatched)(context.getDeviceBlasHandlesVec()[0],
+                D, gemmStridedBatched)(context.getDeviceBlasHandle(),
                                        transa,
                                        transb,
                                        m[0],
@@ -667,7 +667,7 @@ namespace dftefe
               DEVICEBLAS_API_CHECK(status);
 #  elif defined(DFTEFE_WITH_DEVICE_LANG_SYCL)
               DEVICEBLAS_API_CHECK(DFTEFE_DEVICE_BLAS_INT(D, gemm_batch)(
-                context.getDeviceBlasHandlesVec()[0],
+                context.getDeviceBlasHandle(),
                 transa,
                 transb,
                 m[0],
@@ -831,7 +831,7 @@ namespace dftefe
 #  if defined(DFTEFE_WITH_DEVICE_LANG_CUDA) || \
     defined(DFTEFE_WITH_DEVICE_LANG_HIP)
               utils::deviceBlasStatus_t status = DFTEFE_DEVICE_BLAS_INT(
-                Z, gemmStridedBatched)(context.getDeviceBlasHandlesVec()[0],
+                Z, gemmStridedBatched)(context.getDeviceBlasHandle(),
                                        transa,
                                        transb,
                                        m[0],
@@ -852,7 +852,7 @@ namespace dftefe
               DEVICEBLAS_API_CHECK(status);
 #  elif defined(DFTEFE_WITH_DEVICE_LANG_SYCL)
               DEVICEBLAS_API_CHECK(DFTEFE_DEVICE_BLAS_INT(Z, gemm_batch)(
-                context.getDeviceBlasHandlesVec()[0],
+                context.getDeviceBlasHandle(),
                 transa,
                 transb,
                 m[0],
