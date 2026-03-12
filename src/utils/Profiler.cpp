@@ -72,6 +72,9 @@ namespace dftefe
     void
     Profiler::registerStart(const std::string &sectionName)
     {
+#if defined(DFTEFE_WITH_DEVICE)
+        utils::deviceSynchronize();
+#endif
       // add device synchronize for gpu
       std::mutex                  mutex;
       std::lock_guard<std::mutex> lock(std::mutex);
@@ -115,11 +118,13 @@ namespace dftefe
     void
     Profiler::registerEnd(const std::string &sectionName)
     {
+#if defined(DFTEFE_WITH_DEVICE)
+      utils::deviceSynchronize();
+#endif
       DFTEFE_AssertWithMsg(
         !d_activeSections.empty(),
         "Cannot exit any section because none has been entered!");
 
-      // add device synchronize for gpu
       std::mutex                  mutex;
       std::lock_guard<std::mutex> lock(mutex);
 

@@ -32,10 +32,10 @@ namespace dftefe
     {
       template <typename ValueType>
       __global__ void
-      setValueKernel(ValueType *devPtr, ValueType value, size_type size)
+      setValueKernel(ValueType *devPtr, ValueType value, std::size_t size)
       {
-        const size_type globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
-        for (size_type i = globalThreadId; i < size;
+        const std::size_t globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
+        for (std::size_t i = globalThreadId; i < size;
              i += blockDim.x * gridDim.x)
           {
             devPtr[i] = value;
@@ -94,7 +94,7 @@ namespace dftefe
     }
 
     deviceError_t
-    deviceMalloc(void **devPtr, size_type size)
+    deviceMalloc(void **devPtr, std::size_t size)
     {
       deviceError_t err = hipMalloc(devPtr, size);
       DEVICE_API_CHECK(err);
@@ -102,7 +102,7 @@ namespace dftefe
     }
 
     deviceError_t
-    deviceMemset(void *devPtr, int value, size_type count)
+    deviceMemset(void *devPtr, int value, std::size_t count)
     {
       deviceError_t err = hipMemset(devPtr, value, count);
       DEVICE_API_CHECK(err);
@@ -111,7 +111,7 @@ namespace dftefe
 
     template <typename ValueType>
     void
-    deviceSetValue(ValueType *devPtr, ValueType value, size_type size)
+    deviceSetValue(ValueType *devPtr, ValueType value, std::size_t size)
     {
       hipLaunchKernelGGL(setValueKernel,
                          size / dftefe::utils::DEVICE_BLOCK_SIZE + 1,
@@ -124,45 +124,45 @@ namespace dftefe
     }
 
     template void
-    deviceSetValue(bool *devPtr, bool value, size_type size);
+    deviceSetValue(bool *devPtr, bool value, std::size_t size);
 
     template void
-    deviceSetValue(int *devPtr, int value, size_type size);
+    deviceSetValue(int *devPtr, int value, std::size_t size);
 
     template void
-    deviceSetValue(long int *devPtr, long int value, size_type size);
+    deviceSetValue(long int *devPtr, long int value, std::size_t size);
 
     template void
-    deviceSetValue(unsigned int *devPtr, unsigned int value, size_type size);
+    deviceSetValue(unsigned int *devPtr, unsigned int value, std::size_t size);
 
     template void
     deviceSetValue(unsigned long int *devPtr,
                    unsigned long int  value,
-                   size_type          size);
+                   std::size_t          size);
 
     template void
-    deviceSetValue(double *devPtr, double value, size_type size);
+    deviceSetValue(double *devPtr, double value, std::size_t size);
 
     template void
-    deviceSetValue(float *devPtr, float value, size_type size);
+    deviceSetValue(float *devPtr, float value, std::size_t size);
 
     template void
     deviceSetValue(std::complex<float> *devPtr,
                    std::complex<float>  value,
-                   size_type            size);
+                   std::size_t            size);
 
     template void
     deviceSetValue(std::complex<double> *devPtr,
                    std::complex<double>  value,
-                   size_type             size);
+                   std::size_t             size);
 
     template void
-    deviceSetValue(uint16_t *devPtr, uint16_t value, size_type size);
+    deviceSetValue(uint16_t *devPtr, uint16_t value, std::size_t size);
 
     template void
     deviceSetValue(std::complex<uint16_t> *devPtr,
                    std::complex<uint16_t>  value,
-                   size_type               size);
+                   std::size_t               size);
 
     deviceError_t
     deviceFree(void *devPtr)
@@ -173,7 +173,7 @@ namespace dftefe
     }
 
     deviceError_t
-    hostPinnedMalloc(void **hostPtr, size_type size)
+    hostPinnedMalloc(void **hostPtr, std::size_t size)
     {
       deviceError_t err =
         hipHostMalloc(hostPtr, size, hipHostMallocNonCoherent);
@@ -190,7 +190,7 @@ namespace dftefe
     }
 
     deviceError_t
-    deviceMemcpyD2H(void *dst, const void *src, size_type count)
+    deviceMemcpyD2H(void *dst, const void *src, std::size_t count)
     {
       deviceError_t err = hipMemcpy(dst, src, count, hipMemcpyDeviceToHost);
       DEVICE_API_CHECK(err);
@@ -198,14 +198,14 @@ namespace dftefe
     }
 
     deviceError_t
-    deviceMemcpyD2D(void *dst, const void *src, size_type count)
+    deviceMemcpyD2D(void *dst, const void *src, std::size_t count)
     {
       deviceError_t err = hipMemcpy(dst, src, count, hipMemcpyDeviceToDevice);
       DEVICE_API_CHECK(err);
       return err;
     }
     deviceError_t
-    deviceMemcpyH2D(void *dst, const void *src, size_type count)
+    deviceMemcpyH2D(void *dst, const void *src, std::size_t count)
     {
       deviceError_t err = hipMemcpy(dst, src, count, hipMemcpyHostToDevice);
       DEVICE_API_CHECK(err);
@@ -214,11 +214,11 @@ namespace dftefe
 
     deviceError_t
     deviceMemcpyD2H_2D(void *      dst,
-                       size_type   dpitch,
+                       std::size_t   dpitch,
                        const void *src,
-                       size_type   spitch,
-                       size_type   width,
-                       size_type   height)
+                       std::size_t   spitch,
+                       std::size_t   width,
+                       std::size_t   height)
     {
       deviceError_t err = hipMemcpy2D(
         dst, dpitch, src, spitch, width, height, hipMemcpyDeviceToHost);
@@ -229,11 +229,11 @@ namespace dftefe
 
     deviceError_t
     deviceMemcpyD2D_2D(void *      dst,
-                       size_type   dpitch,
+                       std::size_t   dpitch,
                        const void *src,
-                       size_type   spitch,
-                       size_type   width,
-                       size_type   height)
+                       std::size_t   spitch,
+                       std::size_t   width,
+                       std::size_t   height)
     {
       deviceError_t err = hipMemcpy2D(
         dst, dpitch, src, spitch, width, height, hipMemcpyDeviceToDevice);
@@ -243,11 +243,11 @@ namespace dftefe
 
     deviceError_t
     deviceMemcpyH2D_2D(void *      dst,
-                       size_type   dpitch,
+                       std::size_t   dpitch,
                        const void *src,
-                       size_type   spitch,
-                       size_type   width,
-                       size_type   height)
+                       std::size_t   spitch,
+                       std::size_t   width,
+                       std::size_t   height)
     {
       deviceError_t err = hipMemcpy2D(
         dst, dpitch, src, spitch, width, height, hipMemcpyHostToDevice);
@@ -266,7 +266,7 @@ namespace dftefe
     deviceError_t
     deviceMemcpyAsyncD2H(void *         dst,
                          const void *   src,
-                         size_type      count,
+                         std::size_t      count,
                          deviceStream_t stream)
     {
       deviceError_t err =
@@ -278,7 +278,7 @@ namespace dftefe
     deviceError_t
     deviceMemcpyAsyncD2D(void *         dst,
                          const void *   src,
-                         size_type      count,
+                         std::size_t      count,
                          deviceStream_t stream)
     {
       deviceError_t err =
@@ -290,7 +290,7 @@ namespace dftefe
     deviceError_t
     deviceMemcpyAsyncH2D(void *         dst,
                          const void *   src,
-                         size_type      count,
+                         std::size_t      count,
                          deviceStream_t stream)
     {
       deviceError_t err =

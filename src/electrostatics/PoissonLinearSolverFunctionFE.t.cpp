@@ -426,7 +426,7 @@ namespace dftefe
                 1,
                 *d_linAlgOpContext);
 
-              utils::mpi::MPIAllreduce<memorySpace>(
+              utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
                 utils::mpi::MPIInPlace,
                 &max,
                 1,

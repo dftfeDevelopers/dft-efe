@@ -66,26 +66,28 @@ namespace dftefe
       const double                                wantedSpectrumUpperBound,
       const double                                unWantedSpectrumUpperBound,
       MultiVector<blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>,
-                  memorySpace> &                  filteredSubspace);
+                  memorySpace> &                  filteredSubspace,
+      MultiVector<blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>, memorySpace> &scratch1,
+      MultiVector<blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>, memorySpace> &scratch2);
 
-    template <typename ValueTypeOperator,
-              typename ValueTypeOperand,
-              utils::MemorySpace memorySpace>
-    void
-    ChebyshevFilterGEP(
-      const OperatorContext<ValueTypeOperator, ValueTypeOperand, memorySpace>
-        &A,
-      const OperatorContext<ValueTypeOperator, ValueTypeOperand, memorySpace>
-        &B,
-      const OperatorContext<ValueTypeOperator, ValueTypeOperand, memorySpace>
-        &                                         BInv,
-      MultiVector<ValueTypeOperand, memorySpace> &eigenSubspaceGuess,
-      const size_type                             polynomialDegree,
-      const double                                wantedSpectrumLowerBound,
-      const double                                wantedSpectrumUpperBound,
-      const double                                unWantedSpectrumUpperBound,
-      MultiVector<blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>,
-                  memorySpace> &                  filteredSubspace);
+    // template <typename ValueTypeOperator,
+    //           typename ValueTypeOperand,
+    //           utils::MemorySpace memorySpace>
+    // void
+    // ChebyshevFilterGEP(
+    //   const OperatorContext<ValueTypeOperator, ValueTypeOperand, memorySpace>
+    //     &A,
+    //   const OperatorContext<ValueTypeOperator, ValueTypeOperand, memorySpace>
+    //     &B,
+    //   const OperatorContext<ValueTypeOperator, ValueTypeOperand, memorySpace>
+    //     &                                         BInv,
+    //   MultiVector<ValueTypeOperand, memorySpace> &eigenSubspaceGuess,
+    //   const size_type                             polynomialDegree,
+    //   const double                                wantedSpectrumLowerBound,
+    //   const double                                wantedSpectrumUpperBound,
+    //   const double                                unWantedSpectrumUpperBound,
+    //   MultiVector<blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>,
+    //               memorySpace> &                  filteredSubspace);
 
     template <typename ValueTypeOperator,
               typename ValueTypeOperand,
@@ -107,7 +109,12 @@ namespace dftefe
       const double                                wantedSpectrumUpperBound,
       const double                                unWantedSpectrumUpperBound,
       MultiVector<blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>,
-                  memorySpace> &                  filteredSubspace);
+                  memorySpace> &                  filteredSubspace,
+      MultiVector<blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>, memorySpace> &scratch1,
+      MultiVector<blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>, memorySpace> &scratch2,
+      MultiVector<blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>, memorySpace> &scratch3,
+      MultiVector<blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>, memorySpace> &Residual,
+      MultiVector<blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>, memorySpace> &ResidualNew);
 
   } // end of namespace linearAlgebra
 } // end of namespace dftefe

@@ -925,6 +925,10 @@ namespace dftefe
           linearAlgebra::blasLapack::scalar_type<ValueTypeElectrostaticsCoeff,
                                                  ValueTypeWaveFunctionCoeff>,
           memorySpace> &                             xCellValues,
+        utils::MemoryStorage<
+          linearAlgebra::blasLapack::scalar_type<ValueTypeElectrostaticsCoeff,
+                                                 ValueTypeWaveFunctionCoeff>,
+          memorySpace> &                             yCellValues,          
         const size_type                              numVecs,
         const size_type                              numLocallyOwnedCells,
         const std::vector<size_type> &               numCellDofs,
@@ -955,14 +959,14 @@ namespace dftefe
         //     linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
         //                                            ValueTypeOperand>>::zero);
 
-        utils::MemoryStorage<linearAlgebra::blasLapack::
-                               scalar_type<ValueTypeOperator, ValueTypeOperand>,
-                             memorySpace>
-          yCellValues(
-            cellBlockSize * numVecs * maxDofInCell,
-            utils::Types<
-              linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
-                                                     ValueTypeOperand>>::zero);
+        // utils::MemoryStorage<linearAlgebra::blasLapack::
+        //                        scalar_type<ValueTypeOperator, ValueTypeOperand>,
+        //                      memorySpace>
+        //   yCellValues(
+        //     cellBlockSize * numVecs * maxDofInCell,
+        //     utils::Types<
+        //       linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
+        //                                              ValueTypeOperand>>::zero);
 
         if (electroONCVHamiltonian != nullptr)
           {
@@ -1169,6 +1173,7 @@ namespace dftefe
       , d_useOptimizedImplement(useOptimizedImplement)
       , d_electroONCVHamiltonian(nullptr)
       , d_XCellValues(std::make_shared<utils::MemoryStorage<ValueTypeOperand, memorySpace>>(0))
+      , d_YCellValues(std::make_shared<utils::MemoryStorage<ValueTypeOperand, memorySpace>>(0))
       , d_hamiltonianInAllCells(0)
     {
       reinit(feBasisManager, hamiltonianComponentsVec);
@@ -1255,10 +1260,13 @@ namespace dftefe
           {
             d_XCellValues = std::make_shared<utils::MemoryStorage<ValueTypeOperand, memorySpace>>(
               d_maxWaveFnBatch * numLocallyOwnedCells * maxDofInCell);
+            d_YCellValues = std::make_shared<utils::MemoryStorage<ValueTypeOperand, memorySpace>>(
+              d_maxWaveFnBatch * d_maxCellBlock * maxDofInCell);
           }
           else
           {
             d_XCellValues->setValue((ValueTypeOperand)0);
+            d_YCellValues->setValue((ValueTypeOperand)0);
           }
         }
     }
@@ -1347,6 +1355,7 @@ namespace dftefe
           X.begin(),
           Y.begin(),
           *d_XCellValues,
+          *d_YCellValues,
           numVecs,
           numLocallyOwnedCells,
           numCellDofs,

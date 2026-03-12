@@ -90,6 +90,27 @@ namespace dftefe
         std::make_shared<linearAlgebra::MultiVector<ValueType, memorySpace>>(
           d_mpiPatternP2P, linAlgOpContext, eigenVectorBatchSize, ValueType());
 
+      d_chfsiScratch1 = std::make_shared<
+            linearAlgebra::MultiVector<ValueType, memorySpace>>(
+            d_mpiPatternP2P, linAlgOpContext, d_eigenVecBatchSize, ValueType());
+      d_chfsiScratch2 = std::make_shared<
+            linearAlgebra::MultiVector<ValueType, memorySpace>>(
+            d_mpiPatternP2P, linAlgOpContext, d_eigenVecBatchSize, ValueType());
+      if (d_isResidualChebyFilter)
+      {
+        d_chfsiResidualScratch1 = std::make_shared<
+            linearAlgebra::MultiVector<ValueType, memorySpace>>(
+            d_mpiPatternP2P, linAlgOpContext, d_eigenVecBatchSize, ValueType());
+        d_chfsiResidualScratch2 = std::make_shared<
+            linearAlgebra::MultiVector<ValueType, memorySpace>>(
+            d_mpiPatternP2P, linAlgOpContext, d_eigenVecBatchSize, ValueType());
+      }
+      else
+      {
+        d_chfsiResidualScratch1 = nullptr;
+        d_chfsiResidualScratch2 = nullptr; 
+      }
+
       if (!d_isGHEP)
         d_ortho =
           std::make_shared<OrthonormalizationFunctions<ValueTypeOperator,
@@ -156,6 +177,22 @@ namespace dftefe
             linearAlgebra::MultiVector<ValueType, memorySpace>>(
             d_mpiPatternP2P, linAlgOpContext, d_eigenVecBatchSize, ValueType());
 
+          d_chfsiScratch1 = std::make_shared<
+            linearAlgebra::MultiVector<ValueType, memorySpace>>(
+            d_mpiPatternP2P, linAlgOpContext, d_eigenVecBatchSize, ValueType());
+          d_chfsiScratch2 = std::make_shared<
+            linearAlgebra::MultiVector<ValueType, memorySpace>>(
+            d_mpiPatternP2P, linAlgOpContext, d_eigenVecBatchSize, ValueType());
+          if (d_isResidualChebyFilter)
+          {
+            d_chfsiResidualScratch1 = std::make_shared<
+            linearAlgebra::MultiVector<ValueType, memorySpace>>(
+            d_mpiPatternP2P, linAlgOpContext, d_eigenVecBatchSize, ValueType());
+            d_chfsiResidualScratch2 = std::make_shared<
+            linearAlgebra::MultiVector<ValueType, memorySpace>>(
+            d_mpiPatternP2P, linAlgOpContext, d_eigenVecBatchSize, ValueType());
+          }
+
           if (!d_isGHEP)
             d_ortho =
               std::make_shared<OrthonormalizationFunctions<ValueTypeOperator,
@@ -216,10 +253,11 @@ namespace dftefe
       size_type numEigenVectors   = eigenVectors.getNumberComponents();
       size_type eigenVecLocalSize = eigenVectors.localSize();
       utils::MemoryTransfer<memorySpace, memorySpace>      memoryTransfer;
-      std::shared_ptr<MultiVector<ValueType, memorySpace>> d_subspaceBatchIn =
-                                                             nullptr,
-                                                           d_subspaceBatchOut =
-                                                             nullptr;
+      std::shared_ptr<MultiVector<ValueType, memorySpace>> 
+          subspaceBatchIn = nullptr, subspaceBatchOut = nullptr, 
+          chfsiScratch1 = nullptr, chfsiScratch2 = nullptr,
+          chfsiResidualScratch1 = nullptr, chfsiResidualScratch2 = nullptr;
+
       for (size_type eigVecStartId = 0; eigVecStartId < numEigenVectors;
            eigVecStartId += d_eigenVecBatchSize)
         {
@@ -235,15 +273,31 @@ namespace dftefe
 
           if (numEigVecInBatch % d_eigenVecBatchSize == 0)
             {
-              for (size_type iSize = 0; iSize < eigenVecLocalSize; iSize++)
-                memoryTransfer.copy(numEigVecInBatch,
-                                    d_XinBatch->data() +
-                                      numEigVecInBatch * iSize,
-                                    eigenVectors.data() +
-                                      iSize * numEigenVectors + eigVecStartId);
+              // for (size_type iSize = 0; iSize < eigenVecLocalSize; iSize++)
+              //   memoryTransfer.copy(numEigVecInBatch,
+              //                       d_XinBatch->data() +
+              //                         numEigVecInBatch * iSize,
+              //                       eigenVectors.data() +
+              //                         iSize * numEigenVectors + eigVecStartId);
 
-              d_subspaceBatchIn  = d_XinBatch;
-              d_subspaceBatchOut = d_XoutBatch;
+              blasLapack::stridedBlockCopy(
+                            eigenVecLocalSize,
+                            numEigVecInBatch,
+                            numEigenVectors,
+                            eigVecStartId,
+                            numEigVecInBatch,
+                            0,
+                            eigenVectors.data(),
+                            d_XinBatch->data(),
+                            *eigenVectors.getLinAlgOpContext());
+
+              subspaceBatchIn  = d_XinBatch;
+              subspaceBatchOut = d_XoutBatch;
+
+              chfsiScratch1 = d_chfsiScratch1;
+              chfsiScratch2 = d_chfsiScratch2;
+              chfsiResidualScratch1 = d_chfsiResidualScratch1;
+              chfsiResidualScratch2 = d_chfsiResidualScratch2;
             }
           else if (numEigVecInBatch % d_eigenVecBatchSize == d_batchSizeSmall)
             {
@@ -254,8 +308,13 @@ namespace dftefe
                                     eigenVectors.data() +
                                       iSize * numEigenVectors + eigVecStartId);
 
-              d_subspaceBatchIn  = d_XinBatchSmall;
-              d_subspaceBatchOut = d_XoutBatchSmall;
+              subspaceBatchIn  = d_XinBatchSmall;
+              subspaceBatchOut = d_XoutBatchSmall;
+
+              chfsiScratch1 = d_chfsiScratch1Small;
+              chfsiScratch2 = d_chfsiScratch2Small;
+              chfsiResidualScratch1 = d_chfsiResidualScratch1Small;
+              chfsiResidualScratch2 = d_chfsiResidualScratch2Small;
             }
           else
             {
@@ -275,6 +334,34 @@ namespace dftefe
                 numEigVecInBatch,
                 ValueType());
 
+              d_chfsiScratch1Small = std::make_shared<
+                linearAlgebra::MultiVector<ValueType, memorySpace>>(
+                d_mpiPatternP2P,
+                eigenVectors.getLinAlgOpContext(),
+                numEigVecInBatch,
+                ValueType());
+              d_chfsiScratch2Small = std::make_shared<
+                linearAlgebra::MultiVector<ValueType, memorySpace>>(
+                d_mpiPatternP2P,
+                eigenVectors.getLinAlgOpContext(),
+                numEigVecInBatch,
+                ValueType());
+              if (d_isResidualChebyFilter)
+              {
+                d_chfsiResidualScratch1Small = std::make_shared<
+                linearAlgebra::MultiVector<ValueType, memorySpace>>(
+                d_mpiPatternP2P,
+                eigenVectors.getLinAlgOpContext(),
+                numEigVecInBatch,
+                ValueType());
+                d_chfsiResidualScratch2Small = std::make_shared<
+                linearAlgebra::MultiVector<ValueType, memorySpace>>(
+                d_mpiPatternP2P,
+                eigenVectors.getLinAlgOpContext(),
+                numEigVecInBatch,
+                ValueType()); 
+              }
+
               for (size_type iSize = 0; iSize < eigenVecLocalSize; iSize++)
                 memoryTransfer.copy(numEigVecInBatch,
                                     d_XinBatchSmall->data() +
@@ -282,8 +369,13 @@ namespace dftefe
                                     eigenVectors.data() +
                                       iSize * numEigenVectors + eigVecStartId);
 
-              d_subspaceBatchIn  = d_XinBatchSmall;
-              d_subspaceBatchOut = d_XoutBatchSmall;
+              subspaceBatchIn  = d_XinBatchSmall;
+              subspaceBatchOut = d_XoutBatchSmall;
+
+              chfsiScratch1 = d_chfsiScratch1Small;
+              chfsiScratch2 = d_chfsiScratch2Small;
+              chfsiResidualScratch1 = d_chfsiResidualScratch1Small;
+              chfsiResidualScratch2 = d_chfsiResidualScratch2Small;
             }
           if (d_isResidualChebyFilter)
             ResidualChebyshevFilterGEP<ValueTypeOperator,
@@ -293,39 +385,49 @@ namespace dftefe
               B,
               BInv,
               eigenValBatch,
-              *d_subspaceBatchIn, /*scratch1*/
+              *subspaceBatchIn, /*scratch1*/
               d_polynomialDegree,
               d_wantedSpectrumLowerBound,
               d_wantedSpectrumUpperBound,
               d_unWantedSpectrumUpperBound,
-              *d_subspaceBatchOut); /*scratch2*/
+              *subspaceBatchOut,
+              *chfsiScratch1,
+              *chfsiScratch2,
+              *chfsiResidualScratch1,
+              *chfsiResidualScratch2); /*scratch2*/
           else
             ChebyshevFilter<ValueTypeOperator, ValueTypeOperand, memorySpace>(
               A,
               BInv,
-              *d_subspaceBatchIn, /*scratch1*/
+              *subspaceBatchIn, /*scratch1*/
               d_polynomialDegree,
               d_wantedSpectrumLowerBound,
               d_wantedSpectrumUpperBound,
               d_unWantedSpectrumUpperBound,
-              *d_subspaceBatchOut); /*scratch2*/
+              *subspaceBatchOut,
+              *chfsiScratch1,
+              *chfsiScratch2); /*scratch2*/
 
           utils::printCurrentMemoryUsage(d_mpiPatternP2P->mpiCommunicator(),
                                          "During blocked chebyshev filtering");
 
-          for (size_type iSize = 0; iSize < eigenVecLocalSize; iSize++)
-            memoryTransfer.copy(numEigVecInBatch,
-                                eigenVectors.data() + iSize * numEigenVectors +
-                                  eigVecStartId,
-                                d_subspaceBatchOut->data() +
-                                  numEigVecInBatch * iSize);
+              blasLapack::stridedBlockCopy(
+                            eigenVecLocalSize,
+                            numEigVecInBatch,
+                            numEigVecInBatch,
+                            0,                            
+                            numEigenVectors,
+                            eigVecStartId,
+                            subspaceBatchOut->data(),
+                            eigenVectors.data(),
+                            *eigenVectors.getLinAlgOpContext());
 
           // for (size_type iSize = 0; iSize < eigenVecLocalSize; iSize++)
           //   memoryTransfer.copy(numEigVecInBatch,
-          //                       d_eigenSubspaceGuess->data() +
-          //                         iSize * numEigenVectors + eigVecStartId,
-          //                       d_subspaceBatchIn->data() +
-          //                         numEigVecInBatch * iSize);
+          //                       eigenVectors.data() + iSize * numEigenVectors +
+          //                         eigVecStartId,
+          //                       subspaceBatchOut->data() +
+          //                         numEigVecInBatch * iSize);                            
         }
 
       if (d_storeIntermediateSubspaces && d_printL2Norms)
@@ -353,6 +455,7 @@ namespace dftefe
         }
 
       d_p.registerEnd("Chebyshev Filter");
+      d_p.print();
       d_pTotal.registerEnd("Chebyshev Filter");
 
       if (!d_isGHEP)

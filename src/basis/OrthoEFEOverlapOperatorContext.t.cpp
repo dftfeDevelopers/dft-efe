@@ -1671,11 +1671,11 @@ namespace dftefe
           // utils::throwException(mpiIsSuccessAndMsg.first,
           //                       "MPI Error:" + mpiIsSuccessAndMsg.second);
 
-          auto err = utils::mpi::MPIAllreduce<memorySpace>(
+          auto err = utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
             utils::mpi::MPIInPlace,
             basisOverlapEnrichmentBlock.data(),
             basisOverlapEnrichmentBlock.size(),
-            utils::mpi::MPIDouble,
+            utils::mpi::Types<ValueTypeOperator>::getMPIDatatype(),
             utils::mpi::MPISum,
             d_feBasisManager->getMPIPatternP2P()->mpiCommunicator());
           auto mpiIsSuccessAndMsg = utils::mpi::MPIErrIsSuccessAndMsg(err);
@@ -2343,8 +2343,10 @@ namespace dftefe
             {
               utils::MemoryStorage<ValueTypeOperand, memorySpace>
                 XenrichedGlobalVec(d_nglobalEnrichmentIds * numComponents),
-                XenrichedGlobalVecTmp(d_nglobalEnrichmentIds * numComponents),
                 YenrichedGlobalVec(d_nglobalEnrichmentIds * numComponents);
+
+              utils::MemoryStorage<ValueTypeOperand, utils::MemorySpace::HOST>
+                XenrichedGlobalVecTmp(d_nglobalEnrichmentIds * numComponents);
 
               XenrichedGlobalVecTmp.template copyFrom<memorySpace>(
                 X.begin(),
@@ -2354,17 +2356,20 @@ namespace dftefe
                  (d_efebasisDofHandler->getGlobalRanges()[0].second)) *
                   numComponents);
 
-              int err = utils::mpi::MPIAllreduce<memorySpace>(
+              int err = utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
+                utils::mpi::MPIInPlace,
                 XenrichedGlobalVecTmp.data(),
-                XenrichedGlobalVec.data(),
                 XenrichedGlobalVecTmp.size(),
-                utils::mpi::MPIDouble,
+                utils::mpi::Types<ValueTypeOperand>::getMPIDatatype(),
                 utils::mpi::MPISum,
                 d_feBasisManager->getMPIPatternP2P()->mpiCommunicator());
               std::pair<bool, std::string> mpiIsSuccessAndMsg =
                 utils::mpi::MPIErrIsSuccessAndMsg(err);
               utils::throwException(mpiIsSuccessAndMsg.first,
                                     "MPI Error:" + mpiIsSuccessAndMsg.second);
+
+              XenrichedGlobalVec.template copyFrom<utils::MemorySpace::HOST>(
+                XenrichedGlobalVecTmp);
 
               // Do dgemm
 

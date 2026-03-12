@@ -414,7 +414,8 @@ namespace dftefe
                 L2ProjectionDefaults::DIVERGENCE_TOL,
                 profiler);
 
-          linearAlgebra::LinearSolverError errLS = CGSolve->solve(*linearSolverFunction);
+          linearAlgebra::LinearSolverError errLS;
+          errLS = CGSolve->solve(*linearSolverFunction);
           linearSolverFunction->getSolution(*basisInterfaceCoeff);
 
           if (errLS.err != linearAlgebra::LinearSolverErrorCode::SUCCESS)
@@ -590,7 +591,7 @@ namespace dftefe
 
       avgEnrich /= d_cfeBasisDofHandler->nLocallyOwnedCells();
 
-      utils::mpi::MPIAllreduce<memorySpace>(
+      utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
         utils::mpi::MPIInPlace,
         &maxEnrich,
         1,
@@ -598,7 +599,7 @@ namespace dftefe
         utils::mpi::MPIMax,
         comm);
 
-      utils::mpi::MPIAllreduce<memorySpace>(
+      utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
         utils::mpi::MPIInPlace,
         &minEnrich,
         1,
@@ -606,7 +607,7 @@ namespace dftefe
         utils::mpi::MPIMin,
         comm);
 
-      utils::mpi::MPIAllreduce<memorySpace>(
+      utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
         utils::mpi::MPIInPlace,
         &avgEnrich,
         1,
@@ -614,7 +615,7 @@ namespace dftefe
         utils::mpi::MPIMax,
         comm);
 
-      utils::mpi::MPIAllreduce<memorySpace>(
+      utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
         utils::mpi::MPIInPlace,
         &maxTotalEnrichInProc,
         1,
@@ -771,7 +772,7 @@ namespace dftefe
 
       avgEnrich /= locallyOwnedCellsInTriangulation;
 
-      utils::mpi::MPIAllreduce<memorySpace>(
+      utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
         utils::mpi::MPIInPlace,
         &maxEnrich,
         1,
@@ -779,7 +780,7 @@ namespace dftefe
         utils::mpi::MPIMax,
         comm);
 
-      utils::mpi::MPIAllreduce<memorySpace>(
+      utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
         utils::mpi::MPIInPlace,
         &minEnrich,
         1,
@@ -787,7 +788,7 @@ namespace dftefe
         utils::mpi::MPIMin,
         comm);
 
-      utils::mpi::MPIAllreduce<memorySpace>(
+      utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
         utils::mpi::MPIInPlace,
         &avgEnrich,
         1,
@@ -795,7 +796,7 @@ namespace dftefe
         utils::mpi::MPISum,
         comm);
 
-      utils::mpi::MPIAllreduce<memorySpace>(
+      utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
         utils::mpi::MPIInPlace,
         &maxTotalEnrichInProc,
         1,

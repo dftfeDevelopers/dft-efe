@@ -421,6 +421,54 @@ namespace dftefe
           const ValueType2 *dB,
           ValueType3 *      dC);
 
+        template <typename ValueType1, typename ValueType2>
+        DFTEFE_CREATE_KERNEL(
+          void,
+          stridedBlockCopyDeviceKernel,
+          {
+            const size_type numberEntries =
+                vecSize * numVec;
+
+              for (size_type index = globalThreadId;
+                  index < numberEntries;
+                  index += nThreadsPerBlock * nThreadBlock)
+              {
+                const size_type blockIndex = index / numVec;
+
+                const size_type intraBlockIndex = index - blockIndex * numVec;
+
+                const size_type srcIndex = blockIndex * srcLeadingDim +
+                  srcBlockStartId + intraBlockIndex;
+
+                const size_type dstIndex = blockIndex * dstLeadingDim +
+                  dstBlockStartId + intraBlockIndex;
+
+                dftefe::utils::copyValue(copyToVec + dstIndex , copyFromVec[srcIndex]);
+              }
+            },
+            const size_type vecSize,
+            const size_type numVec,
+            const size_type srcLeadingDim,
+            const size_type srcBlockStartId,
+            const size_type dstLeadingDim,
+            const size_type dstBlockStartId,
+            const ValueType1 *copyFromVec,
+            ValueType2       *copyToVec);
+
+          template <typename ValueType1, typename ValueType2>
+          DFTEFE_CREATE_KERNEL(
+            void,
+            copyValueType1ArrToValueType2ArrDeviceKernel,
+            {
+              for (size_type index = globalThreadId; index < size;
+                  index += nThreadsPerBlock * nThreadBlock)
+              {
+                dftefe::utils::copyValue(valueType2Arr + index, valueType1Arr[index]);
+              }
+            },
+            const size_type size,
+            const ValueType1 *valueType1Arr,
+            ValueType2       *valueType2Arr);
       } // namespace
 
       template <typename ValueType1, typename ValueType2>
@@ -1057,12 +1105,73 @@ namespace dftefe
         return nrms2;
       }
 
+      template <typename ValueType1, typename ValueType2>
+      void
+      CopyKernelTwoValueTypes<ValueType1, ValueType2, utils::MemorySpace::DEVICE>::
+        stridedBlockCopy(
+          const size_type vecSize,
+          const size_type numVec,
+          const size_type srcLeadingDim,
+          const size_type srcBlockStartId,
+          const size_type dstLeadingDim,
+          const size_type dstBlockStartId,
+          const ValueType1 *copyFromVec,
+          ValueType2       *copyToVec,
+          LinAlgOpContext<utils::MemorySpace::DEVICE> &context)
+      {
+        DFTEFE_LAUNCH_KERNEL(stridedBlockCopyDeviceKernel,
+                             (vecSize * numVec) / utils::DEVICE_BLOCK_SIZE + 1,
+                             utils::DEVICE_BLOCK_SIZE,
+                             context.getBlasStream(),
+                              numVec,
+                              vecSize,
+                              srcLeadingDim,
+                              srcBlockStartId,
+                              dstLeadingDim,
+                              dstBlockStartId,
+                             utils::makeDataTypeDeviceCompatible(copyFromVec),
+                             utils::makeDataTypeDeviceCompatible(copyToVec));
+      }
+
+      template <typename ValueType1, typename ValueType2>
+      void
+      CopyKernelTwoValueTypes<ValueType1, ValueType2, utils::MemorySpace::DEVICE>::
+        copyValueType1ArrToValueType2Arr(
+          const size_type size,
+          const ValueType1 *valueType1Arr,
+          ValueType2       *valueType2Arr,
+        LinAlgOpContext<utils::MemorySpace::DEVICE> &context)
+      {
+        DFTEFE_LAUNCH_KERNEL(copyValueType1ArrToValueType2ArrDeviceKernel,
+                             (size) / utils::DEVICE_BLOCK_SIZE + 1,
+                             utils::DEVICE_BLOCK_SIZE,
+                             context.getBlasStream(),
+                             size,
+                             utils::makeDataTypeDeviceCompatible(valueType1Arr),
+                             utils::makeDataTypeDeviceCompatible(valueType2Arr));
+      }
+
 #  define EXPLICITLY_INSTANTIATE_2T(T1, T2, M) \
     template class KernelsTwoValueTypes<T1, T2, M>;
 
 #  define EXPLICITLY_INSTANTIATE_1T(T, M) \
     template class KernelsOneValueType<T, M>;
 
+#define EXPLICITLY_INSTANTIATE_COPY_2T(T1, T2, M) \
+  template class CopyKernelTwoValueTypes<T1, T2, M>;
+
+      EXPLICITLY_INSTANTIATE_COPY_2T(float,
+                                float,
+                                dftefe::utils::MemorySpace::DEVICE);
+      EXPLICITLY_INSTANTIATE_COPY_2T(double,
+                                double,
+                                dftefe::utils::MemorySpace::DEVICE);
+      EXPLICITLY_INSTANTIATE_COPY_2T(std::complex<float>,
+                                std::complex<float>,
+                                dftefe::utils::MemorySpace::DEVICE);
+      EXPLICITLY_INSTANTIATE_COPY_2T(std::complex<double>,
+                                std::complex<double>,
+                                dftefe::utils::MemorySpace::DEVICE);
 
       EXPLICITLY_INSTANTIATE_1T(float, utils::MemorySpace::DEVICE);
       EXPLICITLY_INSTANTIATE_1T(double, utils::MemorySpace::DEVICE);

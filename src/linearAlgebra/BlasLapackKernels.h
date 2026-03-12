@@ -281,6 +281,29 @@ namespace dftefe
                          LinAlgOpContext<memorySpace> &context);
       };
 
+      template <typename ValueType1, typename ValueType2, dftefe::utils::MemorySpace memorySpace>
+      class CopyKernelTwoValueTypes
+      {
+      public:
+        static void
+        stridedBlockCopy(const size_type vecSize,
+          const size_type numVec,
+          const size_type srcLeadingDim,
+          const size_type srcBlockStartId,
+          const size_type dstLeadingDim,
+          const size_type dstBlockStartId,
+          const ValueType1 *copyFromVec,
+          ValueType2       *copyToVec,
+              LinAlgOpContext<memorySpace> &       context);   
+
+     static void
+     copyValueType1ArrToValueType2Arr(
+          const size_type size,
+          const ValueType1 *valueType1Arr,
+          ValueType2       *valueType2Arr,
+        LinAlgOpContext<memorySpace> &context);              
+      };
+
 #ifdef DFTEFE_WITH_DEVICE
       template <typename ValueType1, typename ValueType2>
       class KernelsTwoValueTypes<ValueType1,
@@ -415,6 +438,31 @@ namespace dftefe
           size_type                                            numVec,
           const ValueType *                                    multiVecData,
           LinAlgOpContext<dftefe::utils::MemorySpace::DEVICE> &context);
+      };
+
+      template <typename ValueType1, typename ValueType2>
+      class CopyKernelTwoValueTypes<ValueType1,
+                                 ValueType2,
+                                 dftefe::utils::MemorySpace::DEVICE>
+      {
+      public:
+        static void
+        stridedBlockCopy(const size_type vecSize,
+          const size_type numVec,
+          const size_type srcLeadingDim,
+          const size_type srcBlockStartId,
+          const size_type dstLeadingDim,
+          const size_type dstBlockStartId,
+          const ValueType1 *copyFromVec,
+          ValueType2       *copyToVec,
+              LinAlgOpContext<dftefe::utils::MemorySpace::DEVICE> &       context);   
+
+     static void
+     copyValueType1ArrToValueType2Arr(
+          const size_type size,
+          const ValueType1 *valueType1Arr,
+          ValueType2       *valueType2Arr,
+        LinAlgOpContext<dftefe::utils::MemorySpace::DEVICE> &context);                     
       };
 
 #endif

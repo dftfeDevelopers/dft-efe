@@ -1092,12 +1092,16 @@ namespace dftefe
         YenrichedLocalVec(nlocallyOwnedEnrichmentIds * numComponents),
         dotProds(d_rank * numComponents);
 
-      XenrichedLocalVec.template copyFrom<memorySpace>(
-        X.begin(),
-        nlocallyOwnedEnrichmentIds * numComponents,
-        nlocallyOwnedClassicalIds * numComponents,
-        0);
+      // XenrichedLocalVec.template copyFrom<memorySpace>(
+      //   X.begin(),
+      //   nlocallyOwnedEnrichmentIds * numComponents,
+      //   nlocallyOwnedClassicalIds * numComponents,
+      //   0);
 
+      linearAlgebra::blasLapack::copyValueType1ArrToValueType2Arr(
+        nlocallyOwnedEnrichmentIds * numComponents, 
+        X.data() + nlocallyOwnedClassicalIds * numComponents, 
+        XenrichedLocalVec.data(), *d_linAlgOpContext);
 
       ValueType alpha = 1.0;
       ValueType beta  = 0.0;
@@ -1193,11 +1197,17 @@ namespace dftefe
       //           *d_linAlgOpContext);
       //   }
 
-      YenrichedLocalVec.template copyTo<memorySpace>(
-        Y.begin(),
-        nlocallyOwnedEnrichmentIds * numComponents,
-        0,
-        nlocallyOwnedClassicalIds * numComponents);
+      // YenrichedLocalVec.template copyTo<memorySpace>(
+      //   Y.begin(),
+      //   nlocallyOwnedEnrichmentIds * numComponents,
+      //   0,
+      //   nlocallyOwnedClassicalIds * numComponents);
+
+      linearAlgebra::blasLapack::copyValueType1ArrToValueType2Arr(
+        nlocallyOwnedEnrichmentIds * numComponents, 
+        YenrichedLocalVec.data(), 
+        Y.data() + nlocallyOwnedClassicalIds * numComponents, 
+        *d_linAlgOpContext);
 
       Y.updateGhostValues();
 

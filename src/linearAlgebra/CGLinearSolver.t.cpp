@@ -135,6 +135,8 @@ namespace dftefe
       ones.resize(numComponents, (ValueType)1.0);
       std::vector<ValueType> nOnes(0);
       nOnes.resize(numComponents, (ValueType)-1.0);
+      std::vector<ValueType> alpha(numComponents, (ValueType)0), 
+        nAlpha(numComponents, (ValueType)0), beta(numComponents, (ValueType)0);
 
       //
       // @note: w is meant for storing Ap (p = search direction).
@@ -245,11 +247,10 @@ namespace dftefe
               blasLapack::ScalarOp::Identity);
 
           // ValueType alpha = zDotr / pDotw;
-          std::vector<ValueType> alpha(0), nAlpha(0);
           for (size_type i = 0; i < numComponents; i++)
             {
-              alpha.push_back(zDotr[i] / pDotw[i]);
-              nAlpha.push_back(-zDotr[i] / pDotw[i]);
+              alpha[i] = (zDotr[i] / pDotw[i]);
+              nAlpha[i] = (-zDotr[i] / pDotw[i]);
             }
 
           // x = x + alpha*p
@@ -270,16 +271,13 @@ namespace dftefe
               blasLapack::ScalarOp::Identity);
 
           // ValueType beta = zDotrNew / zDotr;
-          std::vector<ValueType> beta(0);
           for (size_type i = 0; i < numComponents; i++)
           {
-            beta.push_back(zDotrNew[i] / zDotr[i]);
+            beta[i] = (zDotrNew[i] / zDotr[i]);
           }                     
           // p = z + beta*p
           add(ones, z, beta, p, p);
           
-          if constexpr (memorySpace == utils::MemorySpace::DEVICE)
-            dftefe::utils::deviceSynchronize();
           // register end of the iteration
           // d_profiler.registerIterEnd(msg);
         }

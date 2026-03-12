@@ -54,6 +54,7 @@ namespace dftefe
 
         MultiVector<ValueType, memorySpace> X0X0HBX(X, 0.0), residual(X, 0.0);
         utils::MemoryStorage<ValueType, memorySpace> X0HBX(numVec * numVec);
+        utils::MemoryStorage<ValueType, utils::MemorySpace::HOST> X0HBXHost(numVec * numVec);
 
         B.apply(X, residual, true, false);
         blasLapack::gemm<ValueTypeOperand, ValueType, memorySpace>(
@@ -72,12 +73,17 @@ namespace dftefe
           numVec,
           linAlgOpContext);
 
+          utils::MemoryTransfer<utils::MemorySpace::HOST,
+                                memorySpace>::copy(X0HBX.size(),
+                                                    X0HBXHost.data(),
+                                                    X0HBX.data());
+
         // MPI_AllReduce to get the S from all procs
         // mpi_inplace
-        int err = utils::mpi::MPIAllreduce<memorySpace>(
+        int err = utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
           utils::mpi::MPIInPlace,
-          X0HBX.data(),
-          X0HBX.size(),
+          X0HBXHost.data(),
+          X0HBXHost.size(),
           utils::mpi::Types<ValueType>::getMPIDatatype(),
           utils::mpi::MPISum,
           utils::mpi::MPICommWorld);
@@ -86,6 +92,9 @@ namespace dftefe
           utils::mpi::MPIErrIsSuccessAndMsg(err);
         DFTEFE_AssertWithMsg(mpiIsSuccessAndMsg.first,
                              "MPI Error:" + mpiIsSuccessAndMsg.second);
+
+        utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
+          X0HBXHost.size(), X0HBX.data(), X0HBXHost.data());
 
         blasLapack::gemm<ValueType, ValueType, memorySpace>(
           'N',
@@ -822,14 +831,14 @@ namespace dftefe
       // allocate memory for overlap matrix
       utils::MemoryStorage<ValueType, memorySpace> S(
         numVec * numVec, utils::Types<ValueType>::zero);
-      utils::MemoryStorage<ValueType, memorySpace> eigenVectorsS(
+      utils::MemoryStorage<ValueType, utils::MemorySpace::HOST> eigenVectorsS(
         numVec * numVec, utils::Types<ValueType>::zero);
       utils::MemoryStorage<ValueType, memorySpace> scratch(
         numVec * numVec, utils::Types<ValueType>::zero);
       utils::MemoryStorage<RealType, memorySpace> sqrtInvShiftedEigenValMatrix(
         numVec * numVec, utils::Types<RealType>::zero);
       utils::MemoryStorage<ValueType, utils::MemorySpace::HOST> Shost(S.size());
-      utils::MemoryStorage<RealType, memorySpace> eigenValuesSmemory(numVec);
+      utils::MemoryStorage<RealType, utils::MemorySpace::HOST> eigenValuesSHost(numVec);
       std::vector<RealType> sqrtInvShiftedEigenValMatrixSTL(numVec * numVec);
       std::vector<RealType> eigenValuesS(numVec);
       p.registerEnd("MemoryStorage Initialization");
@@ -884,10 +893,15 @@ namespace dftefe
                 numVec,
                 linAlgOpContext);
 
-              int mpierr = utils::mpi::MPIAllreduce<memorySpace>(
+              utils::MemoryTransfer<utils::MemorySpace::HOST,
+                                    memorySpace>::copy(S.size(),
+                                                       Shost.data(),
+                                                       S.data());
+
+              int mpierr = utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
                 utils::mpi::MPIInPlace,
-                S.data(),
-                S.size(),
+                Shost.data(),
+                Shost.size(),
                 utils::mpi::Types<ValueType>::getMPIDatatype(),
                 utils::mpi::MPISum,
                 comm);
@@ -896,11 +910,6 @@ namespace dftefe
                 utils::mpi::MPIErrIsSuccessAndMsg(mpierr);
               DFTEFE_AssertWithMsg(mpiIsSuccessAndMsg.first,
                                    "MPI Error:" + mpiIsSuccessAndMsg.second);
-
-              utils::MemoryTransfer<utils::MemorySpace::HOST,
-                                    memorySpace>::copy(S.size(),
-                                                       Shost.data(),
-                                                       S.data());
 
               p.registerEnd("Compute X^T M X");
 
@@ -929,19 +938,17 @@ namespace dftefe
                   break;
                 }
 
-              eigenVectorsS = S;
-
               p.registerStart("Minimum EigenValue Check");
               /* do a eigendecomposition and get min eigenvalue and get shift*/
 
-              lapackReturn = blasLapack::heevd<ValueType, memorySpace>(
+              lapackReturn = blasLapack::heevd<ValueType, utils::MemorySpace::HOST>(
                 'V',
                 'L',
                 numVec,
-                eigenVectorsS.data(),
+                Shost.data(),
                 numVec,
-                eigenValuesSmemory.data(),
-                linAlgOpContext);
+                eigenValuesSHost.data(),
+                *LinAlgOpContextDefaults::LINALG_OP_CONTXT_HOST);
 
               if (!lapackReturn.isSuccess)
                 {
@@ -952,12 +959,7 @@ namespace dftefe
                   break;
                 }
 
-              utils::MemoryTransfer<utils::MemorySpace::HOST, memorySpace>::
-                copy(eigenValuesSmemory.size(),
-                     eigenValuesS.data(),
-                     eigenValuesSmemory.data());
-
-              eigenValueMin = eigenValuesS[0];
+              eigenValueMin = eigenValuesSHost[0];
 
               RealType shift = (RealType)0;
               if (eigenValueMin > shiftTolerance)
@@ -969,12 +971,17 @@ namespace dftefe
 
               for (size_type i = 0; i < numVec; i++)
                 sqrtInvShiftedEigenValMatrixSTL[i * numVec + i] =
-                  (RealType)(1.0 / std::sqrt(eigenValuesS[i] + shift));
+                  (RealType)(1.0 / std::sqrt(eigenValuesSHost[i] + shift));
 
               utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::
                 copy(sqrtInvShiftedEigenValMatrixSTL.size(),
                      sqrtInvShiftedEigenValMatrix.data(),
                      sqrtInvShiftedEigenValMatrixSTL.data());
+
+              utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::
+                copy(Shost.size(),
+                     eigenVectorsS.data(),
+                     Shost.data());
 
               p.registerEnd("Minimum EigenValue Check");
 
@@ -1205,8 +1212,8 @@ namespace dftefe
 
           utils::MemoryStorage<ValueType, memorySpace> SBlock(
             numVec * d_eigenVecBatchSize, ValueType(0));
-          // utils::MemoryStorage<ValueType, utils::MemorySpace::HOST>
-          // SBlockHost(numVec * d_eigenVecBatchSize);
+          utils::MemoryStorage<ValueType, utils::MemorySpace::HOST> SBlockHost(
+            numVec * d_eigenVecBatchSize, ValueType(0));
 
           for (size_type eigVecStartId = 0; eigVecStartId < numVec;
                eigVecStartId += d_eigenVecBatchSize)
@@ -1294,17 +1301,19 @@ namespace dftefe
                 numVec - eigVecStartId,
                 linAlgOpContext);
 
-              // utils::MemoryTransfer<utils::MemorySpace::HOST,
-              // memorySpace>::copy(
-              //   SBlock.size(), SBlockHost.data(), SBlock.data());
+              utils::MemoryTransfer<utils::MemorySpace::HOST, memorySpace>::copy(
+                SBlock.size(), SBlockHost.data(), SBlock.data());
 
-              int mpierr = utils::mpi::MPIAllreduce<memorySpace>(
+              int mpierr = utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
                 utils::mpi::MPIInPlace,
-                SBlock /*Host*/.data(),
+                SBlockHost.data(),
                 (numVec - eigVecStartId) * numEigVecInBatch,
                 utils::mpi::Types<ValueType>::getMPIDatatype(),
                 utils::mpi::MPISum,
                 comm);
+
+              utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
+                SBlockHost.size(), SBlock.data(), SBlockHost.data());
 
               std::pair<bool, std::string> mpiIsSuccessAndMsg =
                 utils::mpi::MPIErrIsSuccessAndMsg(mpierr);
@@ -1365,10 +1374,13 @@ namespace dftefe
 
           // MPI_AllReduce to get the S from all procs
 
-          int mpierr = utils::mpi::MPIAllreduce<memorySpace>(
+          utils::MemoryTransfer<utils::MemorySpace::HOST, memorySpace>::copy(
+            S.size(), Shost.data(), S.data());
+
+          int mpierr = utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
             utils::mpi::MPIInPlace,
-            S.data(),
-            S.size(),
+            Shost.data(),
+            Shost.size(),
             utils::mpi::Types<ValueType>::getMPIDatatype(),
             utils::mpi::MPISum,
             X.getMPIPatternP2P()->mpiCommunicator());
@@ -1377,9 +1389,6 @@ namespace dftefe
             utils::mpi::MPIErrIsSuccessAndMsg(mpierr);
           DFTEFE_AssertWithMsg(mpiIsSuccessAndMsg.first,
                                "MPI Error:" + mpiIsSuccessAndMsg.second);
-
-          utils::MemoryTransfer<utils::MemorySpace::HOST, memorySpace>::copy(
-            S.size(), Shost.data(), S.data());
 
           for (size_type i = 0; i < numVec; i++) // column
             {

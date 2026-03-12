@@ -36,6 +36,7 @@ namespace dftefe
     typedef int           deviceError_t;
     typedef int           deviceStream_t;
     typedef int           deviceEvent_t;
+    typedef int      deviceBlasStatus_t;
     static deviceStream_t defaultStream = 0;
   } // namespace utils
 } // namespace dftefe

@@ -786,13 +786,22 @@ namespace dftefe
       DFTEFE_AssertWithMsg(
         u.getNumberComponents() == a.size() && a.size() == b.size(),
         "The coefficients are not comptible with the vector local size");
+
+      utils::MemoryStorage<blasLapack::scalar_type<ValueType1, ValueType2>,
+                           memorySpace> aMemSpace(a.size()) , bMemSpace(b.size());
+
+      utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
+        a.size(), aMemSpace.data(), a.data());
+      utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
+        b.size(), bMemSpace.data(), b.data());
+
       blasLapack::axpbyBlocked(u.localSize(),
                                nv,
                                1,
-                               a.data(),
+                               aMemSpace.data(),
                                u.data(),
                                1,
-                               b.data(),
+                               bMemSpace.data(),
                                v.data(),
                                w.data(),
                                *(w.getLinAlgOpContext()));
@@ -808,6 +817,8 @@ namespace dftefe
         const blasLapack::ScalarOp &opU /*= blasLapack::ScalarOp::Identity*/,
         const blasLapack::ScalarOp &opV /*= blasLapack::ScalarOp::Identity*/)
     {
+      utils::throwException(false,
+                            "Use dot prod in multivector with precaution of All Reduce in memorySpace.");
       DFTEFE_AssertWithMsg(
         u.isCompatible(v),
         "u and v MultiVectors used for dot product are not compatible.");
@@ -851,14 +862,42 @@ namespace dftefe
         const blasLapack::ScalarOp &opU /*= blasLapack::ScalarOp::Identity*/,
         const blasLapack::ScalarOp &opV /*= blasLapack::ScalarOp::Identity*/)
     {
+      DFTEFE_AssertWithMsg(
+        u.isCompatible(v),
+        "u and v MultiVectors used for dot product are not compatible.");
+
       const size_type nv = u.numVectors();
       utils::MemoryStorage<blasLapack::scalar_type<ValueType1, ValueType2>,
                            memorySpace>
         dotProdsInMemorySpace(nv, 0.0);
-      dot(u, v, dotProdsInMemorySpace.data(), opU, opV);
+
+      //
+      // @note: The following assumes that the MultiVector has the vector
+      // index as the fastest index (i.e., that if viewed as a Matrix,
+      // the MultiVector is stored in a row-major format)
+      //
+      blasLapack::dotMultiVector(u.locallyOwnedSize(),
+                                 nv,
+                                 u.data(),
+                                 v.data(),
+                                 opU,
+                                 opV,
+                                 dotProdsInMemorySpace.data(),
+                                 *(u.getLinAlgOpContext()));
+
       dotProds.resize(nv, (blasLapack::scalar_type<ValueType1, ValueType2>)0.0);
       utils::MemoryTransfer<utils::MemorySpace::HOST, memorySpace>::copy(
         nv, dotProds.data(), dotProdsInMemorySpace.data());
+
+      utils::mpi::MPIDatatype mpiDatatype = utils::mpi::Types<
+        blasLapack::scalar_type<ValueType1, ValueType2>>::getMPIDatatype();
+      utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
+        utils::mpi::MPIInPlace,
+        dotProds.data(),
+        nv,
+        mpiDatatype,
+        utils::mpi::MPISum,
+        (u.getMPIPatternP2P())->mpiCommunicator());
     }
   } // end of namespace linearAlgebra
 } // namespace dftefe

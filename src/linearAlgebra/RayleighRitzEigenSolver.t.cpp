@@ -235,55 +235,59 @@ namespace dftefe
           LapackError                                  lapackReturn;
           utils::MemoryStorage<ValueType, memorySpace> XprojectedA(
             numVec * numVec, utils::Types<ValueType>::zero);
-          utils::MemoryStorage<ValueType, memorySpace> eigenVectorsXSubspace(
+          utils::MemoryStorage<ValueType, utils::MemorySpace::HOST> XprojectedAHost(
             numVec * numVec, utils::Types<ValueType>::zero);
-          utils::MemoryStorage<RealType, memorySpace> eigenValuesMemSpace(
-            numVec);
+          utils::MemoryStorage<ValueType, utils::MemorySpace::HOST> eigenVectorsXSubspace(
+            numVec * numVec, utils::Types<ValueType>::zero);
+          eigenValues.resize(numVec);
 
           computeXTransOpX(X, XprojectedA, A);
 
           // Solve the standard eigenvalue problem
 
-          lapackReturn = blasLapack::heevd<ValueType, memorySpace>(
+          utils::MemoryTransfer<utils::MemorySpace::HOST, memorySpace>::copy(
+                XprojectedA.size(), eigenVectorsXSubspace.data(), XprojectedA.data());
+
+          lapackReturn = blasLapack::heevd<ValueType, utils::MemorySpace::HOST>(
             computeEigenVectors ? 'V' : 'N',
             'L',
             numVec,
-            XprojectedA.data(),
-            numVec,
-            eigenValuesMemSpace.data(),
-            *X.getLinAlgOpContext());
-
-          eigenValuesMemSpace.template copyTo<utils::MemorySpace::HOST>(
-            eigenValues.data(), numVec, 0, 0);
-
-          if (computeEigenVectors)
-            eigenVectorsXSubspace = XprojectedA;
-
-          int mpierr = utils::mpi::MPIAllreduce<memorySpace>(
-            utils::mpi::MPIInPlace,
-            eigenVectorsXSubspace.data(),
-            eigenVectorsXSubspace.size(),
-            utils::mpi::Types<ValueType>::getMPIDatatype(),
-            utils::mpi::MPISum,
-            X.getMPIPatternP2P()->mpiCommunicator());
-
-          blasLapack::gemm<ValueType, ValueType, memorySpace>(
-            'T',
-            'N',
-            numVec,
-            vecSize,
-            numVec,
-            (ValueType)1,
             eigenVectorsXSubspace.data(),
             numVec,
-            X.data(),
-            numVec,
-            (ValueType)0,
-            eigenVectors.data(),
-            numVec,
-            *X.getLinAlgOpContext());
+            eigenValues.data(),
+            *LinAlgOpContextDefaults::LINALG_OP_CONTXT_HOST);
 
-          X = eigenVectors;
+          if(computeEigenVectors)
+          {
+            int mpierr = utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
+              utils::mpi::MPIInPlace,
+              eigenVectorsXSubspace.data(),
+              eigenVectorsXSubspace.size(),
+              utils::mpi::Types<ValueType>::getMPIDatatype(),
+              utils::mpi::MPISum,
+              X.getMPIPatternP2P()->mpiCommunicator());
+
+            utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
+                  XprojectedA.size(), XprojectedA.data(), eigenVectorsXSubspace.data());
+
+            blasLapack::gemm<ValueType, ValueType, memorySpace>(
+              'T',
+              'N',
+              numVec,
+              vecSize,
+              numVec,
+              (ValueType)1,
+              XprojectedA.data(),
+              numVec,
+              X.data(),
+              numVec,
+              (ValueType)0,
+              eigenVectors.data(),
+              numVec,
+              *X.getLinAlgOpContext());
+
+            X = eigenVectors;
+          }
 
           if (lapackReturn.err == LapackErrorCode::FAILED_STANDARD_EIGENPROBLEM)
             {
@@ -594,8 +598,8 @@ namespace dftefe
 
           utils::MemoryStorage<ValueType, memorySpace> SBlock(
             numVec * d_eigenVecBatchSize, ValueType(0));
-          // utils::MemoryStorage<ValueType, utils::MemorySpace::HOST>
-          // SBlockHost(numVec * d_eigenVecBatchSize);
+          utils::MemoryStorage<ValueType, utils::MemorySpace::HOST>
+          SBlockHost(numVec * d_eigenVecBatchSize);
 
           for (size_type eigVecStartId = 0; eigVecStartId < numVec;
                eigVecStartId += d_eigenVecBatchSize)
@@ -683,13 +687,13 @@ namespace dftefe
                 numVec - eigVecStartId,
                 linAlgOpContext);
 
-              // utils::MemoryTransfer<utils::MemorySpace::HOST,
-              // memorySpace>::copy(
-              //   SBlock.size(), SBlockHost.data(), SBlock.data());
+              utils::MemoryTransfer<utils::MemorySpace::HOST,
+              memorySpace>::copy(
+                SBlock.size(), SBlockHost.data(), SBlock.data());
 
-              int mpierr = utils::mpi::MPIAllreduce<memorySpace>(
+              int mpierr = utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
                 utils::mpi::MPIInPlace,
-                SBlock /*Host*/.data(),
+                SBlockHost.data(),
                 (numVec - eigVecStartId) * numEigVecInBatch,
                 utils::mpi::Types<ValueType>::getMPIDatatype(),
                 utils::mpi::MPISum,
@@ -699,6 +703,9 @@ namespace dftefe
                 utils::mpi::MPIErrIsSuccessAndMsg(mpierr);
               DFTEFE_AssertWithMsg(mpiIsSuccessAndMsg.first,
                                    "MPI Error:" + mpiIsSuccessAndMsg.second);
+
+              utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
+                SBlock.size(), SBlock.data(), SBlockHost.data());
 
               // Copying only the lower triangular part to projected matrix
               for (size_type iSize = 0; iSize < numEigVecInBatch; iSize++)
@@ -722,6 +729,8 @@ namespace dftefe
           size_type vecSize = X.locallyOwnedSize();
 
           utils::MemoryStorage<ValueType, memorySpace> XprojectedA(
+            numVec * numVec, utils::Types<ValueType>::zero);
+          utils::MemoryStorage<ValueType, utils::MemorySpace::HOST> XprojectedAHost(
             numVec * numVec, utils::Types<ValueType>::zero);
           MultiVector<ValueType, memorySpace> scratch(X, (ValueType)0);
 
@@ -748,7 +757,11 @@ namespace dftefe
 
           // MPI_AllReduce to get the XprojectedA from all procs
 
-          int mpierr = utils::mpi::MPIAllreduce<memorySpace>(
+          utils::MemoryTransfer<utils::MemorySpace::HOST,
+          memorySpace>::copy(
+            XprojectedA.size(), XprojectedAHost.data(), XprojectedA.data());
+
+          int mpierr = utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
             utils::mpi::MPIInPlace,
             XprojectedA.data(),
             XprojectedA.size(),
@@ -760,6 +773,9 @@ namespace dftefe
             utils::mpi::MPIErrIsSuccessAndMsg(mpierr);
           DFTEFE_AssertWithMsg(mpiIsSuccessAndMsg.first,
                                "MPI Error:" + mpiIsSuccessAndMsg.second);
+
+          utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
+            XprojectedAHost.size(), XprojectedA.data(), XprojectedAHost.data());                               
         }
     }
     // // ------------- DEBUG ------------------- // //

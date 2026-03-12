@@ -26,8 +26,10 @@
 #include "DeviceAPICalls.h"
 #include <algorithm>
 #include <bitset>
+#include <utils/Exceptions.h>
 #include <climits>
 #include <cstring>
+#include <climits>
 
 
 namespace dftefe
@@ -39,6 +41,11 @@ namespace dftefe
     MemoryManager<ValueType, MemorySpace::HOST>::allocate(size_type   size,
                                                           ValueType **ptr)
     {
+      if (size > std::numeric_limits<size_type>::max())
+      {
+        utils::throwException(false,
+                              "Size to be allocated more than the unsigned int.");
+      }
       if (size > 0)
         *ptr = new ValueType[size];
       else
@@ -79,6 +86,11 @@ namespace dftefe
       size_type   size,
       ValueType **ptr)
     {
+      if (size > std::numeric_limits<size_type>::max())
+      {
+        utils::throwException(false,
+                              "Size to be allocated more than the unsigned int.");
+      }
       if (size > 0)
         hostPinnedMalloc((void **)ptr, size * sizeof(ValueType));
       else
@@ -118,6 +130,11 @@ namespace dftefe
     MemoryManager<ValueType, MemorySpace::DEVICE>::allocate(size_type   size,
                                                             ValueType **ptr)
     {
+      if (size > std::numeric_limits<size_type>::max())
+      {
+        utils::throwException(false,
+                              "Size to be allocated more than the unsigned int.");
+      }
       if (size > 0)
         deviceMalloc((void **)ptr, size * sizeof(ValueType));
       else

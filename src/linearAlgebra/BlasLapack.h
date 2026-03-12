@@ -325,7 +325,41 @@ namespace dftefe
           size_type                     incy,
           LinAlgOpContext<memorySpace> &context);
 
+      /**
+       * @brief Template for computing dot products numVec vectors in a multi Vector
+       * @param[in] vecSize size of each vector
+       * @param[in] numVec number of vectors in the multi Vector
+       * @param[in] srcLeadingDim leading dim of source , src numvecs
+       * @param[in] srcBlockStartId local id of source to start
+       * @param[in] dstLeadingDim leading dim of dst , dst numvecs
+       * @param[in] dstBlockStartId local id of dst to start
+       * @param[in] copyFromVec multi vector to copy from
+       * @param[out] copyToVec multi vector to copy to
+       *
+       */
+     template <typename ValueType1, typename ValueType2,
+               typename dftefe::utils::MemorySpace memorySpace>
+     void
+     stridedBlockCopy(
+          const size_type vecSize,  
+          const size_type numVec, 
+          const size_type srcLeadingDim,
+          const size_type srcBlockStartId,
+          const size_type dstLeadingDim,
+          const size_type dstBlockStartId,
+          const ValueType1 *copyFromVec,
+          ValueType2       *copyToVec,
+          LinAlgOpContext<memorySpace> &       context);  
 
+     template <typename ValueType1, typename ValueType2,
+               typename dftefe::utils::MemorySpace memorySpace>
+     void
+     copyValueType1ArrToValueType2Arr(
+          const size_type size,
+          const ValueType1 *valueType1Arr,
+          ValueType2       *valueType2Arr,
+        LinAlgOpContext<memorySpace> &context);
+          
       /**
        * @brief Template for computing dot products numVec vectors in a multi Vector
        * @param[in] vecSize size of each vector

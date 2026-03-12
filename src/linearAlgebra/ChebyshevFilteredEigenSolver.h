@@ -158,6 +158,11 @@ namespace dftefe
       std::shared_ptr<MultiVector<ValueType, memorySpace>> d_XinBatchSmall,
         d_XinBatch, d_XoutBatchSmall, d_XoutBatch;
 
+      std::shared_ptr<MultiVector<ValueType, memorySpace>> d_chfsiScratch1,
+        d_chfsiScratch2, d_chfsiResidualScratch1, d_chfsiResidualScratch2;
+      std::shared_ptr<MultiVector<ValueType, memorySpace>> d_chfsiScratch1Small,
+        d_chfsiScratch2Small, d_chfsiResidualScratch1Small, d_chfsiResidualScratch2Small;
+
       std::shared_ptr<
         RayleighRitzEigenSolver<ValueTypeOperator, ValueType, memorySpace>>
         d_rr;

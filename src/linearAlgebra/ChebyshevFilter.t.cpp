@@ -48,7 +48,9 @@ namespace dftefe
       const double                                unWantedSpectrumUpperBound,
       MultiVector<blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>,
                   memorySpace>
-        &filteredSubspace) // remove this and put X (in/out)
+        &filteredSubspace,
+      MultiVector<blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>, memorySpace> &scratch1,
+      MultiVector<blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>, memorySpace> &scratch2) // remove this and put X (in/out)
     {
       /* taken from "Lin CC, Gavini V. TTDFT: A GPU accelerated Tucker
        *  tensor DFT code for large-scale Kohn-Sham DFT calculations. Computer
@@ -73,10 +75,32 @@ namespace dftefe
 
       // MultiVector<ValueType, memorySpace> filteredSubspaceNew(
       //   eigenSubspaceGuess, (ValueType)0);
-      MultiVector<ValueType, memorySpace> scratch1(eigenSubspaceGuess,
-                                                   (ValueType)0);
-      MultiVector<ValueType, memorySpace> scratch2(eigenSubspaceGuess,
-                                                   (ValueType)0);
+      // MultiVector<ValueType, memorySpace> scratch1(eigenSubspaceGuess,
+      //                                              (ValueType)0);
+      // MultiVector<ValueType, memorySpace> scratch2(eigenSubspaceGuess,
+      //                                              (ValueType)0);
+
+      // /* -------------- Time HX ---------------------- */                                          
+      // double total_grouped_ms = 0.0;
+      // A.apply(eigenSubspaceGuess, scratch1, true, true);
+      // for (int iter = 0; iter < 10; ++iter)
+      // {
+      //     auto start = std::chrono::high_resolution_clock::now();
+
+      //     A.apply(eigenSubspaceGuess, scratch1, true, true);
+
+      //     if constexpr (memorySpace == utils::MemorySpace::DEVICE)
+      //         utils::deviceSynchronize();
+
+      //     auto end = std::chrono::high_resolution_clock::now();
+
+      //     total_grouped_ms +=
+      //         std::chrono::duration<double, std::milli>(end - start).count();
+      // }
+
+      // std::cout << "\ntime for HX: " << total_grouped_ms/10 << std::endl << std::flush;
+      // std::exit(1);
+      // /* -------------- Time HX ---------------------- */ 
 
       // Compute B^-1AX
       A.apply(eigenSubspaceGuess, scratch1, true, false);
@@ -255,7 +279,11 @@ namespace dftefe
       const double                                wantedSpectrumUpperBound,
       const double                                unWantedSpectrumUpperBound,
       MultiVector<blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>,
-                  memorySpace> &                  Y)
+                  memorySpace> &                  Y,
+      MultiVector<blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>, memorySpace> &scratch1,
+      MultiVector<blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>, memorySpace> &scratch2,
+      MultiVector<blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>, memorySpace> &Residual,
+      MultiVector<blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>, memorySpace> &ResidualNew)
     {
       using ValueType =
         blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>;
@@ -273,12 +301,11 @@ namespace dftefe
       double       sigma2;
 
       //============scratch spaces================
-      MultiVector<ValueType, memorySpace> scratch1(X, (ValueType)0);
-      MultiVector<ValueType, memorySpace> scratch2(X, (ValueType)0);
-      MultiVector<ValueType, memorySpace> scratch3(X, (ValueType)0);
+      // MultiVector<ValueType, memorySpace> scratch1(X, (ValueType)0);
+      // MultiVector<ValueType, memorySpace> scratch2(X, (ValueType)0);
 
-      MultiVector<ValueType, memorySpace> Residual(X, (ValueType)0);
-      MultiVector<ValueType, memorySpace> ResidualNew(X, (ValueType)0);
+      // MultiVector<ValueType, memorySpace> Residual(X, (ValueType)0);
+      // MultiVector<ValueType, memorySpace> ResidualNew(X, (ValueType)0);
       //============scratch spaces================
 
       utils::MemoryStorage<RealType, memorySpace> eigenValuesFiltered(
@@ -295,21 +322,22 @@ namespace dftefe
       double alpha1 = sigma1 / e, alpha2 = -c;
 
       B.apply(X, Y, true, false);
-      A.apply(X, scratch3, true, false);
+      A.apply(X, scratch1, true, false);
       linearAlgebra::blasLapack::
         axpbyBlocked<ValueType, ValueType, memorySpace>(
           X.locallyOwnedSize(),
           X.getNumberComponents(),
           1,
           ones.data(),
-          scratch3.data(),
+          scratch1.data(),
           -1,
           eigenValuesFiltered.data(),
           Y.data(),
           Y.data(),
           linAlgOpContext); // Y = AX - \lambda BX
 
-      ResidualNew = Y;
+      blasLapack::copyValueType1ArrToValueType2Arr(
+        X.locallyOwnedSize() * X.numVectors(), Y.data(), ResidualNew.data(), linAlgOpContext);
 
       Residual.setValue(0.0);
 
