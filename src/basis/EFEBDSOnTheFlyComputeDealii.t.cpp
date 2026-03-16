@@ -1274,16 +1274,35 @@ namespace dftefe
               d_tmpGradientBlock = std::make_shared<Storage>(
                 d_classialDofsInCell * nQuadPointsInCell[0] * dim *
                 d_maxCellBlock);
-              size_type gradientParaCellSize =
-                d_basisGradientParaCellClassQuadStorage->size();
-              for (size_type iCell = 0; iCell < d_maxCellBlock; ++iCell)
-                {
-                  d_tmpGradientBlock->template copyFrom<memorySpace>(
-                    d_basisGradientParaCellClassQuadStorage->data(),
-                    gradientParaCellSize,
-                    0,
-                    gradientParaCellSize * iCell);
-                }
+              // size_type gradientParaCellSize =
+              //   d_basisGradientParaCellClassQuadStorage->size();
+              // for (size_type iCell = 0; iCell < d_maxCellBlock; ++iCell)
+              //   {
+              //     d_tmpGradientBlock->template copyFrom<memorySpace>(
+              //       d_basisGradientParaCellClassQuadStorage->data(),
+              //       gradientParaCellSize,
+              //       0,
+              //       gradientParaCellSize * iCell);
+              //   }
+
+           size_type cumulativeOffset = 0;
+            for (size_type iCell = 0; iCell < d_maxCellBlock; ++iCell)
+              {
+                const size_type nQuad = nQuadPointsInCell[0];
+                const size_type nDofs  = d_classialDofsInCell;
+                linearAlgebra::blasLapack::stridedBlockCopy(
+                    nQuad * dim,               // vecSize: number of quadrature points (slowest)
+                    d_classialDofsInCell,          // numVec: number of classical DOFs (fastest)
+                    d_classialDofsInCell,          // srcLeadingDim
+                    0,                   // srcBlockStartId
+                    d_classialDofsInCell,               // dstLeadingDim
+                    0,                   // dstBlockStartId
+                    d_basisGradientParaCellClassQuadStorage->data(), // src
+                    d_tmpGradientBlock->data() + cumulativeOffset,   // dst
+                    d_linAlgOpContext);
+
+                cumulativeOffset += nDofs * nQuad * dim;
+              }
             }
           d_basisGradientEnrichQuadStorage =
             std::move(basisGradientEnrichQuadStorage);
@@ -1539,16 +1558,35 @@ namespace dftefe
               d_tmpGradientBlock = std::make_shared<Storage>(
                 d_classialDofsInCell * nQuadPointsInCell[0] * dim *
                 d_maxCellBlock);
-              size_type gradientParaCellSize =
-                d_basisGradientParaCellClassQuadStorage->size();
-              for (size_type iCell = 0; iCell < d_maxCellBlock; ++iCell)
-                {
-                  d_tmpGradientBlock->template copyFrom<memorySpace>(
-                    d_basisGradientParaCellClassQuadStorage->data(),
-                    gradientParaCellSize,
-                    0,
-                    gradientParaCellSize * iCell);
-                }
+              // size_type gradientParaCellSize =
+              //   d_basisGradientParaCellClassQuadStorage->size();
+              // for (size_type iCell = 0; iCell < d_maxCellBlock; ++iCell)
+              //   {
+              //     d_tmpGradientBlock->template copyFrom<memorySpace>(
+              //       d_basisGradientParaCellClassQuadStorage->data(),
+              //       gradientParaCellSize,
+              //       0,
+              //       gradientParaCellSize * iCell);
+              //   }
+
+           size_type cumulativeOffset = 0;
+            for (size_type iCell = 0; iCell < d_maxCellBlock; ++iCell)
+            {
+                const size_type nQuad = nQuadPointsInCell[0];
+                const size_type nDofs  = d_classialDofsInCell;
+                linearAlgebra::blasLapack::stridedBlockCopy(
+                    nQuad * dim,               // vecSize: number of quadrature points (slowest)
+                    d_classialDofsInCell,          // numVec: number of classical DOFs (fastest)
+                    d_classialDofsInCell,          // srcLeadingDim
+                    0,                   // srcBlockStartId
+                    d_classialDofsInCell,               // dstLeadingDim
+                    0,                   // dstBlockStartId
+                    d_basisGradientParaCellClassQuadStorage->data(), // src
+                    d_tmpGradientBlock->data() + cumulativeOffset,   // dst
+                    d_linAlgOpContext);
+
+                cumulativeOffset += nDofs * nQuad * dim;
+              }
             }
           d_basisGradientEnrichQuadStorage =
             std::move(basisGradientEnrichQuadStorage);
@@ -1779,6 +1817,42 @@ namespace dftefe
           ->second,
         "Basis values are not evaluated for the given QuadratureRuleAttributes");
 
+      // size_type cumulativeOffsetEnrichQuad = 0;
+      // for (size_type cellId = 0; cellId < cellRange.first; cellId++)
+      //   {
+      //     cumulativeOffsetEnrichQuad +=
+      //       (d_dofsInCell[cellId] - d_classialDofsInCell) *
+      //       d_nQuadPointsIncell[cellId];
+      //   }
+      // size_type cumulativeOffset = 0;
+      // for (size_type cellId = cellRange.first; cellId < cellRange.second;
+      //      cellId++)
+      //   {
+      //     for (size_type quadId = 0; quadId < d_nQuadPointsIncell[cellId];
+      //          quadId++)
+      //       {
+      //         basisData.template copyFrom<memorySpace>(
+      //           d_basisParaCellClassQuadStorage->data(),
+      //           d_classialDofsInCell,
+      //           d_classialDofsInCell * quadId,
+      //           cumulativeOffset + d_dofsInCell[cellId] * quadId);
+
+      //         if (d_dofsInCell[cellId] - d_classialDofsInCell > 0)
+      //           basisData.template copyFrom<memorySpace>(
+      //             d_basisEnrichQuadStorage->data(),
+      //             d_dofsInCell[cellId] - d_classialDofsInCell,
+      //             cumulativeOffsetEnrichQuad +
+      //               (d_dofsInCell[cellId] - d_classialDofsInCell) * quadId,
+      //             cumulativeOffset + d_dofsInCell[cellId] * quadId +
+      //               d_classialDofsInCell);
+      //       }
+      //     cumulativeOffset +=
+      //       d_dofsInCell[cellId] * d_nQuadPointsIncell[cellId];
+      //     cumulativeOffsetEnrichQuad +=
+      //       (d_dofsInCell[cellId] - d_classialDofsInCell) *
+      //       d_nQuadPointsIncell[cellId];
+      //   }
+
       size_type cumulativeOffsetEnrichQuad = 0;
       for (size_type cellId = 0; cellId < cellRange.first; cellId++)
         {
@@ -1786,33 +1860,40 @@ namespace dftefe
             (d_dofsInCell[cellId] - d_classialDofsInCell) *
             d_nQuadPointsIncell[cellId];
         }
-      size_type cumulativeOffset = 0;
-      for (size_type cellId = cellRange.first; cellId < cellRange.second;
-           cellId++)
+        size_type cumulativeOffset = 0;
+        for (size_type cellId = cellRange.first; cellId < cellRange.second; cellId++)
         {
-          for (size_type quadId = 0; quadId < d_nQuadPointsIncell[cellId];
-               quadId++)
-            {
-              basisData.template copyFrom<memorySpace>(
-                d_basisParaCellClassQuadStorage->data(),
-                d_classialDofsInCell,
-                d_classialDofsInCell * quadId,
-                cumulativeOffset + d_dofsInCell[cellId] * quadId);
+            const size_type nQuad = d_nQuadPointsIncell[cellId];
+            const size_type nDofs  = d_dofsInCell[cellId];
+            const size_type nEnriched = nDofs - d_classialDofsInCell;
 
-              if (d_dofsInCell[cellId] - d_classialDofsInCell > 0)
-                basisData.template copyFrom<memorySpace>(
-                  d_basisEnrichQuadStorage->data(),
-                  d_dofsInCell[cellId] - d_classialDofsInCell,
-                  cumulativeOffsetEnrichQuad +
-                    (d_dofsInCell[cellId] - d_classialDofsInCell) * quadId,
-                  cumulativeOffset + d_dofsInCell[cellId] * quadId +
-                    d_classialDofsInCell);
+            linearAlgebra::blasLapack::stridedBlockCopy(
+                nQuad,               // vecSize: number of quadrature points (slowest)
+                d_classialDofsInCell,          // numVec: number of classical DOFs (fastest)
+                d_classialDofsInCell,          // srcLeadingDim
+                0,                   // srcBlockStartId
+                nDofs,               // dstLeadingDim
+                0,                   // dstBlockStartId
+                d_basisParaCellClassQuadStorage->data(), // src
+                basisData.data() + cumulativeOffset, // dst
+                d_linAlgOpContext);
+
+            if (nEnriched > 0)
+            {
+              linearAlgebra::blasLapack::stridedBlockCopy(
+                  nQuad,               // vecSize: number of quadrature points
+                  nEnriched,           // numVec: number of enriched DOFs
+                  nEnriched,           // srcLeadingDim
+                  0,                   // srcBlockStartId
+                  nDofs,               // dstLeadingDim
+                  d_classialDofsInCell,          // dstBlockStartId
+                  d_basisEnrichQuadStorage->data() + cumulativeOffsetEnrichQuad, // src
+                  basisData.data() + cumulativeOffset,             // dst
+                  d_linAlgOpContext);
             }
-          cumulativeOffset +=
-            d_dofsInCell[cellId] * d_nQuadPointsIncell[cellId];
-          cumulativeOffsetEnrichQuad +=
-            (d_dofsInCell[cellId] - d_classialDofsInCell) *
-            d_nQuadPointsIncell[cellId];
+
+            cumulativeOffset += nDofs * nQuad;
+            cumulativeOffsetEnrichQuad += nEnriched * nQuad;
         }
     }
 
@@ -1881,17 +1962,37 @@ namespace dftefe
           tmpGradientBlock = std::make_shared<Storage>(
             d_dofsInCell[0] * d_nQuadPointsIncell[0] * dim *
             (cellRange.second - cellRange.first));
-          size_type gradientParaCellSize =
-            d_basisGradientParaCellClassQuadStorage->size();
-          for (size_type iCell = 0;
-               iCell < (cellRange.second - cellRange.first);
-               ++iCell)
-            {
-              tmpGradientBlock->template copyFrom<memorySpace>(
-                d_basisGradientParaCellClassQuadStorage->data(),
-                gradientParaCellSize,
-                0,
-                gradientParaCellSize * iCell);
+
+          // size_type gradientParaCellSize =
+          //   d_basisGradientParaCellClassQuadStorage->size();
+          // for (size_type iCell = 0;
+          //      iCell < (cellRange.second - cellRange.first);
+          //      ++iCell)
+          //   {
+          //     tmpGradientBlock->template copyFrom<memorySpace>(
+          //       d_basisGradientParaCellClassQuadStorage->data(),
+          //       gradientParaCellSize,
+          //       0,
+          //       gradientParaCellSize * iCell);
+          //   }
+
+           size_type cumulativeOffset = 0;
+          for (size_type cellId = cellRange.first; cellId < cellRange.second; cellId++)
+          {
+                const size_type nQuad = d_nQuadPointsIncell[cellId];
+                const size_type nDofs  = d_classialDofsInCell;
+                linearAlgebra::blasLapack::stridedBlockCopy(
+                    nQuad * dim,               // vecSize: number of quadrature points (slowest)
+                    d_classialDofsInCell,          // numVec: number of classical DOFs (fastest)
+                    d_classialDofsInCell,          // srcLeadingDim
+                    0,                   // srcBlockStartId
+                    d_classialDofsInCell,               // dstLeadingDim
+                    0,                   // dstBlockStartId
+                    d_basisGradientParaCellClassQuadStorage->data(), // src
+                    tmpGradientBlock->data() + cumulativeOffset,   // dst
+                    d_linAlgOpContext);
+
+                cumulativeOffset += nDofs * nQuad * dim;
             }
         }
       else
@@ -1919,35 +2020,58 @@ namespace dftefe
             (d_dofsInCell[cellId] - d_classialDofsInCell) *
             d_nQuadPointsIncell[cellId] * dim;
         }
+      // size_type cumulativeOffset = 0;
+      // for (size_type cellId = cellRange.first; cellId < cellRange.second;
+      //      cellId++)
+      //   {
+      //     if (d_dofsInCell[cellId] - d_classialDofsInCell > 0)
+      //       {
+      //         for (size_type quadId = 0; quadId < d_nQuadPointsIncell[cellId];
+      //              quadId++)
+      //           {
+      //             for (size_type iDim = 0; iDim < dim; iDim++)
+      //               {
+      //                 basisGradientData.template copyFrom<memorySpace>(
+      //                   d_basisGradientEnrichQuadStorage->data(),
+      //                   (d_dofsInCell[cellId] - d_classialDofsInCell),
+      //                   cumulativeOffsetEnrichQuad +
+      //                     (d_dofsInCell[cellId] - d_classialDofsInCell) * dim *
+      //                       quadId +
+      //                     iDim * (d_dofsInCell[cellId] - d_classialDofsInCell),
+      //                   cumulativeOffset + d_dofsInCell[cellId] * dim * quadId +
+      //                     d_dofsInCell[cellId] * iDim + d_classialDofsInCell);
+      //               }
+      //           }
+      //       }
+      //     cumulativeOffset +=
+      //       d_dofsInCell[cellId] * d_nQuadPointsIncell[cellId] * dim;
+      //     cumulativeOffsetEnrichQuad +=
+      //       (d_dofsInCell[cellId] - d_classialDofsInCell) *
+      //       d_nQuadPointsIncell[cellId] * dim;
+      //   }
+
       size_type cumulativeOffset = 0;
-      for (size_type cellId = cellRange.first; cellId < cellRange.second;
-           cellId++)
+      for (size_type cellId = cellRange.first; cellId < cellRange.second; cellId++)
+      {
+        const size_type nDofs = d_dofsInCell[cellId];
+        const size_type nEnriched = nDofs - d_classialDofsInCell;
+        const size_type nQuad = d_nQuadPointsIncell[cellId];
+        if (nEnriched > 0)
         {
-          if (d_dofsInCell[cellId] - d_classialDofsInCell > 0)
-            {
-              for (size_type quadId = 0; quadId < d_nQuadPointsIncell[cellId];
-                   quadId++)
-                {
-                  for (size_type iDim = 0; iDim < dim; iDim++)
-                    {
-                      basisGradientData.template copyFrom<memorySpace>(
-                        d_basisGradientEnrichQuadStorage->data(),
-                        (d_dofsInCell[cellId] - d_classialDofsInCell),
-                        cumulativeOffsetEnrichQuad +
-                          (d_dofsInCell[cellId] - d_classialDofsInCell) * dim *
-                            quadId +
-                          iDim * (d_dofsInCell[cellId] - d_classialDofsInCell),
-                        cumulativeOffset + d_dofsInCell[cellId] * dim * quadId +
-                          d_dofsInCell[cellId] * iDim + d_classialDofsInCell);
-                    }
-                }
-            }
-          cumulativeOffset +=
-            d_dofsInCell[cellId] * d_nQuadPointsIncell[cellId] * dim;
-          cumulativeOffsetEnrichQuad +=
-            (d_dofsInCell[cellId] - d_classialDofsInCell) *
-            d_nQuadPointsIncell[cellId] * dim;
+          linearAlgebra::blasLapack::stridedBlockCopy(
+              nQuad * dim,          // vecSize: quad * dim (slowest)
+              nEnriched,            // numVec: DOFs (fastest)
+              nEnriched,            // srcLeadingDim: DOFs per quad/dim
+              0,                    // srcBlockStartId
+              nDofs,          // dstLeadingDim: total DOFs * dim
+              d_classialDofsInCell, // dstBlockStartId: after classical DOFs
+              d_basisGradientEnrichQuadStorage->data() + cumulativeOffsetEnrichQuad, // src
+              basisGradientData.data() + cumulativeOffset,   // dst
+              d_linAlgOpContext);
         }
+        cumulativeOffset += nDofs * nQuad * dim;
+        cumulativeOffsetEnrichQuad += nEnriched * nQuad * dim;
+      }
     }
 
     template <typename ValueTypeBasisCoeff,

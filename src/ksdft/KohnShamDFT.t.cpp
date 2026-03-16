@@ -2488,6 +2488,7 @@ namespace dftefe
                 memorySpace,
                 dim>::solve()
     {
+      d_pTotal.reset();
       d_isSolved = true;
 
       if (auto hamiltonian = std::dynamic_pointer_cast<
@@ -2648,6 +2649,9 @@ namespace dftefe
               d_pTotal.registerEnd("Hamiltonian Reinit");
             }
 
+          d_p.registerStart("EigenSolve");
+          d_pTotal.registerStart("EigenSolve");
+
           // reinit the chfsi bounds
           if (scfIter > 0)
             {
@@ -2659,8 +2663,6 @@ namespace dftefe
           if (scfIter == 0 && d_isPSPCalculation)
             d_ksEigSolve->setChebyPolyScalingFactor(1.34);
 
-          d_p.registerStart("EigenSolve");
-          d_pTotal.registerStart("EigenSolve");
           // Linear Eigen Solve
           linearAlgebra::EigenSolverError err =
             d_ksEigSolve->solve(*d_hamitonianOperator,
@@ -2669,13 +2671,14 @@ namespace dftefe
                                 true,
                                 *d_MContext,
                                 *d_MInvContext);
-          d_pTotal.registerEnd("EigenSolve");
-          d_p.registerEnd("EigenSolve");
 
           d_occupation = d_ksEigSolve->getFractionalOccupancy();
 
           std::vector<RealType> eigSolveResNorm =
             d_ksEigSolve->getEigenSolveResidualNorm();
+
+          d_pTotal.registerEnd("EigenSolve");
+          d_p.registerEnd("EigenSolve");            
 
           /*
           ============== DEBUG : Integral \psi and \psi_orthonormalized =
@@ -2797,9 +2800,6 @@ namespace dftefe
           d_densCalc->computeRho(d_occupation,
                                  d_kohnShamWaveFunctions,
                                  d_densityOutQuadValues);
-          d_pTotal.registerEnd("Density Compute");
-          d_p.registerEnd("Density Compute");
-          d_p.print();
 
           RealType totalDensityInQuad =
             KohnShamDFTInternal::normalizeDensityQuadData(
@@ -2813,6 +2813,9 @@ namespace dftefe
               d_rootCout);
 
           d_rootCout << "Electron density out : " << totalDensityInQuad << "\n";
+          d_pTotal.registerEnd("Density Compute");
+          d_p.registerEnd("Density Compute");
+          d_p.print();
 
           // check residual in density if else
           if (d_evaluateEnergyEverySCF)

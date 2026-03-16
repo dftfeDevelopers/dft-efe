@@ -1455,8 +1455,9 @@ namespace dftefe
       size_type maxQuadInCell =
         *std::max_element(numCellQuad.begin(), numCellQuad.end());
 
-      utils::MemoryStorage<ValueTypeUnion, memorySpace> fxJxW(
-        numComponents * maxQuadInCell * cellBlockSize, ValueTypeUnion());
+      StorageBasis JxWxNBlock(maxQuadInCell * cellBlockSize *
+                                    maxDofInCell,
+                                  ValueTypeBasisData());
 
       utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>
         fieldCellValues(cellBlockSize * maxDofInCell * numComponents,
@@ -1530,26 +1531,60 @@ namespace dftefe
             linearAlgebra::blasLapack::ScalarOp::Identity;
           linearAlgebra::blasLapack::ScalarOp scalarOpB =
             linearAlgebra::blasLapack::ScalarOp::Identity;
-          std::vector<size_type> mSize(numCellsInBlock, 0);
-          std::vector<size_type> nSize(numCellsInBlock, 0);
-          std::vector<size_type> kSize(numCellsInBlock, 0);
+          std::vector<size_type> m(numCellsInBlock, 0);
+          std::vector<size_type> n(numCellsInBlock, 0);
+          std::vector<size_type> k(numCellsInBlock, 0);
           std::vector<size_type> stA(numCellsInBlock, 0);
           std::vector<size_type> stB(numCellsInBlock, 0);
           std::vector<size_type> stC(numCellsInBlock, 0);
 
+          // for (size_type iCell = 0; iCell < numCellsInBlock; iCell++)
+          //   {
+          //     mSize[iCell] = 1;
+          //     nSize[iCell] = numComponents;
+          //     kSize[iCell] = numCellsInBlockQuad[iCell];
+          //     stA[iCell]   = mSize[iCell] * kSize[iCell];
+          //     stB[iCell]   = nSize[iCell] * kSize[iCell];
+          //     stC[iCell]   = mSize[iCell] * nSize[iCell] * kSize[iCell];
+          //   }
+
+          // linearAlgebra::blasLapack::scaleStridedVarBatched<ValueTypeBasisData,
+          //                                                   ValueTypeBasisData,
+          //                                                   memorySpace>(
+          //   numCellsInBlock,
+          //   layout,
+          //   scalarOpA,
+          //   scalarOpB,
+          //   stA.data(),
+          //   stB.data(),
+          //   stC.data(),
+          //   mSize.data(),
+          //   nSize.data(),
+          //   kSize.data(),
+          //   jxwStorage.data() +
+          //     quadRuleContainer->getCellQuadStartId(cellStartId),
+          //   f.begin(cellStartId),
+          //   fxJxW.data(),
+          //   linAlgOpContext);
+
+          if (!zeroStrideB || cellStartId == 0)
+            d_feBasisDataStorage->getBasisDataInCellRange(
+              std::make_pair(cellStartId, cellEndId), basisDataInCellRange);
+
           for (size_type iCell = 0; iCell < numCellsInBlock; iCell++)
             {
-              mSize[iCell] = 1;
-              nSize[iCell] = numComponents;
-              kSize[iCell] = numCellsInBlockQuad[iCell];
-              stA[iCell]   = mSize[iCell] * kSize[iCell];
-              stB[iCell]   = nSize[iCell] * kSize[iCell];
-              stC[iCell]   = mSize[iCell] * nSize[iCell] * kSize[iCell];
+              m[iCell]   = 1;
+              n[iCell]   = numCellsInBlockDofs[iCell];
+              k[iCell]   = numCellsInBlockQuad[iCell];
+              stA[iCell] = m[iCell] * k[iCell];
+              stB[iCell] = zeroStrideB ? 0 : n[iCell] * k[iCell];
+              stC[iCell] = m[iCell] * n[iCell] * k[iCell];
             }
 
-          linearAlgebra::blasLapack::scaleStridedVarBatched<ValueTypeBasisData,
-                                                            ValueTypeBasisData,
-                                                            memorySpace>(
+          linearAlgebra::blasLapack::scaleStridedVarBatched<
+            ValueTypeBasisData,
+            ValueTypeBasisData,
+            memorySpace>(
             numCellsInBlock,
             layout,
             scalarOpA,
@@ -1557,13 +1592,13 @@ namespace dftefe
             stA.data(),
             stB.data(),
             stC.data(),
-            mSize.data(),
-            nSize.data(),
-            kSize.data(),
+            m.data(),
+            n.data(),
+            k.data(),
             jxwStorage.data() +
               quadRuleContainer->getCellQuadStartId(cellStartId),
-            f.begin(cellStartId),
-            fxJxW.data(),
+            basisDataInCellRange.data(),
+            JxWxNBlock.data(),
             linAlgOpContext);
 
           // // TransposedKhatriRao product for f and JxW
@@ -1623,18 +1658,13 @@ namespace dftefe
               ldcSizes[iCell]        = mSizes[iCell];
               strideA[iCell]         = mSizes[iCell] * kSizes[iCell];
               strideC[iCell]         = mSizes[iCell] * nSizes[iCell];
-              if (!zeroStrideB)
-                strideB[iCell] = kSizes[iCell] * nSizes[iCell];
+              strideB[iCell] = kSizes[iCell] * nSizes[iCell];
             }
 
           ValueTypeUnion alpha = 1.0;
           ValueTypeUnion beta  = 0.0;
 
-          if (!zeroStrideB || cellStartId == 0)
-            d_feBasisDataStorage->getBasisDataInCellRange(
-              std::make_pair(cellStartId, cellEndId), basisDataInCellRange);
-
-          const ValueTypeBasisData *B = basisDataInCellRange.data();
+          const ValueTypeBasisData *B = JxWxNBlock.data();
           // (d_feBasisDataStorage->getBasisDataInAllCells()).data() +
           // BStartOffset;
 
@@ -1652,7 +1682,7 @@ namespace dftefe
             nSizes.data(),
             kSizes.data(),
             alpha,
-            fxJxW.data(),
+            f.begin(cellStartId),
             ldaSizes.data(),
             B,
             ldbSizes.data(),

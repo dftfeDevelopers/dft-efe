@@ -43,6 +43,15 @@ namespace dftefe
 {
   namespace basis
   {
+    enum class FEBasisOpScratchSpaceAttr
+      {
+        fieldCellValues,
+        basisDataInCellRange,
+        basisGradientDataInCellRange,
+        JxW,
+        JxWxNBlock,
+        JxWxGradNBlock
+      };
     /**
      * An abstract class to handle interactions between a basis and a
      * field (e.g., integration of field with basis).

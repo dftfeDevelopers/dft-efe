@@ -322,7 +322,7 @@ namespace dftefe
       double alpha1 = sigma1 / e, alpha2 = -c;
 
       B.apply(X, Y, true, false);
-      A.apply(X, scratch1, true, false);
+      A.apply(X, scratch1, false, false); // true, false initially
       linearAlgebra::blasLapack::
         axpbyBlocked<ValueType, ValueType, memorySpace>(
           X.locallyOwnedSize(),
@@ -455,7 +455,7 @@ namespace dftefe
           sigma = sigma2;
         }
 
-      BInv.apply(ResidualNew, Residual, true, true);
+      BInv.apply(ResidualNew, Residual, false, false); // Both true initilly
 
       linearAlgebra::blasLapack::
         axpbyBlocked<ValueType, ValueType, memorySpace>(

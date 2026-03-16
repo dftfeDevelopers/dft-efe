@@ -182,7 +182,7 @@ namespace dftefe
 
       d_rhoMemspace->setValue((RealType)0);
 
-      utils::MemoryTransfer<memorySpace, memorySpace> memoryTransfer;
+      // utils::MemoryTransfer<memorySpace, memorySpace> memoryTransfer;
 
       utils::MemoryTransfer<memorySpace, memorySpaceHost> memoryTransferM2H;
       utils::MemoryTransfer<memorySpaceHost, memorySpace> memoryTransferH2M;
@@ -202,9 +202,14 @@ namespace dftefe
 
           utils::MemoryStorage<RealType, memorySpace> occupationInBatch(numPsiInBatch, 0);
 
-          memoryTransfer.copy(numPsiInBatch,
-                    occupationInBatch.begin(),
-                    occMemspace.data() + psiStartId);
+          // memoryTransfer.copy(numPsiInBatch,
+          //           occupationInBatch.begin(),
+          //           occMemspace.data() + psiStartId);
+
+          linearAlgebra::blasLapack::copyValueType1ArrToValueType2Arr(numPsiInBatch,
+            occMemspace.data() + psiStartId,
+            occupationInBatch.begin(),
+            *waveFunc.getLinAlgOpContext());
 
           /*
            * Use scratch space for case where "numPsiInBatch <
@@ -214,12 +219,23 @@ namespace dftefe
 
           if (numPsiInBatch % d_waveFuncBatchSize == 0)
             {
-              for (size_type iSize = 0; iSize < waveFunc.localSize(); iSize++)
-                memoryTransfer.copy(numPsiInBatch,
-                                    d_psiBatch->data() + numPsiInBatch * iSize,
-                                    waveFunc.data() +
-                                      iSize * waveFunc.getNumberComponents() +
-                                      psiStartId);
+              // for (size_type iSize = 0; iSize < waveFunc.localSize(); iSize++)
+              //   memoryTransfer.copy(numPsiInBatch,
+              //                       d_psiBatch->data() + numPsiInBatch * iSize,
+              //                       waveFunc.data() +
+              //                         iSize * waveFunc.getNumberComponents() +
+              //                         psiStartId);
+
+              linearAlgebra::blasLapack::stridedBlockCopy(
+                            waveFunc.localSize(),
+                            numPsiInBatch,
+                            waveFunc.getNumberComponents(),
+                            psiStartId,
+                            numPsiInBatch,
+                            0,
+                            waveFunc.data(),
+                            d_psiBatch->data(),
+                            *waveFunc.getLinAlgOpContext());                                    
 
               d_feBasisOp->reinit(d_cellBlockSize, d_waveFuncBatchSize);
               d_feBasisOp->interpolate(*d_psiBatch,
@@ -244,15 +260,26 @@ namespace dftefe
             }
           else if (numPsiInBatch % d_waveFuncBatchSize == d_batchSizeSmall)
             {
-              for (size_type iSize = 0; iSize < waveFunc.localSize(); iSize++)
-                memoryTransfer.copy(numPsiInBatch,
-                                    d_psiBatchSmall->data() +
-                                      numPsiInBatch * iSize,
-                                    waveFunc.data() +
-                                      iSize * waveFunc.getNumberComponents() +
-                                      psiStartId);
+              // for (size_type iSize = 0; iSize < waveFunc.localSize(); iSize++)
+              //   memoryTransfer.copy(numPsiInBatch,
+              //                       d_psiBatchSmall->data() +
+              //                         numPsiInBatch * iSize,
+              //                       waveFunc.data() +
+              //                         iSize * waveFunc.getNumberComponents() +
+              //                         psiStartId);
 
-              d_feBasisOp->reinit(d_cellBlockSize, d_batchSizeSmall);
+              linearAlgebra::blasLapack::stridedBlockCopy(
+                            waveFunc.localSize(),
+                            numPsiInBatch,
+                            waveFunc.getNumberComponents(),
+                            psiStartId,
+                            numPsiInBatch,
+                            0,
+                            waveFunc.data(),
+                            d_psiBatchSmall->data(),
+                            *waveFunc.getLinAlgOpContext()); 
+
+              //d_feBasisOp->reinit(d_cellBlockSize, d_batchSizeSmall);
               d_feBasisOp->interpolate(*d_psiBatchSmall,
                                        *d_feBMPsi,
                                        *d_psiBatchSmallQuad);
@@ -296,15 +323,26 @@ namespace dftefe
                 d_modPsiSqBatchSmallQuad = quadrature::QuadratureValuesContainer<RealType, memorySpace>(
                     d_quadRuleContainer, numPsiInBatch);
 
-              for (size_type iSize = 0; iSize < waveFunc.localSize(); iSize++)
-                memoryTransfer.copy(numPsiInBatch,
-                                    d_psiBatchSmall->data() +
-                                      numPsiInBatch * iSize,
-                                    waveFunc.data() +
-                                      iSize * waveFunc.getNumberComponents() +
-                                      psiStartId);
+              // for (size_type iSize = 0; iSize < waveFunc.localSize(); iSize++)
+              //   memoryTransfer.copy(numPsiInBatch,
+              //                       d_psiBatchSmall->data() +
+              //                         numPsiInBatch * iSize,
+              //                       waveFunc.data() +
+              //                         iSize * waveFunc.getNumberComponents() +
+              //                         psiStartId);
 
-              d_feBasisOp->reinit(d_cellBlockSize, d_batchSizeSmall);
+              linearAlgebra::blasLapack::stridedBlockCopy(
+                            waveFunc.localSize(),
+                            numPsiInBatch,
+                            waveFunc.getNumberComponents(),
+                            psiStartId,
+                            numPsiInBatch,
+                            0,
+                            waveFunc.data(),
+                            d_psiBatchSmall->data(),
+                            *waveFunc.getLinAlgOpContext());                                       
+
+              //d_feBasisOp->reinit(d_cellBlockSize, d_batchSizeSmall);
               d_feBasisOp->interpolate(*d_psiBatchSmall,
                                        *d_feBMPsi,
                                        *d_psiBatchSmallQuad);

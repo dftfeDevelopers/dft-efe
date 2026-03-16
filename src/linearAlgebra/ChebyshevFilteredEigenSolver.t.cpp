@@ -301,12 +301,16 @@ namespace dftefe
             }
           else if (numEigVecInBatch % d_eigenVecBatchSize == d_batchSizeSmall)
             {
-              for (size_type iSize = 0; iSize < eigenVecLocalSize; iSize++)
-                memoryTransfer.copy(numEigVecInBatch,
-                                    d_XinBatchSmall->data() +
-                                      numEigVecInBatch * iSize,
-                                    eigenVectors.data() +
-                                      iSize * numEigenVectors + eigVecStartId);
+              blasLapack::stridedBlockCopy(
+                            eigenVecLocalSize,
+                            numEigVecInBatch,
+                            numEigenVectors,
+                            eigVecStartId,
+                            numEigVecInBatch,
+                            0,
+                            eigenVectors.data(),
+                            d_XinBatchSmall->data(),
+                            *eigenVectors.getLinAlgOpContext());                                     
 
               subspaceBatchIn  = d_XinBatchSmall;
               subspaceBatchOut = d_XoutBatchSmall;
@@ -362,12 +366,16 @@ namespace dftefe
                 ValueType()); 
               }
 
-              for (size_type iSize = 0; iSize < eigenVecLocalSize; iSize++)
-                memoryTransfer.copy(numEigVecInBatch,
-                                    d_XinBatchSmall->data() +
-                                      numEigVecInBatch * iSize,
-                                    eigenVectors.data() +
-                                      iSize * numEigenVectors + eigVecStartId);
+              blasLapack::stridedBlockCopy(
+                            eigenVecLocalSize,
+                            numEigVecInBatch,
+                            numEigenVectors,
+                            eigVecStartId,
+                            numEigVecInBatch,
+                            0,
+                            eigenVectors.data(),
+                            d_XinBatchSmall->data(),
+                            *eigenVectors.getLinAlgOpContext());                                      
 
               subspaceBatchIn  = d_XinBatchSmall;
               subspaceBatchOut = d_XoutBatchSmall;
@@ -455,7 +463,6 @@ namespace dftefe
         }
 
       d_p.registerEnd("Chebyshev Filter");
-      d_p.print();
       d_pTotal.registerEnd("Chebyshev Filter");
 
       if (!d_isGHEP)

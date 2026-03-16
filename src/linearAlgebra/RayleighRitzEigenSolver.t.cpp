@@ -827,22 +827,38 @@ namespace dftefe
 
           if (numEigVecInBatch % d_eigenVecBatchSize == 0)
             {
-              for (size_type iSize = 0; iSize < vecLocalSize; iSize++)
-                memoryTransfer.copy(numEigVecInBatch,
-                                    d_XinBatch->data() +
-                                      numEigVecInBatch * iSize,
-                                    X.data() + iSize * numVec + eigVecStartId);
+              // for (size_type iSize = 0; iSize < vecLocalSize; iSize++)
+              //   memoryTransfer.copy(numEigVecInBatch,
+              //                       d_XinBatch->data() +
+              //                         numEigVecInBatch * iSize,
+              //                       X.data() + iSize * numVec + eigVecStartId);
+
+              blasLapack::stridedBlockCopy(
+                            vecLocalSize,
+                            numEigVecInBatch,
+                            numVec,
+                            eigVecStartId,
+                            numEigVecInBatch,
+                            0,
+                            X.data(),
+                            d_XinBatch->data(),
+                            *X.getLinAlgOpContext());
 
               subspaceBatchIn  = d_XinBatch;
               subspaceBatchOut = d_XoutBatch;
             }
           else if (numEigVecInBatch % d_eigenVecBatchSize == d_batchSizeSmall)
             {
-              for (size_type iSize = 0; iSize < vecLocalSize; iSize++)
-                memoryTransfer.copy(numEigVecInBatch,
-                                    d_XinBatchSmall->data() +
-                                      numEigVecInBatch * iSize,
-                                    X.data() + iSize * numVec + eigVecStartId);
+              blasLapack::stridedBlockCopy(
+                            vecLocalSize,
+                            numEigVecInBatch,
+                            numVec,
+                            eigVecStartId,
+                            numEigVecInBatch,
+                            0,
+                            X.data(),
+                            d_XinBatchSmall->data(),
+                            *X.getLinAlgOpContext());                                    
 
               subspaceBatchIn  = d_XinBatchSmall;
               subspaceBatchOut = d_XoutBatchSmall;
@@ -865,11 +881,16 @@ namespace dftefe
                   numEigVecInBatch,
                   ValueType());
 
-              for (size_type iSize = 0; iSize < vecLocalSize; iSize++)
-                memoryTransfer.copy(numEigVecInBatch,
-                                    d_XinBatchSmall->data() +
-                                      numEigVecInBatch * iSize,
-                                    X.data() + iSize * numVec + eigVecStartId);
+              blasLapack::stridedBlockCopy(
+                            vecLocalSize,
+                            numEigVecInBatch,
+                            numVec,
+                            eigVecStartId,
+                            numEigVecInBatch,
+                            0,
+                            X.data(),
+                            d_XinBatchSmall->data(),
+                            *X.getLinAlgOpContext());                                         
 
               subspaceBatchIn  = d_XinBatchSmall;
               subspaceBatchOut = d_XoutBatchSmall;
@@ -939,11 +960,22 @@ namespace dftefe
                     }
                 }
 
-          for (size_type iSize = 0; iSize < vecLocalSize; iSize++)
-            memoryTransfer.copy(numEigVecInBatch,
-                                X.data() + iSize * numVec + eigVecStartId,
-                                subspaceBatchIn->data() +
-                                  numEigVecInBatch * iSize);
+          // for (size_type iSize = 0; iSize < vecLocalSize; iSize++)
+          //   memoryTransfer.copy(numEigVecInBatch,
+          //                       X.data() + iSize * numVec + eigVecStartId,
+          //                       subspaceBatchIn->data() +
+          //                         numEigVecInBatch * iSize);
+
+          blasLapack::stridedBlockCopy(
+                        vecLocalSize,
+                        numEigVecInBatch,
+                        numEigVecInBatch,
+                        0,                            
+                        numVec,
+                        eigVecStartId,
+                        subspaceBatchIn->data(),
+                        X.data(),
+                        *X.getLinAlgOpContext());                                  
         }
     }
 

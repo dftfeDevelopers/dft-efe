@@ -331,8 +331,12 @@ namespace dftefe
 
             if (BDof != 0)
               {
-                utils::MemoryTransfer<memorySpace, memorySpace>::copy(
-                  N * BDof, X + idof * N, rotatedVectorsMatBlock.begin());
+                blasLapack::copyValueType1ArrToValueType2Arr(N * BDof,
+                  rotatedVectorsMatBlock.begin(),
+                  X + idof * N,
+                  linAlgOpContext);   
+                // utils::MemoryTransfer<memorySpace, memorySpace>::copy(
+                //   N * BDof, X + idof * N, rotatedVectorsMatBlock.begin());
               }
           } // block loop over dofs
       }

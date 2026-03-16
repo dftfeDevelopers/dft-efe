@@ -661,16 +661,35 @@ namespace dftefe
             {
               d_tmpGradientBlock = std::make_shared<Storage>(
                 d_dofsInCell[0] * nQuadPointsInCell[0] * dim * d_maxCellBlock);
-              size_type gradientParaCellSize =
-                d_basisGradientParaCellQuadStorage->size();
-              for (size_type iCell = 0; iCell < d_maxCellBlock; ++iCell)
-                {
-                  d_tmpGradientBlock->template copyFrom<memorySpace>(
-                    d_basisGradientParaCellQuadStorage->data(),
-                    gradientParaCellSize,
-                    0,
-                    gradientParaCellSize * iCell);
-                }
+              // size_type gradientParaCellSize =
+              //   d_basisGradientParaCellQuadStorage->size();
+              // for (size_type iCell = 0; iCell < d_maxCellBlock; ++iCell)
+              //   {
+              //     d_tmpGradientBlock->template copyFrom<memorySpace>(
+              //       d_basisGradientParaCellQuadStorage->data(),
+              //       gradientParaCellSize,
+              //       0,
+              //       gradientParaCellSize * iCell);
+              //   }
+
+            size_type cumulativeOffset = 0;
+            for (size_type iCell = 0; iCell < d_maxCellBlock; ++iCell)
+              {
+                  const size_type nQuad = nQuadPointsInCell[0];
+                  const size_type nDofs  = d_dofsInCell[0];
+                  linearAlgebra::blasLapack::stridedBlockCopy(
+                      nQuad * dim,               // vecSize: number of quadrature points (slowest)
+                      nDofs,          // numVec: number of classical DOFs (fastest)
+                      nDofs,          // srcLeadingDim
+                      0,                   // srcBlockStartId
+                      nDofs,               // dstLeadingDim
+                      0,                   // dstBlockStartId
+                      d_basisGradientParaCellQuadStorage->data(), // src
+                      d_tmpGradientBlock->data() + cumulativeOffset,   // dst
+                      d_linAlgOpContext);
+
+                  cumulativeOffset += nDofs * nQuad * dim;
+              }
             }
         }
       if (basisStorageAttributesBoolMap
@@ -814,16 +833,35 @@ namespace dftefe
             {
               d_tmpGradientBlock = std::make_shared<Storage>(
                 d_dofsInCell[0] * nQuadPointsInCell[0] * dim * d_maxCellBlock);
-              size_type gradientParaCellSize =
-                d_basisGradientParaCellQuadStorage->size();
-              for (size_type iCell = 0; iCell < d_maxCellBlock; ++iCell)
-                {
-                  d_tmpGradientBlock->template copyFrom<memorySpace>(
-                    d_basisGradientParaCellQuadStorage->data(),
-                    gradientParaCellSize,
-                    0,
-                    gradientParaCellSize * iCell);
-                }
+              // size_type gradientParaCellSize =
+              //   d_basisGradientParaCellQuadStorage->size();
+              // for (size_type iCell = 0; iCell < d_maxCellBlock; ++iCell)
+              //   {
+              //     d_tmpGradientBlock->template copyFrom<memorySpace>(
+              //       d_basisGradientParaCellQuadStorage->data(),
+              //       gradientParaCellSize,
+              //       0,
+              //       gradientParaCellSize * iCell);
+              //   }
+
+            size_type cumulativeOffset = 0;
+            for (size_type iCell = 0; iCell < d_maxCellBlock; ++iCell)
+              {
+                  const size_type nQuad = nQuadPointsInCell[0];
+                  const size_type nDofs  = d_dofsInCell[0];
+                  linearAlgebra::blasLapack::stridedBlockCopy(
+                      nQuad * dim,               // vecSize: number of quadrature points (slowest)
+                      nDofs,          // numVec: number of classical DOFs (fastest)
+                      nDofs,          // srcLeadingDim
+                      0,                   // srcBlockStartId
+                      nDofs,               // dstLeadingDim
+                      0,                   // dstBlockStartId
+                      d_basisGradientParaCellQuadStorage->data(), // src
+                      d_tmpGradientBlock->data() + cumulativeOffset,   // dst
+                      d_linAlgOpContext);
+
+                  cumulativeOffset += nDofs * nQuad * dim;
+              }
             }
         }
 
@@ -1151,17 +1189,23 @@ namespace dftefe
           tmpGradientBlock = std::make_shared<Storage>(
             d_dofsInCell[0] * d_nQuadPointsIncell[0] * dim *
             (cellRange.second - cellRange.first));
-          size_type gradientParaCellSize =
-            d_basisGradientParaCellQuadStorage->size();
-          for (size_type iCell = 0;
-               iCell < (cellRange.second - cellRange.first);
-               ++iCell)
+          size_type cumulativeOffset = 0;
+          for (size_type cellId = cellRange.first; cellId < cellRange.second; cellId++)
             {
-              tmpGradientBlock->template copyFrom<memorySpace>(
-                d_basisGradientParaCellQuadStorage->data(),
-                gradientParaCellSize,
-                0,
-                gradientParaCellSize * iCell);
+                const size_type nQuad = d_nQuadPointsIncell[cellId];
+                const size_type nDofs  = d_dofsInCell[cellId];
+                linearAlgebra::blasLapack::stridedBlockCopy(
+                    nQuad * dim,               // vecSize: number of quadrature points (slowest)
+                    nDofs,          // numVec: number of classical DOFs (fastest)
+                    nDofs,          // srcLeadingDim
+                    0,                   // srcBlockStartId
+                    nDofs,               // dstLeadingDim
+                    0,                   // dstBlockStartId
+                    d_basisGradientParaCellQuadStorage->data(), // src
+                    tmpGradientBlock->data() + cumulativeOffset,   // dst
+                    d_linAlgOpContext);
+
+                cumulativeOffset += nDofs * nQuad * dim;
             }
         }
       else

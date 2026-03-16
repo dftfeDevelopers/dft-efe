@@ -311,7 +311,7 @@ namespace dftefe
                      << d_chebyshevPolynomialDegree << "\n";
 
           d_p.registerStart("Reinit CHFSI");
-          d_pTotal.registerStart("Lanczos Solve");
+          d_pTotal.registerStart("Reinit CHFSI");
           d_chfsi->reinit(d_wantedSpectrumLowerBound,
                           d_wantedSpectrumUpperBound,
                           eigenValuesLanczos[1] + residual,
@@ -319,7 +319,7 @@ namespace dftefe
                           ksdft::LinearEigenSolverDefaults::ILL_COND_TOL,
                           kohnShamWaveFunctions.getMPIPatternP2P(),
                           kohnShamWaveFunctions.getLinAlgOpContext());
-          d_pTotal.registerStart("Lanczos Solve");
+          d_pTotal.registerStart("Reinit CHFSI");
           d_p.registerEnd("Reinit CHFSI");
 
           for (; iPass < d_maxChebyshevFilterPass; iPass++)
@@ -620,12 +620,16 @@ namespace dftefe
 
           if (numEigVecInBatch % d_waveFunctionBatchSize == 0)
             {
-              for (size_type iSize = 0; iSize < eigenVecLocalSize; iSize++)
-                memoryTransfer.copy(numEigVecInBatch,
-                                    d_waveFnBatch->data() +
-                                      numEigVecInBatch * iSize,
-                                    kohnShamWaveFunctions.data() +
-                                      iSize * numEigenVectors + waveFnStartId);
+              linearAlgebra::blasLapack::stridedBlockCopy(
+                            eigenVecLocalSize,
+                            numEigVecInBatch,
+                            numEigenVectors,
+                            waveFnStartId,
+                            numEigVecInBatch,
+                            0,
+                            kohnShamWaveFunctions.data(),
+                            d_waveFnBatch->data(),
+                            *kohnShamWaveFunctions.getLinAlgOpContext());                                         
 
               XBatch  = d_waveFnBatch;
               HXBatch = d_HXBatch;
@@ -634,12 +638,16 @@ namespace dftefe
           else if (numEigVecInBatch % d_waveFunctionBatchSize ==
                    d_batchSizeSmall)
             {
-              for (size_type iSize = 0; iSize < eigenVecLocalSize; iSize++)
-                memoryTransfer.copy(numEigVecInBatch,
-                                    d_waveFnBatchSmall->data() +
-                                      numEigVecInBatch * iSize,
-                                    kohnShamWaveFunctions.data() +
-                                      iSize * numEigenVectors + waveFnStartId);
+              linearAlgebra::blasLapack::stridedBlockCopy(
+                            eigenVecLocalSize,
+                            numEigVecInBatch,
+                            numEigenVectors,
+                            waveFnStartId,
+                            numEigVecInBatch,
+                            0,
+                            kohnShamWaveFunctions.data(),
+                            d_waveFnBatchSmall->data(),
+                            *kohnShamWaveFunctions.getLinAlgOpContext());                                         
 
               XBatch  = d_waveFnBatchSmall;
               HXBatch = d_HXBatchSmall;
@@ -669,12 +677,16 @@ namespace dftefe
                 numEigVecInBatch,
                 ValueType());
 
-              for (size_type iSize = 0; iSize < eigenVecLocalSize; iSize++)
-                memoryTransfer.copy(numEigVecInBatch,
-                                    d_waveFnBatchSmall->data() +
-                                      numEigVecInBatch * iSize,
-                                    kohnShamWaveFunctions.data() +
-                                      iSize * numEigenVectors + waveFnStartId);
+              linearAlgebra::blasLapack::stridedBlockCopy(
+                            eigenVecLocalSize,
+                            numEigVecInBatch,
+                            numEigenVectors,
+                            waveFnStartId,
+                            numEigVecInBatch,
+                            0,
+                            kohnShamWaveFunctions.data(),
+                            d_waveFnBatchSmall->data(),
+                            *kohnShamWaveFunctions.getLinAlgOpContext());  
 
               XBatch  = d_waveFnBatchSmall;
               HXBatch = d_HXBatchSmall;

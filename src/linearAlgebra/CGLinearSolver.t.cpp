@@ -193,12 +193,23 @@ namespace dftefe
                   //   *(xConverged.data() + j * numComponents + i) =
                   //     *(x.data() + j * numComponents + i);
 
-                  for (size_type iSize = 0; iSize < x.locallyOwnedSize();
-                       iSize++)
-                    memoryTransfer.copy(1,
-                                        xConverged.data() +
-                                          numComponents * iSize + i,
-                                        x.data() + iSize * numComponents + i);
+                  // for (size_type iSize = 0; iSize < x.locallyOwnedSize();
+                  //      iSize++)
+                  //   memoryTransfer.copy(1,
+                  //                       xConverged.data() +
+                  //                         numComponents * iSize + i,
+                  //                       x.data() + iSize * numComponents + i);
+
+                  blasLapack::stridedBlockCopy(
+                                x.locallyOwnedSize(),
+                                1,
+                                numComponents, // srcLeadingDim
+                                i, // srcBlockStartId
+                                numComponents, // dstLeadingDim
+                                i, // dstBlockStartId
+                                x.data(),
+                                xConverged.data(),
+                                *x.getLinAlgOpContext());                                        
                 }
 
               if (rNorm[i] > d_divergenceTol && divergeFlag == false)

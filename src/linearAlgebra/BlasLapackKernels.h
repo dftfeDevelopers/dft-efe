@@ -457,12 +457,12 @@ namespace dftefe
           ValueType2       *copyToVec,
               LinAlgOpContext<dftefe::utils::MemorySpace::DEVICE> &       context);   
 
-     static void
-     copyValueType1ArrToValueType2Arr(
-          const size_type size,
-          const ValueType1 *valueType1Arr,
-          ValueType2       *valueType2Arr,
-        LinAlgOpContext<dftefe::utils::MemorySpace::DEVICE> &context);                     
+        static void
+        copyValueType1ArrToValueType2Arr(
+              const size_type size,
+              const ValueType1 *valueType1Arr,
+              ValueType2       *valueType2Arr,
+            LinAlgOpContext<dftefe::utils::MemorySpace::DEVICE> &context);               
       };
 
 #endif

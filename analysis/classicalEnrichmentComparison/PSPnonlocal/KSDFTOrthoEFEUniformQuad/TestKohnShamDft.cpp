@@ -330,6 +330,7 @@ int main(int argc, char** argv)
     int numProcs;
     utils::mpi::MPICommSize(comm, &numProcs);
 
+  p.registerStart("Setting LinAlgOpContext");
   int blasQueue = 0;
   int lapackQueue = 0;
   std::shared_ptr<linearAlgebra::LinAlgOpContext
@@ -340,6 +341,7 @@ int main(int argc, char** argv)
   std::shared_ptr<linearAlgebra::LinAlgOpContext
     <Host>> linAlgOpContextHost = 
     linearAlgebra::LinAlgOpContextDefaults::LINALG_OP_CONTXT_HOST;
+  p.registerEnd("Setting LinAlgOpContext");
 
   p.registerStart("Reading Parameter file data");
   rootCout<<" Entering test kohn sham dft ortho enrichment \n";
@@ -956,8 +958,8 @@ int main(int argc, char** argv)
 
     p.registerEnd("Orbital Grad basis datastorage eval");
     utils::printCurrentMemoryUsage(comm, "Orbital Grad basis datastorage eval");
-    p.print();
 
+    p.registerStart("FE Basis Manager Init");
     std::shared_ptr<const utils::ScalarSpatialFunctionReal>
           zeroFunction = std::make_shared
             <utils::ScalarZeroFunctionReal>();
@@ -973,6 +975,7 @@ int main(int argc, char** argv)
     basisManagerTotalPot = std::make_shared
       <basis::FEBasisManager<double, double, Host,dim>>
         (basisDofHandlerTotalPot, zeroFunction);
+    p.registerEnd("FE Basis Manager Init");
 
     p.registerStart("Hamiltonian Basis overlap eval");
 

@@ -640,11 +640,16 @@ namespace dftefe
 
               if (numPsiInBatch < d_maxWaveFnBlock)
                 {
-                  for (size_type iSize = 0; iSize < X.localSize(); iSize++)
-                    memoryTransfer.copy(
-                      numPsiInBatch,
-                      d_psiBatchSmall->data() + numPsiInBatch * iSize,
-                      X.data() + iSize * X.getNumberComponents() + psiStartId);
+                  linearAlgebra::blasLapack::stridedBlockCopy(
+                                X.localSize(),
+                                numPsiInBatch,
+                                X.getNumberComponents(),
+                                psiStartId,
+                                numPsiInBatch,
+                                0,
+                                X.data(),
+                                d_psiBatchSmall->data(),
+                                *X.getLinAlgOpContext());                      
 
                   d_atomNonLocOpContext->apply(*d_psiBatchSmall,
                                                *d_YBatchSmall,
@@ -659,11 +664,16 @@ namespace dftefe
                 }
               else
                 {
-                  for (size_type iSize = 0; iSize < X.localSize(); iSize++)
-                    memoryTransfer.copy(
-                      numPsiInBatch,
-                      d_psiBatch->data() + numPsiInBatch * iSize,
-                      X.data() + iSize * X.getNumberComponents() + psiStartId);
+                  linearAlgebra::blasLapack::stridedBlockCopy(
+                                X.localSize(),
+                                numPsiInBatch,
+                                X.getNumberComponents(),
+                                psiStartId,
+                                numPsiInBatch,
+                                0,
+                                X.data(),
+                                d_psiBatch->data(),
+                                *X.getLinAlgOpContext());                           
 
                   d_atomNonLocOpContext->apply(*d_psiBatch,
                                                *d_YBatch,
