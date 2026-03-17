@@ -187,7 +187,7 @@ namespace dftefe
           (ValueTypeBasisData)0.0,
           classicalComponentInQuadValues.data(),
           numEnrichmentIdsInCell,
-          *efeBDH->getEnrichmentClassicalInterface()->getLinAlgOpContext());
+          *linearAlgebra::LinAlgOpContextDefaults::LINALG_OP_CONTXT_HOST);
       }
 
       template <typename ValueTypeBasisCoeff,
@@ -239,7 +239,7 @@ namespace dftefe
           classicalComponentInQuadGradients
             .data(), // saved as cell->quad->dim->enrichid
           numEnrichmentIdsInCell,
-          *efeBDH->getEnrichmentClassicalInterface()->getLinAlgOpContext());
+          *linearAlgebra::LinAlgOpContextDefaults::LINALG_OP_CONTXT_HOST);
       }
 
       // This class stores the enriched FE basis data for a h-refined
@@ -2721,11 +2721,13 @@ namespace dftefe
       EFEBasisDataStorageDealii(
         std::shared_ptr<const BasisDofHandler>      efeBDH,
         const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
-        const BasisStorageAttributesBoolMap basisStorageAttributesBoolMap)
+        const BasisStorageAttributesBoolMap basisStorageAttributesBoolMap,
+        linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext)
       : d_dofsInCell(0)
       , d_cellStartIdsBasisOverlap(0)
       , d_quadratureRuleAttributes(quadratureRuleAttributes)
       , d_basisStorageAttributesBoolMap(basisStorageAttributesBoolMap)
+      , d_linAlgOpContext(linAlgOpContext)
     {
       d_evaluateBasisData = false;
       d_efeBDH            = std::dynamic_pointer_cast<
@@ -3927,10 +3929,12 @@ namespace dftefe
         nQuadPointsInCell[cellId] * d_dofsInCell[cellId];
       typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage
         returnValue(sizeToCopy);
-      utils::MemoryTransfer<memorySpace, memorySpace>::copy(
+      linearAlgebra::blasLapack::copyValueType1ArrToValueType2Arr(
         sizeToCopy,
+        basisQuadStorage->data() + cellStartIds[cellId],
         returnValue.data(),
-        basisQuadStorage->data() + cellStartIds[cellId]);
+        d_linAlgOpContext);  
+
       return returnValue;
     }
 
@@ -3965,14 +3969,17 @@ namespace dftefe
       size_type                     sizeToCopy        = 0;
       for (size_type cellId = cellRange.first; cellId < cellRange.second;
            cellId++)
-        sizeToCopy += nQuadPointsInCell[cellId] * d_dofsInCell[cellId] * dim;
+        sizeToCopy += nQuadPointsInCell[cellId] * d_dofsInCell[cellId];
       for (size_type cellId = cellRange.first; cellId < cellRange.second;
            cellId++)
-        utils::MemoryTransfer<memorySpace, memorySpace>::copy(
+      {
+        linearAlgebra::blasLapack::copyValueType1ArrToValueType2Arr(
           nQuadPointsInCell[cellId] * d_dofsInCell[cellId],
+          basisQuadStorage->data() + cellStartIds[cellId],
           basisData.data() + cellStartIds[cellId] -
             cellStartIds[cellRange.first],
-          basisQuadStorage->data() + cellStartIds[cellId]);
+          d_linAlgOpContext);  
+      }
     }
 
     template <typename ValueTypeBasisCoeff,
@@ -4005,10 +4012,11 @@ namespace dftefe
         nQuadPointsInCell[cellId] * d_dofsInCell[cellId] * dim;
       typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage
         returnValue(sizeToCopy);
-      utils::MemoryTransfer<memorySpace, memorySpace>::copy(
+      linearAlgebra::blasLapack::copyValueType1ArrToValueType2Arr(
         sizeToCopy,
+        basisGradientQuadStorage->data() + cellStartIds[cellId],
         returnValue.data(),
-        basisGradientQuadStorage->data() + cellStartIds[cellId]);
+        d_linAlgOpContext);  
       return returnValue;
     }
 
@@ -4046,11 +4054,14 @@ namespace dftefe
         sizeToCopy += nQuadPointsInCell[cellId] * d_dofsInCell[cellId] * dim;
       for (size_type cellId = cellRange.first; cellId < cellRange.second;
            cellId++)
-        utils::MemoryTransfer<memorySpace, memorySpace>::copy(
+        {
+        linearAlgebra::blasLapack::copyValueType1ArrToValueType2Arr(
           nQuadPointsInCell[cellId] * d_dofsInCell[cellId] * dim,
+          basisGradientQuadStorage->data() + cellStartIds[cellId],
           basisGradientData.data() + cellStartIds[cellId] -
             cellStartIds[cellRange.first],
-          basisGradientQuadStorage->data() + cellStartIds[cellId]);
+          d_linAlgOpContext);  
+        }
     }
 
     template <typename ValueTypeBasisCoeff,
@@ -4083,10 +4094,11 @@ namespace dftefe
         nQuadPointsInCell[cellId] * d_dofsInCell[cellId] * dim * dim;
       typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage
         returnValue(sizeToCopy);
-      utils::MemoryTransfer<memorySpace, memorySpace>::copy(
+      linearAlgebra::blasLapack::copyValueType1ArrToValueType2Arr(
         sizeToCopy,
+        basisHessianQuadStorage->data() + cellStartIds[cellId],
         returnValue.data(),
-        basisHessianQuadStorage->data() + cellStartIds[cellId]);
+        d_linAlgOpContext);          
       return returnValue;
     }
 
@@ -4116,11 +4128,12 @@ namespace dftefe
       const size_type               sizeToCopy = nQuadPointsInCell[cellId];
       typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage
         returnValue(sizeToCopy);
-      utils::MemoryTransfer<memorySpace, memorySpace>::copy(
+      linearAlgebra::blasLapack::copyValueType1ArrToValueType2Arr(
         sizeToCopy,
-        returnValue.data(),
         jxwQuadStorage->data() +
-          d_quadratureRuleContainer->getCellQuadStartId(cellId));
+          d_quadratureRuleContainer->getCellQuadStartId(cellId),
+        returnValue.data(),
+        d_linAlgOpContext);              
       return returnValue;
     }
 
@@ -4156,12 +4169,12 @@ namespace dftefe
       const std::vector<size_type> &nQuadPointsInCell = d_nQuadPointsIncell;
       typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage
         returnValue(1);
-      utils::MemoryTransfer<memorySpace, memorySpace>::copy(
+      linearAlgebra::blasLapack::copyValueType1ArrToValueType2Arr(
         1,
-        returnValue.data(),
         basisQuadStorage->data() + cellStartIds[cellId] +
-          quadPointId * d_dofsInCell[cellId] + basisId);
-      // basisId * nQuadPointsInCell[cellId] + quadPointId);
+          quadPointId * d_dofsInCell[cellId] + basisId,
+        returnValue.data(),
+        d_linAlgOpContext); 
       return returnValue;
     }
 
@@ -4199,14 +4212,13 @@ namespace dftefe
         returnValue(dim);
       for (size_type iDim = 0; iDim < dim; ++iDim)
         {
-          utils::MemoryTransfer<memorySpace, memorySpace>::copy(
+          linearAlgebra::blasLapack::copyValueType1ArrToValueType2Arr(
             1,
-            returnValue.data() + iDim,
             basisGradientQuadStorage->data() + cellStartIds[cellId] +
               quadPointId * d_dofsInCell[cellId] * dim +
-              iDim * d_dofsInCell[cellId] + basisId);
-          // iDim * d_dofsInCell[cellId] * nQuadPointsInCell[cellId] +
-          // basisId * nQuadPointsInCell[cellId] + quadPointId);
+              iDim * d_dofsInCell[cellId] + basisId,
+            returnValue.data() + iDim,
+            d_linAlgOpContext); 
         }
       return returnValue;
     }
@@ -4247,15 +4259,13 @@ namespace dftefe
         {
           for (size_type jDim = 0; jDim < dim; ++jDim)
             {
-              utils::MemoryTransfer<memorySpace, memorySpace>::copy(
+              linearAlgebra::blasLapack::copyValueType1ArrToValueType2Arr(
                 1,
-                returnValue.data() + iDim * dim + jDim,
                 basisHessianQuadStorage->data() + cellStartIds[cellId] +
                   quadPointId * d_dofsInCell[cellId] * dim * dim +
-                  (iDim * dim + jDim) * d_dofsInCell[cellId] + basisId);
-              // (iDim * dim + jDim) * d_dofsInCell[cellId] *
-              //   nQuadPointsInCell[cellId] +
-              // basisId * nQuadPointsInCell[cellId] + quadPointId);
+                  (iDim * dim + jDim) * d_dofsInCell[cellId] + basisId,
+                returnValue.data() + iDim * dim + jDim,
+                d_linAlgOpContext);                   
             }
         }
       return returnValue;
@@ -4310,10 +4320,11 @@ namespace dftefe
       const size_type sizeToCopy = d_dofsInCell[cellId] * d_dofsInCell[cellId];
       typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage
         returnValue(sizeToCopy);
-      utils::MemoryTransfer<memorySpace, memorySpace>::copy(
+      linearAlgebra::blasLapack::copyValueType1ArrToValueType2Arr(
         sizeToCopy,
+        basisOverlapStorage->data() + d_cellStartIdsBasisOverlap[cellId],
         returnValue.data(),
-        basisOverlapStorage->data() + d_cellStartIdsBasisOverlap[cellId]);
+        d_linAlgOpContext);   
       return returnValue;
     }
 
@@ -4345,11 +4356,12 @@ namespace dftefe
       typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage
                       returnValue(1);
       const size_type sizeToCopy = d_dofsInCell[cellId] * d_dofsInCell[cellId];
-      utils::MemoryTransfer<memorySpace, memorySpace>::copy(
+      linearAlgebra::blasLapack::copyValueType1ArrToValueType2Arr(
         sizeToCopy,
-        returnValue.data(),
         basisOverlapStorage->data() + d_cellStartIdsBasisOverlap[cellId] +
-          basisId1 * d_dofsInCell[cellId] + basisId2);
+          basisId1 * d_dofsInCell[cellId] + basisId2,
+        returnValue.data(),
+        d_linAlgOpContext);  
       return returnValue;
     }
 
@@ -4487,10 +4499,11 @@ namespace dftefe
       const size_type sizeToCopy = d_dofsInCell[cellId] * d_dofsInCell[cellId];
       typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage
         returnValue(sizeToCopy);
-      utils::MemoryTransfer<memorySpace, memorySpace>::copy(
+      linearAlgebra::blasLapack::copyValueType1ArrToValueType2Arr(
         sizeToCopy,
+        basisGradNiGradNj->data() + d_cellStartIdsGradNiGradNj[cellId],
         returnValue.data(),
-        basisGradNiGradNj->data() + d_cellStartIdsGradNiGradNj[cellId]);
+        d_linAlgOpContext);  
       return returnValue;
     }
 

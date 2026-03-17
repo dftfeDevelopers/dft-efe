@@ -331,7 +331,8 @@ namespace dftefe
 
             if (BDof != 0)
               {
-                blasLapack::copyValueType1ArrToValueType2Arr(N * BDof,
+                blasLapack::copyValueType1ArrToValueType2Arr(
+                  N * BDof,
                   rotatedVectorsMatBlock.begin(),
                   X + idof * N,
                   linAlgOpContext);   

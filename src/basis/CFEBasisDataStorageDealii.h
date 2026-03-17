@@ -64,7 +64,8 @@ namespace dftefe
       CFEBasisDataStorageDealii(
         std::shared_ptr<const BasisDofHandler>      feBDH,
         const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
-        const BasisStorageAttributesBoolMap basisStorageAttributesBoolMap);
+        const BasisStorageAttributesBoolMap basisStorageAttributesBoolMap,
+        linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext);
 
       ~CFEBasisDataStorageDealii() = default;
 
@@ -238,6 +239,7 @@ namespace dftefe
       std::vector<size_type>        d_cellStartIdsGradNiGradNj;
       dealii::Quadrature<dim>       d_dealiiQuadratureRule;
       bool                          d_isUniformQuad;
+      linearAlgebra::LinAlgOpContext<memorySpace> &d_linAlgOpContext;
 
     }; // end of CFEBasisDataStorageDealii
   }    // end of namespace basis
