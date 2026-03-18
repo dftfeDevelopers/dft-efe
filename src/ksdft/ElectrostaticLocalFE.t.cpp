@@ -1141,7 +1141,7 @@ namespace dftefe
             feBDHamiltonian->getQuadratureRuleContainer(),
         "The  feBDElectronicChargeRHS and feBDHamiltonian should have same Quadrature.");
 
-      utils::Profiler p(feBMTotalCharge->getMPIPatternP2P()->mpiCommunicator());
+      utils::Profiler<utils::MemorySpace::HOST> p(feBMTotalCharge->getMPIPatternP2P()->mpiCommunicator());
 
       // d_atomicTotalElecPotElectronicQuad = &atomicTotalElecPotElectronicQuad;
       // d_atomicElectronChargeDensity      = atomicElectronChargeDensity;
@@ -1757,7 +1757,7 @@ namespace dftefe
                                                                memorySpaceHost> &>
             inpRhsMap = {{"deltarho", *d_scratchDensRhoQuad}};
 
-          utils::Profiler p(
+          utils::Profiler<utils::MemorySpace::HOST> p(
             d_feBMTotalCharge->getMPIPatternP2P()->mpiCommunicator(),
             "Delta Rho Poisson Solve");
           p.registerStart("Reinit");
@@ -1825,7 +1825,7 @@ namespace dftefe
             inpRhsMap = {{"bSmear", *d_scratchDensNuclearQuad},
                          {"rho", *d_scratchDensRhoQuad}};
 
-          utils::Profiler p(
+          utils::Profiler<utils::MemorySpace::HOST> p(
             d_feBMTotalCharge->getMPIPatternP2P()->mpiCommunicator(),
             "b+rho Poisson Solve");
           p.registerStart("Reinit");
@@ -2033,7 +2033,7 @@ namespace dftefe
                             *d_scratchDensNuclearQuad,
                             *d_linAlgOpContextHost);
 
-          utils::Profiler p(
+          utils::Profiler<utils::MemorySpace::HOST> p(
             d_feBMTotalCharge->getMPIPatternP2P()->mpiCommunicator(),
             "bNuclear Poisson Solve for Atom " + std::to_string(iAtom + 1));
           p.registerStart("Reinit");

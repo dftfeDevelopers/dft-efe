@@ -84,19 +84,23 @@ namespace dftefe
       utils::deviceBlasStatus_t status;
       d_opType = TensorOpDataType::FP32;
       d_stream = utils::defaultStream;
+      
+#if defined(DFTEFE_WITH_DEVICE)
+      if constexpr(memorySpace == utils::MemorySpace::DEVICE)
+      {
       status   = create(d_deviceBlasHandle);
       status   = setBlasStream(d_deviceBlasHandle, d_stream);
 
       d_streams.resize(d_numBlasStreams);
       d_deviceBlasHandles.resize(d_numBlasStreams);
 
-#if defined(DFTEFE_WITH_DEVICE)
       for (size_type i = 0; i < d_numBlasStreams; ++i)
         {
           utils::deviceStreamCreate(d_streams[i]);
           status = create(d_deviceBlasHandles[i]);
           status = setBlasStream(d_deviceBlasHandles[i], d_streams[i]);
         }
+      }
 #endif
     }
 

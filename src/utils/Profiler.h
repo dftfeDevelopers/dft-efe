@@ -36,10 +36,13 @@
 #include <string>
 #include <vector>
 #include <chrono>
+#include "sys/types.h"
+#include "sys/sysinfo.h"
 namespace dftefe
 {
   namespace utils
   {
+    template <dftefe::utils::MemorySpace memorySpace>
     class Profiler
     {
     public:
@@ -89,10 +92,36 @@ namespace dftefe
     //
     // helper function
     //
-    void
+    static inline void
     printCurrentMemoryUsage(const utils::mpi::MPIComm &mpiComm,
-                            const std::string          message);
+                            const std::string          message)
+    {
+      int rank;
+      mpi::MPICommRank(mpiComm, &rank);
+      ConditionalOStream cout(ConditionalOStream(std::cout));
+      cout.setCondition(rank == 0);
+      mpi::MPIBarrier(mpiComm);
+      struct sysinfo memInfo;
+      sysinfo(&memInfo);
+      double totalVirtualMem = memInfo.totalram;
+      totalVirtualMem += memInfo.totalswap;
+      totalVirtualMem *= memInfo.mem_unit;
+      double virtualMemUsed = memInfo.totalram - memInfo.freeram;
+      virtualMemUsed += memInfo.totalswap - memInfo.freeswap;
+      virtualMemUsed *= memInfo.mem_unit;
+      auto minMaxAvg =
+        mpi::MPIAllreduceMinMaxAvg<double, utils::MemorySpace::HOST>(
+          virtualMemUsed, mpiComm);
+      const double maxBytes = minMaxAvg.max;
+      cout << std::endl
+           << message + ", Current maximum memory usage across all processors: "
+           << maxBytes / 1024.0 / 1024.0 / 1024.0 << " GB out of "
+           << totalVirtualMem / 1024.0 / 1024.0 / 1024.0 << std::endl
+           << std::endl;
+      mpi::MPIBarrier(mpiComm);
+    }
 
   } // end of namespace utils
 } // end of namespace dftefe
+#include "Profiler.t.cpp"
 #endif // dftefeProfiler_h

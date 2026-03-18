@@ -300,8 +300,8 @@ int main(int argc, char** argv)
 
   utils::mpi::MPIComm comm = utils::mpi::MPICommWorld;
 
-  utils::Profiler pTot(comm, "Total Statistics");
-  utils::Profiler p(comm, "Initilization Breakdown Statistics");
+  utils::Profiler<memorySpace> pTot(comm, "Total Statistics");
+  utils::Profiler<memorySpace> p(comm, "Initilization Breakdown Statistics");
   pTot.registerStart("Initilization");
 
     // Get the rank of the process

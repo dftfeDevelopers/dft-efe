@@ -219,7 +219,7 @@ namespace dftefe
       std::shared_ptr<
         const basis::FEBasisDataStorage<ValueTypeOperator, memorySpace>>
                                 d_feBasisDataStorageStiffnessMatrix;
-      utils::Profiler           d_p;
+      utils::Profiler<memorySpace>          d_p;
       utils::ConditionalOStream d_rootCout;
       std::map<std::string,
                linearAlgebra::MultiVector<ValueTypeOperand, memorySpace>>

@@ -328,8 +328,8 @@ namespace dftefe
             "dstLeadingDim smaller than block size");
 
         return CopyKernelTwoValueTypes<ValueType1, ValueType2, memorySpace>::stridedBlockCopy(
-          numVec,
           vecSize,
+          numVec,
           srcLeadingDim,
           srcBlockStartId,
           dstLeadingDim,

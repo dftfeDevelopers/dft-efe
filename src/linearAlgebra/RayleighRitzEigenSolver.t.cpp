@@ -78,7 +78,7 @@ namespace dftefe
       if (d_useScalapack)
         {
           bool            solveSuccess = true;
-          utils::Profiler p(X.getMPIPatternP2P()->mpiCommunicator(),
+          utils::Profiler<memorySpace> p(X.getMPIPatternP2P()->mpiCommunicator(),
                             "Rayleigh-Ritz EigenSolver");
 
           // Compute projected hamiltonian = X_O^H A X_O
@@ -325,7 +325,7 @@ namespace dftefe
       if (d_useScalapack)
         {
           bool            solveSuccess = true;
-          utils::Profiler p(X.getMPIPatternP2P()->mpiCommunicator(),
+          utils::Profiler<memorySpace> p(X.getMPIPatternP2P()->mpiCommunicator(),
                             "Rayleigh-Ritz EigenSolver");
 
           // Compute projected hamiltonian = X_O^H A X_O

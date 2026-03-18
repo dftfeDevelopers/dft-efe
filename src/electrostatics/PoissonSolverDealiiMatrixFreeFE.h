@@ -209,7 +209,7 @@ namespace dftefe
           FEBasisManager<ValueTypeOperand, ValueTypeOperator, memorySpace, dim>>
                                         d_feBasisManagerField;
       linearAlgebra::PreconditionerType d_pcType;
-      utils::Profiler                   d_p;
+      utils::Profiler<memorySpace>                   d_p;
 
 
       std::shared_ptr<

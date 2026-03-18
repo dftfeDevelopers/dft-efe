@@ -642,9 +642,9 @@ namespace dftefe
       const global_size_type enrichmentId) const
     {
       auto it = d_enrichmentIdToOldAtomIdMap.find(enrichmentId);
-      DFTEFE_AssertWithMsg(
+      utils::throwException(
         it != d_enrichmentIdToOldAtomIdMap.end(),
-        "Cannot find the enrichmentId in locally Owned or Ghost Enrichment Ids of the processor");
+        "Cannot find the enrichmentId " + std::to_string(enrichmentId) + " in locally Owned or Ghost Enrichment Ids of the processor");
       return it->second;
 
       // auto it = std::find(d_enrichmentIdsVec.begin(),

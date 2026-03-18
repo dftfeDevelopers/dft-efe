@@ -162,7 +162,7 @@ namespace dftefe
       CholeskyGramSchmidt(MultiVector<ValueTypeOperand, memorySpace> &X,
                           const OpContext &                           B)
     {
-      utils::Profiler p(X.getMPIPatternP2P()->mpiCommunicator(),
+      utils::Profiler<memorySpace> p(X.getMPIPatternP2P()->mpiCommunicator(),
                         "Orthogonalization");
 
       OrthonormalizationErrorCode err;
@@ -456,7 +456,7 @@ namespace dftefe
       utils::throwException(
         d_useScalapack,
         "MultipassCGS orthonormalization only provide scalapack interface.");
-      utils::Profiler p(X.getMPIPatternP2P()->mpiCommunicator(),
+      utils::Profiler<memorySpace> p(X.getMPIPatternP2P()->mpiCommunicator(),
                         "Orthogonalization");
 
       OrthonormalizationErrorCode err;
@@ -806,7 +806,7 @@ namespace dftefe
       utils::throwException(
         !d_useScalapack,
         "ModifiedGramSchmidt orthonormalization does not provide scalapack interface.");
-      utils::Profiler p(X.getMPIPatternP2P()->mpiCommunicator(),
+      utils::Profiler<memorySpace> p(X.getMPIPatternP2P()->mpiCommunicator(),
                         "Orthogonalization");
 
       OrthonormalizationErrorCode err;

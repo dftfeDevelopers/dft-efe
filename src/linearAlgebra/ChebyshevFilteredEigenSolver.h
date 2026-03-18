@@ -171,7 +171,7 @@ namespace dftefe
         OrthonormalizationFunctions<ValueTypeOperator, ValueType, memorySpace>>
         d_ortho;
 
-      utils::Profiler d_p, d_pTotal;
+      utils::Profiler<memorySpace> d_p, d_pTotal;
       const bool      d_isResidualChebyFilter;
       size_type       d_batchSizeSmall;
 

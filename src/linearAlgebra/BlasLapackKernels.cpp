@@ -571,33 +571,42 @@ namespace dftefe
         ValueType2       *copyToVec,
         LinAlgOpContext<memorySpace> &context)
       {
-        if constexpr (std::is_same_v<ValueType1, ValueType2>)
-        {
-          for (size_type blockIndex = 0; blockIndex < vecSize; ++blockIndex)
-          {
-            const ValueType1 *src =
-              copyFromVec + blockIndex * srcLeadingDim + srcBlockStartId;
+         utils::MemoryTransfer<memorySpace, memorySpace> memoryTransfer;
 
-            ValueType2 *dst =
-              copyToVec + blockIndex * dstLeadingDim + dstBlockStartId;
+        for (size_type iSize = 0; iSize < vecSize; iSize++)
+          memoryTransfer.copy(numVec,
+                              copyToVec +
+                                dstLeadingDim * iSize + dstBlockStartId,
+                              copyFromVec +
+                                iSize * srcLeadingDim + srcBlockStartId);
 
-            std::memcpy(dst, src, numVec * sizeof(ValueType1));
-          }
-        }
-        else
-        {
-          for (size_type blockIndex = 0; blockIndex < vecSize; ++blockIndex)
-          {
-            const ValueType1 *src =
-              copyFromVec + blockIndex * srcLeadingDim + srcBlockStartId;
+        // if constexpr (std::is_same_v<ValueType1, ValueType2>)
+        // {
+        //   for (size_type blockIndex = 0; blockIndex < vecSize; ++blockIndex)
+        //   {
+        //     const ValueType1 *src =
+        //       copyFromVec + blockIndex * srcLeadingDim + srcBlockStartId;
 
-            ValueType2 *dst =
-              copyToVec + blockIndex * dstLeadingDim + dstBlockStartId;
+        //     ValueType2 *dst =
+        //       copyToVec + blockIndex * dstLeadingDim + dstBlockStartId;
 
-            for (size_type i = 0; i < numVec; ++i)
-              dst[i] = src[i];
-          }
-        }
+        //     std::copy(src, src + numVec, dst);
+        //   }
+        // }
+        // else
+        // {
+        //   for (size_type blockIndex = 0; blockIndex < vecSize; ++blockIndex)
+        //   {
+        //     const ValueType1 *src =
+        //       copyFromVec + blockIndex * srcLeadingDim + srcBlockStartId;
+
+        //     ValueType2 *dst =
+        //       copyToVec + blockIndex * dstLeadingDim + dstBlockStartId;
+
+        //     for (size_type i = 0; i < numVec; ++i)
+        //       dst[i] = src[i];
+        //   }
+        // }
       }
 
 
