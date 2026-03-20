@@ -534,46 +534,7 @@ namespace dftefe
             std::vector<ValueTypeBasisData> coeffsInCell(0);
             if (efeBDH->isOrthogonalized() && numEnrichmentIdsInCell > 0)
               {
-                coeffsInCell =
-                  getClassicalComponentCoeffsInCellOEFE<ValueTypeBasisCoeff,
-                                                        ValueTypeBasisData,
-                                                        memorySpace,
-                                                        dim>(cellIndex, efeBDH);
-
-                // if (basisStorageAttributesBoolMap
-                //       .find(BasisStorageAttributes::StoreValues)
-                //       ->second ||
-                //     basisStorageAttributesBoolMap
-                //       .find(BasisStorageAttributes::StoreOverlap)
-                //       ->second)
-                //   {
-                //     getClassicalComponentBasisValuesInCellAtQuadOEFE<
-                //       ValueTypeBasisCoeff,
-                //       ValueTypeBasisData,
-                //       memorySpace,
-                //       dim>(cellIndex,
-                //            nQuadPointInCell,
-                //            coeffsInCell,
-                //            efeBDH,
-                //            cfeBasisDataStorage,
-                //            classicalComponentInQuadValues);
-                //   }
-
-                // if (basisStorageAttributesBoolMap
-                //       .find(BasisStorageAttributes::StoreGradient)
-                //       ->second)
-                //   {
-                //     getClassicalComponentBasisGradInCellAtQuadOEFE<
-                //       ValueTypeBasisCoeff,
-                //       ValueTypeBasisData,
-                //       memorySpace,
-                //       dim>(cellIndex,
-                //            nQuadPointInCell,
-                //            coeffsInCell,
-                //            efeBDH,
-                //            cfeBasisDataStorage,
-                //            classicalComponentInQuadGradients);
-                //   }
+                coeffsInCell = efeBDH->getClassicalComponentCoeffsInCellOEFE(cellIndex);
               }
 
             if (basisStorageAttributesBoolMap
@@ -1161,11 +1122,7 @@ namespace dftefe
                           }
                       }
                   }
-                std::vector<ValueTypeBasisData> coeffsInCell =
-                  getClassicalComponentCoeffsInCellOEFE<ValueTypeBasisCoeff,
-                                                        ValueTypeBasisData,
-                                                        memorySpace,
-                                                        dim>(cellIndex, efeBDH);
+                std::vector<ValueTypeBasisData> coeffsInCell = efeBDH->getClassicalComponentCoeffsInCellOEFE(cellIndex);
 
                 getClassicalComponentBasisGradInCellAtQuadOEFE<
                   ValueTypeBasisCoeff,
@@ -1700,11 +1657,7 @@ namespace dftefe
             std::vector<ValueTypeBasisData> coeffsInCell(0);
             if (efeBDH->isOrthogonalized() && numEnrichmentIdsInCell > 0)
               {
-                coeffsInCell =
-                  getClassicalComponentCoeffsInCellOEFE<ValueTypeBasisCoeff,
-                                                        ValueTypeBasisData,
-                                                        memorySpace,
-                                                        dim>(cellIndex, efeBDH);
+                coeffsInCell = efeBDH->getClassicalComponentCoeffsInCellOEFE(cellIndex);
 
                 // if (basisStorageAttributesBoolMap
                 //       .find(BasisStorageAttributes::StoreValues)
@@ -2466,11 +2419,7 @@ namespace dftefe
                           }
                       }
                   }
-                std::vector<ValueTypeBasisData> coeffsInCell =
-                  getClassicalComponentCoeffsInCellOEFE<ValueTypeBasisCoeff,
-                                                        ValueTypeBasisData,
-                                                        memorySpace,
-                                                        dim>(cellIndex, efeBDH);
+                std::vector<ValueTypeBasisData> coeffsInCell = efeBDH->getClassicalComponentCoeffsInCellOEFE(cellIndex);
 
                 getClassicalComponentBasisGradInCellAtQuadOEFE<
                   ValueTypeBasisCoeff,

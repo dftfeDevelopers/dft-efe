@@ -446,41 +446,7 @@ namespace dftefe
                 std::vector<ValueTypeOperator> coeffsInCell(
                   dofsPerCellCFE * numEnrichmentIdsInCell, 0);
 
-                for (size_type cellEnrichId = 0;
-                     cellEnrichId < numEnrichmentIdsInCell;
-                     cellEnrichId++)
-                  {
-                    // get the enrichmentIds
-                    global_size_type enrichmentId =
-                      eci->getEnrichmentId(cellIndex, cellEnrichId);
-
-                    // get the vectors of non-zero localIds and coeffs
-                    auto iter =
-                      enrichmentIdToInterfaceCoeffMap->find(enrichmentId);
-                    auto it =
-                      enrichmentIdToClassicalLocalIdMap->find(enrichmentId);
-                    if (iter != enrichmentIdToInterfaceCoeffMap->end() &&
-                        it != enrichmentIdToClassicalLocalIdMap->end())
-                      {
-                        const std::vector<ValueTypeOperator>
-                          &coeffsInLocalIdsMap = iter->second;
-
-                        for (size_type i = 0; i < dofsPerCellCFE; i++)
-                          {
-                            size_type pos   = 0;
-                            bool      found = false;
-                            it->second.getPosition(vecClassicalLocalNodeId[i],
-                                                   pos,
-                                                   found);
-                            if (found)
-                              {
-                                coeffsInCell[numEnrichmentIdsInCell * i +
-                                             cellEnrichId] =
-                                  coeffsInLocalIdsMap[pos];
-                              }
-                          }
-                      }
-                  }
+                coeffsInCell = efeBDH->getClassicalComponentCoeffsInCellOEFE(cellIndex);
 
                 // Do a gemm (\Sigma c_i N_i^classical)
                 // and get the quad values in std::vector
@@ -740,23 +706,6 @@ namespace dftefe
                   basisOverlapEEBlock3.data(),
                   n,
                   linAlgOpContext);
-
-                // linearAlgebra::blasLapack::
-                //   gemm<ValueTypeOperand, ValueTypeOperator, memorySpace>(
-                //     'T',
-                //     'T',
-                //     n,
-                //     n,
-                //     k,
-                //     (ValueTypeOperand)1.0,
-                //     classicalComponentInQuadValuesEC.data(),
-                //     k,
-                //     JxWxNCell.data(),
-                //     n,
-                //     (ValueTypeOperator)0.0,
-                //     basisOverlapEEBlock4.data(),
-                //     n,
-                //     linAlgOpContext);
               }
 
             for (unsigned int iNode = 0; iNode < dofsPerCell; iNode++)
@@ -770,115 +719,10 @@ namespace dftefe
                         *basisOverlapTmpIter =
                           *(basisOverlapClassicalBlock.data() +
                             iNode * dofsPerCellCFE + jNode);
-                        // for (unsigned int qPoint = 0;
-                        //      qPoint < nQuadPointInCellClassicalBlock;
-                        //      qPoint++)
-                        //   {
-                        //     *basisOverlapTmpIter +=
-                        //       *(cumulativeClassicalBlockDofQuadPoints +
-                        //         dofsPerCellCFE * qPoint + iNode
-                        //         /*nQuadPointInCellClassicalBlock * iNode +
-                        //         qPoint*/) *
-                        //       *(cumulativeClassicalBlockDofQuadPoints +
-                        //         dofsPerCellCFE * qPoint + jNode
-                        //         /*nQuadPointInCellClassicalBlock * jNode +
-                        //         qPoint*/) *
-                        //       cellJxWValuesClassicalBlock[qPoint];
-                        //   }
                       }
 
                     else if (iNode >= dofsPerCellCFE && jNode >= dofsPerCellCFE)
                       {
-                        /**
-                        // Ni_pristine*Ni_pristine at quadpoints
-                        for (unsigned int qPoint = 0;
-                             qPoint < nQuadPointInCellEnrichmentBlockEnrichment;
-                             qPoint++)
-                          {
-                            *basisOverlapTmpIter +=
-                              *(cumulativeEnrichmentBlockEnrichmentDofQuadPoints
-                        + nQuadPointInCellEnrichmentBlockEnrichment * iNode +
-                                qPoint) *
-                              *(cumulativeEnrichmentBlockEnrichmentDofQuadPoints
-                        + nQuadPointInCellEnrichmentBlockEnrichment * jNode +
-                                qPoint) *
-                              cellJxWValuesEnrichmentBlockEnrichment[qPoint];
-                          }
-                          **/
-
-                        /**
-                        ValueTypeOperator NpiNpj     = (ValueTypeOperator)0,
-                                          ciNciNpj   = (ValueTypeOperator)0,
-                                          NpicjNcj   = (ValueTypeOperator)0,
-                                          ciNcicjNcj = (ValueTypeOperator)0;
-                        // Ni_pristine*Ni_pristine at quadpoints
-                        for (unsigned int qPoint = 0;
-                             qPoint < nQuadPointInCellEnrichmentBlockEnrichment;
-                             qPoint++)
-                          {
-                            NpiNpj +=
-                              *(enrichmentValuesVec.data() +
-                                (iNode - dofsPerCellCFE) *
-                                  nQuadPointInCellEnrichmentBlockEnrichment +
-                                qPoint) *
-                              *(enrichmentValuesVec.data() +
-                                (jNode - dofsPerCellCFE) *
-                                  nQuadPointInCellEnrichmentBlockEnrichment +
-                                qPoint) *
-                              cellJxWValuesEnrichmentBlockEnrichment[qPoint];
-                          }
-                        // Ni_pristine* interpolated ci's in
-                        // Ni_classicalQuadratureOfPristine at quadpoints
-                        for (unsigned int qPoint = 0;
-                             qPoint < nQuadPointInCellEnrichmentBlockEnrichment;
-                             qPoint++)
-                          {
-                            ciNciNpj +=
-                              classicalComponentInQuadValuesEE
-                                [numEnrichmentIdsInCell * qPoint +
-                                 (iNode - dofsPerCellCFE)] *
-                              *(enrichmentValuesVec.data() +
-                                (jNode - dofsPerCellCFE) *
-                                  nQuadPointInCellEnrichmentBlockEnrichment +
-                                qPoint) *
-                              cellJxWValuesEnrichmentBlockEnrichment[qPoint];
-                          }
-                        // Ni_pristine* interpolated ci's in
-                        // Ni_classicalQuadratureOfPristine at quadpoints
-                        for (unsigned int qPoint = 0;
-                             qPoint < nQuadPointInCellEnrichmentBlockEnrichment;
-                             qPoint++)
-                          {
-                            NpicjNcj +=
-                              *(enrichmentValuesVec.data() +
-                                (iNode - dofsPerCellCFE) *
-                                  nQuadPointInCellEnrichmentBlockEnrichment +
-                                qPoint) *
-                              classicalComponentInQuadValuesEE
-                                [numEnrichmentIdsInCell * qPoint +
-                                 (jNode - dofsPerCellCFE)] *
-                              cellJxWValuesEnrichmentBlockEnrichment[qPoint];
-                          }
-                        // interpolated ci's in Ni_classicalQuadrature of Mc = d
-                        // * interpolated ci's in Ni_classicalQuadrature of Mc =
-                        // d
-                        for (unsigned int qPoint = 0;
-                             qPoint < nQuadPointInCellEnrichmentBlockClassical;
-                             qPoint++)
-                          {
-                            ciNcicjNcj +=
-                              classicalComponentInQuadValuesEC
-                                [numEnrichmentIdsInCell * qPoint +
-                                 (iNode - dofsPerCellCFE)] *
-                              classicalComponentInQuadValuesEC
-                                [numEnrichmentIdsInCell * qPoint +
-                                 (jNode - dofsPerCellCFE)] *
-                              cellJxWValuesEnrichmentBlockClassical[qPoint];
-                          }
-                        *basisOverlapTmpIter +=
-                          NpiNpj - NpicjNcj - ciNciNpj + ciNcicjNcj;
-                        **/
-
                         *basisOverlapTmpIter =
                           *(basisOverlapEEBlock1.data() +
                             (iNode - dofsPerCellCFE) * numEnrichmentIdsInCell +

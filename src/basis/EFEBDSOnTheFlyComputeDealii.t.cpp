@@ -74,9 +74,6 @@ namespace dftefe
               }
           }
 
-        utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>
-          memoryTransfer;
-
         std::vector<char>      transA(numMats, 'N');
         std::vector<char>      transB(numMats, 'N');
         std::vector<size_type> mSizes(numMats, 0);
@@ -135,95 +132,6 @@ namespace dftefe
           basisGradientData /*.data()*/,
           ldcSizes.data(),
           linAlgOpContext);
-      }
-
-      template <typename ValueTypeBasisCoeff,
-                typename ValueTypeBasisData,
-                utils::MemorySpace memorySpace,
-                size_type          dim>
-      std::vector<ValueTypeBasisData>
-      getClassicalComponentCoeffsInCellOEFE(
-        const size_type                                      cellIndex,
-        std::shared_ptr<const EFEBasisDofHandlerDealii<ValueTypeBasisCoeff,
-                                                       ValueTypeBasisData,
-                                                       memorySpace,
-                                                       dim>> efeBDH)
-      {
-        const std::unordered_map<global_size_type,
-                                 utils::OptimizedIndexSet<size_type>>
-          *enrichmentIdToClassicalLocalIdMap = nullptr;
-        const std::unordered_map<global_size_type,
-                                 std::vector<ValueTypeBasisData>>
-          *enrichmentIdToInterfaceCoeffMap = nullptr;
-        std::shared_ptr<const FEBasisManager<ValueTypeBasisData,
-                                             ValueTypeBasisData,
-                                             memorySpace,
-                                             dim>>
-          cfeBasisManager = nullptr;
-
-        cfeBasisManager =
-          std::dynamic_pointer_cast<const FEBasisManager<ValueTypeBasisData,
-                                                         ValueTypeBasisData,
-                                                         memorySpace,
-                                                         dim>>(
-            efeBDH->getEnrichmentClassicalInterface()->getCFEBasisManager());
-
-        enrichmentIdToClassicalLocalIdMap =
-          &(efeBDH->getEnrichmentClassicalInterface()
-              ->getClassicalComponentLocalIdsMap());
-
-        enrichmentIdToInterfaceCoeffMap =
-          &(efeBDH->getEnrichmentClassicalInterface()
-              ->getClassicalComponentCoeffMap());
-
-        std::vector<size_type> vecClassicalLocalNodeId(0);
-
-        cfeBasisManager->getCellDofsLocalIds(cellIndex,
-                                             vecClassicalLocalNodeId);
-
-        size_type classicalDofsPerCell =
-          utils::mathFunctions::sizeTypePow((efeBDH->getFEOrder(cellIndex) + 1),
-                                            dim);
-        size_type numEnrichmentIdsInCell =
-          efeBDH->nCellDofs(cellIndex) - classicalDofsPerCell;
-
-        std::vector<ValueTypeBasisData> coeffsInCell(classicalDofsPerCell *
-                                                       numEnrichmentIdsInCell,
-                                                     0);
-
-        for (size_type cellEnrichId = 0; cellEnrichId < numEnrichmentIdsInCell;
-             cellEnrichId++)
-          {
-            // get the enrichmentIds
-            global_size_type enrichmentId =
-              efeBDH->getEnrichmentClassicalInterface()->getEnrichmentId(
-                cellIndex, cellEnrichId);
-
-            // get the vectors of non-zero localIds and coeffs
-            auto iter = enrichmentIdToInterfaceCoeffMap->find(enrichmentId);
-            auto it   = enrichmentIdToClassicalLocalIdMap->find(enrichmentId);
-            if (iter != enrichmentIdToInterfaceCoeffMap->end() &&
-                it != enrichmentIdToClassicalLocalIdMap->end())
-              {
-                const std::vector<ValueTypeBasisData> &coeffsInLocalIdsMap =
-                  iter->second;
-
-                for (size_type i = 0; i < classicalDofsPerCell; i++)
-                  {
-                    size_type pos   = 0;
-                    bool      found = false;
-                    it->second.getPosition(vecClassicalLocalNodeId[i],
-                                           pos,
-                                           found);
-                    if (found)
-                      {
-                        coeffsInCell[numEnrichmentIdsInCell * i +
-                                     cellEnrichId] = coeffsInLocalIdsMap[pos];
-                      }
-                  }
-              }
-          }
-        return coeffsInCell;
       }
 
       template <typename ValueTypeBasisCoeff,
@@ -645,42 +553,7 @@ namespace dftefe
             if (efeBDH->isOrthogonalized() && numEnrichmentIdsInCell > 0)
               {
                 coeffsInCell =
-                  getClassicalComponentCoeffsInCellOEFE<ValueTypeBasisCoeff,
-                                                        ValueTypeBasisData,
-                                                        memorySpace,
-                                                        dim>(cellIndex, efeBDH);
-
-                // if (basisStorageAttributesBoolMap
-                //       .find(BasisStorageAttributes::StoreValues)
-                //       ->second)
-                //   {
-                //     getClassicalComponentBasisValuesInCellAtQuadOEFE<
-                //       ValueTypeBasisCoeff,
-                //       ValueTypeBasisData,
-                //       memorySpace,
-                //       dim>(cellIndex,
-                //            nQuadPointInCell,
-                //            coeffsInCell,
-                //            efeBDH,
-                //            cfeBasisDataStorage,
-                //            classicalComponentInQuadValues);
-                //   }
-
-                // if (basisStorageAttributesBoolMap
-                //       .find(BasisStorageAttributes::StoreGradient)
-                //       ->second)
-                //   {
-                //     getClassicalComponentBasisGradInCellAtQuadOEFE<
-                //       ValueTypeBasisCoeff,
-                //       ValueTypeBasisData,
-                //       memorySpace,
-                //       dim>(cellIndex,
-                //            nQuadPointInCell,
-                //            coeffsInCell,
-                //            efeBDH,
-                //            cfeBasisDataStorage,
-                //            classicalComponentInQuadGradients);
-                //   }
+                  efeBDH->getClassicalComponentCoeffsInCellOEFE(cellIndex);
               }
 
             //

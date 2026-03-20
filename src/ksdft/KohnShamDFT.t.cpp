@@ -2108,7 +2108,7 @@ namespace dftefe
       d_rootCout << "Electron density in : " << totalDensityInQuad << "\n";
 
       d_p.registerEnd("Pre Init Checks");
-      d_p.registerStart("Hamiltonian Components Initilization");
+      d_p.registerStart("Hamiltonian Components Initilization Kinetic Op");
 
       d_hamitonianKin = std::make_shared<KineticFE<ValueTypeWaveFunctionBasis,
                                                    ValueTypeWaveFunctionCoeff,
@@ -2120,6 +2120,8 @@ namespace dftefe
         numWantedEigenvalues > KSDFTDefaults::MAX_KINENG_WAVEFN_BATCH_SIZE ?
           KSDFTDefaults::MAX_KINENG_WAVEFN_BATCH_SIZE :
           numWantedEigenvalues);
+      d_p.registerEnd("Hamiltonian Components Initilization Kinetic Op");
+      d_p.registerStart("Hamiltonian Components Initilization Electrostatic Op");
 
       size_type waveFnBatch =
         numWantedEigenvalues > KSDFTDefaults::MAX_WAVEFN_BATCH_SIZE ?
@@ -2270,6 +2272,8 @@ namespace dftefe
           KSDFTDefaults::CELL_BATCH_SIZE,
           waveFnBatch,
           fieldToTCIASplineMap);
+        d_p.registerEnd("Hamiltonian Components Initilization Electrostatic Op");
+        d_p.registerStart("Hamiltonian Components Initilization Exc Op");
 
       if (d_isNlcc && d_isONCVNonLocPSP)
         {
@@ -2349,7 +2353,7 @@ namespace dftefe
       std::vector<HamiltonianPtrVariant> hamiltonianComponentsVec{
         d_hamitonianKin, d_hamiltonianElectroExc};
 
-      d_p.registerEnd("Hamiltonian Components Initilization");
+      d_p.registerEnd("Hamiltonian Components Initilization Exc Op");
       d_p.registerStart("Hamiltonian Operator Creation");
       // form the kohn sham operator
       d_hamitonianOperator =

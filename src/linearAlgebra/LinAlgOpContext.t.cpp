@@ -24,6 +24,7 @@
  */
 
 #include <linearAlgebra/LinAlgOpContext.h>
+#ifdef DFTEFE_WITH_DEVICE
 #ifdef DFTEFE_WITH_DEVICE_INTEL
 #  include <oneapi/mkl.hpp>
 #  include <oneapi/mkl/blas.hpp>
@@ -59,6 +60,7 @@
 #  error \
     "No device backend defined (DFTEFE_WITH_DEVICE_NVIDIA or DFTEFE_WITH_DEVICE_AMD)"
 #endif
+#endif
 
 namespace dftefe
 {
@@ -81,13 +83,10 @@ namespace dftefe
       initialize();
 #endif
 
+#if defined(DFTEFE_WITH_DEVICE)
       utils::deviceBlasStatus_t status;
       d_opType = TensorOpDataType::FP32;
       d_stream = utils::defaultStream;
-      
-#if defined(DFTEFE_WITH_DEVICE)
-      if constexpr(memorySpace == utils::MemorySpace::DEVICE)
-      {
       status   = create(d_deviceBlasHandle);
       status   = setBlasStream(d_deviceBlasHandle, d_stream);
 
@@ -100,7 +99,6 @@ namespace dftefe
           status = create(d_deviceBlasHandles[i]);
           status = setBlasStream(d_deviceBlasHandles[i], d_streams[i]);
         }
-      }
 #endif
     }
 
@@ -117,14 +115,15 @@ namespace dftefe
       utils::deviceBlasHandle_t &handleId,
       utils::deviceStream_t &    streamId)
     {
+      utils::deviceBlasStatus_t status;
 #if defined(DFTEFE_WITH_DEVICE_LANG_CUDA) || \
   defined(DFTEFE_WITH_DEVICE_LANG_HIP)
-      utils::deviceBlasStatus_t status =
+      status =
         DFTEFE_DEVICE_BLAS(, SetStream)(handleId, streamId);
       DEVICEBLAS_API_CHECK(status);
 #elif defined(DFTEFE_WITH_DEVICE_LANG_SYCL)
       handleId = utils::queueRegistry.find(streamId)->second;
-      utils::deviceBlasStatus_t status = utils::deviceBlasSuccess;
+      status = utils::deviceBlasSuccess;
 #endif
       return status;
     }
@@ -133,14 +132,15 @@ namespace dftefe
     utils::deviceBlasStatus_t
     LinAlgOpContext<memorySpace>::create(utils::deviceBlasHandle_t &handleId)
     {
+       utils::deviceBlasStatus_t status;
 #if defined(DFTEFE_WITH_DEVICE_LANG_CUDA) || \
   defined(DFTEFE_WITH_DEVICE_LANG_HIP)
-      utils::deviceBlasStatus_t status =
+      status =
         DFTEFE_DEVICE_BLAS(, Create)(&handleId);
       DEVICEBLAS_API_CHECK(status);
 #elif defined(DFTEFE_WITH_DEVICE_LANG_SYCL)
       handleId = utils::queueRegistry.find(utils::defaultStream)->second;
-      utils::deviceBlasStatus_t status = utils::deviceBlasSuccess;
+      status = utils::deviceBlasSuccess;
 #endif
       return status;
     }
@@ -149,13 +149,14 @@ namespace dftefe
     utils::deviceBlasStatus_t
     LinAlgOpContext<memorySpace>::destroy(utils::deviceBlasHandle_t &handleId)
     {
+      utils::deviceBlasStatus_t status;
 #if defined(DFTEFE_WITH_DEVICE_LANG_CUDA) || \
   defined(DFTEFE_WITH_DEVICE_LANG_HIP)
-      utils::deviceBlasStatus_t status =
+      status =
         DFTEFE_DEVICE_BLAS(, Destroy)(handleId);
       DEVICEBLAS_API_CHECK(status);
 #elif defined(DFTEFE_WITH_DEVICE_LANG_SYCL)
-      utils::deviceBlasStatus_t status = utils::deviceBlasSuccess;
+      status = utils::deviceBlasSuccess;
 #endif
       return status;
     }

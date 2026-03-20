@@ -535,41 +535,7 @@ namespace dftefe
                 std::vector<ValueTypeOperator> coeffsInCell(
                   dofsPerCellCFE * numEnrichmentIdsInCell, 0);
 
-                for (size_type cellEnrichId = 0;
-                     cellEnrichId < numEnrichmentIdsInCell;
-                     cellEnrichId++)
-                  {
-                    // get the enrichmentIds
-                    global_size_type enrichmentId =
-                      eci->getEnrichmentId(cellIndex, cellEnrichId);
-
-                    // get the vectors of non-zero localIds and coeffs
-                    auto iter =
-                      enrichmentIdToInterfaceCoeffMap->find(enrichmentId);
-                    auto it =
-                      enrichmentIdToClassicalLocalIdMap->find(enrichmentId);
-                    if (iter != enrichmentIdToInterfaceCoeffMap->end() &&
-                        it != enrichmentIdToClassicalLocalIdMap->end())
-                      {
-                        const std::vector<ValueTypeOperator>
-                          &coeffsInLocalIdsMap = iter->second;
-
-                        for (size_type i = 0; i < dofsPerCellCFE; i++)
-                          {
-                            size_type pos   = 0;
-                            bool      found = false;
-                            it->second.getPosition(vecClassicalLocalNodeId[i],
-                                                   pos,
-                                                   found);
-                            if (found)
-                              {
-                                coeffsInCell[numEnrichmentIdsInCell * i +
-                                             cellEnrichId] =
-                                  coeffsInLocalIdsMap[pos];
-                              }
-                          }
-                      }
-                  }
+                coeffsInCell = eefeBDH->getClassicalComponentCoeffsInCellOEFE(cellIndex);
 
                 ValueTypeOperator *B =
                   basisDataInAllCellsEnrichmentBlockClassicalHost.data() +
@@ -957,220 +923,27 @@ namespace dftefe
                         *basisOverlapTmpIter =
                           *(basisOverlapClassicalBlock.data() +
                             iNode * dofsPerCellCFE + jNode);
-                        // for (unsigned int qPoint = 0;
-                        //      qPoint < nQuadPointInCellClassicalBlock;
-                        //      qPoint++)
-                        //   {
-                        //     *basisOverlapTmpIter +=
-                        //       *(cumulativeClassicalBlockDofQuadPoints +
-                        //         dofsPerCellCFE * qPoint + iNode
-                        //         /*nQuadPointInCellClassicalBlock * iNode +
-                        //         qPoint*/) *
-                        //       *(cumulativeClassicalBlockDofQuadPoints +
-                        //         dofsPerCellCFE * qPoint + jNode
-                        //         /*nQuadPointInCellClassicalBlock * jNode +
-                        //         qPoint*/) *
-                        //       cellJxWValuesClassicalBlock[qPoint];
-                        //   }
                       }
                     else if (iNode >= dofsPerCellCFE &&
                              jNode < dofsPerCellCFE && calculateWings)
                       {
-                        // ValueTypeOperator NpiNcj   = (ValueTypeOperator)0,
-                        //                   ciNciNcj = (ValueTypeOperator)0;
-                        // // Ni_pristine*Ni_classical at quadpoints
-                        // for (unsigned int qPoint = 0;
-                        //      qPoint <
-                        //      nQuadPointInCellEnrichmentBlockEnrichment;
-                        //      qPoint++)
-                        //   {
-                        //     NpiNcj +=
-                        //       *(enrichmentValuesVec.data() +
-                        //         (iNode - dofsPerCellCFE) *
-                        //           nQuadPointInCellEnrichmentBlockEnrichment +
-                        //         qPoint) *
-                        //       *(cumulativeEnrichmentBlockEnrichmentDofQuadPoints
-                        //       +
-                        //         dofsPerCell * qPoint + jNode
-                        //         /*nQuadPointInCellEnrichmentBlockEnrichment *
-                        //           jNode +
-                        //         qPoint*/) *
-                        //       cellJxWValuesEnrichmentBlockEnrichment[qPoint];
-                        //   }
-
-                        // // Ni_classical using Mc = d quadrature *
-                        // //interpolated
-                        // // ci's in Ni_classicalQuadrature of Mc = d
-                        // for (unsigned int qPoint = 0;
-                        //      qPoint <
-                        //      nQuadPointInCellEnrichmentBlockClassical;
-                        //      qPoint++)
-                        //   {
-                        //     ciNciNcj +=
-                        //       classicalComponentInQuadValuesEC
-                        //         [numEnrichmentIdsInCell * qPoint +
-                        //          (iNode - dofsPerCellCFE)] *
-                        //       *(cumulativeEnrichmentBlockClassicalDofQuadPoints
-                        //       +
-                        //         dofsPerCellCFE * qPoint + jNode
-                        //         /*nQuadPointInCellEnrichmentBlockClassical *
-                        //           jNode + qPoint*/) *
-                        //       cellJxWValuesEnrichmentBlockClassical[qPoint];
-                        //   }
-                        // *basisOverlapTmpIter += NpiNcj - ciNciNcj;
-
                         *basisOverlapTmpIter =
                           *(basisOverlapECBlockEnrich.data() +
                             (iNode - dofsPerCellCFE) * dofsPerCell + jNode) -
                           *(basisOverlapECBlockClass.data() +
                             (iNode - dofsPerCellCFE) * dofsPerCellCFE + jNode);
                       }
-
                     else if (iNode < dofsPerCellCFE &&
                              jNode >= dofsPerCellCFE && calculateWings)
                       {
-                        // ValueTypeOperator NciNpj   = (ValueTypeOperator)0,
-                        //                   NcicjNcj = (ValueTypeOperator)0;
-                        // // Ni_pristine*Ni_classical at quadpoints
-                        // for (unsigned int qPoint = 0;
-                        //      qPoint <
-                        //      nQuadPointInCellEnrichmentBlockEnrichment;
-                        //      qPoint++)
-                        //   {
-                        //     NciNpj +=
-                        //       *(cumulativeEnrichmentBlockEnrichmentDofQuadPoints
-                        //       +
-                        //         dofsPerCell * qPoint + iNode
-                        //         /*nQuadPointInCellEnrichmentBlockEnrichment *
-                        //           iNode +
-                        //         qPoint*/) *
-                        //       *(enrichmentValuesVec.data() +
-                        //         (jNode - dofsPerCellCFE) *
-                        //           nQuadPointInCellEnrichmentBlockEnrichment +
-                        //         qPoint) *
-                        //       cellJxWValuesEnrichmentBlockEnrichment[qPoint];
-                        //   }
-
-                        // // Ni_classical using Mc = d quadrature *
-                        // //interpolated
-                        // // ci's in Ni_classicalQuadrature of Mc = d
-                        // for (unsigned int qPoint = 0;
-                        //      qPoint <
-                        //      nQuadPointInCellEnrichmentBlockClassical;
-                        //      qPoint++)
-                        //   {
-                        //     NcicjNcj +=
-                        //       *(cumulativeEnrichmentBlockClassicalDofQuadPoints
-                        //       +
-                        //         dofsPerCellCFE * qPoint + iNode
-                        //         /*nQuadPointInCellEnrichmentBlockClassical *
-                        //           iNode + qPoint*/) *
-                        //       classicalComponentInQuadValuesEC
-                        //         [numEnrichmentIdsInCell * qPoint +
-                        //          (jNode - dofsPerCellCFE)] *
-                        //       cellJxWValuesEnrichmentBlockClassical[qPoint];
-                        //   }
-                        // *basisOverlapTmpIter += NciNpj - NcicjNcj;
-
                         *basisOverlapTmpIter =
                           *(basisOverlapECBlockEnrich.data() +
                             (jNode - dofsPerCellCFE) * dofsPerCell + iNode) -
                           *(basisOverlapECBlockClass.data() +
                             (jNode - dofsPerCellCFE) * dofsPerCellCFE + iNode);
                       }
-
                     else if (iNode >= dofsPerCellCFE && jNode >= dofsPerCellCFE)
                       {
-                        /**
-                        // Ni_pristine*Ni_pristine at quadpoints
-                        for (unsigned int qPoint = 0;
-                             qPoint < nQuadPointInCellEnrichmentBlockEnrichment;
-                             qPoint++)
-                          {
-                            *basisOverlapTmpIter +=
-                              *(cumulativeEnrichmentBlockEnrichmentDofQuadPoints
-                        + nQuadPointInCellEnrichmentBlockEnrichment * iNode +
-                                qPoint) *
-                              *(cumulativeEnrichmentBlockEnrichmentDofQuadPoints
-                        + nQuadPointInCellEnrichmentBlockEnrichment * jNode +
-                                qPoint) *
-                              cellJxWValuesEnrichmentBlockEnrichment[qPoint];
-                          }
-                        **/
-
-                        /**
-                        ValueTypeOperator NpiNpj     = (ValueTypeOperator)0,
-                                          ciNciNpj   = (ValueTypeOperator)0,
-                                          NpicjNcj   = (ValueTypeOperator)0,
-                                          ciNcicjNcj = (ValueTypeOperator)0;
-                        // Ni_pristine*Ni_pristine at quadpoints
-                        for (unsigned int qPoint = 0;
-                             qPoint < nQuadPointInCellEnrichmentBlockEnrichment;
-                             qPoint++)
-                          {
-                            NpiNpj +=
-                              *(enrichmentValuesVec.data() +
-                                (iNode - dofsPerCellCFE) *
-                                  nQuadPointInCellEnrichmentBlockEnrichment +
-                                qPoint) *
-                              *(enrichmentValuesVec.data() +
-                                (jNode - dofsPerCellCFE) *
-                                  nQuadPointInCellEnrichmentBlockEnrichment +
-                                qPoint) *
-                              cellJxWValuesEnrichmentBlockEnrichment[qPoint];
-                          }
-                        // Ni_pristine* interpolated ci's in
-                        // Ni_classicalQuadratureOfPristine at quadpoints
-                        for (unsigned int qPoint = 0;
-                             qPoint < nQuadPointInCellEnrichmentBlockEnrichment;
-                             qPoint++)
-                          {
-                            ciNciNpj +=
-                              classicalComponentInQuadValuesEE
-                                [numEnrichmentIdsInCell * qPoint +
-                                 (iNode - dofsPerCellCFE)] *
-                              *(enrichmentValuesVec.data() +
-                                (jNode - dofsPerCellCFE) *
-                                  nQuadPointInCellEnrichmentBlockEnrichment +
-                                qPoint) *
-                              cellJxWValuesEnrichmentBlockEnrichment[qPoint];
-                          }
-                        // Ni_pristine* interpolated ci's in
-                        // Ni_classicalQuadratureOfPristine at quadpoints
-                        for (unsigned int qPoint = 0;
-                             qPoint < nQuadPointInCellEnrichmentBlockEnrichment;
-                             qPoint++)
-                          {
-                            NpicjNcj +=
-                              *(enrichmentValuesVec.data() +
-                                (iNode - dofsPerCellCFE) *
-                                  nQuadPointInCellEnrichmentBlockEnrichment +
-                                qPoint) *
-                              classicalComponentInQuadValuesEE
-                                [numEnrichmentIdsInCell * qPoint +
-                                 (jNode - dofsPerCellCFE)] *
-                              cellJxWValuesEnrichmentBlockEnrichment[qPoint];
-                          }
-                        // interpolated ci's in Ni_classicalQuadrature of Mc = d
-                        // * interpolated ci's in Ni_classicalQuadrature of Mc =
-                        // d
-                        for (unsigned int qPoint = 0;
-                             qPoint < nQuadPointInCellEnrichmentBlockClassical;
-                             qPoint++)
-                          {
-                            ciNcicjNcj +=
-                              classicalComponentInQuadValuesEC
-                                [numEnrichmentIdsInCell * qPoint +
-                                 (iNode - dofsPerCellCFE)] *
-                              classicalComponentInQuadValuesEC
-                                [numEnrichmentIdsInCell * qPoint +
-                                 (jNode - dofsPerCellCFE)] *
-                              cellJxWValuesEnrichmentBlockClassical[qPoint];
-                          }
-                        // *basisOverlapTmpIter +=
-                        double b = NpiNpj - NpicjNcj - ciNciNpj + ciNcicjNcj;
-                        **/
-
                         *basisOverlapTmpIter =
                           *(basisOverlapEEBlock1.data() +
                             (iNode - dofsPerCellCFE) * numEnrichmentIdsInCell +
