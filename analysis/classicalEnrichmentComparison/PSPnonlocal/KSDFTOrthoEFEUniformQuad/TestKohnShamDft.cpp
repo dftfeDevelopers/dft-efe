@@ -935,6 +935,7 @@ int main(int argc, char** argv)
   feBDAtomCenterNonLocalOperator->evaluateBasisData(quadAttrGaussSubdivided, quadRuleContainerAdaptiveAtomCenterNonLocalOperator, basisAttrMap);
 
   p.registerEnd("Orbital basis datastorage eval");
+  p.print();
   utils::printCurrentMemoryUsage(comm, "Orbital basis datastorage eval");
   
   p.registerStart("Orbital Grad basis datastorage eval");

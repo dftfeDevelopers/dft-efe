@@ -120,6 +120,24 @@ namespace dftefe
                  d_realPoints,
                  d_JxW,
                  d_numQuadPoints);
+
+      const unsigned int dim      = triangulation->getDim();
+      std::vector<double> d_realPointsHost(d_realPoints.size() * dim);
+      for(int i = 0 ; i < d_realPoints.size() ; i++)
+      {
+        for(int j = 0 ; j < dim ; j++)
+        {
+          d_realPointsHost[i * dim + j] = d_realPoints[i][j];
+        }
+      }
+#ifdef DFTEFE_WITH_DEVICE
+      d_cellQuadStartIdsDevice.resize(d_cellQuadStartIds.size());
+      d_cellQuadStartIdsDevice.copyFrom(d_cellQuadStartIds);
+      d_realPointsDevice.resize(d_realPoints.size() * dim);
+      d_realPointsDevice.copyFrom(d_realPointsHost);
+      d_JxWDevice.resize(d_JxW.size());
+      d_JxWDevice.copyFrom(d_JxW);
+#endif
     }
 
     QuadratureRuleContainer::QuadratureRuleContainer(
@@ -170,6 +188,24 @@ namespace dftefe
                  d_realPoints,
                  d_JxW,
                  d_numQuadPoints);
+
+      const unsigned int dim      = triangulation->getDim();
+      std::vector<double> d_realPointsHost(d_realPoints.size() * dim);
+      for(int i = 0 ; i < d_realPoints.size() ; i++)
+      {
+        for(int j = 0 ; j < dim ; j++)
+        {
+          d_realPointsHost[i * dim + j] = d_realPoints[i][j];
+        }
+      }
+#ifdef DFTEFE_WITH_DEVICE
+      d_cellQuadStartIdsDevice.resize(d_cellQuadStartIds.size());
+      d_cellQuadStartIdsDevice.copyFrom(d_cellQuadStartIds);
+      d_realPointsDevice.resize(d_realPoints.size() * dim);
+      d_realPointsDevice.copyFrom(d_realPointsHost);
+      d_JxWDevice.resize(d_JxW.size());
+      d_JxWDevice.copyFrom(d_JxW);
+#endif              
     }
 
 
@@ -299,6 +335,24 @@ namespace dftefe
           // std::cout << "iCell volume: " << cellVolume << std::endl;
           iCell++;
         }
+
+      const unsigned int dim      = triangulation->getDim();
+      std::vector<double> d_realPointsHost(d_realPoints.size() * dim);
+      for(int i = 0 ; i < d_realPoints.size() ; i++)
+      {
+        for(int j = 0 ; j < dim ; j++)
+        {
+          d_realPointsHost[i * dim + j] = d_realPoints[i][j];
+        }
+      }
+#ifdef DFTEFE_WITH_DEVICE
+      d_cellQuadStartIdsDevice.resize(d_cellQuadStartIds.size());
+      d_cellQuadStartIdsDevice.copyFrom(d_cellQuadStartIds);
+      d_realPointsDevice.resize(d_realPoints.size() * dim);
+      d_realPointsDevice.copyFrom(d_realPointsHost);
+      d_JxWDevice.resize(d_JxW.size());
+      d_JxWDevice.copyFrom(d_JxW);
+#endif
     }
 
     QuadratureRuleContainer::QuadratureRuleContainer(
@@ -624,6 +678,24 @@ namespace dftefe
       //     if(rank == j)
       //       std::cout << i.first << "\t" << i.second/1e6 << std::flush <<
       //       "\n";
+
+      const unsigned int dim      = triangulation->getDim();
+      std::vector<double> d_realPointsHost(d_realPoints.size() * dim);
+      for(int i = 0 ; i < d_realPoints.size() ; i++)
+      {
+        for(int j = 0 ; j < dim ; j++)
+        {
+          d_realPointsHost[i * dim + j] = d_realPoints[i][j];
+        }
+      }
+#ifdef DFTEFE_WITH_DEVICE
+      d_cellQuadStartIdsDevice.resize(d_cellQuadStartIds.size());
+      d_cellQuadStartIdsDevice.copyFrom(d_cellQuadStartIds);
+      d_realPointsDevice.resize(d_realPoints.size() * dim);
+      d_realPointsDevice.copyFrom(d_realPointsHost);
+      d_JxWDevice.resize(d_JxW.size());
+      d_JxWDevice.copyFrom(d_JxW);
+#endif
     }
 
 

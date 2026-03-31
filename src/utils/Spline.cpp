@@ -188,18 +188,43 @@ namespace dftefe
       d_c0 = (d_left == first_deriv) ? 0.0 : d_c[0];
     }
 
+    //-------------------------------------------------------------------------
+    // Private: copy host vectors -> device MemoryStorage
+    //-------------------------------------------------------------------------
+
     void
-    Spline::set_points(const std::vector<double> &x,
-                       const std::vector<double> &y,
-                       spline_type                type)
+    Spline::syncToDevice()
     {
-      assert(x.size() == y.size());
-      assert(x.size() > 2);
+      size_type n = d_x.size();
+      d_x_device.resize(n);
+      d_y_device.resize(n);
+      d_b_device.resize(n);
+      d_c_device.resize(n);
+      d_d_device.resize(n);
+      MemoryTransfer<MemorySpace::DEVICE, MemorySpace::HOST>::copy(
+        n, d_x_device.data(), d_x.data());
+      MemoryTransfer<MemorySpace::DEVICE, MemorySpace::HOST>::copy(
+        n, d_y_device.data(), d_y.data());
+      MemoryTransfer<MemorySpace::DEVICE, MemorySpace::HOST>::copy(
+        n, d_b_device.data(), d_b.data());
+      MemoryTransfer<MemorySpace::DEVICE, MemorySpace::HOST>::copy(
+        n, d_c_device.data(), d_c.data());
+      MemoryTransfer<MemorySpace::DEVICE, MemorySpace::HOST>::copy(
+        n, d_d_device.data(), d_d.data());
+    }
+
+    //-------------------------------------------------------------------------
+    // computeAndSync: compute spline coefficients from d_x/d_y,
+    // then sync all arrays to the target memorySpace.
+    // Call this after d_x and d_y have been populated.
+    //-------------------------------------------------------------------------
+
+    void
+    Spline::computeAndSync(spline_type type)
+    {
       d_type           = type;
       d_made_monotonic = false;
-      d_x              = x;
-      d_y              = y;
-      int n            = (int)x.size();
+      int n            = (int)d_x.size();
       // check strict monotonicity of input vector x
       for (int i = 0; i < n - 1; i++)
         {
@@ -230,16 +255,16 @@ namespace dftefe
           // this requires solving an equation system
 
           // setting up the matrix and right hand side of the equation system
-          // for the parameters b[]
+          // for the parameters d_b[]
           splineInternal::band_matrix A(n, 1, 1);
           std::vector<double>         rhs(n);
           for (int i = 1; i < n - 1; i++)
             {
-              A(i, i - 1) = 1.0 / 3.0 * (x[i] - x[i - 1]);
-              A(i, i)     = 2.0 / 3.0 * (x[i + 1] - x[i - 1]);
-              A(i, i + 1) = 1.0 / 3.0 * (x[i + 1] - x[i]);
-              rhs[i]      = (y[i + 1] - y[i]) / (x[i + 1] - x[i]) -
-                       (y[i] - y[i - 1]) / (x[i] - x[i - 1]);
+              A(i, i - 1) = 1.0 / 3.0 * (d_x[i] - d_x[i - 1]);
+              A(i, i)     = 2.0 / 3.0 * (d_x[i + 1] - d_x[i - 1]);
+              A(i, i + 1) = 1.0 / 3.0 * (d_x[i + 1] - d_x[i]);
+              rhs[i]      = (d_y[i + 1] - d_y[i]) / (d_x[i + 1] - d_x[i]) -
+                       (d_y[i] - d_y[i - 1]) / (d_x[i] - d_x[i - 1]);
             }
           // boundary conditions
           if (d_left == Spline::second_deriv)
@@ -251,11 +276,11 @@ namespace dftefe
             }
           else if (d_left == Spline::first_deriv)
             {
-              // b[0] = f', needs to be re-expressed in terms of c:
-              // (2c[0]+c[1])(x[1]-x[0]) = 3 ((y[1]-y[0])/(x[1]-x[0]) - f')
-              A(0, 0) = 2.0 * (x[1] - x[0]);
-              A(0, 1) = 1.0 * (x[1] - x[0]);
-              rhs[0]  = 3.0 * ((y[1] - y[0]) / (x[1] - x[0]) - d_left_value);
+              // d_b[0] = f', needs to be re-expressed in terms of c:
+              // (2c[0]+c[1])(d_x[1]-d_x[0]) = 3 ((d_y[1]-d_y[0])/(d_x[1]-d_x[0]) - f')
+              A(0, 0) = 2.0 * (d_x[1] - d_x[0]);
+              A(0, 1) = 1.0 * (d_x[1] - d_x[0]);
+              rhs[0]  = 3.0 * ((d_y[1] - d_y[0]) / (d_x[1] - d_x[0]) - d_left_value);
             }
           else
             {
@@ -270,13 +295,13 @@ namespace dftefe
             }
           else if (d_right == Spline::first_deriv)
             {
-              // b[n-1] = f', needs to be re-expressed in terms of c:
-              // (c[n-2]+2c[n-1])(x[n-1]-x[n-2])
-              // = 3 (f' - (y[n-1]-y[n-2])/(x[n-1]-x[n-2]))
-              A(n - 1, n - 1) = 2.0 * (x[n - 1] - x[n - 2]);
-              A(n - 1, n - 2) = 1.0 * (x[n - 1] - x[n - 2]);
-              rhs[n - 1]      = 3.0 * (d_right_value - (y[n - 1] - y[n - 2]) /
-                                                    (x[n - 1] - x[n - 2]));
+              // d_b[n-1] = f', needs to be re-expressed in terms of c:
+              // (c[n-2]+2c[n-1])(d_x[n-1]-d_x[n-2])
+              // = 3 (f' - (d_y[n-1]-d_y[n-2])/(d_x[n-1]-d_x[n-2]))
+              A(n - 1, n - 1) = 2.0 * (d_x[n - 1] - d_x[n - 2]);
+              A(n - 1, n - 2) = 1.0 * (d_x[n - 1] - d_x[n - 2]);
+              rhs[n - 1]      = 3.0 * (d_right_value - (d_y[n - 1] - d_y[n - 2]) /
+                                                    (d_x[n - 1] - d_x[n - 2]));
             }
           else
             {
@@ -286,19 +311,19 @@ namespace dftefe
           // solve the equation system to obtain the parameters c[]
           d_c = A.lu_solve(rhs);
 
-          // calculate parameters b[] and d[] based on c[]
+          // calculate parameters d_b[] and d[] based on c[]
           d_d.resize(n);
           d_b.resize(n);
           for (int i = 0; i < n - 1; i++)
             {
-              d_d[i] = 1.0 / 3.0 * (d_c[i + 1] - d_c[i]) / (x[i + 1] - x[i]);
+              d_d[i] = 1.0 / 3.0 * (d_c[i + 1] - d_c[i]) / (d_x[i + 1] - d_x[i]);
               d_b[i] =
-                (y[i + 1] - y[i]) / (x[i + 1] - x[i]) -
-                1.0 / 3.0 * (2.0 * d_c[i] + d_c[i + 1]) * (x[i + 1] - x[i]);
+                (d_y[i + 1] - d_y[i]) / (d_x[i + 1] - d_x[i]) -
+                1.0 / 3.0 * (2.0 * d_c[i] + d_c[i + 1]) * (d_x[i + 1] - d_x[i]);
             }
           // for the right extrapolation coefficients (zero cubic term)
           // f_{n-1}(x) = y_{n-1} + b*(x-x_{n-1}) + c*(x-x_{n-1})^2
-          double h = x[n - 1] - x[n - 2];
+          double h = d_x[n - 1] - d_x[n - 2];
           // d_c[n-1] is determined by the boundary condition
           d_d[n - 1] = 0.0;
           d_b[n - 1] = 3.0 * d_d[n - 2] * h * h + 2.0 * d_c[n - 2] * h +
@@ -323,7 +348,7 @@ namespace dftefe
                        (h - hl) / (hl * h) * d_y[i] +
                        hl / (h * (hl + h)) * d_y[i + 1];
             }
-          // boundary conditions determine b[0] and b[n-1]
+          // boundary conditions determine d_b[0] and d_b[n-1]
           if (d_left == first_deriv)
             {
               d_b[0] = d_left_value;
@@ -361,13 +386,32 @@ namespace dftefe
           set_coeffs_from_b();
         }
       else
-        {
-          assert(false);
-        }
+        assert(false);
 
       // for left extrapolation coefficients
       d_c0 = (d_left == first_deriv) ? 0.0 : d_c[0];
+#ifdef DFTEFE_WITH_DEVICE
+      syncToDevice();
+#endif
     }
+
+    //-------------------------------------------------------------------------
+    // set_points: copy x,y from memorySpace -> host, compute, sync back
+    //-------------------------------------------------------------------------
+
+    void
+    Spline::set_points(
+      const std::vector<double> &x,
+      const std::vector<double> &y,
+      spline_type                               type)
+    {
+      assert(x.size() == y.size());
+      assert(x.size() > 2);
+      d_x              = x;
+      d_y              = y;
+      computeAndSync(type);
+    }
+
 
     bool
     Spline::make_monotonic()
@@ -390,9 +434,9 @@ namespace dftefe
               d_b[i]   = 0.0;
             }
         }
-      // if input data is monotonic (b[i], b[i+1], avg have all the same sign)
+      // if input data is monotonic (d_b[i], d_b[i+1], avg have all the same sign)
       // ensure a sufficient criteria for monotonicity is satisfied:
-      //     sqrt(b[i]^2+b[i+1]^2) <= 3 |avg|, with avg=(y[i+1]-y[i])/h,
+      //     sqrt(d_b[i]^2+d_b[i+1]^2) <= 3 |avg|, with avg=(d_y[i+1]-d_y[i])/h,
       for (int i = 0; i < n - 1; i++)
         {
           double h   = d_x[i + 1] - d_x[i];
@@ -412,7 +456,7 @@ namespace dftefe
               if (r > 3.0)
                 {
                   // sufficient criteria for monotonicity: r<=3
-                  // adjust b[i] and b[i+1]
+                  // adjust d_b[i] and d_b[i+1]
                   modified = true;
                   d_b[i] *= (3.0 / r);
                   d_b[i + 1] *= (3.0 / r);
@@ -424,6 +468,9 @@ namespace dftefe
         {
           set_coeffs_from_b();
           d_made_monotonic = true;
+#ifdef DFTEFE_WITH_DEVICE
+          syncToDevice();
+#endif
         }
 
       return modified;
@@ -633,7 +680,29 @@ namespace dftefe
       return ss.str();
     }
 
+    template<>
+    void
+    Spline::evalAll<utils::MemorySpace::HOST>(size_type   n,
+              const double *x, 
+              double *y,
+              utils::deviceStream_t  streamId) const
+    {
+      for (size_type i = 0; i < n; ++i)
+        y[i] = ((*this)((x[i])));
+    }
 
+    template<>
+    void
+    Spline::derivAll<utils::MemorySpace::HOST>(size_type        n,
+                int              order,
+                const double *x,
+                double *      y,
+              utils::deviceStream_t  streamId) const
+    {
+      for (size_type i = 0; i < n; ++i)
+        y[i] = (this->deriv(order, (x[i])));
+    }
+    
     namespace splineInternal
     {
       // band_matrix implementation

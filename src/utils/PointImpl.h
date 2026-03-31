@@ -109,6 +109,20 @@ namespace dftefe
       end() const;
 
       /**
+       * @brief Return the raw pointer to the Vector
+       * @return pointer to data
+       */
+      T *
+      data() noexcept;
+
+      /**
+       * @brief Return the raw pointer to the Vector without modifying the values
+       * @return pointer to const data
+       */
+      const T *
+      data() const noexcept;
+
+      /**
        * @brief Operator overload for assignment q=p
        * @param[in] p the rhs PointImpl from which to copy
        *

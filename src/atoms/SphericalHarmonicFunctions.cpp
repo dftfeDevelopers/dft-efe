@@ -280,18 +280,21 @@ namespace dftefe
         }
     }
 
+    template<>
     void
-    convertCartesianToSpherical(const std::vector<utils::Point> &points,
-                                std::vector<double> &            r,
-                                std::vector<double> &            theta,
-                                std::vector<double> &            phi,
-                                double polarAngleTolerance)
+    convertCartesianToSpherical<utils::MemorySpace::HOST>(size_type numPoints,
+                                const double *points,
+                                double *            r,
+                                double *            theta,
+                                double *           phi,
+                                double polarAngleTolerance,
+                                utils::deviceStream_t  streamId)
     {
-      for (int i = 0; i < points.size(); i++)
+      for (int i = 0; i < numPoints; i++)
         {
-          utils::Point x(points[i]);
-          double &     radius = r[i];
-          radius              = sqrt(x[0] * x[0] + x[1] * x[1] + x[2] * x[2]);
+          const double *x = points + i * 3;
+          r[i]             = sqrt(x[0] * x[0] + x[1] * x[1] + x[2] * x[2]);
+          double radius = r[i];
           if (radius == 0)
             {
               theta[i] = 0.0;
@@ -320,6 +323,36 @@ namespace dftefe
     ///////////////////////////////////////////////////////////////////////////
     ///////////// START OF SPHERICAL HARMONICS RELATED FUNCTIONS //////////////
     ///////////////////////////////////////////////////////////////////////////
+
+    //=========================================================================
+    // Qm<HOST>
+    //=========================================================================
+    template <>
+    void
+    Qm<utils::MemorySpace::HOST>(size_type             numPoints,
+                                  const int             m,
+                                  const double *        phi,
+                                  double *              out,
+                                  utils::deviceStream_t streamId)
+    {
+      for (size_type i = 0; i < numPoints; i++)
+        out[i] = Qm(m, phi[i]);
+    }
+
+    //=========================================================================
+    // dQmDPhi<HOST>
+    //=========================================================================
+    template <>
+    void
+    dQmDPhi<utils::MemorySpace::HOST>(size_type             numPoints,
+                                       const int             m,
+                                       const double *        phi,
+                                       double *              out,
+                                       utils::deviceStream_t streamId)
+    {
+      for (size_type i = 0; i < numPoints; i++)
+        out[i] = dQmDPhi(m, phi[i]);
+    }
 
     //
     // We use the real form of spherical harmonics without the Condon-Shortley
@@ -531,5 +564,57 @@ namespace dftefe
     ///////////////////////////////////////////////////////////////////////////
     ///////////// END OF SPHERICAL HARMONICS RELATED FUNCTIONS //////////////
     ///////////////////////////////////////////////////////////////////////////
+
+    //=========================================================================
+    // SphericalHarmonicFunctions::Plm<HOST>
+    //=========================================================================
+    template <>
+    void
+    SphericalHarmonicFunctions::Plm<utils::MemorySpace::HOST>(
+      size_type             numPoints,
+      const int             l,
+      const int             m,
+      const double *        theta,
+      double *              out,
+      utils::deviceStream_t streamId) const
+    {
+      for (size_type i = 0; i < numPoints; i++)
+        out[i] = Plm(l, m, theta[i]);
+    }
+
+    //=========================================================================
+    // SphericalHarmonicFunctions::dPlmDTheta<HOST>
+    //=========================================================================
+    template <>
+    void
+    SphericalHarmonicFunctions::dPlmDTheta<utils::MemorySpace::HOST>(
+      size_type             numPoints,
+      const int             l,
+      const int             m,
+      const double *        theta,
+      double *              out,
+      utils::deviceStream_t streamId) const
+    {
+      for (size_type i = 0; i < numPoints; i++)
+        out[i] = dPlmDTheta(l, m, theta[i]);
+    }
+
+    //=========================================================================
+    // SphericalHarmonicFunctions::d2PlmDTheta2<HOST>
+    //=========================================================================
+    template <>
+    void
+    SphericalHarmonicFunctions::d2PlmDTheta2<utils::MemorySpace::HOST>(
+      size_type             numPoints,
+      const int             l,
+      const int             m,
+      const double *        theta,
+      double *              out,
+      utils::deviceStream_t streamId) const
+    {
+      for (size_type i = 0; i < numPoints; i++)
+        out[i] = d2PlmDTheta2(l, m, theta[i]);
+    }
+
   } // namespace atoms
 } // namespace dftefe

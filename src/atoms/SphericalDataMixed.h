@@ -36,6 +36,7 @@
 #include <utils/Point.h>
 #include <atoms/Defaults.h>
 #include <atoms/SphericalHarmonicFunctions.h>
+#include <utils/Exceptions.h>
 
 namespace dftefe
 {
@@ -112,6 +113,47 @@ namespace dftefe
 
       double
       getSmoothness() const override;
+
+#ifdef DFTEFE_WITH_DEVICE
+      void
+      getValueDevice(const size_type       numPoints,
+                     const double *        points,
+                     const double *        origin,
+                     double *              out,
+                     utils::deviceStream_t streamId =
+                       utils::defaultStream) override
+      {
+        utils::throwException(false,
+                              "getValueDevice not implemented for "
+                              "SphericalDataMixed.");
+      }
+
+      void
+      getGradientValueDevice(const size_type       numPoints,
+                             const double *        points,
+                             const double *        origin,
+                             double *              out,
+                             utils::deviceStream_t streamId =
+                               utils::defaultStream) override
+      {
+        utils::throwException(false,
+                              "getGradientValueDevice not implemented for "
+                              "SphericalDataMixed.");
+      }
+
+      void
+      getHessianValueDevice(const size_type       numPoints,
+                            const double *        points,
+                            const double *        origin,
+                            double *              out,
+                            utils::deviceStream_t streamId =
+                              utils::defaultStream) override
+      {
+        utils::throwException(false,
+                              "getHessianValueDevice not implemented for "
+                              "SphericalDataMixed.");
+      }
+#endif
 
     private:
       std::vector<int>                     d_qNumbers;

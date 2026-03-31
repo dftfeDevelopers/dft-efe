@@ -34,6 +34,10 @@
 #include <algorithm>
 #include <sstream>
 #include <string>
+#include <utils/MemoryStorage.h>
+#ifdef DFTEFE_WITH_DEVICE
+  #include <utils/DeviceKernelLauncherHelpers.h>
+#endif
 
 
 // header file and we don't want to export symbols to the obj files
@@ -41,6 +45,24 @@ namespace dftefe
 {
   namespace utils
   {
+#ifdef DFTEFE_WITH_DEVICE
+    // Plain-old-data view of a Spline's device-side arrays.
+    // Safe to pass by value into CUDA/HIP/SYCL kernels.
+    struct SplineDeviceView
+    {
+      const double * x;
+      const double * y;
+      const double * b;
+      const double * c;
+      const double * d;
+      size_type      n;
+      double         c0;
+      bool           isSubdivGrid;
+      double         a;
+      double         r;
+      unsigned int   numSubDiv;
+    };
+#endif
     // spline interpolation
     class Spline
     {
@@ -78,6 +100,20 @@ namespace dftefe
       set_coeffs_from_b(); // calculate c_i, d_i from b_i
       size_t
       find_closest(double x) const; // closest idx so that d_x[idx]<=x
+
+      // Compute spline coefficients from d_x_host/d_y_host, then syncToDevice.
+      void
+      computeAndSync(spline_type type);
+
+#ifdef DFTEFE_WITH_DEVICE
+      // Copy host vectors -> Device
+      void
+      syncToDevice();
+
+      // ---- device-resident MemoryStorage (managed on host) ----
+      MemoryStorage<double, utils::MemorySpace::DEVICE> d_x_device, d_y_device;
+      MemoryStorage<double, utils::MemorySpace::DEVICE> d_b_device, d_c_device, d_d_device;
+#endif
 
     public:
       // default constructor: set boundary condition to be zero curvature
@@ -152,6 +188,43 @@ namespace dftefe
       // spline info string, i.e. spline type, boundary conditions etc.
       std::string
       info() const;
+
+#ifdef DFTEFE_WITH_DEVICE
+      // Returns a POD view of the device-side knot/coefficient arrays.
+      // Safe to copy by value into GPU kernels.
+      SplineDeviceView
+      getDeviceView() const
+      {
+        SplineDeviceView v;
+        v.x           = d_x_device.data();
+        v.y           = d_y_device.data();
+        v.b           = d_b_device.data();
+        v.c           = d_c_device.data();
+        v.d           = d_d_device.data();
+        v.n           = static_cast<size_type>(d_x_device.size());
+        v.c0          = d_c0;
+        v.isSubdivGrid = d_isSubdivPowerLawGrid;
+        v.a           = d_a;
+        v.r           = d_r;
+        v.numSubDiv   = d_numSubDiv;
+        return v;
+      }
+#endif
+
+      template <dftefe::utils::MemorySpace memorySpace>
+      void
+      evalAll(size_type   numPoints,
+              const double *x, 
+              double *y,
+              utils::deviceStream_t  streamId = utils::defaultStream) const;
+
+      template <dftefe::utils::MemorySpace memorySpace>
+      void
+      derivAll(size_type        numPoints,
+                int              order,
+                const double *x,
+                double *      y,
+                utils::deviceStream_t  streamId = utils::defaultStream) const;
     };
 
     namespace splineInternal
@@ -202,5 +275,9 @@ namespace dftefe
     } // namespace splineInternal
   }   // namespace utils
 } // namespace dftefe
+
+#ifdef DFTEFE_WITH_DEVICE
+#  include <utils/SplineDeviceKernels.h>
+#endif
 
 #endif // dftefeSpline_h

@@ -87,6 +87,29 @@ namespace dftefe
                            const std::vector<double> &theta,
                            const std::vector<double> &phi) = 0;
 
+#ifdef DFTEFE_WITH_DEVICE
+      virtual void
+      getValueDevice(const size_type numPoints, 
+              const double    *points, 
+              const double    *origin,
+              double *out,
+              utils::deviceStream_t  streamId = utils::defaultStream) = 0;
+
+      virtual void
+      getGradientValueDevice(const size_type numPoints, 
+              const double    *points, 
+              const double    *origin,
+              double *out,
+              utils::deviceStream_t  streamId = utils::defaultStream) = 0;
+
+      virtual void
+      getHessianValueDevice(const size_type numPoints, 
+              const double    *points, 
+              const double    *origin,
+              double *out,
+              utils::deviceStream_t  streamId = utils::defaultStream) = 0;
+#endif
+
       virtual std::vector<int>
       getQNumbers() const = 0;
 

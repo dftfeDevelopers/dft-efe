@@ -24,6 +24,9 @@
  */
 #include <utils/PointImpl.h>
 #include <basis/L2ProjectionLinearSolverFunction.h>
+#include <atoms/SphericalDataNumerical.h>
+#include <utils/MemoryStorage.h>
+#include <utils/MemoryTransfer.h>
 #include <quadrature/QuadratureValuesContainer.h>
 #include <basis/CFEOverlapInverseOpContextGLL.h>
 #include <utils/ScalarSpatialFunction.h>
@@ -1165,6 +1168,7 @@ namespace dftefe
       // unsigned int numEnrichedIdsSkipped = 0;
       // unsigned int l                     = 0;
 
+      size_type  atomIdPrev = std::numeric_limits<size_type>::max();
       for (int iEnrich = 0; iEnrich < numEnrichIdsInCell;
            iEnrich += 1 /*numEnrichedIdsSkipped*/)
         {
@@ -1175,18 +1179,22 @@ namespace dftefe
           size_type atomId  = eIdAttr.atomId;
           size_type localId = eIdAttr.localIdInAtom;
 
+          if(atomIdPrev != atomId)
+          {   
           utils::Point origin(d_atomCoordinatesVec[atomId]);
           std::transform(points.begin(),
                          points.end(),
                          x.begin(),
                          [origin](utils::Point p) { return p - origin; });
 
-          atoms::convertCartesianToSpherical(
-            x,
-            rVec,
-            thetaVec,
-            phiVec,
-            atoms::SphericalDataDefaults::POL_ANG_TOL);
+          for(int iPts = 0 ; iPts < points.size() ; iPts++)
+            atoms::convertCartesianToSpherical(
+              x[iPts],
+              rVec[iPts],
+              thetaVec[iPts],
+              phiVec[iPts],
+              atoms::SphericalDataDefaults::POL_ANG_TOL);
+          }
 
           auto sphericalDataVec =
             d_atomSphericalDataContainer->getSphericalData(
@@ -1215,6 +1223,7 @@ namespace dftefe
             *linearAlgebra::LinAlgOpContextDefaults::LINALG_OP_CONTXT_HOST);
           //   }
           // numEnrichedIdsSkipped = (2 * l + 1);
+          atomIdPrev = atomId;
         }
       return retValue;
     }
@@ -1243,6 +1252,8 @@ namespace dftefe
       // unsigned int numEnrichedIdsSkipped = 0;
       unsigned int l = 0;
 
+      size_type  atomIdPrev = std::numeric_limits<size_type>::max();
+
       for (int iEnrich = 0; iEnrich < numEnrichIdsInCell;
            iEnrich += 1 /*numEnrichedIdsSkipped*/)
         {
@@ -1253,18 +1264,22 @@ namespace dftefe
           size_type atomId  = eIdAttr.atomId;
           size_type localId = eIdAttr.localIdInAtom;
 
+          if(atomIdPrev != atomId)
+          {    
           utils::Point origin(d_atomCoordinatesVec[atomId]);
           std::transform(points.begin(),
                          points.end(),
                          x.begin(),
                          [origin](utils::Point p) { return p - origin; });
 
-          atoms::convertCartesianToSpherical(
-            x,
-            rVec,
-            thetaVec,
-            phiVec,
-            atoms::SphericalDataDefaults::POL_ANG_TOL);
+          for(int iPts = 0 ; iPts < points.size() ; iPts++)
+            atoms::convertCartesianToSpherical(
+              x[iPts],
+              rVec[iPts],
+              thetaVec[iPts],
+              phiVec[iPts],
+              atoms::SphericalDataDefaults::POL_ANG_TOL);
+          }
 
           auto sphericalDataVec =
             d_atomSphericalDataContainer->getSphericalData(
@@ -1317,6 +1332,7 @@ namespace dftefe
             }
           //   }
           // numEnrichedIdsSkipped = (2 * l + 1);
+          atomIdPrev = atomId;
         }
       return retValue;
     }
@@ -1338,5 +1354,91 @@ namespace dftefe
       return std::vector<double>(0);
     }
 
+    // // gpu cpu hybrid kernel for calculating the enrichment id values at 
+    // // all cells in all quad points 
+    // // for variable quad points also
+    // template <typename ValueTypeBasisData,
+    //           utils::MemorySpace memorySpace,
+    //           size_type          dim>
+    // std::vector<double>
+    // EnrichmentClassicalInterfaceSpherical<ValueTypeBasisData,
+    //                                       memorySpace,
+    //                                       dim>::
+    //   getEnrichmentValuesInAllCellsAtQuadPts(quadrature::QuadratureRuleContainer &quadRuleContainer, 
+    //                     std::vector<ValueTypeBasisData> quadValuesInAllCellsEnrichment) const
+    // {
+    //   std::vector<double> quadPtsInOverlappingCellsWithLocalEIds(0);
+    //   std::vector<double> quadValuesInOverlappingCellsWithLocalEIds(0);
+    //   for (int iLocalEId = 0 ; iLocalEId < d_enrichmentIdsPartition->numLocalEnrichments() ; iLocalEId++)
+    //   {
+    //      basis::EnrichmentIdAttribute eIdAttr =
+    //         d_enrichmentIdsPartition->getEnrichmentIdAttribute(localEIdToGlobalEId(iLocalEId));
+
+    //       size_type atomId  = eIdAttr.atomId;
+    //       size_type localId = eIdAttr.localIdInAtom;
+
+    //       auto sphericalData =
+    //         d_atomSphericalDataContainer->getSphericalData(
+    //           d_atomSymbolVec[atomId], d_fieldName)[localId];
+
+    //       auto quantumNoVec =
+    //         d_atomSphericalDataContainer->getQNumbers(d_atomSymbolVec[atomId], d_fieldName);
+
+    //       l = quantumNoVec[localId][1];
+    //       m = quantumNoVec[localId][2];
+
+    //     std::vector<size_type> overlappingCellsWithLocalEId = 
+    //       d_enrichmentIdsPartition->overlappingCellsWithLocalEnrichmentId(iLocalEId);
+    //     cumulativeQuadInLocalEId[iLocalEId] = 0;
+    //     for (int iCell = 0 ; iCell < overlappingCellsWithLocalEId.size() ; iCell++)
+    //     {
+    //       cellId = overlappingCellsWithLocalEId[iCell];
+    //       cumulativeQuadInLocalEId[iLocalEId] += quadRuleContainer.nCellQuadraturePoints(cellId);
+    //       for(int iQuadPt = 0 ; iQuadPt < numQuadInCell ; iQuadPt++)
+    //       {
+    //         std::memcpy(*quadPtsInOverlappingCellsWithLocalEIds.data() + iQuadPt,
+    //                      d_enrichmentIdsPartition->getCellRealPoints(cellId),
+    //                      dim);
+    //       }
+    //     }
+    //   }
+
+    //   std::vector<double> cumulativeQuadxEnrichPerCell(numLocallyOwnedCells);
+    //   for(int iCell = 0 ; iCell < numLocallyOwnedCells ; iCell++)
+    //   {
+    //     cumulativeQuadxEnrichPerCell[iCell] += numQuadInCell * numEnrichInCell;
+    //   }
+
+    //   utils::MemoryStorage<double, memorySpace> quadPtsInOverlappingCellsWithLocalEIdsMemSpace(0);
+    //   // transfer points to device 
+      
+    //   // computation 
+
+    //   getEnrichmentValues(
+    //     const size_type  numEnrichmentFunc,
+    //     cumulativeQuadInLocalEId.data(),
+    //     std::vector<const SphericalData&> &sphericalDataVec,
+    //     double * values);
+
+    //   // transfer values to host 
+
+    //   // transpose from enrich->cell->quad with overlapping cells to cell->enrich->quad with all cells 
+    //   int cumuLativeQuadPerCellInLocalEnrich = 0; 
+    //   for (int iLocalEId = 0 ; iLocalEId < d_enrichmentIdsPartition->numLocalEnrichments() ; iLocalEId++)
+    //   {
+    //     std::vector<size_type> overlappingCellsWithLocalEId = 
+    //       d_enrichmentIdsPartition->overlappingCellsWithLocalEnrichmentId(iLocalEId);
+    //     for (int iCell = 0 ; iCell < overlappingCellsWithLocalEId.size() ; iCell++)
+    //     {
+    //       cellId = overlappingCellsWithLocalEId[iCell];
+    //       std::memcpy(quadValuesInAllCellsEnrichment.data() + cumulativeQuadxEnrichPerCell[cellId] + 
+    //                   localToCellLocalEIdsVec[cumulativeCellsInEId[iLocalEId] + iCell] * numQuadInCell, // dst 
+    //                   quadValuesInOverlappingCellsWithLocalEIds.data() + cumuLativeQuadPerCellInLocalEnrich, // src 
+    //                   numQuadInCell);
+    //       cumuLativeQuadPerCellInLocalEnrich += numQuadInCell;
+    //     }
+    //   }
+    // }
+    
   } // namespace basis
 } // namespace dftefe

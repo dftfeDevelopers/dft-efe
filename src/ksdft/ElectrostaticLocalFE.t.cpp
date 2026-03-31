@@ -1520,8 +1520,8 @@ namespace dftefe
               for (int jAtom = 0; jAtom < atomCoordinates.size(); jAtom++)
                 {
                   double r, theta, phi;
-                  atoms::convertCartesianToSpherical(atomCoordinates[iAtom] -
-                                                       atomCoordinates[jAtom],
+                  atoms::convertCartesianToSpherical((atomCoordinates[iAtom] -
+                                                       atomCoordinates[jAtom]),
                                                      r,
                                                      theta,
                                                      phi,

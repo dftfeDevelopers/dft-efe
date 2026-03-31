@@ -128,6 +128,20 @@ namespace dftefe
     }
 
     template <typename T>
+    T *
+    PointImpl<T>::data() noexcept
+    {
+      return d_data;
+    }
+
+    template <typename T>
+    const T *
+    PointImpl<T>::data() const noexcept
+    {
+      return d_data;
+    }
+
+    template <typename T>
     inline typename PointImpl<T>::reference
     PointImpl<T>::operator[](size_type i)
     {

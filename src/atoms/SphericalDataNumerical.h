@@ -27,6 +27,8 @@
 #define dftefeSphericalDataNumerical_h
 
 #include <utils/TypeConfig.h>
+#include <utils/MemorySpaceType.h>
+#include <utils/DeviceTypeConfig.h>
 #include <vector>
 #include <utils/Point.h>
 #include <atoms/SphericalData.h>
@@ -82,6 +84,29 @@ namespace dftefe
       std::vector<double>
       getHessianValue(const utils::Point &point,
                       const utils::Point &origin) override;
+
+#ifdef DFTEFE_WITH_DEVICE
+      void
+      getValueDevice(const size_type numPoints, 
+              const double    *points, 
+              const double    *origin,
+              double *out,
+              utils::deviceStream_t  streamId = utils::defaultStream) override;
+
+      void
+      getGradientValueDevice(const size_type numPoints, 
+              const double    *points, 
+              const double    *origin,
+              double *out,
+              utils::deviceStream_t  streamId = utils::defaultStream) override;
+
+      void
+      getHessianValueDevice(const size_type numPoints, 
+              const double    *points, 
+              const double    *origin,
+              double *out,
+              utils::deviceStream_t  streamId = utils::defaultStream) override;
+#endif              
 
       std::vector<double>
       getRadialValue(const std::vector<double> &r) override;

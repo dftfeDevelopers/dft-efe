@@ -672,6 +672,7 @@ namespace dftefe
                            "The requested cell does not have any proj ids.");
       unsigned int numProjIdsSkipped = 0;
       unsigned int l                 = 0;
+      size_type  atomIdPrev = std::numeric_limits<size_type>::max();
 
       for (int iProj = 0; iProj < numProjIdsInCell; iProj += numProjIdsSkipped)
         {
@@ -681,18 +682,22 @@ namespace dftefe
           size_type atomId  = pIdAttr.atomId;
           size_type localId = pIdAttr.localIdInAtom;
 
+          if(atomIdPrev != atomId)
+          {
           utils::Point origin(d_atomCoordinatesVec[atomId]);
           std::transform(points.begin(),
                          points.end(),
                          x.begin(),
                          [origin](utils::Point p) { return p - origin; });
 
-          atoms::convertCartesianToSpherical(
-            x,
-            rVec,
-            thetaVec,
-            phiVec,
-            atoms::SphericalDataDefaults::POL_ANG_TOL);
+          for(int iPts = 0 ; iPts < points.size() ; iPts++)
+            atoms::convertCartesianToSpherical(
+              x[iPts],
+              rVec[iPts],
+              thetaVec[iPts],
+              phiVec[iPts],
+              atoms::SphericalDataDefaults::POL_ANG_TOL);
+          }
 
           auto sphericalDataVec =
             d_atomSphericalDataContainer->getSphericalData(
@@ -724,6 +729,7 @@ namespace dftefe
                   LINALG_OP_CONTXT_HOST);
             }
           numProjIdsSkipped = (2 * l + 1);
+          atomIdPrev = atomId;
         }
       return retValue;
     }

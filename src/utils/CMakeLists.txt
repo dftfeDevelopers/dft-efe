@@ -79,18 +79,21 @@ IF (ENABLE_GPU)
       DeviceUtils.cpp
       DeviceAPICalls.cu.cpp
       DiscontiguousDataOperationsKernelsDevice.cpp
+      SplineDeviceKernels.cpp
     )
   ELSEIF ("${GPU_LANG}" STREQUAL "hip")
   SET(DFT-EFE-UTILS-DEVICE-SOURCES
       DeviceUtils.cpp
       DeviceAPICalls.hip.cpp
       DiscontiguousDataOperationsKernelsDevice.cpp
+      SplineDeviceKernels.cpp
     )
   ELSEIF ("${GPU_LANG}" STREQUAL "sycl")
   SET(DFT-EFE-UTILS-DEVICE-SOURCES
       DeviceUtils.cpp
       DeviceAPICalls.sycl.cpp
       DiscontiguousDataOperationsKernelsDevice.cpp
+      SplineDeviceKernels.cpp
     )
   ENDIF()
 ENDIF()

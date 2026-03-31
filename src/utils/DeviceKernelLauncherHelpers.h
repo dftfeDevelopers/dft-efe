@@ -274,5 +274,14 @@ namespace dftefe
         "No device backend defined (DFTEFE_WITH_DEVICE_LANG_CUDA or DFTEFE_WITH_DEVICE_LANG_HIP or DFTEFE_WITH_DEVICE_LANG_SYCL)"
 #    endif
 
+#  if defined(DFTEFE_WITH_DEVICE_LANG_CUDA) || \
+    defined(DFTEFE_WITH_DEVICE_LANG_HIP)
+#    define DFTEFE_DEVICE_FUNC __device__ __forceinline__
+#  elif defined(DFTEFE_WITH_DEVICE_LANG_SYCL)
+#    define DFTEFE_DEVICE_FUNC inline
+#      error \
+        "No device backend defined (DFTEFE_WITH_DEVICE_LANG_CUDA or DFTEFE_WITH_DEVICE_LANG_HIP or DFTEFE_WITH_DEVICE_LANG_SYCL)"
+#  endif
+
 #  endif // dftefeDeviceKernelLauncherHelpers_h
 #endif   // DFTEFE_WITH_DEVICE

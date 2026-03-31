@@ -8,6 +8,9 @@
 #include <utils/Point.h>
 #include <sstream>
 #include <utils/Spline.h>
+#ifdef DFTEFE_WITH_DEVICE
+  #  include <utils/DeviceKernelLauncherHelpers.h>
+#endif
 
 namespace dftefe
 {
@@ -88,6 +91,44 @@ namespace dftefe
 
       double
       d2PlmDTheta2(const int l, const int m, const double theta) const;
+
+      template <dftefe::utils::MemorySpace memorySpace>
+      void
+      Plm(size_type numPoints,
+          const int l, 
+          const int m, 
+          const double *theta, 
+          double *out,
+        utils::deviceStream_t  streamId = utils::defaultStream) const;
+
+      template <dftefe::utils::MemorySpace memorySpace>
+      void
+      dPlmDTheta(size_type numPoints,
+                const int l, 
+                const int m, 
+                const double *theta, 
+                double *out,
+              utils::deviceStream_t  streamId = utils::defaultStream) const;
+
+      template <dftefe::utils::MemorySpace memorySpace>
+      void
+      d2PlmDTheta2(size_type numPoints,
+                  const int l, 
+                  const int m, 
+                  const double *theta, 
+                  double *out,
+                utils::deviceStream_t  streamId = utils::defaultStream) const;
+
+#ifdef DFTEFE_WITH_DEVICE
+      DFTEFE_DEVICE_FUNC double
+      PlmDevice(const int l, const int m, const double theta) const;
+
+      DFTEFE_DEVICE_FUNC double
+      dPlmDThetaDevice(const int l, const int m, const double theta) const;
+
+      DFTEFE_DEVICE_FUNC double
+      d2PlmDTheta2Device(const int l, const int m, const double theta) const;
+#endif
       ///////////////////////////////////////////////////////////////////////////
       ///////////// END OF SPHERICAL HARMONICS RELATED FUNCTIONS //////////////
       ///////////////////////////////////////////////////////////////////////////
@@ -106,12 +147,16 @@ namespace dftefe
                                 double &            phi,
                                 double              polarAngleTolerance);
 
+    template <dftefe::utils::MemorySpace memorySpace>
     void
-    convertCartesianToSpherical(const std::vector<utils::Point> &x,
-                                std::vector<double> &            r,
-                                std::vector<double> &            theta,
-                                std::vector<double> &            phi,
-                                double polarAngleTolerance);
+    convertCartesianToSpherical(size_type numPoints,
+                                const double * x,
+                                double *       r,
+                                double *       theta,
+                                double *       phi,
+                                double polarAngleTolerance,
+                                utils::deviceStream_t  streamId = 
+                                  utils::defaultStream);
     double
     Dm(const int m);
 
@@ -121,9 +166,22 @@ namespace dftefe
     double
     Qm(const int m, const double phi);
 
+    template <dftefe::utils::MemorySpace memorySpace>
+    void
+    Qm(size_type numPoints, const int m, const double *phi, double *out,  utils::deviceStream_t  streamId = utils::defaultStream);
+
     double
     dQmDPhi(const int m, const double phi);
 
+    template <dftefe::utils::MemorySpace memorySpace>
+    void
+    dQmDPhi(size_type numPoints, const int m, const double *phi, double *out,  utils::deviceStream_t  streamId = utils::defaultStream);
+
   } // namespace atoms
 } // namespace dftefe
+
+#ifdef DFTEFE_WITH_DEVICE
+#include <atoms/SphericalHarmonicFunctionsDeviceKernels.h>
+#endif
+
 #endif // SphericalHarmonicFunctions

@@ -13,6 +13,7 @@
 #include <utils/MPITypes.h>
 #include <utils/MPIWrapper.h>
 #include <quadrature/Defaults.h>
+#include <utils/MemoryStorage.h>
 namespace dftefe
 {
   namespace quadrature
@@ -253,12 +254,78 @@ namespace dftefe
       const basis::CellMappingBase &
       getCellMapping() const;
 
+#ifdef DFTEFE_WITH_DEVICE
+      template <utils::MemorySpace memorySpace>
+      inline size_type*
+      getCellQuadStartIdsPtr() const
+      {
+        if constexpr(memorySpace == utils::MemorySpace::HOST)
+        {
+          return d_cellQuadStartIds.data();
+        }
+        else
+        {
+          return d_cellQuadStartIdsDevice.data();
+        }
+      }
+
+      template <utils::MemorySpace memorySpace>
+      inline double*
+      getJxWPtr() const
+      {
+        if constexpr(memorySpace == utils::MemorySpace::HOST)
+        {
+          return d_JxW.data();
+        }
+        else
+        {
+          return d_JxWDevice.data();
+        }
+      }
+
+      template <utils::MemorySpace memorySpace>
+      inline double*
+      getRealPointsPtr() const
+      {
+        if constexpr(memorySpace == utils::MemorySpace::HOST)
+        {
+          return d_realPointsHost.data();
+        }
+        else
+        {
+          return d_realPointsDevice.data();
+        }
+      }
+#else
+      template <>
+      inline size_type*
+      getCellQuadStartIdsPtr<utils::MemorySpace::HOST>() const
+      {
+          return d_cellQuadStartIds.data();
+      }
+
+      template <>
+      inline double*
+      getJxWPtr<utils::MemorySpace::HOST>() const
+      {
+          return d_JxW.data();
+      }
+
+      template <>
+      inline double*
+      getRealPointsPtr<utils::MemorySpace::HOST>() const
+      {
+          return d_realPointsHost.data();
+      }
+#endif
+
     private:
       const QuadratureRuleAttributes &d_quadratureRuleAttributes;
       std::vector<std::shared_ptr<const QuadratureRule>> d_quadratureRuleVec;
       std::vector<size_type>                             d_numCellQuadPoints;
       std::vector<size_type>                             d_cellQuadStartIds;
       std::vector<dftefe::utils::Point>                  d_realPoints;
+      std::vector<double>                                d_realPointsHost;
       std::vector<double>                                d_JxW;
       unsigned int                                       d_dim;
       size_type                                          d_numQuadPoints;
@@ -266,6 +333,12 @@ namespace dftefe
       bool                                               d_storeJacobianInverse;
       std::shared_ptr<const basis::TriangulationBase>    d_triangulation;
       const basis::CellMappingBase &                     d_cellMapping;
+
+#ifdef DFTEFE_WITH_DEVICE
+      utils::MemoryStorage<size_type, utils::MemorySpace::DEVICE> d_cellQuadStartIdsDevice;
+      utils::MemoryStorage<double, utils::MemorySpace::DEVICE>    d_realPointsDevice;
+      utils::MemoryStorage<double, utils::MemorySpace::DEVICE>    d_JxWDevice;
+#endif
     };
   } // end of namespace quadrature
 

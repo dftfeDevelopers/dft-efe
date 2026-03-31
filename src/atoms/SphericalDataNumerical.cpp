@@ -32,6 +32,7 @@
 #include <cmath>
 #include <atoms/SphericalDataNumerical.h>
 #include <boost/math/special_functions/spherical_harmonic.hpp>
+#include <utils/Exceptions.h>
 
 namespace dftefe
 {
@@ -167,6 +168,12 @@ namespace dftefe
                 double dValueDPhiByrsinTheta = 0.;
                 dValueDPhiByrsinTheta =
                   (radialValue / r) * cutoffValue * dYlmDPhiBysinTheta;
+
+              if ((r < 1e-4 && l > 0))
+                {
+                  dValueDThetaByr = dValueDR * dYlmDTheta;
+                  dValueDPhiByrsinTheta = dValueDR * dYlmDPhiBysinTheta;
+                }
 
                 gradient[3 * i + 0] =
                   dValueDR * (sin(theta) * cos(phi)) +
