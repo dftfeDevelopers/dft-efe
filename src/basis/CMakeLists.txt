@@ -54,6 +54,7 @@ set(DFT-EFE-BASIS-SOURCES
 	OEFEAtomBlockOverlapInvOpContextGLL.cpp
 	AtomCenterNonLocalOpContextFE.cpp
 	FECellWiseDataOperations.cpp
+	EnrichmentDataEvalKernels.cpp
 	)
 
 IF (ENABLE_GPU)
@@ -61,16 +62,19 @@ IF ("${GPU_LANG}" STREQUAL "cuda")
 SET(DFT-EFE-BASIS-DEVICE-SOURCES
 	ConstraintsInternalDeviceKernels.cpp
 	FECellWiseDataOperationsDeviceKernels.cpp
+	EnrichmentDataEvalDeviceKernels.cpp
 	)
 ELSEIF ("${GPU_LANG}" STREQUAL "hip")
 SET(DFT-EFE-BASIS-DEVICE-SOURCES
 	ConstraintsInternalDeviceKernels.cpp
 	FECellWiseDataOperationsDeviceKernels.cpp
+	EnrichmentDataEvalDeviceKernels.cpp
 	)
 ELSEIF ("${GPU_LANG}" STREQUAL "sycl")
 SET(DFT-EFE-BASIS-DEVICE-SOURCES
 	ConstraintsInternalDeviceKernels.cpp
 	FECellWiseDataOperationsDeviceKernels.cpp
+	EnrichmentDataEvalDeviceKernels.cpp
 	)
 ENDIF()
 ENDIF()

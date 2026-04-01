@@ -256,21 +256,7 @@ namespace dftefe
 
 #ifdef DFTEFE_WITH_DEVICE
       template <utils::MemorySpace memorySpace>
-      inline size_type*
-      getCellQuadStartIdsPtr() const
-      {
-        if constexpr(memorySpace == utils::MemorySpace::HOST)
-        {
-          return d_cellQuadStartIds.data();
-        }
-        else
-        {
-          return d_cellQuadStartIdsDevice.data();
-        }
-      }
-
-      template <utils::MemorySpace memorySpace>
-      inline double*
+      inline const double*
       getJxWPtr() const
       {
         if constexpr(memorySpace == utils::MemorySpace::HOST)
@@ -284,7 +270,7 @@ namespace dftefe
       }
 
       template <utils::MemorySpace memorySpace>
-      inline double*
+      inline const double*
       getRealPointsPtr() const
       {
         if constexpr(memorySpace == utils::MemorySpace::HOST)
@@ -298,21 +284,14 @@ namespace dftefe
       }
 #else
       template <>
-      inline size_type*
-      getCellQuadStartIdsPtr<utils::MemorySpace::HOST>() const
-      {
-          return d_cellQuadStartIds.data();
-      }
-
-      template <>
-      inline double*
+      inline const double*
       getJxWPtr<utils::MemorySpace::HOST>() const
       {
           return d_JxW.data();
       }
 
       template <>
-      inline double*
+      inline const double*
       getRealPointsPtr<utils::MemorySpace::HOST>() const
       {
           return d_realPointsHost.data();
@@ -335,7 +314,6 @@ namespace dftefe
       const basis::CellMappingBase &                     d_cellMapping;
 
 #ifdef DFTEFE_WITH_DEVICE
-      utils::MemoryStorage<size_type, utils::MemorySpace::DEVICE> d_cellQuadStartIdsDevice;
       utils::MemoryStorage<double, utils::MemorySpace::DEVICE>    d_realPointsDevice;
       utils::MemoryStorage<double, utils::MemorySpace::DEVICE>    d_JxWDevice;
 #endif

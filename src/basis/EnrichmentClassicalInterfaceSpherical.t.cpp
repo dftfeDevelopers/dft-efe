@@ -33,6 +33,7 @@
 #include <linearAlgebra/Defaults.h>
 #include <linearAlgebra/LinearAlgebraTypes.h>
 #include <algorithm>
+#include <basis/EnrichmentDataEvalKernels.h>
 #include <set>
 #include <string>
 
@@ -1354,91 +1355,123 @@ namespace dftefe
       return std::vector<double>(0);
     }
 
-    // // gpu cpu hybrid kernel for calculating the enrichment id values at 
-    // // all cells in all quad points 
-    // // for variable quad points also
-    // template <typename ValueTypeBasisData,
-    //           utils::MemorySpace memorySpace,
-    //           size_type          dim>
-    // std::vector<double>
-    // EnrichmentClassicalInterfaceSpherical<ValueTypeBasisData,
-    //                                       memorySpace,
-    //                                       dim>::
-    //   getEnrichmentValuesInAllCellsAtQuadPts(quadrature::QuadratureRuleContainer &quadRuleContainer, 
-    //                     std::vector<ValueTypeBasisData> quadValuesInAllCellsEnrichment) const
-    // {
-    //   std::vector<double> quadPtsInOverlappingCellsWithLocalEIds(0);
-    //   std::vector<double> quadValuesInOverlappingCellsWithLocalEIds(0);
-    //   for (int iLocalEId = 0 ; iLocalEId < d_enrichmentIdsPartition->numLocalEnrichments() ; iLocalEId++)
-    //   {
-    //      basis::EnrichmentIdAttribute eIdAttr =
-    //         d_enrichmentIdsPartition->getEnrichmentIdAttribute(localEIdToGlobalEId(iLocalEId));
+    // gpu/cpu kernel for calculating the enrichment id values at 
+    // all cells in all quad points 
+    // for variable quad points also
+    template <typename ValueTypeBasisData,
+              utils::MemorySpace memorySpace,
+              size_type          dim>
+    void
+    EnrichmentClassicalInterfaceSpherical<ValueTypeBasisData,
+                                          memorySpace,
+                                          dim>::
+      getEnrichmentValuesInAllCellsAtQuadPts(quadrature::QuadratureRuleContainer &quadRuleContainer, 
+                        std::vector<double> &quadValuesInAllCellsEnrichment,
+                        linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext) const
+    {
+      const auto &localToCellLocalEIds = d_enrichmentIdsPartition->localToCellLocalEIdsVec();
+      const auto &cellsInLocalEId = d_enrichmentIdsPartition->cellsInLocalEIdVec();
+      size_type numLocalEnrichIds = d_enrichmentIdsPartition->nLocalEnrichmentIds();
+      const auto &localToGlobalEnrichmentIds = d_enrichmentIdsPartition->localToGlobalEnrichmentIds();
+      const auto &overlappingCellsWithLocalEnrichmentIds = d_enrichmentIdsPartition->overlappingCellsWithLocalEnrichmentIds();
+      std::vector<size_type> quadInLocalEId(numLocalEnrichIds, 0);
+      std::vector<std::shared_ptr<atoms::SphericalData>> sphericalDataVec(0);
 
-    //       size_type atomId  = eIdAttr.atomId;
-    //       size_type localId = eIdAttr.localIdInAtom;
+      const size_type numLocallyOwnedCells = d_overlappingEnrichmentIdsInCells.size();
 
-    //       auto sphericalData =
-    //         d_atomSphericalDataContainer->getSphericalData(
-    //           d_atomSymbolVec[atomId], d_fieldName)[localId];
+      std::vector<size_type> quadxEnrichPerCell(numLocallyOwnedCells);
+      for(int iCell = 0 ; iCell < numLocallyOwnedCells ; iCell++)
+      {
+        size_type numEnrichInCell =  d_overlappingEnrichmentIdsInCells[iCell].size();
+        size_type numQuadInCell = quadRuleContainer.nCellQuadraturePoints(iCell);
+        quadxEnrichPerCell[iCell] += numQuadInCell * numEnrichInCell;
+      }
 
-    //       auto quantumNoVec =
-    //         d_atomSphericalDataContainer->getQNumbers(d_atomSymbolVec[atomId], d_fieldName);
+      const size_type cumulativeNumPointsInAllEnrich = 
+          std::accumulate(quadxEnrichPerCell.begin(), quadxEnrichPerCell.end(), (size_type)0);
 
-    //       l = quantumNoVec[localId][1];
-    //       m = quantumNoVec[localId][2];
+      std::vector<double> quadValuesInOverlappingCellsWithLocalEIds(cumulativeNumPointsInAllEnrich);
+      utils::MemoryStorage<double, memorySpace> quadPtsInOverlappingCellsWithLocalEIdsMemSpace(cumulativeNumPointsInAllEnrich * dim),
+                  quadValuesInOverlappingCellsWithLocalEIdsMemSpace(cumulativeNumPointsInAllEnrich);
 
-    //     std::vector<size_type> overlappingCellsWithLocalEId = 
-    //       d_enrichmentIdsPartition->overlappingCellsWithLocalEnrichmentId(iLocalEId);
-    //     cumulativeQuadInLocalEId[iLocalEId] = 0;
-    //     for (int iCell = 0 ; iCell < overlappingCellsWithLocalEId.size() ; iCell++)
-    //     {
-    //       cellId = overlappingCellsWithLocalEId[iCell];
-    //       cumulativeQuadInLocalEId[iLocalEId] += quadRuleContainer.nCellQuadraturePoints(cellId);
-    //       for(int iQuadPt = 0 ; iQuadPt < numQuadInCell ; iQuadPt++)
-    //       {
-    //         std::memcpy(*quadPtsInOverlappingCellsWithLocalEIds.data() + iQuadPt,
-    //                      d_enrichmentIdsPartition->getCellRealPoints(cellId),
-    //                      dim);
-    //       }
-    //     }
-    //   }
+      quadValuesInAllCellsEnrichment.clear();
+      quadValuesInAllCellsEnrichment.resize(cumulativeNumPointsInAllEnrich);
 
-    //   std::vector<double> cumulativeQuadxEnrichPerCell(numLocallyOwnedCells);
-    //   for(int iCell = 0 ; iCell < numLocallyOwnedCells ; iCell++)
-    //   {
-    //     cumulativeQuadxEnrichPerCell[iCell] += numQuadInCell * numEnrichInCell;
-    //   }
+      std::vector<double> origin(numLocalEnrichIds*dim, 0);
+      utils::MemoryStorage<double, memorySpace> originMemspace(numLocalEnrichIds*dim, 0);
 
-    //   utils::MemoryStorage<double, memorySpace> quadPtsInOverlappingCellsWithLocalEIdsMemSpace(0);
-    //   // transfer points to device 
+      const size_type *overlappingCellsWithLocalEnrichmentIdsPtr = overlappingCellsWithLocalEnrichmentIds.data();
+      size_type cumulativeQuadInCellPerLocalEnrich = 0;
+      for (int iLocalEId = 0 ; iLocalEId < numLocalEnrichIds ; iLocalEId++)
+      {
+         basis::EnrichmentIdAttribute eIdAttr =
+            d_enrichmentIdsPartition->getEnrichmentIdAttribute(localToGlobalEnrichmentIds[iLocalEId]);
+
+          size_type atomId  = eIdAttr.atomId;
+          size_type localId = eIdAttr.localIdInAtom;
+          
+          std::memcpy(origin.data() + iLocalEId*dim, d_atomCoordinatesVec[atomId].data(), dim * sizeof(double));
+
+          sphericalDataVec.push_back(d_atomSphericalDataContainer->getSphericalData(
+              d_atomSymbolVec[atomId], d_fieldName)[localId]);
+
+        quadInLocalEId[iLocalEId] = 0;
+        const size_type numCellInocalEId = cellsInLocalEId[iLocalEId];
+        for (int iCell = 0 ; iCell < numCellInocalEId ; iCell++)
+        {
+          size_type cellId = *(overlappingCellsWithLocalEnrichmentIdsPtr + iCell);
+          size_type nCellQuadraturePoints = quadRuleContainer.nCellQuadraturePoints(cellId);
+          quadInLocalEId[iLocalEId] += nCellQuadraturePoints;
+          linearAlgebra::blasLapack::copyValueType1ArrToValueType2Arr(
+                nCellQuadraturePoints * dim,
+                quadRuleContainer.template getRealPointsPtr<memorySpace>() +
+                  (quadRuleContainer.getCellQuadStartId(cellId) * dim),
+                quadPtsInOverlappingCellsWithLocalEIdsMemSpace.data() + cumulativeQuadInCellPerLocalEnrich,
+                linAlgOpContext);
+          cumulativeQuadInCellPerLocalEnrich += nCellQuadraturePoints * dim;
+        }
+        overlappingCellsWithLocalEnrichmentIdsPtr += numCellInocalEId;
+      }
       
-    //   // computation 
+      originMemspace.template copyFrom<utils::MemorySpace::HOST>(origin.data());
 
-    //   getEnrichmentValues(
-    //     const size_type  numEnrichmentFunc,
-    //     cumulativeQuadInLocalEId.data(),
-    //     std::vector<const SphericalData&> &sphericalDataVec,
-    //     double * values);
+      // computation  of the enrichment ids in all points local enrichment wise.
+      EnrichmentDataEvalKernels<memorySpace>::getEnrichmentValues(
+        numLocalEnrichIds,
+        quadInLocalEId,
+        sphericalDataVec,
+        quadPtsInOverlappingCellsWithLocalEIdsMemSpace.data(),
+        originMemspace.data(),
+        quadValuesInOverlappingCellsWithLocalEIdsMemSpace.data(),
+        linAlgOpContext);
 
-    //   // transfer values to host 
+      // transfer values to host 
+      quadValuesInOverlappingCellsWithLocalEIdsMemSpace.
+        template copyTo<utils::MemorySpace::HOST>(quadValuesInOverlappingCellsWithLocalEIds.data());
 
-    //   // transpose from enrich->cell->quad with overlapping cells to cell->enrich->quad with all cells 
-    //   int cumuLativeQuadPerCellInLocalEnrich = 0; 
-    //   for (int iLocalEId = 0 ; iLocalEId < d_enrichmentIdsPartition->numLocalEnrichments() ; iLocalEId++)
-    //   {
-    //     std::vector<size_type> overlappingCellsWithLocalEId = 
-    //       d_enrichmentIdsPartition->overlappingCellsWithLocalEnrichmentId(iLocalEId);
-    //     for (int iCell = 0 ; iCell < overlappingCellsWithLocalEId.size() ; iCell++)
-    //     {
-    //       cellId = overlappingCellsWithLocalEId[iCell];
-    //       std::memcpy(quadValuesInAllCellsEnrichment.data() + cumulativeQuadxEnrichPerCell[cellId] + 
-    //                   localToCellLocalEIdsVec[cumulativeCellsInEId[iLocalEId] + iCell] * numQuadInCell, // dst 
-    //                   quadValuesInOverlappingCellsWithLocalEIds.data() + cumuLativeQuadPerCellInLocalEnrich, // src 
-    //                   numQuadInCell);
-    //       cumuLativeQuadPerCellInLocalEnrich += numQuadInCell;
-    //     }
-    //   }
-    // }
+      // transpose from enrich->cell->quad with overlapping cells to cell->enrich->quad with all cells 
+      int cumuLativeQuadPerCellInLocalEnrich = 0; 
+      overlappingCellsWithLocalEnrichmentIdsPtr = overlappingCellsWithLocalEnrichmentIds.data();
+      const size_type *localToCellLocalEIdsPtr = localToCellLocalEIds.data();
+      for (int iLocalEId = 0 ; iLocalEId < numLocalEnrichIds ; iLocalEId++)
+      {
+        const size_type numCellInocalEId = cellsInLocalEId[iLocalEId];
+        for (int iCell = 0 ; iCell < numCellInocalEId ; iCell++)
+        {
+          size_type cellId = *(overlappingCellsWithLocalEnrichmentIdsPtr + iCell);
+          size_type numQuadInCell = quadRuleContainer.nCellQuadraturePoints(cellId);
+          size_type cumulativeQuadxEnrichInCell = 
+            std::accumulate(quadxEnrichPerCell.begin(), quadxEnrichPerCell.begin()+cellId, (size_type)0);
+          std::memcpy(quadValuesInAllCellsEnrichment.data() + cumulativeQuadxEnrichInCell + 
+                      *(localToCellLocalEIdsPtr + iCell) * numQuadInCell, // dst 
+                      quadValuesInOverlappingCellsWithLocalEIds.data() + cumuLativeQuadPerCellInLocalEnrich, // src 
+                      numQuadInCell * sizeof(double));
+          cumuLativeQuadPerCellInLocalEnrich += numQuadInCell;
+        }
+        overlappingCellsWithLocalEnrichmentIdsPtr += numCellInocalEId;
+        localToCellLocalEIdsPtr += numCellInocalEId;
+      }
+    }
     
   } // namespace basis
 } // namespace dftefe

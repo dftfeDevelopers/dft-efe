@@ -620,6 +620,48 @@ namespace dftefe
       return retVal;
     }
 
+    void
+    SphericalDataNumerical::getValue(const size_type numPoints,
+                                     const double *  points,
+                                     const double *  origin,
+                                     double *        out)
+    {
+      utils::Point originPt(std::vector<double>(origin, origin + d_dim));
+      for (size_type i = 0; i < numPoints; i++)
+        {
+          utils::Point pt(
+            std::vector<double>(points + i * d_dim, points + (i + 1) * d_dim));
+          out[i] = getValue(pt, originPt);
+        }
+    }
+
+    void
+    SphericalDataNumerical::getGradientValue(const size_type numPoints,
+                                              const double *  points,
+                                              const double *  origin,
+                                              double *        out)
+    {
+      utils::Point originPt(std::vector<double>(origin, origin + d_dim));
+      for (size_type i = 0; i < numPoints; i++)
+        {
+          utils::Point pt(
+            std::vector<double>(points + i * d_dim, points + (i + 1) * d_dim));
+          auto grad = getGradientValue(pt, originPt);
+          for (size_type j = 0; j < d_dim; j++)
+            out[i * d_dim + j] = grad[j];
+        }
+    }
+
+    void
+    SphericalDataNumerical::getHessianValue(const size_type numPoints,
+                                             const double *  points,
+                                             const double *  origin,
+                                             double *        out)
+    {
+      utils::throwException(
+        false, "getHessianValue not implemented for SphericalDataNumerical.");
+    }
+
     std::vector<int>
     SphericalDataNumerical::getQNumbers() const
     {

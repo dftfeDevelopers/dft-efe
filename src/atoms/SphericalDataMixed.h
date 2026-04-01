@@ -114,6 +114,36 @@ namespace dftefe
       double
       getSmoothness() const override;
 
+      void
+      getValue(const size_type numPoints,
+               const double *  points,
+               const double *  origin,
+               double *        out) override
+      {
+        utils::throwException(
+          false, "getValue not implemented for SphericalDataMixed.");
+      }
+
+      void
+      getGradientValue(const size_type numPoints,
+                       const double *  points,
+                       const double *  origin,
+                       double *        out) override
+      {
+        utils::throwException(
+          false, "getGradientValue not implemented for SphericalDataMixed.");
+      }
+
+      void
+      getHessianValue(const size_type numPoints,
+                      const double *  points,
+                      const double *  origin,
+                      double *        out) override
+      {
+        utils::throwException(
+          false, "getHessianValue not implemented for SphericalDataMixed.");
+      }
+
 #ifdef DFTEFE_WITH_DEVICE
       void
       getValueDevice(const size_type       numPoints,

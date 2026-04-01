@@ -231,6 +231,10 @@ namespace dftefe
         const size_type                          cellId,
         const std::vector<dftefe::utils::Point> &points) const;
 
+      void
+      getEnrichmentValuesInAllCellsAtQuadPts(quadrature::QuadratureRuleContainer &quadRuleContainer, 
+                        std::vector<double> &quadValuesInAllCellsEnrichment,
+                        linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext) const;
 
     private:
       std::shared_ptr<EnrichmentIdsPartition<dim>> d_enrichmentIdsPartition;

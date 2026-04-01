@@ -108,6 +108,24 @@ namespace dftefe
               utils::deviceStream_t  streamId = utils::defaultStream) override;
 #endif              
 
+      void
+      getValue(const size_type numPoints,
+               const double *  points,
+               const double *  origin,
+               double *        out) override;
+
+      void
+      getGradientValue(const size_type numPoints,
+                       const double *  points,
+                       const double *  origin,
+                       double *        out) override;
+
+      void
+      getHessianValue(const size_type numPoints,
+                      const double *  points,
+                      const double *  origin,
+                      double *        out) override;
+
       std::vector<double>
       getRadialValue(const std::vector<double> &r) override;
 

@@ -53,9 +53,9 @@ namespace dftefe
                i += nThreadsPerBlock * nThreadBlock)
             {
               double shifted[3];
-              shifted[0] = points[3 * i]     - ox;
-              shifted[1] = points[3 * i + 1] - oy;
-              shifted[2] = points[3 * i + 2] - oz;
+              shifted[0] = points[3 * i]     - origin[0];
+              shifted[1] = points[3 * i + 1] - origin[1];
+              shifted[2] = points[3 * i + 2] - origin[2];
               double r;
               double theta;
               double phi;
@@ -80,9 +80,7 @@ namespace dftefe
         },
         const size_type             numPoints,
         const double *              points,
-        const double                ox,
-        const double                oy,
-        const double                oz,
+        const double *              origin,
         const double                cutoff,
         const double                smoothness,
         const double                polarAngleTolerance,
@@ -105,9 +103,9 @@ namespace dftefe
                i += nThreadsPerBlock * nThreadBlock)
             {
               double shifted[3];
-              shifted[0] = points[3 * i]     - ox;
-              shifted[1] = points[3 * i + 1] - oy;
-              shifted[2] = points[3 * i + 2] - oz;
+              shifted[0] = points[3 * i]     - origin[0];
+              shifted[1] = points[3 * i + 1] - origin[1];
+              shifted[2] = points[3 * i + 2] - origin[2];
               double r;
               double theta;
               double phi;
@@ -178,9 +176,7 @@ namespace dftefe
         },
         const size_type               numPoints,
         const double *                points,
-        const double                  ox,
-        const double                  oy,
-        const double                  oz,
+        const double *                origin,
         const double                  cutoff,
         const double                  smoothness,
         const double                  polarAngleTolerance,
@@ -217,9 +213,7 @@ namespace dftefe
                            streamId,
                            numPoints,
                            points,
-                           origin[0],
-                           origin[1],
-                           origin[2],
+                           origin,
                            d_cutoff,
                            d_smoothness,
                            d_polarAngleTolerance,
@@ -253,9 +247,7 @@ namespace dftefe
                            streamId,
                            numPoints,
                            points,
-                           origin[0],
-                           origin[1],
-                           origin[2],
+                           origin,
                            d_cutoff,
                            d_smoothness,
                            d_polarAngleTolerance,

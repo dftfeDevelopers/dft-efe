@@ -122,7 +122,7 @@ namespace dftefe
                  d_numQuadPoints);
 
       const unsigned int dim      = triangulation->getDim();
-      std::vector<double> d_realPointsHost(d_realPoints.size() * dim);
+      d_realPointsHost.resize(d_realPoints.size() * dim);
       for(int i = 0 ; i < d_realPoints.size() ; i++)
       {
         for(int j = 0 ; j < dim ; j++)
@@ -131,8 +131,6 @@ namespace dftefe
         }
       }
 #ifdef DFTEFE_WITH_DEVICE
-      d_cellQuadStartIdsDevice.resize(d_cellQuadStartIds.size());
-      d_cellQuadStartIdsDevice.copyFrom(d_cellQuadStartIds);
       d_realPointsDevice.resize(d_realPoints.size() * dim);
       d_realPointsDevice.copyFrom(d_realPointsHost);
       d_JxWDevice.resize(d_JxW.size());
@@ -190,7 +188,7 @@ namespace dftefe
                  d_numQuadPoints);
 
       const unsigned int dim      = triangulation->getDim();
-      std::vector<double> d_realPointsHost(d_realPoints.size() * dim);
+      d_realPointsHost.resize(d_realPoints.size() * dim);
       for(int i = 0 ; i < d_realPoints.size() ; i++)
       {
         for(int j = 0 ; j < dim ; j++)
@@ -199,8 +197,6 @@ namespace dftefe
         }
       }
 #ifdef DFTEFE_WITH_DEVICE
-      d_cellQuadStartIdsDevice.resize(d_cellQuadStartIds.size());
-      d_cellQuadStartIdsDevice.copyFrom(d_cellQuadStartIds);
       d_realPointsDevice.resize(d_realPoints.size() * dim);
       d_realPointsDevice.copyFrom(d_realPointsHost);
       d_JxWDevice.resize(d_JxW.size());
@@ -337,7 +333,7 @@ namespace dftefe
         }
 
       const unsigned int dim      = triangulation->getDim();
-      std::vector<double> d_realPointsHost(d_realPoints.size() * dim);
+      d_realPointsHost.resize(d_realPoints.size() * dim);
       for(int i = 0 ; i < d_realPoints.size() ; i++)
       {
         for(int j = 0 ; j < dim ; j++)
@@ -346,8 +342,6 @@ namespace dftefe
         }
       }
 #ifdef DFTEFE_WITH_DEVICE
-      d_cellQuadStartIdsDevice.resize(d_cellQuadStartIds.size());
-      d_cellQuadStartIdsDevice.copyFrom(d_cellQuadStartIds);
       d_realPointsDevice.resize(d_realPoints.size() * dim);
       d_realPointsDevice.copyFrom(d_realPointsHost);
       d_JxWDevice.resize(d_JxW.size());
@@ -680,7 +674,7 @@ namespace dftefe
       //       "\n";
 
       const unsigned int dim      = triangulation->getDim();
-      std::vector<double> d_realPointsHost(d_realPoints.size() * dim);
+      d_realPointsHost.resize(d_realPoints.size() * dim);
       for(int i = 0 ; i < d_realPoints.size() ; i++)
       {
         for(int j = 0 ; j < dim ; j++)
@@ -689,8 +683,6 @@ namespace dftefe
         }
       }
 #ifdef DFTEFE_WITH_DEVICE
-      d_cellQuadStartIdsDevice.resize(d_cellQuadStartIds.size());
-      d_cellQuadStartIdsDevice.copyFrom(d_cellQuadStartIds);
       d_realPointsDevice.resize(d_realPoints.size() * dim);
       d_realPointsDevice.copyFrom(d_realPointsHost);
       d_JxWDevice.resize(d_JxW.size());
