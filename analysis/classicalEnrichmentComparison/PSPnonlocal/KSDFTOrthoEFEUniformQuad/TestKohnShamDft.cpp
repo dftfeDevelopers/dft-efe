@@ -694,7 +694,7 @@ int main(int argc, char** argv)
 
   p.registerEnd("Quadrature Rule Creation");
     utils::printCurrentMemoryUsage(comm, "Quadrature Rule Creation");
-  p.registerStart("Ortho EFE basis manager creation");
+  p.registerStart("Classical DoFHandler and datastorage creation");
 
   // Make orthogonalized EFE basis for all the fields
 
@@ -767,6 +767,9 @@ int main(int argc, char** argv)
   // evaluate basis data
   cfeBasisDataStorageAdaptiveOrbital->evaluateBasisData(quadAttrGaussSubdivided, quadRuleContainerAdaptiveOrbital, basisAttrMap);
 
+  p.registerEnd("Classical DoFHandler and datastorage creation");
+  p.registerStart("Orbital partitioning and orthogonalization");
+
   std::shared_ptr<basis::EnrichmentClassicalInterfaceSpherical
                           <double, Host, dim>>
         enrichClassIntfceTotalPot = nullptr;
@@ -785,9 +788,134 @@ int main(int argc, char** argv)
                           "orbital",
                           linAlgOpContext,
                           comm);
+  p.registerEnd("Orbital partitioning and orthogonalization");
+  // std::vector<double> quadValuesInAllCellsEnrichment, quadGradientsInAllCellsEnrichment;
+  // enrichClassIntfceOrbital->getEnrichmentDataInAllCellsAtQuadPts(
+  //   true,
+  //   true,
+  //   *quadRuleContainerAdaptiveOrbital,
+  //   quadValuesInAllCellsEnrichment,
+  //   quadGradientsInAllCellsEnrichment,
+  //   *linAlgOpContext);
+
+  // {
+  //   const size_type numCells =
+  //     quadRuleContainerAdaptiveOrbital->nCells();
+
+  //   // Reconstruct numEnrichPerCell from the public partition API.
+  //   auto        partition    = enrichClassIntfceOrbital->getEnrichmentIdsPartition();
+  //   const auto &cellsInEId   = partition->cellsInLocalEIdVec();
+  //   const auto &overlapCells = partition->overlappingCellsWithLocalEnrichmentIds();
+  //   size_type   numLocalEIds = partition->nLocalEnrichmentIds();
+
+  //   std::vector<size_type> numEnrichPerCell(numCells, 0);
+  //   {
+  //     const size_type *ptr = overlapCells.data();
+  //     for (size_type iEId = 0; iEId < numLocalEIds; iEId++)
+  //       {
+  //         for (size_type iCell = 0; iCell < cellsInEId[iEId]; iCell++)
+  //           numEnrichPerCell[ptr[iCell]]++;
+  //         ptr += cellsInEId[iEId];
+  //       }
+  //   }
+
+  //   // Build exclusive prefix-sum cell offsets (matches the function's layout).
+  //   std::vector<size_type> cellOffset(numCells, 0);
+  //   for (size_type iCell = 1; iCell < numCells; iCell++)
+  //     {
+  //       size_type nq = quadRuleContainerAdaptiveOrbital->nCellQuadraturePoints(iCell - 1);
+  //       cellOffset[iCell] = cellOffset[iCell - 1] + numEnrichPerCell[iCell - 1] * nq;
+  //     }
+
+  //   // Compare cell by cell.
+  //   size_type mismatchCount = 0;
+  //   for (size_type iCell = 0; iCell < numCells; iCell++)
+  //     {
+  //       if (numEnrichPerCell[iCell] == 0)
+  //         continue;
+
+  //       size_type numQuad =
+  //         quadRuleContainerAdaptiveOrbital->nCellQuadraturePoints(iCell);
+  //       std::vector<dftefe::utils::Point> quadPts =
+  //         quadRuleContainerAdaptiveOrbital->getCellRealPoints(iCell);
+
+  //       // Reference: layout [enrich0_pt0, enrich0_pt1, ..., enrich1_pt0, ...]
+  //       std::vector<double> refValues =
+  //         enrichClassIntfceOrbital->getEnrichmentValue(iCell, quadPts);
+
+  //       size_type offset = cellOffset[iCell];
+  //       for (size_type iEnrich = 0; iEnrich < numEnrichPerCell[iCell]; iEnrich++)
+  //         for (size_type iPt = 0; iPt < numQuad; iPt++)
+  //           {
+  //             double ref      = refValues[iEnrich * numQuad + iPt];
+  //             double computed = quadValuesInAllCellsEnrichment[offset + iEnrich * numQuad + iPt];
+  //             if (std::abs(ref - computed) > 1e-10)
+  //               {
+  //                 rootCout << "MISMATCH: cell=" << iCell
+  //                          << " enrich=" << iEnrich
+  //                          << " quadPt=" << iPt
+  //                          << " ref=" << ref
+  //                          << " computed=" << computed
+  //                          << " diff=" << std::abs(ref - computed) << "\n";
+  //                 mismatchCount++;
+  //               }
+  //           }
+  //     }
+  //   if (mismatchCount == 0)
+  //     rootCout << "getEnrichmentValuesInAllCellsAtQuadPts: all values match getEnrichmentValue.\n";
+  //   else
+  //     rootCout << "getEnrichmentValuesInAllCellsAtQuadPts: " << mismatchCount << " mismatches found.\n";
+
+  //   // Build gradient cell offsets: same prefix-sum as values but scaled by dim.
+  //   std::vector<size_type> gradCellOffset(numCells, 0);
+  //   for (size_type iCell = 1; iCell < numCells; iCell++)
+  //     gradCellOffset[iCell] = gradCellOffset[iCell - 1] +
+  //                             numEnrichPerCell[iCell - 1] *
+  //                               quadRuleContainerAdaptiveOrbital->nCellQuadraturePoints(iCell - 1) * dim;
+
+  //   size_type gradMismatchCount = 0;
+  //   for (size_type iCell = 0; iCell < numCells; iCell++)
+  //     {
+  //       if (numEnrichPerCell[iCell] == 0)
+  //         continue;
+
+  //       size_type numQuad =
+  //         quadRuleContainerAdaptiveOrbital->nCellQuadraturePoints(iCell);
+  //       std::vector<dftefe::utils::Point> quadPts =
+  //         quadRuleContainerAdaptiveOrbital->getCellRealPoints(iCell);
+
+  //       // Reference layout: [iEnrich * numQuad * dim + iPt * dim + iDim]
+  //       std::vector<double> refGrads =
+  //         enrichClassIntfceOrbital->getEnrichmentDerivative(iCell, quadPts);
+
+  //       size_type gOffset = gradCellOffset[iCell];
+  //       for (size_type iEnrich = 0; iEnrich < numEnrichPerCell[iCell]; iEnrich++)
+  //         for (size_type iPt = 0; iPt < numQuad; iPt++)
+  //           for (size_type iDim = 0; iDim < dim; iDim++)
+  //             {
+  //               double ref      = refGrads[iEnrich * numQuad * dim + iPt * dim + iDim];
+  //               double computed = quadGradientsInAllCellsEnrichment[gOffset + iEnrich * numQuad * dim + iPt * dim + iDim];
+  //               if (std::abs(ref - computed) > 1e-10)
+  //                 {
+  //                   rootCout << "GRAD MISMATCH: cell=" << iCell
+  //                            << " enrich=" << iEnrich
+  //                            << " quadPt=" << iPt
+  //                            << " dim=" << iDim
+  //                            << " ref=" << ref
+  //                            << " computed=" << computed
+  //                            << " diff=" << std::abs(ref - computed) << "\n";
+  //                   gradMismatchCount++;
+  //                 }
+  //             }
+  //     }
+  //   if (gradMismatchCount == 0)
+  //     rootCout << "getEnrichmentGradientsInAllCellsAtQuadPts: all gradients match getEnrichmentDerivative.\n";
+  //   else
+  //     rootCout << "getEnrichmentGradientsInAllCellsAtQuadPts: " << gradMismatchCount << " mismatches found.\n";
+  // }
 
   // initialize the basis Manager
-
+  p.registerStart("Electrostatics DofHandler creation");
   std::shared_ptr<basis::FEBasisDofHandler<double, Host,dim>> basisDofHandlerTotalPot = nullptr;
   if (!isDeltaRhoPoissonSolve)
   {
@@ -808,11 +936,12 @@ int main(int argc, char** argv)
   }
   else
     basisDofHandlerTotalPot = cfeBasisDofHandlerElec;
-
+  p.registerEnd("Electrostatics DofHandler creation");
+  p.registerStart("Orbital DofHandler creation");
   std::shared_ptr<basis::FEBasisDofHandler<double, memorySpace,dim>> basisDofHandlerWaveFn =  
     std::make_shared<basis::EFEBasisDofHandlerDealii<double, double,memorySpace,dim>>(
       enrichClassIntfceOrbital, comm);
-
+  p.registerEnd("Orbital DofHandler creation");
   /*
   utils::ConditionalOStream allCout(std::cout);
   for(int iProc = 0 ; iProc < numProcs ; iProc++)
@@ -830,7 +959,6 @@ int main(int argc, char** argv)
   utils::mpi::MPIBarrier(comm);
   */
 
-  p.registerEnd("Ortho EFE basis manager creation");
   utils::printCurrentMemoryUsage(comm, "Ortho EFE basis manager creation");
 
   rootCout << "Total Number of dofs electrostatics: " << basisDofHandlerTotalPot->nGlobalNodes() << "\n";
@@ -935,7 +1063,7 @@ int main(int argc, char** argv)
   feBDAtomCenterNonLocalOperator->evaluateBasisData(quadAttrGaussSubdivided, quadRuleContainerAdaptiveAtomCenterNonLocalOperator, basisAttrMap);
 
   p.registerEnd("Orbital basis datastorage eval");
-  p.print();
+
   utils::printCurrentMemoryUsage(comm, "Orbital basis datastorage eval");
   
   p.registerStart("Orbital Grad basis datastorage eval");
@@ -1059,7 +1187,7 @@ int main(int argc, char** argv)
 
     p.registerEnd("Hamiltonian Basis overlap inverse eval");
   utils::printCurrentMemoryUsage(comm, "Hamiltonian Basis overlap , overlap for inv and inv");
-
+    p.print();
   p.registerStart("Kohn Sham DFT Class Init");
   ksdft::KohnShamDFT<double,
                                         double,

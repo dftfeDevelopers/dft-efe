@@ -110,6 +110,7 @@ namespace dftefe
 
           d_SectionsMap[sectionName].totalWallTime = 0;
           d_SectionsMap[sectionName].nCalls        = 0;
+          d_insertionOrder.push_back(sectionName);
         }
 
       d_SectionsMap[sectionName].timer.reset();
@@ -212,9 +213,10 @@ namespace dftefe
       d_stream << "+---------------------------------" << extraDash
                << "+-----------+------------"
                << "+------------+";
-      for (const auto &i : d_SectionsMap)
+      for (const auto &name : d_insertionOrder)
         {
-          std::string nameOut = i.first;
+          const auto &sec     = d_SectionsMap.at(name);
+          std::string nameOut = name;
 
           // resize the array so that it is always of the same size
           unsigned int posNonSpace = nameOut.find_first_not_of(' ');
@@ -224,10 +226,10 @@ namespace dftefe
           d_stream << "| " << nameOut;
           d_stream << "| ";
           d_stream << std::setw(9);
-          d_stream << i.second.nCalls << " |";
+          d_stream << sec.nCalls << " |";
           d_stream << std::setw(10);
           d_stream << std::setprecision(3);
-          d_stream << i.second.totalWallTime << "s |";
+          d_stream << sec.totalWallTime << "s |";
           d_stream << std::setw(10);
 
           if (totalWallTime != 0)
@@ -235,7 +237,7 @@ namespace dftefe
               // if run time was less than 0.1%, just print a zero to avoid
               // printing silly things such as "2.45e-6%". otherwise print
               // the actual percentage
-              const double fraction = i.second.totalWallTime / totalWallTime;
+              const double fraction = sec.totalWallTime / totalWallTime;
               if (fraction > 0.001)
                 {
                   d_stream << std::setprecision(3);
@@ -321,6 +323,7 @@ namespace dftefe
       std::mutex                  mutex;
       std::lock_guard<std::mutex> lock(mutex);
       d_SectionsMap.clear();
+      d_insertionOrder.clear();
       d_activeSections.clear();
       d_totalTime.restart();
     }

@@ -268,13 +268,6 @@ namespace dftefe
                                                     dim>>
       getEnrichmentClassicalInterface() const override;
 
-      std::vector<ValueTypeBasisData>
-      getClassicalComponentCoeffsInCellOEFE(
-        const size_type                   cellIndex) const override;
-
-      // utils::MemoryStorage<ValueTypeBasisData, memorySpace>
-      // getClassicalComponentCoeffsInAllCellsOEFE() const override;
-
       bool
       isOrthogonalized() const override;
 

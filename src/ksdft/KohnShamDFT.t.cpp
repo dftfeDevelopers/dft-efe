@@ -1969,7 +1969,11 @@ namespace dftefe
       , d_pTotal(feBMWaveFn->getMPIPatternP2P()->mpiCommunicator(),
                  "Kohn Sham DFT Solve time")
     {
+      utils::Profiler<utils::MemorySpace::HOST> p(
+        feBMWaveFn->getMPIPatternP2P()->mpiCommunicator(),
+        "Pre Init Checks");
       d_p.registerStart("Pre Init Checks");
+      p.registerStart("atomSphericalDataContainerPSP create");
       const std::vector<std::string> metadataNames =
         atoms::AtomSphDataPSPDefaults::METADATANAMES;
       std::vector<std::string> fieldNamesPSP = {"vlocal"};
@@ -2036,6 +2040,8 @@ namespace dftefe
               d_atomSphericalDataContainerPSP->addFieldName("nlcc");
             }
         }
+      p.registerEnd("atomSphericalDataContainerPSP create");
+      p.registerStart("generateRandNormDistMultivec");
 
       d_densityInQuadValues =
         quadrature::QuadratureValuesContainer<RealType, memorySpaceHost>(
@@ -2057,7 +2063,8 @@ namespace dftefe
         d_kohnShamWaveFunctions);
       utils::throwException(d_densityInQuadValues.getNumberComponents() == 1,
                             "Electron density should have only one component.");
-
+      p.registerEnd("generateRandNormDistMultivec");
+      p.registerStart("rhoAtFunc");      
       utils::throwException(
         feBDEXCHamiltonian->getQuadratureRuleContainer() ==
           d_densityInQuadValues.getQuadratureRuleContainer(),
@@ -2090,6 +2097,7 @@ namespace dftefe
           cumulativeQuadInCell += numQuadInCell;
         }
 
+      p.registerEnd("rhoAtFunc");
       //************* CHANGE THIS **********************
       d_jxwDataHost = quadRuleContainerRho->getJxW();
 
@@ -2106,7 +2114,7 @@ namespace dftefe
                                                       d_rootCout);
 
       d_rootCout << "Electron density in : " << totalDensityInQuad << "\n";
-
+      p.print();
       d_p.registerEnd("Pre Init Checks");
       d_p.registerStart("Hamiltonian Components Initilization Kinetic Op");
 

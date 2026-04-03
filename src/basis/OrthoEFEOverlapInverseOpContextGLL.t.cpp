@@ -294,26 +294,6 @@ namespace dftefe
 
         locallyOwnedCellIter = efeBDH->beginLocallyOwnedCells();
 
-        const std::unordered_map<global_size_type,
-                                 utils::OptimizedIndexSet<size_type>>
-          *enrichmentIdToClassicalLocalIdMap =
-            &eci->getClassicalComponentLocalIdsMap();
-        const std::unordered_map<global_size_type,
-                                 std::vector<ValueTypeOperator>>
-          *enrichmentIdToInterfaceCoeffMap =
-            &eci->getClassicalComponentCoeffMap();
-
-        std::shared_ptr<const FEBasisManager<ValueTypeOperator,
-                                             ValueTypeOperator,
-                                             memorySpace,
-                                             dim>>
-          cfeBasisManager =
-            std::dynamic_pointer_cast<const FEBasisManager<ValueTypeOperator,
-                                                           ValueTypeOperator,
-                                                           memorySpace,
-                                                           dim>>(
-              eci->getCFEBasisManager());
-
         size_type cumulativeDofQuadPointsOffsetCFE            = 0,
                   cumulativeDofQuadPointsOffsetEnrichBlockCFE = 0,
                   cumulativeDofQuadPointsOffsetEnrichBlockEFE = 0;
@@ -416,8 +396,6 @@ namespace dftefe
                 .getQuadratureRuleContainer()
                 ->getCellRealPoints(cellIndex);
 
-            std::vector<size_type> vecClassicalLocalNodeId(0);
-
             size_type numEnrichmentIdsInCell = dofsPerCell - dofsPerCellCFE;
 
             std::vector<ValueTypeOperator> classicalComponentInQuadValuesEC(0);
@@ -440,13 +418,10 @@ namespace dftefe
 
             if (numEnrichmentIdsInCell > 0)
               {
-                cfeBasisManager->getCellDofsLocalIds(cellIndex,
-                                                     vecClassicalLocalNodeId);
-
                 std::vector<ValueTypeOperator> coeffsInCell(
                   dofsPerCellCFE * numEnrichmentIdsInCell, 0);
 
-                coeffsInCell = efeBDH->getClassicalComponentCoeffsInCellOEFE(cellIndex);
+                coeffsInCell = efeBDH->getEnrichmentClassicalInterface()->getClassicalComponentCoeffsInCellOEFE(cellIndex);
 
                 // Do a gemm (\Sigma c_i N_i^classical)
                 // and get the quad values in std::vector

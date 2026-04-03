@@ -372,27 +372,6 @@ namespace dftefe
         auto      basisOverlapTmpIter = basisOverlapTmp.begin();
         size_type cellIndex           = 0;
 
-        //
-        const std::unordered_map<global_size_type,
-                                 utils::OptimizedIndexSet<size_type>>
-          *enrichmentIdToClassicalLocalIdMap =
-            &eci->getClassicalComponentLocalIdsMap();
-        const std::unordered_map<global_size_type,
-                                 std::vector<ValueTypeOperator>>
-          *enrichmentIdToInterfaceCoeffMap =
-            &eci->getClassicalComponentCoeffMap();
-        std::shared_ptr<const FEBasisManager<ValueTypeOperator,
-                                             ValueTypeOperator,
-                                             memorySpace,
-                                             dim>>
-          cfeBasisManager =
-            std::dynamic_pointer_cast<const FEBasisManager<ValueTypeOperator,
-                                                           ValueTypeOperator,
-                                                           memorySpace,
-                                                           dim>>(
-              eci->getCFEBasisManager());
-
-
         size_type cumulativeDofQuadPointsOffsetCFE            = 0,
                   cumulativeDofQuadPointsOffsetEnrichBlockCFE = 0,
                   cumulativeDofQuadPointsOffsetEnrichBlockEFE = 0;
@@ -454,6 +433,17 @@ namespace dftefe
         basisDataInAllCellsEnrichmentBlockEnrichmentHost.copyFrom(
           basisDataInAllCellsEnrichmentBlockEnrichment);
 
+      std::vector<double> quadValuesInAllCellsEnrichment, quadGradientsInAllCellsEnrichment;
+          eefeBDH->getEnrichmentClassicalInterface()->getEnrichmentDataInAllCellsAtQuadPts(
+            true,
+            false,
+            *enrichmentBlockEnrichmentBasisDataStorage.getQuadratureRuleContainer(),
+            quadValuesInAllCellsEnrichment,
+            quadGradientsInAllCellsEnrichment,
+            *eefeBDH->getEnrichmentClassicalInterface()->getLinAlgOpContext());
+
+        size_type cumulativeQuadEnrichBlockEnrichxenrichInCell = 0;
+
         locallyOwnedCellIter = eefeBDH->beginLocallyOwnedCells();
         for (; locallyOwnedCellIter != eefeBDH->endLocallyOwnedCells();
              ++locallyOwnedCellIter)
@@ -498,12 +488,10 @@ namespace dftefe
                 basisDataInAllCellsEnrichmentBlockEnrichmentHost.data() +
                 cumulativeDofQuadPointsOffsetEnrichBlockEFE;
 
-            std::vector<utils::Point> quadRealPointsVec =
-              enrichmentBlockEnrichmentBasisDataStorage
-                .getQuadratureRuleContainer()
-                ->getCellRealPoints(cellIndex);
-
-            std::vector<size_type> vecClassicalLocalNodeId(0);
+            // std::vector<utils::Point> quadRealPointsVec =
+            //   enrichmentBlockEnrichmentBasisDataStorage
+            //     .getQuadratureRuleContainer()
+            //     ->getCellRealPoints(cellIndex);
 
             size_type numEnrichmentIdsInCell = dofsPerCell - dofsPerCellCFE;
 
@@ -529,13 +517,11 @@ namespace dftefe
 
             if (numEnrichmentIdsInCell > 0)
               {
-                cfeBasisManager->getCellDofsLocalIds(cellIndex,
-                                                     vecClassicalLocalNodeId);
 
                 std::vector<ValueTypeOperator> coeffsInCell(
                   dofsPerCellCFE * numEnrichmentIdsInCell, 0);
 
-                coeffsInCell = eefeBDH->getClassicalComponentCoeffsInCellOEFE(cellIndex);
+                coeffsInCell = eefeBDH->getEnrichmentClassicalInterface()->getClassicalComponentCoeffsInCellOEFE(cellIndex);
 
                 ValueTypeOperator *B =
                   basisDataInAllCellsEnrichmentBlockClassicalHost.data() +
@@ -584,8 +570,8 @@ namespace dftefe
                   numEnrichmentIdsInCell,
                   linAlgOpContext);
 
-                const std::vector<double> &enrichValAtQuadPts =
-                  eefeBDH->getEnrichmentValue(cellIndex, quadRealPointsVec);
+                // const std::vector<double> &enrichValAtQuadPts =
+                //   eefeBDH->getEnrichmentValue(cellIndex, quadRealPointsVec);
                 for (size_type i = 0; i < numEnrichmentIdsInCell; i++)
                   {
                     for (unsigned int qPoint = 0;
@@ -596,7 +582,8 @@ namespace dftefe
                            + i
                           /*nQuadPointInCellEnrichmentBlockEnrichment * i +
                           qPoint*/) =
-                            *(enrichValAtQuadPts.data() + nQuadPointInCellEnrichmentBlockEnrichment * i + qPoint);
+                            *(quadValuesInAllCellsEnrichment.data() + cumulativeQuadEnrichBlockEnrichxenrichInCell +
+                              nQuadPointInCellEnrichmentBlockEnrichment * i + qPoint);
                       }
                   }
               }
@@ -972,6 +959,8 @@ namespace dftefe
                 nQuadPointInCellEnrichmentBlockClassical * dofsPerCellCFE;
             cumulativeDofQuadPointsOffsetEnrichBlockEFE +=
               nQuadPointInCellEnrichmentBlockEnrichment * dofsPerCell;
+            cumulativeQuadEnrichBlockEnrichxenrichInCell += 
+              numEnrichmentIdsInCell * nQuadPointInCellEnrichmentBlockEnrichment;
             cellIndex++;
           }
 

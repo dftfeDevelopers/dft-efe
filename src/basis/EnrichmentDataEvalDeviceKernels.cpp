@@ -57,6 +57,8 @@ namespace dftefe
           cumulativeValuesOffset += pointsPerEnrichId[i];
           cumulativeCoordsOffset += pointsPerEnrichId[i] * 3;
         }
+        for (int s = 0; s < numStreams; ++s)
+          utils::deviceStreamSynchronize(streams[s]);
     }
 
     void
@@ -85,6 +87,8 @@ namespace dftefe
           cumulativeValuesOffset += pointsPerEnrichId[i] * 3;
           cumulativeCoordsOffset += pointsPerEnrichId[i] * 3;
         }
+        for (int s = 0; s < numStreams; ++s)
+          utils::deviceStreamSynchronize(streams[s]);
     }
 
   } // end of namespace basis

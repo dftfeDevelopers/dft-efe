@@ -81,6 +81,7 @@ namespace dftefe
 
     private:
       std::map<std::string, Section> d_SectionsMap;
+      std::vector<std::string>       d_insertionOrder;
       std::list<std::string>         d_activeSections;
       ConditionalOStream             d_stream;
       const mpi::MPIComm             d_mpiComm;

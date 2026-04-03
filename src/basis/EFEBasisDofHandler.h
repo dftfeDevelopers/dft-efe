@@ -203,10 +203,6 @@ namespace dftefe
                                                     dim>>
       getEnrichmentClassicalInterface() const = 0;
 
-      virtual std::vector<ValueTypeBasisData>
-      getClassicalComponentCoeffsInCellOEFE(
-        const size_type                                      cellIndex) const  = 0;
-
       // virtual utils::MemoryStorage<ValueTypeBasisData, memorySpace>
       // getClassicalComponentCoeffsInAllCellsOEFE() const override;
 

@@ -167,17 +167,13 @@ namespace dftefe
 
       std::shared_ptr<const BasisManager<ValueTypeBasisData, memorySpace>>
       getCFEBasisManager() const;
+      
+      std::vector<ValueTypeBasisData>
+      getClassicalComponentCoeffsInCellOEFE(
+        const size_type                   cellIndex) const;
 
-      std::shared_ptr<const BasisDofHandler>
-      getCFEBasisDofHandler() const;
-
-      const std::unordered_map<global_size_type,
-                               utils::OptimizedIndexSet<size_type>> &
-      getClassicalComponentLocalIdsMap() const;
-
-      const std::unordered_map<global_size_type,
-                               std::vector<ValueTypeBasisData>> &
-      getClassicalComponentCoeffMap() const;
+      std::vector<ValueTypeBasisData>
+      getClassicalComponentCoeffsInAllCellsOEFE() const;
 
       std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
       getLinAlgOpContext() const;
@@ -232,11 +228,26 @@ namespace dftefe
         const std::vector<dftefe::utils::Point> &points) const;
 
       void
-      getEnrichmentValuesInAllCellsAtQuadPts(quadrature::QuadratureRuleContainer &quadRuleContainer, 
-                        std::vector<double> &quadValuesInAllCellsEnrichment,
-                        linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext) const;
+      getEnrichmentDataInAllCellsAtQuadPts(bool storeValues, 
+                                          bool storeGradients, 
+                                          const quadrature::QuadratureRuleContainer &quadRuleContainer, 
+                                          std::vector<double> &quadValuesInAllCellsEnrichment,
+                                          std::vector<double> &quadGradientsInAllCellsEnrichment,
+                                          linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext) const;
 
     private:
+
+      const std::unordered_map<global_size_type,
+                               utils::OptimizedIndexSet<size_type>> &
+      getClassicalComponentLocalIdsMap() const;
+
+      const std::unordered_map<global_size_type,
+                               std::vector<ValueTypeBasisData>> &
+      getClassicalComponentCoeffMap() const;
+
+      std::shared_ptr<const BasisDofHandler>
+      getCFEBasisDofHandler() const;
+
       std::shared_ptr<EnrichmentIdsPartition<dim>> d_enrichmentIdsPartition;
       std::shared_ptr<const AtomIdsPartition<dim>> d_atomIdsPartition;
       std::shared_ptr<const atoms::AtomSphericalDataContainer>

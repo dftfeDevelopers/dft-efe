@@ -1141,7 +1141,7 @@ namespace dftefe
             feBDHamiltonian->getQuadratureRuleContainer(),
         "The  feBDElectronicChargeRHS and feBDHamiltonian should have same Quadrature.");
 
-      utils::Profiler<utils::MemorySpace::HOST> p(feBMTotalCharge->getMPIPatternP2P()->mpiCommunicator());
+      //utils::Profiler<utils::MemorySpace::HOST> p(feBMTotalCharge->getMPIPatternP2P()->mpiCommunicator());
 
       // d_atomicTotalElecPotElectronicQuad = &atomicTotalElecPotElectronicQuad;
       // d_atomicElectronChargeDensity      = atomicElectronChargeDensity;
@@ -1243,6 +1243,11 @@ namespace dftefe
           feBDElectronicChargeRhs->getQuadratureRuleContainer(), 1, 0.0);
 
       //----- Atomic storages init ----
+
+      utils::Profiler<utils::MemorySpace::HOST> p(
+        d_feBMTotalCharge->getMPIPatternP2P()->mpiCommunicator(),
+        "Electrostiaitcs Reinit Basis");
+      p.registerStart("Quad Eval for rhoAtFunc, vTotAtFunc , smfuncDens , externalPotentialFunction , smfuncPot  + TCI + numSelf");
 
       RealType *quadValueIter1 = d_atomicElectronChargeDensity.begin();
       ValueTypeBasisCoeff *quadValueIter2 =
@@ -1574,6 +1579,9 @@ namespace dftefe
                  << "\t" << d_integralDiffVZZCorrVSmearxSumBZZCorrBSmear
                  << "\n";
 
+      p.registerEnd("Quad Eval for rhoAtFunc, vTotAtFunc , smfuncDens , externalPotentialFunction , smfuncPot  + TCI + numSelf");
+      p.registerStart("Poisson Solve Object Creation");
+
       d_scratchDensNuclearQuad->setValue(0);
       std::map<
         std::string,
@@ -1609,6 +1617,8 @@ namespace dftefe
           inpRhsMap,
           ksdft::PoissonProblemDefaults::PC_TYPE,
           d_linAlgOpContextHost);
+      p.registerEnd("Poisson Solve Object Creation");
+      p.print();
     }
 
     template <typename ValueTypeBasisData,

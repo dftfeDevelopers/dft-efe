@@ -590,10 +590,11 @@ namespace dftefe
               double dYlmDPhiBysinTheta = 0.;
               if (m != 0)
                 {
+                  const double d2PlmDTheta2_theta = 
+                    d_sphericalHarmonicFunc.d2PlmDTheta2(l, std::abs(m), theta);
                   dYlmDPhiBysinTheta =
                     constant *
-                    (sin(theta) * d_sphericalHarmonicFunc.d2PlmDTheta2(
-                                    l, std::abs(m), theta) +
+                    (sin(theta) * d2PlmDTheta2_theta +
                      cos(theta) * dPlmDTheta_theta +
                      sin(theta) * l * (l + 1) * plm_theta) *
                     (1. / (m * m)) * dQmDPhi(m, phi);
