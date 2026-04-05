@@ -578,10 +578,9 @@ namespace dftefe
                          qPoint < nQuadPointInCellEnrichmentBlockEnrichment;
                          qPoint++)
                       {
-                        *(enrichmentValuesVec.data() + numEnrichmentIdsInCell * qPoint
-                           + i
-                          /*nQuadPointInCellEnrichmentBlockEnrichment * i +
-                          qPoint*/) =
+                        *(enrichmentValuesVec.data() +
+                          nQuadPointInCellEnrichmentBlockEnrichment * i +
+                          qPoint) =
                             *(quadValuesInAllCellsEnrichment.data() + cumulativeQuadEnrichBlockEnrichxenrichInCell +
                               nQuadPointInCellEnrichmentBlockEnrichment * i + qPoint);
                       }
@@ -672,18 +671,18 @@ namespace dftefe
                                                 ValueTypeOperand,
                                                 utils::MemorySpace::HOST>(
                   'N',
-                  'C',
-                  dofsPerCell,
+                  'N',
+                  n,
                   numEnrichmentIdsInCell,
                   k,
                   (ValueTypeOperand)1.0,
                   JxWxNCell.data(),
                   n,
                   enrichmentValuesVec.data(),
-                  numEnrichmentIdsInCell,
+                  k,
                   (ValueTypeOperand)0.0,
                   basisOverlapECBlockEnrich.data(),
-                  dofsPerCell,
+                  n,
                   linAlgOpContext);
 
                 JxWxNCell.resize(dofsPerCellCFE *
@@ -755,7 +754,7 @@ namespace dftefe
                   ValueTypeOperator,
                   utils::MemorySpace::HOST>(
                   1,
-                  linearAlgebra::blasLapack::Layout::ColMajor,
+                  linearAlgebra::blasLapack::Layout::RowMajor,
                   linearAlgebra::blasLapack::ScalarOp::Identity,
                   linearAlgebra::blasLapack::ScalarOp::Identity,
                   &stride,
@@ -772,16 +771,16 @@ namespace dftefe
                 linearAlgebra::blasLapack::gemm<ValueTypeOperand,
                                                 ValueTypeOperand,
                                                 utils::MemorySpace::HOST>(
-                  'N',
                   'C',
+                  'N',
                   n,
                   n,
                   k,
                   (ValueTypeOperand)1.0,
                   JxWxNCell.data(),
-                  n,
+                  k,
                   enrichmentValuesVec.data(),
-                  n,
+                  k,
                   (ValueTypeOperand)0.0,
                   basisOverlapEEBlock1.data(),
                   n,
@@ -849,7 +848,7 @@ namespace dftefe
                   ValueTypeOperator,
                   utils::MemorySpace::HOST>(
                   1,
-                  linearAlgebra::blasLapack::Layout::ColMajor,
+                  linearAlgebra::blasLapack::Layout::RowMajor,
                   linearAlgebra::blasLapack::ScalarOp::Identity,
                   linearAlgebra::blasLapack::ScalarOp::Identity,
                   &stride,
@@ -867,15 +866,15 @@ namespace dftefe
                                                 ValueTypeOperator,
                                                 utils::MemorySpace::HOST>(
                   'N',
-                  'C',
+                  'N',
                   n,
                   n,
                   k,
                   (ValueTypeOperand)1.0,
-                  JxWxNCell.data(),
-                  n,
                   classicalComponentInQuadValuesEE.data(),
-                  n,
+                  n,                  
+                  JxWxNCell.data(),
+                  k,
                   (ValueTypeOperator)0.0,
                   basisOverlapEEBlock3.data(),
                   n,
