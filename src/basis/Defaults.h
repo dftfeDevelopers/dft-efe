@@ -88,8 +88,20 @@ namespace dftefe
       // algorithm.
       //
       static const size_type ENRICHMENT_BATCH_SIZE;
+      static const double ENRICHMENT_ORTHO_COEFF_TOL;
 
     }; // end of class ECIDefaults
+
+    class BasisDataStorageDefaults
+    {
+    public:
+      //
+      // The maximum refinement steps used for adaptive mesh generation
+      // algorithm.
+      //
+      static const size_type CELL_BATCH_SIZE;
+
+    }; // end of class GenerateMeshDefaults
 
   } // end of namespace basis
 } // end of namespace dftefe

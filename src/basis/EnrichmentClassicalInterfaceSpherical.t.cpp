@@ -491,7 +491,7 @@ namespace dftefe
               for (global_size_type j = 0; j < numEnrichInBatch; j++)
                 {
                   if (std::abs(*(basisInterfaceCoeffSTL.data() +
-                                 i * numEnrichInBatch + j)) > 1e-8)
+                                 i * numEnrichInBatch + j)) > ECIDefaults::ENRICHMENT_ORTHO_COEFF_TOL)
                     {
                       enrichmentIdToClassicalLocalIdMapSet[j + enrichStartId]
                         .insert(i);
@@ -1065,7 +1065,7 @@ namespace dftefe
            coeffInAllCellsVecSize += d_overlappingEnrichmentIdsInCells[cellIndex].size();
         coeffInAllCellsVecSize *= classicalDofsPerCell;
           
-        std::vector<ValueTypeBasisData> coeffsInAllCells(classicalDofsPerCell,
+        std::vector<ValueTypeBasisData> coeffsInAllCells(coeffInAllCellsVecSize,
                                                      0);
 
         for(int cellIndex = 0 ; cellIndex < d_overlappingEnrichmentIdsInCells.size() ; cellIndex++)

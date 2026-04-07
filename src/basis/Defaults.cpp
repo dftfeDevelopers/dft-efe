@@ -40,5 +40,7 @@ namespace dftefe
     const double    L2ProjectionDefaults::DIVERGENCE_TOL       = 1e6;
     const size_type GenerateMeshDefaults::MAX_REFINEMENT_STEPS = 40;
     const size_type ECIDefaults::ENRICHMENT_BATCH_SIZE         = 400;
+    const double ECIDefaults::ENRICHMENT_ORTHO_COEFF_TOL    = 1e-8;
+    const size_type BasisDataStorageDefaults::CELL_BATCH_SIZE  = 50;
   } // end of namespace basis
 } // end of namespace dftefe

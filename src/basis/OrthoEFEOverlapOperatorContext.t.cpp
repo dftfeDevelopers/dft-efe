@@ -967,6 +967,923 @@ namespace dftefe
           basisOverlapTmp.size(), basisOverlap->data(), basisOverlapTmp.data());
       }
 
+      // Use this for data storage of orthogonalized EFE only
+      template <typename ValueTypeOperator,
+                typename ValueTypeOperand,
+                utils::MemorySpace memorySpace,
+                size_type          dim>
+      void
+      computeBasisOverlapMatrixBlocked(
+        const FEBasisDataStorage<ValueTypeOperator, memorySpace>
+          &classicalBlockBasisDataStorage,
+        const FEBasisDataStorage<ValueTypeOperator, memorySpace>
+          &enrichmentBlockEnrichmentBasisDataStorage,
+        const FEBasisDataStorage<ValueTypeOperator, memorySpace>
+          &enrichmentBlockClassicalBasisDataStorage,
+        std::shared_ptr<utils::MemoryStorage<ValueTypeOperator, memorySpace>>
+          &                     basisOverlap,
+        std::vector<size_type> &cellStartIdsBasisOverlap,
+        std::vector<size_type> &dofsInCellVec,
+        const size_type         cellBlockSize,   
+        bool                    calculateWings = true)
+      {
+        std::shared_ptr<
+          const FEBasisDofHandler<ValueTypeOperand, memorySpace, dim>>
+          ccfeBDH = std::dynamic_pointer_cast<
+            const FEBasisDofHandler<ValueTypeOperand, memorySpace, dim>>(
+            classicalBlockBasisDataStorage.getBasisDofHandler());
+        utils::throwException(
+          ccfeBDH != nullptr,
+          "Could not cast BasisDofHandler to FEBasisDofHandler "
+          "in OrthoEFEOverlapOperatorContext for the Classical data storage of classical dof block.");
+
+        std::shared_ptr<
+          const FEBasisDofHandler<ValueTypeOperand, memorySpace, dim>>
+          ecfeBDH = std::dynamic_pointer_cast<
+            const FEBasisDofHandler<ValueTypeOperand, memorySpace, dim>>(
+            enrichmentBlockClassicalBasisDataStorage.getBasisDofHandler());
+        utils::throwException(
+          ecfeBDH != nullptr,
+          "Could not cast BasisDofHandler to FEBasisDofHandler "
+          "in OrthoEFEOverlapOperatorContext for the Classical data storage of enrichment dof blocks.");
+
+        std::shared_ptr<const EFEBasisDofHandler<ValueTypeOperand,
+                                                 ValueTypeOperator,
+                                                 memorySpace,
+                                                 dim>>
+          eefeBDH = std::dynamic_pointer_cast<
+            const EFEBasisDofHandler<ValueTypeOperand,
+                                     ValueTypeOperator,
+                                     memorySpace,
+                                     dim>>(
+            enrichmentBlockEnrichmentBasisDataStorage.getBasisDofHandler());
+        utils::throwException(
+          eefeBDH != nullptr,
+          "Could not cast BasisDofHandler to EFEBasisDofHandler "
+          "in OrthoEFEOverlapOperatorContext for the Enrichment data storage of enrichment dof blocks.");
+
+        linearAlgebra::LinAlgOpContext<memorySpace>
+          &linAlgOpContext = *eefeBDH->getEnrichmentClassicalInterface()->getLinAlgOpContext();
+
+        utils::throwException(
+          ccfeBDH->getTriangulation() == ecfeBDH->getTriangulation() &&
+            ccfeBDH->getFEOrder(0) == ecfeBDH->getFEOrder(0) &&
+            ccfeBDH->getTriangulation() == eefeBDH->getTriangulation() &&
+            ccfeBDH->getFEOrder(0) == eefeBDH->getFEOrder(0),
+          "The EFEBasisDataStorage and and Classical FEBasisDataStorage have different triangulation or FEOrder"
+          "in OrthoEFEOverlapOperatorContext.");
+
+        utils::throwException(
+          eefeBDH->isOrthogonalized(),
+          "The Enrcihment data storage of enrichment dof blocks should have isOrthogonalized as true in OrthoEFEOverlapOperatorContext.");
+
+        // interpolate the ci 's to the enrichment quadRuleAttr quadpoints
+
+        const EFEBasisDataStorage<ValueTypeOperator, memorySpace>
+          &enrichmentBlockEnrichmentBasisDataStorageEFE = dynamic_cast<
+            const EFEBasisDataStorage<ValueTypeOperator, memorySpace> &>(
+            enrichmentBlockEnrichmentBasisDataStorage);
+        utils::throwException(
+          &enrichmentBlockEnrichmentBasisDataStorageEFE != nullptr,
+          "Could not cast FEBasisDataStorage to EFEBasisDataStorage "
+          "in OrthoEFEOverlapOperatorContext for enrichmentBlockEnrichmentBasisDataStorage.");
+
+        // Set up the overlap matrix quadrature storages.
+
+        const size_type numLocallyOwnedCells = eefeBDH->nLocallyOwnedCells();
+        dofsInCellVec.resize(numLocallyOwnedCells, 0);
+
+        size_type       basisOverlapSize                    = 0;
+        size_type       cellId                              = 0;
+
+        const size_type dofsPerCellCFE = ccfeBDH->nCellDofs(cellId);
+
+        auto locallyOwnedCellIter = eefeBDH->beginLocallyOwnedCells();
+        for (; locallyOwnedCellIter != eefeBDH->endLocallyOwnedCells();
+             ++locallyOwnedCellIter)
+          {
+            dofsInCellVec[cellId] = eefeBDH->nCellDofs(cellId);
+            basisOverlapSize += dofsInCellVec[cellId] * dofsInCellVec[cellId];
+            cellId++;
+          }
+
+        basisOverlap = std::make_shared<
+          utils::MemoryStorage<ValueTypeOperator, memorySpace>>(
+          basisOverlapSize, (ValueTypeOperator)0);
+
+        cellStartIdsBasisOverlap.resize(numLocallyOwnedCells, 0);
+
+        size_type cellIndex   = 0;
+
+      // et the enrichment values
+      std::vector<double> quadValuesInAllCellsEnrichmentHost, quadGradientsInAllCellsEnrichmentHost;
+          eefeBDH->getEnrichmentClassicalInterface()->getEnrichmentDataInAllCellsAtQuadPts(
+            true,
+            false,
+            *enrichmentBlockEnrichmentBasisDataStorage.getQuadratureRuleContainer(),
+            quadValuesInAllCellsEnrichmentHost,
+            quadGradientsInAllCellsEnrichmentHost,
+            *eefeBDH->getEnrichmentClassicalInterface()->getLinAlgOpContext());
+        utils::MemoryStorage<ValueTypeOperator, memorySpace>
+          quadValuesInAllCellsEnrichment(quadValuesInAllCellsEnrichmentHost.size());
+        utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
+          quadValuesInAllCellsEnrichment.size(), quadValuesInAllCellsEnrichment.data(), quadValuesInAllCellsEnrichmentHost.data());
+
+        auto coeffsInAllCellsHost = eefeBDH->getEnrichmentClassicalInterface()->getClassicalComponentCoeffsInAllCellsOEFE();
+        utils::MemoryStorage<ValueTypeOperator, memorySpace>
+          coeffsInAllCells(coeffsInAllCellsHost.size());      
+        utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
+          coeffsInAllCellsHost.size(), coeffsInAllCells.data(), coeffsInAllCellsHost.data());
+
+        const double* cellJxWValuesClassicalBlockPtr =
+          classicalBlockBasisDataStorage.getQuadratureRuleContainer()
+            ->template getJxWPtr<memorySpace>();
+
+        const double* cellJxWValuesEnrichmentBlockClassicalPtr =
+          enrichmentBlockClassicalBasisDataStorage
+            .getQuadratureRuleContainer()
+            ->template getJxWPtr<memorySpace>();
+
+        const double* cellJxWValuesEnrichmentBlockEnrichmentPtr =
+          enrichmentBlockEnrichmentBasisDataStorage
+            .getQuadratureRuleContainer()
+            ->template getJxWPtr<memorySpace>();
+
+        size_type numCumulativeDofsxDofsCellsInBlock = 0;
+        size_type cumulativeQuadEnrichBlockEnrichxenrichInCell = 0;
+        size_type cumulativeCoeffsInCellRange = 0;
+
+        for (size_type cellStartId = 0; cellStartId < numLocallyOwnedCells;
+              cellStartId += cellBlockSize)
+          {
+            ValueTypeOperator* basisOverlapStartPtrInCellBlock = basisOverlap->data() + numCumulativeDofsxDofsCellsInBlock;
+
+            size_type cellQuadStartIdsClassicalBlock = classicalBlockBasisDataStorage
+              .getQuadratureRuleContainer()->getCellQuadStartId(cellStartId);
+            size_type cellQuadStartIdsEnrichmentBlockClassical = enrichmentBlockClassicalBasisDataStorage
+              .getQuadratureRuleContainer()->getCellQuadStartId(cellStartId);
+            size_type cellQuadStartIdsEnrichmentBlockEnrichment = enrichmentBlockEnrichmentBasisDataStorage
+              .getQuadratureRuleContainer()->getCellQuadStartId(cellStartId);
+
+            const size_type cellEndId =
+              std::min(cellStartId + cellBlockSize, numLocallyOwnedCells);
+            const size_type numCellsInBlock = cellEndId - cellStartId;
+
+            std::vector<size_type> dofsPerCellInCellBlock(numCellsInBlock, 0),
+              numEnrichmentIdsInCellBlock(numCellsInBlock, 0),
+              nQuadPointInCellBlockClassicalBlock(numCellsInBlock, 0),
+              nQuadPointInCellBlockEnrichmentBlockClassical(numCellsInBlock, 0),
+              nQuadPointInCellBlockEnrichmentBlockEnrichment(numCellsInBlock, 0);
+
+            std::vector<size_type> mSizes(numCellsInBlock, 0);
+            std::vector<size_type> nSizes(numCellsInBlock, 0);
+            std::vector<size_type> kSizes(numCellsInBlock, 0);
+            std::vector<size_type> ldaSizes(numCellsInBlock, 0);
+            std::vector<size_type> ldbSizes(numCellsInBlock, 0);
+            std::vector<size_type> ldcSizes(numCellsInBlock, 0);
+            std::vector<size_type> strideA(numCellsInBlock, 0);
+            std::vector<size_type> strideB(numCellsInBlock, 0);
+            std::vector<size_type> strideC(numCellsInBlock, 0);
+
+            std::copy(dofsInCellVec.begin() + cellStartId,
+                      dofsInCellVec.begin() + cellEndId,
+                      dofsPerCellInCellBlock.begin());
+
+            size_type cumulativeDofsCFExQuadClassicalBlock = 0;            
+            size_type cumulativeDofsCFExQuadEnrichmentBlockClassical = 0;
+            size_type cumulativeDofsxQuadEnrichmentBlockEnrichment = 0;
+            size_type cumulativeEnrichxQuadEnrichmentBlockClassical = 0;
+            size_type cumulativeEnrichxQuadEnrichmentBlockEnrichment = 0;
+            for (size_type iCell = 0; iCell < numCellsInBlock; iCell++)
+              {
+                cellIndex = iCell + cellStartId;
+
+                numEnrichmentIdsInCellBlock[iCell] = dofsPerCellInCellBlock[iCell] - dofsPerCellCFE;                       
+                                            
+                nQuadPointInCellBlockClassicalBlock[iCell] = 
+                  classicalBlockBasisDataStorage.getQuadratureRuleContainer()
+                    ->nCellQuadraturePoints(cellIndex);   
+                nQuadPointInCellBlockEnrichmentBlockClassical[iCell] = 
+                  enrichmentBlockClassicalBasisDataStorage
+                    .getQuadratureRuleContainer()
+                    ->nCellQuadraturePoints(cellIndex);                
+                nQuadPointInCellBlockEnrichmentBlockEnrichment[iCell] =  
+                  enrichmentBlockEnrichmentBasisDataStorage
+                    .getQuadratureRuleContainer()
+                    ->nCellQuadraturePoints(cellIndex);     
+                    
+                cumulativeDofsCFExQuadClassicalBlock +=
+                  dofsPerCellCFE * nQuadPointInCellBlockClassicalBlock[iCell];
+                cumulativeDofsCFExQuadEnrichmentBlockClassical +=     
+                  dofsPerCellCFE * nQuadPointInCellBlockEnrichmentBlockClassical[iCell];                
+                cumulativeDofsxQuadEnrichmentBlockEnrichment  += 
+                  dofsPerCellInCellBlock[iCell] * nQuadPointInCellBlockEnrichmentBlockEnrichment[iCell];
+
+                cumulativeEnrichxQuadEnrichmentBlockClassical += numEnrichmentIdsInCellBlock[iCell] * 
+                  nQuadPointInCellBlockEnrichmentBlockClassical[iCell];  
+                cumulativeEnrichxQuadEnrichmentBlockEnrichment += numEnrichmentIdsInCellBlock[iCell] * 
+                  nQuadPointInCellBlockEnrichmentBlockEnrichment[iCell];                     
+              }
+
+            //------- basis data in cell range ------
+            std::pair<size_type, size_type> cellPair(cellStartId, cellEndId);
+
+            utils::MemoryStorage<ValueTypeOperator, memorySpace>
+              basisDataInCellRangeClassicalBlock(
+                cumulativeDofsCFExQuadClassicalBlock);
+            classicalBlockBasisDataStorage.getBasisDataInCellRange(
+                  cellPair, basisDataInCellRangeClassicalBlock);
+
+            utils::MemoryStorage<ValueTypeOperator, memorySpace>
+              basisDataInCellRangeEnrichmentBlockClassical(
+                cumulativeDofsCFExQuadEnrichmentBlockClassical);
+            enrichmentBlockClassicalBasisDataStorage.getBasisDataInCellRange(
+                  cellPair, basisDataInCellRangeEnrichmentBlockClassical);
+
+            utils::MemoryStorage<ValueTypeOperator, memorySpace>
+              basisDataInCellRangeEnrichmentBlockEnrichment(
+                cumulativeDofsxQuadEnrichmentBlockEnrichment);
+            enrichmentBlockEnrichmentBasisDataStorage.getBasisDataInCellRange(
+              cellPair, basisDataInCellRangeEnrichmentBlockEnrichment);
+            //------ basis data in cell range -------
+
+            utils::MemoryStorage<ValueTypeOperator, memorySpace> 
+              classicalComponentInQuadValuesEC(
+                cumulativeEnrichxQuadEnrichmentBlockClassical);
+
+            utils::MemoryStorage<ValueTypeOperator, memorySpace>
+              classicalComponentInQuadValuesEE(
+                cumulativeEnrichxQuadEnrichmentBlockEnrichment);
+
+            // Do a gemm (\Sigma c_i N_i^classical)
+            std::vector<char>      transA(numCellsInBlock, 'N');
+            std::vector<char>      transB(numCellsInBlock, 'N');
+            for (size_type iCell = 0; iCell < numCellsInBlock; ++iCell)
+              {
+                mSizes[iCell]   = numEnrichmentIdsInCellBlock[iCell];
+                nSizes[iCell]   = nQuadPointInCellBlockEnrichmentBlockClassical[iCell];
+                kSizes[iCell]   = dofsPerCellCFE;
+                ldaSizes[iCell] = mSizes[iCell];
+                ldbSizes[iCell] = kSizes[iCell];
+                ldcSizes[iCell] = mSizes[iCell];
+                strideA[iCell] = mSizes[iCell] * kSizes[iCell];
+                strideB[iCell] = kSizes[iCell] * nSizes[iCell];
+                strideC[iCell] = mSizes[iCell] * nSizes[iCell];
+              }
+                  
+                linearAlgebra::blasLapack::gemmStridedVarBatched<ValueTypeOperator,
+                                                ValueTypeOperator,
+                                                memorySpace>(
+                  numCellsInBlock,                                                  
+                  transA.data(),
+                  transB.data(),
+                  strideA.data(),
+                  strideB.data(),
+                  strideC.data(),                  
+                  mSizes.data(),
+                  nSizes.data(),
+                  kSizes.data(),
+                  (ValueTypeOperator)1.0,
+                  coeffsInAllCells.data() + cumulativeCoeffsInCellRange,
+                  ldaSizes.data(),
+                  basisDataInCellRangeEnrichmentBlockClassical.data(),
+                  ldbSizes.data(),
+                  (ValueTypeOperator)0.0,
+                  classicalComponentInQuadValuesEC.data(),
+                  ldcSizes.data(),
+                  linAlgOpContext);
+
+              for (size_type iCell = 0; iCell < numCellsInBlock; ++iCell)
+                {
+                  mSizes[iCell]   = numEnrichmentIdsInCellBlock[iCell];
+                  nSizes[iCell]   = nQuadPointInCellBlockEnrichmentBlockEnrichment[iCell];
+                  kSizes[iCell]   = dofsPerCellCFE;
+                  ldaSizes[iCell] = mSizes[iCell];
+                  ldbSizes[iCell] = dofsPerCellInCellBlock[iCell];
+                  ldcSizes[iCell] = mSizes[iCell];
+                  strideA[iCell]  = mSizes[iCell] * kSizes[iCell];
+                  strideB[iCell]  = dofsPerCellInCellBlock[iCell] * nSizes[iCell];
+                  strideC[iCell]  = mSizes[iCell] * nSizes[iCell];
+                }
+
+                // Do a gemm (\Sigma c_i N_i^classical) for enrichment quad rule
+
+                linearAlgebra::blasLapack::gemmStridedVarBatched<
+                  ValueTypeOperator,
+                  ValueTypeOperator,
+                  memorySpace>(
+                  numCellsInBlock, 
+                  transA.data(),
+                  transB.data(),
+                  strideA.data(),
+                  strideB.data(),
+                  strideC.data(),
+                  mSizes.data(),
+                  nSizes.data(),
+                  kSizes.data(),
+                  (ValueTypeOperator)1.0,
+                  coeffsInAllCells.data() + cumulativeCoeffsInCellRange,
+                  ldaSizes.data(),
+                  basisDataInCellRangeEnrichmentBlockEnrichment.data(),
+                  ldbSizes.data(),
+                  (ValueTypeOperator)0.0,
+                  classicalComponentInQuadValuesEE.data(),
+                  ldcSizes.data(),
+                  linAlgOpContext);
+
+            // strideC for sub-blocks written directly into basisOverlap:
+            //   strideC_full[i]       = dofsPerCell[i]^2  (CC, EC)
+            //   strideC_colOffset[i]  = dofsPerCell[i]^2 +
+            //     dofsPerCFE*(dofsPerCell[i+1]-dofsPerCell[i])  (CE, EE)                  
+            std::vector<size_type> strideC_full(numCellsInBlock, 0);
+            std::vector<size_type> strideC_colOffset(numCellsInBlock, 0);
+           for (size_type iCell = 0; iCell < numCellsInBlock; ++iCell)
+              {
+                strideC_full[iCell] =
+                  dofsPerCellInCellBlock[iCell] * dofsPerCellInCellBlock[iCell];
+                strideC_colOffset[iCell] =
+                  strideC_full[iCell] +
+                  ((iCell + 1 < numCellsInBlock)
+                     ? dofsPerCellCFE * (dofsPerCellInCellBlock[iCell + 1] -
+                                         dofsPerCellInCellBlock[iCell])
+                     : 0);
+              }
+              
+            // ------------------- Classical - Classical Block --------------------
+            size_type JxWxNCellSize = 0;
+            for (size_type iCell = 0; iCell < numCellsInBlock; ++iCell)
+              {
+                mSizes[iCell]   = 1;
+                nSizes[iCell]   = dofsPerCellCFE;
+                kSizes[iCell]   = nQuadPointInCellBlockClassicalBlock[iCell];
+                strideA[iCell] = mSizes[iCell] * kSizes[iCell];
+                strideB[iCell] = kSizes[iCell] * nSizes[iCell];
+                strideC[iCell] = mSizes[iCell] * nSizes[iCell] * kSizes[iCell];
+                JxWxNCellSize += nSizes[iCell] * kSizes[iCell] * mSizes[iCell];
+              }
+            utils::MemoryStorage<ValueTypeOperator, memorySpace> JxWxNCell(
+              JxWxNCellSize);
+
+            linearAlgebra::blasLapack::scaleStridedVarBatched<
+              ValueTypeOperator,
+              ValueTypeOperator,
+              memorySpace>(
+              numCellsInBlock,
+              linearAlgebra::blasLapack::Layout::ColMajor,
+              linearAlgebra::blasLapack::ScalarOp::Identity,
+              linearAlgebra::blasLapack::ScalarOp::Identity,
+              strideA.data(),
+              strideB.data(),
+              strideC.data(),
+              mSizes.data(),
+              nSizes.data(),
+              kSizes.data(),
+              cellJxWValuesClassicalBlockPtr + cellQuadStartIdsClassicalBlock,
+              basisDataInCellRangeClassicalBlock.data(),
+              JxWxNCell.data(),
+              linAlgOpContext);
+
+            std::fill(transA.begin(), transA.end(), 'N');
+            std::fill(transB.begin(), transB.end(), 'C');
+
+            for (size_type iCell = 0; iCell < numCellsInBlock; ++iCell)
+              {
+                mSizes[iCell]   = dofsPerCellCFE;
+                nSizes[iCell]   = dofsPerCellCFE;
+                kSizes[iCell]   = nQuadPointInCellBlockClassicalBlock[iCell];
+                ldaSizes[iCell] = mSizes[iCell];
+                ldbSizes[iCell] = nSizes[iCell];
+                ldcSizes[iCell] = dofsPerCellInCellBlock[iCell]; 
+                strideA[iCell]  = mSizes[iCell] * kSizes[iCell];
+                strideB[iCell]  = kSizes[iCell] * nSizes[iCell];
+                strideC[iCell]  = strideC_full[iCell]; 
+              }
+
+            linearAlgebra::blasLapack::gemmStridedVarBatched<ValueTypeOperand,
+                                            ValueTypeOperand,
+                                            memorySpace>(
+              numCellsInBlock, 
+              transA.data(),
+              transB.data(),
+              strideA.data(),
+              strideB.data(),
+              strideC.data(),
+              mSizes.data(),
+              nSizes.data(),
+              kSizes.data(),
+              (ValueTypeOperand)1.0,
+              JxWxNCell.data(),
+              ldaSizes.data(),
+              basisDataInCellRangeClassicalBlock.data(),
+              ldbSizes.data(),
+              (ValueTypeOperand)0.0,
+              basisOverlapStartPtrInCellBlock,
+              ldcSizes.data(),
+              linAlgOpContext);
+            // ------------------- Classical - Classical Block --------------------
+  
+            // ------------------- Classical - Enrichment Block --------------------
+            if(calculateWings)
+            {
+            // Pristine - with classical 
+            JxWxNCellSize = 0;
+            for (size_type iCell = 0; iCell < numCellsInBlock; ++iCell)
+              {
+                mSizes[iCell]   = 1;
+                nSizes[iCell]   = dofsPerCellInCellBlock[iCell];
+                kSizes[iCell]   = nQuadPointInCellBlockEnrichmentBlockEnrichment[iCell];
+                strideA[iCell] = mSizes[iCell] * kSizes[iCell];
+                strideB[iCell] = kSizes[iCell] * nSizes[iCell];
+                strideC[iCell] = mSizes[iCell] * nSizes[iCell] * kSizes[iCell];
+                JxWxNCellSize += nSizes[iCell] * kSizes[iCell] * mSizes[iCell];
+              }
+
+              JxWxNCell.resize(JxWxNCellSize, 0);
+
+              linearAlgebra::blasLapack::scaleStridedVarBatched<
+                ValueTypeOperator,
+                ValueTypeOperator,
+                memorySpace>(
+                numCellsInBlock,
+                linearAlgebra::blasLapack::Layout::ColMajor,
+                linearAlgebra::blasLapack::ScalarOp::Identity,
+                linearAlgebra::blasLapack::ScalarOp::Identity,
+                strideA.data(),
+                strideB.data(),
+                strideC.data(),
+                mSizes.data(),
+                nSizes.data(),
+                kSizes.data(),
+                cellJxWValuesEnrichmentBlockEnrichmentPtr + cellQuadStartIdsEnrichmentBlockEnrichment,
+                basisDataInCellRangeEnrichmentBlockEnrichment.data(),
+                JxWxNCell.data(),
+                linAlgOpContext);
+
+            // CE block
+            std::fill(transA.begin(), transA.end(), 'N');
+            std::fill(transB.begin(), transB.end(), 'N');
+
+            for (size_type iCell = 0; iCell < numCellsInBlock; ++iCell)
+              {
+                mSizes[iCell]   = dofsPerCellCFE;
+                nSizes[iCell]   = numEnrichmentIdsInCellBlock[iCell];
+                kSizes[iCell]   = nQuadPointInCellBlockEnrichmentBlockEnrichment[iCell];
+                ldaSizes[iCell] = dofsPerCellInCellBlock[iCell];
+                ldbSizes[iCell] = kSizes[iCell];
+                ldcSizes[iCell] = dofsPerCellInCellBlock[iCell]; 
+                strideA[iCell]  = dofsPerCellInCellBlock[iCell] * kSizes[iCell];
+                strideB[iCell]  = kSizes[iCell] * nSizes[iCell];
+                strideC[iCell]  = strideC_colOffset[iCell]; 
+              }
+
+            linearAlgebra::blasLapack::gemmStridedVarBatched<ValueTypeOperand,
+                                            ValueTypeOperand,
+                                            memorySpace>(
+                  numCellsInBlock, 
+                  transA.data(),
+                  transB.data(),
+                  strideA.data(),
+                  strideB.data(),
+                  strideC.data(),
+                  mSizes.data(),
+                  nSizes.data(),
+                  kSizes.data(),
+                  (ValueTypeOperand)1.0,
+                  JxWxNCell.data(),
+                  ldaSizes.data(),
+                  quadValuesInAllCellsEnrichment.data() + cumulativeQuadEnrichBlockEnrichxenrichInCell,
+                  ldbSizes.data(),
+                  (ValueTypeOperand)0.0,
+                  basisOverlapStartPtrInCellBlock + dofsPerCellInCellBlock[0] * dofsPerCellCFE,
+                  ldcSizes.data(),
+                  linAlgOpContext);
+
+              // EC block
+            std::fill(transA.begin(), transA.end(), 'T');
+            std::fill(transB.begin(), transB.end(), 'T');
+
+            for (size_type iCell = 0; iCell < numCellsInBlock; ++iCell)
+              {
+                mSizes[iCell]   = numEnrichmentIdsInCellBlock[iCell];
+                nSizes[iCell]   = dofsPerCellCFE;
+                kSizes[iCell]   = nQuadPointInCellBlockEnrichmentBlockEnrichment[iCell];
+                ldaSizes[iCell] = kSizes[iCell];
+                ldbSizes[iCell] = dofsPerCellInCellBlock[iCell];
+                ldcSizes[iCell] = dofsPerCellInCellBlock[iCell]; 
+                strideA[iCell]  = mSizes[iCell] * kSizes[iCell];
+                strideB[iCell]  = kSizes[iCell] * dofsPerCellInCellBlock[iCell];
+                strideC[iCell]  = strideC_full[iCell]; 
+              }
+
+            linearAlgebra::blasLapack::gemmStridedVarBatched<ValueTypeOperand,
+                                            ValueTypeOperand,
+                                            memorySpace>(
+                  numCellsInBlock, 
+                  transA.data(),
+                  transB.data(),
+                  strideA.data(),
+                  strideB.data(),
+                  strideC.data(),
+                  mSizes.data(),
+                  nSizes.data(),
+                  kSizes.data(),
+                  (ValueTypeOperand)1.0,
+                  quadValuesInAllCellsEnrichment.data() + cumulativeQuadEnrichBlockEnrichxenrichInCell,                  
+                  ldaSizes.data(),
+                  JxWxNCell.data(),
+                  ldbSizes.data(),
+                  (ValueTypeOperand)0.0,
+                  basisOverlapStartPtrInCellBlock + dofsPerCellCFE,
+                  ldcSizes.data(),
+                  linAlgOpContext);
+
+              // CiNi interpolated - with classical 
+              JxWxNCellSize = 0;
+              for (size_type iCell = 0; iCell < numCellsInBlock; ++iCell)
+                {
+                  mSizes[iCell]   = 1;
+                  nSizes[iCell]   = dofsPerCellCFE;
+                  kSizes[iCell]   = nQuadPointInCellBlockEnrichmentBlockClassical[iCell];
+                  strideA[iCell] = mSizes[iCell] * kSizes[iCell];
+                  strideB[iCell] = kSizes[iCell] * nSizes[iCell];
+                  strideC[iCell] = mSizes[iCell] * nSizes[iCell] * kSizes[iCell];
+                  JxWxNCellSize += nSizes[iCell] * kSizes[iCell] * mSizes[iCell];
+                }
+
+                JxWxNCell.resize(JxWxNCellSize,
+                                 0);
+
+                linearAlgebra::blasLapack::scaleStridedVarBatched<
+                  ValueTypeOperator,
+                  ValueTypeOperator,
+                  memorySpace>(
+                  numCellsInBlock,
+                  linearAlgebra::blasLapack::Layout::ColMajor,
+                  linearAlgebra::blasLapack::ScalarOp::Identity,
+                  linearAlgebra::blasLapack::ScalarOp::Identity,
+                  strideA.data(),
+                  strideB.data(),
+                  strideC.data(),
+                  mSizes.data(),
+                  nSizes.data(),
+                  kSizes.data(),
+                  cellJxWValuesEnrichmentBlockClassicalPtr + cellQuadStartIdsEnrichmentBlockClassical,
+                  basisDataInCellRangeEnrichmentBlockClassical.data(),
+                  JxWxNCell.data(),
+                  linAlgOpContext);
+
+                // CE block
+                std::fill(transA.begin(), transA.end(), 'N');
+                std::fill(transB.begin(), transB.end(), 'C');
+
+                for (size_type iCell = 0; iCell < numCellsInBlock; ++iCell)
+                  {
+                    mSizes[iCell]   = dofsPerCellCFE;
+                    nSizes[iCell]   = numEnrichmentIdsInCellBlock[iCell];
+                    kSizes[iCell]   = nQuadPointInCellBlockEnrichmentBlockClassical[iCell];
+                    ldaSizes[iCell] = mSizes[iCell];
+                    ldbSizes[iCell] = nSizes[iCell];
+                    ldcSizes[iCell] = dofsPerCellInCellBlock[iCell]; 
+                    strideA[iCell]  = mSizes[iCell] * kSizes[iCell];
+                    strideB[iCell]  = kSizes[iCell] * nSizes[iCell];
+                    strideC[iCell]  = strideC_colOffset[iCell];
+                  }
+
+                linearAlgebra::blasLapack::gemmStridedVarBatched<ValueTypeOperand,
+                                                ValueTypeOperator,
+                                                memorySpace>(
+                  numCellsInBlock, 
+                  transA.data(),
+                  transB.data(),
+                  strideA.data(),
+                  strideB.data(),
+                  strideC.data(),
+                  mSizes.data(),
+                  nSizes.data(),
+                  kSizes.data(),
+                  (ValueTypeOperand)-1.0,
+                  JxWxNCell.data(),
+                  ldaSizes.data(),
+                  classicalComponentInQuadValuesEC.data(),
+                  ldbSizes.data(),
+                  (ValueTypeOperator)1.0,
+                  basisOverlapStartPtrInCellBlock + dofsPerCellInCellBlock[0] * dofsPerCellCFE,
+                  ldcSizes.data(),
+                  linAlgOpContext);
+
+              // EC block
+                std::fill(transA.begin(), transA.end(), 'N');
+                std::fill(transB.begin(), transB.end(), 'T');
+
+                for (size_type iCell = 0; iCell < numCellsInBlock; ++iCell)
+                  {
+                    mSizes[iCell]   = numEnrichmentIdsInCellBlock[iCell];
+                    nSizes[iCell]   = dofsPerCellCFE;
+                    kSizes[iCell]   = nQuadPointInCellBlockEnrichmentBlockClassical[iCell];
+                    ldaSizes[iCell] = mSizes[iCell];
+                    ldbSizes[iCell] = nSizes[iCell];
+                    ldcSizes[iCell] = dofsPerCellInCellBlock[iCell];
+                    strideA[iCell]  = mSizes[iCell] * kSizes[iCell];
+                    strideB[iCell]  = kSizes[iCell] * nSizes[iCell];
+                    strideC[iCell]  = strideC_full[iCell];
+                  }
+
+                linearAlgebra::blasLapack::gemmStridedVarBatched<ValueTypeOperand,
+                                                ValueTypeOperator,
+                                                memorySpace>(
+                  numCellsInBlock, 
+                  transA.data(),
+                  transB.data(),
+                  strideA.data(),
+                  strideB.data(),
+                  strideC.data(),
+                  mSizes.data(),
+                  nSizes.data(),
+                  kSizes.data(),
+                  (ValueTypeOperand)-1.0,
+                  classicalComponentInQuadValuesEC.data(),                  
+                  ldaSizes.data(),
+                  JxWxNCell.data(),                  
+                  ldbSizes.data(),
+                  (ValueTypeOperator)1.0,
+                  basisOverlapStartPtrInCellBlock + dofsPerCellCFE,
+                  ldcSizes.data(),
+                  linAlgOpContext);
+            }
+            // ------------------- Classical - Enrichment Block --------------------
+
+            // ------------------- Enrichment - Enrichment Block --------------------
+            // pristine with pristine
+            JxWxNCellSize = 0;
+            for (size_type iCell = 0; iCell < numCellsInBlock; ++iCell)
+              {
+                mSizes[iCell]   = 1;
+                nSizes[iCell]   = numEnrichmentIdsInCellBlock[iCell];
+                kSizes[iCell]   = nQuadPointInCellBlockEnrichmentBlockEnrichment[iCell];
+                strideA[iCell] = mSizes[iCell] * kSizes[iCell];
+                strideB[iCell] = kSizes[iCell] * nSizes[iCell];
+                strideC[iCell] = mSizes[iCell] * nSizes[iCell] * kSizes[iCell];
+                JxWxNCellSize += nSizes[iCell] * kSizes[iCell] * mSizes[iCell];
+              }
+              JxWxNCell.resize(JxWxNCellSize, 0);
+
+              linearAlgebra::blasLapack::scaleStridedVarBatched<
+                ValueTypeOperator,
+                ValueTypeOperator,
+                memorySpace>(
+                numCellsInBlock,
+                linearAlgebra::blasLapack::Layout::RowMajor,
+                linearAlgebra::blasLapack::ScalarOp::Identity,
+                linearAlgebra::blasLapack::ScalarOp::Identity,
+                strideA.data(),
+                strideB.data(),
+                strideC.data(), 
+                mSizes.data(),
+                nSizes.data(),
+                kSizes.data(),
+                cellJxWValuesEnrichmentBlockEnrichmentPtr + cellQuadStartIdsEnrichmentBlockEnrichment,
+                quadValuesInAllCellsEnrichment.data() + cumulativeQuadEnrichBlockEnrichxenrichInCell,
+                JxWxNCell.data(),
+                linAlgOpContext);
+
+            std::fill(transA.begin(), transA.end(), 'C');
+            std::fill(transB.begin(), transB.end(), 'N');
+
+            for (size_type iCell = 0; iCell < numCellsInBlock; ++iCell)
+              {
+                mSizes[iCell]   = numEnrichmentIdsInCellBlock[iCell];
+                nSizes[iCell]   = numEnrichmentIdsInCellBlock[iCell];
+                kSizes[iCell]   = nQuadPointInCellBlockEnrichmentBlockEnrichment[iCell];
+                ldaSizes[iCell] = kSizes[iCell];
+                ldbSizes[iCell] = kSizes[iCell];
+                ldcSizes[iCell] = dofsPerCellInCellBlock[iCell]; 
+                strideA[iCell]  = mSizes[iCell] * kSizes[iCell];
+                strideB[iCell]  = kSizes[iCell] * nSizes[iCell];
+                strideC[iCell]  = strideC_colOffset[iCell];
+              }
+
+              linearAlgebra::blasLapack::gemmStridedVarBatched<ValueTypeOperand,
+                                              ValueTypeOperand,
+                                              memorySpace>(
+                numCellsInBlock, 
+                transA.data(),
+                transB.data(),
+                strideA.data(),
+                strideB.data(),
+                strideC.data(),
+                mSizes.data(),
+                nSizes.data(),
+                kSizes.data(),
+                (ValueTypeOperand)1.0,
+                JxWxNCell.data(),
+                ldaSizes.data(),
+                quadValuesInAllCellsEnrichment.data() + cumulativeQuadEnrichBlockEnrichxenrichInCell,
+                ldbSizes.data(),
+                (ValueTypeOperand)0.0,
+                basisOverlapStartPtrInCellBlock + dofsPerCellInCellBlock[0] * dofsPerCellCFE + dofsPerCellCFE,
+                ldcSizes.data(),
+                linAlgOpContext);
+
+              // interpolated ci's in Ni_classicalQuadrature of Mc = d
+              // * interpolated ci's in Ni_classicalQuadrature of Mc =
+              // d
+            JxWxNCellSize = 0;
+            for (size_type iCell = 0; iCell < numCellsInBlock; ++iCell)
+              {
+                mSizes[iCell]   = 1;
+                nSizes[iCell]   = numEnrichmentIdsInCellBlock[iCell];
+                kSizes[iCell]   = nQuadPointInCellBlockEnrichmentBlockClassical[iCell];
+                strideA[iCell] = mSizes[iCell] * kSizes[iCell];
+                strideB[iCell] = kSizes[iCell] * nSizes[iCell];
+                strideC[iCell] = mSizes[iCell] * nSizes[iCell] * kSizes[iCell];
+                JxWxNCellSize += nSizes[iCell] * kSizes[iCell] * mSizes[iCell];
+              }
+              JxWxNCell.resize(JxWxNCellSize,0);
+
+              linearAlgebra::blasLapack::scaleStridedVarBatched<
+                ValueTypeOperator,
+                ValueTypeOperator,
+                memorySpace>(
+                numCellsInBlock,
+                linearAlgebra::blasLapack::Layout::ColMajor,
+                linearAlgebra::blasLapack::ScalarOp::Identity,
+                linearAlgebra::blasLapack::ScalarOp::Identity,
+                strideA.data(),
+                strideB.data(),
+                strideC.data(),
+                mSizes.data(),
+                nSizes.data(),
+                kSizes.data(),
+                cellJxWValuesEnrichmentBlockClassicalPtr + cellQuadStartIdsEnrichmentBlockClassical,
+                classicalComponentInQuadValuesEC.data(),
+                JxWxNCell.data(),
+                linAlgOpContext);
+
+
+            std::fill(transA.begin(), transA.end(), 'N');
+            std::fill(transB.begin(), transB.end(), 'C');
+
+            for (size_type iCell = 0; iCell < numCellsInBlock; ++iCell)
+              {
+                mSizes[iCell]   = numEnrichmentIdsInCellBlock[iCell];
+                nSizes[iCell]   = numEnrichmentIdsInCellBlock[iCell];
+                kSizes[iCell]   = nQuadPointInCellBlockEnrichmentBlockClassical[iCell];
+                ldaSizes[iCell] = mSizes[iCell];
+                ldbSizes[iCell] = nSizes[iCell];
+                ldcSizes[iCell] = dofsPerCellInCellBlock[iCell]; 
+                strideA[iCell]  = mSizes[iCell] * kSizes[iCell];
+                strideB[iCell]  = kSizes[iCell] * nSizes[iCell];
+                strideC[iCell]  = strideC_colOffset[iCell];
+              }
+
+              linearAlgebra::blasLapack::gemmStridedVarBatched<ValueTypeOperand,
+                                              ValueTypeOperator,
+                                              memorySpace>(
+                numCellsInBlock, 
+                transA.data(),
+                transB.data(),
+                strideA.data(),
+                strideB.data(),
+                strideC.data(),
+                mSizes.data(),
+                nSizes.data(),
+                kSizes.data(),
+                (ValueTypeOperand)1.0,
+                JxWxNCell.data(),
+                ldaSizes.data(),
+                classicalComponentInQuadValuesEC.data(),
+                ldbSizes.data(),
+                (ValueTypeOperator)1.0,
+                basisOverlapStartPtrInCellBlock + dofsPerCellInCellBlock[0] * dofsPerCellCFE + dofsPerCellCFE,
+                ldcSizes.data(),
+                linAlgOpContext);
+
+              // Ni_pristine* interpolated ci's in
+              // Ni_classicalQuadratureOfPristine at quadpoints
+
+              JxWxNCellSize = 0;
+              for (size_type iCell = 0; iCell < numCellsInBlock; ++iCell)
+                {
+                  mSizes[iCell]   = 1;
+                  nSizes[iCell]   = numEnrichmentIdsInCellBlock[iCell];
+                  kSizes[iCell]   = nQuadPointInCellBlockEnrichmentBlockEnrichment[iCell];
+                  strideA[iCell] = mSizes[iCell] * kSizes[iCell];
+                  strideB[iCell] = kSizes[iCell] * nSizes[iCell];
+                  strideC[iCell] = mSizes[iCell] * nSizes[iCell] * kSizes[iCell];
+                  JxWxNCellSize += nSizes[iCell] * kSizes[iCell] * mSizes[iCell];
+                }
+              JxWxNCell.resize(JxWxNCellSize, 0);  
+              
+              linearAlgebra::blasLapack::scaleStridedVarBatched<
+                ValueTypeOperator,
+                ValueTypeOperator,
+                memorySpace>(
+                numCellsInBlock,
+                linearAlgebra::blasLapack::Layout::RowMajor,
+                linearAlgebra::blasLapack::ScalarOp::Identity,
+                linearAlgebra::blasLapack::ScalarOp::Identity,
+                strideA.data(),
+                strideB.data(),
+                strideC.data(),
+                mSizes.data(),
+                nSizes.data(),
+                kSizes.data(),
+                cellJxWValuesEnrichmentBlockEnrichmentPtr + cellQuadStartIdsEnrichmentBlockEnrichment,
+                quadValuesInAllCellsEnrichment.data() + cumulativeQuadEnrichBlockEnrichxenrichInCell,
+                JxWxNCell.data(),
+                linAlgOpContext);
+
+            std::fill(transA.begin(), transA.end(), 'N');
+            std::fill(transB.begin(), transB.end(), 'N');
+
+            for (size_type iCell = 0; iCell < numCellsInBlock; ++iCell)
+              {
+                mSizes[iCell]   = numEnrichmentIdsInCellBlock[iCell];
+                nSizes[iCell]   = numEnrichmentIdsInCellBlock[iCell];
+                kSizes[iCell]   = nQuadPointInCellBlockEnrichmentBlockEnrichment[iCell];
+                ldaSizes[iCell] = mSizes[iCell];
+                ldbSizes[iCell] = kSizes[iCell];
+                ldcSizes[iCell] = dofsPerCellInCellBlock[iCell]; 
+                strideA[iCell]  = mSizes[iCell] * kSizes[iCell];
+                strideB[iCell]  = kSizes[iCell] * nSizes[iCell];
+                strideC[iCell]  = strideC_colOffset[iCell];
+              }
+
+              linearAlgebra::blasLapack::gemmStridedVarBatched<ValueTypeOperand,
+                                              ValueTypeOperator,
+                                              memorySpace>(
+                numCellsInBlock, 
+                transA.data(),
+                transB.data(),
+                strideA.data(),
+                strideB.data(),
+                strideC.data(),
+                mSizes.data(),
+                nSizes.data(),
+                kSizes.data(),
+                (ValueTypeOperand)-1.0,
+                classicalComponentInQuadValuesEE.data(),
+                ldaSizes.data(),
+                JxWxNCell.data(),
+                ldbSizes.data(),
+                (ValueTypeOperator)1.0,
+                basisOverlapStartPtrInCellBlock + dofsPerCellInCellBlock[0] * dofsPerCellCFE + dofsPerCellCFE,
+                ldcSizes.data(),
+                linAlgOpContext);
+
+            std::fill(transA.begin(), transA.end(), 'T');
+            std::fill(transB.begin(), transB.end(), 'T');
+
+              for (size_type iCell = 0; iCell < numCellsInBlock; ++iCell)
+                {
+                mSizes[iCell]   = numEnrichmentIdsInCellBlock[iCell];
+                nSizes[iCell]   = numEnrichmentIdsInCellBlock[iCell];
+                kSizes[iCell]   = nQuadPointInCellBlockEnrichmentBlockEnrichment[iCell];
+                ldaSizes[iCell] = kSizes[iCell];
+                ldbSizes[iCell] = nSizes[iCell];
+                ldcSizes[iCell] = dofsPerCellInCellBlock[iCell]; 
+                strideA[iCell] = mSizes[iCell] * kSizes[iCell];
+                strideB[iCell] = kSizes[iCell] * nSizes[iCell];
+                strideC[iCell] = strideC_colOffset[iCell];
+              }
+
+              linearAlgebra::blasLapack::gemmStridedVarBatched<ValueTypeOperand,
+                                              ValueTypeOperator,
+                                              memorySpace>(
+                numCellsInBlock,
+                transA.data(),
+                transB.data(),
+                strideA.data(),
+                strideB.data(),
+                strideC.data(),
+                mSizes.data(),
+                nSizes.data(),
+                kSizes.data(),
+                (ValueTypeOperand)-1.0,
+                JxWxNCell.data(),
+                ldaSizes.data(),
+                classicalComponentInQuadValuesEE.data(),
+                ldbSizes.data(),
+                (ValueTypeOperator)1.0,
+                basisOverlapStartPtrInCellBlock + dofsPerCellInCellBlock[0] * dofsPerCellCFE + dofsPerCellCFE,
+                ldcSizes.data(),
+                linAlgOpContext);
+
+            for (size_type iCell = 0; iCell < numCellsInBlock; iCell++)
+              {
+                cellStartIdsBasisOverlap[cellStartId + iCell] =
+                  numCumulativeDofsxDofsCellsInBlock;
+                numCumulativeDofsxDofsCellsInBlock +=
+                  dofsPerCellInCellBlock[iCell] * dofsPerCellInCellBlock[iCell];
+                cumulativeCoeffsInCellRange +=
+                  dofsPerCellCFE * numEnrichmentIdsInCellBlock[iCell];
+                cumulativeQuadEnrichBlockEnrichxenrichInCell +=
+                  numEnrichmentIdsInCellBlock[iCell] *
+                  nQuadPointInCellBlockEnrichmentBlockEnrichment[iCell];
+              }
+          }
+      }
+
       template <typename ValueTypeOperator,
                 typename ValueTypeOperand,
                 utils::MemorySpace memorySpace>
@@ -1203,7 +2120,7 @@ namespace dftefe
       , d_isMassLumping(false)
       , d_isEnrichAtomBlockDiagonalApprox(false)
     {
-      OrthoEFEOverlapOperatorContextInternal::computeBasisOverlapMatrix<
+      OrthoEFEOverlapOperatorContextInternal::computeBasisOverlapMatrixBlocked<
         ValueTypeOperator,
         ValueTypeOperand,
         memorySpace,
@@ -1213,6 +2130,7 @@ namespace dftefe
              d_basisOverlap,
              d_cellStartIdsBasisOverlap,
              d_dofsInCell,
+             BasisDataStorageDefaults::CELL_BATCH_SIZE,
              calculateWings);
     }
 
@@ -1716,7 +2634,7 @@ namespace dftefe
         d_feBasisManager->locallyOwnedCellLocalDofIdsBegin();
 
       std::shared_ptr<Storage> basisOverlap;
-      OrthoEFEOverlapOperatorContextInternal::computeBasisOverlapMatrix<
+      OrthoEFEOverlapOperatorContextInternal::computeBasisOverlapMatrixBlocked<
         ValueTypeOperator,
         ValueTypeOperand,
         memorySpace,
@@ -1726,6 +2644,7 @@ namespace dftefe
              basisOverlap,
              d_cellStartIdsBasisOverlap,
              d_dofsInCell,
+             BasisDataStorageDefaults::CELL_BATCH_SIZE,
              false);
 
       std::vector<size_type> locallyOwnedCellsNumDoFsSTL(numLocallyOwnedCells,

@@ -1100,19 +1100,39 @@ namespace dftefe
           ->second,
         "Basis values are not evaluated for the given QuadratureRuleAttributes");
 
-      std::shared_ptr<
-        typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage>
-                                    basisQuadStorage = d_basisQuadStorage;
+      // std::shared_ptr<
+      //   typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage>
+      //                               basisQuadStorage = d_basisQuadStorage;
       const std::vector<size_type> &cellStartIds =
         d_cellStartIdsBasisQuadStorage;
-      const std::vector<size_type> &nQuadPointsInCell = d_nQuadPointsIncell;
-      for (size_type cellId = cellRange.first; cellId < cellRange.second;
-           cellId++)
-        utils::MemoryTransfer<memorySpace, memorySpace>::copy(
-          nQuadPointsInCell[cellId] * d_dofsInCell[cellId],
-          basisData.data() + cellStartIds[cellId] -
-            cellStartIds[cellRange.first],
-          basisQuadStorage->data() + cellStartIds[cellId]);
+      // const std::vector<size_type> &nQuadPointsInCell = d_nQuadPointsIncell;
+      // for (size_type cellId = cellRange.first; cellId < cellRange.second;
+      //      cellId++)
+      //   utils::MemoryTransfer<memorySpace, memorySpace>::copy(
+      //     nQuadPointsInCell[cellId] * d_dofsInCell[cellId],
+      //     basisData.data() + cellStartIds[cellId] -
+      //       cellStartIds[cellRange.first],
+      //     basisQuadStorage->data() + cellStartIds[cellId]);
+
+        size_type cumulativeOffset = 0;
+        for (size_type cellId = cellRange.first; cellId < cellRange.second; cellId++)
+        {
+            const size_type nQuad = d_nQuadPointsIncell[cellId];
+            const size_type nDofs  = d_dofsInCell[cellId];
+
+            linearAlgebra::blasLapack::stridedBlockCopy(
+                nQuad,               // vecSize: number of quadrature points (slowest)
+                nDofs,          // numVec: number of classical DOFs (fastest)
+                nDofs,          // srcLeadingDim
+                0,                   // srcBlockStartId
+                nDofs,               // dstLeadingDim
+                0,                   // dstBlockStartId
+                d_basisQuadStorage->data() + cellStartIds[cellId], // src
+                basisData.data() + cumulativeOffset, // dst
+                d_linAlgOpContext);
+
+            cumulativeOffset += nDofs * nQuad;
+        }
     }
 
     template <typename ValueTypeBasisCoeff,
