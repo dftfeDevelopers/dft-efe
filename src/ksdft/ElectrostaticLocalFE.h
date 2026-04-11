@@ -410,7 +410,7 @@ namespace dftefe
       std::shared_ptr<
         electrostatics::PoissonSolverDealiiMatrixFreeFE<ValueTypeBasisData,
                                                         ValueTypeBasisCoeff,
-                                                        memorySpaceHost,
+                                                        memorySpace,
                                                         dim>>
                d_poissonSolverDealiiMatFree;
       RealType d_totNuclearChargeQuad;

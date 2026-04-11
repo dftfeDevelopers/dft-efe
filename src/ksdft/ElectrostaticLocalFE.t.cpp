@@ -813,14 +813,14 @@ namespace dftefe
         d_poissonSolverDealiiMatFree = std::make_shared<
           electrostatics::PoissonSolverDealiiMatrixFreeFE<ValueTypeBasisData,
                                                           ValueTypeBasisCoeff,
-                                                          memorySpaceHost,
+                                                          memorySpace,
                                                           dim>>(
           d_feBMTotalCharge,
           d_feBDTotalChargeStiffnessMatrix,
           d_feBasisDataStorageRhsMap,
           inpRhsMap,
           ksdft::PoissonProblemDefaults::PC_TYPE,
-          d_linAlgOpContextHost);
+          d_linAlgOpContext);
     }
 
     template <typename ValueTypeBasisData,
@@ -1080,14 +1080,14 @@ namespace dftefe
         d_poissonSolverDealiiMatFree = std::make_shared<
           electrostatics::PoissonSolverDealiiMatrixFreeFE<ValueTypeBasisData,
                                                           ValueTypeBasisCoeff,
-                                                          memorySpaceHost,
+                                                          memorySpace,
                                                           dim>>(
           d_feBMTotalCharge,
           d_feBDTotalChargeStiffnessMatrix,
           d_feBasisDataStorageRhsMap,
           inpRhsMap,
           ksdft::PoissonProblemDefaults::PC_TYPE,
-          d_linAlgOpContextHost);
+          d_linAlgOpContext);
     }
 
     template <typename ValueTypeBasisData,
@@ -1609,14 +1609,14 @@ namespace dftefe
         d_poissonSolverDealiiMatFree = std::make_shared<
           electrostatics::PoissonSolverDealiiMatrixFreeFE<ValueTypeBasisData,
                                                           ValueTypeBasisCoeff,
-                                                          memorySpaceHost,
+                                                          memorySpace,
                                                           dim>>(
           d_feBMTotalCharge,
           d_feBDTotalChargeStiffnessMatrix,
           d_feBasisDataStorageRhsMap,
           inpRhsMap,
           ksdft::PoissonProblemDefaults::PC_TYPE,
-          d_linAlgOpContextHost);
+          d_linAlgOpContext);
       p.registerEnd("Poisson Solve Object Creation");
       p.print();
     }

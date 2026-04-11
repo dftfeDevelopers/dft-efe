@@ -37,7 +37,47 @@ ENDIF()
 set(DFT-EFE-ELECTROSTATICS-SOURCES
 	PoissonLinearSolverFunctionFE.cpp
 	LaplaceOperatorContextFE.cpp
-	PoissonSolverDealiiMatrixFreeFE.cpp)
+	PoissonSolverDealiiMatrixFreeFE.cpp
+  MatrixFree.cpp)
+
+IF (ENABLE_GPU)
+IF ("${GPU_LANG}" STREQUAL "cuda")
+SET(DFT-EFE-ELECTROSTATICS-DEVICE-SOURCES
+     MatrixFreeDevice.cu.cpp
+     MatrixFreeDevice.cpp
+     PoissonSolverDealiiMatrixFreeFEDeviceKernels.cpp
+    )
+ELSEIF ("${GPU_LANG}" STREQUAL "hip")
+SET(DFT-EFE-ELECTROSTATICS-DEVICE-SOURCES
+    MatrixFreeDevice.hip.cpp
+    MatrixFreeDevice.cpp
+    PoissonSolverDealiiMatrixFreeFEDeviceKernels.cpp
+    )
+ELSEIF ("${GPU_LANG}" STREQUAL "sycl")
+SET(DFT-EFE-ELECTROSTATICS-DEVICE-SOURCES
+    MatrixFreeDevice.sycl.cpp
+    MatrixFreeDevice.cpp
+    PoissonSolverDealiiMatrixFreeFEDeviceKernels.cpp
+    )
+ENDIF()
+ENDIF()
+
+IF (ENABLE_GPU)
+    IF ("${GPU_LANG}" STREQUAL "cuda")
+    set_source_files_properties(${DFT-EFE-ELECTROSTATICS-DEVICE-SOURCES} PROPERTIES LANGUAGE CUDA)
+    ELSEIF ("${GPU_LANG}" STREQUAL "hip")
+    set_source_files_properties(${DFT-EFE-ELECTROSTATICS-DEVICE-SOURCES} PROPERTIES LANGUAGE HIP)
+    IF ("${GPU_VENDOR}" STREQUAL "amd")
+        ADD_DEFINITIONS(-D__HIP_PLATFORM_AMD__)
+    ELSEIF ("${GPU_VENDOR}" STREQUAL "nvidia")
+        ADD_DEFINITIONS(-D__HIP_PLATFORM_NVIDIA__)
+    ENDIF()
+    ELSEIF ("${GPU_LANG}" STREQUAL "sycl")
+    set_source_files_properties(${DFT-EFE-ELECTROSTATICS-DEVICE-SOURCES} PROPERTIES COMPILE_FLAGS ${CMAKE_SYCL_FLAGS})
+    ENDIF()
+
+LIST(APPEND DFT-EFE-ELECTROSTATICS-SOURCES ${DFT-EFE-ELECTROSTATICS-DEVICE-SOURCES})
+ENDIF()
 
 add_library(dft-efe-electrostatics SHARED ${DFT-EFE-ELECTROSTATICS-SOURCES})
 

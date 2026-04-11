@@ -184,23 +184,23 @@ namespace dftefe
       return (*this);
     }
 
-    //    // This part does not work for GPU version, will work on this until
-    //    // having cleaner solution.
-    //    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    //    typename MemoryStorage<ValueType, memorySpace>::reference
-    //    MemoryStorage<ValueType, memorySpace>::operator[](const size_type i)
-    //    {
-    //
-    //      return d_data[i];
-    //    }
-    //
-    //    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    //    typename MemoryStorage<ValueType, memorySpace>::const_reference
-    //    MemoryStorage<ValueType, memorySpace>::operator[](const size_type i)
-    //    const
-    //    {
-    //      return d_data[i];
-    //    }
+    // This part does not work for GPU version, will work on this until
+    // having cleaner solution.
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    typename MemoryStorage<ValueType, memorySpace>::reference
+    MemoryStorage<ValueType, memorySpace>::operator[](const size_type i)
+    {
+
+      return d_data[i];
+    }
+
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    typename MemoryStorage<ValueType, memorySpace>::const_reference
+    MemoryStorage<ValueType, memorySpace>::operator[](const size_type i)
+    const
+    {
+      return d_data[i];
+    }
 
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
