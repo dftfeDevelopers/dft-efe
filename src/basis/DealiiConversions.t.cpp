@@ -12,9 +12,9 @@ namespace dftefe
       DFTEFE_AssertWithMsg(
         dim == point.size(),
         "Mismatch of dimension for dealii and the dimension of the point");
-      std::copy(point.begin(), point.end(), dealiiPoint.begin_raw());
-      // for (unsigned int i = 0; i < dim; ++i)
-      //  outputDealiiPoint[i] = point[i];
+      ///std::copy(point.begin(), point.end(), dealiiPoint.begin_raw());
+      for (unsigned int i = 0; i < dim; ++i)
+        dealiiPoint[i] = point[i];
     }
 
     template <unsigned int dim>
@@ -29,11 +29,11 @@ namespace dftefe
       dealiiPoints.resize(numPoints);
       for (unsigned int j = 0; j < numPoints; j++)
         {
-          std::copy(points[j].begin(),
-                    points[j].end(),
-                    dealiiPoints[j].begin_raw());
-          // for (unsigned int i = 0; i < dim; ++i)
-          //  dealiiPoints[j][i] = points[j][i];
+          // std::copy(points[j].begin(),
+          //           points[j].end(),
+          //           dealiiPoints[j].begin_raw());
+          for (unsigned int i = 0; i < dim; ++i)
+            dealiiPoints[j][i] = points[j][i];
         }
     }
 
@@ -45,9 +45,9 @@ namespace dftefe
       DFTEFE_AssertWithMsg(
         dim == v.size(),
         "Mismatch of dimension for dealii and the dimension of the vector");
-      std::copy(v.begin(), v.end(), dealiiPoint.begin_raw());
-      // for (unsigned int i = 0; i < dim; ++i)
-      //  dealiiPoint[i] = v[i];
+      //std::copy(v.begin(), v.end(), dealiiPoint.begin_raw());
+      for (unsigned int i = 0; i < dim; ++i)
+        dealiiPoint[i] = v[i];
     }
 
     template <unsigned int dim>
@@ -56,9 +56,9 @@ namespace dftefe
                          utils::Point &                    point)
     {
       point = utils::Point(dim);
-      std::copy(dealiiPoint.begin_raw(), dealiiPoint.end_raw(), point.begin());
-      // for (unsigned int i = 0; i < dim; ++i)
-      //  point[i] = dealiiPoint[i];
+      //std::copy(dealiiPoint.begin_raw(), dealiiPoint.end_raw(), point.begin());
+      for (unsigned int i = 0; i < dim; ++i)
+        point[i] = dealiiPoint[i];
     }
 
     template <unsigned int dim>
@@ -71,9 +71,11 @@ namespace dftefe
       points.resize(numPoints, utils::Point(dim));
       for (unsigned int j = 0; j < numPoints; ++j)
         {
-          std::copy(dealiiPoints[j].begin_raw(),
-                    dealiiPoints[j].end_raw(),
-                    points[j].begin());
+          // std::copy(dealiiPoints[j].begin_raw(),
+          //           dealiiPoints[j].end_raw(),
+          //           points[j].begin());
+          for (unsigned int i = 0; i < dim; ++i)
+            points[j][i] = dealiiPoints[j][i];                    
         }
     }
 
@@ -88,9 +90,11 @@ namespace dftefe
       utils::Point pointTmp(dim);
       for (; iter != dealiiPoints.end(); iter++)
         {
-          std::copy((iter->second).begin_raw(),
-                    (iter->second).end_raw(),
-                    pointTmp.begin());
+          // std::copy((iter->second).begin_raw(),
+          //           (iter->second).end_raw(),
+          //           pointTmp.begin());
+          for (unsigned int i = 0; i < dim; ++i)
+            pointTmp[i] = (iter->second)[i];                    
           // points[iter->first] = pointTmp;
           points.insert({iter->first, pointTmp});
         }

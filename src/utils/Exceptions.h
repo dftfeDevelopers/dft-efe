@@ -97,13 +97,29 @@ template parameter instead. Available typedefs LogicError - std::logic_error
                 // set DFTEFE_ENABLE_ASSERT even when in release mode (with
                 // NDEBUG)
 #  include <assert.h> // .h to support old libraries w/o <cassert> - effect is the same
+#  include <iostream>
 #  define DFTEFE_Assert(expr) assert(expr)
-#  define DFTEFE_AssertWithMsg(expr, msg) assert((expr) && (msg))
+#  define DFTEFE_AssertWithMsg(expr, msg)  \
+  do {                                     \
+    if (!(expr))                           \
+      {                                    \
+        std::cerr << (msg) << std::endl;   \
+        assert(false);                     \
+      }                                    \
+  } while (0)
 
 #else
 #  include <assert.h> // .h to support old libraries w/o <cassert> - effect is the same
+#  include <iostream>
 #  define DFTEFE_Assert(expr) assert(expr)
-#  define DFTEFE_AssertWithMsg(expr, msg) assert((expr) && (msg))
+#  define DFTEFE_AssertWithMsg(expr, msg)  \
+  do {                                     \
+    if (!(expr))                           \
+      {                                    \
+        std::cerr << (msg) << std::endl;   \
+        assert(false);                     \
+      }                                    \
+  } while (0)
 
 #endif
 

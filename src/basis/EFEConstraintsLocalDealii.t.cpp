@@ -22,9 +22,10 @@ namespace dftefe
     {
       d_locallyOwnedRanges.resize(0);
       d_ghostIndices.resize(0);
+      d_ghostIndicesSet.clear();
       d_globalToLocalMap.clear();
       d_dealiiAffineConstraintMatrix.clear();
-      d_dealiiAffineConstraintMatrix.reinit(/*locally_owned_dofs,*/
+      d_dealiiAffineConstraintMatrix.reinit(locally_owned_dofs,
                                             locally_relevant_dofs);
     }
 
@@ -45,6 +46,7 @@ namespace dftefe
       : d_dealiiAffineConstraintMatrix(dealiiAffineConstraintMatrix)
       , d_locallyOwnedRanges(locallyOwnedRanges)
       , d_ghostIndices(ghostIndices)
+      , d_ghostIndicesSet(ghostIndices.begin(), ghostIndices.end())
       , d_globalToLocalMap(globalToLocalMapLocalDofs)
       , d_isCleared(false)
       , d_isClosed(true)
@@ -76,6 +78,7 @@ namespace dftefe
       d_isCleared          = false;
       d_locallyOwnedRanges = EFEConstraintsLocalDealiiIn.d_locallyOwnedRanges;
       d_ghostIndices       = EFEConstraintsLocalDealiiIn.d_ghostIndices;
+      d_ghostIndicesSet    = EFEConstraintsLocalDealiiIn.d_ghostIndicesSet;
       d_globalToLocalMap   = EFEConstraintsLocalDealiiIn.d_globalToLocalMap;
       copyConstraintsDataFromDealiiToDealii(EFEConstraintsLocalDealiiIn);
     }
@@ -562,36 +565,26 @@ namespace dftefe
     template <typename ValueTypeBasisCoeff,
               utils::MemorySpace memorySpace,
               size_type          dim>
-    bool
+    inline bool
     EFEConstraintsLocalDealii<ValueTypeBasisCoeff, memorySpace, dim>::
       isGhostEntry(const global_size_type globalId) const
     {
-      bool returnValue = false;
-      auto it =
-        std::find(d_ghostIndices.begin(), d_ghostIndices.end(), globalId);
-
-      if (it != d_ghostIndices.end())
-        returnValue = true;
-      return returnValue;
+      return d_ghostIndicesSet.count(globalId) > 0;
     }
 
     template <typename ValueTypeBasisCoeff,
               utils::MemorySpace memorySpace,
               size_type          dim>
-    bool
+    inline bool
     EFEConstraintsLocalDealii<ValueTypeBasisCoeff, memorySpace, dim>::
       inLocallyOwnedRanges(const global_size_type globalId) const
     {
-      bool returnValue = false;
-      for (auto i : d_locallyOwnedRanges)
+      for (const auto &i : d_locallyOwnedRanges)
         {
           if (globalId >= i.first && globalId < i.second)
-            {
-              returnValue = true;
-              break;
-            }
+            return true;
         }
-      return returnValue;
+      return false;
     }
 
     template <typename ValueTypeBasisCoeff,

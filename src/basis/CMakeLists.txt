@@ -100,7 +100,7 @@ add_library(dft-efe-basis SHARED ${DFT-EFE-BASIS-SOURCES})
 
 include_directories(../)
 
-find_package(deal.II 9.5.1 REQUIRED HINTS ${DEALII_PATH})
+find_package(deal.II 9.7.0 REQUIRED HINTS ${DEALII_PATH})
 target_include_directories(dft-efe-basis PUBLIC ${DEALII_PATH}/${DEAL_II_INCLUDE_RELDIR})
 target_link_libraries (dft-efe-basis PUBLIC dealii::dealii_release)
 #target_link_libraries (dft-efe-basis PUBLIC ${DEALII_PATH}/lib)

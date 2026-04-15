@@ -30,21 +30,25 @@
 #include <deal.II/dofs/dof_tools.h>
 
 #include <iostream>
-
+const dftefe::utils::MemorySpace memorySpace = dftefe::utils::MemorySpace::HOST;
 // operator - nabla^2 in weak form
 // operand - V_H
 // memoryspace - HOST
 
 double rho(double x, double y, double z)
 {
+  //0.0; // 1.0; 
   // The function should have inhomogeneous dirichlet BC
-    return 1.0; //(2*((x)*(x-5)*(y)*(y-5))/6.0 + 2*((x)*(x-5)*(z)*(z-5))/6.0 + 2*((x)*(x-5)*(y)*(y-5))/6.0); 
+    return (2.0 * (x*(x-5)*y*(y-5)) / 6.0 +
+          2.0 * (x*(x-5)*z*(z-5)) / 6.0 +
+          2.0 * (y*(y-5)*z*(z-5)) / 6.0);
 }
 
 double potential(double x, double y, double z)
 {
+  //1.0 ; //-((x)*(x) + (y)*(y) + (z)*(z))/(6.0); 
   // The function should have inhomogeneous dirichlet BC
-    return -((x)*(x) + (y)*(y) + (z)*(z))/(6.0); // -((x)*(x-5)*(y)*(y-5)*(z)*(z-5))/6.0; 
+    return -((x)*(x-5)*(y)*(y-5)*(z)*(z-5))/6.0; 
 }
 
  class ScalarSpatialPotentialFunctionReal : public dftefe::utils::ScalarSpatialFunctionReal
@@ -95,18 +99,11 @@ int main()
 
   int blasQueue = 0;
   int lapackQueue = 0;
-  std::shared_ptr<dftefe::linearAlgebra::blasLapack::BlasQueue
-    <dftefe::utils::MemorySpace::HOST>> blasQueuePtr = std::make_shared
-      <dftefe::linearAlgebra::blasLapack::BlasQueue
-        <dftefe::utils::MemorySpace::HOST>>(blasQueue);
-  std::shared_ptr<dftefe::linearAlgebra::blasLapack::LapackQueue
-    <dftefe::utils::MemorySpace::HOST>> lapackQueuePtr = std::make_shared
-      <dftefe::linearAlgebra::blasLapack::LapackQueue
-        <dftefe::utils::MemorySpace::HOST>>(lapackQueue);
-  std::shared_ptr<dftefe::linearAlgebra::LinAlgOpContext
-    <dftefe::utils::MemorySpace::HOST>> linAlgOpContext = 
-    std::make_shared<dftefe::linearAlgebra::LinAlgOpContext
-    <dftefe::utils::MemorySpace::HOST>>(blasQueuePtr, lapackQueuePtr);
+  std::shared_ptr<dftefe::linearAlgebra::LinAlgOpContext<memorySpace>> linAlgOpContextDevice = 
+    std::make_shared<dftefe::linearAlgebra::LinAlgOpContext<memorySpace>>(10);
+
+  std::shared_ptr<dftefe::linearAlgebra::LinAlgOpContext<dftefe::utils::MemorySpace::HOST>> linAlgOpContext = 
+    std::make_shared<dftefe::linearAlgebra::LinAlgOpContext<dftefe::utils::MemorySpace::HOST>>(0);
 
   // Set up Triangulation
   const unsigned int dim = 3;
@@ -143,9 +140,9 @@ int main()
   {
     dftefe::utils::Point centerPoint(dim, 0.0); 
     (*triaCellIter)->center(centerPoint);
-    double dist = (centerPoint[0] - 2.5)* (centerPoint[0] - 2.5);
-    dist += (centerPoint[1] - 2.5)* (centerPoint[1] - 2.5);
-    dist += (centerPoint[2] - 2.5)* (centerPoint[2] - 2.5);
+    double dist = (centerPoint[0] - 2.5) * (centerPoint[0] - 2.5);
+    dist += (centerPoint[1] - 2.5) * (centerPoint[1] - 2.5);
+    dist += (centerPoint[2] - 2.5) * (centerPoint[2] - 2.5);
     dist = std::sqrt(dist); 
     if ( (centerPoint[0] < 1.0) || (dist < 1.0) )
     {
@@ -170,7 +167,7 @@ int main()
   std::cout << "Total Number of dofs : " << basisDofHandler->nGlobalNodes() << "\n";
 
   // Set up the quadrature rule
-  unsigned int num1DGaussSize = 6;
+  unsigned int num1DGaussSize = 4;
 
   dftefe::quadrature::QuadratureRuleAttributes quadAttr(dftefe::quadrature::QuadratureFamily::GAUSS,true,num1DGaussSize);
 
@@ -185,7 +182,7 @@ int main()
   // Set up the FE Basis Data Storage
   std::shared_ptr<dftefe::basis::FEBasisDataStorage<double, dftefe::utils::MemorySpace::HOST>> feBasisData =
     std::make_shared<dftefe::basis::CFEBasisDataStorageDealii<double, double, dftefe::utils::MemorySpace::HOST,dim>>
-    (basisDofHandler, quadAttr, basisAttrMap);
+    (basisDofHandler, quadAttr, basisAttrMap, *linAlgOpContext);
 
   // evaluate basis data
   feBasisData->evaluateBasisData(quadAttr, basisAttrMap);
@@ -276,17 +273,18 @@ int main()
 
   std::shared_ptr<dftefe::electrostatics::PoissonSolverDealiiMatrixFreeFE<double,
                                                    double,
-                                                   dftefe::utils::MemorySpace::HOST,
+                                                   memorySpace,
                                                    dim>> poissonSolveDealiiMatrixFree =
     std::make_shared<dftefe::electrostatics::PoissonSolverDealiiMatrixFreeFE<double,
                                                    double,
-                                                   dftefe::utils::MemorySpace::HOST,
+                                                   memorySpace,
                                                    dim>>
                                                    (basisManager,
                                                     feBasisData,
                                                     feBasisData,
                                                     quadValuesContainer,
-                                                    dftefe::linearAlgebra::PreconditionerType::JACOBI);
+                                                    dftefe::linearAlgebra::PreconditionerType::JACOBI,
+                                                    linAlgOpContextDevice);
 
   poissonSolveDealiiMatrixFree->solve(absoluteTol, maxIter);
 

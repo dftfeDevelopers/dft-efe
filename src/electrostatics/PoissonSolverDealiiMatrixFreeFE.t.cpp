@@ -815,19 +815,13 @@ namespace dftefe
                                     dim>::vmult(distributedCPUVec<double> &Ax,
                                                 distributedCPUVec<double> &x)
     {
-            pcout << "Enter AX; x l2Norm: " << x.l2_norm()<< "\n"<<std::flush;
       Ax = 0.0;
       x.update_ghost_values();
-      pcout << "update ghost AX; x l2Norm: " << x.l2_norm()<< "\n"<<std::flush;
       AX(*d_dealiiMatrixFree,
          Ax,
          x,
          std::make_pair(0, d_dealiiMatrixFree->n_cell_batches()));
-      pcout << "ConstraintC2P AX; x l2Norm: " << x.l2_norm()<< "\n"<<std::flush;
-            pcout << "ConstraintC2P AX; Ax l2Norm: " << Ax.l2_norm()<< "\n"<<std::flush;
       Ax.compress(dealii::VectorOperation::add);
-      pcout << "Leave AX; x l2Norm: " << x.l2_norm()<< "\n"<<std::flush;
-            pcout << "Leave AX; Ax l2Norm: " << Ax.l2_norm()<< "\n"<<std::flush;
     }
 
 
@@ -1144,7 +1138,6 @@ namespace dftefe
                     << "\n\n";
               return;
             }
-              pcout << "initial abs. residual: " << res << "\n";
           while ((!conv) && (it < maxNumberIterations))
             {
               it++;
@@ -1158,8 +1151,6 @@ namespace dftefe
                   gh   = gvec * hvec;
                   beta = gh / beta;
 
-                  pcout << "beta: " << beta<< "\n";
-
                   dvec.sadd(beta, -1., hvec);
                 }
               else
@@ -1169,14 +1160,8 @@ namespace dftefe
                   gh = gvec * hvec;
                 }
 
-              pcout << "gh: " << gh<< "\n";
-
               this->vmult(hvec, dvec);
-              pcout << "d_dvec l2norm: " << hvec.l2_norm()<< "\n";
-              pcout << "d_qvec l2norm: " << dvec.l2_norm()<< "\n";
               alpha = dvec * hvec;
-
-              pcout << "alpha: " << alpha<< "\n";
 
               DFTEFE_AssertWithMsg(std::abs(alpha) != 0., "Division by zero\n");
               alpha = gh / alpha;
@@ -1186,8 +1171,6 @@ namespace dftefe
               // x.add(alpha, dvec);
 
               res = std::sqrt(std::abs(gvec.add_and_dot(alpha, hvec, gvec)));
-
-              pcout << "current abs. residual: " << res << "\n";
 
               if (res < absTolerance)
                 conv = true;
@@ -1264,26 +1247,30 @@ namespace dftefe
         false,
         "computeAXDevice requires compilation with DFTEFE_WITH_DEVICE.");
 #else
-            pcout << "Enter AX; x l2Norm: " << x.l2Norm()<< "\n"<<std::flush;
+      //pcout << "Enter AX; x l2Norm: " << x.l2Norm()<< "\n"<<std::flush;
+
       // Zero the output vector (locally owned + ghost).
       Ax.setValue(ValueTypeOperator(0));
 
       // Update ghost values on device via MPI (uses dft-efe MPIPatternP2P).
       x.updateGhostValues();
- pcout << "Update Ghost AX; x l2Norm: " << x.l2Norm()<< "\n"<<std::flush;
+
+      //pcout << "Update Ghost AX; x l2Norm: " << x.l2Norm()<< "\n"<<std::flush;
+
       // Apply homogeneous constraints on device (sets constrained dofs to 0,
       // distributes slave→master using the constraint matrix supplied to the
       // MatrixFreeWrapperClass constructor).
       d_matrixFreeWrapperDevice->constraintsDistribute(x.data());
 
-      pcout << "After ConstraintP2C and update AX; x l2Norm: " << x.l2Norm()<< "\n"<<std::flush;
-            pcout << "After ConstraintP2C and update AX; Ax l2Norm: " << Ax.l2Norm()<< "\n"<<std::flush;
+      //pcout << "After ConstraintP2C and update AX; x l2Norm: " << x.l2Norm()<< "\n"<<std::flush;
+      //pcout << "After ConstraintP2C and update AX; Ax l2Norm: " << Ax.l2Norm()<< "\n"<<std::flush;
 
       // Execute the matrix-free Laplace AX kernel on device.
       // NOTE: MatrixFree::init() bakes coeff = 1/(4*pi) into d_jacobianFactor
       // for the Laplace operator (DFT-FE convention), but the host AX() uses
       // quarter = 1.0.  Scale Ax by 4*pi to match the host convention.
       d_matrixFreeWrapperDevice->computeAX(Ax.data(), x.data());
+
       // Scale the full local storage (owned + ghost) by 4*pi so that ghost
       // contributions passed to accumulateAddLocallyOwned() are also corrected.
       linearAlgebra::blasLapack::ascale(
@@ -1293,23 +1280,23 @@ namespace dftefe
         Ax.begin(),
         *d_linAlgOpContext);
 
-      pcout << "After Compute AX; x l2Norm: " << x.l2Norm()<< "\n"<<std::flush;
-            pcout << "After Compute AX; Ax l2Norm: " << Ax.l2Norm()<< "\n"<<std::flush;
-
+      //pcout << "After Compute AX; x l2Norm: " << x.l2Norm()<< "\n"<<std::flush;
+      //pcout << "After Compute AX; Ax l2Norm: " << Ax.l2Norm()<< "\n"<<std::flush;
 
       // Transpose-distribute: scatter master contributions to slave dofs and
       // accumulate elemental results from ghost dofs back to locally-owned dofs.
       d_matrixFreeWrapperDevice->constraintsDistributeTranspose(Ax.data(),
                                                                 x.data());
 
-      pcout << "ConstraintC2P AX; x l2Norm: " << x.l2Norm()<< "\n"<<std::flush;
-            pcout << "ConstraintC2P AX; Ax l2Norm: " << Ax.l2Norm()<< "\n"<<std::flush;
+      //pcout << "ConstraintC2P AX; x l2Norm: " << x.l2Norm()<< "\n"<<std::flush;
+      //pcout << "ConstraintC2P AX; Ax l2Norm: " << Ax.l2Norm()<< "\n"<<std::flush;
                                                             
       // MPI reduction: add ghost contributions to locally-owned dofs.
       Ax.accumulateAddLocallyOwned();
       
-      pcout << "Leave AX; x l2Norm: " << x.l2Norm()<< "\n"<<std::flush;
-            pcout << "Leave AX; Ax l2Norm: " << Ax.l2Norm()<< "\n"<<std::flush;
+      //pcout << "Leave AX; x l2Norm: " << x.l2Norm()<< "\n"<<std::flush;
+      //  pcout << "Leave AX; Ax l2Norm: " << Ax.l2Norm()<< "\n"<<std::flush;
+
 #endif // DFTEFE_WITH_DEVICE
     }
 
@@ -1358,9 +1345,6 @@ namespace dftefe
         false,
         "CGsolveDevice requires compilation with DFTEFE_WITH_DEVICE.");
 #else
-      int rank;
-      utils::mpi::MPICommRank(getMPIComm(), &rank);
-      utils::ConditionalOStream pcoutLocal(std::cout, rank == 0);
 
       utils::mpi::MPIBarrier(getMPIComm());
       double time = utils::mpi::MPIWtime();
@@ -1419,7 +1403,6 @@ namespace dftefe
           // res = r.r
           res = d_rvec.l2Norm();
           initial_res = res;
-              pcout << "initial abs. residual: " << res << "\n";
           if (res < absTolerance)
             conv = true;
           if (conv)
@@ -1441,8 +1424,6 @@ namespace dftefe
 
                   beta = delta / beta;
 
-                  pcout << "beta: " << beta<< "\n";
-
                   // q = beta * q - d
                   saddDevice(d_qvec.begin(), d_dvec.begin(), beta, d_xLocalDof);
                 }
@@ -1454,16 +1435,11 @@ namespace dftefe
                     d_Jacobi.begin());
                 }
 
-              pcout << "delta: " << delta<< "\n";
-
               // d = Aq
               computeAXDevice(d_dvec, d_qvec);
-              pcout << "d_dvec l2norm: " << d_dvec.l2Norm()<< "\n";
-              pcout << "d_qvec l2norm: " << d_qvec.l2Norm()<< "\n";
+
               // alpha = q.d
               dot(d_qvec, d_dvec, alpha);
-
-              pcout << "alpha: " << alpha<< "\n";
 
               DFTEFE_AssertWithMsg(std::abs(alpha) != 0.,"Division by zero\n");
               alpha = delta / alpha;
@@ -1472,8 +1448,6 @@ namespace dftefe
               // r += alpha * d
               // x += alpha * q
               res = scaleXRandComputeNorm(x.begin(), alpha);
-
-              pcout << "current abs. residual: " << res << "\n" << std::flush;
 
               if (res < absTolerance)
                 conv = true;

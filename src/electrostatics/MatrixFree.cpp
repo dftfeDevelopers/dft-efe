@@ -493,6 +493,56 @@ namespace dftefe
                            shapeFunctionValueGradient.size());
 #endif
       }
+
+      // const auto mpi_comm =
+      //   d_matrixFreeDataPtr->get_vector_partitioner(d_dofHandlerID)
+      //     ->get_mpi_communicator();
+
+      // const unsigned int my_rank =
+      //   dealii::Utilities::MPI::this_mpi_process(mpi_comm);
+      // const unsigned int n_procs =
+      //   dealii::Utilities::MPI::n_mpi_processes(mpi_comm);
+
+      // std::ostringstream oss;
+      // oss << std::fixed << std::setprecision(8);
+
+      // oss << "\n===== Rank " << my_rank << " =====\n";
+
+      // oss << "\n===== d_nCells " << d_nCells << " =====\n";
+      // oss << "\n===== d_nOwnedDofs " << d_nOwnedDofs << " =====\n";
+      // oss << "\n===== d_nGhostDofs " << d_nGhostDofs << " =====\n";
+      // oss << "\n===== d_nRelaventDofs " << d_nRelaventDofs << " =====\n";
+
+
+      // //cellIndexToMacroCellSubCellIndexMap
+      // oss << "cellIndexToMacroCellSubCellIndexMap:\n";
+      // for (size_t i = 0; i < cellIndexToMacroCellSubCellIndexMap.size(); ++i)
+      //   oss << cellIndexToMacroCellSubCellIndexMap[i] << " ";
+      // oss << "\n";
+
+      // // d_map
+      // oss << "d_map:\n";
+      // for (size_t i = 0; i < singleVectorGlobalToLocalMap.size(); ++i)
+      //   oss << singleVectorGlobalToLocalMap[i] << " ";
+      // oss << "\n";
+
+      // // d_jacobianFactor
+      // oss << "d_jacobianFactor:\n";
+      // for (size_t i = 0; i < jacobianFactor.size(); ++i)
+      //   oss << jacobianFactor[i] << " ";
+      // oss << "\n";
+
+      // std::string local_str = oss.str();
+
+      // // ---- gather all strings to rank 0 ----
+      // std::vector<std::string> all_strings =
+      //   dealii::Utilities::MPI::gather(mpi_comm, local_str, 0);
+
+      // if (my_rank == 0)
+      // {
+      //   for (const auto &s : all_strings)
+      //     std::cout << s;
+      // }
   }
 
 

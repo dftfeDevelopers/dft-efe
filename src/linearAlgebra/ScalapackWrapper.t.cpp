@@ -187,8 +187,9 @@ namespace dftefe
     {
       DFTEFE_AssertWithMsg(n_local_rows >= 0 &&
                              loc_row < static_cast<unsigned int>(n_local_rows),
-                           "Exceeding index id: " + loc_row + ", Range is: (" +
-                             0 + "," + n_local_rows + ")");
+                           (std::string("Exceeding index id: ") +
+                            std::to_string(loc_row) + ", Range is: (0," +
+                            std::to_string(n_local_rows) + ")"));
       const int i = loc_row + 1;
       return indxl2g_(&i,
                       &row_block_size,
@@ -208,8 +209,9 @@ namespace dftefe
       DFTEFE_AssertWithMsg(n_local_columns >= 0 &&
                              loc_column <
                                static_cast<unsigned int>(n_local_columns),
-                           "Exceeding index id: " + loc_column +
-                             ", Range is: (" + 0 + "," + n_local_columns + ")");
+                           (std::string("Exceeding index id: ") +
+                            std::to_string(loc_column) + ", Range is: (0," +
+                            std::to_string(n_local_columns) + ")"));
       const int j = loc_column + 1;
       return indxl2g_(&j,
                       &column_block_size,
@@ -248,11 +250,13 @@ namespace dftefe
       ScaLAPACKMatrix<NumberType> &dest) const
     {
       DFTEFE_AssertWithMsg(n_rows == dest.n_rows,
-                           ("Dimension mismatch between " + n_rows + " and " +
-                            dest.n_rows));
+                           (std::string("Dimension mismatch between ") +
+                            std::to_string(n_rows) + " and " +
+                            std::to_string(dest.n_rows)));
       DFTEFE_AssertWithMsg(n_columns == dest.n_columns,
-                           ("Dimension mismatch between " + n_columns +
-                            " and " + dest.n_columns));
+                           (std::string("Dimension mismatch between ") +
+                            std::to_string(n_columns) + " and " +
+                            std::to_string(dest.n_columns)));
 
       if (this->grid->is_process_active())
         DFTEFE_AssertWithMsg(
@@ -407,34 +411,40 @@ namespace dftefe
       if (transpose_B)
         {
           DFTEFE_AssertWithMsg(n_rows == B.n_columns,
-                               ("Dimension mismatch between " + n_rows +
-                                " and " + B.n_columns));
+                               (std::string("Dimension mismatch between ") +
+                                std::to_string(n_rows) + " and " +
+                                std::to_string(B.n_columns)));
           DFTEFE_AssertWithMsg(n_columns == B.n_rows,
-                               ("Dimension mismatch between " + n_columns +
-                                " and " + B.n_rows));
+                               (std::string("Dimension mismatch between ") +
+                                std::to_string(n_columns) + " and " +
+                                std::to_string(B.n_rows)));
           DFTEFE_AssertWithMsg(column_block_size == B.row_block_size,
-                               ("Dimension mismatch between " +
-                                column_block_size + " and " +
-                                B.row_block_size));
+                               (std::string("Dimension mismatch between ") +
+                                std::to_string(column_block_size) + " and " +
+                                std::to_string(B.row_block_size)));
           DFTEFE_AssertWithMsg(row_block_size == B.column_block_size,
-                               ("Dimension mismatch between " + row_block_size +
-                                " and " + B.column_block_size));
+                               (std::string("Dimension mismatch between ") +
+                                std::to_string(row_block_size) + " and " +
+                                std::to_string(B.column_block_size)));
         }
       else
         {
           DFTEFE_AssertWithMsg(n_rows == B.n_rows,
-                               ("Dimension mismatch between " + n_rows +
-                                " and " + B.n_rows));
+                               (std::string("Dimension mismatch between ") +
+                                std::to_string(n_rows) + " and " +
+                                std::to_string(B.n_rows)));
           DFTEFE_AssertWithMsg(n_columns == B.n_columns,
-                               ("Dimension mismatch between " + n_columns +
-                                " and " + B.n_columns));
+                               (std::string("Dimension mismatch between ") +
+                                std::to_string(n_columns) + " and " +
+                                std::to_string(B.n_columns)));
           DFTEFE_AssertWithMsg(column_block_size == B.column_block_size,
-                               ("Dimension mismatch between " +
-                                column_block_size + " and " +
-                                B.column_block_size));
+                               (std::string("Dimension mismatch between ") +
+                                std::to_string(column_block_size) + " and " +
+                                std::to_string(B.column_block_size)));
           DFTEFE_AssertWithMsg(row_block_size == B.row_block_size,
-                               ("Dimension mismatch between " + row_block_size +
-                                " and " + B.row_block_size));
+                               (std::string("Dimension mismatch between ") +
+                                std::to_string(row_block_size) + " and " +
+                                std::to_string(B.row_block_size)));
         }
       DFTEFE_AssertWithMsg(
         this->grid == B.grid,
@@ -475,34 +485,40 @@ namespace dftefe
       if (conjugate_transpose_B)
         {
           DFTEFE_AssertWithMsg(n_rows == B.n_columns,
-                               ("Dimension mismatch between " + n_rows +
-                                " and " + B.n_columns));
+                               (std::string("Dimension mismatch between ") +
+                                std::to_string(n_rows) + " and " +
+                                std::to_string(B.n_columns)));
           DFTEFE_AssertWithMsg(n_columns == B.n_rows,
-                               ("Dimension mismatch between " + n_columns +
-                                " and " + B.n_rows));
+                               (std::string("Dimension mismatch between ") +
+                                std::to_string(n_columns) + " and " +
+                                std::to_string(B.n_rows)));
           DFTEFE_AssertWithMsg(column_block_size == B.row_block_size,
-                               ("Dimension mismatch between " +
-                                column_block_size + " and " +
-                                B.row_block_size));
+                               (std::string("Dimension mismatch between ") +
+                                std::to_string(column_block_size) + " and " +
+                                std::to_string(B.row_block_size)));
           DFTEFE_AssertWithMsg(row_block_size == B.column_block_size,
-                               ("Dimension mismatch between " + row_block_size +
-                                " and " + B.column_block_size));
+                               (std::string("Dimension mismatch between ") +
+                                std::to_string(row_block_size) + " and " +
+                                std::to_string(B.column_block_size)));
         }
       else
         {
           DFTEFE_AssertWithMsg(n_rows == B.n_rows,
-                               ("Dimension mismatch between " + n_rows +
-                                " and " + B.n_rows));
+                               (std::string("Dimension mismatch between ") +
+                                std::to_string(n_rows) + " and " +
+                                std::to_string(B.n_rows)));
           DFTEFE_AssertWithMsg(n_columns == B.n_columns,
-                               ("Dimension mismatch between " + n_columns +
-                                " and " + B.n_columns));
+                               (std::string("Dimension mismatch between ") +
+                                std::to_string(n_columns) + " and " +
+                                std::to_string(B.n_columns)));
           DFTEFE_AssertWithMsg(column_block_size == B.column_block_size,
-                               ("Dimension mismatch between " +
-                                column_block_size + " and " +
-                                B.column_block_size));
+                               (std::string("Dimension mismatch between ") +
+                                std::to_string(column_block_size) + " and " +
+                                std::to_string(B.column_block_size)));
           DFTEFE_AssertWithMsg(row_block_size == B.row_block_size,
-                               ("Dimension mismatch between " + row_block_size +
-                                " and " + B.row_block_size));
+                               (std::string("Dimension mismatch between ") +
+                                std::to_string(row_block_size) + " and " +
+                                std::to_string(B.row_block_size)));
         }
       DFTEFE_AssertWithMsg(
         this->grid == B.grid,
@@ -574,98 +590,118 @@ namespace dftefe
       if (!transpose_A && !transpose_B)
         {
           DFTEFE_AssertWithMsg(this->n_columns == B.n_rows,
-                               ("Dimension mismatch between " +
-                                this->n_columns + " and " + B.n_rows));
+                               (std::string("Dimension mismatch between ") +
+                                std::to_string(this->n_columns) + " and " +
+                                std::to_string(B.n_rows)));
           DFTEFE_AssertWithMsg(this->n_rows == C.n_rows,
-                               ("Dimension mismatch between " + this->n_rows +
-                                " and " + C.n_rows));
+                               (std::string("Dimension mismatch between ") +
+                                std::to_string(this->n_rows) + " and " +
+                                std::to_string(C.n_rows)));
           DFTEFE_AssertWithMsg(B.n_columns == C.n_columns,
-                               ("Dimension mismatch between " + B.n_columns +
-                                " and " + C.n_columns));
+                               (std::string("Dimension mismatch between ") +
+                                std::to_string(B.n_columns) + " and " +
+                                std::to_string(C.n_columns)));
           DFTEFE_AssertWithMsg(this->row_block_size == C.row_block_size,
-                               ("Dimension mismatch between " +
-                                this->row_block_size + " and " +
-                                C.row_block_size));
+                               (std::string("Dimension mismatch between ") +
+                                std::to_string(this->row_block_size) +
+                                " and " +
+                                std::to_string(C.row_block_size)));
           DFTEFE_AssertWithMsg(this->column_block_size == B.row_block_size,
-                               ("Dimension mismatch between " +
-                                this->column_block_size + " and " +
-                                B.row_block_size));
+                               (std::string("Dimension mismatch between ") +
+                                std::to_string(this->column_block_size) +
+                                " and " +
+                                std::to_string(B.row_block_size)));
           DFTEFE_AssertWithMsg(B.column_block_size == C.column_block_size,
-                               ("Dimension mismatch between " +
-                                B.column_block_size + " and " +
-                                C.column_block_size));
+                               (std::string("Dimension mismatch between ") +
+                                std::to_string(B.column_block_size) + " and " +
+                                std::to_string(C.column_block_size)));
         }
       else if (transpose_A && !transpose_B)
         {
           DFTEFE_AssertWithMsg(this->n_rows == B.n_rows,
-                               ("Dimension mismatch between " + this->n_rows +
-                                " and " + B.n_rows));
+                               (std::string("Dimension mismatch between ") +
+                                std::to_string(this->n_rows) + " and " +
+                                std::to_string(B.n_rows)));
           DFTEFE_AssertWithMsg(this->n_columns == C.n_rows,
-                               ("Dimension mismatch between " +
-                                this->n_columns + " and " + C.n_rows));
+                               (std::string("Dimension mismatch between ") +
+                                std::to_string(this->n_columns) + " and " +
+                                std::to_string(C.n_rows)));
           DFTEFE_AssertWithMsg(B.n_columns == C.n_columns,
-                               ("Dimension mismatch between " + B.n_columns +
-                                " and " + C.n_columns));
+                               (std::string("Dimension mismatch between ") +
+                                std::to_string(B.n_columns) + " and " +
+                                std::to_string(C.n_columns)));
           DFTEFE_AssertWithMsg(this->column_block_size == C.row_block_size,
-                               ("Dimension mismatch between " +
-                                this->column_block_size + " and " +
-                                C.row_block_size));
+                               (std::string("Dimension mismatch between ") +
+                                std::to_string(this->column_block_size) +
+                                " and " +
+                                std::to_string(C.row_block_size)));
           DFTEFE_AssertWithMsg(this->row_block_size == B.row_block_size,
-                               ("Dimension mismatch between " +
-                                this->row_block_size + " and " +
-                                B.row_block_size));
+                               (std::string("Dimension mismatch between ") +
+                                std::to_string(this->row_block_size) +
+                                " and " +
+                                std::to_string(B.row_block_size)));
           DFTEFE_AssertWithMsg(B.column_block_size == C.column_block_size,
-                               ("Dimension mismatch between " +
-                                  B.column_block_size,
-                                C.column_block_size));
+                               (std::string("Dimension mismatch between ") +
+                                std::to_string(B.column_block_size) + " and " +
+                                std::to_string(C.column_block_size)));
         }
       else if (!transpose_A && transpose_B)
         {
           DFTEFE_AssertWithMsg(this->n_columns == B.n_columns,
-                               ("Dimension mismatch between " +
-                                this->n_columns + " and " + B.n_columns));
+                               (std::string("Dimension mismatch between ") +
+                                std::to_string(this->n_columns) + " and " +
+                                std::to_string(B.n_columns)));
           DFTEFE_AssertWithMsg(this->n_rows == C.n_rows,
-                               ("Dimension mismatch between " + this->n_rows +
-                                " and " + C.n_rows));
+                               (std::string("Dimension mismatch between ") +
+                                std::to_string(this->n_rows) + " and " +
+                                std::to_string(C.n_rows)));
           DFTEFE_AssertWithMsg(B.n_rows == C.n_columns,
-                               ("Dimension mismatch between " + B.n_rows +
-                                " and " + C.n_columns));
+                               (std::string("Dimension mismatch between ") +
+                                std::to_string(B.n_rows) + " and " +
+                                std::to_string(C.n_columns)));
           DFTEFE_AssertWithMsg(this->row_block_size == C.row_block_size,
-                               ("Dimension mismatch between " +
-                                this->row_block_size + " and " +
-                                C.row_block_size));
+                               (std::string("Dimension mismatch between ") +
+                                std::to_string(this->row_block_size) +
+                                " and " +
+                                std::to_string(C.row_block_size)));
           DFTEFE_AssertWithMsg(this->column_block_size == B.column_block_size,
-                               ("Dimension mismatch between " +
-                                this->column_block_size + " and " +
-                                B.column_block_size));
+                               (std::string("Dimension mismatch between ") +
+                                std::to_string(this->column_block_size) +
+                                " and " +
+                                std::to_string(B.column_block_size)));
           DFTEFE_AssertWithMsg(B.row_block_size == C.column_block_size,
-                               ("Dimension mismatch between " +
-                                B.row_block_size + " and " +
-                                C.column_block_size));
+                               (std::string("Dimension mismatch between ") +
+                                std::to_string(B.row_block_size) + " and " +
+                                std::to_string(C.column_block_size)));
         }
       else // if (transpose_A && transpose_B)
         {
           DFTEFE_AssertWithMsg(this->n_rows == B.n_columns,
-                               ("Dimension mismatch between " + this->n_rows +
-                                " and " + B.n_columns));
+                               (std::string("Dimension mismatch between ") +
+                                std::to_string(this->n_rows) + " and " +
+                                std::to_string(B.n_columns)));
           DFTEFE_AssertWithMsg(this->n_columns == C.n_rows,
-                               ("Dimension mismatch between " +
-                                this->n_columns + " and " + C.n_rows));
+                               (std::string("Dimension mismatch between ") +
+                                std::to_string(this->n_columns) + " and " +
+                                std::to_string(C.n_rows)));
           DFTEFE_AssertWithMsg(B.n_rows == C.n_columns,
-                               ("Dimension mismatch between " + B.n_rows +
-                                " and " + C.n_columns));
+                               (std::string("Dimension mismatch between ") +
+                                std::to_string(B.n_rows) + " and " +
+                                std::to_string(C.n_columns)));
           DFTEFE_AssertWithMsg(this->column_block_size == C.row_block_size,
-                               ("Dimension mismatch between " +
-                                this->row_block_size + " and " +
-                                C.row_block_size));
+                               (std::string("Dimension mismatch between ") +
+                                std::to_string(this->row_block_size) +
+                                " and " +
+                                std::to_string(C.row_block_size)));
           DFTEFE_AssertWithMsg(this->row_block_size == B.column_block_size,
-                               ("Dimension mismatch between " +
-                                this->column_block_size + " and " +
-                                B.row_block_size));
+                               (std::string("Dimension mismatch between ") +
+                                std::to_string(this->column_block_size) +
+                                " and " +
+                                std::to_string(B.row_block_size)));
           DFTEFE_AssertWithMsg(B.row_block_size == C.column_block_size,
-                               ("Dimension mismatch between " +
-                                B.column_block_size + " and " +
-                                C.column_block_size));
+                               (std::string("Dimension mismatch between ") +
+                                std::to_string(B.column_block_size) + " and " +
+                                std::to_string(C.column_block_size)));
         }
 
       if (this->grid->is_process_active())
@@ -726,98 +762,118 @@ namespace dftefe
       if (!conjugate_transpose_A && !conjugate_transpose_B)
         {
           DFTEFE_AssertWithMsg(this->n_columns == B.n_rows,
-                               ("Dimension mismatch between " +
-                                this->n_columns + " and " + B.n_rows));
+                               (std::string("Dimension mismatch between ") +
+                                std::to_string(this->n_columns) + " and " +
+                                std::to_string(B.n_rows)));
           DFTEFE_AssertWithMsg(this->n_rows == C.n_rows,
-                               ("Dimension mismatch between " + this->n_rows +
-                                " and " + C.n_rows));
+                               (std::string("Dimension mismatch between ") +
+                                std::to_string(this->n_rows) + " and " +
+                                std::to_string(C.n_rows)));
           DFTEFE_AssertWithMsg(B.n_columns == C.n_columns,
-                               ("Dimension mismatch between " + B.n_columns +
-                                " and " + C.n_columns));
+                               (std::string("Dimension mismatch between ") +
+                                std::to_string(B.n_columns) + " and " +
+                                std::to_string(C.n_columns)));
           DFTEFE_AssertWithMsg(this->row_block_size == C.row_block_size,
-                               ("Dimension mismatch between " +
-                                this->row_block_size + " and " +
-                                C.row_block_size));
+                               (std::string("Dimension mismatch between ") +
+                                std::to_string(this->row_block_size) +
+                                " and " +
+                                std::to_string(C.row_block_size)));
           DFTEFE_AssertWithMsg(this->column_block_size == B.row_block_size,
-                               ("Dimension mismatch between " +
-                                this->column_block_size + " and " +
-                                B.row_block_size));
+                               (std::string("Dimension mismatch between ") +
+                                std::to_string(this->column_block_size) +
+                                " and " +
+                                std::to_string(B.row_block_size)));
           DFTEFE_AssertWithMsg(B.column_block_size == C.column_block_size,
-                               ("Dimension mismatch between " +
-                                B.column_block_size + " and " +
-                                C.column_block_size));
+                               (std::string("Dimension mismatch between ") +
+                                std::to_string(B.column_block_size) + " and " +
+                                std::to_string(C.column_block_size)));
         }
       else if (conjugate_transpose_A && !conjugate_transpose_B)
         {
           DFTEFE_AssertWithMsg(this->n_rows == B.n_rows,
-                               ("Dimension mismatch between " + this->n_rows +
-                                " and " + B.n_rows));
+                               (std::string("Dimension mismatch between ") +
+                                std::to_string(this->n_rows) + " and " +
+                                std::to_string(B.n_rows)));
           DFTEFE_AssertWithMsg(this->n_columns == C.n_rows,
-                               ("Dimension mismatch between " +
-                                this->n_columns + " and " + C.n_rows));
+                               (std::string("Dimension mismatch between ") +
+                                std::to_string(this->n_columns) + " and " +
+                                std::to_string(C.n_rows)));
           DFTEFE_AssertWithMsg(B.n_columns == C.n_columns,
-                               ("Dimension mismatch between " + B.n_columns +
-                                " and " + C.n_columns));
+                               (std::string("Dimension mismatch between ") +
+                                std::to_string(B.n_columns) + " and " +
+                                std::to_string(C.n_columns)));
           DFTEFE_AssertWithMsg(this->column_block_size == C.row_block_size,
-                               ("Dimension mismatch between " +
-                                this->column_block_size + " and " +
-                                C.row_block_size));
+                               (std::string("Dimension mismatch between ") +
+                                std::to_string(this->column_block_size) +
+                                " and " +
+                                std::to_string(C.row_block_size)));
           DFTEFE_AssertWithMsg(this->row_block_size == B.row_block_size,
-                               ("Dimension mismatch between " +
-                                this->row_block_size + " and " +
-                                B.row_block_size));
+                               (std::string("Dimension mismatch between ") +
+                                std::to_string(this->row_block_size) +
+                                " and " +
+                                std::to_string(B.row_block_size)));
           DFTEFE_AssertWithMsg(B.column_block_size == C.column_block_size,
-                               ("Dimension mismatch between " +
-                                B.column_block_size + " and " +
-                                C.column_block_size));
+                               (std::string("Dimension mismatch between ") +
+                                std::to_string(B.column_block_size) + " and " +
+                                std::to_string(C.column_block_size)));
         }
       else if (!conjugate_transpose_A && conjugate_transpose_B)
         {
           DFTEFE_AssertWithMsg(this->n_columns == B.n_columns,
-                               ("Dimension mismatch between " +
-                                this->n_columns + " and " + B.n_columns));
+                               (std::string("Dimension mismatch between ") +
+                                std::to_string(this->n_columns) + " and " +
+                                std::to_string(B.n_columns)));
           DFTEFE_AssertWithMsg(this->n_rows == C.n_rows,
-                               ("Dimension mismatch between " + this->n_rows +
-                                " and " + C.n_rows));
+                               (std::string("Dimension mismatch between ") +
+                                std::to_string(this->n_rows) + " and " +
+                                std::to_string(C.n_rows)));
           DFTEFE_AssertWithMsg(B.n_rows == C.n_columns,
-                               ("Dimension mismatch between " + B.n_rows +
-                                " and " + C.n_columns));
+                               (std::string("Dimension mismatch between ") +
+                                std::to_string(B.n_rows) + " and " +
+                                std::to_string(C.n_columns)));
           DFTEFE_AssertWithMsg(this->row_block_size == C.row_block_size,
-                               ("Dimension mismatch between " +
-                                this->row_block_size + " and " +
-                                C.row_block_size));
+                               (std::string("Dimension mismatch between ") +
+                                std::to_string(this->row_block_size) +
+                                " and " +
+                                std::to_string(C.row_block_size)));
           DFTEFE_AssertWithMsg(this->column_block_size == B.column_block_size,
-                               ("Dimension mismatch between " +
-                                this->column_block_size + " and " +
-                                B.column_block_size));
+                               (std::string("Dimension mismatch between ") +
+                                std::to_string(this->column_block_size) +
+                                " and " +
+                                std::to_string(B.column_block_size)));
           DFTEFE_AssertWithMsg(B.row_block_size == C.column_block_size,
-                               ("Dimension mismatch between " +
-                                B.row_block_size + " and " +
-                                C.column_block_size));
+                               (std::string("Dimension mismatch between ") +
+                                std::to_string(B.row_block_size) + " and " +
+                                std::to_string(C.column_block_size)));
         }
       else // if (transpose_A && transpose_B)
         {
           DFTEFE_AssertWithMsg(this->n_rows == B.n_columns,
-                               ("Dimension mismatch between " + this->n_rows +
-                                " and " + B.n_columns));
+                               (std::string("Dimension mismatch between ") +
+                                std::to_string(this->n_rows) + " and " +
+                                std::to_string(B.n_columns)));
           DFTEFE_AssertWithMsg(this->n_columns == C.n_rows,
-                               ("Dimension mismatch between " +
-                                this->n_columns + " and " + C.n_rows));
+                               (std::string("Dimension mismatch between ") +
+                                std::to_string(this->n_columns) + " and " +
+                                std::to_string(C.n_rows)));
           DFTEFE_AssertWithMsg(B.n_rows == C.n_columns,
-                               ("Dimension mismatch between " + B.n_rows +
-                                " and " + C.n_columns));
+                               (std::string("Dimension mismatch between ") +
+                                std::to_string(B.n_rows) + " and " +
+                                std::to_string(C.n_columns)));
           DFTEFE_AssertWithMsg(this->column_block_size == C.row_block_size,
-                               ("Dimension mismatch between " +
-                                this->row_block_size + " and " +
-                                C.row_block_size));
+                               (std::string("Dimension mismatch between ") +
+                                std::to_string(this->row_block_size) +
+                                " and " +
+                                std::to_string(C.row_block_size)));
           DFTEFE_AssertWithMsg(this->row_block_size == B.column_block_size,
-                               ("Dimension mismatch between " +
-                                this->column_block_size + " and " +
-                                B.row_block_size));
+                               (std::string("Dimension mismatch between ") +
+                                std::to_string(this->column_block_size) +
+                                " and " +
+                                std::to_string(B.row_block_size)));
           DFTEFE_AssertWithMsg(B.row_block_size == C.column_block_size,
-                               ("Dimension mismatch between " +
-                                B.column_block_size + " and " +
-                                C.column_block_size));
+                               (std::string("Dimension mismatch between ") +
+                                std::to_string(B.column_block_size) + " and " +
+                                std::to_string(C.column_block_size)));
         }
 
       if (this->grid->is_process_active())
@@ -1828,8 +1884,9 @@ namespace dftefe
       if (grid->is_process_active())
         {
           DFTEFE_AssertWithMsg(this->n() == factors.size(),
-                               ("Dimension mismatch between " + this->n() +
-                                " and " + factors.size()));
+                               (std::string("Dimension mismatch between ") +
+                                std::to_string(this->n()) + " and " +
+                                std::to_string(factors.size())));
 
           for (unsigned int i = 0; i < this->local_n(); ++i)
             {
@@ -1848,8 +1905,9 @@ namespace dftefe
       if (grid->is_process_active())
         {
           DFTEFE_AssertWithMsg(this->m() == factors.size(),
-                               ("Dimension mismatch between " + this->m() +
-                                " and " + factors.size()));
+                               (std::string("Dimension mismatch between ") +
+                                std::to_string(this->m()) + " and " +
+                                std::to_string(factors.size())));
           for (unsigned int i = 0; i < this->local_m(); ++i)
             {
               const NumberType s = factors[this->global_row(i)];
@@ -1867,8 +1925,9 @@ namespace dftefe
       if (grid->is_process_active())
         {
           DFTEFE_AssertWithMsg(this->n() == factors.size(),
-                               ("Dimension mismatch between " + this->n() +
-                                " and " + factors.size()));
+                               (std::string("Dimension mismatch between ") +
+                                std::to_string(this->n()) + " and " +
+                                std::to_string(factors.size())));
 
           for (unsigned int i = 0; i < this->local_n(); ++i)
             {
@@ -1887,8 +1946,9 @@ namespace dftefe
       if (grid->is_process_active())
         {
           DFTEFE_AssertWithMsg(this->m() == factors.size(),
-                               ("Dimension mismatch between " + this->m() +
-                                " and " + factors.size()));
+                               (std::string("Dimension mismatch between ") +
+                                std::to_string(this->m()) + " and " +
+                                std::to_string(factors.size())));
           for (unsigned int i = 0; i < this->local_m(); ++i)
             {
               const NumberType s = NumberType(factors[this->global_row(i)]);

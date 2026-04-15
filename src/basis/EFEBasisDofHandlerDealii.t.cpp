@@ -91,10 +91,12 @@ namespace dftefe
           *(dealiiMatrixFree.get_vector_partitioner());
         const dealii::IndexSet &ghostIndexSet =
           dealiiPartitioner.ghost_indices();
-        const size_type numGhostIndicesClassical = ghostIndexSet.n_elements();
-        std::vector<global_size_type> ghostIndicesClassical(0);
-        ghostIndicesClassical.resize(numGhostIndicesClassical, 0);
-        ghostIndexSet.fill_index_vector(ghostIndicesClassical);
+        // const size_type numGhostIndicesClassical = ghostIndexSet.n_elements();
+        // std::vector<global_size_type> ghostIndicesClassical(0);
+        // ghostIndicesClassical.resize(numGhostIndicesClassical, 0);
+        // ghostIndexSet.fill_index_vector(ghostIndicesClassical);
+        std::vector<global_size_type> ghostIndicesClassical =
+          ghostIndexSet.get_index_vector();
 
         // get the enriched ghost ids
         ghostIndices.clear();
@@ -346,12 +348,15 @@ namespace dftefe
         dealiiAffineConstraintMatrix;
 
       dealiiAffineConstraintMatrix.clear();
-      dealii::IndexSet locally_relevant_dofs;
-      locally_relevant_dofs.clear();
-      dealii::DoFTools::extract_locally_relevant_dofs(*(this->getDoFHandler()),
-                                                      locally_relevant_dofs);
+      // dealii::IndexSet locally_relevant_dofs;
+      // locally_relevant_dofs.clear();
+      // dealii::DoFTools::extract_locally_relevant_dofs(*(this->getDoFHandler()),
+      //                                                 locally_relevant_dofs);
+      dealii::IndexSet locally_relevant_dofs =
+        dealii::DoFTools::extract_locally_relevant_dofs(
+          *(this->getDoFHandler()));
       dealiiAffineConstraintMatrix.reinit(
-        /*this->getDoFHandler()->locally_owned_dofs(),*/ locally_relevant_dofs);
+        this->getDoFHandler()->locally_owned_dofs(), locally_relevant_dofs);
       dealii::DoFTools::make_hanging_node_constraints(
         *(this->getDoFHandler()), dealiiAffineConstraintMatrix);
 
@@ -677,12 +682,11 @@ namespace dftefe
         dealiiAffineConstraintMatrix;
 
       dealiiAffineConstraintMatrix.clear();
-      dealii::IndexSet locally_relevant_dofs;
-      locally_relevant_dofs.clear();
-      dealii::DoFTools::extract_locally_relevant_dofs(*(this->getDoFHandler()),
-                                                      locally_relevant_dofs);
+      dealii::IndexSet locally_relevant_dofs =
+        dealii::DoFTools::extract_locally_relevant_dofs(
+          *(this->getDoFHandler()));
       dealiiAffineConstraintMatrix.reinit(
-        /*this->getDoFHandler()->locally_owned_dofs(),*/ locally_relevant_dofs);
+        this->getDoFHandler()->locally_owned_dofs(), locally_relevant_dofs);
       dealii::DoFTools::make_hanging_node_constraints(
         *(this->getDoFHandler()), dealiiAffineConstraintMatrix);
 
@@ -1713,10 +1717,9 @@ namespace dftefe
                              memorySpace,
                              dim>::createConstraintsStart() const
     {
-      dealii::IndexSet locally_relevant_dofs;
-      locally_relevant_dofs.clear();
-      dealii::DoFTools::extract_locally_relevant_dofs(*(this->getDoFHandler()),
-                                                      locally_relevant_dofs);
+      dealii::IndexSet locally_relevant_dofs =
+        dealii::DoFTools::extract_locally_relevant_dofs(
+          *(this->getDoFHandler()));
 
       std::shared_ptr<ConstraintsLocal<ValueTypeBasisCoeff, memorySpace>>
         constraintsLocal = std::make_shared<

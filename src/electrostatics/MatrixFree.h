@@ -73,35 +73,35 @@ namespace dftefe
      * @brief Initialize data structures for MatrixFree class
      *
      */
-    inline void
+    void
     init();
 
     /**
      * @brief Initialize Helmholtz operator coefficient
      *
      */
-    inline void
+    void
     initOperatorCoeffs(T coeffHelmholtz);
 
     /**
      * @brief Compute Laplace operator multipled by X
      *
      */
-    inline void
+    void
     computeAX(T *dst, T *src);
 
     /**
      * @brief Apply constraints to src vector
      *
      */
-    inline void
+    void
     constraintsDistribute(T *src);
 
     /**
      * @brief Apply transpose of constraints to src vector and set zero on src
      *
      */
-    inline void
+    void
     constraintsDistributeTranspose(T *dst, T *src);
 
   private:
