@@ -106,6 +106,17 @@ namespace dftefe
              const size_type                           incy,
              LinAlgOpContext<memorySpace> &            context);
 
+        template <typename ValueType1,
+                  typename ValueType2,
+                  typename utils::MemorySpace memorySpace>
+        scalar_type<ValueType1, ValueType2>
+        dot(const size_type           n,
+            const ValueType1 *x,
+            const size_type           incx,
+            const ValueType2 *y,
+            const size_type           incy,
+            LinAlgOpContext<memorySpace> &            context);
+
       } // namespace blasWrapper
     }   // namespace blasLapack
   }     // end of namespace linearAlgebra

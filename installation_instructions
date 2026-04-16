@@ -19,25 +19,51 @@ python configure.py  --CMAKE_BUILD_TYPE=Release --CMAKE_C_COMPILER=gcc --CMAKE_C
 
 python install.py
 
-make
-
 For perlmutter:
-For a CPU only compilation
 
 Note: Used locally installed boost. 
 
+export DFTEFE_PATH= <path to dftefe project> (eg: /global/homes/a/$USER/dft-efe)
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/cray/pe/lib64
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/pscratch/sd/a/avirup/DFTEFE-softwares/scalapack/install/lib
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/pscratch/sd/a/avirup/DFTEFE-softwares/elpa/install/lib
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/pscratch/sd/a/avirup/DFTEFE-softwares/libflame/install/lib
-
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/pscratch/sd/a/avirup/DFTEFE-softwares/blis/install/lib
 
-export DFTEFE_PATH= <path to dftefe project> (eg: /global/homes/a/$USER/dft-efe)
 
-CPU:
-python configure.py  --CMAKE_BUILD_TYPE=Release --CMAKE_C_COMPILER=cc --CMAKE_CXX_COMPILER=CC --CMAKE_C_FLAGS="-std=gnu++17 -march=native -fopenmp -I$MPICH_DIR/include" --CMAKE_CXX_FLAGS="-std=gnu++17 -march=native -fopenmp -I$MPICH_DIR/include" --BOOST_DIR="/pscratch/sd/a/avirup/DFTEFE-softwares-new/boost/install" --ELPA_DIR="/pscratch/sd/a/avirup/DFTEFE-softwares-new/elpa/install" --SLATE_DIR="/pscratch/sd/a/avirup/DFTEFE-softwares-new/slate/install" --DEALII_PATH="/pscratch/sd/a/avirup/DFTEFE-softwares-new/dealii/install" --SCALAPACK_LIBRARIES="/pscratch/sd/a/avirup/DFTEFE-softwares-new/scalapack/install/lib/libscalapack.so" --ENABLE_MPI=ON --ENABLE_GPU=OFF --LIBXML_PATH="/usr/include/libxml2/" --LIBXML_LIBRARIES="/usr/lib64/libxml2.so" --LIBXC_DIR="/pscratch/sd/a/avirup/DFTEFE-softwares-new/libxc/install" --LIBXC_LIBRARY="/pscratch/sd/a/avirup/DFTEFE-softwares-new/libxc/install/lib64/libxc.so"
-
-GPU:
-python configure.py  --CMAKE_BUILD_TYPE=Release --CMAKE_C_COMPILER=cc --CMAKE_CXX_COMPILER=CC --CMAKE_C_FLAGS="-std=gnu++17 -march=native -fopenmp -I$MPICH_DIR/include" --CMAKE_CXX_FLAGS="-std=gnu++17 -march=native -fopenmp -I$MPICH_DIR/include" --BOOST_DIR="/pscratch/sd/a/avirup/DFTEFE-softwares-new/boost/install" --ELPA_DIR="/pscratch/sd/a/avirup/DFTEFE-softwares-new/elpa/install" --SLATE_DIR="/pscratch/sd/a/avirup/DFTEFE-softwares-new/slate/install" --DEALII_PATH="/pscratch/sd/a/avirup/DFTEFE-softwares-new/dealii/install" --SCALAPACK_LIBRARIES="/pscratch/sd/a/avirup/DFTEFE-softwares-new/scalapack/install/lib/libscalapack.so" --ENABLE_MPI=ON --ENABLE_GPU=ON  --GPU_LANG="cuda" --GPU_VENDOR="nvidia" --CMAKE_CUDA_FLAGS="-I'$MPICH_DIR'/include -arch=sm_80" --CMAKE_CUDA_ARCHITECTURES="80" --LIBXML_PATH="/usr/include/libxml2/" --LIBXML_LIBRARIES="/usr/lib64/libxml2.so" --LIBXC_DIR="/pscratch/sd/a/avirup/DFTEFE-softwares-new/libxc/install" --LIBXC_LIBRARY="/pscratch/sd/a/avirup/DFTEFE-softwares-new/libxc/install/lib64/libxc.so"
+CPU/GPU:
+python configure.py \
+  --CMAKE_BUILD_TYPE=Release \
+  --CMAKE_C_COMPILER=cc \
+  --CMAKE_CXX_COMPILER=CC \
+  --CMAKE_C_FLAGS="-std=gnu++17 -march=native -fopenmp -I$MPICH_DIR/include" \
+  --CMAKE_CXX_FLAGS="-march=znver3 -fPIC" \
+  --CMAKE_CXX_FLAGS_RELEASE="-fPIC -O2 -target-accel=nvidia80 -I$MPICH_DIR/include" \
+  --BOOST_DIR="/pscratch/sd/a/avirup/DFTEFE-softwares/boost/install" \
+  --ELPA_DIR="/pscratch/sd/a/avirup/DFTEFE-softwares/elpa/install" \
+  --DEALII_PATH="/pscratch/sd/a/avirup/DFTEFE-softwares/dealii/install" \
+  --DEAL_II_CXX_FLAGS_RELEASE="-O2" \
+  --SCALAPACK_LIBRARIES="/pscratch/sd/a/avirup/DFTEFE-softwares/scalapack/install/lib/libscalapack.so" \
+  --ENABLE_MPI=ON \
+  --ENABLE_MPI_DEVICE_AWARE=OFF \
+  --MPI_C_COMPILER= \
+  --MPI_CXX_COMPILER= \
+  --ENABLE_GPU=ON \
+  --GPU_LANG="cuda" \
+  --GPU_VENDOR="nvidia" \
+  --CMAKE_CUDA_FLAGS="-I'$MPICH_DIR'/include -arch=sm_80" \
+  --CMAKE_CUDA_ARCHITECTURES="80" \
+  --LIBXML_PATH="/usr/include/libxml2/" \
+  --LIBXML_LIBRARIES="/usr/lib64/libxml2.so" \
+  --LIBXC_DIR="/pscratch/sd/a/avirup/DFTEFE-softwares/libxc/install" \
+  --LIBXC_LIBRARY="/pscratch/sd/a/avirup/DFTEFE-softwares/libxc/install/lib64/libxc.so"
 
 python install.py
 
-make
+To Run:
+salloc job:
+
+salloc --nodes=2 --ntasks=8 --ntasks-per-node=4 --cpus-per-task=32 --gpus-per-node=4 --gpus-per-task=1 --constraint=gpu --qos=interactive --time=00:20:00 --account=m2360_g
+
+To Analyse:
+python install.py --n=8 --build_dir=/global/homes/a/avirup/dft-efe-new/dft-efe/analysis/classicalEnrichmentComparison/PSPnonlocal/KSDFTOrthoEFEUniformQuad/build  --src_dir=/global/homes/a/avirup/dft-efe-new/dft-efe/analysis/classicalEnrichmentComparison/PSPnonlocal/KSDFTOrthoEFEUniformQuad/

@@ -332,6 +332,10 @@ namespace dftefe
     double
     scaleXRandComputeNorm(double *x, const double &alpha);
 
+  void
+  dotDevice(const size_type size, double *x, double *y, double &alpha,
+           linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext);
+
     }; // end of class PoissonSolverDealiiMatrixFreeFE
   }    // namespace electrostatics
 } // end of namespace dftefe

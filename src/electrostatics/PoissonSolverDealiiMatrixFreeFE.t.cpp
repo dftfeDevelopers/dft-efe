@@ -1439,7 +1439,7 @@ namespace dftefe
               computeAXDevice(d_dvec, d_qvec);
 
               // alpha = q.d
-              dot(d_qvec, d_dvec, alpha);
+              dotDevice(d_xLocalDof, d_qvec.begin(), d_dvec.begin(), alpha, *d_linAlgOpContext);
 
               DFTEFE_AssertWithMsg(std::abs(alpha) != 0.,"Division by zero\n");
               alpha = delta / alpha;
@@ -1585,6 +1585,33 @@ namespace dftefe
     MPI_Allreduce(&local_sum, &sum, 1, MPI_DOUBLE, MPI_SUM, getMPIComm());
 
     return std::sqrt(sum);
+  }
+
+
+      template <typename ValueTypeOperator,
+              typename ValueTypeOperand,
+              utils::MemorySpace memorySpace,
+              size_type          dim>
+    void
+    PoissonSolverDealiiMatrixFreeFE<ValueTypeOperator,
+                                    ValueTypeOperand,
+                                    memorySpace,
+                                    dim>::
+  dotDevice(const size_type size, double *x, double *y, double &alpha,
+           linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext)
+  {
+    double result = linearAlgebra::blasLapack::dot(size,
+                                 x,
+                                1,
+                                y,
+                                1,
+                                linAlgOpContext);
+      MPI_Allreduce(&result,
+                    &alpha,
+                    1,
+                    MPI_DOUBLE,
+                    MPI_SUM,
+                    getMPIComm());
   }
 
   } // end of namespace electrostatics

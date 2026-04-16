@@ -248,10 +248,10 @@ namespace dftefe
           const size_type               incy,
           LinAlgOpContext<memorySpace> &context)
       {
-        utils::throwException(false, "blasLapack::dot() is not implemented");
-        // scalar_type<ValueType1, ValueType2> output;
-        // output = blasWrapper::dot<ValueType1, ValueType2, memorySpace>(n, x,
-        // incx, y, incy, context); return output;
+        scalar_type<ValueType1, ValueType2> output;
+        output = blasWrapper::dot<ValueType1, ValueType2, memorySpace>
+          (n, x, incx, y, incy, context); 
+        return output;
       }
 
       template <typename ValueType1,

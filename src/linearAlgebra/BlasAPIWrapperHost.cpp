@@ -643,6 +643,87 @@ namespace dftefe
           return zaxpy_(&nTmp, &alpha, x, &incxTmp, y, &incyTmp);
         }
 
+        template <typename ValueType1,
+                  typename ValueType2,
+                  utils::MemorySpace memorySpace>
+        scalar_type<ValueType1, ValueType2>
+        dot(
+            const size_type           n,
+            const ValueType1 *x,
+            const size_type           incx,
+            const ValueType2 *y,
+            const size_type           incy,
+             LinAlgOpContext<memorySpace> &context)
+        {
+          utils::throwException(
+            false, "The input valuetypes are not supported by gemm");
+          return (scalar_type<ValueType1, ValueType2>)0;
+        }
+
+        template <>
+        float
+        dot<float, float, utils::MemorySpace::HOST>(
+            const size_type           n,
+            const float *x,
+            const size_type           incx,
+            const float *y,
+            const size_type           incy,
+          LinAlgOpContext<utils::MemorySpace::HOST> &context)
+        {
+          unsigned int nTmp    = n;
+          unsigned int incxTmp = incx;
+          unsigned int incyTmp = incy;
+          return sdot_(&nTmp, x, &incxTmp, y, &incyTmp);
+        }
+
+        template <>
+        double
+        dot<double, double, utils::MemorySpace::HOST>(
+            const size_type           n,
+            const double *x,
+            const size_type           incx,
+            const double *y,
+            const size_type           incy,
+          LinAlgOpContext<utils::MemorySpace::HOST> &context)
+        {
+          unsigned int nTmp    = n;
+          unsigned int incxTmp = incx;
+          unsigned int incyTmp = incy;
+          return ddot_(&nTmp, x, &incxTmp, y, &incyTmp);
+        }
+
+        template <>
+        std::complex<float>
+        dot<std::complex<float>, std::complex<float>, utils::MemorySpace::HOST>(
+            const size_type           n,
+            const std::complex<float> *x,
+            const size_type           incx,
+            const std::complex<float> *y,
+            const size_type           incy,
+          LinAlgOpContext<utils::MemorySpace::HOST> &context)
+        {
+          unsigned int nTmp    = n;
+          unsigned int incxTmp = incx;
+          unsigned int incyTmp = incy;
+          return cdotc_(&nTmp, x, &incxTmp, y, &incyTmp);
+        }
+
+        template <>
+        std::complex<double>
+        dot<std::complex<double>, std::complex<double>, utils::MemorySpace::HOST>(
+            const size_type           n,
+            const std::complex<double> *x,
+            const size_type           incx,
+            const std::complex<double> *y,
+            const size_type           incy,
+          LinAlgOpContext<utils::MemorySpace::HOST> &context)
+        {
+          unsigned int nTmp    = n;
+          unsigned int incxTmp = incx;
+          unsigned int incyTmp = incy;
+          return zdotc_(&nTmp, x, &incxTmp, y, &incyTmp);
+        }
+
         template real_type<float>
         asum<float, utils::MemorySpace::HOST>(
           const size_type                            n,
@@ -669,6 +750,42 @@ namespace dftefe
           const size_type                            n,
           std::complex<double> const *               x,
           const size_type                            incx,
+          LinAlgOpContext<utils::MemorySpace::HOST> &context);
+
+        template float
+        dot<float, float, utils::MemorySpace::HOST>(
+            const size_type           n,
+            const float *x,
+            const size_type           incx,
+            const float *y,
+            const size_type           incy,
+          LinAlgOpContext<utils::MemorySpace::HOST> &context);
+
+        template double
+        dot<double, double, utils::MemorySpace::HOST>(
+            const size_type           n,
+            const double *x,
+            const size_type           incx,
+            const double *y,
+            const size_type           incy,
+          LinAlgOpContext<utils::MemorySpace::HOST> &context);
+
+        template std::complex<float>
+        dot<std::complex<float>, std::complex<float>, utils::MemorySpace::HOST>(
+            const size_type           n,
+            const std::complex<float> *x,
+            const size_type           incx,
+            const std::complex<float> *y,
+            const size_type           incy,
+          LinAlgOpContext<utils::MemorySpace::HOST> &context);
+
+        template std::complex<double>
+        dot<std::complex<double>, std::complex<double>, utils::MemorySpace::HOST>(
+            const size_type           n,
+            const std::complex<double> *x,
+            const size_type           incx,
+            const std::complex<double> *y,
+            const size_type           incy,
           LinAlgOpContext<utils::MemorySpace::HOST> &context);
 
         template size_type
