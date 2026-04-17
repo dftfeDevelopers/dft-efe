@@ -1,6 +1,5 @@
-#include "SmearChargePotentialFunction.h"
-#include <utils/TypeConfig.h>
 #include <cmath>
+#include <utils/SmearChargePotentialFunction.h>
 
 namespace dftefe
 {
@@ -11,26 +10,45 @@ namespace dftefe
       const std::vector<double> &      atomCharges,
       const std::vector<double> &      smearedChargeRadius)
       : d_atomCoordinates(atomCoordinates)
-      , d_z(atomCharges)
       , d_rc(smearedChargeRadius)
-    {}
+      , d_z(atomCharges)
+      , d_numAtoms(atomCoordinates.size())
+      , d_dim(atomCoordinates[0].size())
+    {
+#ifdef DFTEFE_WITH_DEVICE
+       std::vector<double> atomCoordsFlat = utils::flatten(atomCoordinates);
+      d_atomCoordsFlatDevice.resize(atomCoordsFlat.size());
+      d_rcDevice.resize(d_rc.size());
+      d_zDevice.resize(d_z.size());
+      MemoryTransfer<MemorySpace::DEVICE, MemorySpace::HOST>::copy(
+        atomCoordsFlat.size(),
+        d_atomCoordsFlatDevice.data(),
+        atomCoordsFlat.data());
+      MemoryTransfer<MemorySpace::DEVICE, MemorySpace::HOST>::copy(
+        d_rc.size(), d_rcDevice.data(), d_rc.data());
+      MemoryTransfer<MemorySpace::DEVICE, MemorySpace::HOST>::copy(
+        d_z.size(), d_zDevice.data(), d_z.data());
+#endif
+    }
 
     SmearChargePotentialFunction::SmearChargePotentialFunction(
       const std::vector<utils::Point> &atomCoordinates,
       const std::vector<double> &      atomCharges,
       const double &                   smearedChargeRadius)
-      : d_atomCoordinates(atomCoordinates)
-      , d_z(atomCharges)
-      , d_rc(std::vector<double>(atomCoordinates.size(), smearedChargeRadius))
+      : SmearChargePotentialFunction(
+          atomCoordinates,
+          atomCharges,
+          std::vector<double>(atomCoordinates.size(), smearedChargeRadius))
     {}
 
     SmearChargePotentialFunction::SmearChargePotentialFunction(
       const utils::Point &atomCoordinates,
       const double        atomCharges,
       const double        smearedChargeRadius)
-      : d_atomCoordinates(std::vector<utils::Point>{atomCoordinates})
-      , d_z(std::vector<double>{atomCharges})
-      , d_rc(std::vector<double>{smearedChargeRadius})
+      : SmearChargePotentialFunction(
+          std::vector<utils::Point>{atomCoordinates},
+          std::vector<double>{atomCharges},
+          std::vector<double>{smearedChargeRadius})
     {}
 
     double
@@ -89,5 +107,21 @@ namespace dftefe
         }
       return returnValue;
     }
+
+    void
+    SmearChargePotentialFunction::evalHost(size_type     numPoints,
+                                           const double *t,
+                                           double *      q) const
+    {
+      utils::Point              p(d_dim);
+      std::vector<utils::Point> points(numPoints, p);
+      for (size_type iPoint = 0; iPoint < numPoints; ++iPoint)
+        for (size_type iDim = 0; iDim < d_dim; ++iDim)
+          points[iPoint][iDim] = t[iPoint * d_dim + iDim];
+      std::vector<double> retValue = (*this)(points);
+      for (size_type iPoint = 0; iPoint < numPoints; ++iPoint)
+        q[iPoint] = retValue[iPoint];
+    }
+
   } // namespace utils
 } // namespace dftefe

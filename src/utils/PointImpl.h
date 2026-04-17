@@ -266,6 +266,14 @@ namespace dftefe
     std::ostream &
     operator<<(std::ostream &outputStream, const PointImpl<T> &p);
 
+    /**
+     * @brief Flatten a vector of points into a contiguous coordinate array.
+     * Output layout: [x0,y0,z0, x1,y1,z1, ...] of size pts.size()*dim.
+     */
+    template <typename T>
+    std::vector<T>
+    flatten(const std::vector<PointImpl<T>> &pts);
+
   } // end of namespace utils
 } // end of namespace dftefe
 

@@ -1,6 +1,6 @@
-#include "PointChargePotentialFunction.h"
-#include <utils/TypeConfig.h>
 #include <cmath>
+#include "Exceptions.h"
+#include <utils/PointChargePotentialFunction.h>
 
 namespace dftefe
 {
@@ -11,13 +11,28 @@ namespace dftefe
       const std::vector<double> &      atomCharges)
       : d_atomCoordinates(atomCoordinates)
       , d_z(atomCharges)
-    {}
+      , d_numAtoms(atomCoordinates.size())
+      , d_dim(atomCoordinates[0].size())
+    {
+#ifdef DFTEFE_WITH_DEVICE
+      std::vector<double> atomCoordsFlat = utils::flatten(atomCoordinates);
+      d_atomCoordsFlatDevice.resize(atomCoordsFlat.size());
+      d_zDevice.resize(d_z.size());
+      MemoryTransfer<MemorySpace::DEVICE, MemorySpace::HOST>::copy(
+        atomCoordsFlat.size(),
+        d_atomCoordsFlatDevice.data(),
+        atomCoordsFlat.data());
+      MemoryTransfer<MemorySpace::DEVICE, MemorySpace::HOST>::copy(
+        d_z.size(), d_zDevice.data(), d_z.data());
+#endif
+    }
 
     PointChargePotentialFunction::PointChargePotentialFunction(
       const utils::Point &atomCoordinates,
       const double        atomCharges)
-      : d_atomCoordinates(std::vector<utils::Point>{atomCoordinates})
-      , d_z(std::vector<double>{atomCharges})
+      : PointChargePotentialFunction(
+          std::vector<utils::Point>{atomCoordinates},
+          std::vector<double>{atomCharges})
     {}
 
     double
@@ -64,5 +79,21 @@ namespace dftefe
         }
       return returnValue;
     }
+
+    void
+    PointChargePotentialFunction::evalHost(size_type     numPoints,
+                                           const double *t,
+                                           double *      q) const
+    {
+      utils::Point              p(d_dim);
+      std::vector<utils::Point> points(numPoints, p);
+      for (size_type iPoint = 0; iPoint < numPoints; ++iPoint)
+        for (size_type iDim = 0; iDim < d_dim; ++iDim)
+          points[iPoint][iDim] = t[iPoint * d_dim + iDim];
+      std::vector<double> retValue = (*this)(points);
+      for (size_type iPoint = 0; iPoint < numPoints; ++iPoint)
+        q[iPoint] = retValue[iPoint];
+    }
+
   } // namespace utils
 } // namespace dftefe

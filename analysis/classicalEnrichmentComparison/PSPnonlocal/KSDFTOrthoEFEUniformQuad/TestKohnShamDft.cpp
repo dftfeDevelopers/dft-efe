@@ -108,118 +108,118 @@ T readParameter(const std::string &ParamFile,
   return t;
 }
 
-class RhoFunction : public utils::ScalarSpatialFunctionReal
-{
-private:
-    std::shared_ptr<const atoms::AtomSphericalDataContainer>
-                              d_atomSphericalDataContainer;
-    std::vector<std::string>  d_atomSymbolVec;
-    std::vector<utils::Point> d_atomCoordinatesVec;
-    std::vector<double> d_atomChargesVec;
-    double d_ylm00;
+// class RhoFunction : public utils::ScalarSpatialFunctionReal
+// {
+// private:
+//     std::shared_ptr<const atoms::AtomSphericalDataContainer>
+//                               d_atomSphericalDataContainer;
+//     std::vector<std::string>  d_atomSymbolVec;
+//     std::vector<utils::Point> d_atomCoordinatesVec;
+//     std::vector<double> d_atomChargesVec;
+//     double d_ylm00;
 
-public:
-  RhoFunction(
-    std::shared_ptr<const atoms::AtomSphericalDataContainer>
-                                        atomSphericalDataContainer,
-      const std::vector<std::string> & atomSymbol,
-      const std::vector<double> &      atomCharges,
-      const std::vector<utils::Point> &atomCoordinates)
-    : d_atomSphericalDataContainer(atomSphericalDataContainer)
-    , d_atomSymbolVec(atomSymbol)
-    , d_atomCoordinatesVec(atomCoordinates)
-    , d_atomChargesVec(atomCharges)
-    , d_ylm00(atoms::Clm(0, 0) * atoms::Dm(0) * atoms::Qm(0, 0))
-    {}
+// public:
+//   RhoFunction(
+//     std::shared_ptr<const atoms::AtomSphericalDataContainer>
+//                                         atomSphericalDataContainer,
+//       const std::vector<std::string> & atomSymbol,
+//       const std::vector<double> &      atomCharges,
+//       const std::vector<utils::Point> &atomCoordinates)
+//     : d_atomSphericalDataContainer(atomSphericalDataContainer)
+//     , d_atomSymbolVec(atomSymbol)
+//     , d_atomCoordinatesVec(atomCoordinates)
+//     , d_atomChargesVec(atomCharges)
+//     , d_ylm00(atoms::Clm(0, 0) * atoms::Dm(0) * atoms::Qm(0, 0))
+//     {}
 
-  double
-  operator()(const utils::Point &point) const
-  {
-    double   retValue = 0;
-    for (size_type atomId = 0 ; atomId < d_atomCoordinatesVec.size() ; atomId++)
-      {
-        utils::Point origin(d_atomCoordinatesVec[atomId]);
-        for(auto &enrichmentObjId : 
-          d_atomSphericalDataContainer->getSphericalData(d_atomSymbolVec[atomId], "density"))
-        {
-          retValue = retValue + std::abs(enrichmentObjId->getValue(point, origin) * (1/d_ylm00));
-        }
-      }
-    return retValue;
-  }
-  std::vector<double>
-  operator()(const std::vector<utils::Point> &points) const
-  {
-    std::vector<double> ret(0);
-    ret.resize(points.size());
-    for (size_type atomId = 0 ; atomId < d_atomCoordinatesVec.size() ; atomId++)
-      {
-        utils::Point origin(d_atomCoordinatesVec[atomId]);
-        auto vec = d_atomSphericalDataContainer->getSphericalData(d_atomSymbolVec[atomId], "density");
-        for(auto &enrichmentObjId : vec)
-        for (unsigned int i = 0 ; i < points.size() ; i++)            
-        {
-          ret[i] = ret[i] + std::abs(enrichmentObjId->getValue(points[i], origin) * (1/d_ylm00));
-        }
-      }
-    return ret;
-  }
-};
+//   double
+//   operator()(const utils::Point &point) const
+//   {
+//     double   retValue = 0;
+//     for (size_type atomId = 0 ; atomId < d_atomCoordinatesVec.size() ; atomId++)
+//       {
+//         utils::Point origin(d_atomCoordinatesVec[atomId]);
+//         for(auto &enrichmentObjId : 
+//           d_atomSphericalDataContainer->getSphericalData(d_atomSymbolVec[atomId], "density"))
+//         {
+//           retValue = retValue + std::abs(enrichmentObjId->getValue(point, origin) * (1/d_ylm00));
+//         }
+//       }
+//     return retValue;
+//   }
+//   std::vector<double>
+//   operator()(const std::vector<utils::Point> &points) const
+//   {
+//     std::vector<double> ret(0);
+//     ret.resize(points.size());
+//     for (size_type atomId = 0 ; atomId < d_atomCoordinatesVec.size() ; atomId++)
+//       {
+//         utils::Point origin(d_atomCoordinatesVec[atomId]);
+//         auto vec = d_atomSphericalDataContainer->getSphericalData(d_atomSymbolVec[atomId], "density");
+//         for(auto &enrichmentObjId : vec)
+//         for (unsigned int i = 0 ; i < points.size() ; i++)            
+//         {
+//           ret[i] = ret[i] + std::abs(enrichmentObjId->getValue(points[i], origin) * (1/d_ylm00));
+//         }
+//       }
+//     return ret;
+//   }
+// };
 
-class AtomicTotalElectrostaticPotentialFunction : public utils::ScalarSpatialFunctionReal
-{
-private:
-    std::shared_ptr<const atoms::AtomSphericalDataContainer>
-                              d_atomSphericalDataContainer;
-    std::vector<std::string>  d_atomSymbolVec;
-    std::vector<utils::Point> d_atomCoordinatesVec;
-    double d_ylm00;
+// class AtomicTotalElectrostaticPotentialFunction : public utils::ScalarSpatialFunctionReal
+// {
+// private:
+//     std::shared_ptr<const atoms::AtomSphericalDataContainer>
+//                               d_atomSphericalDataContainer;
+//     std::vector<std::string>  d_atomSymbolVec;
+//     std::vector<utils::Point> d_atomCoordinatesVec;
+//     double d_ylm00;
 
-public:
-  AtomicTotalElectrostaticPotentialFunction(
-    std::shared_ptr<const atoms::AtomSphericalDataContainer>
-                                      atomSphericalDataContainer,
-      const std::vector<std::string> & atomSymbol,
-      const std::vector<utils::Point> &atomCoordinates)
-    : d_atomSphericalDataContainer(atomSphericalDataContainer)
-    , d_atomSymbolVec(atomSymbol)
-    , d_atomCoordinatesVec(atomCoordinates)
-    , d_ylm00(atoms::Clm(0, 0) * atoms::Dm(0) * atoms::Qm(0, 0))
-    {}
+// public:
+//   AtomicTotalElectrostaticPotentialFunction(
+//     std::shared_ptr<const atoms::AtomSphericalDataContainer>
+//                                       atomSphericalDataContainer,
+//       const std::vector<std::string> & atomSymbol,
+//       const std::vector<utils::Point> &atomCoordinates)
+//     : d_atomSphericalDataContainer(atomSphericalDataContainer)
+//     , d_atomSymbolVec(atomSymbol)
+//     , d_atomCoordinatesVec(atomCoordinates)
+//     , d_ylm00(atoms::Clm(0, 0) * atoms::Dm(0) * atoms::Qm(0, 0))
+//     {}
 
-  double
-  operator()(const utils::Point &point) const
-  {
-    double   retValue = 0;
-    for (size_type atomId = 0 ; atomId < d_atomCoordinatesVec.size() ; atomId++)
-      {
-        utils::Point origin(d_atomCoordinatesVec[atomId]);
-        for(auto &enrichmentObjId : 
-          d_atomSphericalDataContainer->getSphericalData(d_atomSymbolVec[atomId], "vtotal"))
-        {
-          retValue = retValue + enrichmentObjId->getValue(point, origin) * (1/d_ylm00);
-        }
-      }
-    return retValue;
-  }
-  std::vector<double>
-  operator()(const std::vector<utils::Point> &points) const
-  {
-    std::vector<double> ret(0);
-    ret.resize(points.size());
-    for (size_type atomId = 0 ; atomId < d_atomCoordinatesVec.size() ; atomId++)
-      {
-        utils::Point origin(d_atomCoordinatesVec[atomId]);
-        auto vec = d_atomSphericalDataContainer->getSphericalData(d_atomSymbolVec[atomId], "vtotal");
-        for(auto &enrichmentObjId : vec)
-        for (unsigned int i = 0 ; i < points.size() ; i++)            
-        {
-          ret[i] = ret[i] + enrichmentObjId->getValue(points[i], origin) * (1/d_ylm00);
-        }
-      }
-    return ret;
-  }
-};
+//   double
+//   operator()(const utils::Point &point) const
+//   {
+//     double   retValue = 0;
+//     for (size_type atomId = 0 ; atomId < d_atomCoordinatesVec.size() ; atomId++)
+//       {
+//         utils::Point origin(d_atomCoordinatesVec[atomId]);
+//         for(auto &enrichmentObjId : 
+//           d_atomSphericalDataContainer->getSphericalData(d_atomSymbolVec[atomId], "vtotal"))
+//         {
+//           retValue = retValue + enrichmentObjId->getValue(point, origin) * (1/d_ylm00);
+//         }
+//       }
+//     return retValue;
+//   }
+//   std::vector<double>
+//   operator()(const std::vector<utils::Point> &points) const
+//   {
+//     std::vector<double> ret(0);
+//     ret.resize(points.size());
+//     for (size_type atomId = 0 ; atomId < d_atomCoordinatesVec.size() ; atomId++)
+//       {
+//         utils::Point origin(d_atomCoordinatesVec[atomId]);
+//         auto vec = d_atomSphericalDataContainer->getSphericalData(d_atomSymbolVec[atomId], "vtotal");
+//         for(auto &enrichmentObjId : vec)
+//         for (unsigned int i = 0 ; i < points.size() ; i++)            
+//         {
+//           ret[i] = ret[i] + enrichmentObjId->getValue(points[i], origin) * (1/d_ylm00);
+//         }
+//       }
+//     return ret;
+//   }
+// };
 
   template <typename ValueTypeBasisData,
             utils::MemorySpace memorySpace,
@@ -1247,15 +1247,25 @@ int main(int argc, char** argv)
   else if (!isNumericalNuclearSolve && isDeltaRhoPoissonSolve)
   {
     std::shared_ptr<utils::ScalarSpatialFunctionReal> smfuncAtTotPot = 
-      std::make_shared<AtomicTotalElectrostaticPotentialFunction>(atomSphericalDataContainer,
-                      atomSymbolVec,
-                      atomCoordinatesVec);
+        std::make_shared<atoms::AtomSevereFunction>(
+          atomSphericalDataContainer,
+          atomSymbolVec,
+          atomCoordinatesVec,
+          "vtotal",
+          0,
+          1,
+          1/(atoms::Clm(0, 0) * atoms::Dm(0) * atoms::Qm(0, 0)));
+
 
   std::shared_ptr<utils::ScalarSpatialFunctionReal> elecChargeDens = 
-    std::make_shared<RhoFunction>(atomSphericalDataContainer,
-                    atomSymbolVec,
-                    atomChargesVec,
-                    atomCoordinatesVec);                      
+        std::make_shared<atoms::AtomSevereFunction>(
+          atomSphericalDataContainer,
+          atomSymbolVec,
+          atomCoordinatesVec,
+          "density",
+          0,
+          1,
+          1/(atoms::Clm(0, 0) * atoms::Dm(0) * atoms::Qm(0, 0)));                
 
     dftefeSolve =
      new ksdft::KohnShamDFT<double,

@@ -35,6 +35,7 @@ IF (ENABLE_GPU)
         SmoothCutoffFunctionsDeviceKernels.cpp
         SphericalHarmonicFunctionsDeviceKernels.cpp
         SphericalDataNumericalDeviceKernels.cpp
+        AtomSevereFunctionDeviceKernels.cpp
         )
     IF ("${GPU_LANG}" STREQUAL "cuda")
         set_source_files_properties(${DFT-EFE-ATOMS-DEVICE-SOURCES} PROPERTIES LANGUAGE CUDA)

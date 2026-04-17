@@ -1575,7 +1575,7 @@ namespace dftefe
       utils::mpi::MPICommRank(d_mpiCommDomain, &rank);
       d_rootCout.setCondition(rank == 0);
 
-      const atoms::AtomSevereFunction<dim> rho(d_atomSphericalDataContainerPSP,
+      const atoms::AtomSevereFunction rho(d_atomSphericalDataContainerPSP,
                                                atomSymbolVec,
                                                atomCoordinates,
                                                "rhoatom",
@@ -1668,7 +1668,7 @@ namespace dftefe
             quadrature::QuadratureValuesContainer<RealType, memorySpaceHost>(
               feBDElectronicChargeRhs->getQuadratureRuleContainer(), 1, 0.0);
 
-          const atoms::AtomSevereFunction<dim> rhoCoreCorrection(
+          const atoms::AtomSevereFunction rhoCoreCorrection(
             d_atomSphericalDataContainerPSP,
             atomSymbolVec,
             atomCoordinates,
@@ -2293,7 +2293,7 @@ namespace dftefe
             quadrature::QuadratureValuesContainer<RealType, memorySpaceHost>(
               feBDElectronicChargeRhs->getQuadratureRuleContainer(), 1, 0.0);
 
-          const atoms::AtomSevereFunction<dim> rhoCoreCorrection(
+          const atoms::AtomSevereFunction rhoCoreCorrection(
             d_atomSphericalDataContainerPSP,
             atomSymbolVec,
             atomCoordinates,

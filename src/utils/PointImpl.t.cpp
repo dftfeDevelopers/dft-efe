@@ -19,7 +19,7 @@ namespace dftefe
       : d_size(N)
       , d_data(new T[N])
     {
-      DFTEFE_AssertWithMsg(x->size() <= 3,
+      DFTEFE_AssertWithMsg(N <= 3,
                            "Max. dimension of a point can be 3.");
       std::copy(x, x + N, &(d_data[0]));
     }
@@ -236,6 +236,20 @@ namespace dftefe
 
       outputStream << p[pSize - 1] << " }";
       return outputStream;
+    }
+
+    template <typename T>
+    inline std::vector<T>
+    flatten(const std::vector<PointImpl<T>> &pts)
+    {
+      if (pts.empty())
+        return {};
+      const size_type dim = pts[0].size();
+      std::vector<T>  flat(pts.size() * dim);
+      for (size_type i = 0; i < pts.size(); ++i)
+        for (size_type d = 0; d < dim; ++d)
+          flat[i * dim + d] = pts[i][d];
+      return flat;
     }
 
   } // end of namespace utils

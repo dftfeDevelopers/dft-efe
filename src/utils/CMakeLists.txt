@@ -67,11 +67,11 @@ set(DFT-EFE-UTILS-SOURCES
   MPIErrorCodeHandler.cpp
   Spline.cpp
   ScalarZeroFunctionReal.cpp
+  Timer.cpp
+  Profiler.cpp
   SmearChargeDensityFunction.cpp
   SmearChargePotentialFunction.cpp
-  PointChargePotentialFunction.cpp
-  Timer.cpp
-  Profiler.cpp)
+  PointChargePotentialFunction.cpp)
 
 IF (ENABLE_GPU)
   IF ("${GPU_LANG}" STREQUAL "cuda")
@@ -80,6 +80,9 @@ IF (ENABLE_GPU)
       DeviceAPICalls.cu.cpp
       DiscontiguousDataOperationsKernelsDevice.cpp
       SplineDeviceKernels.cpp
+      SmearChargeDensityFunctionDeviceKernels.cpp
+      SmearChargePotentialFunctionDeviceKernels.cpp
+      PointChargePotentialFunctionDeviceKernels.cpp
     )
   ELSEIF ("${GPU_LANG}" STREQUAL "hip")
   SET(DFT-EFE-UTILS-DEVICE-SOURCES
@@ -87,6 +90,9 @@ IF (ENABLE_GPU)
       DeviceAPICalls.hip.cpp
       DiscontiguousDataOperationsKernelsDevice.cpp
       SplineDeviceKernels.cpp
+      SmearChargeDensityFunctionDeviceKernels.cpp
+      SmearChargePotentialFunctionDeviceKernels.cpp
+      PointChargePotentialFunctionDeviceKernels.cpp
     )
   ELSEIF ("${GPU_LANG}" STREQUAL "sycl")
   SET(DFT-EFE-UTILS-DEVICE-SOURCES
@@ -94,6 +100,9 @@ IF (ENABLE_GPU)
       DeviceAPICalls.sycl.cpp
       DiscontiguousDataOperationsKernelsDevice.cpp
       SplineDeviceKernels.cpp
+      SmearChargeDensityFunctionDeviceKernels.cpp
+      SmearChargePotentialFunctionDeviceKernels.cpp
+      PointChargePotentialFunctionDeviceKernels.cpp
     )
   ENDIF()
 ENDIF()

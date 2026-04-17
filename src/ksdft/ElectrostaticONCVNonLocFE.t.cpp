@@ -124,7 +124,7 @@ namespace dftefe
         }
 
       d_atomVLocFunction =
-        std::make_shared<const atoms::AtomSevereFunction<dim>>(
+        std::make_shared<const atoms::AtomSevereFunction>(
           d_atomSphericalDataContainerPSP,
           atomSymbolVec,
           atomCoordinates,
@@ -254,7 +254,7 @@ namespace dftefe
         }
 
       d_atomVLocFunction =
-        std::make_shared<const atoms::AtomSevereFunction<dim>>(
+        std::make_shared<const atoms::AtomSevereFunction>(
           d_atomSphericalDataContainerPSP,
           atomSymbolVec,
           atomCoordinates,
@@ -355,7 +355,7 @@ namespace dftefe
         }
 
       d_atomVLocFunction =
-        std::make_shared<const atoms::AtomSevereFunction<dim>>(
+        std::make_shared<const atoms::AtomSevereFunction>(
           d_atomSphericalDataContainerPSP,
           d_atomSymbolVec,
           atomCoordinates,
@@ -436,7 +436,7 @@ namespace dftefe
         }
 
       d_atomVLocFunction =
-        std::make_shared<const atoms::AtomSevereFunction<dim>>(
+        std::make_shared<const atoms::AtomSevereFunction>(
           d_atomSphericalDataContainerPSP,
           d_atomSymbolVec,
           atomCoordinates,
