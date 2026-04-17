@@ -648,6 +648,7 @@ namespace dftefe
         new quadrature::QuadratureValuesContainer<RealType, memorySpaceHost>(
           quadRuleContainerNucl, d_numComponents);
 
+      // --------TODO : use eval()-----
       const utils::SmearChargeDensityFunction smfunc(d_atomCoordinates,
                                                      d_atomCharges,
                                                      d_smearedChargeRadius);
@@ -715,6 +716,7 @@ namespace dftefe
                           *d_linAlgOpContextHost);
         }
 
+      // --------TODO : use eval()-----
       for (size_type iCell = 0; iCell < quadRuleContainerHam->nCells(); iCell++)
         {
           size_type quadId = 0;
@@ -957,6 +959,7 @@ namespace dftefe
           d_linAlgOpContextHost,
           d_numComponents);
 
+      // --------TODO : use eval()-----
       const utils::SmearChargeDensityFunction smfunc(d_atomCoordinates,
                                                      d_atomCharges,
                                                      d_smearedChargeRadius);
@@ -1004,7 +1007,7 @@ namespace dftefe
                  << d_totNuclearChargeQuad << "\n";
 
       // create the correction quadValuesContainer for analytical solve
-
+      // --------TODO : use eval()-----
       const utils::SmearChargePotentialFunction smfuncPot(
         d_atomCoordinates, d_atomCharges, d_smearedChargeRadius);
 
@@ -1249,6 +1252,7 @@ namespace dftefe
         "Electrostiaitcs Reinit Basis");
       p.registerStart("Quad Eval for rhoAtFunc, vTotAtFunc , smfuncDens , externalPotentialFunction , smfuncPot  + TCI + numSelf");
 
+      // --------TODO : use eval()-----
       RealType *quadValueIter1 = d_atomicElectronChargeDensity.begin();
       ValueTypeBasisCoeff *quadValueIter2 =
         d_atomicTotalElecPotElectronicQuad->begin();
@@ -1309,6 +1313,7 @@ namespace dftefe
       d_rootCout << "Integral Atomic Rho over domain: " << d_integralAtRho
                  << "\n";
 
+      // --------TODO : use eval()-----
       const utils::SmearChargeDensityFunction smfuncDens(d_atomCoordinates,
                                                          d_atomCharges,
                                                          d_smearedChargeRadius);
@@ -1339,9 +1344,26 @@ namespace dftefe
               //   valInCellQuad1[iQuad];
               quadValueIter3[cumulativeQuadInCell + iQuad] =
                 valInCellQuad3[iQuad];
-              totNuclearChargeQuad += valInCellQuad3[iQuad] * jxw[iQuad];
             }
           cumulativeQuadInCell += numQuadInCell;
+        }
+
+      size_type quadId = 0;
+      auto      jxwData =
+        d_nuclearChargesDensity.getQuadratureRuleContainer()->getJxW();
+      for (size_type iCell = 0; iCell < d_nuclearChargesDensity.nCells();
+           iCell++)
+        {
+          std::vector<RealType> a(
+            d_nuclearChargesDensity.nCellQuadraturePoints(iCell) *
+            d_nuclearChargesDensity.getNumberComponents());
+          d_nuclearChargesDensity
+            .template getCellValues<utils::MemorySpace::HOST>(iCell, a.data());
+          for (auto j : a)
+            {
+              totNuclearChargeQuad += *(jxwData.data() + quadId) * j;
+              quadId = quadId + 1;
+            }
         }
 
       utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
@@ -1363,6 +1385,7 @@ namespace dftefe
       d_rootCout << "Integral of nuclear charges over domain: "
                  << totNuclearChargeQuad << "\n";
 
+      // --------TODO : use eval()-----
       const utils::SmearChargePotentialFunction smfuncPot(
         d_atomCoordinates, d_atomCharges, d_smearedChargeRadius);
 
@@ -1411,6 +1434,7 @@ namespace dftefe
           // d_atomicElectronChargeDensityNucQuad.data();
           cumulativeQuadInCell = 0;
 
+          // --------TODO : use eval()-----
           for (size_type iCell = 0; iCell < quadRuleContainerNucl->nCells();
                iCell++)
             {
@@ -1999,6 +2023,7 @@ namespace dftefe
                                                    dim>>(feBDHNuclearCharge,
                                                          smfunc);
 
+          // --------TODO : use eval()-----                                                         
           smfunc = std::make_shared<const utils::SmearChargeDensityFunction>(
             d_atomCoordinates[iAtom],
             d_atomCharges[iAtom],

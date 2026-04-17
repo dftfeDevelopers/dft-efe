@@ -1575,6 +1575,7 @@ namespace dftefe
       utils::mpi::MPICommRank(d_mpiCommDomain, &rank);
       d_rootCout.setCondition(rank == 0);
 
+      // --------TODO : use eval()-----
       const atoms::AtomSevereFunction rho(d_atomSphericalDataContainerPSP,
                                                atomSymbolVec,
                                                atomCoordinates,
@@ -1668,6 +1669,7 @@ namespace dftefe
             quadrature::QuadratureValuesContainer<RealType, memorySpaceHost>(
               feBDElectronicChargeRhs->getQuadratureRuleContainer(), 1, 0.0);
 
+          // --------TODO : use eval()-----
           const atoms::AtomSevereFunction rhoCoreCorrection(
             d_atomSphericalDataContainerPSP,
             atomSymbolVec,
@@ -2078,6 +2080,7 @@ namespace dftefe
       utils::mpi::MPICommRank(d_mpiCommDomain, &rank);
       d_rootCout.setCondition(rank == 0);
 
+      // --------TODO : use eval()-----
       RealType *quadValueIter = d_densityInQuadValues.begin();
       std::shared_ptr<const quadrature::QuadratureRuleContainer>
                 quadRuleContainerVal = quadRuleContainerRho;
@@ -2293,6 +2296,7 @@ namespace dftefe
             quadrature::QuadratureValuesContainer<RealType, memorySpaceHost>(
               feBDElectronicChargeRhs->getQuadratureRuleContainer(), 1, 0.0);
 
+          // --------TODO : use eval()-----
           const atoms::AtomSevereFunction rhoCoreCorrection(
             d_atomSphericalDataContainerPSP,
             atomSymbolVec,
