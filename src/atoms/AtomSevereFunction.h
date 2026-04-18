@@ -42,6 +42,7 @@ namespace dftefe
 {
   namespace atoms
   {
+    template <utils::MemorySpace memorySpace>
     class AtomSevereFunction : public utils::ScalarSpatialFunctionReal
     {
     public:
@@ -54,7 +55,7 @@ namespace dftefe
         const size_type                  derivativeType,
         const size_type                  sphericalValPower = 2,
         const double                     constant          = 1.0,
-        linearAlgebra::LinAlgOpContext<utils::MemorySpace::DEVICE>
+        linearAlgebra::LinAlgOpContext<memorySpace>
           *linAlgOpContext = nullptr);
 
       double
@@ -89,20 +90,17 @@ namespace dftefe
       size_type                      d_dim;
 
       std::vector<std::shared_ptr<SphericalData>> d_sphericalDataVecAll;
-      std::vector<double>                         d_originsFlat;
       size_type                                   d_numEnrichmentFuncTotal;
 
-#ifdef DFTEFE_WITH_DEVICE
-      linearAlgebra::LinAlgOpContext<utils::MemorySpace::DEVICE>
-        *d_linAlgOpContext;
-      mutable utils::MemoryStorage<double, utils::MemorySpace::DEVICE>
-        d_pointsTiledDevice;
-      mutable utils::MemoryStorage<double, utils::MemorySpace::DEVICE>
-        d_valuesDevice;
-#endif
+      linearAlgebra::LinAlgOpContext<memorySpace> *d_linAlgOpContext;
+      mutable utils::MemoryStorage<double, memorySpace> d_pointsTiled;
+      mutable utils::MemoryStorage<double, memorySpace> d_values;
+      utils::MemoryStorage<double, memorySpace>         d_originsFlat;
     };
 
   } // namespace atoms
 } // namespace dftefe
+
+#include <atoms/AtomSevereFunction.t.cpp>
 
 #endif // dftefeAtomSevereFunction_h

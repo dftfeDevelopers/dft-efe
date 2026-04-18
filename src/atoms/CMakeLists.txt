@@ -35,6 +35,7 @@ IF (ENABLE_GPU)
         SmoothCutoffFunctionsDeviceKernels.cpp
         SphericalHarmonicFunctionsDeviceKernels.cpp
         SphericalDataNumericalDeviceKernels.cpp
+        SphericalDataMixedDeviceKernels.cpp
         AtomSevereFunctionDeviceKernels.cpp
         )
     IF ("${GPU_LANG}" STREQUAL "cuda")

@@ -91,8 +91,7 @@ namespace dftefe
         for (size_type iDim = 0; iDim < d_dim; ++iDim)
           points[iPoint][iDim] = t[iPoint * d_dim + iDim];
       std::vector<double> retValue = (*this)(points);
-      for (size_type iPoint = 0; iPoint < numPoints; ++iPoint)
-        q[iPoint] = retValue[iPoint];
+      std::copy(retValue.begin(), retValue.end(), q);
     }
 
   } // namespace utils

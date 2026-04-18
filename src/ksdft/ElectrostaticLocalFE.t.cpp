@@ -1253,41 +1253,66 @@ namespace dftefe
       p.registerStart("Quad Eval for rhoAtFunc, vTotAtFunc , smfuncDens , externalPotentialFunction , smfuncPot  + TCI + numSelf");
 
       // --------TODO : use eval()-----
-      RealType *quadValueIter1 = d_atomicElectronChargeDensity.begin();
-      ValueTypeBasisCoeff *quadValueIter2 =
-        d_atomicTotalElecPotElectronicQuad->begin();
-
       std::shared_ptr<const quadrature::QuadratureRuleContainer>
         quadRuleContainerVal =
           feBDElectronicChargeRhs->getQuadratureRuleContainer();
 
+      RealType *quadValueIter1 = nullptr;
+      ValueTypeBasisCoeff *quadValueIter2 = nullptr;
       size_type cumulativeQuadInCell = 0;
-      for (size_type iCell = 0; iCell < quadRuleContainerVal->nCells(); iCell++)
-        {
-          size_type numQuadInCell =
-            quadRuleContainerVal->nCellQuadraturePoints(iCell);
 
-          std::vector<RealType> valInCellQuad1 =
-            (atomicElectronicChargeDensityFunction)(
-              quadRuleContainerVal->getCellRealPoints(iCell));
+      utils::MemoryStorage<RealType, memorySpace> 
+        atomicElectronChargeDensityMemspace(quadRuleContainerVal->nQuadraturePoints());
+      utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace> 
+        atomicTotalElecPotElectronicQuadMemspace(quadRuleContainerVal->nQuadraturePoints());
 
-          std::vector<ValueTypeBasisCoeff> valInCellQuad2 =
-            (atomicTotalElectroPotentialFunction)(
-              quadRuleContainerVal->getCellRealPoints(iCell));
+      atomicElectronicChargeDensityFunction.template eval<memorySpace>(
+                                    quadRuleContainerVal->nQuadraturePoints(),
+                                    quadRuleContainerVal->template getRealPointsPtr<memorySpace>(),
+                                    atomicElectronChargeDensityMemspace.data());
 
-          for (size_type iQuad = 0; iQuad < numQuadInCell; iQuad++)
-            {
-              quadValueIter1[cumulativeQuadInCell + iQuad] =
-                valInCellQuad1[iQuad];
-              quadValueIter2[cumulativeQuadInCell + iQuad] =
-                valInCellQuad2[iQuad];
-            }
-          cumulativeQuadInCell += numQuadInCell;
-        }
+      atomicTotalElectroPotentialFunction.template eval<memorySpace>(
+                                    quadRuleContainerVal->nQuadraturePoints(),
+                                    quadRuleContainerVal->template getRealPointsPtr<memorySpace>(),
+                                    atomicTotalElecPotElectronicQuadMemspace.data());      
+                    
+      utils::MemoryTransfer<memorySpaceHost, memorySpace> memTrans;
+      memTrans.copy(atomicElectronChargeDensityMemspace.size(),
+                    d_atomicElectronChargeDensity.begin(),
+                    atomicElectronChargeDensityMemspace.data());
+
+      memTrans.copy(atomicTotalElecPotElectronicQuadMemspace.size(),
+                    d_atomicTotalElecPotElectronicQuad->begin(),
+                    atomicTotalElecPotElectronicQuadMemspace.data());             
+
+      // quadValueIter1 = d_atomicElectronChargeDensity.begin();
+      // quadValueIter2 = d_atomicTotalElecPotElectronicQuad->begin();
+
+      // for (size_type iCell = 0; iCell < quadRuleContainerVal->nCells(); iCell++)
+      //   {
+      //     size_type numQuadInCell =
+      //       quadRuleContainerVal->nCellQuadraturePoints(iCell);
+
+      //     std::vector<RealType> valInCellQuad1 =
+      //       (atomicElectronicChargeDensityFunction)(
+      //         quadRuleContainerVal->getCellRealPoints(iCell));
+
+      //     std::vector<ValueTypeBasisCoeff> valInCellQuad2 =
+      //       (atomicTotalElectroPotentialFunction)(
+      //         quadRuleContainerVal->getCellRealPoints(iCell));
+
+      //     for (size_type iQuad = 0; iQuad < numQuadInCell; iQuad++)
+      //       {
+      //         quadValueIter1[cumulativeQuadInCell + iQuad] =
+      //           valInCellQuad1[iQuad];
+      //         quadValueIter2[cumulativeQuadInCell + iQuad] =
+      //           valInCellQuad2[iQuad];
+      //       }
+      //     cumulativeQuadInCell += numQuadInCell;
+      //   }
 
       size_type quadId = 0;
-      auto      jxwData =
-        d_atomicElectronChargeDensity.getQuadratureRuleContainer()->getJxW();
+      auto      jxwData = d_atomicElectronChargeDensity.getQuadratureRuleContainer()->getJxW();
       for (size_type iCell = 0; iCell < d_atomicElectronChargeDensity.nCells();
            iCell++)
         {
@@ -1318,47 +1343,58 @@ namespace dftefe
                                                          d_atomCharges,
                                                          d_smearedChargeRadius);
 
-      // quadValueIter1 = d_atomicElectronChargeDensityNucQuad.begin();
-      RealType *quadValueIter3 = d_nuclearChargesDensity->begin();
+      quadRuleContainerVal = feBDNuclearChargeRhs->getQuadratureRuleContainer();   
 
-      quadRuleContainerVal = feBDNuclearChargeRhs->getQuadratureRuleContainer();
+      utils::MemoryStorage<RealType, memorySpace> 
+        nuclearChargesDensityMemspace(quadRuleContainerVal->nQuadraturePoints());
+
+      smfuncDens.template eval<memorySpace>(
+                                    quadRuleContainerVal->nQuadraturePoints(),
+                                    quadRuleContainerVal->template getRealPointsPtr<memorySpace>(),
+                                    nuclearChargesDensityMemspace.data());
+                    
+      memTrans.copy(nuclearChargesDensityMemspace.size(),
+                    d_nuclearChargesDensity->begin(),
+                    nuclearChargesDensityMemspace.data());                    
+
+      // // quadValueIter1 = d_atomicElectronChargeDensityNucQuad.begin();
+      // RealType *quadValueIter3 = d_nuclearChargesDensity->begin();
+
+      // cumulativeQuadInCell          = 0;
+      // for (size_type iCell = 0; iCell < quadRuleContainerVal->nCells(); iCell++)
+      //   {
+      //     size_type numQuadInCell =
+      //       quadRuleContainerVal->nCellQuadraturePoints(iCell);
+      //     std::vector<double> jxw = quadRuleContainerVal->getCellJxW(iCell);
+
+      //     // std::vector<RealType> valInCellQuad1 =
+      //     //   (atomicElectronicChargeDensityFunction)(
+      //     //     quadRuleContainerVal->getCellRealPoints(iCell));
+
+      //     std::vector<RealType> valInCellQuad3 =
+      //       (smfuncDens)(quadRuleContainerVal->getCellRealPoints(iCell));
+
+      //     for (size_type iQuad = 0; iQuad < numQuadInCell; iQuad++)
+      //       {
+      //         // quadValueIter1[cumulativeQuadInCell + iQuad] =
+      //         //   valInCellQuad1[iQuad];
+      //         quadValueIter3[cumulativeQuadInCell + iQuad] =
+      //           valInCellQuad3[iQuad];
+      //       }
+      //     cumulativeQuadInCell += numQuadInCell;
+      //   }
 
       RealType totNuclearChargeQuad = 0;
-      cumulativeQuadInCell          = 0;
-      for (size_type iCell = 0; iCell < quadRuleContainerVal->nCells(); iCell++)
-        {
-          size_type numQuadInCell =
-            quadRuleContainerVal->nCellQuadraturePoints(iCell);
-          std::vector<double> jxw = quadRuleContainerVal->getCellJxW(iCell);
-
-          // std::vector<RealType> valInCellQuad1 =
-          //   (atomicElectronicChargeDensityFunction)(
-          //     quadRuleContainerVal->getCellRealPoints(iCell));
-
-          std::vector<RealType> valInCellQuad3 =
-            (smfuncDens)(quadRuleContainerVal->getCellRealPoints(iCell));
-
-          for (size_type iQuad = 0; iQuad < numQuadInCell; iQuad++)
-            {
-              // quadValueIter1[cumulativeQuadInCell + iQuad] =
-              //   valInCellQuad1[iQuad];
-              quadValueIter3[cumulativeQuadInCell + iQuad] =
-                valInCellQuad3[iQuad];
-            }
-          cumulativeQuadInCell += numQuadInCell;
-        }
-
-      size_type quadId = 0;
-      auto      jxwData =
-        d_nuclearChargesDensity.getQuadratureRuleContainer()->getJxW();
-      for (size_type iCell = 0; iCell < d_nuclearChargesDensity.nCells();
+      quadId = 0;
+      jxwData = d_nuclearChargesDensity->getQuadratureRuleContainer()->getJxW();
+      for (size_type iCell = 0; iCell < d_nuclearChargesDensity->nCells();
            iCell++)
         {
           std::vector<RealType> a(
-            d_nuclearChargesDensity.nCellQuadraturePoints(iCell) *
-            d_nuclearChargesDensity.getNumberComponents());
+            d_nuclearChargesDensity->nCellQuadraturePoints(iCell) *
+            d_nuclearChargesDensity->getNumberComponents());
           d_nuclearChargesDensity
-            .template getCellValues<utils::MemorySpace::HOST>(iCell, a.data());
+            ->template getCellValues<utils::MemorySpace::HOST>(iCell, a.data());
           for (auto j : a)
             {
               totNuclearChargeQuad += *(jxwData.data() + quadId) * j;
@@ -1389,29 +1425,57 @@ namespace dftefe
       const utils::SmearChargePotentialFunction smfuncPot(
         d_atomCoordinates, d_atomCharges, d_smearedChargeRadius);
 
-      quadValueIter2       = d_correctionPotHamQuad->begin();
       quadRuleContainerVal = quadRuleContainerHam;
 
-      cumulativeQuadInCell = 0;
-      for (size_type iCell = 0; iCell < quadRuleContainerVal->nCells(); iCell++)
-        {
-          size_type numQuadInCell =
-            quadRuleContainerVal->nCellQuadraturePoints(iCell);
+      utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace> 
+        externalPotentialFunctionQuadMemspace(quadRuleContainerVal->nQuadraturePoints());
+      utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace> 
+        smfuncPotQuadMemspace(quadRuleContainerVal->nQuadraturePoints());
 
-          std::vector<ValueTypeBasisCoeff> valInCellQuad1 =
-            (externalPotentialFunction)(
-              quadRuleContainerVal->getCellRealPoints(iCell));
+      externalPotentialFunction.template eval<memorySpace>(
+                                    quadRuleContainerVal->nQuadraturePoints(),
+                                    quadRuleContainerVal->template getRealPointsPtr<memorySpace>(),
+                                    externalPotentialFunctionQuadMemspace.data());
 
-          std::vector<ValueTypeBasisCoeff> valInCellQuad2 =
-            (smfuncPot)(quadRuleContainerVal->getCellRealPoints(iCell));
+      smfuncPot.template eval<memorySpace>(
+                                    quadRuleContainerVal->nQuadraturePoints(),
+                                    quadRuleContainerVal->template getRealPointsPtr<memorySpace>(),
+                                    smfuncPotQuadMemspace.data());     
+                    
+      linearAlgebra::blasLapack::axpy(smfuncPotQuadMemspace.size(),
+                                      -1.0,
+                                      smfuncPotQuadMemspace.data(),
+                                      1.0,
+                                      externalPotentialFunctionQuadMemspace.data(),
+                                      1.0,
+                                      *d_linAlgOpContext);
+                    
+      memTrans.copy(externalPotentialFunctionQuadMemspace.size(),
+                    d_correctionPotHamQuad->begin(),
+                    externalPotentialFunctionQuadMemspace.data());    
 
-          for (size_type iQuad = 0; iQuad < numQuadInCell; iQuad++)
-            {
-              quadValueIter2[cumulativeQuadInCell + iQuad] =
-                valInCellQuad1[iQuad] - valInCellQuad2[iQuad];
-            }
-          cumulativeQuadInCell += numQuadInCell;
-        }
+      // quadValueIter2       = d_correctionPotHamQuad->begin();
+
+      // cumulativeQuadInCell = 0;
+      // for (size_type iCell = 0; iCell < quadRuleContainerVal->nCells(); iCell++)
+      //   {
+      //     size_type numQuadInCell =
+      //       quadRuleContainerVal->nCellQuadraturePoints(iCell);
+
+      //     std::vector<ValueTypeBasisCoeff> valInCellQuad1 =
+      //       (externalPotentialFunction)(
+      //         quadRuleContainerVal->getCellRealPoints(iCell));
+
+      //     std::vector<ValueTypeBasisCoeff> valInCellQuad2 =
+      //       (smfuncPot)(quadRuleContainerVal->getCellRealPoints(iCell));
+
+      //     for (size_type iQuad = 0; iQuad < numQuadInCell; iQuad++)
+      //       {
+      //         quadValueIter2[cumulativeQuadInCell + iQuad] =
+      //           valInCellQuad1[iQuad] - valInCellQuad2[iQuad];
+      //       }
+      //     cumulativeQuadInCell += numQuadInCell;
+      //   }
 
       computeNuclearSelfEnergy();
 

@@ -74,18 +74,32 @@ namespace dftefe
         double *        q);
     } // namespace
 
+    template <>
     void
-    AtomSevereFunction::evalDevice(size_type      numPoints,
-                                   const double * t,
-                                   double *       q) const
+    AtomSevereFunction<utils::MemorySpace::HOST>::evalDevice(
+      size_type      numPoints,
+      const double * t,
+      double *       q) const
+    {
+      utils::throwException(
+        false,
+        "AtomSevereFunction<HOST>::evalDevice should not be called.");
+    }
+
+    template <>
+    void
+    AtomSevereFunction<utils::MemorySpace::DEVICE>::evalDevice(
+      size_type      numPoints,
+      const double * t,
+      double *       q) const
     {
       const size_type nComp = (d_derivativeType == 1) ? d_dim : 1;
       const size_type E     = d_numEnrichmentFuncTotal;
 
-      if(d_pointsTiledDevice.size() != E * numPoints * d_dim)
-        d_pointsTiledDevice.resize(E * numPoints * d_dim);
-      if(d_valuesDevice.size() != E * numPoints * nComp)
-        d_valuesDevice.resize(E * numPoints * nComp);
+      if (d_pointsTiled.size() != E * numPoints * d_dim)
+        d_pointsTiled.resize(E * numPoints * d_dim);
+      if (d_values.size() != E * numPoints * nComp)
+        d_values.resize(E * numPoints * nComp);
 
       const size_type blockSize = utils::DEVICE_BLOCK_SIZE;
       const size_type tileGrid =
@@ -98,7 +112,7 @@ namespace dftefe
                            numPoints,
                            d_dim,
                            t,
-                           d_pointsTiledDevice.data());
+                           d_pointsTiled.data());
 
       std::vector<size_type> pointsPerEnrichId(E, numPoints);
 
@@ -110,10 +124,9 @@ namespace dftefe
           utils::MemorySpace::DEVICE>::getEnrichmentValues(E,
                                                            pointsPerEnrichId,
                                                            d_sphericalDataVecAll,
-                                                           d_pointsTiledDevice
-                                                             .data(),
+                                                           d_pointsTiled.data(),
                                                            d_originsFlat.data(),
-                                                           d_valuesDevice.data(),
+                                                           d_values.data(),
                                                            *d_linAlgOpContext);
       else
         basis::EnrichmentDataEvalKernels<
@@ -121,9 +134,9 @@ namespace dftefe
           E,
           pointsPerEnrichId,
           d_sphericalDataVecAll,
-          d_pointsTiledDevice.data(),
+          d_pointsTiled.data(),
           d_originsFlat.data(),
-          d_valuesDevice.data(),
+          d_values.data(),
           *d_linAlgOpContext);
 
       const size_type accumGrid = (numPoints + blockSize - 1) / blockSize;
@@ -136,7 +149,7 @@ namespace dftefe
                            nComp,
                            d_sphericalValPower,
                            d_constant,
-                           d_valuesDevice.data(),
+                           d_values.data(),
                            q);
     }
 

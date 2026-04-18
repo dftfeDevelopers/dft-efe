@@ -1576,12 +1576,13 @@ namespace dftefe
       d_rootCout.setCondition(rank == 0);
 
       // --------TODO : use eval()-----
-      const atoms::AtomSevereFunction rho(d_atomSphericalDataContainerPSP,
-                                               atomSymbolVec,
-                                               atomCoordinates,
-                                               "rhoatom",
-                                               0,
-                                               1);
+      const atoms::AtomSevereFunction<utils::MemorySpace::HOST>
+        rho(d_atomSphericalDataContainerPSP,
+            atomSymbolVec,
+            atomCoordinates,
+            "rhoatom",
+            0,
+            1);
 
       RealType *quadValueIter = d_densityInQuadValues.begin();
       std::shared_ptr<const quadrature::QuadratureRuleContainer>
@@ -1670,13 +1671,13 @@ namespace dftefe
               feBDElectronicChargeRhs->getQuadratureRuleContainer(), 1, 0.0);
 
           // --------TODO : use eval()-----
-          const atoms::AtomSevereFunction rhoCoreCorrection(
-            d_atomSphericalDataContainerPSP,
-            atomSymbolVec,
-            atomCoordinates,
-            "nlcc",
-            0,
-            1);
+          const atoms::AtomSevereFunction<utils::MemorySpace::HOST>
+            rhoCoreCorrection(d_atomSphericalDataContainerPSP,
+                              atomSymbolVec,
+                              atomCoordinates,
+                              "nlcc",
+                              0,
+                              1);
 
           RealType *quadValueIter = d_coreCorrDensUPF.begin();
           std::shared_ptr<const quadrature::QuadratureRuleContainer>
@@ -2081,24 +2082,38 @@ namespace dftefe
       d_rootCout.setCondition(rank == 0);
 
       // --------TODO : use eval()-----
-      RealType *quadValueIter = d_densityInQuadValues.begin();
+
       std::shared_ptr<const quadrature::QuadratureRuleContainer>
                 quadRuleContainerVal = quadRuleContainerRho;
-      size_type cumulativeQuadInCell = 0;
-      for (size_type iCell = 0; iCell < quadRuleContainerVal->nCells(); iCell++)
-        {
-          size_type numQuadInCell =
-            quadRuleContainerVal->nCellQuadraturePoints(iCell);
-          std::vector<RealType> valInCellQuad =
-            (atomicElectronicChargeDensityFunction)(
-              quadRuleContainerVal->getCellRealPoints(iCell));
-          for (size_type iQuad = 0; iQuad < numQuadInCell; iQuad++)
-            {
-              quadValueIter[cumulativeQuadInCell + iQuad] =
-                valInCellQuad[iQuad];
-            }
-          cumulativeQuadInCell += numQuadInCell;
-        }
+
+      utils::MemoryStorage<RealType, memorySpace> 
+        densityInQuadValuesMemspace(quadRuleContainerVal->nQuadraturePoints());
+
+      atomicElectronicChargeDensityFunction.template eval<memorySpace>(
+                                    quadRuleContainerVal->nQuadraturePoints(),
+                                    quadRuleContainerVal->template getRealPointsPtr<memorySpace>(),
+                                    densityInQuadValuesMemspace.data());
+      utils::MemoryTransfer<memorySpaceHost, memorySpace> memTrans;                    
+      memTrans.copy(densityInQuadValuesMemspace.size(),
+                    d_densityInQuadValues.begin(),
+                    densityInQuadValuesMemspace.data());  
+
+      // RealType *quadValueIter = d_densityInQuadValues.begin();
+      // size_type cumulativeQuadInCell = 0;
+      // for (size_type iCell = 0; iCell < quadRuleContainerVal->nCells(); iCell++)
+      //   {
+      //     size_type numQuadInCell =
+      //       quadRuleContainerVal->nCellQuadraturePoints(iCell);
+      //     std::vector<RealType> valInCellQuad =
+      //       (atomicElectronicChargeDensityFunction)(
+      //         quadRuleContainerVal->getCellRealPoints(iCell));
+      //     for (size_type iQuad = 0; iQuad < numQuadInCell; iQuad++)
+      //       {
+      //         quadValueIter[cumulativeQuadInCell + iQuad] =
+      //           valInCellQuad[iQuad];
+      //       }
+      //     cumulativeQuadInCell += numQuadInCell;
+      //   }
 
       p.registerEnd("rhoAtFunc");
       //************* CHANGE THIS **********************
@@ -2297,32 +2312,49 @@ namespace dftefe
               feBDElectronicChargeRhs->getQuadratureRuleContainer(), 1, 0.0);
 
           // --------TODO : use eval()-----
-          const atoms::AtomSevereFunction rhoCoreCorrection(
-            d_atomSphericalDataContainerPSP,
-            atomSymbolVec,
-            atomCoordinates,
-            "nlcc",
-            0,
-            1);
+          const atoms::AtomSevereFunction<memorySpace>
+            rhoCoreCorrection(d_atomSphericalDataContainerPSP,
+                              atomSymbolVec,
+                              atomCoordinates,
+                              "nlcc",
+                              0,
+                              1,
+                              1,
+                              linAlgOpContext.get());
 
-          RealType *quadValueIter = d_coreCorrDensUPF.begin();
           std::shared_ptr<const quadrature::QuadratureRuleContainer>
                     quadRuleContainerVal = quadRuleContainerRho;
-          size_type cumulativeQuadInCell = 0;
-          for (size_type iCell = 0; iCell < quadRuleContainerVal->nCells();
-               iCell++)
-            {
-              size_type numQuadInCell =
-                quadRuleContainerVal->nCellQuadraturePoints(iCell);
-              std::vector<RealType> valInCellQuad = (rhoCoreCorrection)(
-                quadRuleContainerVal->getCellRealPoints(iCell));
-              for (size_type iQuad = 0; iQuad < numQuadInCell; iQuad++)
-                {
-                  quadValueIter[cumulativeQuadInCell + iQuad] =
-                    valInCellQuad[iQuad];
-                }
-              cumulativeQuadInCell += numQuadInCell;
-            }
+
+          utils::MemoryStorage<RealType, memorySpace> 
+            coreCorrDensUPFMemspace(quadRuleContainerVal->nQuadraturePoints());
+
+          rhoCoreCorrection.template eval<memorySpace>(
+                                        quadRuleContainerVal->nQuadraturePoints(),
+                                        quadRuleContainerVal->template getRealPointsPtr<memorySpace>(),
+                                        coreCorrDensUPFMemspace.data());
+                        
+          memTrans.copy(coreCorrDensUPFMemspace.size(),
+                        d_coreCorrDensUPF.begin(),
+                        coreCorrDensUPFMemspace.data());
+
+          // RealType *quadValueIter = d_coreCorrDensUPF.begin();
+
+          // size_type cumulativeQuadInCell = 0;
+          // for (size_type iCell = 0; iCell < quadRuleContainerVal->nCells();
+          //      iCell++)
+          //   {
+          //     size_type numQuadInCell =
+          //       quadRuleContainerVal->nCellQuadraturePoints(iCell);
+          //     std::vector<RealType> valInCellQuad = (rhoCoreCorrection)(
+          //       quadRuleContainerVal->getCellRealPoints(iCell));
+          //     for (size_type iQuad = 0; iQuad < numQuadInCell; iQuad++)
+          //       {
+          //         quadValueIter[cumulativeQuadInCell + iQuad] =
+          //           valInCellQuad[iQuad];
+          //       }
+          //     cumulativeQuadInCell += numQuadInCell;
+          //   }
+
           quadrature::add((ValueType)1.0,
                           d_densityInQuadValues,
                           (ValueType)1.0,

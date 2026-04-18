@@ -1247,25 +1247,27 @@ int main(int argc, char** argv)
   else if (!isNumericalNuclearSolve && isDeltaRhoPoissonSolve)
   {
     std::shared_ptr<utils::ScalarSpatialFunctionReal> smfuncAtTotPot = 
-        std::make_shared<atoms::AtomSevereFunction>(
+        std::make_shared<atoms::AtomSevereFunction<memorySpace>>(
           atomSphericalDataContainer,
           atomSymbolVec,
           atomCoordinatesVec,
           "vtotal",
           0,
           1,
-          1/(atoms::Clm(0, 0) * atoms::Dm(0) * atoms::Qm(0, 0)));
+          1/(atoms::Clm(0, 0) * atoms::Dm(0) * atoms::Qm(0, 0)),
+          linAlgOpContext.get());
 
 
   std::shared_ptr<utils::ScalarSpatialFunctionReal> elecChargeDens = 
-        std::make_shared<atoms::AtomSevereFunction>(
+        std::make_shared<atoms::AtomSevereFunction<memorySpace>>(
           atomSphericalDataContainer,
           atomSymbolVec,
           atomCoordinatesVec,
           "density",
           0,
           1,
-          1/(atoms::Clm(0, 0) * atoms::Dm(0) * atoms::Qm(0, 0)));                
+          1/(atoms::Clm(0, 0) * atoms::Dm(0) * atoms::Qm(0, 0)),
+          linAlgOpContext.get());                
 
     dftefeSolve =
      new ksdft::KohnShamDFT<double,

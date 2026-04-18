@@ -124,13 +124,15 @@ namespace dftefe
         }
 
       d_atomVLocFunction =
-        std::make_shared<const atoms::AtomSevereFunction>(
+        std::make_shared<const atoms::AtomSevereFunction<memorySpace>>(
           d_atomSphericalDataContainerPSP,
           atomSymbolVec,
           atomCoordinates,
           "vlocal",
           0,
-          1);
+          1,
+          1,
+          d_linAlgOpContext.get());
 
       d_electrostaticLocal =
         std::make_shared<ElectrostaticLocalFE<ValueTypeBasisData,
@@ -254,13 +256,15 @@ namespace dftefe
         }
 
       d_atomVLocFunction =
-        std::make_shared<const atoms::AtomSevereFunction>(
+        std::make_shared<const atoms::AtomSevereFunction<memorySpace>>(
           d_atomSphericalDataContainerPSP,
           atomSymbolVec,
           atomCoordinates,
           "vlocal",
           0,
-          1);
+          1,
+          1,
+          d_linAlgOpContext.get());
 
       ////-------DEBUG V_Local print---------------------
       // for(int i = 0 ; i < 2000 ; i++)
@@ -355,13 +359,15 @@ namespace dftefe
         }
 
       d_atomVLocFunction =
-        std::make_shared<const atoms::AtomSevereFunction>(
+        std::make_shared<const atoms::AtomSevereFunction<memorySpace>>(
           d_atomSphericalDataContainerPSP,
           d_atomSymbolVec,
           atomCoordinates,
           "vlocal",
           0,
-          1);
+          1,
+          1,
+          d_linAlgOpContext.get());
 
       d_electrostaticLocal->reinitBasis(atomCoordinates,
                                         feBMTotalCharge,
@@ -436,13 +442,15 @@ namespace dftefe
         }
 
       d_atomVLocFunction =
-        std::make_shared<const atoms::AtomSevereFunction>(
+        std::make_shared<const atoms::AtomSevereFunction<memorySpace>>(
           d_atomSphericalDataContainerPSP,
           d_atomSymbolVec,
           atomCoordinates,
           "vlocal",
           0,
-          1);
+          1,
+          1,
+          d_linAlgOpContext.get());
 
       d_electrostaticLocal->reinitBasis(atomCoordinates,
                                         // atomicElectronChargeDensity,

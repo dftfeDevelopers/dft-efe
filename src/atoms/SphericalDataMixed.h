@@ -151,12 +151,7 @@ namespace dftefe
                      const double *        origin,
                      double *              out,
                      utils::deviceStream_t streamId =
-                       utils::defaultStream) override
-      {
-        utils::throwException(false,
-                              "getValueDevice not implemented for "
-                              "SphericalDataMixed.");
-      }
+                       utils::defaultStream) override;
 
       void
       getGradientValueDevice(const size_type       numPoints,

@@ -273,7 +273,8 @@ namespace dftefe
         d_linAlgOpContext;
       std::shared_ptr<atoms::AtomSphericalDataContainer>
         d_atomSphericalDataContainerPSP;
-      std::shared_ptr<const atoms::AtomSevereFunction> d_atomVLocFunction;
+      std::shared_ptr<const atoms::AtomSevereFunction<memorySpace>>
+        d_atomVLocFunction;
       std::shared_ptr<
         const basis::AtomCenterNonLocalOpContextFE<ValueTypeWaveFnBasis,
                                                    ValueTypeWaveFnCoeff,
