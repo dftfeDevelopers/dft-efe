@@ -1114,25 +1114,54 @@ namespace dftefe
       //       cellStartIds[cellRange.first],
       //     basisQuadStorage->data() + cellStartIds[cellId]);
 
-        size_type cumulativeOffset = 0;
-        for (size_type cellId = cellRange.first; cellId < cellRange.second; cellId++)
-        {
-            const size_type nQuad = d_nQuadPointsIncell[cellId];
+      // size_type cumulativeOffset = 0;
+      // for (size_type cellId = cellRange.first; cellId < cellRange.second; cellId++)
+      // {
+      //     const size_type nQuad = d_nQuadPointsIncell[cellId];
+      //     const size_type nDofs = d_dofsInCell[cellId];
+      //     linearAlgebra::blasLapack::stridedBlockCopy(
+      //         nQuad, nDofs, nDofs, 0, nDofs, 0,
+      //         d_basisQuadStorage->data() + cellStartIds[cellId],
+      //         basisData.data() + cumulativeOffset, d_linAlgOpContext);
+      //     cumulativeOffset += nDofs * nQuad;
+      // }
+
+        const size_type numBatch = cellRange.second - cellRange.first;
+        std::vector<size_type> batchStrideSrc(numBatch);
+        std::vector<size_type> batchStrideDst(numBatch);
+        std::vector<size_type> batchVecSize(numBatch);
+        std::vector<size_type> batchNumVec(numBatch);
+        std::vector<size_type> batchSrcLD(numBatch);
+        std::vector<size_type> batchSrcStart(numBatch, 0);
+        std::vector<size_type> batchDstLD(numBatch);
+        std::vector<size_type> batchDstStart(numBatch, 0);
+
+        for (size_type ibatch = 0; ibatch < numBatch; ++ibatch)
+          {
+            const size_type cellId = cellRange.first + ibatch;
+            const size_type nQuad  = d_nQuadPointsIncell[cellId];
             const size_type nDofs  = d_dofsInCell[cellId];
+            batchVecSize[ibatch]   = nQuad;
+            batchNumVec[ibatch]    = nDofs;
+            batchSrcLD[ibatch]     = nDofs;
+            batchDstLD[ibatch]     = nDofs;
+            batchStrideSrc[ibatch] = cellStartIds[cellId + 1] - cellStartIds[cellId];
+            batchStrideDst[ibatch] = nDofs * nQuad;
+          }
 
-            linearAlgebra::blasLapack::stridedBlockCopy(
-                nQuad,               // vecSize: number of quadrature points (slowest)
-                nDofs,          // numVec: number of classical DOFs (fastest)
-                nDofs,          // srcLeadingDim
-                0,                   // srcBlockStartId
-                nDofs,               // dstLeadingDim
-                0,                   // dstBlockStartId
-                d_basisQuadStorage->data() + cellStartIds[cellId], // src
-                basisData.data() + cumulativeOffset, // dst
-                d_linAlgOpContext);
-
-            cumulativeOffset += nDofs * nQuad;
-        }
+        linearAlgebra::blasLapack::varBatchedStridedBlockCopy(
+          numBatch,
+          batchStrideSrc.data(),
+          batchStrideDst.data(),
+          batchVecSize.data(),
+          batchNumVec.data(),
+          batchSrcLD.data(),
+          batchSrcStart.data(),
+          batchDstLD.data(),
+          batchDstStart.data(),
+          d_basisQuadStorage->data() + cellStartIds[cellRange.first],
+          basisData.data(),
+          d_linAlgOpContext);
     }
 
     template <typename ValueTypeBasisCoeff,
@@ -1209,24 +1238,53 @@ namespace dftefe
           tmpGradientBlock = std::make_shared<Storage>(
             d_dofsInCell[0] * d_nQuadPointsIncell[0] * dim *
             (cellRange.second - cellRange.first));
-          size_type cumulativeOffset = 0;
-          for (size_type cellId = cellRange.first; cellId < cellRange.second; cellId++)
-            {
-                const size_type nQuad = d_nQuadPointsIncell[cellId];
-                const size_type nDofs  = d_dofsInCell[cellId];
-                linearAlgebra::blasLapack::stridedBlockCopy(
-                    nQuad * dim,               // vecSize: number of quadrature points (slowest)
-                    nDofs,          // numVec: number of classical DOFs (fastest)
-                    nDofs,          // srcLeadingDim
-                    0,                   // srcBlockStartId
-                    nDofs,               // dstLeadingDim
-                    0,                   // dstBlockStartId
-                    d_basisGradientParaCellQuadStorage->data(), // src
-                    tmpGradientBlock->data() + cumulativeOffset,   // dst
-                    d_linAlgOpContext);
+          // size_type cumulativeOffset = 0;
+          // for (size_type cellId = cellRange.first; cellId < cellRange.second; cellId++)
+          // {
+          //     const size_type nQuad = d_nQuadPointsIncell[cellId];
+          //     const size_type nDofs = d_dofsInCell[cellId];
+          //     linearAlgebra::blasLapack::stridedBlockCopy(
+          //         nQuad * dim, nDofs, nDofs, 0, nDofs, 0,
+          //         d_basisGradientParaCellQuadStorage->data(),
+          //         tmpGradientBlock->data() + cumulativeOffset, d_linAlgOpContext);
+          //     cumulativeOffset += nDofs * nQuad * dim;
+          // }
 
-                cumulativeOffset += nDofs * nQuad * dim;
+          const size_type numBatchGrad = cellRange.second - cellRange.first;
+          std::vector<size_type> batchStrideSrcGrad(numBatchGrad, 0);
+          std::vector<size_type> batchStrideDstGrad(numBatchGrad);
+          std::vector<size_type> batchVecSizeGrad(numBatchGrad);
+          std::vector<size_type> batchNumVecGrad(numBatchGrad);
+          std::vector<size_type> batchSrcLDGrad(numBatchGrad);
+          std::vector<size_type> batchSrcStartGrad(numBatchGrad, 0);
+          std::vector<size_type> batchDstLDGrad(numBatchGrad);
+          std::vector<size_type> batchDstStartGrad(numBatchGrad, 0);
+
+          for (size_type ibatch = 0; ibatch < numBatchGrad; ++ibatch)
+            {
+              const size_type cellId = cellRange.first + ibatch;
+              const size_type nQuad  = d_nQuadPointsIncell[cellId];
+              const size_type nDofs  = d_dofsInCell[cellId];
+              batchVecSizeGrad[ibatch]   = nQuad * dim;
+              batchNumVecGrad[ibatch]    = nDofs;
+              batchSrcLDGrad[ibatch]     = nDofs;
+              batchDstLDGrad[ibatch]     = nDofs;
+              batchStrideDstGrad[ibatch] = nDofs * nQuad * dim;
             }
+
+          linearAlgebra::blasLapack::varBatchedStridedBlockCopy(
+            numBatchGrad,
+            batchStrideSrcGrad.data(),
+            batchStrideDstGrad.data(),
+            batchVecSizeGrad.data(),
+            batchNumVecGrad.data(),
+            batchSrcLDGrad.data(),
+            batchSrcStartGrad.data(),
+            batchDstLDGrad.data(),
+            batchDstStartGrad.data(),
+            d_basisGradientParaCellQuadStorage->data(),
+            tmpGradientBlock->data(),
+            d_linAlgOpContext);
         }
       else
         {

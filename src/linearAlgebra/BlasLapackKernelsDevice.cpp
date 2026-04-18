@@ -5,6 +5,7 @@
 #  include <utils/DeviceAPICalls.h>
 #  include <utils/DeviceDataTypeOverloads.h>
 #  include <utils/DeviceTypeConfigHalfPrec.h>
+#  include <utils/MemoryTransfer.h>
 #  include <linearAlgebra/BlasLapackKernels.h>
 #  include <linearAlgebra/BlasLapack.h>
 #  include <complex>
@@ -1136,6 +1137,57 @@ namespace dftefe
       template <typename ValueType1, typename ValueType2>
       void
       CopyKernelTwoValueTypes<ValueType1, ValueType2, utils::MemorySpace::DEVICE>::
+        varBatchedStridedBlockCopy(
+          const size_type   numBatch,
+          const size_type * strideSrc,
+          const size_type * strideDst,
+          const size_type * vecSizeArr,
+          const size_type * numVecArr,
+          const size_type * srcLeadingDimArr,
+          const size_type * srcBlockStartIdArr,
+          const size_type * dstLeadingDimArr,
+          const size_type * dstBlockStartIdArr,
+          const ValueType1 *copyFromVec,
+          ValueType2       *copyToVec,
+          LinAlgOpContext<utils::MemorySpace::DEVICE> &context)
+      {
+        size_type       cumulativeSrc = 0;
+        size_type       cumulativeDst = 0;
+        const size_type numStreams    = context.numBlasStreams();
+        auto *          streams       = context.getBlasStreamsVec();
+
+        for (size_type ibatch = 0; ibatch < numBatch; ++ibatch)
+          {
+            size_type sid        = ibatch % numStreams;
+            size_type vSize      = vecSizeArr[ibatch];
+            size_type nVec       = numVecArr[ibatch];
+            size_type totalSize  = vSize * nVec;
+
+            DFTEFE_LAUNCH_KERNEL(
+              stridedBlockCopyDeviceKernel,
+              totalSize / utils::DEVICE_BLOCK_SIZE + 1,
+              utils::DEVICE_BLOCK_SIZE,
+              streams[sid],
+              vSize,
+              nVec,
+              srcLeadingDimArr[ibatch],
+              srcBlockStartIdArr[ibatch],
+              dstLeadingDimArr[ibatch],
+              dstBlockStartIdArr[ibatch],
+              utils::makeDataTypeDeviceCompatible(copyFromVec + cumulativeSrc),
+              utils::makeDataTypeDeviceCompatible(copyToVec + cumulativeDst));
+
+            cumulativeSrc += strideSrc[ibatch];
+            cumulativeDst += strideDst[ibatch];
+          }
+
+        for (int s = 0; s < numStreams; ++s)
+          utils::deviceStreamSynchronize(streams[s]);
+      }
+
+      template <typename ValueType1, typename ValueType2>
+      void
+      CopyKernelTwoValueTypes<ValueType1, ValueType2, utils::MemorySpace::DEVICE>::
         copyValueType1ArrToValueType2Arr(
           const size_type size,
           const ValueType1 *valueType1Arr,
@@ -1160,6 +1212,9 @@ namespace dftefe
 #define EXPLICITLY_INSTANTIATE_COPY_2T(T1, T2, M) \
   template class CopyKernelTwoValueTypes<T1, T2, M>;
 
+#define EXPLICITLY_INSTANTIATE_COPY_1T(T, M) \
+  template class CopyKernelOneValueType<T, M>;
+
       EXPLICITLY_INSTANTIATE_COPY_2T(float,
                                 float,
                                 dftefe::utils::MemorySpace::DEVICE);
@@ -1172,6 +1227,13 @@ namespace dftefe
       EXPLICITLY_INSTANTIATE_COPY_2T(std::complex<double>,
                                 std::complex<double>,
                                 dftefe::utils::MemorySpace::DEVICE);
+
+      EXPLICITLY_INSTANTIATE_COPY_1T(float, utils::MemorySpace::DEVICE);
+      EXPLICITLY_INSTANTIATE_COPY_1T(double, utils::MemorySpace::DEVICE);
+      EXPLICITLY_INSTANTIATE_COPY_1T(std::complex<float>,
+                                     utils::MemorySpace::DEVICE);
+      EXPLICITLY_INSTANTIATE_COPY_1T(std::complex<double>,
+                                     utils::MemorySpace::DEVICE);
 
       EXPLICITLY_INSTANTIATE_1T(float, utils::MemorySpace::DEVICE);
       EXPLICITLY_INSTANTIATE_1T(double, utils::MemorySpace::DEVICE);

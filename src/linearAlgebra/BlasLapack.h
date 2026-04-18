@@ -359,6 +359,45 @@ namespace dftefe
           const ValueType1 *valueType1Arr,
           ValueType2       *valueType2Arr,
         LinAlgOpContext<memorySpace> &context);
+
+     /**
+      * @brief Template for performing a variable-batch strided block copy across
+      * multiple batches, each with its own vector size, number of vectors,
+      * source/destination strides, leading dimensions, and block start offsets.
+      * @param[in] numBatch number of batches
+      * @param[in] strideSrc array of per-batch strides (in elements) between
+      * consecutive source blocks
+      * @param[in] strideDst array of per-batch strides (in elements) between
+      * consecutive destination blocks
+      * @param[in] vecSizeArr array of per-batch vector sizes
+      * @param[in] numVecArr array of per-batch number of vectors
+      * @param[in] srcLeadingDimArr array of per-batch source leading dimensions
+      * @param[in] srcBlockStartIdArr array of per-batch source block start indices
+      * @param[in] dstLeadingDimArr array of per-batch destination leading dimensions
+      * @param[in] dstBlockStartIdArr array of per-batch destination block start
+      * indices
+      * @param[in] copyFromVec contiguous source multi-vector data (row-major,
+      * vector index fastest)
+      * @param[out] copyToVec contiguous destination multi-vector data (row-major,
+      * vector index fastest)
+      *
+      */
+     template <typename ValueType1, typename ValueType2,
+               typename dftefe::utils::MemorySpace memorySpace>
+     void
+     varBatchedStridedBlockCopy(
+          const size_type   numBatch,
+          const size_type * strideSrc,
+          const size_type * strideDst,
+          const size_type * vecSizeArr,
+          const size_type * numVecArr,
+          const size_type * srcLeadingDimArr,
+          const size_type * srcBlockStartIdArr,
+          const size_type * dstLeadingDimArr,
+          const size_type * dstBlockStartIdArr,
+          const ValueType1 *copyFromVec,
+          ValueType2       *copyToVec,
+          LinAlgOpContext<memorySpace> &context);
           
       /**
        * @brief Template for computing dot products numVec vectors in a multi Vector

@@ -67,7 +67,10 @@ namespace dftefe
         const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
         const BasisStorageAttributesBoolMap basisStorageAttributesBoolMap,
         const size_type                     maxCellBlock,
-        linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext);
+        linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext,
+        const bool useMemOptGradScratchSpace = false 
+        /*In gpu an extra scratch for grad helps in cuda strided gemm */
+        /* instead of varStrided gemm which is optimal*/);
 
       ~EFEBDSOnTheFlyComputeDealii() = default;
 
@@ -233,11 +236,12 @@ namespace dftefe
       std::vector<size_type>        d_cellStartIdsBasisJacobianInvQuadStorage;
       std::vector<size_type>        d_cellStartIdsBasisHessianQuadStorage;
       size_type                     d_maxCellBlock;
-      std::shared_ptr<Storage>      d_tmpGradientBlock;
+      std::shared_ptr<Storage>      d_tmpGradientBlock , d_basisGradientDataClass;
       linearAlgebra::LinAlgOpContext<memorySpace> &d_linAlgOpContext;
       size_type                                    d_classialDofsInCell;
       std::shared_ptr<Storage> d_basisGradientEnrichQuadStorage,
         d_basisEnrichQuadStorage;
+      const bool d_useMemOptGradScratchSpace;
 
     }; // end of EFEBDSOnTheFlyComputeDealii
   }    // end of namespace basis

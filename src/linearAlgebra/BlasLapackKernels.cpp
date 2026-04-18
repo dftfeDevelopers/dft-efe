@@ -613,6 +613,49 @@ namespace dftefe
       template <typename ValueType1, typename ValueType2,
                 dftefe::utils::MemorySpace memorySpace>
       void
+      CopyKernelTwoValueTypes<ValueType1, ValueType2, memorySpace>::
+        varBatchedStridedBlockCopy(
+          const size_type   numBatch,
+          const size_type * strideSrc,
+          const size_type * strideDst,
+          const size_type * vecSizeArr,
+          const size_type * numVecArr,
+          const size_type * srcLeadingDimArr,
+          const size_type * srcBlockStartIdArr,
+          const size_type * dstLeadingDimArr,
+          const size_type * dstBlockStartIdArr,
+          const ValueType1 *copyFromVec,
+          ValueType2       *copyToVec,
+          LinAlgOpContext<memorySpace> &context)
+      {
+        utils::MemoryTransfer<memorySpace, memorySpace> memoryTransfer;
+        size_type cumulativeSrc = 0;
+        size_type cumulativeDst = 0;
+
+        for (size_type ibatch = 0; ibatch < numBatch; ++ibatch)
+          {
+            const size_type vSize   = vecSizeArr[ibatch];
+            const size_type nVec    = numVecArr[ibatch];
+            const size_type srcLD   = srcLeadingDimArr[ibatch];
+            const size_type srcStart = srcBlockStartIdArr[ibatch];
+            const size_type dstLD   = dstLeadingDimArr[ibatch];
+            const size_type dstStart = dstBlockStartIdArr[ibatch];
+
+            for (size_type iSize = 0; iSize < vSize; ++iSize)
+              memoryTransfer.copy(nVec,
+                                  copyToVec + cumulativeDst +
+                                    dstLD * iSize + dstStart,
+                                  copyFromVec + cumulativeSrc +
+                                    iSize * srcLD + srcStart);
+
+            cumulativeSrc += strideSrc[ibatch];
+            cumulativeDst += strideDst[ibatch];
+          }
+      }
+
+      template <typename ValueType1, typename ValueType2,
+                dftefe::utils::MemorySpace memorySpace>
+      void
       CopyKernelTwoValueTypes<ValueType1, ValueType2, memorySpace>::copyValueType1ArrToValueType2Arr(
           const size_type size,
           const ValueType1 *valueType1Arr,
@@ -632,6 +675,9 @@ namespace dftefe
 #define EXPLICITLY_INSTANTIATE_COPY_2T(T1, T2, M) \
   template class CopyKernelTwoValueTypes<T1, T2, M>;
 
+#define EXPLICITLY_INSTANTIATE_COPY_1T(T, M) \
+  template class CopyKernelOneValueType<T, M>;
+
       EXPLICITLY_INSTANTIATE_COPY_2T(float,
                                 float,
                                 dftefe::utils::MemorySpace::HOST);
@@ -644,6 +690,13 @@ namespace dftefe
       EXPLICITLY_INSTANTIATE_COPY_2T(std::complex<double>,
                                 std::complex<double>,
                                 dftefe::utils::MemorySpace::HOST);
+
+      EXPLICITLY_INSTANTIATE_COPY_1T(float, dftefe::utils::MemorySpace::HOST);
+      EXPLICITLY_INSTANTIATE_COPY_1T(double, dftefe::utils::MemorySpace::HOST);
+      EXPLICITLY_INSTANTIATE_COPY_1T(std::complex<float>,
+                                     dftefe::utils::MemorySpace::HOST);
+      EXPLICITLY_INSTANTIATE_COPY_1T(std::complex<double>,
+                                     dftefe::utils::MemorySpace::HOST);
 
       EXPLICITLY_INSTANTIATE_1T(float, dftefe::utils::MemorySpace::HOST);
       EXPLICITLY_INSTANTIATE_1T(double, dftefe::utils::MemorySpace::HOST);
@@ -713,6 +766,15 @@ namespace dftefe
       EXPLICITLY_INSTANTIATE_COPY_2T(std::complex<double>,
                                 std::complex<double>,
                                 dftefe::utils::MemorySpace::HOST_PINNED);
+
+      EXPLICITLY_INSTANTIATE_COPY_1T(float,
+                                     dftefe::utils::MemorySpace::HOST_PINNED);
+      EXPLICITLY_INSTANTIATE_COPY_1T(double,
+                                     dftefe::utils::MemorySpace::HOST_PINNED);
+      EXPLICITLY_INSTANTIATE_COPY_1T(std::complex<float>,
+                                     dftefe::utils::MemorySpace::HOST_PINNED);
+      EXPLICITLY_INSTANTIATE_COPY_1T(std::complex<double>,
+                                     dftefe::utils::MemorySpace::HOST_PINNED);
 
       EXPLICITLY_INSTANTIATE_1T(float, dftefe::utils::MemorySpace::HOST_PINNED);
       EXPLICITLY_INSTANTIATE_1T(double,

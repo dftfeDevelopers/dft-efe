@@ -342,6 +342,38 @@ namespace dftefe
      template <typename ValueType1, typename ValueType2,
                typename dftefe::utils::MemorySpace memorySpace>
      void
+     varBatchedStridedBlockCopy(
+          const size_type   numBatch,
+          const size_type * strideSrc,
+          const size_type * strideDst,
+          const size_type * vecSizeArr,
+          const size_type * numVecArr,
+          const size_type * srcLeadingDimArr,
+          const size_type * srcBlockStartIdArr,
+          const size_type * dstLeadingDimArr,
+          const size_type * dstBlockStartIdArr,
+          const ValueType1 *copyFromVec,
+          ValueType2       *copyToVec,
+          LinAlgOpContext<memorySpace> &context)
+      {
+        return CopyKernelTwoValueTypes<ValueType1, ValueType2, memorySpace>::varBatchedStridedBlockCopy(
+          numBatch,
+          strideSrc,
+          strideDst,
+          vecSizeArr,
+          numVecArr,
+          srcLeadingDimArr,
+          srcBlockStartIdArr,
+          dstLeadingDimArr,
+          dstBlockStartIdArr,
+          copyFromVec,
+          copyToVec,
+          context);
+      }
+
+     template <typename ValueType1, typename ValueType2,
+               typename dftefe::utils::MemorySpace memorySpace>
+     void
       copyValueType1ArrToValueType2Arr(
           const size_type size,
           const ValueType1 *valueType1Arr,
