@@ -712,15 +712,14 @@ namespace dftefe
                 .find(BasisStorageAttributes::StoreGradient)
                 ->second)
             storeEnrichGrad = true;
-      std::vector<double> quadValuesInAllCellsEnrichment, quadGradientsInAllCellsEnrichment;
         if(storeEnrichGrad || storeEnrichValues)
         {
           efeBDH->getEnrichmentClassicalInterface()->getEnrichmentDataInAllCellsAtQuadPts(
             storeEnrichValues,
             storeEnrichGrad,
             *quadratureRuleContainer,
-            quadValuesInAllCellsEnrichment,
-            quadGradientsInAllCellsEnrichment,
+            basisEnrichQuadStorageTmp.data(),
+            basisGradientEnrichQuadStorageTmp.data(),
             linAlgOpContext);
         }
 
@@ -812,11 +811,7 @@ namespace dftefe
                             //     "\n";
                             *(basisEnrichQuadStorageTmp.data() +
                               cumulativeEnrichQuadxDof +
-                              qPoint * numEnrichmentIdsInCell + iNode) =
-                              *(quadValuesInAllCellsEnrichment.data() + cumulativeEnrichQuadxDof +
-                                nQuadPointInCell * iNode + qPoint)
-                              /*enrichValAtQuadPts[qPoint]*/
-                              -
+                              qPoint * numEnrichmentIdsInCell + iNode) -=
                               *(iter + numEnrichmentIdsInCell * qPoint + iNode);
                           }
                       }
@@ -882,12 +877,7 @@ namespace dftefe
                                   cumulativeEnrichQuadxDof * dim +
                                   qPoint * dim * numEnrichmentIdsInCell +
                                   iDim * numEnrichmentIdsInCell + iNode;
-                                *it = *(quadGradientsInAllCellsEnrichment.data() +
-                                        cumulativeEnrichQuadxDof * dim + nQuadPointInCell * iNode * dim +
-                                        qPoint * dim + iDim)
-                                      /*shapeGrad[iDim]*/
-                                      -
-                                      *(iter +
+                                *it -= *(iter +
                                         numEnrichmentIdsInCell * dim * qPoint +
                                         iDim * numEnrichmentIdsInCell + iNode);
                               }
@@ -1396,80 +1386,19 @@ namespace dftefe
           utils::MemoryStorage<ValueTypeBasisData, utils::MemorySpace::HOST>
             basisEnrichQuadStorageTmp(0), basisGradientEnrichQuadStorageTmp(0);
 
-          basisEnrichQuadStorageTmp.resize(enrichQuadValStorageSize, ValueTypeBasisData(0));
-          basisGradientEnrichQuadStorageTmp.resize(enrichQuadValStorageSize * dim,
-                                                    ValueTypeBasisData(0));
-
-          std::vector<double> quadValuesInAllCellsEnrichment, quadGradientsInAllCellsEnrichment;
+          if(storeEnrichValues)
+            basisEnrichQuadStorageTmp.resize(enrichQuadValStorageSize, ValueTypeBasisData(0));
+          if(storeEnrichGrad)
+            basisGradientEnrichQuadStorageTmp.resize(enrichQuadValStorageSize * dim,
+                                                      ValueTypeBasisData(0));
 
           efeBDH->getEnrichmentClassicalInterface()->getEnrichmentDataInAllCellsAtQuadPts(
             storeEnrichValues,
             storeEnrichGrad,
             *quadratureRuleContainer,
-            quadValuesInAllCellsEnrichment,
-            quadGradientsInAllCellsEnrichment,
+            basisEnrichQuadStorageTmp.data(),
+            basisGradientEnrichQuadStorageTmp.data(),
             linAlgOpContext);
-
-          cellIndex                            = 0;
-          size_type cumulativeEnrichQuadxDof   = 0;
-          locallyOwnedCellIter = efeBDH->beginLocallyOwnedCells();
-          for (; locallyOwnedCellIter != efeBDH->endLocallyOwnedCells();
-              ++locallyOwnedCellIter)
-            {
-              dofsPerCell = efeBDH->nCellDofs(cellIndex);
-              // Get classical dof numbers
-
-              size_type numEnrichmentIdsInCell =
-                dofsPerCell - classicalDofsPerCell;
-
-              if (basisStorageAttributesBoolMap
-                    .find(BasisStorageAttributes::StoreValues)
-                    ->second)
-                {
-                  for (unsigned int iNode = 0; iNode < numEnrichmentIdsInCell;
-                      iNode++)
-                    {
-                      for (unsigned int qPoint = 0; qPoint < nQuadPointInCell;
-                          qPoint++)
-                        {
-                          *(basisEnrichQuadStorageTmp.data() +
-                            cumulativeEnrichQuadxDof +
-                            qPoint * numEnrichmentIdsInCell + iNode) =
-                            *(quadValuesInAllCellsEnrichment.data() + cumulativeEnrichQuadxDof +
-                              nQuadPointInCell * iNode + qPoint);
-                        }
-                    }
-                }
-
-              if (basisStorageAttributesBoolMap
-                    .find(BasisStorageAttributes::StoreGradient)
-                    ->second)
-                {
-                  for (unsigned int iNode = 0; iNode < numEnrichmentIdsInCell;
-                      iNode++)
-                    {
-                      for (unsigned int qPoint = 0; qPoint < nQuadPointInCell;
-                          qPoint++)
-                        {
-                          // enriched gradient function call
-                          for (unsigned int iDim = 0; iDim < dim; iDim++)
-                            {
-                              auto it =
-                                basisGradientEnrichQuadStorageTmp.data() +
-                                cumulativeEnrichQuadxDof * dim +
-                                qPoint * dim * numEnrichmentIdsInCell +
-                                iDim * numEnrichmentIdsInCell + iNode;
-                              *it = *(quadGradientsInAllCellsEnrichment.data() +
-                                      cumulativeEnrichQuadxDof * dim + nQuadPointInCell * iNode * dim +
-                                      qPoint * dim + iDim);
-                            }
-                        }
-                    }
-                }
-              cellIndex++;
-              cumulativeEnrichQuadxDof +=
-                numEnrichmentIdsInCell * nQuadPointInCell;
-            }
 
           if (basisStorageAttributesBoolMap
                 .find(BasisStorageAttributes::StoreValues)

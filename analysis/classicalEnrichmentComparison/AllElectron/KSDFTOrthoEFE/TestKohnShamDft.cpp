@@ -105,63 +105,7 @@ T readParameter(const std::string &ParamFile,
   return t;
 }
 
-  class RhoFunction : public utils::ScalarSpatialFunctionReal
-  {
-  private:
-      std::shared_ptr<const atoms::AtomSphericalDataContainer>
-                                d_atomSphericalDataContainer;
-      std::vector<std::string>  d_atomSymbolVec;
-      std::vector<utils::Point> d_atomCoordinatesVec;
-      std::vector<double> d_atomChargesVec;
-      double d_ylm00;
-
-  public:
-    RhoFunction(
-      std::shared_ptr<const atoms::AtomSphericalDataContainer>
-                                         atomSphericalDataContainer,
-        const std::vector<std::string> & atomSymbol,
-        const std::vector<double> &      atomCharges,
-        const std::vector<utils::Point> &atomCoordinates)
-      : d_atomSphericalDataContainer(atomSphericalDataContainer)
-      , d_atomSymbolVec(atomSymbol)
-      , d_atomCoordinatesVec(atomCoordinates)
-      , d_atomChargesVec(atomCharges)
-    , d_ylm00(atoms::Clm(0, 0) * atoms::Dm(0) * atoms::Qm(0, 0))
-      {}
-
-    double
-    operator()(const utils::Point &point) const
-    {
-      double   retValue = 0;
-      for (size_type atomId = 0 ; atomId < d_atomCoordinatesVec.size() ; atomId++)
-        {
-          utils::Point origin(d_atomCoordinatesVec[atomId]);
-          for(auto &enrichmentObjId : 
-            d_atomSphericalDataContainer->getSphericalData(d_atomSymbolVec[atomId], "density"))
-          {
-            retValue = retValue + std::abs(enrichmentObjId->getValue(point, origin) * (1/d_ylm00));
-          }
-        }
-      return retValue;
-    }
-    std::vector<double>
-    operator()(const std::vector<utils::Point> &points) const
-    {
-      std::vector<double> ret(0);
-      ret.resize(points.size());
-      for (size_type atomId = 0 ; atomId < d_atomCoordinatesVec.size() ; atomId++)
-        {
-          utils::Point origin(d_atomCoordinatesVec[atomId]);
-          auto vec = d_atomSphericalDataContainer->getSphericalData(d_atomSymbolVec[atomId], "density");
-          for(auto &enrichmentObjId : vec)
-          for (unsigned int i = 0 ; i < points.size() ; i++)            
-          {
-            ret[i] = ret[i] + std::abs(enrichmentObjId->getValue(points[i], origin) * (1/d_ylm00));
-          }
-        }
-      return ret;
-    }
-  };
+// RhoFunction replaced by atoms::AtomSevereFunction<memorySpace> with "density" field
 
   class BPlusRhoTimesVTotalFunction : public utils::ScalarSpatialFunctionReal
   {
@@ -186,8 +130,10 @@ T readParameter(const std::string &ParamFile,
       {
         d_b = std::make_shared
                 <utils::SmearChargeDensityFunction>(atomCoordinates, atomCharges, smearedChargeRadius);
-        d_rho = std::make_shared
-                <RhoFunction>(atomSphericalDataContainer, atomSymbol, atomCharges, atomCoordinates);
+        d_rho = std::make_shared<atoms::AtomSevereFunction<memorySpace>>(
+          atomSphericalDataContainer, atomSymbol, atomCoordinates,
+          "density", 0, 1,
+          1.0/(atoms::Clm(0, 0) * atoms::Dm(0) * atoms::Qm(0, 0)));
       }
 
     double
@@ -354,60 +300,7 @@ T readParameter(const std::string &ParamFile,
   };
 
 
-class AtomicTotalElectrostaticPotentialFunction : public utils::ScalarSpatialFunctionReal
-{
-private:
-    std::shared_ptr<const atoms::AtomSphericalDataContainer>
-                              d_atomSphericalDataContainer;
-    std::vector<std::string>  d_atomSymbolVec;
-    std::vector<utils::Point> d_atomCoordinatesVec;
-    double d_ylm00;
-
-public:
-  AtomicTotalElectrostaticPotentialFunction(
-    std::shared_ptr<const atoms::AtomSphericalDataContainer>
-                                      atomSphericalDataContainer,
-      const std::vector<std::string> & atomSymbol,
-      const std::vector<utils::Point> &atomCoordinates)
-    : d_atomSphericalDataContainer(atomSphericalDataContainer)
-    , d_atomSymbolVec(atomSymbol)
-    , d_atomCoordinatesVec(atomCoordinates)
-    , d_ylm00(atoms::Clm(0, 0) * atoms::Dm(0) * atoms::Qm(0, 0))
-    {}
-
-  double
-  operator()(const utils::Point &point) const
-  {
-    double   retValue = 0;
-    for (size_type atomId = 0 ; atomId < d_atomCoordinatesVec.size() ; atomId++)
-      {
-        utils::Point origin(d_atomCoordinatesVec[atomId]);
-        for(auto &enrichmentObjId : 
-          d_atomSphericalDataContainer->getSphericalData(d_atomSymbolVec[atomId], "vtotal"))
-        {
-          retValue = retValue + enrichmentObjId->getValue(point, origin) * (1/d_ylm00);
-        }
-      }
-    return retValue;
-  }
-  std::vector<double>
-  operator()(const std::vector<utils::Point> &points) const
-  {
-    std::vector<double> ret(0);
-    ret.resize(points.size());
-    for (size_type atomId = 0 ; atomId < d_atomCoordinatesVec.size() ; atomId++)
-      {
-        utils::Point origin(d_atomCoordinatesVec[atomId]);
-        auto vec = d_atomSphericalDataContainer->getSphericalData(d_atomSymbolVec[atomId], "vtotal");
-        for(auto &enrichmentObjId : vec)
-        for (unsigned int i = 0 ; i < points.size() ; i++)            
-        {
-          ret[i] = ret[i] + enrichmentObjId->getValue(points[i], origin) * (1/d_ylm00);
-        }
-      }
-    return ret;
-  }
-};
+// AtomicTotalElectrostaticPotentialFunction replaced by atoms::AtomSevereFunction<memorySpace> with "vtotal" field
 
   template <typename ValueTypeBasisData,
             utils::MemorySpace memorySpace,
@@ -756,12 +649,12 @@ int main(int argc, char** argv)
 
     for ( unsigned int i=0 ;i < 2 ; i++ )
     {
-      functionsVec.push_back(std::make_shared<atoms::AtomSevereFunction<dim>>(        
+      functionsVec.push_back(std::make_shared<atoms::AtomSevereFunction<memorySpace>>(
           atomSphericalDataContainer,
           atomSymbolVec,
           atomCoordinatesVec,
           "orbital",
-          i));      
+          i));
     }
       functionsVec.push_back(std::make_shared<VExternalTimesOrbitalSqFunction>(
         atomSphericalDataContainer,
@@ -773,12 +666,12 @@ int main(int argc, char** argv)
     {
     for ( unsigned int i=0 ;i < 2 ; i++ )
     {
-      functionsVec.push_back(std::make_shared<atoms::AtomSevereFunction<dim>>(        
+      functionsVec.push_back(std::make_shared<atoms::AtomSevereFunction<memorySpace>>(
           atomSphericalDataContainer,
           atomSymbolVec,
           atomCoordinatesVec,
           "vtotal",
-          i));      
+          i));
     }
     }
     if(isDeltaRhoPoissonSolve && (tciaFolder == "" || tciaOutFilePrefix == ""))
@@ -801,7 +694,7 @@ int main(int argc, char** argv)
       for ( unsigned int i=0 ;i < 3 ; i++ )
       {
         if( i < 2)
-          functionsVec.push_back(std::make_shared<atoms::AtomSevereFunction<dim>>(        
+          functionsVec.push_back(std::make_shared<atoms::AtomSevereFunction<memorySpace>>(
             atomSphericalDataContainer,
             atomSymbolVec,
             atomCoordinatesVec,
@@ -1152,8 +1045,12 @@ int main(int argc, char** argv)
    quadrature::QuadratureValuesContainer<double, Host> 
       electronChargeDensity(quadRuleContainerRho, 1, 0.0);
 
-    std::shared_ptr<const utils::ScalarSpatialFunctionReal> rho = std::make_shared
-                <RhoFunction>(atomSphericalDataContainer, atomSymbolVec, atomChargesVec, atomCoordinatesVec);
+    std::shared_ptr<const utils::ScalarSpatialFunctionReal> rho =
+      std::make_shared<atoms::AtomSevereFunction<memorySpace>>(
+        atomSphericalDataContainer, atomSymbolVec, atomCoordinatesVec,
+        "density", 0, 1,
+        1.0/(atoms::Clm(0, 0) * atoms::Dm(0) * atoms::Qm(0, 0)),
+        linAlgOpContext.get());
  
   for (size_type iCell = 0; iCell < electronChargeDensity.nCells(); iCell++)
     {
@@ -1367,16 +1264,19 @@ int main(int argc, char** argv)
   }
   else if (!isNumericalNuclearSolve && isDeltaRhoPoissonSolve)
   {
-    std::shared_ptr<utils::ScalarSpatialFunctionReal> smfuncAtTotPot = 
-      std::make_shared<AtomicTotalElectrostaticPotentialFunction>(atomSphericalDataContainer,
-                      atomSymbolVec,
-                      atomCoordinatesVec);
+    std::shared_ptr<utils::ScalarSpatialFunctionReal> smfuncAtTotPot =
+      std::make_shared<atoms::AtomSevereFunction<memorySpace>>(
+        atomSphericalDataContainer, atomSymbolVec, atomCoordinatesVec,
+        "vtotal", 0, 1,
+        1.0/(atoms::Clm(0, 0) * atoms::Dm(0) * atoms::Qm(0, 0)),
+        linAlgOpContext.get());
 
-  std::shared_ptr<utils::ScalarSpatialFunctionReal> elecChargeDens = 
-    std::make_shared<RhoFunction>(atomSphericalDataContainer,
-                    atomSymbolVec,
-                    atomChargesVec,
-                    atomCoordinatesVec);                      
+  std::shared_ptr<utils::ScalarSpatialFunctionReal> elecChargeDens =
+    std::make_shared<atoms::AtomSevereFunction<memorySpace>>(
+      atomSphericalDataContainer, atomSymbolVec, atomCoordinatesVec,
+      "density", 0, 1,
+      1.0/(atoms::Clm(0, 0) * atoms::Dm(0) * atoms::Qm(0, 0)),
+      linAlgOpContext.get());
 
     dftefeSolve =
      new ksdft::KohnShamDFT<double,

@@ -231,8 +231,8 @@ namespace dftefe
       getEnrichmentDataInAllCellsAtQuadPts(bool storeValues, 
                                           bool storeGradients, 
                                           const quadrature::QuadratureRuleContainer &quadRuleContainer, 
-                                          std::vector<double> &quadValuesInAllCellsEnrichment,
-                                          std::vector<double> &quadGradientsInAllCellsEnrichment,
+                                          double *basisEnrichQuadStorageStartPtr,
+                                          double *basisGradientEnrichQuadStorageStartPtr,
                                           linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext) const;
 
     private:
