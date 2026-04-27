@@ -10,19 +10,19 @@ namespace dftefe
 {
   namespace basis
   {
-    template <unsigned int dim>
+    template <size_type dim>
     LinearCellMappingDealii<dim>::LinearCellMappingDealii()
       : d_mappingDealii()
       , d_fe(1)
     {}
 
 
-    template <unsigned int dim>
+    template <size_type dim>
     LinearCellMappingDealii<dim>::~LinearCellMappingDealii()
     {}
 
 
-    template <unsigned int dim>
+    template <size_type dim>
     void
     LinearCellMappingDealii<dim>::getJxW(
       const TriangulationCellBase &            triaCellBase,
@@ -44,13 +44,13 @@ namespace dftefe
       auto                    cellItr = triaCellDealii.getCellIterator();
       fe_values.reinit(cellItr);
 
-      for (unsigned int iQuad = 0; iQuad < quadRuleDealii.size(); iQuad++)
+      for (size_type iQuad = 0; iQuad < quadRuleDealii.size(); iQuad++)
         {
           valuesJxW[iQuad] = fe_values.JxW(iQuad);
         }
     }
 
-    template <unsigned int dim>
+    template <size_type dim>
     void
     LinearCellMappingDealii<dim>::getParametricPoint(
       const dftefe::utils::Point & realPoint,
@@ -81,7 +81,7 @@ namespace dftefe
     }
 
 
-    template <unsigned int dim>
+    template <size_type dim>
     void
     LinearCellMappingDealii<dim>::getParametricPoints(
       const std::vector<dftefe::utils::Point> &realPoints,
@@ -102,7 +102,7 @@ namespace dftefe
       d_mappingDealii.transform_points_real_to_unit_cell(
         cellDealii, dealiiRealPoints, dealiiParametricPoints);
       arePointsInside = std::vector<bool>(numPoints, true);
-      for (unsigned int i = 0; i < numPoints; ++i)
+      for (size_type i = 0; i < numPoints; ++i)
         {
           if (dealiiParametricPoints[i][0] ==
               std::numeric_limits<double>::infinity())
@@ -113,7 +113,7 @@ namespace dftefe
       convertToDftefePoint<dim>(dealiiParametricPoints, parametricPoints);
     }
 
-    template <unsigned int dim>
+    template <size_type dim>
     void
     LinearCellMappingDealii<dim>::getRealPoint(
       const dftefe::utils::Point & parametricPoint,
@@ -133,7 +133,7 @@ namespace dftefe
       convertToDftefePoint<dim>(dealiiRealPoint, realPoint);
     }
 
-    template <unsigned int dim>
+    template <size_type dim>
     void
     LinearCellMappingDealii<dim>::getRealPoints(
       const std::vector<dftefe::utils::Point> &parametricPoints,
@@ -150,7 +150,7 @@ namespace dftefe
       std::vector<dealii::Point<dim, double>> dealiiParametricPoints(numPoints);
       std::vector<dealii::Point<dim, double>> dealiiRealPoints(numPoints);
       convertToDealiiPoint<dim>(parametricPoints, dealiiParametricPoints);
-      for (unsigned int i = 0; i < numPoints; ++i)
+      for (size_type i = 0; i < numPoints; ++i)
         {
           dealiiRealPoints[i] = d_mappingDealii.transform_unit_to_real_cell(
             cellDealii, dealiiParametricPoints[i]);

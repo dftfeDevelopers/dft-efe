@@ -153,7 +153,7 @@ namespace dftefe
       getBasisCenters(
         std::map<global_size_type, utils::Point> &dofCoords) const = 0;
 
-      virtual unsigned int
+      virtual size_type
       getDim() const = 0;
 
       // Enrichment specific functions.

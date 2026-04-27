@@ -49,7 +49,7 @@ namespace dftefe
        * fns in new atom id 0... getNewAtomIdToEnrichmentIdOffset(1) = the no of
        * enrichment fns in new atom id 0 + enrichment fns in new atom id 1...
        * and so on.*/
-      template <unsigned int dim>
+      template <size_type dim>
       void
       getNewAtomIdToEnrichmentIdOffset(
         std::vector<global_size_type> &newAtomIdToEnrichmentIdOffset,
@@ -63,8 +63,8 @@ namespace dftefe
         // find newAtomIdToEnrichmentIdOffset vector
         std::vector<global_size_type> newAtomIdToEnrichmentIdOffsetTmp;
         size_type                     nAtomIds = atomSymbol.size();
-        newAtomIdToEnrichmentIdOffsetTmp.resize(nAtomIds, UINT_MAX);
-        newAtomIdToEnrichmentIdOffset.resize(nAtomIds, UINT_MAX);
+        newAtomIdToEnrichmentIdOffsetTmp.resize(nAtomIds, basis::MaxSizeDefaults::GLOBAL_SIZE_TYPE_MAX);
+        newAtomIdToEnrichmentIdOffset.resize(nAtomIds, basis::MaxSizeDefaults::GLOBAL_SIZE_TYPE_MAX);
 
         std::vector<size_type> localAtomIds =
           atomIdsPartition->locallyOwnedAtomIds();
@@ -89,7 +89,7 @@ namespace dftefe
           newAtomIdToEnrichmentIdOffsetTmp.data(),
           newAtomIdToEnrichmentIdOffset.data(),
           newAtomIdToEnrichmentIdOffsetTmp.size(),
-          utils::mpi::MPIUnsignedLong,
+          utils::mpi::Types<global_size_type>::getMPIDatatype(),
           utils::mpi::MPIMin,
           comm);
         std::pair<bool, std::string> mpiIsSuccessAndMsg =
@@ -105,7 +105,7 @@ namespace dftefe
        * there in that processor.
        */
 
-      template <unsigned int dim>
+      template <size_type dim>
       void
       getLocallyOwnedEnrichmentIds(
         std::pair<global_size_type, global_size_type>
@@ -134,7 +134,7 @@ namespace dftefe
        * Function to populate the vector of overlapping atom ids based on the
        * maximum cutoff of each atoms enrichment id in a field.*/
 
-      template <unsigned int dim>
+      template <size_type dim>
       void
       getOverlappingAtomIdsInBox(
         std::vector<size_type> &         atomIds,
@@ -150,7 +150,7 @@ namespace dftefe
         for (auto it : atomCoordinates)
           {
             flag = false;
-            for (unsigned int i = 0; i < dim; i++)
+            for (size_type i = 0; i < dim; i++)
               {
                 double a = minbound[i];
                 double b = maxbound[i];
@@ -180,7 +180,7 @@ namespace dftefe
        * Function to populate the vector of overlapping enrichment ids in cells.
        */
 
-      template <unsigned int dim>
+      template <size_type dim>
       void
       getOverlappingEnrichmentIdsInCells(
         std::vector<std::vector<global_size_type>>
@@ -234,7 +234,7 @@ namespace dftefe
           {
             maxCellBound.resize(dim, 0);
             minCellBound.resize(dim, 0);
-            for (unsigned int k = 0; k < dim; k++)
+            for (size_type k = 0; k < dim; k++)
               {
                 auto   cellVertices = cellIter->begin();
                 double maxtmp       = *(cellVertices->begin() + k),
@@ -274,7 +274,7 @@ namespace dftefe
                                     sphericalData->getCutoff() /
                                       sphericalData->getSmoothness() +
                                     additionalCutoff;
-                    for (unsigned int k = 0; k < dim; k++)
+                    for (size_type k = 0; k < dim; k++)
                       {
                         // assert for the cell and processor bounds
                         DFTEFE_AssertWithMsg(
@@ -358,7 +358,7 @@ namespace dftefe
        * Function to return the ghost enrichment ids in the processor.
        */
 
-      template <unsigned int dim>
+      template <size_type dim>
       void
       getGhostEnrichmentIds(
         std::vector<global_size_type> &              localToGlobalEnrichmentIds,
@@ -449,19 +449,19 @@ namespace dftefe
                   atomIdsForLocalEnrichmentsSet.end(),
                   std::back_inserter(atomIdsForLocalEnrichments));
 
-        for (int i = locallyOwnedEnrichmentIds.first;
+        for (size_type i = locallyOwnedEnrichmentIds.first;
             i < locallyOwnedEnrichmentIds.second ; i++)
           localToGlobalEnrichmentIds.push_back(i);
         for(auto i : ghostEnrichmentIds)
           localToGlobalEnrichmentIds.push_back(i);
 
-        for(int iLocalEnrich = 0 ; iLocalEnrich < localToGlobalEnrichmentIds.size() ; iLocalEnrich++)
+        for(size_type iLocalEnrich = 0 ; iLocalEnrich < localToGlobalEnrichmentIds.size() ; iLocalEnrich++)
         {
           size_type numCellForLocalEnrich = 0;
-          for (int iCell = 0 ; iCell < overlappingEnrichmentIdsInCells.size(); iCell++)
+          for (size_type iCell = 0 ; iCell < overlappingEnrichmentIdsInCells.size(); iCell++)
             {
               auto enrichInCellVec = overlappingEnrichmentIdsInCells[iCell];
-              for (int iEnrichInCell = 0 ; iEnrichInCell < enrichInCellVec.size() ; iEnrichInCell++)
+              for (size_type iEnrichInCell = 0 ; iEnrichInCell < enrichInCellVec.size() ; iEnrichInCell++)
                 {
                   if(localToGlobalEnrichmentIds[iLocalEnrich] == enrichInCellVec[iEnrichInCell])
                   {
@@ -476,7 +476,7 @@ namespace dftefe
       }
     } // end of namespace EnrichmentIdsPartitionInternal
 
-    template <unsigned int dim>
+    template <size_type dim>
     EnrichmentIdsPartition<dim>::EnrichmentIdsPartition(
       std::shared_ptr<const atoms::AtomSphericalDataContainer>
                                                     atomSphericalDataContainer,
@@ -602,7 +602,7 @@ namespace dftefe
     // Only change overlap of enrich ids in cells, 
     // Note: locallyOwnedEnrichedIds depend on atom partitioning
     // hence do not change
-    template <unsigned int dim>
+    template <size_type dim>
     void
     EnrichmentIdsPartition<dim>::modifyNumCellsOverlapWithEnrichments(
       const std::vector<std::vector<global_size_type>>
@@ -637,35 +637,35 @@ namespace dftefe
         }
     }
 
-    template <unsigned int dim>
+    template <size_type dim>
     std::vector<global_size_type>
     EnrichmentIdsPartition<dim>::newAtomIdToEnrichmentIdOffset() const
     {
       return d_newAtomIdToEnrichmentIdOffset;
     }
 
-    template <unsigned int dim>
+    template <size_type dim>
     std::vector<std::vector<global_size_type>>
     EnrichmentIdsPartition<dim>::overlappingEnrichmentIdsInCells() const
     {
       return d_overlappingEnrichmentIdsInCells;
     }
 
-    template <unsigned int dim>
+    template <size_type dim>
     std::pair<global_size_type, global_size_type>
     EnrichmentIdsPartition<dim>::locallyOwnedEnrichmentIds() const
     {
       return d_locallyOwnedEnrichmentIds;
     }
 
-    template <unsigned int dim>
+    template <size_type dim>
     std::vector<global_size_type>
     EnrichmentIdsPartition<dim>::ghostEnrichmentIds() const
     {
       return d_ghostEnrichmentIds;
     }
 
-    template <unsigned int dim>
+    template <size_type dim>
     size_type
     EnrichmentIdsPartition<dim>::getAtomId(
       const global_size_type enrichmentId) const
@@ -686,7 +686,7 @@ namespace dftefe
       // return d_oldAtomIdsFromEnrichIdsVec[index];
     }
 
-    template <unsigned int dim>
+    template <size_type dim>
     EnrichmentIdAttribute
     EnrichmentIdsPartition<dim>::getEnrichmentIdAttribute(
       const global_size_type enrichmentId) const
@@ -726,7 +726,7 @@ namespace dftefe
       return retStruct;
     }
 
-    template <unsigned int dim>
+    template <size_type dim>
     size_type
     EnrichmentIdsPartition<dim>::nLocallyOwnedEnrichmentIds() const
     {
@@ -734,21 +734,21 @@ namespace dftefe
               d_locallyOwnedEnrichmentIds.first);
     }
 
-    template <unsigned int dim>
+    template <size_type dim>
     global_size_type
     EnrichmentIdsPartition<dim>::nTotalEnrichmentIds() const
     {
       return d_newAtomIdToEnrichmentIdOffset.back();
     }
 
-    template <unsigned int dim>
+    template <size_type dim>
     std::shared_ptr<const AtomIdsPartition<dim>>
     EnrichmentIdsPartition<dim>::getAtomIdsPartition() const
     {
       return d_atomIdsPartition;
     }
 
-    template <unsigned int dim>
+    template <size_type dim>
     size_type
     EnrichmentIdsPartition<dim>::nEnrichmentIds(const size_type atomId) const
     {
@@ -756,21 +756,21 @@ namespace dftefe
                                                           d_fieldName);
     }
 
-    template <unsigned int dim>
+    template <size_type dim>
     std::vector<size_type>
     EnrichmentIdsPartition<dim>::getAtomIdsForLocalEnrichments() const
     {
       return d_atomIdsForLocalEnrichments;
     }
 
-    template <unsigned int dim>
+    template <size_type dim>
     std::vector<std::string>
     EnrichmentIdsPartition<dim>::getAtomSymbolsForLocalEnrichments() const
     {
       return d_atomSymbolsForLocalEnrichments;
     }
 
-    template <unsigned int dim>
+    template <size_type dim>
     size_type
     EnrichmentIdsPartition<dim>::nLocalEnrichmentIds() const
     {
@@ -779,28 +779,28 @@ namespace dftefe
              d_ghostEnrichmentIds.size();
     }
 
-    template <unsigned int dim>
+    template <size_type dim>
     std::vector<size_type>
     EnrichmentIdsPartition<dim>::overlappingCellsWithLocalEnrichmentIds() const
     {
       return d_overlappingCellsWithLocalEnrichmentIds;
     }  
       
-    template <unsigned int dim>
+    template <size_type dim>
     std::vector<size_type>
     EnrichmentIdsPartition<dim>::localToCellLocalEIdsVec() const
     {
       return d_localToCellLocalEIdsVec;
     }
 
-    template <unsigned int dim>
+    template <size_type dim>
     std::vector<global_size_type>
     EnrichmentIdsPartition<dim>::localToGlobalEnrichmentIds() const
     {
       return d_localToGlobalEnrichmentIds;
     }
 
-    template <unsigned int dim>
+    template <size_type dim>
     std::vector<size_type>
     EnrichmentIdsPartition<dim>::cellsInLocalEIdVec() const
     {

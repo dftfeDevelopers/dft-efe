@@ -50,7 +50,7 @@ namespace dftefe
       {
         Timer        timer;
         double       totalWallTime;
-        unsigned int nCalls;
+        size_type nCalls;
       };
 
       Profiler(const std::string &profileName = "");
@@ -74,7 +74,7 @@ namespace dftefe
       getSectionTimer(const std::string &sectionName) const;
       double
       getSectionTotalWallTime(const std::string &sectionName) const;
-      unsigned int
+      size_type
       getSectionCalls(const std::string &sectionName) const;
       void
       reset();

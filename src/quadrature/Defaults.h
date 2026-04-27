@@ -44,7 +44,7 @@ namespace dftefe
       //
       // maximum recursion of divisions for adaptive quad
       //
-      static const unsigned int MAX_RECURSION;
+      static const size_type MAX_RECURSION;
 
       //
       // normalization of Integral threhold criteria to avoid 0/0 form

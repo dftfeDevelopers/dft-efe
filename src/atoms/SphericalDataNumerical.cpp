@@ -52,7 +52,7 @@ namespace dftefe
         const double                         polarAngleTolerance,
         std::vector<double> &                value)
       {
-        for (int i = 0; i < point.size(); i++)
+        for (size_type i = 0; i < point.size(); i++)
           {
             // do the spline interpolation in the radial points
             double r, theta, phi;
@@ -73,7 +73,7 @@ namespace dftefe
 
         // std::vector<double> atomCenteredPoint(dim, 0.);
         // double              r, theta, phi;
-        // for (unsigned int i = 0; i < dim; i++)
+        // for (size_type i = 0; i < dim; i++)
         //   {
         //     atomCenteredPoint[i] = point[i] - origin[i];
         //   }
@@ -105,7 +105,7 @@ namespace dftefe
         const double                         radiusTolerance,
         std::vector<double> &                gradient)
       {
-        for (int i = 0; i < point.size(); i++)
+        for (size_type i = 0; i < point.size(); i++)
           {
             // do the spline interpolation in the radial points
             double r, theta, phi;
@@ -399,7 +399,7 @@ namespace dftefe
       DFTEFE_AssertWithMsg(d_qNumbers.size() == 3,
                            "All quantum numbers not given");
 
-      for (int i = 0; i < point.size(); i++)
+      for (size_type i = 0; i < point.size(); i++)
         {
           SphericalDataNumericalInternal::getHessianValueAutoDiff(
             point[i],
@@ -499,7 +499,7 @@ namespace dftefe
     SphericalDataNumerical::getRadialValue(const std::vector<double> &r)
     {
       std::vector<double> retVal(r.size(), 0.);
-      for (int i = 0; i < r.size(); i++)
+      for (size_type i = 0; i < r.size(); i++)
         {
           double radius = r[i];
           retVal[i]     = (radius <= d_cutoff + d_cutoff / d_smoothness) ?
@@ -520,7 +520,7 @@ namespace dftefe
       int                 m        = d_qNumbers[2];
       double              constant = Clm(l, m) * Dm(m);
       std::vector<double> retVal(r.size(), 0.);
-      for (int i = 0; i < r.size(); i++)
+      for (size_type i = 0; i < r.size(); i++)
         {
           retVal[i] =
             (r[i] <= d_cutoff + d_cutoff / d_smoothness) ?
@@ -535,7 +535,7 @@ namespace dftefe
     SphericalDataNumerical::getRadialDerivative(const std::vector<double> &r)
     {
       std::vector<double> retVal(r.size(), 0.);
-      for (int i = 0; i < r.size(); i++)
+      for (size_type i = 0; i < r.size(); i++)
         {
           double radius = r[i];
           if (radius <= d_cutoff + d_cutoff / d_smoothness)
@@ -571,7 +571,7 @@ namespace dftefe
       int                              l        = d_qNumbers[1];
       int                              m        = d_qNumbers[2];
       double                           constant = Clm(l, m) * Dm(m);
-      for (int i = 0; i < r.size(); i++)
+      for (size_type i = 0; i < r.size(); i++)
         {
           if (r[i] <= d_cutoff + d_cutoff / d_smoothness)
             {

@@ -9,7 +9,7 @@ namespace dftefe
 {
   namespace basis
   {
-    template <unsigned int dim>
+    template <size_type dim>
     class TriangulationDealiiSerial : public TriangulationBase
     {
     public:
@@ -22,7 +22,7 @@ namespace dftefe
       finalizeTriangulationConstruction() override;
       void
       createUniformParallelepiped(
-        const std::vector<unsigned int> &subdivisions,
+        const std::vector<size_type> &subdivisions,
         const std::vector<utils::Point> &domainVectors,
         const std::vector<bool> &        isPeriodicFlags) override;
       void
@@ -31,14 +31,14 @@ namespace dftefe
       void
       shiftTriangulation(const utils::Point &origin) override;
       void
-      refineGlobal(const unsigned int times = 1) override;
+      refineGlobal(const size_type times = 1) override;
       void
-      coarsenGlobal(const unsigned int times = 1) override;
+      coarsenGlobal(const size_type times = 1) override;
       void
       clearUserFlags() override;
       void
       executeCoarseningAndRefinement() override;
-      unsigned int
+      size_type
       nLocallyOwnedCells() const override;
       double
       maxElementLength() const override;
@@ -64,7 +64,7 @@ namespace dftefe
       beginLocal() const override;
       TriangulationBase::const_TriangulationCellIterator
       endLocal() const override;
-      unsigned int
+      size_type
       getDim() const override;
       std::vector<bool>
       getPeriodicFlags() const override;

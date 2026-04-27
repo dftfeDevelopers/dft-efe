@@ -510,9 +510,9 @@ namespace dftefe
                   linAlgOpContext);
               }
 
-            for (unsigned int iNode = 0; iNode < dofsPerCell; iNode++)
+            for (size_type iNode = 0; iNode < dofsPerCell; iNode++)
               {
-                for (unsigned int jNode = 0; jNode < dofsPerCell; jNode++)
+                for (size_type jNode = 0; jNode < dofsPerCell; jNode++)
                   {
                     *basisOverlapTmpIter = 0.0;
                     // Ni_classical* Ni_classical of the classicalBlockBasisData
@@ -1471,9 +1471,9 @@ namespace dftefe
                  ->overlappingEnrichmentIdsInCells())
             {
               size_type nCellEnrichmentDofs = enrichmentVecInCell.size();
-              for (unsigned int j = 0; j < nCellEnrichmentDofs; j++)
+              for (size_type j = 0; j < nCellEnrichmentDofs; j++)
                 {
-                  for (unsigned int k = 0; k < nCellEnrichmentDofs; k++)
+                  for (size_type k = 0; k < nCellEnrichmentDofs; k++)
                     {
                       if (enrichmentVecInCell[k] >= enrichStartId &&
                           enrichmentVecInCell[k] < enrichEndId)
@@ -1562,7 +1562,7 @@ namespace dftefe
       // if (d_rank != 0)
       //   {
       //     ValueTypeOperator normMInvexact = 0;
-      //     for (int i = 0; i < basisOverlapInvEnrichmentBlock.size(); i++)
+      //     for (size_type i = 0; i < basisOverlapInvEnrichmentBlock.size(); i++)
       //       {
       //         *(basisOverlapInvEnrichmentBlock.data() + i) =
       //           *(basisOverlapInvEnrichmentBlockExact.data() + i) -
@@ -1635,7 +1635,7 @@ namespace dftefe
       //       }
 
       //     //   rootCout << "\n\n\nEigenValues: \n";
-      //     // for(int i = 0 ; i < eigenValuesMemSpace.size() ; i++)
+      //     // for(size_type i = 0 ; i < eigenValuesMemSpace.size() ; i++)
       //     // {
       //     //   rootCout << *(eigenValuesMemSpace.data() + indices[i]) << ",";
       //     // }

@@ -103,6 +103,12 @@ namespace dftefe
 
     }; // end of class GenerateMeshDefaults
 
+    class MaxSizeDefaults
+    {
+    public:
+      static const size_type SIZE_TYPE_MAX;
+      static const global_size_type GLOBAL_SIZE_TYPE_MAX;
+    }; // end of class MaxSizeDefaults
   } // end of namespace basis
 } // end of namespace dftefe
 #endif // dftefebasisDefaults_h

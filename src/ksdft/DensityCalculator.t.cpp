@@ -25,7 +25,7 @@
 
 #include <utils/DataTypeOverloads.h>
 #include <ksdft/DensityCalculatorKernels.h>
-
+#include <ksdft/Defaults.h>
 namespace dftefe
 {
   namespace ksdft
@@ -121,7 +121,7 @@ namespace dftefe
                                          dim> &feBMPsi)
     {
       d_feBMPsi        = &feBMPsi;
-      d_batchSizeSmall = UINT_MAX;
+      d_batchSizeSmall = ksdft::MaxSizeDefaults::SIZE_TYPE_MAX;
 
       d_quadRuleContainer = feBasisDataStorage->getQuadratureRuleContainer();
 
@@ -279,7 +279,7 @@ namespace dftefe
                             d_psiBatchSmall->data(),
                             *waveFunc.getLinAlgOpContext()); 
 
-              //d_feBasisOp->reinit(d_cellBlockSize, d_batchSizeSmall);
+              d_feBasisOp->reinit(d_cellBlockSize, d_batchSizeSmall);
               d_feBasisOp->interpolate(*d_psiBatchSmall,
                                        *d_feBMPsi,
                                        *d_psiBatchSmallQuad);
@@ -342,7 +342,7 @@ namespace dftefe
                             d_psiBatchSmall->data(),
                             *waveFunc.getLinAlgOpContext());                                       
 
-              //d_feBasisOp->reinit(d_cellBlockSize, d_batchSizeSmall);
+              d_feBasisOp->reinit(d_cellBlockSize, d_batchSizeSmall);
               d_feBasisOp->interpolate(*d_psiBatchSmall,
                                        *d_feBMPsi,
                                        *d_psiBatchSmallQuad);

@@ -7,27 +7,27 @@ namespace dftefe
 {
   namespace basis
   {
-    template <unsigned int dim>
+    template <size_type dim>
     TriangulationCellDealii<dim>::TriangulationCellDealii(
       DealiiTriangulationCellIterator dealiiCellIter)
       : d_cellItr(dealiiCellIter)
     {}
 
-    template <unsigned int dim>
+    template <size_type dim>
     TriangulationCellDealii<dim>::~TriangulationCellDealii()
     {}
 
-    template <unsigned int dim>
+    template <size_type dim>
     void
     TriangulationCellDealii<dim>::getVertices(
       std::vector<utils::Point> &points) const
     {
-      const unsigned int nVertices =
+      const size_type nVertices =
         dealii::GeometryInfo<dim>::vertices_per_cell;
       points.resize(nVertices, utils::Point(dim, 0.0));
       std::vector<dealii::Point<dim, double>> pointsDealii;
       pointsDealii.resize(nVertices);
-      for (unsigned int iVertex = 0; iVertex < nVertices; iVertex++)
+      for (size_type iVertex = 0; iVertex < nVertices; iVertex++)
         {
           pointsDealii[iVertex] = d_cellItr->vertex(iVertex);
           convertToDftefePoint<dim>(d_cellItr->vertex(iVertex),
@@ -35,7 +35,7 @@ namespace dftefe
         }
     }
 
-    template <unsigned int dim>
+    template <size_type dim>
     void
     TriangulationCellDealii<dim>::getVertex(size_type     i,
                                             utils::Point &point) const
@@ -43,7 +43,7 @@ namespace dftefe
       convertToDftefePoint<dim>(d_cellItr->vertex(i), point);
     }
 
-    template <unsigned int dim>
+    template <size_type dim>
     size_type
     TriangulationCellDealii<dim>::getId() const
     {
@@ -52,7 +52,7 @@ namespace dftefe
       return 0;
     }
 
-    template <unsigned int dim>
+    template <size_type dim>
     bool
     TriangulationCellDealii<dim>::isPointInside(const utils::Point &point) const
     {
@@ -62,42 +62,42 @@ namespace dftefe
     }
 
 
-    template <unsigned int dim>
+    template <size_type dim>
     bool
-    TriangulationCellDealii<dim>::isAtBoundary(const unsigned int i) const
+    TriangulationCellDealii<dim>::isAtBoundary(const size_type i) const
     {
       return d_cellItr->at_boundary(i);
     }
 
-    template <unsigned int dim>
+    template <size_type dim>
     bool
     TriangulationCellDealii<dim>::isAtBoundary() const
     {
       return d_cellItr->at_boundary();
     }
 
-    template <unsigned int dim>
+    template <size_type dim>
     bool
     TriangulationCellDealii<dim>::hasPeriodicNeighbor(
-      const unsigned int i) const
+      const size_type i) const
     {
       return d_cellItr->has_periodic_neighbor(i);
     }
 
-    template <unsigned int dim>
-    unsigned int
+    template <size_type dim>
+    size_type
     TriangulationCellDealii<dim>::getDim() const
     {
       return dim;
     }
-    template <unsigned int dim>
+    template <size_type dim>
     double
     TriangulationCellDealii<dim>::diameter() const
     {
       return d_cellItr->diameter();
     }
 
-    template <unsigned int dim>
+    template <size_type dim>
     void
     TriangulationCellDealii<dim>::center(
       dftefe::utils::Point &centerPoint) const
@@ -107,28 +107,28 @@ namespace dftefe
       convertToDftefePoint<dim>(dealiiPoint, centerPoint);
     }
 
-    template <unsigned int dim>
+    template <size_type dim>
     void
     TriangulationCellDealii<dim>::setRefineFlag()
     {
       d_cellItr->set_refine_flag();
     }
 
-    template <unsigned int dim>
+    template <size_type dim>
     void
     TriangulationCellDealii<dim>::clearRefineFlag()
     {
       d_cellItr->clear_refine_flag();
     }
 
-    template <unsigned int dim>
+    template <size_type dim>
     double
     TriangulationCellDealii<dim>::minimumVertexDistance() const
     {
       return d_cellItr->minimum_vertex_distance();
     }
 
-    template <unsigned int dim>
+    template <size_type dim>
     double
     TriangulationCellDealii<dim>::distanceToUnitCell(
       dftefe::utils::Point &parametricPoint) const
@@ -138,7 +138,7 @@ namespace dftefe
       return dealii::GeometryInfo<dim>::distance_to_unit_cell(dealiiPoint);
     }
 
-    template <unsigned int dim>
+    template <size_type dim>
     void
     TriangulationCellDealii<dim>::getParametricPoint(
       const dftefe::utils::Point &realPoint,
@@ -152,7 +152,7 @@ namespace dftefe
                                      isPointInside);
     }
 
-    template <unsigned int dim>
+    template <size_type dim>
     void
     TriangulationCellDealii<dim>::getRealPoint(
       const utils::Point &   parametricPoint,
@@ -164,14 +164,14 @@ namespace dftefe
     }
 
     // TODO removed const qualifier
-    template <unsigned int dim>
+    template <size_type dim>
     typename TriangulationCellDealii<dim>::DealiiTriangulationCellIterator &
     TriangulationCellDealii<dim>::getCellIterator()
     {
       return d_cellItr;
     }
 
-    //    template <unsigned int dim>
+    //    template <size_type dim>
     //    const typename dealii::Triangulation<dim>::active_cell_iterator &
     //    TriangulationCellDealii<dim>::getCellIterator() const
     //    {

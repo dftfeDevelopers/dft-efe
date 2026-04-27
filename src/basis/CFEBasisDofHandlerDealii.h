@@ -161,7 +161,7 @@ namespace dftefe
       beginLocalCells() const override;
       const_FECellIterator
       endLocalCells() const override;
-      unsigned int
+      size_type
       getDim() const override;
 
       size_type

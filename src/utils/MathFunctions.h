@@ -35,7 +35,7 @@ namespace dftefe
     namespace mathFunctions
     {
       int
-      intPow(int base, unsigned int e);
+      intPow(int base, size_type e);
       size_type
       sizeTypePow(size_type base, size_type e);
     } // namespace mathFunctions

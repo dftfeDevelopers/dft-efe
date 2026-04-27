@@ -33,13 +33,13 @@ namespace dftefe
       isPointInside(const utils::Point &point) const = 0;
 
       virtual bool
-      isAtBoundary(const unsigned int i) const = 0;
+      isAtBoundary(const size_type i) const = 0;
 
       virtual bool
       isAtBoundary() const = 0;
 
       virtual bool
-      hasPeriodicNeighbor(const unsigned int i) const = 0;
+      hasPeriodicNeighbor(const size_type i) const = 0;
 
       virtual size_type
       getDim() const = 0;

@@ -109,7 +109,7 @@ namespace dftefe
               utils::mpi::MPIInPlace,
               &normValue,
               1,
-              utils::mpi::Types<double>::getMPIDatatype(),
+              utils::mpi::Types<RealType>::getMPIDatatype(),
               utils::mpi::MPISum,
               mpiComm);
           }
@@ -131,7 +131,7 @@ namespace dftefe
         RealType totalDensityInQuad = 0.0;
         if (computeTotalDensity || scaleDensity)
           {
-            int quadId = 0;
+            size_type quadId = 0;
             for (size_type iCell = 0; iCell < inValues.nCells(); iCell++)
               {
                 std::vector<RealType> a(inValues.nCellQuadraturePoints(iCell) *
@@ -179,7 +179,7 @@ namespace dftefe
         boost::math::normal normDist;
         std::mt19937        randomIntGenerator(rank);
         ValueType *         temp = multiVectorGuessHost.data();
-        for (unsigned int i = 0;
+        for (size_type i = 0;
              i < multiVectorGuess.localSize() * multiVectorGuess.numVectors();
              ++i)
           {
@@ -1484,7 +1484,7 @@ namespace dftefe
           fieldNamesPSP,
           metadataNames);
 
-      for (int i = 0; i < atomSymbolVec.size(); i++)
+      for (size_type i = 0; i < atomSymbolVec.size(); i++)
         {
           if (std::abs(std::stod(d_atomSphericalDataContainerPSP->getMetadata(
                 atomSymbolVec[i], "z_valence"))) -
@@ -1498,7 +1498,7 @@ namespace dftefe
         }
 
       d_isONCVNonLocPSP = false, d_isNlcc = false;
-      for (int atomSymbolId = 0; atomSymbolId < atomSymbolVec.size();
+      for (size_type atomSymbolId = 0; atomSymbolId < atomSymbolVec.size();
            atomSymbolId++)
         {
           int numProj = 0;
@@ -1988,7 +1988,7 @@ namespace dftefe
           fieldNamesPSP,
           metadataNames);
 
-      for (int i = 0; i < atomSymbolVec.size(); i++)
+      for (size_type i = 0; i < atomSymbolVec.size(); i++)
         {
           if (std::abs(std::stod(d_atomSphericalDataContainerPSP->getMetadata(
                 atomSymbolVec[i], "z_valence"))) -
@@ -2002,7 +2002,7 @@ namespace dftefe
         }
 
       d_isONCVNonLocPSP = false, d_isNlcc = false;
-      for (int atomSymbolId = 0; atomSymbolId < atomSymbolVec.size();
+      for (size_type atomSymbolId = 0; atomSymbolId < atomSymbolVec.size();
            atomSymbolId++)
         {
           int numProj = 0;
@@ -2227,7 +2227,7 @@ namespace dftefe
                 }
             }
 
-          for (int atomSymbolId = 0; atomSymbolId < atomSymbolVec.size();
+          for (size_type atomSymbolId = 0; atomSymbolId < atomSymbolVec.size();
                atomSymbolId++)
             {
               if (d_atomSphericalDataContainerPSP->getMetadata(
@@ -2576,7 +2576,7 @@ namespace dftefe
       //
       // Begin SCF iteration
       //
-      unsigned int scfIter = 0;
+      size_type scfIter = 0;
       double       norm    = 1.0;
       d_rootCout << "Starting SCF iterations....\n";
       while (((norm > d_SCFTol) && (scfIter < d_numMaxSCFIter)))

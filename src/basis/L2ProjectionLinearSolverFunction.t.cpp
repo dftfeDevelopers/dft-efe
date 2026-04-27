@@ -200,12 +200,12 @@ namespace dftefe
       // enrichment functions) , inp will be in adaptive grid
       cfeBasisOperations.integrateWithBasisValues(inp, *d_feBasisManager, d_b);
 
-      // for (unsigned int i = 0 ; i < d_b.locallyOwnedSize() ; i++)
+      // for (size_type i = 0 ; i < d_b.locallyOwnedSize() ; i++)
       //   {
       //     std::cout << i  << " " << *(rhsNHDB.data()+i) << " \t ";
       //   }
 
-      // for(int i = 0 ; i < inp.getNumberComponents() ; i++)
+      // for(size_type i = 0 ; i < inp.getNumberComponents() ; i++)
       // std::cout << "rhs-norm: " << rhsNHDB.l2Norms()[i] << " d_b-norm: " <<
       // d_b.l2Norms()[i] << " b-norm: " << b.l2Norms()[i] << "\t";
       // std::cout << "\n";

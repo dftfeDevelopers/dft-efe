@@ -157,7 +157,7 @@ T readParameter(const std::string &ParamFile,
 //         utils::Point origin(d_atomCoordinatesVec[atomId]);
 //         auto vec = d_atomSphericalDataContainer->getSphericalData(d_atomSymbolVec[atomId], "density");
 //         for(auto &enrichmentObjId : vec)
-//         for (unsigned int i = 0 ; i < points.size() ; i++)            
+//         for (dftefe::size_type i = 0 ; i < points.size() ; i++)            
 //         {
 //           ret[i] = ret[i] + std::abs(enrichmentObjId->getValue(points[i], origin) * (1/d_ylm00));
 //         }
@@ -212,7 +212,7 @@ T readParameter(const std::string &ParamFile,
 //         utils::Point origin(d_atomCoordinatesVec[atomId]);
 //         auto vec = d_atomSphericalDataContainer->getSphericalData(d_atomSymbolVec[atomId], "vtotal");
 //         for(auto &enrichmentObjId : vec)
-//         for (unsigned int i = 0 ; i < points.size() ; i++)            
+//         for (dftefe::size_type i = 0 ; i < points.size() ; i++)            
 //         {
 //           ret[i] = ret[i] + enrichmentObjId->getValue(points[i], origin) * (1/d_ylm00);
 //         }
@@ -383,8 +383,8 @@ int main(int argc, char** argv)
   double radiusAroundAtom = readParameter<double>(parameterInputFileName, "radiusAroundAtom", rootCout);;
   double meshSizeAroundAtom = readParameter<double>(parameterInputFileName, "meshSizeAroundAtom", rootCout);;
   double rc = readParameter<double>(parameterInputFileName, "rc", rootCout);
-  unsigned int feOrderElec = readParameter<unsigned int>(parameterInputFileName, "feOrderElectrostatics", rootCout);
-  unsigned int feOrderEigen = readParameter<unsigned int>(parameterInputFileName, "feOrderEigenSolve", rootCout); 
+  dftefe::size_type feOrderElec = readParameter<dftefe::size_type>(parameterInputFileName, "feOrderElectrostatics", rootCout);
+  dftefe::size_type feOrderEigen = readParameter<dftefe::size_type>(parameterInputFileName, "feOrderEigenSolve", rootCout); 
   double    smearingTemperature = readParameter<double>(parameterInputFileName, "smearingTemperature", rootCout);
   double    fermiEnergyTolerance = readParameter<double>(parameterInputFileName, "fermiEnergyTolerance", rootCout);
   double    fracOccupancyTolerance = readParameter<double>(parameterInputFileName, "fracOccupancyTolerance", rootCout);
@@ -400,14 +400,14 @@ int main(int argc, char** argv)
   const size_type dim = 3;
 
   double atomPartitionTolerance = readParameter<double>(parameterInputFileName, "atomPartitionTolerance", rootCout);
-  unsigned int num1DGaussSubdividedSizeElec = readParameter<unsigned int>(parameterInputFileName, "num1DGaussSubdividedSizeElec", rootCout);
-  unsigned int gaussSubdividedCopiesElec = readParameter<unsigned int>(parameterInputFileName, "gaussSubdividedCopiesElec", rootCout);
+  dftefe::size_type num1DGaussSubdividedSizeElec = readParameter<dftefe::size_type>(parameterInputFileName, "num1DGaussSubdividedSizeElec", rootCout);
+  dftefe::size_type gaussSubdividedCopiesElec = readParameter<dftefe::size_type>(parameterInputFileName, "gaussSubdividedCopiesElec", rootCout);
   
-  unsigned int num1DGaussSubdividedSizeEigen = readParameter<unsigned int>(parameterInputFileName, "num1DGaussSubdividedSizeEigen", rootCout);
-  unsigned int gaussSubdividedCopiesEigen = readParameter<unsigned int>(parameterInputFileName, "gaussSubdividedCopiesEigen", rootCout);
+  dftefe::size_type num1DGaussSubdividedSizeEigen = readParameter<dftefe::size_type>(parameterInputFileName, "num1DGaussSubdividedSizeEigen", rootCout);
+  dftefe::size_type gaussSubdividedCopiesEigen = readParameter<dftefe::size_type>(parameterInputFileName, "gaussSubdividedCopiesEigen", rootCout);
   
-  unsigned int num1DGaussSubdividedSizeGrad = readParameter<unsigned int>(parameterInputFileName, "num1DGaussSubdividedSizeGrad", rootCout);
-  unsigned int gaussSubdividedCopiesGrad = readParameter<unsigned int>(parameterInputFileName, "gaussSubdividedCopiesGrad", rootCout);
+  dftefe::size_type num1DGaussSubdividedSizeGrad = readParameter<dftefe::size_type>(parameterInputFileName, "num1DGaussSubdividedSizeGrad", rootCout);
+  dftefe::size_type gaussSubdividedCopiesGrad = readParameter<dftefe::size_type>(parameterInputFileName, "gaussSubdividedCopiesGrad", rootCout);
   
   bool isNumericalNuclearSolve = readParameter<bool>(parameterInputFileName, "isNumericalNuclearSolve", rootCout);
   bool isDeltaRhoPoissonSolve = readParameter<bool>(parameterInputFileName, "isDeltaRhoPoissonSolve", rootCout);
@@ -421,8 +421,8 @@ int main(int argc, char** argv)
 
   const atoms::TCIADataParams  tciaparams{tciaFolder , tciaOutFilePrefix};
 
-  unsigned int num1DGaussSubdividedSizeNonLocOperator = 14;
-  unsigned int gaussSubdividedCopiesNonLocOperator = 1;
+  dftefe::size_type num1DGaussSubdividedSizeNonLocOperator = 14;
+  dftefe::size_type gaussSubdividedCopiesNonLocOperator = 1;
 
   // Set up Triangulation
     std::shared_ptr<basis::TriangulationBase> triangulationBase =
@@ -435,10 +435,10 @@ int main(int argc, char** argv)
   domainVectors[2][2] = zmax;
 
   // //Uniform mesh creation
-  // std::vector<unsigned int>         subdivisions = {10, 10, 10};
+  // std::vector<dftefe::size_type>         subdivisions = {10, 10, 10};
   // std::vector<double> origin(0);
   // origin.resize(dim);
-  // for(unsigned int i = 0 ; i < dim ; i++)
+  // for(dftefe::size_type i = 0 ; i < dim ; i++)
   //   origin[i] = -domainVectors[i][i]*0.5;
 
   // // initialize the triangulation
@@ -511,7 +511,7 @@ int main(int argc, char** argv)
       std::stringstream ss(line);
       ss >> symbol; 
       ss >> valanceNumber; 
-      for(unsigned int i=0 ; i<dim ; i++){
+      for(dftefe::size_type i=0 ; i<dim ; i++){
           ss >> coordinates[i]; 
       }
       atomCoordinatesVec.push_back(coordinates);
@@ -620,8 +620,8 @@ int main(int argc, char** argv)
       triangulationBase, 
       *cellMapping); 
 
-    unsigned int nQuad = quadRuleContainerGaussSubdividedElec->nQuadraturePoints();
-    unsigned int nQuadMax = nQuad;
+    dftefe::size_type nQuad = quadRuleContainerGaussSubdividedElec->nQuadraturePoints();
+    dftefe::size_type nQuadMax = nQuad;
     auto mpierr = utils::mpi::MPIAllreduce<Host>(
       utils::mpi::MPIInPlace,
       &nQuad,

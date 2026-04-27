@@ -175,7 +175,7 @@ namespace dftefe
       typename FEBasisDofHandler<ValueTypeBasisCoeff, memorySpace, dim>::
         const_FECellIterator
         endLocalCells() const override;
-      unsigned int
+      size_type
       getDim() const override;
 
       size_type

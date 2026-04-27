@@ -236,7 +236,7 @@ namespace dftefe
                                  linearAlgebra::blasLapack::ScalarOp::Identity);
             }
 
-          for (int i = 0; i < dotProds.size(); i++)
+          for (size_type i = 0; i < dotProds.size(); i++)
             d_energy += (RealType)(dotProds[i] * 2.0 * occupationInBatch[i]);
         }
 

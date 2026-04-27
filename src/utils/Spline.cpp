@@ -74,9 +74,9 @@ namespace dftefe
       getSubdivPowerLawGridParams(const std::vector<double> &X,
                                   double &                   a,
                                   double &                   r,
-                                  unsigned int &             numSubDiv)
+                                  dftefe::size_type &             numSubDiv)
       {
-        unsigned int N = X.size();
+        dftefe::size_type N = X.size();
         if (N < 2)
           utils::throwException(
             false, "Number of points is < 2 for getSubdivPowerLawGridParams()");
@@ -97,7 +97,7 @@ namespace dftefe
         double       s     = X[N - 1] - X[0];
         const double alpha = q * (N - 1) / (s);
         r                  = bisection(alpha, p);
-        unsigned int n     = std::round(alpha * (r * p - 1) / (r - 1));
+        dftefe::size_type n     = std::round(alpha * (r * p - 1) / (r - 1));
         numSubDiv          = (N - 1) / n;
         r                  = std::pow(p * 1.0, 1.0 / (n - 1));
         a                  = numSubDiv * q;
@@ -483,7 +483,7 @@ namespace dftefe
       if (d_isSubdivPowerLawGrid == true)
         {
           size_t       idx = 0;
-          unsigned int n = 0, subId = 0;
+          dftefe::size_type n = 0, subId = 0;
           if (x > d_x.back())
             {
               idx = d_x.size() - 1;

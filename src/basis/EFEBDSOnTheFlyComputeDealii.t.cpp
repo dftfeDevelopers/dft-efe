@@ -297,7 +297,7 @@ namespace dftefe
               {
                 // get the parametric points and jxw in each cell according to
                 // the attribute.
-                unsigned int                     cellIndex = 0;
+                size_type                     cellIndex = 0;
                 const std::vector<utils::Point> &cellParametricQuadPoints =
                   quadratureRuleContainer->getCellParametricPoints(cellIndex);
                 std::vector<dealii::Point<dim, double>>
@@ -537,10 +537,10 @@ namespace dftefe
               {
                 if (locallyOwnedCellIter == efeBDH->beginLocallyOwnedCells())
                   {
-                    for (unsigned int iNode = 0; iNode < classicalDofsPerCell;
+                    for (size_type iNode = 0; iNode < classicalDofsPerCell;
                          iNode++)
                       {
-                        for (unsigned int qPoint = 0; qPoint < nQuadPointInCell;
+                        for (size_type qPoint = 0; qPoint < nQuadPointInCell;
                              qPoint++)
                           {
                             auto it = basisParaCellClassQuadStorageTmp.begin() +
@@ -559,15 +559,15 @@ namespace dftefe
                   cellIndex * nDimSqxNumQuad;
                 if (locallyOwnedCellIter == efeBDH->beginLocallyOwnedCells())
                   {
-                    for (unsigned int iNode = 0; iNode < classicalDofsPerCell;
+                    for (size_type iNode = 0; iNode < classicalDofsPerCell;
                          iNode++)
                       {
-                        for (unsigned int qPoint = 0; qPoint < nQuadPointInCell;
+                        for (size_type qPoint = 0; qPoint < nQuadPointInCell;
                              qPoint++)
                           {
                             auto shapeGrad =
                               dealiiFEValuesPara->shape_grad(iNode, qPoint);
-                            for (unsigned int iDim = 0; iDim < dim; iDim++)
+                            for (size_type iDim = 0; iDim < dim; iDim++)
                               {
                                 auto it =
                                   basisGradientParaCellClassQuadStorageTmp
@@ -581,12 +581,12 @@ namespace dftefe
                   }
                 auto &mappingJacInv = dealiiFEValues.get_inverse_jacobians();
                 size_type numJacobiansPerCell = nQuadPointInCell;
-                for (unsigned int iQuad = 0; iQuad < numJacobiansPerCell;
+                for (size_type iQuad = 0; iQuad < numJacobiansPerCell;
                      ++iQuad)
                   {
-                    for (unsigned int iDim = 0; iDim < dim; iDim++)
+                    for (size_type iDim = 0; iDim < dim; iDim++)
                       {
-                        for (unsigned int jDim = 0; jDim < dim; jDim++)
+                        for (size_type jDim = 0; jDim < dim; jDim++)
                           {
                             auto it = basisJacobianInvQuadStorageTmp.begin() +
                                       cellIndex * nDimSqxNumQuad +
@@ -605,18 +605,18 @@ namespace dftefe
                   cumulativeQuadPointsxnDofs * dim * dim;
                 const std::vector<double> &enrichHessAtQuadPts =
                   efeBDH->getEnrichmentHessian(cellIndex, quadRealPointsVec);
-                for (unsigned int iNode = 0; iNode < dofsPerCell; iNode++)
+                for (size_type iNode = 0; iNode < dofsPerCell; iNode++)
                   {
                     if (iNode < classicalDofsPerCell)
                       {
-                        for (unsigned int qPoint = 0; qPoint < nQuadPointInCell;
+                        for (size_type qPoint = 0; qPoint < nQuadPointInCell;
                              qPoint++)
                           {
                             auto shapeHessian =
                               dealiiFEValues.shape_hessian(iNode, qPoint);
-                            for (unsigned int iDim = 0; iDim < dim; iDim++)
+                            for (size_type iDim = 0; iDim < dim; iDim++)
                               {
-                                for (unsigned int jDim = 0; jDim < dim; jDim++)
+                                for (size_type jDim = 0; jDim < dim; jDim++)
                                   {
                                     auto it =
                                       basisHessianQuadStorageTmp.begin() +
@@ -631,7 +631,7 @@ namespace dftefe
                       }
                     else
                       {
-                        for (unsigned int qPoint = 0; qPoint < nQuadPointInCell;
+                        for (size_type qPoint = 0; qPoint < nQuadPointInCell;
                              qPoint++)
                           {
                             if (efeBDH->isOrthogonalized())
@@ -641,9 +641,9 @@ namespace dftefe
                                   "The hessian values are not calculated for OEFE. Contact developers for this.");
                               }
                             // enriched hessian function
-                            for (unsigned int iDim = 0; iDim < dim; iDim++)
+                            for (size_type iDim = 0; iDim < dim; iDim++)
                               {
-                                for (unsigned int jDim = 0; jDim < dim; jDim++)
+                                for (size_type jDim = 0; jDim < dim; jDim++)
                                   {
                                     auto it =
                                       basisHessianQuadStorageTmp.begin() +
@@ -792,14 +792,14 @@ namespace dftefe
                       classicalComponentInQuadValues.data();
                     // const std::vector<double> &enrichValAtQuadPts =
                     //   efeBDH->getEnrichmentValue(cellIndex, quadRealPointsVec);
-                    for (unsigned int iNode = 0; iNode < numEnrichmentIdsInCell;
+                    for (size_type iNode = 0; iNode < numEnrichmentIdsInCell;
                          iNode++)
                       {
                         // const std::vector<double> &enrichValAtQuadPts =
                         //   efeBDH->getEnrichmentValue(cellIndex,
                         //                              iNode,
                         //                              quadRealPointsVec);
-                        for (unsigned int qPoint = 0; qPoint < nQuadPointInCell;
+                        for (size_type qPoint = 0; qPoint < nQuadPointInCell;
                              qPoint++)
                           {
                             // std::cout << efeBDH->getEnrichmentValue(
@@ -859,10 +859,10 @@ namespace dftefe
                     // const std::vector<double> &enrichGradAtQuadPts =
                     //   efeBDH->getEnrichmentDerivative(cellIndex,
                     //                                   quadRealPointsVec);
-                    for (unsigned int iNode = 0; iNode < numEnrichmentIdsInCell;
+                    for (size_type iNode = 0; iNode < numEnrichmentIdsInCell;
                          iNode++)
                       {
-                        for (unsigned int qPoint = 0; qPoint < nQuadPointInCell;
+                        for (size_type qPoint = 0; qPoint < nQuadPointInCell;
                              qPoint++)
                           {
                             // auto shapeGrad = efeBDH->getEnrichmentDerivative(
@@ -870,7 +870,7 @@ namespace dftefe
                             //   iNode,
                             //   quadRealPointsVec[qPoint]);
                             // enriched gradient function call
-                            for (unsigned int iDim = 0; iDim < dim; iDim++)
+                            for (size_type iDim = 0; iDim < dim; iDim++)
                               {
                                 auto it =
                                   basisGradientEnrichQuadStorageTmp.data() +
@@ -977,7 +977,7 @@ namespace dftefe
               {
                 // get the parametric points and jxw in each cell according to
                 // the attribute.
-                unsigned int                     cellIndex = 0;
+                size_type                     cellIndex = 0;
                 const std::vector<utils::Point> &cellParametricQuadPoints =
                   quadratureRuleContainer->getCellParametricPoints(cellIndex);
                 std::vector<dealii::Point<dim, double>>
@@ -1205,10 +1205,10 @@ namespace dftefe
               {
                 if (locallyOwnedCellIter == efeBDH->beginLocallyOwnedCells())
                   {
-                    for (unsigned int iNode = 0; iNode < classicalDofsPerCell;
+                    for (size_type iNode = 0; iNode < classicalDofsPerCell;
                          iNode++)
                       {
-                        for (unsigned int qPoint = 0; qPoint < nQuadPointInCell;
+                        for (size_type qPoint = 0; qPoint < nQuadPointInCell;
                              qPoint++)
                           {
                             auto it = basisParaCellClassQuadStorageTmp.begin() +
@@ -1227,15 +1227,15 @@ namespace dftefe
                   cellIndex * nDimSqxNumQuad;
                 if (locallyOwnedCellIter == efeBDH->beginLocallyOwnedCells())
                   {
-                    for (unsigned int iNode = 0; iNode < classicalDofsPerCell;
+                    for (size_type iNode = 0; iNode < classicalDofsPerCell;
                          iNode++)
                       {
-                        for (unsigned int qPoint = 0; qPoint < nQuadPointInCell;
+                        for (size_type qPoint = 0; qPoint < nQuadPointInCell;
                              qPoint++)
                           {
                             auto shapeGrad =
                               dealiiFEValuesPara->shape_grad(iNode, qPoint);
-                            for (unsigned int iDim = 0; iDim < dim; iDim++)
+                            for (size_type iDim = 0; iDim < dim; iDim++)
                               {
                                 auto it =
                                   basisGradientParaCellClassQuadStorageTmp
@@ -1249,12 +1249,12 @@ namespace dftefe
                   }
                 auto &mappingJacInv = dealiiFEValues.get_inverse_jacobians();
                 size_type numJacobiansPerCell = nQuadPointInCell;
-                for (unsigned int iQuad = 0; iQuad < numJacobiansPerCell;
+                for (size_type iQuad = 0; iQuad < numJacobiansPerCell;
                      ++iQuad)
                   {
-                    for (unsigned int iDim = 0; iDim < dim; iDim++)
+                    for (size_type iDim = 0; iDim < dim; iDim++)
                       {
-                        for (unsigned int jDim = 0; jDim < dim; jDim++)
+                        for (size_type jDim = 0; jDim < dim; jDim++)
                           {
                             auto it = basisJacobianInvQuadStorageTmp.begin() +
                                       cellIndex * nDimSqxNumQuad +
@@ -1273,18 +1273,18 @@ namespace dftefe
                   cumulativeQuadPointsxnDofs * dim * dim;
                 const std::vector<double> &enrichHessAtQuadPts =
                   efeBDH->getEnrichmentHessian(cellIndex, quadRealPointsVec);
-                for (unsigned int iNode = 0; iNode < dofsPerCell; iNode++)
+                for (size_type iNode = 0; iNode < dofsPerCell; iNode++)
                   {
                     if (iNode < classicalDofsPerCell)
                       {
-                        for (unsigned int qPoint = 0; qPoint < nQuadPointInCell;
+                        for (size_type qPoint = 0; qPoint < nQuadPointInCell;
                              qPoint++)
                           {
                             auto shapeHessian =
                               dealiiFEValues.shape_hessian(iNode, qPoint);
-                            for (unsigned int iDim = 0; iDim < dim; iDim++)
+                            for (size_type iDim = 0; iDim < dim; iDim++)
                               {
-                                for (unsigned int jDim = 0; jDim < dim; jDim++)
+                                for (size_type jDim = 0; jDim < dim; jDim++)
                                   {
                                     auto it =
                                       basisHessianQuadStorageTmp.begin() +
@@ -1299,7 +1299,7 @@ namespace dftefe
                       }
                     else
                       {
-                        for (unsigned int qPoint = 0; qPoint < nQuadPointInCell;
+                        for (size_type qPoint = 0; qPoint < nQuadPointInCell;
                              qPoint++)
                           {
                             if (efeBDH->isOrthogonalized())
@@ -1309,9 +1309,9 @@ namespace dftefe
                                   "The hessian values are not calculated for OEFE. Contact developers for this.");
                               }
                             // enriched hessian function
-                            for (unsigned int iDim = 0; iDim < dim; iDim++)
+                            for (size_type iDim = 0; iDim < dim; iDim++)
                               {
-                                for (unsigned int jDim = 0; jDim < dim; jDim++)
+                                for (size_type jDim = 0; jDim < dim; jDim++)
                                   {
                                     auto it =
                                       basisHessianQuadStorageTmp.begin() +
@@ -2276,7 +2276,7 @@ namespace dftefe
         const std::vector<double> &         relativeTolerances,
         const std::vector<double> &         integralThresholds,
         const double                        smallestCellVolume,
-        const unsigned int                  maxRecursion,
+        const size_type                  maxRecursion,
         const BasisStorageAttributesBoolMap basisStorageAttributesBoolMap)
     {
       utils::throwException<utils::InvalidArgument>(

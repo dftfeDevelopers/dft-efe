@@ -700,7 +700,7 @@ namespace dftefe
       nuclearPotentialSolve(feBDNuclChargeStiffnessMatrixNumSol,
                             feBDNuclChargeRhsNumSol);
 
-      for (unsigned int iAtom = 0; iAtom < d_numAtoms; iAtom++)
+      for (size_type iAtom = 0; iAtom < d_numAtoms; iAtom++)
         {
           /* Change this to feBasisOperations for electrostaic basis with same
            * quadrulecontainer as hamiltonian*/
@@ -744,7 +744,7 @@ namespace dftefe
                       *d_linAlgOpContextHost);
 
       /*
-            for (unsigned int iAtom = 0; iAtom < d_numAtoms; iAtom++)
+            for (size_type iAtom = 0; iAtom < d_numAtoms; iAtom++)
               {
                 d_feBasisOpElectronic->interpolate(*d_nuclearChargesPotential[iAtom],
                                          *d_feBMNuclearCharge[iAtom],
@@ -1608,9 +1608,9 @@ namespace dftefe
               tciSpSumBZZCorrBSmearDiffVZZCorrVSmear = it->second;
             }
 
-          for (int iAtom = 0; iAtom < atomCoordinates.size(); iAtom++)
+          for (size_type iAtom = 0; iAtom < atomCoordinates.size(); iAtom++)
             {
-              for (int jAtom = 0; jAtom < atomCoordinates.size(); jAtom++)
+              for (size_type jAtom = 0; jAtom < atomCoordinates.size(); jAtom++)
                 {
                   double r, theta, phi;
                   atoms::convertCartesianToSpherical((atomCoordinates[iAtom] -
@@ -2072,7 +2072,7 @@ namespace dftefe
 
       d_nuclearChargeQuad.clear();
       d_nuclearChargeQuad.resize(d_numAtoms, 0);
-      for (unsigned int iAtom = 0; iAtom < d_numAtoms; iAtom++)
+      for (size_type iAtom = 0; iAtom < d_numAtoms; iAtom++)
         {
           std::shared_ptr<const utils::ScalarSpatialFunctionReal> smfunc =
             std::make_shared<const utils::SmearChargePotentialFunction>(
@@ -2241,7 +2241,7 @@ namespace dftefe
 
           auto jxwStorageNucl = d_feBDNuclearChargeRhs->getJxWInAllCells();
 
-          for (unsigned int iAtom = 0; iAtom < d_numAtoms; iAtom++)
+          for (size_type iAtom = 0; iAtom < d_numAtoms; iAtom++)
             {
               const utils::SmearChargeDensityFunction smfunc(
                 d_atomCoordinates[iAtom],
@@ -2310,7 +2310,7 @@ namespace dftefe
         {
           if (d_isTCIEnabled)
             {
-              for (unsigned int iAtom = 0; iAtom < d_numAtoms; iAtom++)
+              for (size_type iAtom = 0; iAtom < d_numAtoms; iAtom++)
                 {
                   double rc = d_fieldToTCIASplineMap.begin()
                                 ->second->smearedChargeRadius();
@@ -2327,7 +2327,7 @@ namespace dftefe
             }
           else
             {
-              // for (unsigned int iAtom = 0; iAtom < d_numAtoms; iAtom++)
+              // for (size_type iAtom = 0; iAtom < d_numAtoms; iAtom++)
               //   {
               //     const utils::SmearChargePotentialFunction smfunc(
               //       d_atomCoordinates[iAtom],
@@ -2356,7 +2356,7 @@ namespace dftefe
               std::vector<RealType> selfEnergyAtom(d_numAtoms, 0),
                 atomNuclearChargeQuad(d_numAtoms, 0);
 
-              for (unsigned int iAtom = 0; iAtom < d_numAtoms; iAtom++)
+              for (size_type iAtom = 0; iAtom < d_numAtoms; iAtom++)
                 {
                   smfuncDens.push_back(
                     std::make_shared<utils::SmearChargeDensityFunction>(
@@ -2380,7 +2380,7 @@ namespace dftefe
                 {
                   size_type numQuadInCell =
                     quadRuleContainerNucl->nCellQuadraturePoints(iCell);
-                  for (unsigned int iAtom = 0; iAtom < d_numAtoms; iAtom++)
+                  for (size_type iAtom = 0; iAtom < d_numAtoms; iAtom++)
                     {
                       std::vector<RealType> chargeDens = (*smfuncDens[iAtom])(
                         quadRuleContainerNucl->getCellRealPoints(iCell));
@@ -2416,7 +2416,7 @@ namespace dftefe
                 utils::mpi::MPISum,
                 d_feBMTotalCharge->getMPIPatternP2P()->mpiCommunicator());
 
-              for (unsigned int iAtom = 0; iAtom < d_numAtoms; iAtom++)
+              for (size_type iAtom = 0; iAtom < d_numAtoms; iAtom++)
                 {
                   selfEnergy += selfEnergyAtom[iAtom] *
                                 std::abs(d_atomCharges[iAtom] /

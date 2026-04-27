@@ -27,6 +27,7 @@
 #define dftefeAtomIdsPartition_h
 
 #include <utils/Point.h>
+#include <basis/Defaults.h>
 #include <utils/TypeConfig.h>
 #include <vector>
 #include <string>
@@ -44,7 +45,7 @@ namespace dftefe
      * i.e. memory layout should be  'locally owned enriched ids' should be
      * consecutive integers.
      */
-    template <unsigned int dim>
+    template <size_type dim>
     class AtomIdsPartition
     {
     public:

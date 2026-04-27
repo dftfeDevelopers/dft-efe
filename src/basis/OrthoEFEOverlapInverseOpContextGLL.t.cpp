@@ -683,9 +683,9 @@ namespace dftefe
                   linAlgOpContext);
               }
 
-            for (unsigned int iNode = 0; iNode < dofsPerCell; iNode++)
+            for (size_type iNode = 0; iNode < dofsPerCell; iNode++)
               {
-                for (unsigned int jNode = 0; jNode < dofsPerCell; jNode++)
+                for (size_type jNode = 0; jNode < dofsPerCell; jNode++)
                   {
                     *basisOverlapTmpIter = 0.0;
                     // Ni_classical* Ni_classical of the classicalBlockBasisData
@@ -1603,9 +1603,9 @@ namespace dftefe
              ->overlappingEnrichmentIdsInCells())
         {
           size_type nCellEnrichmentDofs = enrichmentVecInCell.size();
-          for (unsigned int j = 0; j < nCellEnrichmentDofs; j++)
+          for (size_type j = 0; j < nCellEnrichmentDofs; j++)
             {
-              for (unsigned int k = 0; k < nCellEnrichmentDofs; k++)
+              for (size_type k = 0; k < nCellEnrichmentDofs; k++)
                 {
                   *(basisOverlapEnrichmentBlockSTLTmp.data() +
                     enrichmentVecInCell[j] * d_nglobalEnrichmentIds +
@@ -1625,7 +1625,7 @@ namespace dftefe
         basisOverlapEnrichmentBlockSTLTmp.data(),
         basisOverlapEnrichmentBlockSTL.data(),
         basisOverlapEnrichmentBlockSTLTmp.size(),
-        utils::mpi::MPIDouble,
+        utils::mpi::Types<ValueTypeOperator>::getMPIDatatype(),
         utils::mpi::MPISum,
         d_feBasisManager->getMPIPatternP2P()->mpiCommunicator());
       std::pair<bool, std::string> mpiIsSuccessAndMsg =

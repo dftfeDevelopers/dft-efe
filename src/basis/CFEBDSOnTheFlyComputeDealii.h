@@ -106,7 +106,7 @@ namespace dftefe
         const std::vector<double> &         relativeTolerances,
         const std::vector<double> &         integralThresholds,
         const double                        smallestCellVolume,
-        const unsigned int                  maxRecursion,
+        const size_type                  maxRecursion,
         const BasisStorageAttributesBoolMap basisStorageAttributesBoolMap)
         override;
 

@@ -38,7 +38,7 @@ namespace dftefe
           const basis::FEBasisDataStorage<ValueTypeOperator, memorySpaceHost>>
                                  feBasisDataStorage,
         dealii::Quadrature<dim> &quadRuleDealii,
-        unsigned int &           num1DQuadPoints)
+        size_type &           num1DQuadPoints)
       {
         const quadrature::QuadratureRuleAttributes quadAttr =
           feBasisDataStorage->getQuadratureRuleContainer()
@@ -52,7 +52,7 @@ namespace dftefe
             quadratureFamily == quadrature::QuadratureFamily::GAUSS_SUBDIVIDED,
           "The quadrature rule has to be uniform quadrature like GAUSS , GLL or GAUSS_SUBDIVIDED for Dealii Matrix Free.");
 
-        num1DQuadPoints = (unsigned int)(std::cbrt(
+        num1DQuadPoints = (size_type)(std::cbrt(
           feBasisDataStorage->getQuadratureRuleContainer()
             ->nCellQuadraturePoints(0)));
 
@@ -208,7 +208,7 @@ namespace dftefe
         dim>(feBasisDataStorageStiffnessMatrix,
              d_dealiiQuadratureRuleVec[0],
              d_num1DQuadPointsStiffnessMatrix);
-      unsigned int count = 1;
+      size_type count = 1;
       auto         iter1 = feBasisDataStorageRhs.begin();
       d_num1DQuadPointsRhs.clear();
       d_nonTensorSructuredQuadeRhs.clear();
@@ -265,7 +265,7 @@ namespace dftefe
       auto endcPtr =
         d_dealiiMatrixFree->get_dof_handler(d_dofHandlerIndex).end();
 
-      unsigned int iCell = 0;
+      size_type iCell = 0;
       for (; cellPtr != endcPtr; ++cellPtr)
         if (cellPtr->is_locally_owned())
           {
@@ -650,7 +650,7 @@ namespace dftefe
                                     ValueTypeOperand,
                                     memorySpace,
                                     dim>::solve(const double absTolerance,
-                                                const unsigned int
+                                                const size_type
                                                   maxNumberIterations)
     {
       this->CGsolve(absTolerance, maxNumberIterations, true);
@@ -670,7 +670,7 @@ namespace dftefe
       dim>::AX(const dealii::MatrixFree<dim, double> &      matrixFreeData,
                distributedCPUVec<double> &                  dst,
                const distributedCPUVec<double> &            src,
-               const std::pair<unsigned int, unsigned int> &cell_range) const
+               const std::pair<size_type, size_type> &cell_range) const
     {
       dealii::VectorizedArray<double> quarter =
         dealii::make_vectorized_array(1.0 /* / (4.0 * M_PI)*/);
@@ -690,14 +690,14 @@ namespace dftefe
       basis::FEEvaluationWrapperBase &fe_eval =
         fe_eval_wrap.getFEEvaluationWrapperBase();
 
-      for (unsigned int cell = cell_range.first; cell < cell_range.second;
+      for (size_type cell = cell_range.first; cell < cell_range.second;
            ++cell)
         {
           fe_eval.reinit(cell);
           // fe_eval.gather_evaluate(src,dealii::EvaluationFlags::gradients);
           fe_eval.readDoFValues(src);
           fe_eval.evaluate(dealii::EvaluationFlags::gradients);
-          //  for (unsigned int q = 0; q < fe_eval.n_q_points; ++q)
+          //  for (size_type q = 0; q < fe_eval.n_q_points; ++q)
           //    {
           //      fe_eval.submit_gradient(fe_eval.get_gradient(q) * quarter, q);
           //    }
@@ -731,8 +731,8 @@ namespace dftefe
                                       quadrature,
                                       dealii::update_gradients |
                                         dealii::update_JxW_values);
-      const unsigned int     dofs_per_cell = dofHandler.get_fe().dofs_per_cell;
-      const unsigned int     num_quad_points = quadrature.size();
+      const size_type     dofs_per_cell = dofHandler.get_fe().dofs_per_cell;
+      const size_type     num_quad_points = quadrature.size();
       dealii::Vector<double> elementalDiagonalA(dofs_per_cell);
       std::vector<dealii::types::global_dof_index> local_dof_indices(
         dofs_per_cell);
@@ -749,8 +749,8 @@ namespace dftefe
             cell->get_dof_indices(local_dof_indices);
 
             elementalDiagonalA = 0.0;
-            for (unsigned int i = 0; i < dofs_per_cell; ++i)
-              for (unsigned int q_point = 0; q_point < num_quad_points;
+            for (size_type i = 0; i < dofs_per_cell; ++i)
+              for (size_type q_point = 0; q_point < num_quad_points;
                    ++q_point)
                 elementalDiagonalA(i) += /*(1.0 / (4.0 * M_PI)) **/
                   (fe_values.shape_grad(i, q_point) *
@@ -798,7 +798,7 @@ namespace dftefe
       // dst = src;
       // dst.scale(d_diagonalA);
 
-      for (unsigned int i = 0; i < dst.locally_owned_size(); i++)
+      for (size_type i = 0; i < dst.locally_owned_size(); i++)
         dst.local_element(i) =
           d_diagonalA.local_element(i) * src.local_element(i);
     }
@@ -855,7 +855,7 @@ namespace dftefe
       const dealii::DoFHandler<dim> &dofHandler =
         d_dealiiMatrixFree->get_dof_handler(d_dofHandlerIndex);
 
-      const unsigned int dofs_per_cell = dofHandler.get_fe().dofs_per_cell;
+      const size_type dofs_per_cell = dofHandler.get_fe().dofs_per_cell;
       typename dealii::DoFHandler<dim>::active_cell_iterator
         cell = dofHandler.begin_active(),
         endc = dofHandler.end();
@@ -895,14 +895,14 @@ namespace dftefe
         {
           dealii::VectorizedArray<double> quarter =
             dealii::make_vectorized_array(-1.0 /* / (4.0 * M_PI)*/);
-          for (unsigned int macrocell = 0;
+          for (size_type macrocell = 0;
                macrocell < d_dealiiMatrixFree->n_cell_batches();
                ++macrocell)
             {
               fe_eval.reinit(macrocell);
               fe_eval.readDoFValuesPlain(tempvec);
               fe_eval.evaluate(dealii::EvaluationFlags::gradients);
-              //  for (unsigned int q = 0; q < fe_eval.n_q_points; ++q)
+              //  for (size_type q = 0; q < fe_eval.n_q_points; ++q)
               //    {
               //      fe_eval.submit_gradient(-quarter *
               //      fe_eval.get_gradient(q), q);
@@ -913,8 +913,8 @@ namespace dftefe
             }
         }
 
-      unsigned int matrixFreeQuadratureComponentRhs = 1;
-      unsigned int nonTensorStructQuadInRhsCount    = 0;
+      size_type matrixFreeQuadratureComponentRhs = 1;
+      size_type nonTensorStructQuadInRhsCount    = 0;
       auto         iter = d_feBasisDataStorageRhs.begin();
       while (iter != d_feBasisDataStorageRhs.end())
         {
@@ -973,7 +973,7 @@ namespace dftefe
               dealii::AlignedVector<dealii::VectorizedArray<double>> rhoQuads(
                 fe_eval_density.totalNumberofQuadraturePoints(),
                 dealii::make_vectorized_array(0.0));
-              for (unsigned int macrocell = 0;
+              for (size_type macrocell = 0;
                    macrocell < d_dealiiMatrixFree->n_cell_batches();
                    ++macrocell)
                 {
@@ -982,30 +982,30 @@ namespace dftefe
                   std::fill(rhoQuads.begin(),
                             rhoQuads.end(),
                             dealii::make_vectorized_array(0.0));
-                  const unsigned int numSubCells =
+                  const size_type numSubCells =
                     d_dealiiMatrixFree->n_active_entries_per_cell_batch(
                       macrocell);
-                  for (unsigned int iSubCell = 0; iSubCell < numSubCells;
+                  for (size_type iSubCell = 0; iSubCell < numSubCells;
                        ++iSubCell)
                     {
                       subCellPtr = d_dealiiMatrixFree->get_cell_iterator(
                         macrocell, iSubCell, d_dofHandlerIndex);
                       dealii::CellId subCellId = subCellPtr->id();
-                      unsigned int   cellIndex =
+                      size_type   cellIndex =
                         d_cellIdToCellIndexMap[subCellId];
                       const double *tempVec =
                         inpRhs.find(iter->first)->second.data() +
                         cellIndex *
                           fe_eval_density.totalNumberofQuadraturePoints();
 
-                      for (unsigned int q = 0;
+                      for (size_type q = 0;
                            q < fe_eval_density.totalNumberofQuadraturePoints();
                            ++q)
                         rhoQuads[q][iSubCell] = tempVec[q];
                     }
 
 
-                  // for (unsigned int q = 0; q < fe_eval_density.n_q_points;
+                  // for (size_type q = 0; q < fe_eval_density.n_q_points;
                   // ++q)
                   //   {
                   //     fe_eval_density.submit_value(rhoQuads[q], q);
@@ -1061,7 +1061,7 @@ namespace dftefe
                                     ValueTypeOperand,
                                     memorySpace,
                                     dim>::CGsolve(const double absTolerance,
-                                                  const unsigned int
+                                                  const size_type
                                                        maxNumberIterations,
                                                   bool distributeFlag)
     {
@@ -1120,7 +1120,7 @@ namespace dftefe
           else
             {
               // gvec.equ(-1., rhs);
-              for (unsigned int i = 0; i < gvec.locally_owned_size(); i++)
+              for (size_type i = 0; i < gvec.locally_owned_size(); i++)
                 gvec.local_element(i) = -rhs.local_element(i);
             }
 
@@ -1166,7 +1166,7 @@ namespace dftefe
               DFTEFE_AssertWithMsg(std::abs(alpha) != 0., "Division by zero\n");
               alpha = gh / alpha;
 
-              for (unsigned int i = 0; i < x.locally_owned_size(); i++)
+              for (size_type i = 0; i < x.locally_owned_size(); i++)
                 x.local_element(i) += alpha * dvec.local_element(i);
               // x.add(alpha, dvec);
 
@@ -1330,7 +1330,7 @@ namespace dftefe
                                     memorySpace,
                                     dim>::CGsolveDevice(
       const double       absTolerance,
-      const unsigned int maxNumberIterations,
+      const size_type maxNumberIterations,
       bool               distributeFlag)
     {
       if constexpr (memorySpace != utils::MemorySpace::DEVICE)

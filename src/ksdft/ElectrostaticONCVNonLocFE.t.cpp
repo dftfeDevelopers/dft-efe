@@ -695,7 +695,7 @@ namespace dftefe
                     linearAlgebra::blasLapack::ScalarOp::Identity);
                 }
 
-              for (int i = 0; i < dotProds.size(); i++)
+              for (size_type i = 0; i < dotProds.size(); i++)
                 nonLocEnergy += dotProds[i] * 2 * occupationInBatch[i];
             }
         }

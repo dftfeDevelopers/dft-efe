@@ -302,13 +302,13 @@ namespace dftefe
             // const ValueTypeOperator *cumulativeClassicalBlockDofQuadPoints =
             //   basisDataInAllCellsClassicalBlock.data(); /*GLL Quad rule*/
 
-            // for (unsigned int iNode = 0; iNode < dofsPerCell; iNode++)
+            // for (size_type iNode = 0; iNode < dofsPerCell; iNode++)
             //   {
-            //     for (unsigned int jNode = 0; jNode < dofsPerCell; jNode++)
+            //     for (size_type jNode = 0; jNode < dofsPerCell; jNode++)
             //       {
             //         *basisOverlapTmpIter = 0.0;
             //         // Ni_classical* Ni_classical of the
-            //         classicalBlockBasisData for (unsigned int qPoint = 0;
+            //         classicalBlockBasisData for (size_type qPoint = 0;
             //              qPoint < nQuadPointInCellClassicalBlock;
             //              qPoint++)
             //           {

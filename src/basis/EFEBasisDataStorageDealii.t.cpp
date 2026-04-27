@@ -209,7 +209,7 @@ namespace dftefe
               {
                 // get the parametric points and jxw in each cell according to
                 // the attribute.
-                unsigned int                     cellIndex = 0;
+                size_type                     cellIndex = 0;
                 const std::vector<utils::Point> &cellParametricQuadPoints =
                   quadratureRuleContainer->getCellParametricPoints(cellIndex);
                 std::vector<dealii::Point<dim, double>>
@@ -421,10 +421,10 @@ namespace dftefe
               {
                 cellStartIdsBasisQuadStorage[cellIndex] =
                   cumulativeQuadPointsxnDofs;
-                for (unsigned int iNode = 0; iNode < classicalDofsPerCell;
+                for (size_type iNode = 0; iNode < classicalDofsPerCell;
                      iNode++)
                   {
-                    for (unsigned int qPoint = 0; qPoint < nQuadPointInCell;
+                    for (size_type qPoint = 0; qPoint < nQuadPointInCell;
                          qPoint++)
                       {
                         *(basisQuadStorageTmp.begin() +
@@ -448,11 +448,11 @@ namespace dftefe
                              cumulativeQuadPointsxnDofs,
                            classicalComponentInQuadValues);
                   }
-                for (unsigned int iNode = classicalDofsPerCell;
+                for (size_type iNode = classicalDofsPerCell;
                      iNode < dofsPerCell;
                      iNode++)
                   {
-                    for (unsigned int qPoint = 0; qPoint < nQuadPointInCell;
+                    for (size_type qPoint = 0; qPoint < nQuadPointInCell;
                          qPoint++)
                       {
                         *(basisQuadStorageTmp.begin() +
@@ -481,10 +481,10 @@ namespace dftefe
                   {
                     basisQuadStorageTmp.resize(dofsPerCell * nQuadPointInCell,
                                                ValueTypeBasisData(0));
-                    for (unsigned int iNode = 0; iNode < classicalDofsPerCell;
+                    for (size_type iNode = 0; iNode < classicalDofsPerCell;
                          iNode++)
                       {
-                        for (unsigned int qPoint = 0; qPoint < nQuadPointInCell;
+                        for (size_type qPoint = 0; qPoint < nQuadPointInCell;
                              qPoint++)
                           {
                             *(basisQuadStorageTmp.begin() +
@@ -510,15 +510,15 @@ namespace dftefe
                       }
                   }
 
-                for (unsigned int iNode = 0; iNode < dofsPerCell; iNode++)
+                for (size_type iNode = 0; iNode < dofsPerCell; iNode++)
                   {
-                    for (unsigned int jNode = 0; jNode < dofsPerCell; jNode++)
+                    for (size_type jNode = 0; jNode < dofsPerCell; jNode++)
                       {
                         *basisOverlapTmpIter = 0.0;
                         if (iNode < classicalDofsPerCell &&
                             jNode < classicalDofsPerCell)
                           {
-                            for (unsigned int qPoint = 0;
+                            for (size_type qPoint = 0;
                                  qPoint < nQuadPointInCell;
                                  qPoint++)
                               {
@@ -531,7 +531,7 @@ namespace dftefe
                         else if (iNode >= classicalDofsPerCell &&
                                  jNode < classicalDofsPerCell)
                           {
-                            for (unsigned int qPoint = 0;
+                            for (size_type qPoint = 0;
                                  qPoint < nQuadPointInCell;
                                  qPoint++)
                               {
@@ -551,7 +551,7 @@ namespace dftefe
                         else if (iNode < classicalDofsPerCell &&
                                  jNode >= classicalDofsPerCell)
                           {
-                            for (unsigned int qPoint = 0;
+                            for (size_type qPoint = 0;
                                  qPoint < nQuadPointInCell;
                                  qPoint++)
                               {
@@ -570,7 +570,7 @@ namespace dftefe
                           }
                         else
                           {
-                            for (unsigned int qPoint = 0;
+                            for (size_type qPoint = 0;
                                  qPoint < nQuadPointInCell;
                                  qPoint++)
                               {
@@ -604,15 +604,15 @@ namespace dftefe
               {
                 cellStartIdsBasisGradientQuadStorage[cellIndex] =
                   cumulativeQuadPointsxnDofs * dim;
-                for (unsigned int iNode = 0; iNode < classicalDofsPerCell;
+                for (size_type iNode = 0; iNode < classicalDofsPerCell;
                      iNode++)
                   {
-                    for (unsigned int qPoint = 0; qPoint < nQuadPointInCell;
+                    for (size_type qPoint = 0; qPoint < nQuadPointInCell;
                          qPoint++)
                       {
                         auto shapeGrad =
                           dealiiFEValues.shape_grad(iNode, qPoint);
-                        for (unsigned int iDim = 0; iDim < dim; iDim++)
+                        for (size_type iDim = 0; iDim < dim; iDim++)
                           {
                             auto it = basisGradientQuadStorageTmp.begin() +
                                       cumulativeQuadPointsxnDofs * dim +
@@ -640,11 +640,11 @@ namespace dftefe
                            classicalComponentInQuadGradients);
                   }
 
-                for (unsigned int iNode = classicalDofsPerCell;
+                for (size_type iNode = classicalDofsPerCell;
                      iNode < dofsPerCell;
                      iNode++)
                   {
-                    for (unsigned int qPoint = 0; qPoint < nQuadPointInCell;
+                    for (size_type qPoint = 0; qPoint < nQuadPointInCell;
                          qPoint++)
                       {
                         auto shapeGrad = efeBDH->getEnrichmentDerivative(
@@ -652,7 +652,7 @@ namespace dftefe
                           iNode - classicalDofsPerCell,
                           quadRealPointsVec[qPoint]);
                         // enriched gradient function call
-                        for (unsigned int iDim = 0; iDim < dim; iDim++)
+                        for (size_type iDim = 0; iDim < dim; iDim++)
                           {
                             auto it = basisGradientQuadStorageTmp.begin() +
                                       cumulativeQuadPointsxnDofs * dim +
@@ -678,18 +678,18 @@ namespace dftefe
               {
                 cellStartIdsBasisHessianQuadStorage[cellIndex] =
                   cumulativeQuadPointsxnDofs * dim * dim;
-                for (unsigned int iNode = 0; iNode < dofsPerCell; iNode++)
+                for (size_type iNode = 0; iNode < dofsPerCell; iNode++)
                   {
                     if (iNode < classicalDofsPerCell)
                       {
-                        for (unsigned int qPoint = 0; qPoint < nQuadPointInCell;
+                        for (size_type qPoint = 0; qPoint < nQuadPointInCell;
                              qPoint++)
                           {
                             auto shapeHessian =
                               dealiiFEValues.shape_hessian(iNode, qPoint);
-                            for (unsigned int iDim = 0; iDim < dim; iDim++)
+                            for (size_type iDim = 0; iDim < dim; iDim++)
                               {
-                                for (unsigned int jDim = 0; jDim < dim; jDim++)
+                                for (size_type jDim = 0; jDim < dim; jDim++)
                                   {
                                     auto it =
                                       basisHessianQuadStorageTmp.begin() +
@@ -708,7 +708,7 @@ namespace dftefe
                       }
                     else
                       {
-                        for (unsigned int qPoint = 0; qPoint < nQuadPointInCell;
+                        for (size_type qPoint = 0; qPoint < nQuadPointInCell;
                              qPoint++)
                           {
                             if (efeBDH->isOrthogonalized())
@@ -723,9 +723,9 @@ namespace dftefe
                               iNode - classicalDofsPerCell,
                               quadRealPointsVec[qPoint]);
                             // enriched hessian function
-                            for (unsigned int iDim = 0; iDim < dim; iDim++)
+                            for (size_type iDim = 0; iDim < dim; iDim++)
                               {
-                                for (unsigned int jDim = 0; jDim < dim; jDim++)
+                                for (size_type jDim = 0; jDim < dim; jDim++)
                                   {
                                     auto it =
                                       basisHessianQuadStorageTmp.begin() +
@@ -827,7 +827,7 @@ namespace dftefe
               {
                 // get the parametric points and jxw in each cell according to
                 // the attribute.
-                unsigned int                     cellIndex = 0;
+                size_type                     cellIndex = 0;
                 const std::vector<utils::Point> &cellParametricQuadPoints =
                   quadratureRuleContainer->getCellParametricPoints(cellIndex);
                 std::vector<dealii::Point<dim, double>>
@@ -948,15 +948,15 @@ namespace dftefe
                 basisGradientQuadStorageTmp.resize(dofsPerCell *
                                                      nQuadPointInCell * dim,
                                                    ValueTypeBasisData(0));
-                for (unsigned int iNode = 0; iNode < classicalDofsPerCell;
+                for (size_type iNode = 0; iNode < classicalDofsPerCell;
                      iNode++)
                   {
-                    for (unsigned int qPoint = 0; qPoint < nQuadPointInCell;
+                    for (size_type qPoint = 0; qPoint < nQuadPointInCell;
                          qPoint++)
                       {
                         auto shapeGrad =
                           dealiiFEValues.shape_grad(iNode, qPoint);
-                        for (unsigned int iDim = 0; iDim < dim; iDim++)
+                        for (size_type iDim = 0; iDim < dim; iDim++)
                           {
                             auto it = basisGradientQuadStorageTmp.begin() +
                                       qPoint * dim * dofsPerCell +
@@ -982,15 +982,15 @@ namespace dftefe
               }
 
 
-            for (unsigned int iNode = 0; iNode < dofsPerCell; iNode++)
+            for (size_type iNode = 0; iNode < dofsPerCell; iNode++)
               {
-                for (unsigned int jNode = 0; jNode < dofsPerCell; jNode++)
+                for (size_type jNode = 0; jNode < dofsPerCell; jNode++)
                   {
                     *basisGradNiGradNjTmpIter = 0.0;
                     if (iNode < classicalDofsPerCell &&
                         jNode < classicalDofsPerCell)
                       {
-                        for (unsigned int qPoint = 0; qPoint < nQuadPointInCell;
+                        for (size_type qPoint = 0; qPoint < nQuadPointInCell;
                              qPoint++)
                           {
                             *basisGradNiGradNjTmpIter +=
@@ -1002,7 +1002,7 @@ namespace dftefe
                     else if (iNode >= classicalDofsPerCell &&
                              jNode < classicalDofsPerCell)
                       {
-                        for (unsigned int qPoint = 0; qPoint < nQuadPointInCell;
+                        for (size_type qPoint = 0; qPoint < nQuadPointInCell;
                              qPoint++)
                           {
                             auto enrichmentDerivative =
@@ -1014,7 +1014,7 @@ namespace dftefe
                               dealiiFEValues.shape_grad(jNode, qPoint);
                             ValueTypeBasisData dotProd =
                               (ValueTypeBasisData)0.0;
-                            for (unsigned int k = 0; k < dim; k++)
+                            for (size_type k = 0; k < dim; k++)
                               {
                                 dotProd =
                                   dotProd +
@@ -1035,7 +1035,7 @@ namespace dftefe
                     else if (iNode < classicalDofsPerCell &&
                              jNode >= classicalDofsPerCell)
                       {
-                        for (unsigned int qPoint = 0; qPoint < nQuadPointInCell;
+                        for (size_type qPoint = 0; qPoint < nQuadPointInCell;
                              qPoint++)
                           {
                             auto enrichmentDerivative =
@@ -1047,7 +1047,7 @@ namespace dftefe
                               dealiiFEValues.shape_grad(iNode, qPoint);
                             ValueTypeBasisData dotProd =
                               (ValueTypeBasisData)0.0;
-                            for (unsigned int k = 0; k < dim; k++)
+                            for (size_type k = 0; k < dim; k++)
                               {
                                 dotProd =
                                   dotProd +
@@ -1067,7 +1067,7 @@ namespace dftefe
                       }
                     else
                       {
-                        for (unsigned int qPoint = 0; qPoint < nQuadPointInCell;
+                        for (size_type qPoint = 0; qPoint < nQuadPointInCell;
                              qPoint++)
                           {
                             auto enrichmentDerivativei =
@@ -1082,7 +1082,7 @@ namespace dftefe
                                 quadRealPointsVec[qPoint]);
                             ValueTypeBasisData dotProd =
                               (ValueTypeBasisData)0.0;
-                            for (unsigned int k = 0; k < dim; k++)
+                            for (size_type k = 0; k < dim; k++)
                               {
                                 dotProd =
                                   dotProd +
@@ -1391,10 +1391,10 @@ namespace dftefe
               {
                 cellStartIdsBasisQuadStorage[cellIndex] =
                   cumulativeQuadPointsxnDofs;
-                for (unsigned int iNode = 0; iNode < classicalDofsPerCell;
+                for (size_type iNode = 0; iNode < classicalDofsPerCell;
                      iNode++)
                   {
-                    for (unsigned int qPoint = 0; qPoint < nQuadPointInCell;
+                    for (size_type qPoint = 0; qPoint < nQuadPointInCell;
                          qPoint++)
                       {
                         *(basisQuadStorageTmp.begin() +
@@ -1418,11 +1418,11 @@ namespace dftefe
                              cumulativeQuadPointsxnDofs,
                            classicalComponentInQuadValues);
                   }
-                for (unsigned int iNode = classicalDofsPerCell;
+                for (size_type iNode = classicalDofsPerCell;
                      iNode < dofsPerCell;
                      iNode++)
                   {
-                    for (unsigned int qPoint = 0; qPoint < nQuadPointInCell;
+                    for (size_type qPoint = 0; qPoint < nQuadPointInCell;
                          qPoint++)
                       {
                         *(basisQuadStorageTmp.begin() +
@@ -1451,10 +1451,10 @@ namespace dftefe
                   {
                     basisQuadStorageTmp.resize(dofsPerCell * nQuadPointInCell,
                                                ValueTypeBasisData(0));
-                    for (unsigned int iNode = 0; iNode < classicalDofsPerCell;
+                    for (size_type iNode = 0; iNode < classicalDofsPerCell;
                          iNode++)
                       {
-                        for (unsigned int qPoint = 0; qPoint < nQuadPointInCell;
+                        for (size_type qPoint = 0; qPoint < nQuadPointInCell;
                              qPoint++)
                           {
                             *(basisQuadStorageTmp.begin() +
@@ -1479,15 +1479,15 @@ namespace dftefe
                                classicalComponentInQuadValues);
                       }
                   }
-                for (unsigned int iNode = 0; iNode < dofsPerCell; iNode++)
+                for (size_type iNode = 0; iNode < dofsPerCell; iNode++)
                   {
-                    for (unsigned int jNode = 0; jNode < dofsPerCell; jNode++)
+                    for (size_type jNode = 0; jNode < dofsPerCell; jNode++)
                       {
                         *basisOverlapTmpIter = 0.0;
                         if (iNode < classicalDofsPerCell &&
                             jNode < classicalDofsPerCell)
                           {
-                            for (unsigned int qPoint = 0;
+                            for (size_type qPoint = 0;
                                  qPoint < nQuadPointInCell;
                                  qPoint++)
                               {
@@ -1500,7 +1500,7 @@ namespace dftefe
                         else if (iNode >= classicalDofsPerCell &&
                                  jNode < classicalDofsPerCell)
                           {
-                            for (unsigned int qPoint = 0;
+                            for (size_type qPoint = 0;
                                  qPoint < nQuadPointInCell;
                                  qPoint++)
                               {
@@ -1520,7 +1520,7 @@ namespace dftefe
                         else if (iNode < classicalDofsPerCell &&
                                  jNode >= classicalDofsPerCell)
                           {
-                            for (unsigned int qPoint = 0;
+                            for (size_type qPoint = 0;
                                  qPoint < nQuadPointInCell;
                                  qPoint++)
                               {
@@ -1539,7 +1539,7 @@ namespace dftefe
                           }
                         else
                           {
-                            for (unsigned int qPoint = 0;
+                            for (size_type qPoint = 0;
                                  qPoint < nQuadPointInCell;
                                  qPoint++)
                               {
@@ -1573,15 +1573,15 @@ namespace dftefe
               {
                 cellStartIdsBasisGradientQuadStorage[cellIndex] =
                   cumulativeQuadPointsxnDofs * dim;
-                for (unsigned int iNode = 0; iNode < classicalDofsPerCell;
+                for (size_type iNode = 0; iNode < classicalDofsPerCell;
                      iNode++)
                   {
-                    for (unsigned int qPoint = 0; qPoint < nQuadPointInCell;
+                    for (size_type qPoint = 0; qPoint < nQuadPointInCell;
                          qPoint++)
                       {
                         auto shapeGrad =
                           dealiiFEValues.shape_grad(iNode, qPoint);
-                        for (unsigned int iDim = 0; iDim < dim; iDim++)
+                        for (size_type iDim = 0; iDim < dim; iDim++)
                           {
                             auto it = basisGradientQuadStorageTmp.begin() +
                                       cumulativeQuadPointsxnDofs * dim +
@@ -1609,11 +1609,11 @@ namespace dftefe
                            classicalComponentInQuadGradients);
                   }
 
-                for (unsigned int iNode = classicalDofsPerCell;
+                for (size_type iNode = classicalDofsPerCell;
                      iNode < dofsPerCell;
                      iNode++)
                   {
-                    for (unsigned int qPoint = 0; qPoint < nQuadPointInCell;
+                    for (size_type qPoint = 0; qPoint < nQuadPointInCell;
                          qPoint++)
                       {
                         auto shapeGrad = efeBDH->getEnrichmentDerivative(
@@ -1621,7 +1621,7 @@ namespace dftefe
                           iNode - classicalDofsPerCell,
                           quadRealPointsVec[qPoint]);
                         // enriched gradient function call
-                        for (unsigned int iDim = 0; iDim < dim; iDim++)
+                        for (size_type iDim = 0; iDim < dim; iDim++)
                           {
                             auto it = basisGradientQuadStorageTmp.begin() +
                                       cumulativeQuadPointsxnDofs * dim +
@@ -1647,18 +1647,18 @@ namespace dftefe
               {
                 cellStartIdsBasisHessianQuadStorage[cellIndex] =
                   cumulativeQuadPointsxnDofs * dim * dim;
-                for (unsigned int iNode = 0; iNode < dofsPerCell; iNode++)
+                for (size_type iNode = 0; iNode < dofsPerCell; iNode++)
                   {
                     if (iNode < classicalDofsPerCell)
                       {
-                        for (unsigned int qPoint = 0; qPoint < nQuadPointInCell;
+                        for (size_type qPoint = 0; qPoint < nQuadPointInCell;
                              qPoint++)
                           {
                             auto shapeHessian =
                               dealiiFEValues.shape_hessian(iNode, qPoint);
-                            for (unsigned int iDim = 0; iDim < dim; iDim++)
+                            for (size_type iDim = 0; iDim < dim; iDim++)
                               {
-                                for (unsigned int jDim = 0; jDim < dim; jDim++)
+                                for (size_type jDim = 0; jDim < dim; jDim++)
                                   {
                                     auto it =
                                       basisHessianQuadStorageTmp.begin() +
@@ -1677,7 +1677,7 @@ namespace dftefe
                       }
                     else
                       {
-                        for (unsigned int qPoint = 0; qPoint < nQuadPointInCell;
+                        for (size_type qPoint = 0; qPoint < nQuadPointInCell;
                              qPoint++)
                           {
                             if (efeBDH->isOrthogonalized())
@@ -1692,9 +1692,9 @@ namespace dftefe
                               iNode - classicalDofsPerCell,
                               quadRealPointsVec[qPoint]);
                             // enriched hessian function
-                            for (unsigned int iDim = 0; iDim < dim; iDim++)
+                            for (size_type iDim = 0; iDim < dim; iDim++)
                               {
-                                for (unsigned int jDim = 0; jDim < dim; jDim++)
+                                for (size_type jDim = 0; jDim < dim; jDim++)
                                   {
                                     auto it =
                                       basisHessianQuadStorageTmp.begin() +
@@ -1897,15 +1897,15 @@ namespace dftefe
                 basisGradientQuadStorageTmp.resize(dofsPerCell *
                                                      nQuadPointInCell * dim,
                                                    ValueTypeBasisData(0));
-                for (unsigned int iNode = 0; iNode < classicalDofsPerCell;
+                for (size_type iNode = 0; iNode < classicalDofsPerCell;
                      iNode++)
                   {
-                    for (unsigned int qPoint = 0; qPoint < nQuadPointInCell;
+                    for (size_type qPoint = 0; qPoint < nQuadPointInCell;
                          qPoint++)
                       {
                         auto shapeGrad =
                           dealiiFEValues.shape_grad(iNode, qPoint);
-                        for (unsigned int iDim = 0; iDim < dim; iDim++)
+                        for (size_type iDim = 0; iDim < dim; iDim++)
                           {
                             auto it = basisGradientQuadStorageTmp.begin() +
                                       qPoint * dim * dofsPerCell +
@@ -1930,15 +1930,15 @@ namespace dftefe
                        classicalComponentInQuadGradients);
               }
 
-            for (unsigned int iNode = 0; iNode < dofsPerCell; iNode++)
+            for (size_type iNode = 0; iNode < dofsPerCell; iNode++)
               {
-                for (unsigned int jNode = 0; jNode < dofsPerCell; jNode++)
+                for (size_type jNode = 0; jNode < dofsPerCell; jNode++)
                   {
                     *basisGradNiGradNjTmpIter = 0.0;
                     if (iNode < classicalDofsPerCell &&
                         jNode < classicalDofsPerCell)
                       {
-                        for (unsigned int qPoint = 0; qPoint < nQuadPointInCell;
+                        for (size_type qPoint = 0; qPoint < nQuadPointInCell;
                              qPoint++)
                           {
                             *basisGradNiGradNjTmpIter +=
@@ -1950,7 +1950,7 @@ namespace dftefe
                     else if (iNode >= classicalDofsPerCell &&
                              jNode < classicalDofsPerCell)
                       {
-                        for (unsigned int qPoint = 0; qPoint < nQuadPointInCell;
+                        for (size_type qPoint = 0; qPoint < nQuadPointInCell;
                              qPoint++)
                           {
                             auto enrichmentDerivative =
@@ -1962,7 +1962,7 @@ namespace dftefe
                               dealiiFEValues.shape_grad(jNode, qPoint);
                             ValueTypeBasisData dotProd =
                               (ValueTypeBasisData)0.0;
-                            for (unsigned int k = 0; k < dim; k++)
+                            for (size_type k = 0; k < dim; k++)
                               {
                                 dotProd =
                                   dotProd +
@@ -1983,7 +1983,7 @@ namespace dftefe
                     else if (iNode < classicalDofsPerCell &&
                              jNode >= classicalDofsPerCell)
                       {
-                        for (unsigned int qPoint = 0; qPoint < nQuadPointInCell;
+                        for (size_type qPoint = 0; qPoint < nQuadPointInCell;
                              qPoint++)
                           {
                             auto enrichmentDerivative =
@@ -1995,7 +1995,7 @@ namespace dftefe
                               dealiiFEValues.shape_grad(iNode, qPoint);
                             ValueTypeBasisData dotProd =
                               (ValueTypeBasisData)0.0;
-                            for (unsigned int k = 0; k < dim; k++)
+                            for (size_type k = 0; k < dim; k++)
                               {
                                 dotProd =
                                   dotProd +
@@ -2015,7 +2015,7 @@ namespace dftefe
                       }
                     else
                       {
-                        for (unsigned int qPoint = 0; qPoint < nQuadPointInCell;
+                        for (size_type qPoint = 0; qPoint < nQuadPointInCell;
                              qPoint++)
                           {
                             auto enrichmentDerivativei =
@@ -2030,7 +2030,7 @@ namespace dftefe
                                 quadRealPointsVec[qPoint]);
                             ValueTypeBasisData dotProd =
                               (ValueTypeBasisData)0.0;
-                            for (unsigned int k = 0; k < dim; k++)
+                            for (size_type k = 0; k < dim; k++)
                               {
                                 dotProd =
                                   dotProd +
@@ -2923,7 +2923,7 @@ namespace dftefe
         const std::vector<double> &         relativeTolerances,
         const std::vector<double> &         integralThresholds,
         const double                        smallestCellVolume,
-        const unsigned int                  maxRecursion,
+        const size_type                  maxRecursion,
         const BasisStorageAttributesBoolMap basisStorageAttributesBoolMap)
     {
       d_evaluateBasisData = true;

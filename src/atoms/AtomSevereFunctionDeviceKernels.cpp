@@ -37,36 +37,18 @@ namespace dftefe
     {
       DFTEFE_CREATE_KERNEL(
         void,
-        tileCoordsKernel,
-        {
-          const size_type total = numEnrich * numPoints * dim;
-          for (size_type i = globalThreadId; i < total;
-               i += nThreadsPerBlock * nThreadBlock)
-            tiled[i] = src[i % (numPoints * dim)];
-        },
-        const size_type numEnrich,
-        const size_type numPoints,
-        const size_type dim,
-        const double *  src,
-        double *        tiled);
-
-      DFTEFE_CREATE_KERNEL(
-        void,
-        accumPowKernel,
+        addPowKernel,
         {
           for (size_type iPoint = globalThreadId; iPoint < numPoints;
                iPoint += nThreadsPerBlock * nThreadBlock)
             {
               double s = 0.0;
-              for (size_type e = 0; e < numEnrich; ++e)
-                for (size_type k = 0; k < nComp; ++k)
-                  s += pow(values[e * numPoints * nComp + iPoint * nComp + k],
-                           static_cast<double>(power));
-              q[iPoint] = constant * s;
+              for (size_type k = 0; k < nComp; ++k)
+                s += pow(values[iPoint * nComp + k], static_cast<double>(power));
+              q[iPoint] += constant * s;
             }
         },
         const size_type numPoints,
-        const size_type numEnrich,
         const size_type nComp,
         const size_type power,
         const double    constant,
@@ -96,61 +78,57 @@ namespace dftefe
       const size_type nComp = (d_derivativeType == 1) ? d_dim : 1;
       const size_type E     = d_numEnrichmentFuncTotal;
 
-      if (d_pointsTiled.size() != E * numPoints * d_dim)
-        d_pointsTiled.resize(E * numPoints * d_dim);
-      if (d_values.size() != E * numPoints * nComp)
-        d_values.resize(E * numPoints * nComp);
+      utils::MemoryStorage<double, utils::MemorySpace::DEVICE> d_values;
+      if (d_values.size() != numPoints * nComp)
+        d_values.resize(numPoints * nComp);
 
-      const size_type blockSize = utils::DEVICE_BLOCK_SIZE;
-      const size_type tileGrid =
-        (E * numPoints * d_dim + blockSize - 1) / blockSize;
-      DFTEFE_LAUNCH_KERNEL(tileCoordsKernel,
-                           tileGrid,
-                           blockSize,
-                           0,
-                           E,
-                           numPoints,
-                           d_dim,
-                           t,
-                           d_pointsTiled.data());
-
-      std::vector<size_type> pointsPerEnrichId(E, numPoints);
+      utils::deviceSetValue(q, 0.0, numPoints);
 
       utils::throwException(
         d_linAlgOpContext != nullptr,
         "AtomSevereFunction::evalDevice requires a non-null LinAlgOpContext.");
-      if (d_derivativeType == 0)
-        basis::EnrichmentDataEvalKernels<
-          utils::MemorySpace::DEVICE>::getEnrichmentValues(E,
-                                                           pointsPerEnrichId,
-                                                           d_sphericalDataVecAll,
-                                                           d_pointsTiled.data(),
-                                                           d_originsFlat.data(),
-                                                           d_values.data(),
-                                                           *d_linAlgOpContext);
-      else
-        basis::EnrichmentDataEvalKernels<
-          utils::MemorySpace::DEVICE>::getEnrichmentGradients(
-          E,
-          pointsPerEnrichId,
-          d_sphericalDataVecAll,
-          d_pointsTiled.data(),
-          d_originsFlat.data(),
-          d_values.data(),
-          *d_linAlgOpContext);
 
-      const size_type accumGrid = (numPoints + blockSize - 1) / blockSize;
-      DFTEFE_LAUNCH_KERNEL(accumPowKernel,
-                           accumGrid,
-                           blockSize,
-                           0,
-                           numPoints,
-                           E,
-                           nComp,
-                           d_sphericalValPower,
-                           d_constant,
-                           d_values.data(),
-                           q);
+      const std::vector<size_type> pointsPerEnrich(1, numPoints);
+      const size_type              blockSize = utils::DEVICE_BLOCK_SIZE;
+      const size_type addGrid = (numPoints + blockSize - 1) / blockSize;
+
+      for (size_type e = 0; e < E; ++e)
+        {
+          const std::vector<std::shared_ptr<atoms::SphericalData>> singleVec = {
+            d_sphericalDataVecAll[e]};
+          if (d_derivativeType == 0)
+            basis::EnrichmentDataEvalKernels<
+              utils::MemorySpace::DEVICE>::getEnrichmentValues(1,
+                                                               pointsPerEnrich,
+                                                               singleVec,
+                                                               t,
+                                                               d_originsFlat
+                                                                   .data() +
+                                                                 e * d_dim,
+                                                               d_values.data(),
+                                                               *d_linAlgOpContext);
+          else
+            basis::EnrichmentDataEvalKernels<
+              utils::MemorySpace::DEVICE>::getEnrichmentGradients(
+              1,
+              pointsPerEnrich,
+              singleVec,
+              t,
+              d_originsFlat.data() + e * d_dim,
+              d_values.data(),
+              *d_linAlgOpContext);
+
+          DFTEFE_LAUNCH_KERNEL(addPowKernel,
+                               addGrid,
+                               blockSize,
+                               0,
+                               numPoints,
+                               nComp,
+                               d_sphericalValPower,
+                               d_constant,
+                               d_values.data(),
+                               q);
+        }
     }
 
   } // namespace atoms

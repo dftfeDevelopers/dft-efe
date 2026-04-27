@@ -487,7 +487,7 @@ namespace dftefe
       d_p.registerEnd("Rhs Computation");
       d_p.print();
 
-      // for (unsigned int i = 0 ; i < d_b.locallyOwnedSize() ; i++)
+      // for (size_type i = 0 ; i < d_b.locallyOwnedSize() ; i++)
       //   {
       //     std::cout << i  << " " << *(rhsNHDB.data()+i) << " \t ";
       //   }

@@ -221,7 +221,7 @@ namespace dftefe
                 constraintsDataIn.getConstraintEntries(lineDof);
 
               bool isConstraintRhsExpandingOutOfIndexSet = false;
-              for (unsigned int j = 0; j < rowData->size(); ++j)
+              for (size_type j = 0; j < rowData->size(); ++j)
                 {
                   if (!(isGhostEntry((*rowData)[j].first) ||
                         inLocallyOwnedRanges((*rowData)[j].first)))
@@ -260,7 +260,7 @@ namespace dftefe
                 constraintsDataIn.getConstraintEntries(lineDof);
 
               bool isConstraintRhsExpandingOutOfIndexSet = false;
-              for (unsigned int j = 0; j < rowData->size(); ++j)
+              for (size_type j = 0; j < rowData->size(); ++j)
                 {
                   if (!(isGhostEntry((*rowData)[j].first) ||
                         inLocallyOwnedRanges((*rowData)[j].first)))
@@ -324,7 +324,7 @@ namespace dftefe
                 this->getConstraintEntries(lineDof);
 
               bool isConstraintRhsExpandingOutOfIndexSet = false;
-              for (unsigned int j = 0; j < rowData->size(); ++j)
+              for (size_type j = 0; j < rowData->size(); ++j)
                 {
                   if (!(isGhostEntry((*rowData)[j].first) ||
                         inLocallyOwnedRanges((*rowData)[j].first)))
@@ -344,7 +344,7 @@ namespace dftefe
               rowConstraintsIdsGlobalTmp.push_back(lineDof);
               constraintsInhomogenitiesTmp.push_back(getInhomogeneity(lineDof));
               rowConstraintsSizesTmp.push_back(rowData->size());
-              for (unsigned int j = 0; j < rowData->size(); ++j)
+              for (size_type j = 0; j < rowData->size(); ++j)
                 {
                   columnConstraintsIdsGlobalTmp.push_back((*rowData)[j].first);
                   columnConstraintsIdsLocalTmp.push_back(
@@ -373,7 +373,7 @@ namespace dftefe
                 this->getConstraintEntries(lineDof);
 
               bool isConstraintRhsExpandingOutOfIndexSet = false;
-              for (unsigned int j = 0; j < rowData->size(); ++j)
+              for (size_type j = 0; j < rowData->size(); ++j)
                 {
                   if (!(isGhostEntry((*rowData)[j].first) ||
                         inLocallyOwnedRanges((*rowData)[j].first)))
@@ -391,7 +391,7 @@ namespace dftefe
               rowConstraintsIdsGlobalTmp.push_back(lineDof);
               constraintsInhomogenitiesTmp.push_back(getInhomogeneity(lineDof));
               rowConstraintsSizesTmp.push_back(rowData->size());
-              for (unsigned int j = 0; j < rowData->size(); ++j)
+              for (size_type j = 0; j < rowData->size(); ++j)
                 {
                   columnConstraintsIdsGlobalTmp.push_back((*rowData)[j].first);
                   columnConstraintsIdsLocalTmp.push_back(

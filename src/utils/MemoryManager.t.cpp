@@ -44,7 +44,7 @@ namespace dftefe
       if (size > std::numeric_limits<size_type>::max())
       {
         utils::throwException(false,
-                              "Size to be allocated more than the unsigned int.");
+                              "Size to be allocated more than the dftefe::size_type.");
       }
       if (size > 0)
         *ptr = new ValueType[size];
@@ -89,7 +89,7 @@ namespace dftefe
       if (size > std::numeric_limits<size_type>::max())
       {
         utils::throwException(false,
-                              "Size to be allocated more than the unsigned int.");
+                              "Size to be allocated more than the dftefe::size_type.");
       }
       if (size > 0)
         hostPinnedMalloc((void **)ptr, size * sizeof(ValueType));
@@ -133,7 +133,7 @@ namespace dftefe
       if (size > std::numeric_limits<size_type>::max())
       {
         utils::throwException(false,
-                              "Size to be allocated more than the unsigned int.");
+                              "Size to be allocated more than the dftefe::size_type.");
       }
       if (size > 0)
         deviceMalloc((void **)ptr, size * sizeof(ValueType));

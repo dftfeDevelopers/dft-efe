@@ -492,9 +492,9 @@ namespace dftefe
                ->overlappingEnrichmentIdsInCells())
           {
             size_type nCellEnrichmentDofs = enrichmentVecInCell.size();
-            for (unsigned int j = 0; j < nCellEnrichmentDofs; j++)
+            for (size_type j = 0; j < nCellEnrichmentDofs; j++)
               {
-                for (unsigned int k = 0; k < nCellEnrichmentDofs; k++)
+                for (size_type k = 0; k < nCellEnrichmentDofs; k++)
                   {
                     *(hamEnrichmentBlockSTLTmp.data() +
                       enrichmentVecInCell[j] * nglobalEnrichmentIds +
@@ -1225,7 +1225,7 @@ namespace dftefe
 
       HamiltonianComponentsOperations<ValueTypeOperator, memorySpace> op;
 
-      for (unsigned int i = 0; i < hamiltonianComponentsVec.size(); ++i)
+      for (size_type i = 0; i < hamiltonianComponentsVec.size(); ++i)
         {
           op.addLocalComponent(d_hamiltonianInAllCells,
                                hamiltonianComponentsVec[i],
@@ -1378,7 +1378,7 @@ namespace dftefe
       if (!d_useOptimizedImplement)
         {
           // TODO : this will not work for types other than double.
-          for (unsigned int i = 0; i < d_hamiltonianComponentsVec.size(); ++i)
+          for (size_type i = 0; i < d_hamiltonianComponentsVec.size(); ++i)
             {
               const Hamiltonian<ValueTypeOperand, memorySpace> &b =
                 *(std::get<

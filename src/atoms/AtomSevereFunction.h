@@ -93,9 +93,8 @@ namespace dftefe
       size_type                                   d_numEnrichmentFuncTotal;
 
       linearAlgebra::LinAlgOpContext<memorySpace> *d_linAlgOpContext;
-      mutable utils::MemoryStorage<double, memorySpace> d_pointsTiled;
-      mutable utils::MemoryStorage<double, memorySpace> d_values;
-      utils::MemoryStorage<double, memorySpace>         d_originsFlat;
+      utils::MemoryStorage<double, memorySpace>   d_originsFlat;
+      //mutable utils::MemoryStorage<double, memorySpace> d_values;
     };
 
   } // namespace atoms

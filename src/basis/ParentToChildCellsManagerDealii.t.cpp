@@ -4,16 +4,16 @@ namespace dftefe
 {
   namespace basis
   {
-    template <unsigned int dim>
+    template <size_type dim>
     ParentToChildCellsManagerDealii<dim>::ParentToChildCellsManagerDealii()
       : d_triangulationDealiiSerialVector(0)
     {}
 
-    template <unsigned int dim>
+    template <size_type dim>
     ParentToChildCellsManagerDealii<dim>::~ParentToChildCellsManagerDealii()
     {}
 
-    template <unsigned int dim>
+    template <size_type dim>
     std::vector<std::shared_ptr<const TriangulationCellBase>>
     ParentToChildCellsManagerDealii<dim>::createChildCells(
       const TriangulationCellBase &parentCell)
@@ -34,7 +34,7 @@ namespace dftefe
 
       TriangulationBase::const_TriangulationCellIterator cellIter =
         triangulationDealiiSerial->beginLocal();
-      unsigned int iCell = 0;
+      size_type iCell = 0;
       for (; cellIter != triangulationDealiiSerial->endLocal(); ++cellIter)
         {
           returnValue[iCell] = *cellIter;
@@ -44,7 +44,7 @@ namespace dftefe
       return returnValue;
     }
 
-    template <unsigned int dim>
+    template <size_type dim>
     void
     ParentToChildCellsManagerDealii<dim>::popLast()
     {

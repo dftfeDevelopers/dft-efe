@@ -70,7 +70,7 @@ namespace dftefe
           d_numContiguousRanges = d_contiguousRanges.size() / 2;
           d_numEntriesBefore.resize(d_numContiguousRanges, 0);
           size_type cumulativeEntries = 0;
-          for (unsigned int i = 0; i < d_numContiguousRanges; ++i)
+          for (size_type i = 0; i < d_numContiguousRanges; ++i)
             {
               d_numEntriesBefore[i] = cumulativeEntries;
               cumulativeEntries +=

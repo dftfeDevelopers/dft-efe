@@ -30,13 +30,13 @@ namespace dftefe
   namespace basis
   {
     template <int          FEOrder,
-              unsigned int num_1d_quadPoints,
-              unsigned int n_components>
+              size_type num_1d_quadPoints,
+              size_type n_components>
     FEEvaluationWrapperDerived<FEOrder, num_1d_quadPoints, n_components>::
       FEEvaluationWrapperDerived(
         const dealii::MatrixFree<3, double> &matrixFreeData,
-        const unsigned int                   matrixFreeVectorComponent,
-        const unsigned int                   matrixFreeQuadratureComponent)
+        const size_type                   matrixFreeVectorComponent,
+        const size_type                   matrixFreeQuadratureComponent)
     {
       d_dealiiFEEvaluation = std::make_unique<
         dealii::FEEvaluation<3, FEOrder, num_1d_quadPoints, n_components>>(
@@ -46,8 +46,8 @@ namespace dftefe
     }
 
     template <int          FEOrder,
-              unsigned int num_1d_quadPoints,
-              unsigned int n_components>
+              size_type num_1d_quadPoints,
+              size_type n_components>
     FEEvaluationWrapperDerived<FEOrder, num_1d_quadPoints, n_components>::
       ~FEEvaluationWrapperDerived()
     {
@@ -58,9 +58,9 @@ namespace dftefe
     {}
 
     template <int          FEOrder,
-              unsigned int num_1d_quadPoints,
-              unsigned int n_components>
-    unsigned int
+              size_type num_1d_quadPoints,
+              size_type n_components>
+    size_type
     FEEvaluationWrapperDerived<FEOrder, num_1d_quadPoints, n_components>::
       totalNumberofQuadraturePoints()
     {
@@ -68,17 +68,17 @@ namespace dftefe
     }
 
     template <int          FEOrder,
-              unsigned int num_1d_quadPoints,
-              unsigned int n_components>
+              size_type num_1d_quadPoints,
+              size_type n_components>
     void
     FEEvaluationWrapperDerived<FEOrder, num_1d_quadPoints, n_components>::
-      reinit(const unsigned int macrocell)
+      reinit(const size_type macrocell)
     {
       d_dealiiFEEvaluation->reinit(macrocell);
     }
     template <int          FEOrder,
-              unsigned int num_1d_quadPoints,
-              unsigned int n_components>
+              size_type num_1d_quadPoints,
+              size_type n_components>
     void
     FEEvaluationWrapperDerived<FEOrder, num_1d_quadPoints, n_components>::
       readDoFValues(const distributedCPUVec<double> &tempvec)
@@ -86,8 +86,8 @@ namespace dftefe
       d_dealiiFEEvaluation->read_dof_values(tempvec);
     }
     template <int          FEOrder,
-              unsigned int num_1d_quadPoints,
-              unsigned int n_components>
+              size_type num_1d_quadPoints,
+              size_type n_components>
     void
     FEEvaluationWrapperDerived<FEOrder, num_1d_quadPoints, n_components>::
       readDoFValuesPlain(const distributedCPUVec<double> &tempvec)
@@ -95,8 +95,8 @@ namespace dftefe
       d_dealiiFEEvaluation->read_dof_values_plain(tempvec);
     }
     template <int          FEOrder,
-              unsigned int num_1d_quadPoints,
-              unsigned int n_components>
+              size_type num_1d_quadPoints,
+              size_type n_components>
     void
     FEEvaluationWrapperDerived<FEOrder, num_1d_quadPoints, n_components>::
       evaluate(dealii::EvaluationFlags::EvaluationFlags evaluateFlags)
@@ -106,14 +106,14 @@ namespace dftefe
 
 
     template <int          FEOrder,
-              unsigned int num_1d_quadPoints,
-              unsigned int n_components>
+              size_type num_1d_quadPoints,
+              size_type n_components>
     void
     FEEvaluationWrapperDerived<FEOrder, num_1d_quadPoints, n_components>::
       submitInterpolatedGradientsAndMultiply(
         dealii::VectorizedArray<double> &alpha)
     {
-      for (unsigned int q = 0; q < d_dealiiFEEvaluation->n_q_points; ++q)
+      for (size_type q = 0; q < d_dealiiFEEvaluation->n_q_points; ++q)
         {
           d_dealiiFEEvaluation->submit_gradient(
             alpha * d_dealiiFEEvaluation->get_gradient(q), q);
@@ -121,14 +121,14 @@ namespace dftefe
     }
 
     template <int          FEOrder,
-              unsigned int num_1d_quadPoints,
-              unsigned int n_components>
+              size_type num_1d_quadPoints,
+              size_type n_components>
     void
     FEEvaluationWrapperDerived<FEOrder, num_1d_quadPoints, n_components>::
       submitInterpolatedValuesAndMultiply(
         dealii::VectorizedArray<double> &alpha)
     {
-      for (unsigned int q = 0; q < d_dealiiFEEvaluation->n_q_points; ++q)
+      for (size_type q = 0; q < d_dealiiFEEvaluation->n_q_points; ++q)
         {
           d_dealiiFEEvaluation->submit_value(
             alpha * d_dealiiFEEvaluation->get_value(q), q);
@@ -136,13 +136,13 @@ namespace dftefe
     }
 
     template <int          FEOrder,
-              unsigned int num_1d_quadPoints,
-              unsigned int n_components>
+              size_type num_1d_quadPoints,
+              size_type n_components>
     void
     FEEvaluationWrapperDerived<FEOrder, num_1d_quadPoints, n_components>::
       submitInterpolatedValuesAndMultiplySquared()
     {
-      for (unsigned int q = 0; q < d_dealiiFEEvaluation->n_q_points; ++q)
+      for (size_type q = 0; q < d_dealiiFEEvaluation->n_q_points; ++q)
         {
           d_dealiiFEEvaluation->submit_value(
             d_dealiiFEEvaluation->get_value(q) *
@@ -154,14 +154,14 @@ namespace dftefe
 
 
     template <int          FEOrder,
-              unsigned int num_1d_quadPoints,
-              unsigned int n_components>
+              size_type num_1d_quadPoints,
+              size_type n_components>
     void
     FEEvaluationWrapperDerived<FEOrder, num_1d_quadPoints, n_components>::
       submitInterpolatedValuesAndMultiply(
         dealii::AlignedVector<dealii::VectorizedArray<double>> &alpha)
     {
-      for (unsigned int q = 0; q < d_dealiiFEEvaluation->n_q_points; ++q)
+      for (size_type q = 0; q < d_dealiiFEEvaluation->n_q_points; ++q)
         {
           d_dealiiFEEvaluation->submit_value(
             alpha[q] * d_dealiiFEEvaluation->get_value(q), q);
@@ -169,8 +169,8 @@ namespace dftefe
     }
 
     template <int          FEOrder,
-              unsigned int num_1d_quadPoints,
-              unsigned int n_components>
+              size_type num_1d_quadPoints,
+              size_type n_components>
     void
     FEEvaluationWrapperDerived<FEOrder, num_1d_quadPoints, n_components>::
       submitValues(
@@ -179,15 +179,15 @@ namespace dftefe
           dealii::Tensor<1, 3, dealii::VectorizedArray<double>>> &alpha)
     {
       if constexpr (n_components == 3)
-        for (unsigned int q = 0; q < d_dealiiFEEvaluation->n_q_points; ++q)
+        for (size_type q = 0; q < d_dealiiFEEvaluation->n_q_points; ++q)
           {
             d_dealiiFEEvaluation->submit_value(scaling * alpha[q], q);
           }
     }
 
     template <int          FEOrder,
-              unsigned int num_1d_quadPoints,
-              unsigned int n_components>
+              size_type num_1d_quadPoints,
+              size_type n_components>
     void
     FEEvaluationWrapperDerived<FEOrder, num_1d_quadPoints, n_components>::
       submitInterpolatedValuesSubmitInterpolatedGradients(
@@ -200,7 +200,7 @@ namespace dftefe
         {
           if (scaleGradientsFlag)
             {
-              for (unsigned int q = 0; q < d_dealiiFEEvaluation->n_q_points;
+              for (size_type q = 0; q < d_dealiiFEEvaluation->n_q_points;
                    ++q)
                 {
                   d_dealiiFEEvaluation->submit_value(
@@ -211,7 +211,7 @@ namespace dftefe
             }
           else
             {
-              for (unsigned int q = 0; q < d_dealiiFEEvaluation->n_q_points;
+              for (size_type q = 0; q < d_dealiiFEEvaluation->n_q_points;
                    ++q)
                 {
                   d_dealiiFEEvaluation->submit_value(
@@ -225,7 +225,7 @@ namespace dftefe
         {
           if (scaleGradientsFlag)
             {
-              for (unsigned int q = 0; q < d_dealiiFEEvaluation->n_q_points;
+              for (size_type q = 0; q < d_dealiiFEEvaluation->n_q_points;
                    ++q)
                 {
                   d_dealiiFEEvaluation->submit_value(
@@ -236,7 +236,7 @@ namespace dftefe
             }
           else
             {
-              for (unsigned int q = 0; q < d_dealiiFEEvaluation->n_q_points;
+              for (size_type q = 0; q < d_dealiiFEEvaluation->n_q_points;
                    ++q)
                 {
                   d_dealiiFEEvaluation->submit_value(
@@ -250,23 +250,23 @@ namespace dftefe
 
 
     template <int          FEOrder,
-              unsigned int num_1d_quadPoints,
-              unsigned int n_components>
+              size_type num_1d_quadPoints,
+              size_type n_components>
     void
     FEEvaluationWrapperDerived<FEOrder, num_1d_quadPoints, n_components>::
       submitGradients(
         dealii::AlignedVector<
           dealii::Tensor<1, 3, dealii::VectorizedArray<double>>> &alpha)
     {
-      for (unsigned int q = 0; q < d_dealiiFEEvaluation->n_q_points; ++q)
+      for (size_type q = 0; q < d_dealiiFEEvaluation->n_q_points; ++q)
         {
           d_dealiiFEEvaluation->submit_gradient(alpha[q], q);
         }
     }
 
     template <int          FEOrder,
-              unsigned int num_1d_quadPoints,
-              unsigned int n_components>
+              size_type num_1d_quadPoints,
+              size_type n_components>
     dealii::VectorizedArray<double>
     FEEvaluationWrapperDerived<FEOrder, num_1d_quadPoints, n_components>::
       integrateValue()
@@ -275,17 +275,17 @@ namespace dftefe
         return d_dealiiFEEvaluation->integrate_value();
     }
     template <int          FEOrder,
-              unsigned int num_1d_quadPoints,
-              unsigned int n_components>
+              size_type num_1d_quadPoints,
+              size_type n_components>
     void
     FEEvaluationWrapperDerived<FEOrder, num_1d_quadPoints, n_components>::
-      alphaTimesQuadValuesPlusYFromSubCell(const unsigned int subCellIndex,
+      alphaTimesQuadValuesPlusYFromSubCell(const size_type subCellIndex,
                                            const double       alpha,
                                            double *           outputVector)
     {
       if constexpr (n_components == 1)
         {
-          for (unsigned int q = 0; q < d_dealiiFEEvaluation->n_q_points; ++q)
+          for (size_type q = 0; q < d_dealiiFEEvaluation->n_q_points; ++q)
             {
               *(outputVector + q) +=
                 alpha * d_dealiiFEEvaluation->get_value(q)[subCellIndex];
@@ -294,17 +294,17 @@ namespace dftefe
     }
 
     template <int          FEOrder,
-              unsigned int num_1d_quadPoints,
-              unsigned int n_components>
+              size_type num_1d_quadPoints,
+              size_type n_components>
     void
     FEEvaluationWrapperDerived<FEOrder, num_1d_quadPoints, n_components>::
-      getQuadGradientsForSubCell(const unsigned int subCellIndex,
+      getQuadGradientsForSubCell(const size_type subCellIndex,
                                  const double       alpha,
                                  double *           outputVector)
     {
       if constexpr (n_components == 1)
         {
-          for (unsigned int q_point = 0;
+          for (size_type q_point = 0;
                q_point < d_dealiiFEEvaluation->n_q_points;
                ++q_point)
             {
@@ -321,24 +321,24 @@ namespace dftefe
     }
 
     template <int          FEOrder,
-              unsigned int num_1d_quadPoints,
-              unsigned int n_components>
+              size_type num_1d_quadPoints,
+              size_type n_components>
     void
     FEEvaluationWrapperDerived<FEOrder, num_1d_quadPoints, n_components>::
-      getQuadHessianForSubCell(const unsigned int subCellIndex,
+      getQuadHessianForSubCell(const size_type subCellIndex,
                                const double       alpha,
                                double *           outputVector)
     {
       if constexpr (n_components == 1)
         {
-          for (unsigned int q_point = 0;
+          for (size_type q_point = 0;
                q_point < d_dealiiFEEvaluation->n_q_points;
                ++q_point)
             {
               const dealii::Tensor<2, 3, dealii::VectorizedArray<double>>
                 &hessianVals = d_dealiiFEEvaluation->get_hessian(q_point);
-              for (unsigned int i = 0; i < 3; i++)
-                for (unsigned int j = 0; j < 3; j++)
+              for (size_type i = 0; i < 3; i++)
+                for (size_type j = 0; j < 3; j++)
                   *(outputVector + 9 * q_point + 3 * i + j) +=
                     alpha * hessianVals[i][j][subCellIndex];
             }
@@ -346,8 +346,8 @@ namespace dftefe
     }
 
     // template <int          FEOrder,
-    //           unsigned int num_1d_quadPoints,
-    //           unsigned int n_components>
+    //           size_type num_1d_quadPoints,
+    //           size_type n_components>
     // void FEEvaluationWrapperDerived<FEOrder, num_1d_quadPoints,
     // n_components>::
     //   submitGradients(
@@ -358,7 +358,7 @@ namespace dftefe
     // {
     //   if constexpr (n_components == 3)
     //     {
-    //       for (unsigned int q = 0; q < d_dealiiFEEvaluation->n_q_points; ++q)
+    //       for (size_type q = 0; q < d_dealiiFEEvaluation->n_q_points; ++q)
     //         {
     //           d_dealiiFEEvaluation->submit_gradient(scaling * alpha[q], q);
     //         }
@@ -373,8 +373,8 @@ namespace dftefe
     // }
 
     template <int          FEOrder,
-              unsigned int num_1d_quadPoints,
-              unsigned int n_components>
+              size_type num_1d_quadPoints,
+              size_type n_components>
     void
     FEEvaluationWrapperDerived<FEOrder, num_1d_quadPoints, n_components>::
       submitValues(
@@ -382,7 +382,7 @@ namespace dftefe
 
     {
       if constexpr (n_components == 1)
-        for (unsigned int q = 0; q < d_dealiiFEEvaluation->n_q_points; ++q)
+        for (size_type q = 0; q < d_dealiiFEEvaluation->n_q_points; ++q)
           {
             d_dealiiFEEvaluation->submit_value(alpha[q], q);
           }
@@ -393,15 +393,15 @@ namespace dftefe
     }
 
     template <int          FEOrder,
-              unsigned int num_1d_quadPoints,
-              unsigned int n_components>
+              size_type num_1d_quadPoints,
+              size_type n_components>
     void
     FEEvaluationWrapperDerived<FEOrder, num_1d_quadPoints, n_components>::
       getValues(dealii::AlignedVector<dealii::VectorizedArray<double>> &tempVec)
 
     {
       if constexpr (n_components == 1)
-        for (unsigned int q = 0; q < d_dealiiFEEvaluation->n_q_points; ++q)
+        for (size_type q = 0; q < d_dealiiFEEvaluation->n_q_points; ++q)
           {
             tempVec[q] = d_dealiiFEEvaluation->get_value(q);
           }
@@ -412,8 +412,8 @@ namespace dftefe
     }
 
     template <int          FEOrder,
-              unsigned int num_1d_quadPoints,
-              unsigned int n_components>
+              size_type num_1d_quadPoints,
+              size_type n_components>
     void
     FEEvaluationWrapperDerived<FEOrder, num_1d_quadPoints, n_components>::
       integrate(dealii::EvaluationFlags::EvaluationFlags evaluateFlags)
@@ -422,11 +422,11 @@ namespace dftefe
     }
 
     template <int          FEOrder,
-              unsigned int num_1d_quadPoints,
-              unsigned int n_components>
+              size_type num_1d_quadPoints,
+              size_type n_components>
     void
     FEEvaluationWrapperDerived<FEOrder, num_1d_quadPoints, n_components>::
-      submitValueAtQuadpoint(const unsigned int                     iQuadPoint,
+      submitValueAtQuadpoint(const size_type                     iQuadPoint,
                              const dealii::VectorizedArray<double> &value)
     {
       if constexpr (n_components == 1)
@@ -434,18 +434,18 @@ namespace dftefe
     }
 
     template <int          FEOrder,
-              unsigned int num_1d_quadPoints,
-              unsigned int n_components>
+              size_type num_1d_quadPoints,
+              size_type n_components>
     dealii::Point<3, dealii::VectorizedArray<double>>
     FEEvaluationWrapperDerived<FEOrder, num_1d_quadPoints, n_components>::
-      getQuadraturePoint(const unsigned int iQuadPoint)
+      getQuadraturePoint(const size_type iQuadPoint)
     {
       return d_dealiiFEEvaluation->quadrature_point(iQuadPoint);
     }
 
     template <int          FEOrder,
-              unsigned int num_1d_quadPoints,
-              unsigned int n_components>
+              size_type num_1d_quadPoints,
+              size_type n_components>
     void
     FEEvaluationWrapperDerived<FEOrder, num_1d_quadPoints, n_components>::
       distributeLocalToGlobal(distributedCPUVec<double> &tempvec)
@@ -477,13 +477,13 @@ namespace dftefe
 // #undef MACRO
 #undef RANGE_FEORDER
 #undef RANGE_QUADRATURE
-    template <unsigned int numberOfComponents>
+    template <size_type numberOfComponents>
     DealiiFEEvaluationWrapper<numberOfComponents>::DealiiFEEvaluationWrapper(
-      unsigned int                         fe_degree,
-      unsigned int                         num_1d_quad,
+      size_type                         fe_degree,
+      size_type                         num_1d_quad,
       const dealii::MatrixFree<3, double> &matrixFreeData,
-      const unsigned int                   matrixFreeVectorComponent,
-      const unsigned int                   matrixFreeQuadratureComponent)
+      const size_type                   matrixFreeVectorComponent,
+      const size_type                   matrixFreeQuadratureComponent)
     {
       d_feDegree                      = fe_degree;
       d_num1dQuad                     = num_1d_quad;
@@ -522,7 +522,7 @@ namespace dftefe
 #undef RANGE_QUADRATURE
     }
 
-    template <unsigned int numberOfComponents>
+    template <size_type numberOfComponents>
     DealiiFEEvaluationWrapper<numberOfComponents>::~DealiiFEEvaluationWrapper()
     {
       if (d_feEvaluationBase.get() != nullptr)
@@ -531,7 +531,7 @@ namespace dftefe
         }
     }
 
-    template <unsigned int numberOfComponents>
+    template <size_type numberOfComponents>
     FEEvaluationWrapperBase &
     DealiiFEEvaluationWrapper<numberOfComponents>::getFEEvaluationWrapperBase()
       const

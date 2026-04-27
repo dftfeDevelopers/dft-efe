@@ -120,12 +120,12 @@ namespace dftefe
             const ValueTypeOperator *cumulativeDofQuadPoints =
               basisDataInAllCells.data() + cumulativeDofQuadPointsOffset;
 
-            for (unsigned int iNode = 0; iNode < dofsPerCell; iNode++)
+            for (size_type iNode = 0; iNode < dofsPerCell; iNode++)
               {
-                for (unsigned int jNode = 0; jNode < dofsPerCell; jNode++)
+                for (size_type jNode = 0; jNode < dofsPerCell; jNode++)
                   {
                     *basisOverlapTmpIter = 0.0;
-                    for (unsigned int qPoint = 0; qPoint < nQuadPointInCell;
+                    for (size_type qPoint = 0; qPoint < nQuadPointInCell;
                          qPoint++)
                       {
                         *basisOverlapTmpIter +=
@@ -280,14 +280,14 @@ namespace dftefe
             const ValueTypeOperator *cumulativeEFEDofQuadPoints =
               basisDataInAllCellsEFE.data() + cumulativeEFEDofQuadPointsOffset;
 
-            for (unsigned int iNode = 0; iNode < dofsPerCell; iNode++)
+            for (size_type iNode = 0; iNode < dofsPerCell; iNode++)
               {
-                for (unsigned int jNode = 0; jNode < dofsPerCell; jNode++)
+                for (size_type jNode = 0; jNode < dofsPerCell; jNode++)
                   {
                     *basisOverlapTmpIter = 0.0;
                     if (iNode < dofsPerCellCFE && jNode < dofsPerCellCFE)
                       {
-                        for (unsigned int qPoint = 0;
+                        for (size_type qPoint = 0;
                              qPoint < nQuadPointInCellCFE;
                              qPoint++)
                           {
@@ -303,7 +303,7 @@ namespace dftefe
                       }
                     else
                       {
-                        for (unsigned int qPoint = 0;
+                        for (size_type qPoint = 0;
                              qPoint < nQuadPointInCellEFE;
                              qPoint++)
                           {

@@ -80,7 +80,7 @@ namespace dftefe
      */
     const size_type KSDFTDefaults::MAX_WAVEFN_BATCH_SIZE          = 400;
     const size_type KSDFTDefaults::MAX_KINENG_WAVEFN_BATCH_SIZE   = 50;
-    const size_type KSDFTDefaults::MAX_DENSCOMP_WAVEFN_BATCH_SIZE = 200;
+    const size_type KSDFTDefaults::MAX_DENSCOMP_WAVEFN_BATCH_SIZE = 50;
     const size_type KSDFTDefaults::CELL_BATCH_SIZE                = 50;
     const size_type KSDFTDefaults::CELL_BATCH_SIZE_GRAD_EVAL      = 50;
     const size_type KSDFTDefaults::SCALAPACK_PARAL_PROCS          = 0;
@@ -93,5 +93,6 @@ namespace dftefe
 
     const atoms::TCIADataParams TCIADataDefaults::TCIA_PARAMS = {"", ""};
 
+    const size_type MaxSizeDefaults::SIZE_TYPE_MAX = std::numeric_limits<size_type>::max();
   } // end of namespace ksdft
 } // end of namespace dftefe

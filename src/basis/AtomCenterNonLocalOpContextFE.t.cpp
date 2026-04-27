@@ -328,7 +328,7 @@ namespace dftefe
       auto                                   endc = triangulation->endLocal();
 
       size_type cellIndex                        = 0;
-      int       locallyOwnedCellsInTriangulation = 0;
+      size_type       locallyOwnedCellsInTriangulation = 0;
 
       for (; cell != endc; cell++)
         {
@@ -347,7 +347,7 @@ namespace dftefe
       maxbound.resize(dim, 0);
       minbound.resize(dim, 0);
 
-      for (unsigned int k = 0; k < dim; k++)
+      for (size_type k = 0; k < dim; k++)
         {
           double maxtmp = -DBL_MAX, mintmp = DBL_MAX;
           auto   cellIter = cellVerticesVector.begin();
@@ -449,9 +449,9 @@ namespace dftefe
               std::vector<double> projectorQuadStorageJxW =
                 getProjectorValues(cellIndex, quadRealPointsVec);
 
-              for (unsigned int iProj = 0; iProj < numProjsInCell; iProj++)
+              for (size_type iProj = 0; iProj < numProjsInCell; iProj++)
                 {
-                  for (unsigned int qPoint = 0; qPoint < nQuadsInCell; qPoint++)
+                  for (size_type qPoint = 0; qPoint < nQuadsInCell; qPoint++)
                     {
                       // std::cout << quadRealPointsVec[qPoint][0]
                       // <<quadRealPointsVec[qPoint][1]
@@ -663,18 +663,18 @@ namespace dftefe
       // Assumption for each l,p pair the m values are consecutive
       std::vector<global_size_type> projIdVec =
         d_overlappingProjectorIdsInCells[cellId];
-      unsigned int        numProjIdsInCell = projIdVec.size();
-      unsigned int        numPoints        = points.size();
+      size_type        numProjIdsInCell = projIdVec.size();
+      size_type        numPoints        = points.size();
       std::vector<double> retValue(numPoints * numProjIdsInCell, 0),
         rVec(numPoints, 0), thetaVec(numPoints, 0), phiVec(numPoints, 0);
       std::vector<dftefe::utils::Point> x(numPoints, utils::Point(dim));
       DFTEFE_AssertWithMsg(!projIdVec.empty(),
                            "The requested cell does not have any proj ids.");
-      unsigned int numProjIdsSkipped = 0;
-      unsigned int l                 = 0;
+      size_type numProjIdsSkipped = 0;
+      int l                 = 0;
       size_type  atomIdPrev = std::numeric_limits<size_type>::max();
 
-      for (int iProj = 0; iProj < numProjIdsInCell; iProj += numProjIdsSkipped)
+      for (size_type iProj = 0; iProj < numProjIdsInCell; iProj += numProjIdsSkipped)
         {
           basis::EnrichmentIdAttribute pIdAttr =
             d_projectorIdsPartition->getEnrichmentIdAttribute(projIdVec[iProj]);
@@ -690,7 +690,7 @@ namespace dftefe
                          x.begin(),
                          [origin](utils::Point p) { return p - origin; });
 
-          for(int iPts = 0 ; iPts < points.size() ; iPts++)
+          for(size_type iPts = 0 ; iPts < points.size() ; iPts++)
             atoms::convertCartesianToSpherical(
               x[iPts],
               rVec[iPts],

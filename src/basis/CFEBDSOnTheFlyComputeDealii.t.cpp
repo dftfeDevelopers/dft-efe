@@ -192,7 +192,7 @@ namespace dftefe
             //     // get the parametric points and jxw in each cell according
             //     to
             //     // the attribute.
-            //     unsigned int                     cellIndex = 0;
+            //     size_type                     cellIndex = 0;
             //     const std::vector<utils::Point> &cellParametricQuadPoints =
             //       quadratureRuleContainer->getCellParametricPoints(cellIndex);
             //     std::vector<dealii::Point<dim, double>>
@@ -380,9 +380,9 @@ namespace dftefe
                   ->second &&
                 locallyOwnedCellIter == feBDH->beginLocallyOwnedCells())
               {
-                for (unsigned int iNode = 0; iNode < dofsPerCell; iNode++)
+                for (size_type iNode = 0; iNode < dofsPerCell; iNode++)
                   {
-                    for (unsigned int qPoint = 0; qPoint < nQuadPointsPerCell;
+                    for (size_type qPoint = 0; qPoint < nQuadPointsPerCell;
                          qPoint++)
                       {
                         auto it = basisQuadStorageTmp.begin() +
@@ -402,15 +402,15 @@ namespace dftefe
                   cellIndex * nDimSqxNumQuad;
                 if (locallyOwnedCellIter == feBDH->beginLocallyOwnedCells())
                   {
-                    for (unsigned int iNode = 0; iNode < dofsPerCell; iNode++)
+                    for (size_type iNode = 0; iNode < dofsPerCell; iNode++)
                       {
-                        for (unsigned int qPoint = 0;
+                        for (size_type qPoint = 0;
                              qPoint < nQuadPointsPerCell;
                              qPoint++)
                           {
                             auto shapeGrad =
                               dealiiFEValuesPara->shape_grad(iNode, qPoint);
-                            for (unsigned int iDim = 0; iDim < dim; iDim++)
+                            for (size_type iDim = 0; iDim < dim; iDim++)
                               {
                                 auto it =
                                   basisGradientParaCellQuadStorageTmp.begin() +
@@ -424,12 +424,12 @@ namespace dftefe
                   }
                 auto &mappingJacInv = dealiiFEValues.get_inverse_jacobians();
                 size_type numJacobiansPerCell = nQuadPointsPerCell;
-                for (unsigned int iQuad = 0; iQuad < numJacobiansPerCell;
+                for (size_type iQuad = 0; iQuad < numJacobiansPerCell;
                      ++iQuad)
                   {
-                    for (unsigned int iDim = 0; iDim < dim; iDim++)
+                    for (size_type iDim = 0; iDim < dim; iDim++)
                       {
-                        for (unsigned int jDim = 0; jDim < dim; jDim++)
+                        for (size_type jDim = 0; jDim < dim; jDim++)
                           {
                             auto it = basisJacobianInvQuadStorageTmp.begin() +
                                       cellIndex * nDimSqxNumQuad +
@@ -446,16 +446,16 @@ namespace dftefe
               {
                 cellStartIdsBasisHessianQuadStorage[cellIndex] =
                   cellIndex * nDimSqxDofsPerCellxNumQuad;
-                for (unsigned int iNode = 0; iNode < dofsPerCell; iNode++)
+                for (size_type iNode = 0; iNode < dofsPerCell; iNode++)
                   {
-                    for (unsigned int qPoint = 0; qPoint < nQuadPointsPerCell;
+                    for (size_type qPoint = 0; qPoint < nQuadPointsPerCell;
                          qPoint++)
                       {
                         auto shapeHessian =
                           dealiiFEValues.shape_hessian(iNode, qPoint);
-                        for (unsigned int iDim = 0; iDim < dim; iDim++)
+                        for (size_type iDim = 0; iDim < dim; iDim++)
                           {
-                            for (unsigned int jDim = 0; jDim < dim; jDim++)
+                            for (size_type jDim = 0; jDim < dim; jDim++)
                               {
                                 auto it =
                                   basisHessianQuadStorageTmp.begin() +
@@ -946,7 +946,7 @@ namespace dftefe
         const std::vector<double> &         relativeTolerances,
         const std::vector<double> &         integralThresholds,
         const double                        smallestCellVolume,
-        const unsigned int                  maxRecursion,
+        const size_type                  maxRecursion,
         const BasisStorageAttributesBoolMap basisStorageAttributesBoolMap)
     {
       utils::throwException<utils::InvalidArgument>(

@@ -31,11 +31,11 @@ namespace dftefe
   {
     template <typename NumberType>
     ScaLAPACKMatrix<NumberType>::ScaLAPACKMatrix(
-      const size_type                           n_rows_,
-      const size_type                           n_columns_,
+      const size_type_scalapack                           n_rows_,
+      const size_type_scalapack                           n_columns_,
       const std::shared_ptr<const ProcessGrid> &process_grid,
-      const size_type                           row_block_size_,
-      const size_type                           column_block_size_,
+      const size_type_scalapack                           row_block_size_,
+      const size_type_scalapack                           column_block_size_,
       const LAPACKSupport::Property             property_)
       : uplo('L')
       , // for non-hermitian matrices this is not needed
@@ -54,9 +54,9 @@ namespace dftefe
 
     template <typename NumberType>
     ScaLAPACKMatrix<NumberType>::ScaLAPACKMatrix(
-      const size_type                           size,
+      const size_type_scalapack                           size,
       const std::shared_ptr<const ProcessGrid> &process_grid,
-      const size_type                           block_size,
+      const size_type_scalapack                           block_size,
       const LAPACKSupport::Property             property)
       : ScaLAPACKMatrix<NumberType>(size,
                                     size,
@@ -69,11 +69,11 @@ namespace dftefe
     template <typename NumberType>
     void
     ScaLAPACKMatrix<NumberType>::reinit(
-      const size_type                           n_rows_,
-      const size_type                           n_columns_,
+      const size_type_scalapack                           n_rows_,
+      const size_type_scalapack                           n_columns_,
       const std::shared_ptr<const ProcessGrid> &process_grid,
-      const size_type                           row_block_size_,
-      const size_type                           column_block_size_,
+      const size_type_scalapack                           row_block_size_,
+      const size_type_scalapack                           column_block_size_,
       const LAPACKSupport::Property             property_)
     {
       DFTEFE_AssertWithMsg(row_block_size_ > 0,
@@ -147,9 +147,9 @@ namespace dftefe
     template <typename NumberType>
     void
     ScaLAPACKMatrix<NumberType>::reinit(
-      const size_type                           size,
+      const size_type_scalapack                           size,
       const std::shared_ptr<const ProcessGrid> &process_grid,
-      const size_type                           block_size,
+      const size_type_scalapack                           block_size,
       const LAPACKSupport::Property             property)
     {
       reinit(size, size, process_grid, block_size, block_size, property);
@@ -1585,7 +1585,7 @@ namespace dftefe
             this->values.swap(eigenvectors->values);
 
           // adapt the size of ev to fit m upon return
-          while (ev.size() > static_cast<size_type>(m))
+          while (ev.size() > static_cast<size_type_scalapack>(m))
             ev.pop_back();
         }
       /*
@@ -1842,7 +1842,7 @@ namespace dftefe
             this->values.swap(eigenvectors->values);
 
           // Adapt the size of ev to fit m upon return.
-          while (ev.size() > static_cast<size_type>(m))
+          while (ev.size() > static_cast<size_type_scalapack>(m))
             ev.pop_back();
         }
       /*

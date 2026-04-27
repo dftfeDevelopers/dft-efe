@@ -29,6 +29,7 @@
 #include <utils/Point.h>
 #include <utils/TypeConfig.h>
 #include <set>
+#include <basis/Defaults.h>
 #include <string>
 #include <vector>
 #include <basis/AtomIdsPartition.h>
@@ -54,7 +55,7 @@ namespace dftefe
      * cell enrichment Ids, locallyowned enrichment ids range, ghost enrichment
      * ids.
      */
-    template <unsigned int dim>
+    template <size_type dim>
     class EnrichmentIdsPartition
     {
     public:

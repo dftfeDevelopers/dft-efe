@@ -30,7 +30,7 @@ namespace dftefe
     namespace mathFunctions
     {
       int
-      intPow(int base, unsigned int e)
+      intPow(int base, size_type e)
       {
         int result = 1;
         for (;;)

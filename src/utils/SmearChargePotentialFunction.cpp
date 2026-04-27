@@ -55,10 +55,10 @@ namespace dftefe
     SmearChargePotentialFunction::operator()(const utils::Point &point) const
     {
       double ret = 0;
-      for (unsigned int i = 0; i < d_atomCoordinates.size(); i++)
+      for (size_type i = 0; i < d_atomCoordinates.size(); i++)
         {
           double r = 0;
-          for (unsigned int j = 0; j < point.size(); j++)
+          for (size_type j = 0; j < point.size(); j++)
             {
               r += std::pow((point[j] - d_atomCoordinates[i][j]), 2);
             }
@@ -82,12 +82,12 @@ namespace dftefe
     {
       const size_type     N = points.size();
       std::vector<double> returnValue(N, 0.0);
-      for (unsigned int i = 0; i < d_atomCoordinates.size(); i++)
+      for (size_type i = 0; i < d_atomCoordinates.size(); i++)
         {
-          for (unsigned int iPoint = 0; iPoint < N; ++iPoint)
+          for (size_type iPoint = 0; iPoint < N; ++iPoint)
             {
               double r = 0;
-              for (unsigned int j = 0; j < points[iPoint].size(); j++)
+              for (size_type j = 0; j < points[iPoint].size(); j++)
                 {
                   r +=
                     std::pow((points[iPoint][j] - d_atomCoordinates[i][j]), 2);

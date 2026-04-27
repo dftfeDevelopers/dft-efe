@@ -161,7 +161,7 @@ T readParameter(const std::string &ParamFile,
         {
           utils::Point origin(d_atomCoordinatesVec[atomId]);
           auto vec = d_atomSphericalDataContainer->getSphericalData(d_atomSymbolVec[atomId], "vtotal");
-          for (unsigned int i = 0 ; i < points.size() ; i++)
+          for (dftefe::size_type i = 0 ; i < points.size() ; i++)
           {
             for(auto &enrichmentObjId : vec)
             {
@@ -224,7 +224,7 @@ T readParameter(const std::string &ParamFile,
         {
           utils::Point origin(d_atomCoordinatesVec[atomId]);
           auto vec = d_atomSphericalDataContainer->getSphericalData(d_atomSymbolVec[atomId], "vnuclear");
-          for (unsigned int i = 0 ; i < points.size() ; i++)
+          for (dftefe::size_type i = 0 ; i < points.size() ; i++)
           {
             for(auto &enrichmentObjId : vec)
             {
@@ -286,7 +286,7 @@ T readParameter(const std::string &ParamFile,
         {
           utils::Point origin(d_atomCoordinatesVec[atomId]);
           auto vec = d_atomSphericalDataContainer->getSphericalData(d_atomSymbolVec[atomId], "orbital");
-          for (unsigned int i = 0 ; i < points.size() ; i++)
+          for (dftefe::size_type i = 0 ; i < points.size() ; i++)
           {
             for(auto &enrichmentObjId : vec)
             {
@@ -464,8 +464,8 @@ int main(int argc, char** argv)
   double radiusAroundAtom = readParameter<double>(parameterInputFileName, "radiusAroundAtom", rootCout);;
   double meshSizeAroundAtom = readParameter<double>(parameterInputFileName, "meshSizeAroundAtom", rootCout);;
   double rc = readParameter<double>(parameterInputFileName, "rc", rootCout);
-  unsigned int feOrderElec = readParameter<unsigned int>(parameterInputFileName, "feOrderElectrostatics", rootCout);
-  unsigned int feOrderEigen = readParameter<unsigned int>(parameterInputFileName, "feOrderEigenSolve", rootCout); 
+  dftefe::size_type feOrderElec = readParameter<dftefe::size_type>(parameterInputFileName, "feOrderElectrostatics", rootCout);
+  dftefe::size_type feOrderEigen = readParameter<dftefe::size_type>(parameterInputFileName, "feOrderEigenSolve", rootCout); 
   double    smearingTemperature = readParameter<double>(parameterInputFileName, "smearingTemperature", rootCout);
   double    fermiEnergyTolerance = readParameter<double>(parameterInputFileName, "fermiEnergyTolerance", rootCout);
   double    fracOccupancyTolerance = readParameter<double>(parameterInputFileName, "fracOccupancyTolerance", rootCout);
@@ -482,7 +482,7 @@ int main(int argc, char** argv)
 
   double atomPartitionTolerance = readParameter<double>(parameterInputFileName, "atomPartitionTolerance", rootCout);
   double smallestCellVolume = readParameter<double>(parameterInputFileName, "smallestCellVolume", rootCout);
-  unsigned int maxRecursion = readParameter<unsigned int>(parameterInputFileName, "maxRecursion", rootCout);
+  dftefe::size_type maxRecursion = readParameter<dftefe::size_type>(parameterInputFileName, "maxRecursion", rootCout);
   double adaptiveQuadAbsTolerance = readParameter<double>(parameterInputFileName, "adaptiveQuadAbsTolerance", rootCout);
   double adaptiveQuadRelTolerance = readParameter<double>(parameterInputFileName, "adaptiveQuadRelTolerance", rootCout);
   double integralThreshold = readParameter<double>(parameterInputFileName, "integralThreshold", rootCout);
@@ -551,7 +551,7 @@ int main(int argc, char** argv)
       std::stringstream ss(line);
       ss >> symbol; 
       ss >> atomicNumber; 
-      for(unsigned int i=0 ; i<dim ; i++){
+      for(dftefe::size_type i=0 ; i<dim ; i++){
           ss >> coordinates[i]; 
       }
       atomCoordinatesVec.push_back(coordinates);
@@ -647,7 +647,7 @@ int main(int argc, char** argv)
     std::vector<std::shared_ptr<const utils::ScalarSpatialFunctionReal>> functionsVec(0);
     std::vector<double> absoluteTolerances(0), relativeTolerances(0), integralThresholds(0);
 
-    for ( unsigned int i=0 ;i < 2 ; i++ )
+    for ( dftefe::size_type i=0 ;i < 2 ; i++ )
     {
       functionsVec.push_back(std::make_shared<atoms::AtomSevereFunction<memorySpace>>(
           atomSphericalDataContainer,
@@ -664,7 +664,7 @@ int main(int argc, char** argv)
 
     if(!isDeltaRhoPoissonSolve)
     {
-    for ( unsigned int i=0 ;i < 2 ; i++ )
+    for ( dftefe::size_type i=0 ;i < 2 ; i++ )
     {
       functionsVec.push_back(std::make_shared<atoms::AtomSevereFunction<memorySpace>>(
           atomSphericalDataContainer,
@@ -691,7 +691,7 @@ int main(int argc, char** argv)
     }
     if(isNumericalNuclearSolve)
     {
-      for ( unsigned int i=0 ;i < 3 ; i++ )
+      for ( dftefe::size_type i=0 ;i < 3 ; i++ )
       {
         if( i < 2)
           functionsVec.push_back(std::make_shared<atoms::AtomSevereFunction<memorySpace>>(
@@ -709,7 +709,7 @@ int main(int argc, char** argv)
             atomCoordinatesVec));
       }
     }
-    for ( unsigned int i=0 ;i < functionsVec.size() ; i++ )
+    for ( dftefe::size_type i=0 ;i < functionsVec.size() ; i++ )
     {
       absoluteTolerances.push_back(adaptiveQuadAbsTolerance);
       relativeTolerances.push_back(adaptiveQuadRelTolerance);
@@ -750,7 +750,7 @@ int main(int argc, char** argv)
       smallestCellVolume,
       maxRecursion);
 
-    unsigned int nQuad = quadRuleContainerAdaptiveElec->nQuadraturePoints();
+    dftefe::size_type nQuad = quadRuleContainerAdaptiveElec->nQuadraturePoints();
 
     auto mpierr = utils::mpi::MPIAllreduce<Host>(
       utils::mpi::MPIInPlace,
@@ -786,7 +786,7 @@ int main(int argc, char** argv)
       smallestCellVolume,
       maxRecursion);
 
-    unsigned int nQuad = quadRuleContainerAdaptiveOrbital->nQuadraturePoints();
+    dftefe::size_type nQuad = quadRuleContainerAdaptiveOrbital->nQuadraturePoints();
     int mpierr = utils::mpi::MPIAllreduce<Host>(
       utils::mpi::MPIInPlace,
       &nQuad,

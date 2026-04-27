@@ -60,7 +60,7 @@ namespace dftefe
       bool           isSubdivGrid;
       double         a;
       double         r;
-      unsigned int   numSubDiv;
+      dftefe::size_type   numSubDiv;
     };
 #endif
     // spline interpolation
@@ -95,7 +95,7 @@ namespace dftefe
       bool                d_made_monotonic;
       bool                d_isSubdivPowerLawGrid;
       double              d_a, d_r;
-      unsigned int        d_numSubDiv;
+      dftefe::size_type        d_numSubDiv;
       void
       set_coeffs_from_b(); // calculate c_i, d_i from b_i
       size_t

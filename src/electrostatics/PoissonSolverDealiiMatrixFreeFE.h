@@ -164,7 +164,7 @@ namespace dftefe
       ~PoissonSolverDealiiMatrixFreeFE() = default;
 
       void
-      solve(const double absTolerance, const unsigned int maxNumberIterations);
+      solve(const double absTolerance, const size_type maxNumberIterations);
 
       void
       getSolution(linearAlgebra::MultiVector<ValueType, memorySpaceHost> &solution);
@@ -205,11 +205,11 @@ namespace dftefe
       AX(const dealii::MatrixFree<dim, double> &      matrixFreeData,
          distributedCPUVec<double> &                  dst,
          const distributedCPUVec<double> &            src,
-         const std::pair<unsigned int, unsigned int> &cell_range) const;
+         const std::pair<size_type, size_type> &cell_range) const;
 
       void
       CGsolve(const double       absTolerance,
-              const unsigned int maxNumberIterations,
+              const size_type maxNumberIterations,
               bool               distributeFlag);
 
       const linearAlgebra::Vector<ValueTypeOperator, utils::MemorySpace::DEVICE> &
@@ -222,7 +222,7 @@ namespace dftefe
       // Requires DFTEFE_WITH_DEVICE for the GPU matrix-free AX kernel.
       void
       CGsolveDevice(const double       absTolerance,
-                    const unsigned int maxNumberIterations,
+                    const size_type maxNumberIterations,
                     bool               distributeFlag);
 
       void
@@ -251,10 +251,10 @@ namespace dftefe
       const dealii::AffineConstraints<ValueTypeOperand>
         *d_dealiiAffineConstraintMatrix;
       const dealii::AffineConstraints<ValueTypeOperand> *d_constraintsInfo;
-      unsigned int                        d_num1DQuadPointsStiffnessMatrix;
-      std::map<std::string, unsigned int> d_num1DQuadPointsRhs;
+      size_type                        d_num1DQuadPointsStiffnessMatrix;
+      std::map<std::string, size_type> d_num1DQuadPointsRhs;
       size_type                           d_feOrder;
-      unsigned int                        d_dofHandlerIndex;
+      size_type                        d_dofHandlerIndex;
 
       std::map<
         std::string,
@@ -264,8 +264,8 @@ namespace dftefe
 
       std::vector<distributedCPUVec<ValueType>> d_nonTensorSructuredQuadeRhs;
 
-      unsigned int d_matrixFreeQuadCompStiffnessMatrix;
-      std::map<dealii::CellId, unsigned int> d_cellIdToCellIndexMap;
+      size_type d_matrixFreeQuadCompStiffnessMatrix;
+      std::map<dealii::CellId, size_type> d_cellIdToCellIndexMap;
 
       std::vector<dealii::Quadrature<dim>> d_dealiiQuadratureRuleVec;
       dealii::MappingQ1<dim, dim>          d_mappingDealii;

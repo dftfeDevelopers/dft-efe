@@ -135,7 +135,7 @@ namespace dftefe
                 {
                   std::vector<double> val =
                     enrichmentObjId->getValue(points, origin);
-                  for (unsigned int iPoint = 0; iPoint < N; ++iPoint)
+                  for (size_type iPoint = 0; iPoint < N; ++iPoint)
                     retValue[iPoint] =
                       retValue[iPoint] + pow(val[iPoint], d_sphericalValPower);
                 }
@@ -153,7 +153,7 @@ namespace dftefe
                 {
                   std::vector<double> val =
                     enrichmentObjId->getGradientValue(points, origin);
-                  for (unsigned int iPoint = 0; iPoint < N; ++iPoint)
+                  for (size_type iPoint = 0; iPoint < N; ++iPoint)
                     for (size_type iDim = 0; iDim < d_dim; iDim++)
                       retValue[iPoint] =
                         retValue[iPoint] +

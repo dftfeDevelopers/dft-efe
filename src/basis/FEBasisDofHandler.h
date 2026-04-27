@@ -148,7 +148,7 @@ namespace dftefe
       virtual size_type
       totalRanges() const = 0;
 
-      virtual unsigned int
+      virtual size_type
       getDim() const = 0;
 
       // Additional functions for getting geometric constriants matrix

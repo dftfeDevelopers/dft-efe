@@ -172,6 +172,12 @@ namespace dftefe
       static const atoms::TCIADataParams TCIA_PARAMS;
     }; // end of class AtomTCIADataDefaults
 
+    class MaxSizeDefaults
+    {
+    public:
+      static const size_type SIZE_TYPE_MAX;
+    }; // end of class MaxSizeDefaults
+
   } // end of namespace ksdft
 
   static constexpr utils::MemorySpace memorySpaceHost = utils::MemorySpace::HOST;  

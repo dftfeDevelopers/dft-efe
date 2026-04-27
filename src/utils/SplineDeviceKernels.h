@@ -53,7 +53,7 @@ namespace dftefe
                     const bool         isSubdivGrid,
                     const double       a_param,
                     const double       r_param,
-                    const unsigned int numSubDiv)
+                    const dftefe::size_type numSubDiv)
       {
         if (isSubdivGrid)
           {
@@ -62,22 +62,22 @@ namespace dftefe
             if (xi < knotX[0])
               return 0;
             double       rDiff = r_param - 1.0;
-            unsigned int n_gp  = 0;
-            unsigned int subId = 0;
+            dftefe::size_type n_gp  = 0;
+            dftefe::size_type subId = 0;
             if (rDiff < 1e-6 && rDiff > -1e-6)
               {
-                subId = static_cast<unsigned int>(xi / a_param);
+                subId = static_cast<dftefe::size_type>(xi / a_param);
               }
             else
               {
-                n_gp = static_cast<unsigned int>(
+                n_gp = static_cast<dftefe::size_type>(
                   log(xi * rDiff / a_param + 1.0) / log(r_param));
                 double segStart =
                   a_param *
                   (pow(r_param, static_cast<double>(n_gp)) - 1.0) / rDiff;
                 double segWidth =
                   a_param * pow(r_param, static_cast<double>(n_gp));
-                subId = static_cast<unsigned int>(
+                subId = static_cast<dftefe::size_type>(
                   static_cast<double>(numSubDiv) * (xi - segStart) / segWidth);
               }
             size_type idx =
@@ -119,7 +119,7 @@ namespace dftefe
                        const bool         isSubdivGrid,
                        const double       a_param,
                        const double       r_param,
-                       const unsigned int numSubDiv)
+                       const dftefe::size_type numSubDiv)
       {
         double          xi  = x;
         const size_type idx =
@@ -154,7 +154,7 @@ namespace dftefe
                         const bool         isSubdivGrid,
                         const double       a_param,
                         const double       r_param,
-                        const unsigned int numSubDiv)
+                        const dftefe::size_type numSubDiv)
       {
         double          xi  = x;
         const size_type idx =

@@ -525,7 +525,7 @@ namespace dftefe
 
 #endif // DFTEFE_WITH_MPI
 
-      unsigned int
+      int
       numMPIProcesses(const MPIComm mpi_communicator)
       {
         int n_jobs = 1;
@@ -538,7 +538,7 @@ namespace dftefe
         return n_jobs;
       }
 
-      unsigned int
+      int
       thisMPIProcess(const MPIComm mpi_communicator)
       {
         int rank = 0;

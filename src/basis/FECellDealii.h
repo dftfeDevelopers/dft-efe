@@ -59,13 +59,13 @@ namespace dftefe
       isPointInside(const utils::Point &point) const override;
 
       bool
-      isAtBoundary(const unsigned int i) const override;
+      isAtBoundary(const size_type i) const override;
 
       bool
       isAtBoundary() const override;
 
       virtual bool
-      hasPeriodicNeighbor(const unsigned int i) const override;
+      hasPeriodicNeighbor(const size_type i) const override;
 
       double
       diameter() const override;

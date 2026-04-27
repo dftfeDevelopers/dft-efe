@@ -172,13 +172,13 @@ namespace dftefe
       const boost::io::ios_base_all_saver restore_stream(d_stream.getOStream());
 
       // get the maximum width among all d_SectionsMap
-      unsigned int maxWidth = 0;
+      size_type maxWidth = 0;
       for (const auto &i : d_SectionsMap)
         maxWidth =
-          std::max(maxWidth, static_cast<unsigned int>(i.first.size()));
+          std::max(maxWidth, static_cast<size_type>(i.first.size()));
 
       // 32 is the default width until | character
-      maxWidth = std::max(maxWidth + 1, static_cast<unsigned int>(32));
+      maxWidth = std::max(maxWidth + 1, static_cast<size_type>(32));
       const std::string extraDash  = std::string(maxWidth - 32, '-');
       const std::string extraSpace = std::string(maxWidth - 32, ' ');
 
@@ -219,7 +219,7 @@ namespace dftefe
           std::string nameOut = name;
 
           // resize the array so that it is always of the same size
-          unsigned int posNonSpace = nameOut.find_first_not_of(' ');
+          size_type posNonSpace = nameOut.find_first_not_of(' ');
           nameOut.erase(0, posNonSpace);
           nameOut.resize(maxWidth, ' ');
           d_stream << std::endl;
@@ -297,7 +297,7 @@ namespace dftefe
     }
 
     template <dftefe::utils::MemorySpace memorySpace>
-    unsigned int
+    size_type
     Profiler<memorySpace>::getSectionCalls(const std::string &sectionName) const
     {
       auto it = d_SectionsMap.find(sectionName);

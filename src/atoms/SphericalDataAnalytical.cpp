@@ -50,7 +50,7 @@ namespace dftefe
         const double                            polarAngleTolerance,
         std::vector<double> &                   value)
       {
-        for (int i = 0; i < point.size(); i++)
+        for (size_type i = 0; i < point.size(); i++)
           {
             double r, theta, phi;
             convertCartesianToSpherical(

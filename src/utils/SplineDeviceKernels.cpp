@@ -80,7 +80,7 @@ namespace dftefe
         const bool         isSubdivGrid,
         const double       a_param,
         const double       r_param,
-        const unsigned int numSubDiv);
+        const dftefe::size_type numSubDiv);
 
       //-----------------------------------------------------------------------
       // Batch kernel: evaluate spline derivative of given order at nQuery pts.
@@ -118,7 +118,7 @@ namespace dftefe
         const bool         isSubdivGrid,
         const double       a_param,
         const double       r_param,
-        const unsigned int numSubDiv);
+        const dftefe::size_type numSubDiv);
 
     } // anonymous namespace
 

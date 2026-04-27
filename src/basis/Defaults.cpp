@@ -42,5 +42,7 @@ namespace dftefe
     const size_type ECIDefaults::ENRICHMENT_BATCH_SIZE         = 400;
     const double ECIDefaults::ENRICHMENT_ORTHO_COEFF_TOL    = 1e-8;
     const size_type BasisDataStorageDefaults::CELL_BATCH_SIZE  = 50;
+    const size_type MaxSizeDefaults::SIZE_TYPE_MAX = std::numeric_limits<size_type>::max();
+    const global_size_type MaxSizeDefaults::GLOBAL_SIZE_TYPE_MAX = std::numeric_limits<global_size_type>::max();
   } // end of namespace basis
 } // end of namespace dftefe

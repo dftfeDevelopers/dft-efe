@@ -132,7 +132,7 @@ namespace dftefe
 
           size_type columnIndexStart =
             *(columnConstraintsAccumulated.begin() + i);
-          for (unsigned int j = 0; j < *(rowConstraintsSizes.begin() + i); ++j)
+          for (size_type j = 0; j < *(rowConstraintsSizes.begin() + i); ++j)
             {
               const size_type startingLocalDofIndexColumn =
                 (*(columnConstraintsIdsLocal.begin() + columnIndexStart + j)) *
@@ -180,7 +180,7 @@ namespace dftefe
         const utils::MemoryStorage<size_type, memorySpace>
           &rowConstraintsIdsLocal)
     {
-      for (unsigned int i = 0; i < rowConstraintsIdsLocal.size(); ++i)
+      for (size_type i = 0; i < rowConstraintsIdsLocal.size(); ++i)
         {
           const global_size_type startingLocalDofIndexRow =
             *(rowConstraintsIdsLocal.begin() + i) * blockSize;
@@ -204,7 +204,7 @@ namespace dftefe
           &                       rowConstraintsIdsLocal,
         const ValueTypeBasisCoeff alpha)
     {
-      for (unsigned int i = 0; i < rowConstraintsIdsLocal.size(); ++i)
+      for (size_type i = 0; i < rowConstraintsIdsLocal.size(); ++i)
         {
           const global_size_type startingLocalDofIndexRow =
             *(rowConstraintsIdsLocal.begin() + i) * blockSize;

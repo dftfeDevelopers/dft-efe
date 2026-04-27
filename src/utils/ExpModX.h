@@ -10,14 +10,14 @@ namespace dftefe
     class ExpModX : public ScalarSpatialFunctionReal
     {
     public:
-      ExpModX(const unsigned int component, const double exponent = 1.0);
+      ExpModX(const size_type component, const double exponent = 1.0);
       double
       operator()(const utils::Point &point) const override;
       std::vector<double>
       operator()(const std::vector<utils::Point> &points) const override;
 
     private:
-      unsigned int d_component;
+      size_type d_component;
       double       d_exponent;
     };
 
