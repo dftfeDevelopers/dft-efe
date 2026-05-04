@@ -148,7 +148,7 @@ namespace dftefe
       /**
        * @brief Destructor for the class
        */
-      ~EnrichmentClassicalInterfaceSpherical() = default;
+      ~EnrichmentClassicalInterfaceSpherical();
 
       /**
        * @brief Function to return AtomSphericalDataContainerObject
@@ -263,6 +263,9 @@ namespace dftefe
       std::shared_ptr<const BasisDofHandler>
       getCFEBasisDofHandler() const;
 
+      void 
+      getOverlappingEnrichmentInCellsAdditionalData();
+
       std::shared_ptr<EnrichmentIdsPartition<dim>> d_enrichmentIdsPartition;
       std::shared_ptr<const AtomIdsPartition<dim>> d_atomIdsPartition;
       std::shared_ptr<const atoms::AtomSphericalDataContainer>
@@ -297,6 +300,10 @@ namespace dftefe
       const utils::mpi::MPIComm d_comm;
 
       size_type d_enrichBatchSize;
+
+      utils::MemoryStorage<double, memorySpace> d_originMemSpace;
+      std::vector<size_type> d_numEnrichInAllCells;
+      atoms::SphericalDataNumerical::Func<memorySpace> *d_sphericalDataNumericalFuncPtrVec;
 
     }; // end of class
   }    // end of namespace basis

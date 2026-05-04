@@ -115,6 +115,7 @@ namespace dftefe
       , d_linAlgOpContext(linAlgOpContext)
       , d_comm(comm)
       , d_enrichBatchSize(enrichmentBatchSize)
+      , d_sphericalDataNumericalFuncPtrVec(nullptr)
     {
       d_isOrthogonalized = true;
 
@@ -223,6 +224,8 @@ namespace dftefe
 
       checkEnrichmentsSpillToBoundary(d_triangulation,
                                       d_overlappingEnrichmentIdsInCells);
+
+      getOverlappingEnrichmentInCellsAdditionalData();
 
       // For Non-Periodic BC, a sparse vector d_i with hanging with homogenous
       // BC will be formed which will be solved by Md =
@@ -588,6 +591,8 @@ namespace dftefe
       d_overlappingEnrichmentIdsInCells =
         d_enrichmentIdsPartition->overlappingEnrichmentIdsInCells();
 
+      getOverlappingEnrichmentInCellsAdditionalData();
+
       global_size_type maxEnrich = 0;
       global_size_type minEnrich = 0;
       global_size_type avgEnrich = 0;
@@ -688,6 +693,7 @@ namespace dftefe
       , d_linAlgOpContext(nullptr)
       , d_feOrder(feOrder)
       , d_comm(comm)
+      , d_sphericalDataNumericalFuncPtrVec(nullptr)
     {
       d_isOrthogonalized = false;
 
@@ -770,6 +776,8 @@ namespace dftefe
       d_overlappingEnrichmentIdsInCells =
         d_enrichmentIdsPartition->overlappingEnrichmentIdsInCells();
 
+      getOverlappingEnrichmentInCellsAdditionalData();
+
       global_size_type maxEnrich = 0;
       global_size_type minEnrich = 0;
       global_size_type avgEnrich = 0;
@@ -844,6 +852,20 @@ namespace dftefe
 
       checkEnrichmentsSpillToBoundary(d_triangulation,
                                       d_overlappingEnrichmentIdsInCells);
+    }
+
+    template <typename ValueTypeBasisData,
+              utils::MemorySpace memorySpace,
+              size_type          dim>
+    EnrichmentClassicalInterfaceSpherical<ValueTypeBasisData,
+                                          memorySpace,
+                                          dim>::~EnrichmentClassicalInterfaceSpherical()
+    {
+      if(d_sphericalDataNumericalFuncPtrVec != nullptr)
+      {
+        utils::MemoryManager<atoms::SphericalDataNumerical::Func<memorySpace>, memorySpace>::deallocate(d_sphericalDataNumericalFuncPtrVec);
+        d_sphericalDataNumericalFuncPtrVec = nullptr;
+      }
     }
 
     template <typename ValueTypeBasisData,
@@ -1840,7 +1862,6 @@ namespace dftefe
       // profiler.print();
     }
 
-    
     template <typename ValueTypeBasisData,
               utils::MemorySpace memorySpace,
               size_type          dim>
@@ -1848,31 +1869,22 @@ namespace dftefe
     EnrichmentClassicalInterfaceSpherical<ValueTypeBasisData,
                                           memorySpace,
                                           dim>::
-      getEnrichmentValuesInCellRangeAtQuadPts(
-        const quadrature::QuadratureRuleContainer &        quadRuleContainer,
-        double *                                           basisEnrichQuadStoragePtr,
-        linearAlgebra::LinAlgOpContext<memorySpace> &      linAlgOpContext,
-        const std::pair<size_type, size_type>              cellRange) const
+    getOverlappingEnrichmentInCellsAdditionalData()
     {
-      utils::Profiler<memorySpace> profiler(d_comm,
-                                            "getEnrichmentValuesInCellRangeAtQuadPts");
-
-      // profiler.registerStart("setup");
-      const size_type numCells = d_overlappingEnrichmentIdsInCells.size();
-
-      // Per-cell size arrays for ALL cells — offset arithmetic in
-      // getEnrichmentValuesInCellRange scans from cell 0 to cellRange.first.
-      std::vector<size_type> numEnrichInAllCells(numCells);
-      std::vector<size_type> numQuadInAllCells(numCells);
+      if(d_sphericalDataNumericalFuncPtrVec != nullptr)
+      {
+        utils::MemoryManager<atoms::SphericalDataNumerical::Func<memorySpace>, memorySpace>::deallocate(d_sphericalDataNumericalFuncPtrVec);
+        d_sphericalDataNumericalFuncPtrVec = nullptr;
+      }
+        const size_type numCells = d_overlappingEnrichmentIdsInCells.size();
+      d_numEnrichInAllCells.resize(numCells);
       size_type totalEnrich = 0;
       for (size_type iCell = 0; iCell < numCells; iCell++)
         {
-          numEnrichInAllCells[iCell] = d_overlappingEnrichmentIdsInCells[iCell].size();
-          numQuadInAllCells[iCell]   = quadRuleContainer.nCellQuadraturePoints(iCell);
-          totalEnrich += numEnrichInAllCells[iCell];
+          d_numEnrichInAllCells[iCell] = d_overlappingEnrichmentIdsInCells[iCell].size();
+          totalEnrich += d_numEnrichInAllCells[iCell];
         }
 
-      // Build flat Func and origin arrays for ALL cells on host, then transfer.
       std::vector<atoms::SphericalDataNumerical::Func<memorySpace>> funcVecHost(totalEnrich);
       std::vector<double> originHost(totalEnrich * dim);
 
@@ -1894,10 +1906,9 @@ namespace dftefe
                 dynamic_cast<atoms::SphericalDataNumerical *>(spData.get());
               utils::throwException(
                 numericalData != nullptr,
-                "getEnrichmentValuesInCellRangeAtQuadPts: enrichment data must be SphericalDataNumerical.");
+                " For getEnrichmentDataInCellRangeAtQuadPts: enrichment data must be SphericalDataNumerical.");
 
-              funcVecHost[enrichOffset + iEnrich] =
-                numericalData->getFunc<memorySpace>();
+              funcVecHost[enrichOffset + iEnrich] = numericalData->getFunc<memorySpace>();
               std::memcpy(originHost.data() + (enrichOffset + iEnrich) * dim,
                           d_atomCoordinatesVec[atomId].data(),
                           dim * sizeof(double));
@@ -1905,32 +1916,48 @@ namespace dftefe
           enrichOffset += enrichIds.size();
         }
 
-      // Allocate Func array in target memory space via MemoryManager (no
-      // deviceSetValue needed — we overwrite the whole buffer immediately).
-      using FuncType = atoms::SphericalDataNumerical::Func<memorySpace>;
-      FuncType *funcPtr = nullptr;
-      utils::MemoryManager<FuncType, memorySpace>::allocate(totalEnrich, &funcPtr);
+      utils::MemoryManager<atoms::SphericalDataNumerical::Func<memorySpace>, memorySpace>::allocate(totalEnrich, &d_sphericalDataNumericalFuncPtrVec);
       utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
-        totalEnrich, funcPtr, funcVecHost.data());
+        totalEnrich, d_sphericalDataNumericalFuncPtrVec, funcVecHost.data());
 
-      utils::MemoryStorage<double, memorySpace> originMemSpace(totalEnrich * dim);
+      d_originMemSpace.resize(totalEnrich * dim);
       utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
-        totalEnrich * dim, originMemSpace.data(), originHost.data());
-      // profiler.registerEnd("setup");
+        totalEnrich * dim, d_originMemSpace.data(), originHost.data());
+    }
+
+    template <typename ValueTypeBasisData,
+              utils::MemorySpace memorySpace,
+              size_type          dim>
+    void
+    EnrichmentClassicalInterfaceSpherical<ValueTypeBasisData,
+                                          memorySpace,
+                                          dim>::
+      getEnrichmentValuesInCellRangeAtQuadPts(
+        const quadrature::QuadratureRuleContainer &        quadRuleContainer,
+        double *                                           basisEnrichQuadStoragePtr,
+        linearAlgebra::LinAlgOpContext<memorySpace> &      linAlgOpContext,
+        const std::pair<size_type, size_type>              cellRange) const
+    {
+      // utils::Profiler<memorySpace> profiler(d_comm,
+      //                                       "getEnrichmentValuesInCellRangeAtQuadPts");
+
+      std::vector<size_type> numQuadInAllCells(quadRuleContainer.nCells());
+      for (size_type iCell = 0; iCell < quadRuleContainer.nCells(); iCell++)
+        {
+          numQuadInAllCells[iCell] = quadRuleContainer.nCellQuadraturePoints(iCell);
+        }
 
       // profiler.registerStart("timing");
-      // Quad points live in quadRuleContainer in the target memory space already.
       EnrichmentDataEvalKernels<memorySpace>::getEnrichmentValuesInCellRange(
         quadRuleContainer.template getRealPointsPtr<memorySpace>(),
-        originMemSpace.data(),
+        d_originMemSpace.data(),
         cellRange,
-        numEnrichInAllCells,
+        d_numEnrichInAllCells,
         numQuadInAllCells,
-        funcPtr,
+        d_sphericalDataNumericalFuncPtrVec,
         basisEnrichQuadStoragePtr,
         linAlgOpContext);
 
-      utils::MemoryManager<FuncType, memorySpace>::deallocate(funcPtr);
       // profiler.registerEnd("timing");
       // profiler.print();
     }
@@ -1948,77 +1975,26 @@ namespace dftefe
         linearAlgebra::LinAlgOpContext<memorySpace> &      linAlgOpContext,
         const std::pair<size_type, size_type>              cellRange) const
     {
-      utils::Profiler<memorySpace> profiler(d_comm,
-                                            "getEnrichmentGradientsInCellRangeAtQuadPts");
+      // utils::Profiler<memorySpace> profiler(d_comm,
+      //                                       "getEnrichmentGradientsInCellRangeAtQuadPts");
 
-      // profiler.registerStart("setup");
-      const size_type numCells = d_overlappingEnrichmentIdsInCells.size();
-
-      std::vector<size_type> numEnrichInAllCells(numCells);
-      std::vector<size_type> numQuadInAllCells(numCells);
-      size_type totalEnrich = 0;
-      for (size_type iCell = 0; iCell < numCells; iCell++)
+      std::vector<size_type> numQuadInAllCells(quadRuleContainer.nCells());
+      for (size_type iCell = 0; iCell < quadRuleContainer.nCells(); iCell++)
         {
-          numEnrichInAllCells[iCell] = d_overlappingEnrichmentIdsInCells[iCell].size();
-          numQuadInAllCells[iCell]   = quadRuleContainer.nCellQuadraturePoints(iCell);
-          totalEnrich += numEnrichInAllCells[iCell];
+          numQuadInAllCells[iCell] = quadRuleContainer.nCellQuadraturePoints(iCell);
         }
-
-      std::vector<atoms::SphericalDataNumerical::Func<memorySpace>> funcVecHost(totalEnrich);
-      std::vector<double> originHost(totalEnrich * dim);
-
-      size_type enrichOffset = 0;
-      for (size_type iCell = 0; iCell < numCells; iCell++)
-        {
-          const auto &enrichIds = d_overlappingEnrichmentIdsInCells[iCell];
-          for (size_type iEnrich = 0; iEnrich < enrichIds.size(); iEnrich++)
-            {
-              const global_size_type globalEnrichId = enrichIds[iEnrich];
-              EnrichmentIdAttribute eIdAttr =
-                d_enrichmentIdsPartition->getEnrichmentIdAttribute(globalEnrichId);
-              const size_type atomId  = eIdAttr.atomId;
-              const size_type localId = eIdAttr.localIdInAtom;
-
-              auto spData = d_atomSphericalDataContainer->getSphericalData(
-                d_atomSymbolVec[atomId], d_fieldName)[localId];
-              auto *numericalData =
-                dynamic_cast<atoms::SphericalDataNumerical *>(spData.get());
-              utils::throwException(
-                numericalData != nullptr,
-                "getEnrichmentGradientsInCellRangeAtQuadPts: enrichment data must be SphericalDataNumerical.");
-
-              funcVecHost[enrichOffset + iEnrich] =
-                numericalData->getFunc<memorySpace>();
-              std::memcpy(originHost.data() + (enrichOffset + iEnrich) * dim,
-                          d_atomCoordinatesVec[atomId].data(),
-                          dim * sizeof(double));
-            }
-          enrichOffset += enrichIds.size();
-        }
-
-      using FuncType = atoms::SphericalDataNumerical::Func<memorySpace>;
-      FuncType *funcPtr = nullptr;
-      utils::MemoryManager<FuncType, memorySpace>::allocate(totalEnrich, &funcPtr);
-      utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
-        totalEnrich, funcPtr, funcVecHost.data());
-
-      utils::MemoryStorage<double, memorySpace> originMemSpace(totalEnrich * dim);
-      utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
-        totalEnrich * dim, originMemSpace.data(), originHost.data());
-      // profiler.registerEnd("setup");
 
       // profiler.registerStart("timing");
       EnrichmentDataEvalKernels<memorySpace>::getEnrichmentGradientsInCellRange(
         quadRuleContainer.template getRealPointsPtr<memorySpace>(),
-        originMemSpace.data(),
+        d_originMemSpace.data(),
         cellRange,
-        numEnrichInAllCells,
+        d_numEnrichInAllCells,
         numQuadInAllCells,
-        funcPtr,
+        d_sphericalDataNumericalFuncPtrVec,
         basisGradientEnrichQuadStoragePtr,
         linAlgOpContext);
 
-      utils::MemoryManager<FuncType, memorySpace>::deallocate(funcPtr);
       // profiler.registerEnd("timing");
       // profiler.print();
     }
