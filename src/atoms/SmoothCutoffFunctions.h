@@ -5,9 +5,8 @@
 #include <utils/TypeConfig.h>
 #include <utils/MemorySpaceType.h>
 #include <utils/DeviceTypeConfig.h>
-#ifdef DFTEFE_WITH_DEVICE
-  #  include <utils/DeviceKernelLauncherHelpers.h>
-#endif
+#include <utils/DeviceKernelLauncherHelpers.h>
+#include <cmath>
 
 namespace dftefe
 {
@@ -16,32 +15,38 @@ namespace dftefe
     ///////////////////////////////////////////////////////////////////////////
     ///////////// START OF SMOOTH CUTOFF FUNCTION RELATED FUNCTIONS ///////////
     ///////////////////////////////////////////////////////////////////////////
-    double
-    f1(const double x);
 
-    double
-    f1Der(const double x);
+    // scalar single-point evaluation — inline so every TU (CPU or GPU) that
+    // includes this header gets its own inline copy callable from host and device.
+    DFTEFE_HOST_DEVICE_FUNC double
+    smoothCutoffValue(const double x, const double r, const double d)
+    {
+      const double y      = 1.0 - d * (x - r) / r;
+      const double f1_y   = (y <= 0.0) ? 0.0 : exp(-1.0 / y);
+      const double omy    = 1.0 - y;
+      const double f1_1my = (omy <= 0.0) ? 0.0 : exp(-1.0 / omy);
+      return f1_y / (f1_y + f1_1my);
+    }
 
-    double
-    f2(const double x);
-
-    double
-    f2Der(const double x, const double tolerance);
-
-    double
-    Y(const double x, const double r, const double d);
-
-    double
-    YDer(const double x, const double r, const double d);
-
-    double
-    smoothCutoffValue(const double x, const double r, const double d);
-
-    double
+    DFTEFE_HOST_DEVICE_FUNC double
     smoothCutoffDerivative(const double x,
                            const double r,
                            const double d,
-                           const double tolerance);
+                           const double tolerance)
+    {
+      const double y = 1.0 - d * (x - r) / r;
+      if (fabs(y) < tolerance || fabs(1.0 - y) < tolerance)
+        return 0.0;
+      const double f1_y      = (y <= 0.0) ? 0.0 : exp(-1.0 / y);
+      const double omy       = 1.0 - y;
+      const double f1_1my    = (omy <= 0.0) ? 0.0 : exp(-1.0 / omy);
+      const double f1Der_y   = f1_y / (y * y);
+      const double f1Der_1my = f1_1my / (omy * omy);
+      const double denom     = f1_y + f1_1my;
+      const double f2Der =
+        (f1Der_y * f1_1my + f1_y * f1Der_1my) / (denom * denom);
+      return f2Der * (-d / r);
+    }
 
     template <dftefe::utils::MemorySpace memorySpace>
     void
@@ -67,9 +72,5 @@ namespace dftefe
     ///////////////////////////////////////////////////////////////////////////
   } // namespace atoms
 } // namespace dftefe
-
-#ifdef DFTEFE_WITH_DEVICE
-#include <atoms/SmoothCutoffFunctionsDeviceKernels.h>
-#endif
 
 #endif // dftefe_SmoothCutoffFunctions_h

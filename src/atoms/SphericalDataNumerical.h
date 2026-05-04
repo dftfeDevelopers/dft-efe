@@ -37,6 +37,7 @@
 #include <utils/Point.h>
 #include <atoms/Defaults.h>
 #include <atoms/SphericalHarmonicFunctions.h>
+#include <utils/DeviceKernelLauncherHelpers.h>
 
 namespace dftefe
 {
@@ -45,6 +46,44 @@ namespace dftefe
     class SphericalDataNumerical : public SphericalData
     {
     public:
+      // Lightweight functor holding all data needed for single-point
+      // evaluation in a specific memory space.  Obtained on the host via
+      // getFunc<MemorySpace>(), then passed by value into host or device
+      // (CUDA/HIP/SYCL) kernels.
+      // Func<HOST>   — host spline pointers, callable from host code.
+      // Func<DEVICE> — device spline pointers, callable from device kernels.
+      template <dftefe::utils::MemorySpace memorySpace>
+      class Func
+      {
+      public:
+        Func();
+
+        Func(utils::Spline::Func<memorySpace> radialSpline,
+             int    l,
+             int    m,
+             int    mEff,
+             double constant,
+             double cutoff,
+             double smoothness,
+             double polarAngleTolerance,
+             double cutoffTolerance,
+             double radiusTolerance);
+
+        DFTEFE_HOST_DEVICE_FUNC double
+        getValue(const double *point, const double *origin) const;
+
+        DFTEFE_HOST_DEVICE_FUNC void
+        getGradientValue(const double *point,
+                         const double *origin,
+                         double *      grad) const;
+
+      private:
+        utils::Spline::Func<memorySpace> d_radialSpline;
+        int    d_l, d_m, d_mEff;
+        double d_constant, d_cutoff, d_smoothness, d_polarAngleTolerance;
+        double d_cutoffTolerance, d_radiusTolerance;
+      };
+
       SphericalDataNumerical(
         const std::vector<int>            qNumbers,
         const std::vector<double>         radialPoints,
@@ -151,6 +190,14 @@ namespace dftefe
       double
       getSmoothness() const override;
 
+      // Returns a Func for the given memory space.
+      // HOST:   fills from host std::vector spline data.
+      // DEVICE: fills from device MemoryStorage spline data.
+      // Both are host-callable only — call before launching a kernel.
+      template <dftefe::utils::MemorySpace memorySpace>
+      Func<memorySpace>
+      getFunc() const;
+
     private:
       std::vector<int>                     d_qNumbers;
       std::vector<double>                  d_radialPoints;
@@ -168,4 +215,7 @@ namespace dftefe
 
   } // end of namespace atoms
 } // end of namespace dftefe
+
+#include <atoms/SphericalDataNumericalKernels.h>
+
 #endif // dftefeSphericalDataNumerical_h

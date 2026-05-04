@@ -123,6 +123,20 @@ namespace dftefe
     } // anonymous namespace
 
     //-------------------------------------------------------------------------
+    // getView<DEVICE>
+    //-------------------------------------------------------------------------
+    template <>
+    Spline::Func<utils::MemorySpace::DEVICE>
+    Spline::getFunc<utils::MemorySpace::DEVICE>() const
+    {
+      return Func<utils::MemorySpace::DEVICE>(
+        d_x_device.data(), d_y_device.data(),
+        d_b_device.data(), d_c_device.data(), d_d_device.data(),
+        static_cast<size_type>(d_x_device.size()),
+        d_c0, d_isSubdivPowerLawGrid, d_a, d_r, d_numSubDiv);
+    }
+
+    //-------------------------------------------------------------------------
     // evalAll<DEVICE>
     //-------------------------------------------------------------------------
     template <>

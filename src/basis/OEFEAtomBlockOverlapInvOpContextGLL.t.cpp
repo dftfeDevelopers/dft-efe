@@ -187,14 +187,17 @@ namespace dftefe
         basisDataInAllCellsEnrichmentBlockEnrichmentHost.copyFrom(
           basisDataInAllCellsEnrichmentBlockEnrichment);
 
-      std::vector<double> quadValuesInAllCellsEnrichment(numCumulativeEnrichDofsxQuadEFEInAllCells), quadGradientsInAllCellsEnrichment;
-          eefeBDH->getEnrichmentClassicalInterface()->getEnrichmentDataInAllCellsAtQuadPts(
-            true,
-            false,
-            *enrichmentBlockEnrichmentBasisDataStorage.getQuadratureRuleContainer(),
-            quadValuesInAllCellsEnrichment.data(),
-            quadGradientsInAllCellsEnrichment.data(),
-            *eefeBDH->getEnrichmentClassicalInterface()->getLinAlgOpContext());
+        utils::MemoryStorage<double, memorySpace> quadValuesInAllCellsEnrichmentMemSpace(numCumulativeEnrichDofsxQuadEFEInAllCells);
+        eefeBDH->getEnrichmentClassicalInterface()->getEnrichmentValuesInCellRangeAtQuadPts(
+          *enrichmentBlockEnrichmentBasisDataStorage.getQuadratureRuleContainer(),
+          quadValuesInAllCellsEnrichmentMemSpace.data(),
+          *eefeBDH->getEnrichmentClassicalInterface()->getLinAlgOpContext(),
+          std::make_pair((size_type)0, numLocallyOwnedCells));
+        std::vector<double> quadValuesInAllCellsEnrichment(numCumulativeEnrichDofsxQuadEFEInAllCells);
+        utils::MemoryTransfer<utils::MemorySpace::HOST, memorySpace>::copy(
+          numCumulativeEnrichDofsxQuadEFEInAllCells,
+          quadValuesInAllCellsEnrichment.data(),
+          quadValuesInAllCellsEnrichmentMemSpace.data());
 
         size_type cumulativeQuadEnrichBlockEnrichxenrichInCell = 0;
 
@@ -645,19 +648,13 @@ namespace dftefe
 
         size_type cellIndex   = 0;
 
-      // et the enrichment values
-      std::vector<double> quadValuesInAllCellsEnrichmentHost(numCumulativeEnrichDofsxQuadEFEInAllCells), quadGradientsInAllCellsEnrichmentHost;
-          eefeBDH->getEnrichmentClassicalInterface()->getEnrichmentDataInAllCellsAtQuadPts(
-            true,
-            false,
-            *enrichmentBlockEnrichmentBasisDataStorage.getQuadratureRuleContainer(),
-            quadValuesInAllCellsEnrichmentHost.data(),
-            quadGradientsInAllCellsEnrichmentHost.data(),
-            *eefeBDH->getEnrichmentClassicalInterface()->getLinAlgOpContext());
-        utils::MemoryStorage<ValueTypeOperator, memorySpace>
-          quadValuesInAllCellsEnrichment(quadValuesInAllCellsEnrichmentHost.size());
-        utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
-          quadValuesInAllCellsEnrichment.size(), quadValuesInAllCellsEnrichment.data(), quadValuesInAllCellsEnrichmentHost.data());
+        utils::MemoryStorage<double, memorySpace>
+          quadValuesInAllCellsEnrichment(numCumulativeEnrichDofsxQuadEFEInAllCells);
+        eefeBDH->getEnrichmentClassicalInterface()->getEnrichmentValuesInCellRangeAtQuadPts(
+          *enrichmentBlockEnrichmentBasisDataStorage.getQuadratureRuleContainer(),
+          quadValuesInAllCellsEnrichment.data(),
+          *eefeBDH->getEnrichmentClassicalInterface()->getLinAlgOpContext(),
+          std::make_pair((size_type)0, numLocallyOwnedCells));
 
         auto coeffsInAllCellsHost = eefeBDH->getEnrichmentClassicalInterface()->getClassicalComponentCoeffsInAllCellsOEFE();
         utils::MemoryStorage<ValueTypeOperator, memorySpace>

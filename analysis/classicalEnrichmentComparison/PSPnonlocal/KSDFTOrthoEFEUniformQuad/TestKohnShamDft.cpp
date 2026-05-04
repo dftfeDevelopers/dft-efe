@@ -336,7 +336,7 @@ int main(int argc, char** argv)
   std::shared_ptr<linearAlgebra::LinAlgOpContext
     <memorySpace>> linAlgOpContext = 
     std::make_shared<linearAlgebra::LinAlgOpContext
-    <memorySpace>>(10);
+    <memorySpace>>(50);
 
   std::shared_ptr<linearAlgebra::LinAlgOpContext
     <Host>> linAlgOpContextHost = 

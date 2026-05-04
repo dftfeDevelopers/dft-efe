@@ -23,9 +23,8 @@
  * @author Avirup Sircar
  *
  * Batch (all-points) kernel launchers for smooth cutoff functions on DEVICE.
- * Scalar per-point device helpers (smoothCutoffValueDevice,
- * smoothCutoffDerivativeDevice) live in SmoothCutoffFunctionsDeviceKernels.h
- * which is pulled in via SmoothCutoffFunctions.h.
+ * Scalar smoothCutoffValue/smoothCutoffDerivative are inline DFTEFE_HOST_DEVICE_FUNC
+ * in SmoothCutoffFunctions.h and are called directly from the device kernels below.
  */
 
 #ifdef DFTEFE_WITH_DEVICE
@@ -33,7 +32,7 @@
 #  include <utils/DeviceTypeConfig.h>
 #  include <utils/DeviceAPICalls.h>
 #  include <utils/Exceptions.h>
-#  include <atoms/SmoothCutoffFunctions.h>  // also pulls in the DeviceKernels header
+#  include <atoms/SmoothCutoffFunctions.h>
 #  include <cmath>
 
 namespace dftefe
@@ -42,18 +41,13 @@ namespace dftefe
   {
     namespace
     {
-      //-----------------------------------------------------------------------
-      // Batch kernel: smoothCutoffValue per point.
-      // Calls smoothCutoffValueDevice from SmoothCutoffFunctionsDeviceKernels.h
-      // (available in this TU via SmoothCutoffFunctions.h).
-      //-----------------------------------------------------------------------
       DFTEFE_CREATE_KERNEL(
         void,
         SmoothCutoffValueKernel,
         {
           for (size_type i = globalThreadId; i < nPoints;
                i += nThreadsPerBlock * nThreadBlock)
-            out[i] = smoothCutoffValueDevice(x[i], r, d);
+            out[i] = smoothCutoffValue(x[i], r, d);
         },
         const size_type nPoints,
         const double *  x,
@@ -61,16 +55,13 @@ namespace dftefe
         const double    d,
         double *        out);
 
-      //-----------------------------------------------------------------------
-      // Batch kernel: smoothCutoffDerivative per point.
-      //-----------------------------------------------------------------------
       DFTEFE_CREATE_KERNEL(
         void,
         SmoothCutoffDerivativeKernel,
         {
           for (size_type i = globalThreadId; i < nPoints;
                i += nThreadsPerBlock * nThreadBlock)
-            out[i] = smoothCutoffDerivativeDevice(x[i], r, d, tolerance);
+            out[i] = smoothCutoffDerivative(x[i], r, d, tolerance);
         },
         const size_type nPoints,
         const double *  x,

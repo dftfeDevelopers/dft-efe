@@ -23,7 +23,7 @@
  * @author Avirup Sircar
  *
  * Batch (all-points) kernel launchers for SphericalHarmonicFunctions on DEVICE.
- * Scalar per-point device helpers (devicePlm, deviceDPlmDTheta, etc.) and
+ * Scalar per-point device helpers (plm, dplmDTheta, etc.) and
  * the scalar member functions (PlmDevice, dPlmDThetaDevice, etc.) live in
  * SphericalHarmonicFunctionsDeviceKernels.h, pulled in via
  * SphericalHarmonicFunctions.h.
@@ -43,19 +43,6 @@ namespace dftefe
   {
     namespace
     {
-      //-----------------------------------------------------------------------
-      // Rlm — host-only recursive helper used by the template specialisations
-      // below to compute the negative-m scaling factor on the host.
-      // (Device analogue RlmDevice is in SphericalHarmonicFunctionsDeviceKernels.h)
-      //-----------------------------------------------------------------------
-      inline double
-      Rlm(const int l, const int m)
-      {
-        if (m == 0)
-          return 1.0;
-        return Rlm(l, m - 1) / ((l - m + 1.0) * (l + m));
-      }
-
       //-----------------------------------------------------------------------
       // Batch kernels
       //-----------------------------------------------------------------------
@@ -94,7 +81,7 @@ namespace dftefe
               pt[0] = points[3 * i];
               pt[1] = points[3 * i + 1];
               pt[2] = points[3 * i + 2];
-              deviceCartesianToSpherical(
+              convertCartesianToSpherical(
                 pt, r[i], theta[i], phi[i], polarAngleTolerance);
             }
         },
@@ -111,7 +98,7 @@ namespace dftefe
         {
           for (size_type i = globalThreadId; i < nPoints;
                i += nThreadsPerBlock * nThreadBlock)
-            out[i] = deviceQm(m, phi[i]);
+            out[i] = Qm(m, phi[i]);
         },
         const size_type nPoints,
         const int       m,
@@ -124,7 +111,7 @@ namespace dftefe
         {
           for (size_type i = globalThreadId; i < nPoints;
                i += nThreadsPerBlock * nThreadBlock)
-            out[i] = deviceDQmDPhi(m, phi[i]);
+            out[i] = dQmDPhi(m, phi[i]);
         },
         const size_type nPoints,
         const int       m,
@@ -137,11 +124,11 @@ namespace dftefe
         {
           for (size_type i = globalThreadId; i < nPoints;
                i += nThreadsPerBlock * nThreadBlock)
-            out[i] = factor * devicePlm(l, mEff, cos(theta[i]));
+            out[i] = factor * plm(l, absm, cos(theta[i]));
         },
         const size_type nPoints,
         const int       l,
-        const int       mEff,
+        const int       absm,
         const double    factor,
         const double *  theta,
         double *        out);
@@ -152,11 +139,11 @@ namespace dftefe
         {
           for (size_type i = globalThreadId; i < nPoints;
                i += nThreadsPerBlock * nThreadBlock)
-            out[i] = factor * deviceDPlmDTheta(l, mEff, cos(theta[i]));
+            out[i] = factor * dplmDTheta(l, absm, cos(theta[i]));
         },
         const size_type nPoints,
         const int       l,
-        const int       mEff,
+        const int       absm,
         const double    factor,
         const double *  theta,
         double *        out);
@@ -167,20 +154,17 @@ namespace dftefe
         {
           for (size_type i = globalThreadId; i < nPoints;
                i += nThreadsPerBlock * nThreadBlock)
-            out[i] = factor * deviceD2PlmDTheta2(l, mEff, cos(theta[i]));
+            out[i] = factor * d2plmDTheta2(l, absm, cos(theta[i]));
         },
         const size_type nPoints,
         const int       l,
-        const int       mEff,
+        const int       absm,
         const double    factor,
         const double *  theta,
         double *        out);
 
     } // anonymous namespace
 
-    //=========================================================================
-    // convertCartesianToSpherical<DEVICE>
-    //=========================================================================
     template <>
     void
     convertCartesianToSpherical<utils::MemorySpace::DEVICE>(
@@ -204,9 +188,6 @@ namespace dftefe
                            polarAngleTolerance);
     }
 
-    //=========================================================================
-    // Qm<DEVICE>
-    //=========================================================================
     template <>
     void
     Qm<utils::MemorySpace::DEVICE>(size_type             numPoints,
@@ -225,9 +206,6 @@ namespace dftefe
                            out);
     }
 
-    //=========================================================================
-    // dQmDPhi<DEVICE>
-    //=========================================================================
     template <>
     void
     dQmDPhi<utils::MemorySpace::DEVICE>(size_type             numPoints,
@@ -246,9 +224,6 @@ namespace dftefe
                            out);
     }
 
-    //=========================================================================
-    // SphericalHarmonicFunctions::Plm<DEVICE>
-    //=========================================================================
     template <>
     void
     SphericalHarmonicFunctions::Plm<utils::MemorySpace::DEVICE>(
@@ -261,8 +236,8 @@ namespace dftefe
     {
       const size_type grid  = numPoints / dftefe::utils::DEVICE_BLOCK_SIZE + 1;
       const size_type block = dftefe::utils::DEVICE_BLOCK_SIZE;
-      const int       mEff  = std::abs(m);
-      const double factor   = (m < 0) ? pow(-1.0, m) * Rlm(l, mEff) : 1.0;
+      const int       absm  = std::abs(m);
+      const double factor   = (m < 0) ? pow(-1.0, m) * Rlm(l, absm) : 1.0;
 
       if (d_isAssocLegendreSplineEval)
         {
@@ -273,7 +248,7 @@ namespace dftefe
             }
           else
             {
-              d_assocLegendreSpline[l][mEff]->evalAll<utils::MemorySpace::DEVICE>(
+              d_assocLegendreSpline[l][absm]->evalAll<utils::MemorySpace::DEVICE>(
                 numPoints, theta, out, streamId);
               if (m < 0)
                 DFTEFE_LAUNCH_KERNEL(
@@ -282,7 +257,7 @@ namespace dftefe
         }
       else
         {
-          if (mEff > l)
+          if (absm > l)
             DFTEFE_LAUNCH_KERNEL(
               FillConstantKernel, grid, block, streamId, numPoints, 0.0, out);
           else
@@ -292,16 +267,13 @@ namespace dftefe
                                  streamId,
                                  numPoints,
                                  l,
-                                 mEff,
+                                 absm,
                                  factor,
                                  theta,
                                  out);
         }
     }
 
-    //=========================================================================
-    // SphericalHarmonicFunctions::dPlmDTheta<DEVICE>
-    //=========================================================================
     template <>
     void
     SphericalHarmonicFunctions::dPlmDTheta<utils::MemorySpace::DEVICE>(
@@ -322,12 +294,12 @@ namespace dftefe
         }
       else
         {
-          const int    mEff  = std::abs(m);
-          const double factor = (m < 0) ? pow(-1.0, m) * Rlm(l, mEff) : 1.0;
+          const int    absm  = std::abs(m);
+          const double factor = (m < 0) ? pow(-1.0, m) * Rlm(l, absm) : 1.0;
 
           if (d_isAssocLegendreSplineEval)
             {
-              d_assocLegendreSpline[l][mEff]->derivAll<utils::MemorySpace::DEVICE>(
+              d_assocLegendreSpline[l][absm]->derivAll<utils::MemorySpace::DEVICE>(
                 numPoints, 1, theta, out, streamId);
               if (m < 0)
                 DFTEFE_LAUNCH_KERNEL(
@@ -341,7 +313,7 @@ namespace dftefe
                                    streamId,
                                    numPoints,
                                    l,
-                                   mEff,
+                                   absm,
                                    factor,
                                    theta,
                                    out);
@@ -349,9 +321,6 @@ namespace dftefe
         }
     }
 
-    //=========================================================================
-    // SphericalHarmonicFunctions::d2PlmDTheta2<DEVICE>
-    //=========================================================================
     template <>
     void
     SphericalHarmonicFunctions::d2PlmDTheta2<utils::MemorySpace::DEVICE>(
@@ -372,12 +341,12 @@ namespace dftefe
         }
       else
         {
-          const int    mEff  = std::abs(m);
-          const double factor = (m < 0) ? pow(-1.0, m) * Rlm(l, mEff) : 1.0;
+          const int    absm  = std::abs(m);
+          const double factor = (m < 0) ? pow(-1.0, m) * Rlm(l, absm) : 1.0;
 
           if (d_isAssocLegendreSplineEval)
             {
-              d_assocLegendreSpline[l][mEff]->derivAll<utils::MemorySpace::DEVICE>(
+              d_assocLegendreSpline[l][absm]->derivAll<utils::MemorySpace::DEVICE>(
                 numPoints, 2, theta, out, streamId);
               if (m < 0)
                 DFTEFE_LAUNCH_KERNEL(
@@ -391,7 +360,7 @@ namespace dftefe
                                    streamId,
                                    numPoints,
                                    l,
-                                   mEff,
+                                   absm,
                                    factor,
                                    theta,
                                    out);

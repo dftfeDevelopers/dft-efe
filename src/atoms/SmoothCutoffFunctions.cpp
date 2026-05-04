@@ -66,63 +66,52 @@ namespace dftefe
     //   return f2Der(y, tolerance) * YDer(x, r, d);
     // }
 
-    double
-    smoothCutoffValue(const double x, const double r, const double d)
-    {
-      // Y(x)
-      const double y = (1.0 - d * (x - r) / r);
+    // double
+    // smoothCutoffValue(const double x, const double r, const double d)
+    // {
+    //   // Y(x)
+    //   const double y = (1.0 - d * (x - r) / r);
+    //   // f1(y)
+    //   const double f1_y =
+    //     (y <= 0.0) ? 0.0 : std::exp(-1.0 / y);
+    //   // f1(1 - y)
+    //   const double one_minus_y = 1.0 - y;
+    //   const double f1_1my =
+    //     (one_minus_y <= 0.0) ? 0.0 : std::exp(-1.0 / one_minus_y);
+    //   // f2(y)
+    //   return f1_y / (f1_y + f1_1my);
+    // }
 
-      // f1(y)
-      const double f1_y =
-        (y <= 0.0) ? 0.0 : std::exp(-1.0 / y);
-
-      // f1(1 - y)
-      const double one_minus_y = 1.0 - y;
-      const double f1_1my =
-        (one_minus_y <= 0.0) ? 0.0 : std::exp(-1.0 / one_minus_y);
-
-      // f2(y)
-      return f1_y / (f1_y + f1_1my);
-    }
-
-    double
-    smoothCutoffDerivative(const double x,
-                           const double r,
-                           const double d,
-                           const double tolerance)
-    {
-      // Y(x)
-      const double y = (1.0 - d * (x - r) / r);
-
-      // Boundary protection
-      if (std::fabs(y) < tolerance || std::fabs(1.0 - y) < tolerance)
-        return 0.0;
-
-      // f1(y)
-      const double f1_y = (y <= 0.0) ? 0.0 : std::exp(-1.0 / y);
-
-      // f1(1 - y)
-      const double one_minus_y = 1.0 - y;
-      const double f1_1my =
-        (one_minus_y <= 0.0) ? 0.0 : std::exp(-1.0 / one_minus_y);
-
-      // f1Der(y) = f1(y) / y^2
-      const double f1Der_y = f1_y / (y * y);
-
-      // f1Der(1 - y)
-      const double f1Der_1my =
-        f1_1my / (one_minus_y * one_minus_y);
-
-      // f2 derivative numerator & denominator
-      const double denom = f1_y + f1_1my;
-
-      const double f2Der =
-        (f1Der_y * f1_1my + f1_y * f1Der_1my) /
-        (denom * denom);
-
-      // YDer = -d / r
-      return f2Der * (-d / r);
-    }
+    // double
+    // smoothCutoffDerivative(const double x,
+    //                        const double r,
+    //                        const double d,
+    //                        const double tolerance)
+    // {
+    //   // Y(x)
+    //   const double y = (1.0 - d * (x - r) / r);
+    //   // Boundary protection
+    //   if (std::fabs(y) < tolerance || std::fabs(1.0 - y) < tolerance)
+    //     return 0.0;
+    //   // f1(y)
+    //   const double f1_y = (y <= 0.0) ? 0.0 : std::exp(-1.0 / y);
+    //   // f1(1 - y)
+    //   const double one_minus_y = 1.0 - y;
+    //   const double f1_1my =
+    //     (one_minus_y <= 0.0) ? 0.0 : std::exp(-1.0 / one_minus_y);
+    //   // f1Der(y) = f1(y) / y^2
+    //   const double f1Der_y = f1_y / (y * y);
+    //   // f1Der(1 - y)
+    //   const double f1Der_1my =
+    //     f1_1my / (one_minus_y * one_minus_y);
+    //   // f2 derivative numerator & denominator
+    //   const double denom = f1_y + f1_1my;
+    //   const double f2Der =
+    //     (f1Der_y * f1_1my + f1_y * f1Der_1my) /
+    //     (denom * denom);
+    //   // YDer = -d / r
+    //   return f2Der * (-d / r);
+    // }
 
     //=========================================================================
     // smoothCutoffValue<HOST>

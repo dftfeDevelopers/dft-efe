@@ -8,9 +8,8 @@
 #include <utils/Point.h>
 #include <sstream>
 #include <utils/Spline.h>
-#ifdef DFTEFE_WITH_DEVICE
-  #  include <utils/DeviceKernelLauncherHelpers.h>
-#endif
+#include <utils/DeviceKernelLauncherHelpers.h>
+#include <cmath>
 
 namespace dftefe
 {
@@ -83,52 +82,45 @@ namespace dftefe
       // above reference.
       //
 
-      double
+      // Scalar single-point evaluation — DFTEFE_HOST_DEVICE_FUNC so that it is
+      // callable from both host and device (analytical path only; spline path is
+      // handled in the batch template specialisations).
+      DFTEFE_HOST_DEVICE_FUNC double
       Plm(const int l, const int m, const double theta) const;
 
-      double
+      DFTEFE_HOST_DEVICE_FUNC double
       dPlmDTheta(const int l, const int m, const double theta) const;
 
-      double
+      DFTEFE_HOST_DEVICE_FUNC double
       d2PlmDTheta2(const int l, const int m, const double theta) const;
 
       template <dftefe::utils::MemorySpace memorySpace>
       void
       Plm(size_type numPoints,
-          const int l, 
-          const int m, 
-          const double *theta, 
+          const int l,
+          const int m,
+          const double *theta,
           double *out,
-        utils::deviceStream_t  streamId = utils::defaultStream) const;
+          utils::deviceStream_t streamId = utils::defaultStream) const;
 
       template <dftefe::utils::MemorySpace memorySpace>
       void
       dPlmDTheta(size_type numPoints,
-                const int l, 
-                const int m, 
-                const double *theta, 
-                double *out,
-              utils::deviceStream_t  streamId = utils::defaultStream) const;
+                 const int l,
+                 const int m,
+                 const double *theta,
+                 double *out,
+                 utils::deviceStream_t streamId = utils::defaultStream) const;
 
       template <dftefe::utils::MemorySpace memorySpace>
       void
       d2PlmDTheta2(size_type numPoints,
-                  const int l, 
-                  const int m, 
-                  const double *theta, 
-                  double *out,
-                utils::deviceStream_t  streamId = utils::defaultStream) const;
+                   const int l,
+                   const int m,
+                   const double *theta,
+                   double *out,
+                   utils::deviceStream_t streamId = utils::defaultStream) const;
 
-#ifdef DFTEFE_WITH_DEVICE
-      DFTEFE_DEVICE_FUNC double
-      PlmDevice(const int l, const int m, const double theta) const;
-
-      DFTEFE_DEVICE_FUNC double
-      dPlmDThetaDevice(const int l, const int m, const double theta) const;
-
-      DFTEFE_DEVICE_FUNC double
-      d2PlmDTheta2Device(const int l, const int m, const double theta) const;
-#endif
       ///////////////////////////////////////////////////////////////////////////
       ///////////// END OF SPHERICAL HARMONICS RELATED FUNCTIONS //////////////
       ///////////////////////////////////////////////////////////////////////////
@@ -139,7 +131,7 @@ namespace dftefe
       bool d_isAssocLegendreSplineEval;
     };
 
-    // Analytical Functions
+    // Host-only single-point evaluation (utils::Point overload)
     void
     convertCartesianToSpherical(const utils::Point &x,
                                 double &            r,
@@ -147,15 +139,23 @@ namespace dftefe
                                 double &            phi,
                                 double              polarAngleTolerance);
 
+    // Single-point raw-pointer overload — callable from host and device
+    DFTEFE_HOST_DEVICE_FUNC void
+    convertCartesianToSpherical(const double *x,
+                                double &      r,
+                                double &      theta,
+                                double &      phi,
+                                double        polarAngleTolerance);
+
     template <dftefe::utils::MemorySpace memorySpace>
     void
-    convertCartesianToSpherical(size_type numPoints,
-                                const double * x,
-                                double *       r,
-                                double *       theta,
-                                double *       phi,
-                                double polarAngleTolerance,
-                                utils::deviceStream_t  streamId = 
+    convertCartesianToSpherical(size_type             numPoints,
+                                const double *        x,
+                                double *              r,
+                                double *              theta,
+                                double *              phi,
+                                double                polarAngleTolerance,
+                                utils::deviceStream_t streamId =
                                   utils::defaultStream);
     double
     Dm(const int m);
@@ -163,25 +163,209 @@ namespace dftefe
     double
     Clm(const int l, const int m);
 
-    double
+    DFTEFE_HOST_DEVICE_FUNC double
     Qm(const int m, const double phi);
 
     template <dftefe::utils::MemorySpace memorySpace>
     void
-    Qm(size_type numPoints, const int m, const double *phi, double *out,  utils::deviceStream_t  streamId = utils::defaultStream);
+    Qm(size_type             numPoints,
+       const int             m,
+       const double *        phi,
+       double *              out,
+       utils::deviceStream_t streamId = utils::defaultStream);
 
-    double
+    DFTEFE_HOST_DEVICE_FUNC double
     dQmDPhi(const int m, const double phi);
 
     template <dftefe::utils::MemorySpace memorySpace>
     void
-    dQmDPhi(size_type numPoints, const int m, const double *phi, double *out,  utils::deviceStream_t  streamId = utils::defaultStream);
+    dQmDPhi(size_type             numPoints,
+            const int             m,
+            const double *        phi,
+            double *              out,
+            utils::deviceStream_t streamId = utils::defaultStream);
 
   } // namespace atoms
 } // namespace dftefe
 
-#ifdef DFTEFE_WITH_DEVICE
-#include <atoms/SphericalHarmonicFunctionsDeviceKernels.h>
-#endif
+//=============================================================================
+// Inline DFTEFE_HOST_DEVICE_FUNC definitions — embedded here so every
+// translation unit (CPU or GPU) gets its own inline copy.
+//=============================================================================
+
+namespace dftefe
+{
+  namespace atoms
+  {
+    namespace
+    {
+      DFTEFE_HOST_DEVICE double
+      Rlm(const int l, const int m)
+      {
+        if (m == 0)
+          return 1.0;
+        return Rlm(l, m - 1) / ((l - m + 1.0) * (l + m));
+      }
+
+      DFTEFE_HOST_DEVICE_FUNC double
+      plm(int l, int absm, double cosTheta)
+      {
+        if (absm > l)
+          return 0.0;
+        double somx2 = sqrt(1.0 - cosTheta * cosTheta);
+        double cxM   = 1.0;
+        double fact  = 1.0;
+        for (int i = 0; i < absm; i++)
+          {
+            cxM  = -cxM * fact * somx2;
+            fact = fact + 2.0;
+          }
+        double cx = cxM;
+        if (absm != l)
+          {
+            double cxMPlus1   = cosTheta * (2 * absm + 1) * cxM;
+            cx                = cxMPlus1;
+            double cxPrev     = cxMPlus1;
+            double cxPrevPrev = cxM;
+            for (int jj = absm + 2; jj < l + 1; jj++)
+              {
+                cx = ((2 * jj - 1) * cosTheta * cxPrev +
+                      (-jj - absm + 1) * cxPrevPrev) /
+                     (jj - absm);
+                cxPrevPrev = cxPrev;
+                cxPrev     = cx;
+              }
+          }
+        return ((absm % 2 == 0) ? 1.0 : -1.0) * cx;
+      }
+
+      DFTEFE_HOST_DEVICE_FUNC double
+      dplmDTheta(int l, int absm, double cosTheta)
+      {
+        if (absm > l)
+          return 0.0;
+        if (l == 0)
+          return 0.0;
+        if (absm == 0)
+          return -1.0 * plm(l, 1, cosTheta);
+        if (absm == l)
+          return (double)l * plm(l, l - 1, cosTheta);
+        double term1 =
+          (double)((l + absm) * (l - absm + 1)) *
+          plm(l, absm - 1, cosTheta);
+        double term2 = plm(l, absm + 1, cosTheta);
+        return 0.5 * (term1 - term2);
+      }
+
+      DFTEFE_HOST_DEVICE_FUNC double
+      d2plmDTheta2(int l, int absm, double cosTheta)
+      {
+        if (absm > l)
+          return 0.0;
+        if (l == 0)
+          return 0.0;
+        if (absm == 0)
+          return -1.0 * dplmDTheta(l, 1, cosTheta);
+        if (absm == l)
+          return (double)l * dplmDTheta(l, l - 1, cosTheta);
+        double term1 = (double)((l + absm) * (l - absm + 1)) *
+                       dplmDTheta(l, absm - 1, cosTheta);
+        double term2 = dplmDTheta(l, absm + 1, cosTheta);
+        return 0.5 * (term1 - term2);
+      }
+
+    } // anonymous namespace
+
+    DFTEFE_HOST_DEVICE_FUNC void
+    convertCartesianToSpherical(const double *x,
+                                double &      r,
+                                double &      theta,
+                                double &      phi,
+                                double        polarAngleTolerance)
+    {
+      double px = x[0];
+      double py = x[1];
+      double pz = x[2];
+      r         = sqrt(px * px + py * py + pz * pz);
+      if (r == 0.0)
+        {
+          theta = 0.0;
+          phi   = 0.0;
+        }
+      else
+        {
+          theta = acos(pz / r);
+          if (fabs(theta - 0.0) >= polarAngleTolerance &&
+              fabs(theta - M_PI) >= polarAngleTolerance)
+            phi = atan2(py, px);
+          else
+            phi = 0.0;
+        }
+    }
+
+    DFTEFE_HOST_DEVICE_FUNC double
+    Qm(const int m, const double phi)
+    {
+      double v = 0.0;
+      if (m > 0)
+        v = cos((double)m * phi);
+      else if (m == 0)
+        v = 1.0;
+      else
+        v = sin((double)(-m) * phi);
+      return v;
+    }
+
+    DFTEFE_HOST_DEVICE_FUNC double
+    dQmDPhi(const int m, const double phi)
+    {
+      double v;
+      if (m > 0)
+        v = -(double)m * sin((double)m * phi);
+      else if (m == 0)
+        v = 0.0;
+      else
+        v = (double)(-m) * cos((double)(-m) * phi);
+      return v;
+    }
+
+    DFTEFE_HOST_DEVICE_FUNC double
+    SphericalHarmonicFunctions::Plm(const int    l,
+                                    const int    m,
+                                    const double theta) const
+    {
+      const int    absm   = (m < 0) ? -m : m;
+      const double factor = (m < 0) ? pow(-1.0, m) * Rlm(l, absm) : 1.0;
+      if (absm > l)
+        return 0.0;
+      return factor * plm(l, absm, cos(theta));
+    }
+
+    DFTEFE_HOST_DEVICE_FUNC double
+    SphericalHarmonicFunctions::dPlmDTheta(const int    l,
+                                           const int    m,
+                                           const double theta) const
+    {
+      const int absm = (m < 0) ? -m : m;
+      if (absm > l || l == 0)
+        return 0.0;
+      const double factor = (m < 0) ? pow(-1.0, m) * Rlm(l, absm) : 1.0;
+      return factor * dplmDTheta(l, absm, cos(theta));
+    }
+
+    DFTEFE_HOST_DEVICE_FUNC double
+    SphericalHarmonicFunctions::d2PlmDTheta2(const int    l,
+                                             const int    m,
+                                             const double theta) const
+    {
+      const int absm = (m < 0) ? -m : m;
+      if (absm > l || l == 0)
+        return 0.0;
+      const double factor = (m < 0) ? pow(-1.0, m) * Rlm(l, absm) : 1.0;
+      return factor * d2plmDTheta2(l, absm, cos(theta));
+    }
+
+  } // namespace atoms
+} // namespace dftefe
 
 #endif // SphericalHarmonicFunctions

@@ -35,9 +35,8 @@
 #include <sstream>
 #include <string>
 #include <utils/MemoryStorage.h>
-#ifdef DFTEFE_WITH_DEVICE
-  #include <utils/DeviceKernelLauncherHelpers.h>
-#endif
+#include <utils/DeviceTypeConfig.h>
+#include <utils/DeviceKernelLauncherHelpers.h>
 
 
 // header file and we don't want to export symbols to the obj files
@@ -45,28 +44,55 @@ namespace dftefe
 {
   namespace utils
   {
-#ifdef DFTEFE_WITH_DEVICE
-    // Plain-old-data view of a Spline's device-side arrays.
-    // Safe to pass by value into CUDA/HIP/SYCL kernels.
-    struct SplineDeviceView
-    {
-      const double * x;
-      const double * y;
-      const double * b;
-      const double * c;
-      const double * d;
-      size_type      n;
-      double         c0;
-      bool           isSubdivGrid;
-      double         a;
-      double         r;
-      dftefe::size_type   numSubDiv;
-    };
-#endif
     // spline interpolation
     class Spline
     {
     public:
+      // Lightweight functor holding raw knot/coefficient pointers for a
+      // specific memory space.  Obtained on the host via getFunc<MemorySpace>(),
+      // then passed by value into host or device (CUDA/HIP/SYCL) kernels.
+      // Func<HOST>   — host pointers, callable from host code.
+      // Func<DEVICE> — device pointers, callable from device kernels.
+      template <dftefe::utils::MemorySpace memorySpace>
+      class Func
+      {
+      public:
+        Func()
+          : d_knotX(nullptr), d_knotY(nullptr), d_coefB(nullptr),
+            d_coefC(nullptr), d_coefD(nullptr), d_nKnots(0),
+            d_c0(0.0), d_isSubdivGrid(false), d_a(0.0), d_r(0.0),
+            d_numSubDiv(0)
+        {}
+
+        Func(const double *    knotX,
+                   const double *    knotY,
+                   const double *    coefB,
+                   const double *    coefC,
+                   const double *    coefD,
+                   size_type         nKnots,
+                   double            c0,
+                   bool              isSubdivGrid,
+                   double            a,
+                   double            r,
+                   dftefe::size_type numSubDiv);
+
+        DFTEFE_HOST_DEVICE_FUNC double eval(double xi) const;
+        DFTEFE_HOST_DEVICE_FUNC double deriv(int order, double xi) const;
+
+      private:
+        const double *    d_knotX;
+        const double *    d_knotY;
+        const double *    d_coefB;
+        const double *    d_coefC;
+        const double *    d_coefD;
+        size_type         d_nKnots;
+        double            d_c0;
+        bool              d_isSubdivGrid;
+        double            d_a;
+        double            d_r;
+        dftefe::size_type d_numSubDiv;
+      };
+
       // spline types
       enum spline_type
       {
@@ -189,27 +215,13 @@ namespace dftefe
       std::string
       info() const;
 
-#ifdef DFTEFE_WITH_DEVICE
-      // Returns a POD view of the device-side knot/coefficient arrays.
-      // Safe to copy by value into GPU kernels.
-      SplineDeviceView
-      getDeviceView() const
-      {
-        SplineDeviceView v;
-        v.x           = d_x_device.data();
-        v.y           = d_y_device.data();
-        v.b           = d_b_device.data();
-        v.c           = d_c_device.data();
-        v.d           = d_d_device.data();
-        v.n           = static_cast<size_type>(d_x_device.size());
-        v.c0          = d_c0;
-        v.isSubdivGrid = d_isSubdivPowerLawGrid;
-        v.a           = d_a;
-        v.r           = d_r;
-        v.numSubDiv   = d_numSubDiv;
-        return v;
-      }
-#endif
+      // Returns a Func for the given memory space.
+      // HOST: fills from host std::vector data.
+      // DEVICE: fills from device MemoryStorage data.
+      // Both are host-callable only — call before launching a kernel.
+      template <dftefe::utils::MemorySpace memorySpace>
+      Func<memorySpace>
+      getFunc() const;
 
       template <dftefe::utils::MemorySpace memorySpace>
       void
@@ -276,8 +288,6 @@ namespace dftefe
   }   // namespace utils
 } // namespace dftefe
 
-#ifdef DFTEFE_WITH_DEVICE
-#  include <utils/SplineDeviceKernels.h>
-#endif
+#include <utils/SplineKernels.h>
 
 #endif // dftefeSpline_h

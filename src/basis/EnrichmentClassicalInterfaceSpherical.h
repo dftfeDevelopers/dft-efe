@@ -228,12 +228,27 @@ namespace dftefe
         const std::vector<dftefe::utils::Point> &points) const;
 
       void
-      getEnrichmentDataInAllCellsAtQuadPts(bool storeValues, 
-                                          bool storeGradients, 
-                                          const quadrature::QuadratureRuleContainer &quadRuleContainer, 
+      getEnrichmentDataInAllCellsAtQuadPts(bool storeValues,
+                                          bool storeGradients,
+                                          const quadrature::QuadratureRuleContainer &quadRuleContainer,
                                           double *basisEnrichQuadStorageStartPtr,
                                           double *basisGradientEnrichQuadStorageStartPtr,
-                                          linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext) const;
+                                          linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext,
+                                          const size_type enrichBlock = 500) const;
+
+      void
+      getEnrichmentValuesInCellRangeAtQuadPts(
+        const quadrature::QuadratureRuleContainer &        quadRuleContainer,
+        double *                                           basisEnrichQuadStoragePtr,
+        linearAlgebra::LinAlgOpContext<memorySpace> &      linAlgOpContext,
+        const std::pair<size_type, size_type>              cellRange) const;
+
+      void
+      getEnrichmentGradientsInCellRangeAtQuadPts(
+        const quadrature::QuadratureRuleContainer &        quadRuleContainer,
+        double *                                           basisGradientEnrichQuadStoragePtr,
+        linearAlgebra::LinAlgOpContext<memorySpace> &      linAlgOpContext,
+        const std::pair<size_type, size_type>              cellRange) const;
 
     private:
 

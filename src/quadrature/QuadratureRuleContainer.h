@@ -254,49 +254,43 @@ namespace dftefe
       const basis::CellMappingBase &
       getCellMapping() const;
 
-#ifdef DFTEFE_WITH_DEVICE
-      template <utils::MemorySpace memorySpace>
-      inline const double*
-      getJxWPtr() const
+    template <utils::MemorySpace memorySpace>
+    inline const double*
+    getJxWPtr() const
+    {
+      if constexpr (memorySpace == utils::MemorySpace::HOST)
       {
-        if constexpr(memorySpace == utils::MemorySpace::HOST)
-        {
-          return d_JxW.data();
-        }
-        else
-        {
-          return d_JxWDevice.data();
-        }
+        return d_JxW.data();
       }
+      else
+      {
+    #ifdef DFTEFE_WITH_DEVICE
+        return d_JxWDevice.data();
+    #else
+        static_assert(memorySpace == utils::MemorySpace::HOST,
+                      "Device memory not available");
+    #endif
+      }
+    }
 
-      template <utils::MemorySpace memorySpace>
-      inline const double*
-      getRealPointsPtr() const
+    template <utils::MemorySpace memorySpace>
+    inline const double*
+    getRealPointsPtr() const
+    {
+      if constexpr (memorySpace == utils::MemorySpace::HOST)
       {
-        if constexpr(memorySpace == utils::MemorySpace::HOST)
-        {
-          return d_realPointsHost.data();
-        }
-        else
-        {
-          return d_realPointsDevice.data();
-        }
+        return d_realPointsHost.data();
       }
-#else
-      template <>
-      inline const double*
-      getJxWPtr<utils::MemorySpace::HOST>() const
+      else
       {
-          return d_JxW.data();
+    #ifdef DFTEFE_WITH_DEVICE
+        return d_realPointsDevice.data();
+    #else
+        static_assert(memorySpace == utils::MemorySpace::HOST,
+                      "Device memory not available");
+    #endif
       }
-
-      template <>
-      inline const double*
-      getRealPointsPtr<utils::MemorySpace::HOST>() const
-      {
-          return d_realPointsHost.data();
-      }
-#endif
+    }
 
     private:
       const QuadratureRuleAttributes &d_quadratureRuleAttributes;

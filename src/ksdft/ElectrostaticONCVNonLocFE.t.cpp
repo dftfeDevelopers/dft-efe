@@ -607,7 +607,7 @@ namespace dftefe
                 X.getLinAlgOpContext(),
                 d_maxWaveFnBlock,
                 ValueTypeWaveFnCoeff());
-              if (X.getNumberComponents() > d_maxWaveFnBlock)
+              if (X.getNumberComponents() > d_maxWaveFnBlock && X.getNumberComponents() % d_maxWaveFnBlock != 0)
                 {
                   d_psiBatchSmall = std::make_shared<
                     linearAlgebra::MultiVector<ValueType, memorySpace>>(

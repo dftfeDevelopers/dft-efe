@@ -42,7 +42,7 @@ namespace dftefe
     {
       //-----------------------------------------------------------------------
       // VALUE kernel
-      // spline is passed by value (SplineDeviceView = POD struct, safe for GPU).
+      // spline is passed by value (Func<DEVICE>, safe for GPU).
       // All spherical harmonic / cutoff functions called directly — no object ptr.
       //-----------------------------------------------------------------------
       DFTEFE_CREATE_KERNEL(
@@ -59,7 +59,7 @@ namespace dftefe
               double r;
               double theta;
               double phi;
-              deviceCartesianToSpherical(
+              convertCartesianToSpherical(
                 shifted, r, theta, phi, polarAngleTolerance);
 
               if (r > cutoff + cutoff / smoothness)
@@ -68,14 +68,14 @@ namespace dftefe
                   continue;
                 }
 
-              const double radialValue = utils::SplineEvalDevice(spline, r);
+              const double radialValue = spline.eval(r);
               const double cutoffValue =
-                smoothCutoffValueDevice(r, cutoff, smoothness);
+                smoothCutoffValue(r, cutoff, smoothness);
               const double cosTheta = cos(theta);
-              const double plm      = devicePlm(l, mEff, cosTheta);
-              const double qm       = deviceQm(m, phi);
+              const double plmVal   = plm(l, mEff, cosTheta);
+              const double qm       = Qm(m, phi);
 
-              out[i] = radialValue * cutoffValue * constant * plm * qm;
+              out[i] = radialValue * cutoffValue * constant * plmVal * qm;
             }
         },
         const size_type             numPoints,
@@ -88,12 +88,12 @@ namespace dftefe
         const int                   m,
         const int                   mEff,
         const double                constant,
-        const utils::SplineDeviceView spline,
+        const utils::Spline::Func<utils::MemorySpace::DEVICE> spline,
         double *                    out);
 
       //-----------------------------------------------------------------------
       // GRADIENT kernel  (output: 3*numPoints, layout [gx0,gy0,gz0,...])
-      // Same design: SplineDeviceView by value, direct function calls.
+      // Same design: Func<DEVICE> by value, direct function calls.
       //-----------------------------------------------------------------------
       DFTEFE_CREATE_KERNEL(
         void,
@@ -109,7 +109,7 @@ namespace dftefe
               double r;
               double theta;
               double phi;
-              deviceCartesianToSpherical(
+              convertCartesianToSpherical(
                 shifted, r, theta, phi, polarAngleTolerance);
 
               if (r > cutoff + cutoff / smoothness || r < radiusTolerance)
@@ -125,29 +125,29 @@ namespace dftefe
               const double cosPhi   = cos(phi);
               const double sinPhi   = sin(phi);
 
-              const double radialValue = utils::SplineEvalDevice(spline, r);
-              const double radialDeriv = utils::SplineDerivDevice(spline, 1, r);
+              const double radialValue = spline.eval(r);
+              const double radialDeriv = spline.deriv(1, r);
               const double cutoffValue =
-                smoothCutoffValueDevice(r, cutoff, smoothness);
-              const double cutoffDerv = smoothCutoffDerivativeDevice(
+                smoothCutoffValue(r, cutoff, smoothness);
+              const double cutoffDerv = smoothCutoffDerivative(
                 r, cutoff, smoothness, cutoffTolerance);
 
-              const double plm  = devicePlm(l, mEff, cosTheta);
-              const double dPlm = deviceDPlmDTheta(l, mEff, cosTheta);
-              const double qm   = deviceQm(m, phi);
+              const double plmVal  = plm(l, mEff, cosTheta);
+              const double dPlmVal = dplmDTheta(l, mEff, cosTheta);
+              const double qm      = Qm(m, phi);
 
-              const double Ylm        = constant * plm * qm;
-              const double dYlmDTheta = constant * dPlm * qm;
+              const double Ylm        = constant * plmVal * qm;
+              const double dYlmDTheta = constant * dPlmVal * qm;
 
               double dYlmDPhiBysinTheta = 0.0;
               if (m != 0)
                 {
-                  const double d2Plm = deviceD2PlmDTheta2(l, mEff, cosTheta);
-                  const double dqm   = deviceDQmDPhi(m, phi);
+                  const double d2PlmVal = d2plmDTheta2(l, mEff, cosTheta);
+                  const double dqm      = dQmDPhi(m, phi);
                   dYlmDPhiBysinTheta =
                     constant *
-                    (sinTheta * d2Plm + cosTheta * dPlm +
-                     sinTheta * (double)(l * (l + 1)) * plm) *
+                    (sinTheta * d2PlmVal + cosTheta * dPlmVal +
+                     sinTheta * (double)(l * (l + 1)) * plmVal) *
                     (1.0 / ((double)m * (double)m)) * dqm;
                 }
 
@@ -186,7 +186,7 @@ namespace dftefe
         const int                     m,
         const int                     mEff,
         const double                  constant,
-        const utils::SplineDeviceView spline,
+        const utils::Spline::Func<utils::MemorySpace::DEVICE> spline,
         double *                      out);
 
     } // anonymous namespace
@@ -221,7 +221,7 @@ namespace dftefe
                            m,
                            mEff,
                            constant,
-                           d_spline->getDeviceView(),
+                           d_spline->getFunc<utils::MemorySpace::DEVICE>(),
                            out);
     }
 
@@ -257,7 +257,7 @@ namespace dftefe
                            m,
                            mEff,
                            constant,
-                           d_spline->getDeviceView(),
+                           d_spline->getFunc<utils::MemorySpace::DEVICE>(),
                            out);
     }
 
@@ -275,6 +275,26 @@ namespace dftefe
       utils::throwException(
         false,
         "getHessianValueDevice not implemented for SphericalDataNumerical.");
+    }
+
+    //=========================================================================
+    // getFunc<DEVICE>
+    //=========================================================================
+    template <>
+    SphericalDataNumerical::Func<utils::MemorySpace::DEVICE>
+    SphericalDataNumerical::getFunc<utils::MemorySpace::DEVICE>() const
+    {
+      const int l = d_qNumbers[1];
+      const int m = d_qNumbers[2];
+      return Func<utils::MemorySpace::DEVICE>(
+        d_spline->getFunc<utils::MemorySpace::DEVICE>(),
+        l, m, std::abs(m),
+        Clm(l, m) * Dm(m),
+        d_cutoff,
+        d_smoothness,
+        d_polarAngleTolerance,
+        d_cutoffTolerance,
+        d_radiusTolerance);
     }
 
   } // namespace atoms

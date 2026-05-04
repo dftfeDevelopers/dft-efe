@@ -20,10 +20,9 @@
  ******************************************************************************/
 
 /*
- * Inline DFTEFE_DEVICE_FUNC definitions for Spline device evaluation.
- * Included by Spline.h (inside #ifdef DFTEFE_WITH_DEVICE) so that every
- * CUDA/HIP/SYCL translation unit that includes Spline.h gets its own
- * inline copy — no cross-TU __device__ linkage required.
+ * Inline DFTEFE_HOST_DEVICE_FUNC definitions for Spline evaluation.
+ * Included unconditionally by Spline.h so that every translation unit
+ * (CPU or GPU) that includes Spline.h gets its own inline copy.
  *
  * @author Avirup Sircar
  */
@@ -31,10 +30,9 @@
 #ifndef dftefe_SplineDeviceKernels_h
 #define dftefe_SplineDeviceKernels_h
 
-#ifdef DFTEFE_WITH_DEVICE
-#  include <utils/Spline.h>
-#  include <utils/DeviceKernelLauncherHelpers.h>
-#  include <cmath>
+#include <utils/Spline.h>
+#include <utils/DeviceKernelLauncherHelpers.h>
+#include <cmath>
 
 namespace dftefe
 {
@@ -46,7 +44,7 @@ namespace dftefe
       // splineFindIdx — device index search: returns the knot index i such
       // that knotX[i] <= x < knotX[i+1] (or the boundary indices).
       //-----------------------------------------------------------------------
-      DFTEFE_DEVICE_FUNC size_type
+      DFTEFE_HOST_DEVICE_FUNC size_type
       splineFindIdx(const double       xi,
                     const double *     knotX,
                     const size_type    nKnots,
@@ -107,7 +105,7 @@ namespace dftefe
       //-----------------------------------------------------------------------
       // Scalar device helper: evaluate spline at a single point x.
       //-----------------------------------------------------------------------
-      DFTEFE_DEVICE_FUNC double
+      DFTEFE_HOST_DEVICE_FUNC double
       SplineEvalKernel(const double       x,
                        const double *     knotX,
                        const double *     knotY,
@@ -142,7 +140,7 @@ namespace dftefe
       //-----------------------------------------------------------------------
       // Scalar device helper: evaluate spline derivative at a single point x.
       //-----------------------------------------------------------------------
-      DFTEFE_DEVICE_FUNC double
+      DFTEFE_HOST_DEVICE_FUNC double
       SplineDerivKernel(const int          derivOrder,
                         const double       x,
                         const double *     knotX,
@@ -193,45 +191,60 @@ namespace dftefe
     } // anonymous namespace
 
     //=========================================================================
-    // Free device functions — take a SplineDeviceView by value (no object ptr).
-    // Call these from kernels instead of spline->getValueDevice / getDerivDevice.
+    // Spline::Func<memorySpace> definitions.
+    // Constructor is host-only (called by Spline::getFunc<>() before kernel
+    // launch).  eval/deriv are DFTEFE_HOST_DEVICE_FUNC so every TU that
+    // includes Spline.h gets an inline copy for CUDA/HIP/SYCL compilation.
     //=========================================================================
-    DFTEFE_DEVICE_FUNC double
-    SplineEvalDevice(const SplineDeviceView v, double x)
+    template <dftefe::utils::MemorySpace memorySpace>
+    Spline::Func<memorySpace>::Func(
+      const double *    knotX,
+      const double *    knotY,
+      const double *    coefB,
+      const double *    coefC,
+      const double *    coefD,
+      size_type         nKnots,
+      double            c0,
+      bool              isSubdivGrid,
+      double            a,
+      double            r,
+      dftefe::size_type numSubDiv)
+      : d_knotX(knotX)
+      , d_knotY(knotY)
+      , d_coefB(coefB)
+      , d_coefC(coefC)
+      , d_coefD(coefD)
+      , d_nKnots(nKnots)
+      , d_c0(c0)
+      , d_isSubdivGrid(isSubdivGrid)
+      , d_a(a)
+      , d_r(r)
+      , d_numSubDiv(numSubDiv)
+    {}
+
+    template <dftefe::utils::MemorySpace memorySpace>
+    DFTEFE_HOST_DEVICE_FUNC double
+    Spline::Func<memorySpace>::eval(double xi) const
     {
-      return SplineEvalKernel(x,
-                              v.x,
-                              v.y,
-                              v.b,
-                              v.c,
-                              v.d,
-                              v.n,
-                              v.c0,
-                              v.isSubdivGrid,
-                              v.a,
-                              v.r,
-                              v.numSubDiv);
+      return SplineEvalKernel(xi,
+                              d_knotX, d_knotY,
+                              d_coefB, d_coefC, d_coefD,
+                              d_nKnots, d_c0, d_isSubdivGrid,
+                              d_a, d_r, d_numSubDiv);
     }
 
-    DFTEFE_DEVICE_FUNC double
-    SplineDerivDevice(const SplineDeviceView v, int order, double x)
+    template <dftefe::utils::MemorySpace memorySpace>
+    DFTEFE_HOST_DEVICE_FUNC double
+    Spline::Func<memorySpace>::deriv(int order, double xi) const
     {
-      return SplineDerivKernel(order,
-                               x,
-                               v.x,
-                               v.b,
-                               v.c,
-                               v.d,
-                               v.n,
-                               v.c0,
-                               v.isSubdivGrid,
-                               v.a,
-                               v.r,
-                               v.numSubDiv);
+      return SplineDerivKernel(order, xi,
+                               d_knotX,
+                               d_coefB, d_coefC, d_coefD,
+                               d_nKnots, d_c0, d_isSubdivGrid,
+                               d_a, d_r, d_numSubDiv);
     }
 
   } // namespace utils
 } // namespace dftefe
 
-#endif // DFTEFE_WITH_DEVICE
 #endif // dftefe_SplineDeviceKernels_h

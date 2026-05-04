@@ -30,6 +30,7 @@
 #include <memory>
 #include <utils/MemoryStorage.h>
 #include <atoms/SphericalData.h>
+#include <atoms/SphericalDataNumerical.h>
 #include <linearAlgebra/BlasLapack.h>
 
 namespace dftefe
@@ -59,6 +60,28 @@ namespace dftefe
         const double *origin,
         double * values,
         linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext);
+
+      static void
+      getEnrichmentValuesInCellRange(
+        const double *                                                  quadPtsInAllCells,
+        const double *                                                  originPtsInAllCells,
+        std::pair<size_type, size_type>                                 cellRange,
+        const std::vector<size_type>                                    numEnrichIdsInAllCells,
+        const std::vector<size_type>                                    numQuadPtsInAllCells,
+        const atoms::SphericalDataNumerical::Func<memorySpace> *        sphericalDataFuncInAllCells,
+        double *                                                        output,
+        linearAlgebra::LinAlgOpContext<memorySpace> &                   linAlgOpContext);
+
+      static void
+      getEnrichmentGradientsInCellRange(
+        const double *                                                  quadPtsInAllCells,
+        const double *                                                  originPtsInAllCells,
+        std::pair<size_type, size_type>                                 cellRange,
+        const std::vector<size_type>                                    numEnrichIdsInAllCells,
+        const std::vector<size_type>                                    numQuadPtsInAllCells,
+        const atoms::SphericalDataNumerical::Func<memorySpace> *        sphericalDataFuncInAllCells,
+        double *                                                        output,
+        linearAlgebra::LinAlgOpContext<memorySpace> &                   linAlgOpContext);
     }; // end of class EnrichmentDataEvalKernels
 
 #ifdef DFTEFE_WITH_DEVICE
@@ -85,6 +108,28 @@ namespace dftefe
         const double *origin,
         double * values,
         linearAlgebra::LinAlgOpContext<dftefe::utils::MemorySpace::DEVICE> &linAlgOpContext);
+
+      static void
+      getEnrichmentValuesInCellRange(
+        const double *                                                         quadPtsInAllCells,
+        const double *                                                         originPtsInAllCells,
+        std::pair<size_type, size_type>                                        cellRange,
+        const std::vector<size_type>                                           numEnrichIdsInAllCells,
+        const std::vector<size_type>                                           numQuadPtsInAllCells,
+        const atoms::SphericalDataNumerical::Func<dftefe::utils::MemorySpace::DEVICE> *sphericalDataFuncInAllCells,
+        double *                                                               output,
+        linearAlgebra::LinAlgOpContext<dftefe::utils::MemorySpace::DEVICE> &  linAlgOpContext);
+
+      static void
+      getEnrichmentGradientsInCellRange(
+        const double *                                                         quadPtsInAllCells,
+        const double *                                                         originPtsInAllCells,
+        std::pair<size_type, size_type>                                        cellRange,
+        const std::vector<size_type>                                           numEnrichIdsInAllCells,
+        const std::vector<size_type>                                           numQuadPtsInAllCells,
+        const atoms::SphericalDataNumerical::Func<dftefe::utils::MemorySpace::DEVICE> *sphericalDataFuncInAllCells,
+        double *                                                               output,
+        linearAlgebra::LinAlgOpContext<dftefe::utils::MemorySpace::DEVICE> &  linAlgOpContext);
     }; // end of class EnrichmentDataEvalKernels
 #endif
   } // end of namespace basis

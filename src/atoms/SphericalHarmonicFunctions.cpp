@@ -12,146 +12,146 @@ namespace dftefe
   {
     namespace SphericalHarmonicFunctionsInternal
     {
-      double
-      Rlm(const int l, const int m)
-      {
-        if (m == 0)
-          return 1.0;
-        else
-          return Rlm(l, m - 1) / ((l - m + 1.0) * (l + m));
-      }
+      // double
+      // Rlm(const int l, const int m)
+      // {
+      //   if (m == 0)
+      //     return 1.0;
+      //   else
+      //     return Rlm(l, m - 1) / ((l - m + 1.0) * (l + m));
+      // }
 
-      double
-      Plm(const int l, const int m, const double x)
-      {
-        // throw exception if x is not in [-1,1]
-        DFTEFE_Assert(abs(x) <= 1.0);
-        if (m < 0)
-          {
-            int    modM   = abs(m);
-            double factor = pow((-1.0), m) * Rlm(l, modM);
-            return factor * Plm(l, modM, x);
-          }
-        if (m > l)
-          return 0.0;
-        double cxM     = 1.0;
-        double cxMplus = 0.0;
-        double somx2   = sqrt(1.0 - x * x);
-        double fact    = 1.0;
-        for (double i = 0; i < m; i++)
-          {
-            cxM  = -cxM * fact * somx2;
-            fact = fact + 2.0;
-          }
-        double cx = cxM;
-        if (m != l)
-          {
-            double cxMPlus1 = x * (2 * m + 1) * cxM;
-            cx              = cxMPlus1;
+      // double
+      // Plm(const int l, const int m, const double x)
+      // {
+      //   // throw exception if x is not in [-1,1]
+      //   DFTEFE_Assert(abs(x) <= 1.0);
+      //   if (m < 0)
+      //     {
+      //       int    modM   = abs(m);
+      //       double factor = pow((-1.0), m) * Rlm(l, modM);
+      //       return factor * Plm(l, modM, x);
+      //     }
+      //   if (m > l)
+      //     return 0.0;
+      //   double cxM     = 1.0;
+      //   double cxMplus = 0.0;
+      //   double somx2   = sqrt(1.0 - x * x);
+      //   double fact    = 1.0;
+      //   for (double i = 0; i < m; i++)
+      //     {
+      //       cxM  = -cxM * fact * somx2;
+      //       fact = fact + 2.0;
+      //     }
+      //   double cx = cxM;
+      //   if (m != l)
+      //     {
+      //       double cxMPlus1 = x * (2 * m + 1) * cxM;
+      //       cx              = cxMPlus1;
 
-            double cxPrev     = cxMPlus1;
-            double cxPrevPrev = cxM;
-            for (double i = m + 2; i < l + 1; i++)
-              {
-                cx = ((2 * i - 1) * x * cxPrev + (-i - m + 1) * cxPrevPrev) /
-                     (i - m);
-                cxPrevPrev = cxPrev;
-                cxPrev     = cx;
-              }
-          }
-        //
-        // NOTE: Multiplies by {-1}^m to remove the
-        // implicit Condon-Shortley factor in the associated legendre
-        // polynomial implementation of boost
-        // This is done to be consistent with the QChem's implementation
-        return pow((-1.0), m) * cx;
-      }
+      //       double cxPrev     = cxMPlus1;
+      //       double cxPrevPrev = cxM;
+      //       for (double i = m + 2; i < l + 1; i++)
+      //         {
+      //           cx = ((2 * i - 1) * x * cxPrev + (-i - m + 1) * cxPrevPrev) /
+      //                (i - m);
+      //           cxPrevPrev = cxPrev;
+      //           cxPrev     = cx;
+      //         }
+      //     }
+      //   //
+      //   // NOTE: Multiplies by {-1}^m to remove the
+      //   // implicit Condon-Shortley factor in the associated legendre
+      //   // polynomial implementation of boost
+      //   // This is done to be consistent with the QChem's implementation
+      //   return pow((-1.0), m) * cx;
+      // }
 
-      /**
-      double
-      Plm(const int l, const int m, const double x)
-      {
-        if (std::abs(m) > l)
-          return 0.0;
-        else
-          //
-          // NOTE: Multiplies by {-1}^m to remove the
-          // implicit Condon-Shortley factor in the associated legendre
-          // polynomial implementation of boost
-          // This is done to be consistent with the QChem's implementation
-          return pow(-1.0, m) * boost::math::legendre_p(l, m, x);
-      }
-      **/
+      // /**
+      // double
+      // Plm(const int l, const int m, const double x)
+      // {
+      //   if (std::abs(m) > l)
+      //     return 0.0;
+      //   else
+      //     //
+      //     // NOTE: Multiplies by {-1}^m to remove the
+      //     // implicit Condon-Shortley factor in the associated legendre
+      //     // polynomial implementation of boost
+      //     // This is done to be consistent with the QChem's implementation
+      //     return pow(-1.0, m) * boost::math::legendre_p(l, m, x);
+      // }
+      // **/
 
-      double
-      dPlmDTheta(const int l, const int m, const double theta)
-      {
-        const double cosTheta = cos(theta);
+      // double
+      // dPlmDTheta(const int l, const int m, const double theta)
+      // {
+      //   const double cosTheta = cos(theta);
 
-        if (std::abs(m) > l)
-          return 0.0;
+      //   if (std::abs(m) > l)
+      //     return 0.0;
 
-        else if (l == 0)
-          return 0.0;
+      //   else if (l == 0)
+      //     return 0.0;
 
-        else if (m < 0)
-          {
-            const int    modM   = std::abs(m);
-            const double factor = pow(-1, m) * Rlm(l, modM);
-            // boost::math::factorial<double>(l - modM) /
-            // boost::math::factorial<double>(l + modM);
-            return factor * dPlmDTheta(l, modM, theta);
-          }
+      //   else if (m < 0)
+      //     {
+      //       const int    modM   = std::abs(m);
+      //       const double factor = pow(-1, m) * Rlm(l, modM);
+      //       // boost::math::factorial<double>(l - modM) /
+      //       // boost::math::factorial<double>(l + modM);
+      //       return factor * dPlmDTheta(l, modM, theta);
+      //     }
 
-        else if (m == 0)
-          {
-            return -1.0 * Plm(l, 1, cosTheta);
-          }
+      //   else if (m == 0)
+      //     {
+      //       return -1.0 * Plm(l, 1, cosTheta);
+      //     }
 
-        else if (m == l)
-          return l * Plm(l, l - 1, cosTheta);
+      //   else if (m == l)
+      //     return l * Plm(l, l - 1, cosTheta);
 
-        else
-          {
-            const double term1 =
-              (l + m) * (l - m + 1) * Plm(l, m - 1, cosTheta);
-            const double term2 = Plm(l, m + 1, cosTheta);
-            return 0.5 * (term1 - term2);
-          }
-      }
+      //   else
+      //     {
+      //       const double term1 =
+      //         (l + m) * (l - m + 1) * Plm(l, m - 1, cosTheta);
+      //       const double term2 = Plm(l, m + 1, cosTheta);
+      //       return 0.5 * (term1 - term2);
+      //     }
+      // }
 
 
-      double
-      d2PlmDTheta2(const int l, const int m, const double theta)
-      {
-        const double cosTheta = cos(theta);
+      // double
+      // d2PlmDTheta2(const int l, const int m, const double theta)
+      // {
+      //   const double cosTheta = cos(theta);
 
-        if (std::abs(m) > l)
-          return 0.0;
+      //   if (std::abs(m) > l)
+      //     return 0.0;
 
-        else if (l == 0)
-          return 0.0;
+      //   else if (l == 0)
+      //     return 0.0;
 
-        else if (m < 0)
-          {
-            const int    modM   = std::abs(m);
-            const double factor = pow(-1, m) * Rlm(l, modM);
-            return factor * d2PlmDTheta2(l, modM, theta);
-          }
+      //   else if (m < 0)
+      //     {
+      //       const int    modM   = std::abs(m);
+      //       const double factor = pow(-1, m) * Rlm(l, modM);
+      //       return factor * d2PlmDTheta2(l, modM, theta);
+      //     }
 
-        else if (m == 0)
-          return -1.0 * dPlmDTheta(l, 1, theta);
+      //   else if (m == 0)
+      //     return -1.0 * dPlmDTheta(l, 1, theta);
 
-        else if (m == l)
-          return l * dPlmDTheta(l, l - 1, theta);
+      //   else if (m == l)
+      //     return l * dPlmDTheta(l, l - 1, theta);
 
-        else
-          {
-            double term1 = (l + m) * (l - m + 1) * dPlmDTheta(l, m - 1, theta);
-            double term2 = dPlmDTheta(l, m + 1, theta);
-            return 0.5 * (term1 - term2);
-          }
-      }
+      //   else
+      //     {
+      //       double term1 = (l + m) * (l - m + 1) * dPlmDTheta(l, m - 1, theta);
+      //       double term2 = dPlmDTheta(l, m + 1, theta);
+      //       return 0.5 * (term1 - term2);
+      //     }
+      // }
 
       void
       readLegendreOutput(const std::string &  filename,
@@ -447,127 +447,124 @@ namespace dftefe
       return Blm(l, abs(m));
     }
 
-    double
-    Qm(const int m, const double phi)
-    {
-      double returnValue = 0.0;
-      if (m > 0)
-        returnValue = cos(m * phi);
-      if (m == 0)
-        returnValue = 1.0;
-      if (m < 0)
-        returnValue = sin(std::abs(m) * phi);
+    // double
+    // Qm(const int m, const double phi)
+    // {
+    //   double returnValue = 0.0;
+    //   if (m > 0)
+    //     returnValue = cos(m * phi);
+    //   if (m == 0)
+    //     returnValue = 1.0;
+    //   if (m < 0)
+    //     returnValue = sin(std::abs(m) * phi);
 
-      return returnValue;
-    }
+    //   return returnValue;
+    // }
 
-    double
-    dQmDPhi(const int m, const double phi)
-    {
-      if (m > 0)
-        return -m * sin(m * phi);
-      else if (m == 0)
-        return 0.0;
-      else
-        return std::abs(m) * cos(std::abs(m) * phi);
-    }
+    // double
+    // dQmDPhi(const int m, const double phi)
+    // {
+    //   if (m > 0)
+    //     return -m * sin(m * phi);
+    //   else if (m == 0)
+    //     return 0.0;
+    //   else
+    //     return std::abs(m) * cos(std::abs(m) * phi);
+    // }
 
-    double
-    SphericalHarmonicFunctions::Plm(const int    l,
-                                    const int    m,
-                                    const double theta) const
-    {
-      if (!d_isAssocLegendreSplineEval)
-        {
-          return SphericalHarmonicFunctionsInternal::Plm(l, m, cos(theta));
-        }
-      else
-        {
-          if (l != 0)
-            {
-              if (m < 0)
-                {
-                  int    modM = abs(m);
-                  double factor =
-                    pow((-1.0), m) *
-                    SphericalHarmonicFunctionsInternal::Rlm(l, modM);
-                  return (*d_assocLegendreSpline[l][modM])(theta)*factor;
-                }
-              else
-                return (*d_assocLegendreSpline[l][m])(theta);
-            }
-          else
-            return 1.0;
-        }
-    }
+    // double
+    // SphericalHarmonicFunctions::Plm(const int    l,
+    //                                 const int    m,
+    //                                 const double theta) const
+    // {
+    //   if (!d_isAssocLegendreSplineEval)
+    //     {
+    //       return SphericalHarmonicFunctionsInternal::Plm(l, m, cos(theta));
+    //     }
+    //   else
+    //     {
+    //       if (l != 0)
+    //         {
+    //           if (m < 0)
+    //             {
+    //               int    modM = abs(m);
+    //               double factor =
+    //                 pow((-1.0), m) *
+    //                 SphericalHarmonicFunctionsInternal::Rlm(l, modM);
+    //               return (*d_assocLegendreSpline[l][modM])(theta)*factor;
+    //             }
+    //           else
+    //             return (*d_assocLegendreSpline[l][m])(theta);
+    //         }
+    //       else
+    //         return 1.0;
+    //     }
+    // }
 
-    double
-    SphericalHarmonicFunctions::dPlmDTheta(const int    l,
-                                           const int    m,
-                                           const double theta) const
-    {
-      if (!d_isAssocLegendreSplineEval)
-        {
-          return SphericalHarmonicFunctionsInternal::dPlmDTheta(l, m, theta);
-        }
-      else
-        {
-          if (l != 0)
-            {
-              if (m < 0)
-                {
-                  int    modM = abs(m);
-                  double factor =
-                    pow((-1.0), m) *
-                    SphericalHarmonicFunctionsInternal::Rlm(l, modM);
-                  return (*d_assocLegendreSpline[l][modM]).deriv(1, theta) *
-                         factor;
-                }
-              else
-                return (*d_assocLegendreSpline[l][m]).deriv(1, theta);
-            }
-          else
-            return 0.0;
-        }
-    }
+    // double
+    // SphericalHarmonicFunctions::dPlmDTheta(const int    l,
+    //                                        const int    m,
+    //                                        const double theta) const
+    // {
+    //   if (!d_isAssocLegendreSplineEval)
+    //     {
+    //       return SphericalHarmonicFunctionsInternal::dPlmDTheta(l, m, theta);
+    //     }
+    //   else
+    //     {
+    //       if (l != 0)
+    //         {
+    //           if (m < 0)
+    //             {
+    //               int    modM = abs(m);
+    //               double factor =
+    //                 pow((-1.0), m) *
+    //                 SphericalHarmonicFunctionsInternal::Rlm(l, modM);
+    //               return (*d_assocLegendreSpline[l][modM]).deriv(1, theta) *
+    //                      factor;
+    //             }
+    //           else
+    //             return (*d_assocLegendreSpline[l][m]).deriv(1, theta);
+    //         }
+    //       else
+    //         return 0.0;
+    //     }
+    // }
 
 
-    double
-    SphericalHarmonicFunctions::d2PlmDTheta2(const int    l,
-                                             const int    m,
-                                             const double theta) const
-    {
-      if (!d_isAssocLegendreSplineEval)
-        {
-          return SphericalHarmonicFunctionsInternal::d2PlmDTheta2(l, m, theta);
-        }
-      else
-        {
-          if (l != 0)
-            {
-              if (m < 0)
-                {
-                  int    modM = abs(m);
-                  double factor =
-                    pow((-1.0), m) *
-                    SphericalHarmonicFunctionsInternal::Rlm(l, modM);
-                  return (*d_assocLegendreSpline[l][modM]).deriv(2, theta) *
-                         factor;
-                }
-              else
-                return (*d_assocLegendreSpline[l][m]).deriv(2, theta);
-            }
-          else
-            return 0.0;
-        }
-    }
+    // double
+    // SphericalHarmonicFunctions::d2PlmDTheta2(const int    l,
+    //                                          const int    m,
+    //                                          const double theta) const
+    // {
+    //   if (!d_isAssocLegendreSplineEval)
+    //     {
+    //       return SphericalHarmonicFunctionsInternal::d2PlmDTheta2(l, m, theta);
+    //     }
+    //   else
+    //     {
+    //       if (l != 0)
+    //         {
+    //           if (m < 0)
+    //             {
+    //               int    modM = abs(m);
+    //               double factor =
+    //                 pow((-1.0), m) *
+    //                 SphericalHarmonicFunctionsInternal::Rlm(l, modM);
+    //               return (*d_assocLegendreSpline[l][modM]).deriv(2, theta) *
+    //                      factor;
+    //             }
+    //           else
+    //             return (*d_assocLegendreSpline[l][m]).deriv(2, theta);
+    //         }
+    //       else
+    //         return 0.0;
+    //     }
+    // }
     ///////////////////////////////////////////////////////////////////////////
     ///////////// END OF SPHERICAL HARMONICS RELATED FUNCTIONS //////////////
     ///////////////////////////////////////////////////////////////////////////
 
-    //=========================================================================
-    // SphericalHarmonicFunctions::Plm<HOST>
-    //=========================================================================
     template <>
     void
     SphericalHarmonicFunctions::Plm<utils::MemorySpace::HOST>(
@@ -578,13 +575,23 @@ namespace dftefe
       double *              out,
       utils::deviceStream_t streamId) const
     {
-      for (size_type i = 0; i < numPoints; i++)
-        out[i] = Plm(l, m, theta[i]);
+      if (d_isAssocLegendreSplineEval && l != 0)
+        {
+          const int    absm   = std::abs(m);
+          const double factor = (m < 0)
+                                  ? pow(-1.0, m) *
+                                      Rlm(l, absm)
+                                  : 1.0;
+          for (size_type i = 0; i < numPoints; i++)
+            out[i] = (*d_assocLegendreSpline[l][absm])(theta[i]) * factor;
+        }
+      else
+        {
+          for (size_type i = 0; i < numPoints; i++)
+            out[i] = Plm(l, m, theta[i]);
+        }
     }
 
-    //=========================================================================
-    // SphericalHarmonicFunctions::dPlmDTheta<HOST>
-    //=========================================================================
     template <>
     void
     SphericalHarmonicFunctions::dPlmDTheta<utils::MemorySpace::HOST>(
@@ -595,13 +602,29 @@ namespace dftefe
       double *              out,
       utils::deviceStream_t streamId) const
     {
-      for (size_type i = 0; i < numPoints; i++)
-        out[i] = dPlmDTheta(l, m, theta[i]);
+      if (std::abs(m) > l || l == 0)
+        {
+          for (size_type i = 0; i < numPoints; i++)
+            out[i] = 0.0;
+        }
+      else if (d_isAssocLegendreSplineEval)
+        {
+          const int    absm   = std::abs(m);
+          const double factor = (m < 0)
+                                  ? pow(-1.0, m) *
+                                      Rlm(l, absm)
+                                  : 1.0;
+          for (size_type i = 0; i < numPoints; i++)
+            out[i] =
+              (*d_assocLegendreSpline[l][absm]).deriv(1, theta[i]) * factor;
+        }
+      else
+        {
+          for (size_type i = 0; i < numPoints; i++)
+            out[i] = dPlmDTheta(l, m, theta[i]);
+        }
     }
 
-    //=========================================================================
-    // SphericalHarmonicFunctions::d2PlmDTheta2<HOST>
-    //=========================================================================
     template <>
     void
     SphericalHarmonicFunctions::d2PlmDTheta2<utils::MemorySpace::HOST>(
@@ -612,9 +635,32 @@ namespace dftefe
       double *              out,
       utils::deviceStream_t streamId) const
     {
-      for (size_type i = 0; i < numPoints; i++)
-        out[i] = d2PlmDTheta2(l, m, theta[i]);
+      if (std::abs(m) > l || l == 0)
+        {
+          for (size_type i = 0; i < numPoints; i++)
+            out[i] = 0.0;
+        }
+      else if (d_isAssocLegendreSplineEval)
+        {
+          const int    absm   = std::abs(m);
+          const double factor = (m < 0)
+                                  ? pow(-1.0, m) *
+                                      Rlm(l, absm)
+                                  : 1.0;
+          for (size_type i = 0; i < numPoints; i++)
+            out[i] =
+              (*d_assocLegendreSpline[l][absm]).deriv(2, theta[i]) * factor;
+        }
+      else
+        {
+          for (size_type i = 0; i < numPoints; i++)
+            out[i] = d2PlmDTheta2(l, m, theta[i]);
+        }
     }
+
+    ///////////////////////////////////////////////////////////////////////////
+    ///////////// END OF SPHERICAL HARMONICS RELATED FUNCTIONS //////////////
+    ///////////////////////////////////////////////////////////////////////////
 
   } // namespace atoms
 } // namespace dftefe

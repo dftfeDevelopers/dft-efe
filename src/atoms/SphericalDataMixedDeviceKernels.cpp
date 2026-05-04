@@ -85,16 +85,16 @@ namespace dftefe
               double r;
               double theta;
               double phi;
-              deviceCartesianToSpherical(
+              convertCartesianToSpherical(
                 shifted, r, theta, phi, polarAngleTolerance);
 
               const double cosTheta = cos(theta);
-              const double plm      = devicePlm(l, mEff, cosTheta);
-              const double qm       = deviceQm(m, phi);
-              const double Ylm      = ylmConstant * plm * qm;
+              const double plmVal      = plm(l, mEff, cosTheta);
+              const double qm       = Qm(m, phi);
+              const double Ylm      = ylmConstant * plmVal * qm;
 
               if (r <= lastRadialGridPoint)
-                out[i] = utils::SplineEvalDevice(spline, r) * Ylm;
+                out[i] = spline.eval(r) * Ylm;
               else
                 out[i] = analyticalVals[i] * Ylm;
             }
@@ -108,7 +108,7 @@ namespace dftefe
         const int                     mEff,
         const double                  ylmConstant,
         const double                  lastRadialGridPoint,
-        const utils::SplineDeviceView spline,
+        const utils::Spline::Func<utils::MemorySpace::DEVICE> spline,
         const double *                analyticalVals,
         double *                      out);
 
@@ -165,7 +165,7 @@ namespace dftefe
                            mEff,
                            ylmConst,
                            lastRPoint,
-                           d_spline->getDeviceView(),
+                           d_spline->getFunc<utils::MemorySpace::DEVICE>(),
                            analyticalVals.data(),
                            out);
     }

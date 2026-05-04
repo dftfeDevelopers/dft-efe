@@ -191,7 +191,7 @@ namespace dftefe
     //-------------------------------------------------------------------------
     // Private: copy host vectors -> device MemoryStorage
     //-------------------------------------------------------------------------
-
+#ifdef DFTEFE_WITH_DEVICE
     void
     Spline::syncToDevice()
     {
@@ -212,6 +212,7 @@ namespace dftefe
       MemoryTransfer<MemorySpace::DEVICE, MemorySpace::HOST>::copy(
         n, d_d_device.data(), d_d.data());
     }
+#endif
 
     //-------------------------------------------------------------------------
     // computeAndSync: compute spline coefficients from d_x/d_y,
@@ -678,6 +679,17 @@ namespace dftefe
           ss << "(spline has been adjusted for piece-wise monotonicity)";
         }
       return ss.str();
+    }
+
+    template <>
+    Spline::Func<utils::MemorySpace::HOST>
+    Spline::getFunc<utils::MemorySpace::HOST>() const
+    {
+      return Func<utils::MemorySpace::HOST>(
+        d_x.data(), d_y.data(),
+        d_b.data(), d_c.data(), d_d.data(),
+        static_cast<size_type>(d_x.size()),
+        d_c0, d_isSubdivPowerLawGrid, d_a, d_r, d_numSubDiv);
     }
 
     template<>

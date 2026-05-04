@@ -17,10 +17,10 @@
 /*
  * @author Ian C. Lin., Sambit Das
  */
-#ifdef DFTEFE_WITH_DEVICE
 #  ifndef dftefeDeviceKernelLauncherHelpers_h
 #    define dftefeDeviceKernelLauncherHelpers_h
 
+#ifdef DFTEFE_WITH_DEVICE
 #    ifdef DFTEFE_WITH_DEVICE_NVIDIA
 namespace dftefe
 {
@@ -274,14 +274,35 @@ namespace dftefe
         "No device backend defined (DFTEFE_WITH_DEVICE_LANG_CUDA or DFTEFE_WITH_DEVICE_LANG_HIP or DFTEFE_WITH_DEVICE_LANG_SYCL)"
 #    endif
 
-#  if defined(DFTEFE_WITH_DEVICE_LANG_CUDA) || \
+#if defined(DFTEFE_WITH_DEVICE_LANG_CUDA) || \
     defined(DFTEFE_WITH_DEVICE_LANG_HIP)
-#    define DFTEFE_DEVICE_FUNC __device__ __forceinline__
-#  elif defined(DFTEFE_WITH_DEVICE_LANG_SYCL)
-#    define DFTEFE_DEVICE_FUNC inline
-#      error \
-        "No device backend defined (DFTEFE_WITH_DEVICE_LANG_CUDA or DFTEFE_WITH_DEVICE_LANG_HIP or DFTEFE_WITH_DEVICE_LANG_SYCL)"
-#  endif
 
-#  endif // dftefeDeviceKernelLauncherHelpers_h
+  #define DFTEFE_DEVICE        __device__
+  #define DFTEFE_HOST_DEVICE   __host__ __device__
+  #define DFTEFE_FORCEINLINE   __forceinline__
+
+#elif defined(DFTEFE_WITH_DEVICE_LANG_SYCL)
+
+  // SYCL: no host/device qualifiers
+  #define DFTEFE_DEVICE
+  #define DFTEFE_HOST_DEVICE
+  #if defined(__clang__)
+    #define DFTEFE_FORCEINLINE inline __attribute__((always_inline))
+  #else
+    #define DFTEFE_FORCEINLINE inline
+  #endif
+
+#else
+  #error "DFTEFE_WITH_DEVICE is set but no backend (CUDA/HIP/SYCL) defined"
+#endif
+
+#else
+
+  #define DFTEFE_HOST_DEVICE
+  #define DFTEFE_FORCEINLINE inline
+
 #endif   // DFTEFE_WITH_DEVICE
+
+#define DFTEFE_HOST_DEVICE_FUNC DFTEFE_FORCEINLINE DFTEFE_HOST_DEVICE
+
+#endif // dftefeDeviceKernelLauncherHelpers_h

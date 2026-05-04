@@ -1500,7 +1500,7 @@ namespace dftefe
 #endif // DFTEFE_WITH_DEVICE
     }
 
-
+#ifdef DFTEFE_WITH_DEVICE
     template <typename ValueTypeOperator,
               typename ValueTypeOperand,
               utils::MemorySpace memorySpace,
@@ -1613,6 +1613,6 @@ namespace dftefe
                     MPI_SUM,
                     getMPIComm());
   }
-
+#endif // DFTEFE_WITH_DEVICE
   } // end of namespace electrostatics
 } // end of namespace dftefe

@@ -336,6 +336,23 @@ namespace dftefe
                                                        this->d_radialValues);
     }
 
+    template <>
+    SphericalDataNumerical::Func<utils::MemorySpace::HOST>
+    SphericalDataNumerical::getFunc<utils::MemorySpace::HOST>() const
+    {
+      const int l = d_qNumbers[1];
+      const int m = d_qNumbers[2];
+      return Func<utils::MemorySpace::HOST>(
+        d_spline->getFunc<utils::MemorySpace::HOST>(),
+        l, m, std::abs(m),
+        Clm(l, m) * Dm(m),
+        d_cutoff,
+        d_smoothness,
+        d_polarAngleTolerance,
+        d_cutoffTolerance,
+        d_radiusTolerance);
+    }
+
     std::vector<double>
     SphericalDataNumerical::getValue(const std::vector<utils::Point> &point,
                                      const utils::Point &             origin)

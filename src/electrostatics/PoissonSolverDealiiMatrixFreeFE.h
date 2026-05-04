@@ -309,7 +309,6 @@ namespace dftefe
                                                     dftefe::utils::MemorySpace::DEVICE,
                                                     false>>
         d_matrixFreeWrapperDevice;
-#endif // DFTEFE_WITH_DEVICE
 
     /**
      * @brief Combines precondition and dot product
@@ -335,6 +334,7 @@ namespace dftefe
   void
   dotDevice(const size_type size, double *x, double *y, double &alpha,
            linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext);
+#endif // DFTEFE_WITH_DEVICE
 
     }; // end of class PoissonSolverDealiiMatrixFreeFE
   }    // namespace electrostatics

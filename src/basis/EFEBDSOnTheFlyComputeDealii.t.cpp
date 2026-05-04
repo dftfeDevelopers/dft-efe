@@ -712,15 +712,31 @@ namespace dftefe
                 .find(BasisStorageAttributes::StoreGradient)
                 ->second)
             storeEnrichGrad = true;
-        if(storeEnrichGrad || storeEnrichValues)
+        if(storeEnrichValues)
         {
-          efeBDH->getEnrichmentClassicalInterface()->getEnrichmentDataInAllCellsAtQuadPts(
-            storeEnrichValues,
-            storeEnrichGrad,
+          utils::MemoryStorage<double, memorySpace> basisEnrichDeviceTmp(enrichQuadValStorageSize);
+          efeBDH->getEnrichmentClassicalInterface()->getEnrichmentValuesInCellRangeAtQuadPts(
             *quadratureRuleContainer,
+            basisEnrichDeviceTmp.data(),
+            linAlgOpContext,
+            std::make_pair((size_type)0, numLocallyOwnedCells));
+          utils::MemoryTransfer<utils::MemorySpace::HOST, memorySpace>::copy(
+            enrichQuadValStorageSize,
             basisEnrichQuadStorageTmp.data(),
+            basisEnrichDeviceTmp.data());
+        }
+        if(storeEnrichGrad)
+        {
+          utils::MemoryStorage<double, memorySpace> basisGradientEnrichDeviceTmp(enrichQuadValStorageSize * dim);
+          efeBDH->getEnrichmentClassicalInterface()->getEnrichmentGradientsInCellRangeAtQuadPts(
+            *quadratureRuleContainer,
+            basisGradientEnrichDeviceTmp.data(),
+            linAlgOpContext,
+            std::make_pair((size_type)0, numLocallyOwnedCells));
+          utils::MemoryTransfer<utils::MemorySpace::HOST, memorySpace>::copy(
+            enrichQuadValStorageSize * dim,
             basisGradientEnrichQuadStorageTmp.data(),
-            linAlgOpContext);
+            basisGradientEnrichDeviceTmp.data());
         }
 
         cellIndex                            = 0;
@@ -1381,44 +1397,23 @@ namespace dftefe
                 ->second)
             storeEnrichGrad = true;
 
-        if(storeEnrichGrad || storeEnrichValues)
+        if(storeEnrichValues)
         {
-          utils::MemoryStorage<ValueTypeBasisData, utils::MemorySpace::HOST>
-            basisEnrichQuadStorageTmp(0), basisGradientEnrichQuadStorageTmp(0);
-
-          if(storeEnrichValues)
-            basisEnrichQuadStorageTmp.resize(enrichQuadValStorageSize, ValueTypeBasisData(0));
-          if(storeEnrichGrad)
-            basisGradientEnrichQuadStorageTmp.resize(enrichQuadValStorageSize * dim,
-                                                      ValueTypeBasisData(0));
-
-          efeBDH->getEnrichmentClassicalInterface()->getEnrichmentDataInAllCellsAtQuadPts(
-            storeEnrichValues,
-            storeEnrichGrad,
+          utils::MemoryStorage<double, memorySpace> basisEnrichDeviceTmp(enrichQuadValStorageSize);
+          efeBDH->getEnrichmentClassicalInterface()->getEnrichmentValuesInCellRangeAtQuadPts(
             *quadratureRuleContainer,
-            basisEnrichQuadStorageTmp.data(),
-            basisGradientEnrichQuadStorageTmp.data(),
-            linAlgOpContext);
-
-          if (basisStorageAttributesBoolMap
-                .find(BasisStorageAttributes::StoreValues)
-                ->second)
-            {
-              utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
-                basisEnrichQuadStorageTmp.size(),
-                basisEnrichQuadStorage->data(),
-                basisEnrichQuadStorageTmp.data());
-            }
-
-          if (basisStorageAttributesBoolMap
-                .find(BasisStorageAttributes::StoreGradient)
-                ->second)
-            {
-              utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
-                basisGradientEnrichQuadStorageTmp.size(),
-                basisGradientEnrichQuadStorage->data(),
-                basisGradientEnrichQuadStorageTmp.data());
-            }
+            basisEnrichQuadStorage->data(),
+            linAlgOpContext,
+            std::make_pair((size_type)0, numLocallyOwnedCells));
+        }
+        if(storeEnrichGrad)
+        {
+          utils::MemoryStorage<double, memorySpace> basisGradientEnrichDeviceTmp(enrichQuadValStorageSize * dim);
+          efeBDH->getEnrichmentClassicalInterface()->getEnrichmentGradientsInCellRangeAtQuadPts(
+            *quadratureRuleContainer,
+            basisGradientEnrichQuadStorage->data(),
+            linAlgOpContext,
+            std::make_pair((size_type)0, numLocallyOwnedCells));
         }
 
         // now remove the classical projected components
