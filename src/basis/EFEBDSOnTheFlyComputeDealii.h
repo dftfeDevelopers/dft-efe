@@ -68,6 +68,7 @@ namespace dftefe
         const BasisStorageAttributesBoolMap basisStorageAttributesBoolMap,
         const size_type                     maxCellBlock,
         linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext,
+        const bool calculateEnrichmentDataOnTheFly = true,
         const bool useMemOptGradScratchSpace = false 
         /*In gpu an extra scratch for grad helps in cuda strided gemm */
         /* instead of varStrided gemm which is optimal*/);
@@ -242,6 +243,10 @@ namespace dftefe
       std::shared_ptr<Storage> d_basisGradientEnrichQuadStorage,
         d_basisEnrichQuadStorage;
       const bool d_useMemOptGradScratchSpace;
+      const bool d_calculateEnrichmentDataOnTheFly;
+      std::shared_ptr<Storage>      d_basisEnrichScratch;
+      std::shared_ptr<Storage>      d_basisGradientEnrichScratch;
+      utils::MemoryStorage<ValueTypeBasisData, memorySpace> d_coeffsInAllCells;
 
     }; // end of EFEBDSOnTheFlyComputeDealii
   }    // end of namespace basis

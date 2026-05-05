@@ -48,11 +48,6 @@ namespace dftefe
     class Spline
     {
     public:
-      // Lightweight functor holding raw knot/coefficient pointers for a
-      // specific memory space.  Obtained on the host via getFunc<MemorySpace>(),
-      // then passed by value into host or device (CUDA/HIP/SYCL) kernels.
-      // Func<HOST>   — host pointers, callable from host code.
-      // Func<DEVICE> — device pointers, callable from device kernels.
       template <dftefe::utils::MemorySpace memorySpace>
       class Func
       {
@@ -215,10 +210,6 @@ namespace dftefe
       std::string
       info() const;
 
-      // Returns a Func for the given memory space.
-      // HOST: fills from host std::vector data.
-      // DEVICE: fills from device MemoryStorage data.
-      // Both are host-callable only — call before launching a kernel.
       template <dftefe::utils::MemorySpace memorySpace>
       Func<memorySpace>
       getFunc() const;

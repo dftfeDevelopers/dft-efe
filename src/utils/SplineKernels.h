@@ -190,12 +190,6 @@ namespace dftefe
 
     } // anonymous namespace
 
-    //=========================================================================
-    // Spline::Func<memorySpace> definitions.
-    // Constructor is host-only (called by Spline::getFunc<>() before kernel
-    // launch).  eval/deriv are DFTEFE_HOST_DEVICE_FUNC so every TU that
-    // includes Spline.h gets an inline copy for CUDA/HIP/SYCL compilation.
-    //=========================================================================
     template <dftefe::utils::MemorySpace memorySpace>
     Spline::Func<memorySpace>::Func(
       const double *    knotX,

@@ -105,7 +105,6 @@ namespace dftefe
 
         cumulativeEnrichInCellRange += numEnrichInCell;
         cumulativeQuadPtsInCellRange += numQuadInCell;
-        cumulativeQuadxEnrichInCellRange += numEnrichInCell * numQuadInCell;
       }
 
       size_type cumulativeCellWithNonZeroNumEnrich = 0;
@@ -168,7 +167,6 @@ namespace dftefe
 
         cumulativeEnrichInCellRange          += numEnrichInCell;
         cumulativeQuadPtsInCellRange         += numQuadInCell;
-        cumulativeQuadxEnrichxDimInCellRange += numEnrichInCell * numQuadInCell * dim;
       }
 
       size_type cumulativeCellWithNonZeroNumEnrich = 0;

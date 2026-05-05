@@ -91,16 +91,15 @@ namespace dftefe
     {
       const size_type dim = 3;
 
-      size_type cumulativeEnrich   = 0;
-      size_type cumulativeQuad     = 0;
-      size_type cumulativeOutput   = 0;
+      size_type cumulativeEnrich = 0;
+      size_type cumulativeQuad   = 0;
       for (size_type iCell = 0; iCell < cellRange.first; iCell++)
         {
-          cumulativeEnrich  += numEnrichIdsInAllCells[iCell];
-          cumulativeQuad    += numQuadPtsInAllCells[iCell];
-          cumulativeOutput  += numEnrichIdsInAllCells[iCell] * numQuadPtsInAllCells[iCell];
+          cumulativeEnrich += numEnrichIdsInAllCells[iCell];
+          cumulativeQuad   += numQuadPtsInAllCells[iCell];
         }
 
+      size_type cumulativeOutput = 0;
       for (size_type iCell = cellRange.first; iCell < cellRange.second; iCell++)
         {
           const size_type numEnrichInCell = numEnrichIdsInAllCells[iCell];
@@ -136,16 +135,15 @@ namespace dftefe
     {
       const size_type dim = 3;
 
-      size_type cumulativeEnrich  = 0;
-      size_type cumulativeQuad    = 0;
-      size_type cumulativeOutput  = 0;
+      size_type cumulativeEnrich = 0;
+      size_type cumulativeQuad   = 0;
       for (size_type iCell = 0; iCell < cellRange.first; iCell++)
         {
-          cumulativeEnrich  += numEnrichIdsInAllCells[iCell];
-          cumulativeQuad    += numQuadPtsInAllCells[iCell];
-          cumulativeOutput  += numEnrichIdsInAllCells[iCell] * numQuadPtsInAllCells[iCell] * dim;
+          cumulativeEnrich += numEnrichIdsInAllCells[iCell];
+          cumulativeQuad   += numQuadPtsInAllCells[iCell];
         }
 
+      size_type cumulativeOutput = 0;
       for (size_type iCell = cellRange.first; iCell < cellRange.second; iCell++)
         {
           const size_type numEnrichInCell = numEnrichIdsInAllCells[iCell];
