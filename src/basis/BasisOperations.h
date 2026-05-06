@@ -33,6 +33,7 @@
 #include <quadrature/QuadratureValuesContainer.h>
 #include <linearAlgebra/BlasLapackTypedef.h>
 #include <linearAlgebra/MultiVector.h>
+#include <basis/BasisManager.h>
 namespace dftefe
 {
   namespace basis
@@ -78,21 +79,6 @@ namespace dftefe
     public:
       virtual ~BasisOperations() = default;
 
-      // virtual void
-      // integrateWithBasisValues(const
-      // ScalarSpatialFunction<ValueTypeBasisCoeff> &f,
-      //    const quadrature::QuadratureRuleAttributes &
-      //    quadratureRuleAttributes,
-      //                         Field<ValueTypeBasisCoeff, memorySpace> &
-      //                         field) const = 0;
-
-      virtual void
-      interpolate(const Field<ValueTypeBasisCoeff, memorySpace> &field,
-                  quadrature::QuadratureValuesContainer<
-                    linearAlgebra::blasLapack::scalar_type<ValueTypeBasisCoeff,
-                                                           ValueTypeBasisData>,
-                    memorySpace> &quadValuesContainer) const = 0;
-
       virtual void
       interpolate(
         const linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
@@ -113,15 +99,6 @@ namespace dftefe
                                                  ValueTypeBasisData>,
           memorySpace> &quadValuesContainer) const = 0;
 
-
-      virtual void
-      integrateWithBasisValues(
-        const quadrature::QuadratureValuesContainer<
-          linearAlgebra::blasLapack::scalar_type<ValueTypeBasisCoeff,
-                                                 ValueTypeBasisData>,
-          memorySpace> &                         inp,
-        Field<ValueTypeBasisCoeff, memorySpace> &f) const = 0;
-
       virtual void
       integrateWithBasisValues(
         const quadrature::QuadratureValuesContainer<
@@ -131,12 +108,6 @@ namespace dftefe
         const BasisManager<ValueTypeBasisCoeff, memorySpace> &basisManager,
         linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
           &vectorData) const = 0;
-      // virtual void
-      // integrateWithBasisValues(
-      //  const Field<ValueTypeBasisCoeff, memorySpace> &       fieldInput,
-      //  const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
-      //  Field<ValueTypeBasisCoeff, memorySpace> &             fieldOutput)
-      //  const = 0;
 
     }; // end of BasisOperations
   }    // end of namespace basis

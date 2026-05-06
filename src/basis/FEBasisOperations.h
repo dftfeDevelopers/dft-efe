@@ -29,7 +29,6 @@
 #include <utils/TypeConfig.h>
 #include <utils/MemorySpaceType.h>
 #include <basis/FEBasisDataStorage.h>
-#include <basis/Field.h>
 #include <basis/BasisOperations.h>
 #include <basis/BasisDataStorage.h>
 #include <basis/FEBasisManager.h>
@@ -48,7 +47,6 @@ namespace dftefe
         fieldCellValues,
         basisDataInCellRange,
         basisGradientDataInCellRange,
-        JxW,
         JxWxNBlock,
         JxWxGradNBlock
       };
@@ -99,12 +97,6 @@ namespace dftefe
 
       void
       interpolate(
-        const Field<ValueTypeBasisCoeff, memorySpace> &field,
-        quadrature::QuadratureValuesContainer<ValueTypeUnion, memorySpace>
-          &quadValuesContainer) const override;
-
-      void
-      interpolate(
         const linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
           &                                                   vectorData,
         const BasisManager<ValueTypeBasisCoeff, memorySpace> &basisManager,
@@ -122,12 +114,6 @@ namespace dftefe
           linearAlgebra::blasLapack::scalar_type<ValueTypeBasisCoeff,
                                                  ValueTypeBasisData>,
           memorySpace> &quadValuesContainer) const override;
-
-      void
-      integrateWithBasisValues(
-        const quadrature::QuadratureValuesContainer<ValueTypeUnion, memorySpace>
-          &                                      inp,
-        Field<ValueTypeBasisCoeff, memorySpace> &f) const override;
 
       void
       integrateWithBasisValues(
@@ -162,19 +148,49 @@ namespace dftefe
     private:
       std::shared_ptr<const FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
         d_feBasisDataStorage;
-      // size_type d_maxCellTimesFieldBlock;
       size_type d_maxCellBlock;
       size_type d_maxFieldBlock;
 
       /**---temporary scratch spaces----- */
-      utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>
-        d_tmpFieldCellValues, d_tmpCellMatrixBlock, d_tmpJxWxVecN,
-        d_tmpJxWxScalN, d_tmpFieldxVecN, d_tmpFieldxScalN;
-      // TODO: initilize this
-      // (VecN is vector * N (like grad/curl), ScalN is scalar x N)
+      mutable StorageBasis d_basisDataInCellRange, d_basisGradientDataInCellRange, d_JxWxNBlock, d_JxWxGradNBlock;
+      mutable StorageUnion d_fieldCellValues, d_fxJxWxNBlock;
+      /**---temporary scratch spaces----- */
 
-      utils::MemoryStorage<ValueTypeBasisData, memorySpace>
-        d_tmpCellGradientsBlock, d_tmpCellValuesBlock;
+      std::vector<size_type> d_numCellDofs;
+      std::vector<size_type> d_numCellQuad;
+      const FEBasisDofHandler<ValueTypeBasisCoeff, memorySpace, dim> *d_feBasisDofHandler;
+      size_type d_maxDofInCell;
+      size_type d_maxQuadInCell;
+      size_type d_numLocallyOwnedCells;
+      bool d_variableDofsPerCell, d_sameQuadRuleInAllCells;
+      std::shared_ptr<const quadrature::QuadratureRuleContainer> d_quadratureRuleContainer;
+
+      void
+      BasisWeakFormKernelWithField(
+        realspace::LinearLocalOp L1,
+        realspace::VectorMathOp  Op1,
+        realspace::VectorMathOp  Op2,
+        realspace::LinearLocalOp L2,
+        const quadrature::QuadratureValuesContainer<ValueTypeUnion,
+          memorySpace> &f,
+        std::shared_ptr<
+          const FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+                                                             feBasisDataStorage,
+        const size_type                                      cellBlockSize,
+        StorageUnion &cellWiseFEData,
+        linearAlgebra::LinAlgOpContext<memorySpace> &        linAlgOpContext) const;
+
+      void
+      BasisWeakFormKernel(
+        realspace::LinearLocalOp L1,
+        realspace::VectorMathOp  Op1,
+        realspace::LinearLocalOp L2,
+        std::shared_ptr<
+          const FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+                                                             feBasisDataStorage,
+        const size_type                                      cellBlockSize,
+        StorageBasis &cellWiseFEData,
+        linearAlgebra::LinAlgOpContext<memorySpace> &        linAlgOpContext) const;
 
     }; // end of FEBasisOperations
   }    // end of namespace basis
