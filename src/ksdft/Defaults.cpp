@@ -79,8 +79,8 @@ namespace dftefe
      * @brief Setting all the KSDFTDefaults
      */
     const size_type KSDFTDefaults::MAX_WAVEFN_BATCH_SIZE          = 400;
-    const size_type KSDFTDefaults::MAX_KINENG_WAVEFN_BATCH_SIZE   = 50;
-    const size_type KSDFTDefaults::MAX_DENSCOMP_WAVEFN_BATCH_SIZE = 50;
+    const size_type KSDFTDefaults::MAX_KINENG_WAVEFN_BATCH_SIZE   = 100;
+    const size_type KSDFTDefaults::MAX_DENSCOMP_WAVEFN_BATCH_SIZE = 100;
     const size_type KSDFTDefaults::CELL_BATCH_SIZE                = 50;
     const size_type KSDFTDefaults::CELL_BATCH_SIZE_GRAD_EVAL      = 50;
     const size_type KSDFTDefaults::SCALAPACK_PARAL_PROCS          = 0;

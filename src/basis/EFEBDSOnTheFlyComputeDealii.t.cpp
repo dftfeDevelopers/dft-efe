@@ -714,29 +714,27 @@ namespace dftefe
             storeEnrichGrad = true;
         if(storeEnrichValues)
         {
-          utils::MemoryStorage<double, memorySpace> basisEnrichDeviceTmp(enrichQuadValStorageSize);
           efeBDH->getEnrichmentClassicalInterface()->getEnrichmentValuesInCellRangeAtQuadPts(
             *quadratureRuleContainer,
-            basisEnrichDeviceTmp.data(),
+            basisEnrichQuadStorage->data(),
             linAlgOpContext,
             std::make_pair((size_type)0, numLocallyOwnedCells));
           utils::MemoryTransfer<utils::MemorySpace::HOST, memorySpace>::copy(
             enrichQuadValStorageSize,
             basisEnrichQuadStorageTmp.data(),
-            basisEnrichDeviceTmp.data());
+            basisEnrichQuadStorage->data());
         }
         if(storeEnrichGrad)
         {
-          utils::MemoryStorage<double, memorySpace> basisGradientEnrichDeviceTmp(enrichQuadValStorageSize * dim);
           efeBDH->getEnrichmentClassicalInterface()->getEnrichmentGradientsInCellRangeAtQuadPts(
             *quadratureRuleContainer,
-            basisGradientEnrichDeviceTmp.data(),
+            basisGradientEnrichQuadStorage->data(),
             linAlgOpContext,
             std::make_pair((size_type)0, numLocallyOwnedCells));
           utils::MemoryTransfer<utils::MemorySpace::HOST, memorySpace>::copy(
             enrichQuadValStorageSize * dim,
             basisGradientEnrichQuadStorageTmp.data(),
-            basisGradientEnrichDeviceTmp.data());
+            basisGradientEnrichQuadStorage->data());
         }
 
         cellIndex                            = 0;
@@ -1399,6 +1397,17 @@ namespace dftefe
               coeffsInAllCellsHost.size(), coeffsInAllCells.data(), coeffsInAllCellsHost.data());
             }
 
+            utils::MemoryStorage<ValueTypeBasisData, memorySpace> tmpGradientInCellBlock(0);
+            utils::MemoryStorage<ValueTypeBasisData, memorySpace> tmpGradientBlock(0);
+            if (efeBDH->isOrthogonalized() &&
+                basisStorageAttributesBoolMap
+                  .find(BasisStorageAttributes::StoreGradient)
+                  ->second)
+              {
+                tmpGradientInCellBlock.resize(classicalDofsPerCell * nQuadPointInCell * dim * cellBlockSize);
+                tmpGradientBlock.resize(classicalDofsPerCell * nQuadPointInCell * dim * cellBlockSize);
+              }
+
             size_type cumulativeCoeffsInCellRange = 0;
             size_type cumulativeDofsxQuadInCellRange = 0;
             for (size_type cellStartId = 0; cellStartId < numLocallyOwnedCells;
@@ -1495,11 +1504,6 @@ namespace dftefe
                   
                     if (efeBDH->isOrthogonalized())
                     {
-                    utils::MemoryStorage<ValueTypeBasisData, memorySpace>  tmpGradientInCellBlock(classicalDofsPerCell * nQuadPointInCellBlock[0] * dim * numCellsInBlock);
-                      
-                    utils::MemoryStorage<ValueTypeBasisData, memorySpace> 
-                      tmpGradientBlock(classicalDofsPerCell * nQuadPointInCellBlock[0] * dim * numCellsInBlock);
-
                     size_type cumulativeOffset = 0;
                     for (size_type cellId = 0; cellId < numCellsInBlock; cellId++)
                     {

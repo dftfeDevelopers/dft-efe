@@ -124,7 +124,9 @@ namespace dftefe
                                    linAlgOpContext,
         const utils::mpi::MPIComm &comm,
         const size_type            enrichmentBatchSize =
-          ECIDefaults::ENRICHMENT_BATCH_SIZE);
+          ECIDefaults::ENRICHMENT_BATCH_SIZE,
+        const size_type            cellBlockSize =
+          BasisDataStorageDefaults::CELL_BATCH_SIZE);
 
       /**
        * @brief This Constructor for augmenting the EFE basis with classical FE basis.
@@ -300,6 +302,7 @@ namespace dftefe
       const utils::mpi::MPIComm d_comm;
 
       size_type d_enrichBatchSize;
+      size_type d_cellBlockSize;
 
       utils::MemoryStorage<double, memorySpace> d_originMemSpace;
       std::vector<size_type> d_numEnrichInAllCells;

@@ -38,6 +38,9 @@
 #include <chrono>
 #include "sys/types.h"
 #include "sys/sysinfo.h"
+#ifdef DFTEFE_WITH_DEVICE
+#  include <utils/DeviceAPICalls.h>
+#endif
 namespace dftefe
 {
   namespace utils
@@ -102,6 +105,8 @@ namespace dftefe
       ConditionalOStream cout(ConditionalOStream(std::cout));
       cout.setCondition(rank == 0);
       mpi::MPIBarrier(mpiComm);
+
+      // --- Host memory ---
       struct sysinfo memInfo;
       sysinfo(&memInfo);
       double totalVirtualMem = memInfo.totalram;
@@ -113,12 +118,29 @@ namespace dftefe
       auto minMaxAvg =
         mpi::MPIAllreduceMinMaxAvg<double, utils::MemorySpace::HOST>(
           virtualMemUsed, mpiComm);
-      const double maxBytes = minMaxAvg.max;
+      const double maxHostBytes = minMaxAvg.max;
+      // --- Device (GPU) memory ---
+#ifdef DFTEFE_WITH_DEVICE
+      std::size_t freeGPU = 0, totalGPU = 0;
+      deviceMemGetInfo(&freeGPU, &totalGPU);
+      double gpuUsed  = static_cast<double>(totalGPU - freeGPU);
+      double gpuTotal = static_cast<double>(totalGPU);
+      auto   gpuMinMaxAvg =
+        mpi::MPIAllreduceMinMaxAvg<double, utils::MemorySpace::HOST>(gpuUsed,
+                                                                      mpiComm);
       cout << std::endl
-           << message + ", Current maximum memory usage across all processors: "
-           << maxBytes / 1024.0 / 1024.0 / 1024.0 << " GB out of "
-           << totalVirtualMem / 1024.0 / 1024.0 / 1024.0 << std::endl
+           << message << ", CPU: " << maxHostBytes / 1073741824.0 << " out of "
+           << totalVirtualMem / 1073741824.0 << " GB, GPU: "
+           << gpuMinMaxAvg.max / 1073741824.0 << " out of "
+           << gpuTotal / 1073741824.0 << " GB" << std::endl
            << std::endl;
+#else
+      cout << std::endl
+           << message << ", CPU: " << maxHostBytes / 1073741824.0 << " out of "
+           << totalVirtualMem / 1073741824.0 << " GB" << std::endl
+           << std::endl;
+#endif
+
       mpi::MPIBarrier(mpiComm);
     }
 

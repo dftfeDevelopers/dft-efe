@@ -108,49 +108,48 @@ namespace dftefe
     void
     DensityCalculatorKernels<ValueType, RealType, utils::MemorySpace::DEVICE>::
       computeRhoInBatch(
-        const utils::MemoryStorage<RealType, utils::MemorySpace::DEVICE> &occupationInBatch,
-        quadrature::QuadratureValuesContainer<ValueType, utils::MemorySpace::DEVICE>
-          &psiBatchQuad,
-        quadrature::QuadratureValuesContainer<RealType, utils::MemorySpace::DEVICE>
-          &modPsiSqBatchQuad,
+        const size_type batchSize,
+        const std::pair<size_type, size_type> cellRange,
+        const RealType* occupationInBatch,
+        ValueType *psiBatchQuad,
+        RealType *modPsiSqBatchQuad,
         std::shared_ptr<const quadrature::QuadratureRuleContainer>
           quadRuleContainer,
-        quadrature::QuadratureValuesContainer<RealType, utils::MemorySpace::DEVICE> &rhoBatch,
+        RealType *rhoBatch,
         linearAlgebra::LinAlgOpContext<utils::MemorySpace::DEVICE> &linAlgOpContext)
     {
-        ValueType *psiBatchQuadIter = psiBatchQuad.begin();
-        RealType *modPsiSqBatchQuadIter = modPsiSqBatchQuad.begin();
-
-        const size_type quadPtsInCellsBlockSize      = modPsiSqBatchQuad.nQuadraturePoints();
-        const size_type numPsiInBatch    = occupationInBatch.size();
+        size_type quadPtsInCellsBlockSize = 0;
+        for (size_type iCell = cellRange.first; iCell < cellRange.second; iCell++)
+          quadPtsInCellsBlockSize +=
+            quadRuleContainer->nCellQuadraturePoints(iCell);
 
         DFTEFE_LAUNCH_KERNEL(
           computeRhoFromInterpolatedValues,
-          (numPsiInBatch + (utils::DEVICE_BLOCK_SIZE - 1)) /
+          (batchSize + (utils::DEVICE_BLOCK_SIZE - 1)) /
             utils::DEVICE_BLOCK_SIZE * quadPtsInCellsBlockSize,
           utils::DEVICE_BLOCK_SIZE,
           utils::defaultStream,
-          numPsiInBatch,
+          batchSize,
           quadPtsInCellsBlockSize,
-          utils::makeDataTypeDeviceCompatible(psiBatchQuadIter),
-          utils::makeDataTypeDeviceCompatible(modPsiSqBatchQuadIter));
+          utils::makeDataTypeDeviceCompatible(psiBatchQuad),
+          utils::makeDataTypeDeviceCompatible(modPsiSqBatchQuad));
 
-        const RealType      alpha = 2.0; // 2 for spin up and down
-        const RealType      beta  = 0.0;
+        const RealType alpha = 2.0; // 2 for spin up and down
+        const RealType beta  = 0.0;
 
         linearAlgebra::blasLapack::gemm<RealType, RealType, utils::MemorySpace::DEVICE>(
           'N',
           'N',
           1,
           quadPtsInCellsBlockSize,
-          numPsiInBatch,
+          batchSize,
           alpha,
-          occupationInBatch.data(),
+          occupationInBatch,
           1,
-          modPsiSqBatchQuad.begin(),
-          numPsiInBatch,
+          modPsiSqBatchQuad,
+          batchSize,
           beta,
-          rhoBatch.begin(),
+          rhoBatch,
           1,
           linAlgOpContext);
     }
@@ -163,6 +162,6 @@ namespace dftefe
                                             dftefe::utils::MemorySpace::DEVICE>;
     template class DensityCalculatorKernels<std::complex<float>, double,
                                             dftefe::utils::MemorySpace::DEVICE>;
-  } // namespace basis
+  } // namespace ksdft
 } // namespace dftefe
 #endif

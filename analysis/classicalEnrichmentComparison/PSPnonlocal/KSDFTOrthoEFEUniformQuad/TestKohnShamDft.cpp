@@ -16,6 +16,7 @@
 #include <utils/TypeConfig.h>
 #include <utils/MemorySpaceType.h>
 #include <utils/MemoryStorage.h>
+#include <utils/DeviceUtils.h>
 #include <vector>
 #include <cmath>
 #include <filesystem>
@@ -314,6 +315,7 @@ int main(int argc, char** argv)
   if constexpr (memorySpace == dftefe::utils::MemorySpace::DEVICE)
   {
   #  ifdef DFTEFE_WITH_DEVICE
+        utils::DeviceUtils::setupDevice(rank);
         rootCout << "\nDFTEFE with GPU support, " << std::flush;
   #    ifdef DFTEFE_WITH_DEVICE_LANG_CUDA
         rootCout << "using CUDA, "<< std::flush;

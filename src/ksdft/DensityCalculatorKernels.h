@@ -42,14 +42,14 @@ namespace dftefe
     public:
       static void
       computeRhoInBatch(
-        const utils::MemoryStorage<RealType, memorySpace> &occupationInBatch,
-        quadrature::QuadratureValuesContainer<ValueType, memorySpace>
-          &psiBatchQuad,
-        quadrature::QuadratureValuesContainer<RealType, memorySpace>
-          &modPsiSqBatchQuad,
+        const size_type batchSize,
+        const std::pair<size_type, size_type> cellRange,
+        const RealType* occupationInBatch,
+        ValueType *psiBatchQuad,
+        RealType *modPsiSqBatchQuad,
         std::shared_ptr<const quadrature::QuadratureRuleContainer>
           quadRuleContainer,
-        quadrature::QuadratureValuesContainer<RealType, memorySpace> &rhoBatch,
+        RealType *rhoBatch,
         linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext);
     }; // end of class DensityCalculatorKernels
 
@@ -62,14 +62,14 @@ namespace dftefe
     public:
       static void
       computeRhoInBatch(
-        const utils::MemoryStorage<RealType, utils::MemorySpace::DEVICE> &occupationInBatch,
-        quadrature::QuadratureValuesContainer<ValueType, utils::MemorySpace::DEVICE>
-          &psiBatchQuad,
-        quadrature::QuadratureValuesContainer<RealType, utils::MemorySpace::DEVICE>
-          &modPsiSqBatchQuad,
+        const size_type batchSize,
+        const std::pair<size_type, size_type> cellRange,
+        const RealType* occupationInBatch,
+        ValueType *psiBatchQuad,
+        RealType *modPsiSqBatchQuad,
         std::shared_ptr<const quadrature::QuadratureRuleContainer>
           quadRuleContainer,
-        quadrature::QuadratureValuesContainer<RealType, utils::MemorySpace::DEVICE> &rhoBatch,
+        RealType *rhoBatch,
         linearAlgebra::LinAlgOpContext<utils::MemorySpace::DEVICE> &linAlgOpContext);
     }; // end of class DensityCalculatorKernels
 #endif

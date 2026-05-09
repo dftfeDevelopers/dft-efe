@@ -125,6 +125,16 @@ namespace dftefe
         linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
           &vectorData) const override;
 
+      void
+      interpolate(
+        const linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
+          &                                                   vectorData,
+        const BasisManager<ValueTypeBasisCoeff, memorySpace> &basisManager,
+        const std::pair<size_type, size_type>                 cellRange,
+        linearAlgebra::blasLapack::scalar_type<ValueTypeBasisCoeff,
+                                               ValueTypeBasisData>
+          *quadValuesInCellRangePtr) const;
+
       /* FE functions for local kernel computations*/
       void
       computeFEMatrices(
@@ -154,6 +164,8 @@ namespace dftefe
       /**---temporary scratch spaces----- */
       mutable StorageBasis d_basisDataInCellRange, d_basisGradientDataInCellRange, d_JxWxNBlock, d_JxWxGradNBlock;
       mutable StorageUnion d_fieldCellValues, d_fxJxWxNBlock;
+      mutable std::pair<size_type, size_type> d_basisDataCellRange;
+      mutable bool                            d_basisDataCellRangeCached;
       /**---temporary scratch spaces----- */
 
       std::vector<size_type> d_numCellDofs;
@@ -164,6 +176,8 @@ namespace dftefe
       size_type d_numLocallyOwnedCells;
       bool d_variableDofsPerCell, d_sameQuadRuleInAllCells;
       std::shared_ptr<const quadrature::QuadratureRuleContainer> d_quadratureRuleContainer;
+
+      void deleteScratch() const;
 
       void
       BasisWeakFormKernelWithField(

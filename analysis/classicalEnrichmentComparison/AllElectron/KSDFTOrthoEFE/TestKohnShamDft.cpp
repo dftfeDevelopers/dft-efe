@@ -26,6 +26,7 @@
 #include <ksdft/ElectrostaticLocalFE.h>
 #include <ksdft/KineticFE.h>
 #include <ksdft/ExchangeCorrelationFE.h>
+#include <utils/DeviceUtils.h>
 #include <ksdft/KohnShamOperatorContextFE.h>
 #include <ksdft/KohnShamEigenSolver.h>
 #include <basis/OrthoEFEOverlapInverseOpContextGLL.h>
@@ -395,6 +396,7 @@ int main(int argc, char** argv)
   if constexpr (memorySpace == dftefe::utils::MemorySpace::DEVICE)
   {
   #  ifdef DFTEFE_WITH_DEVICE
+        utils::DeviceUtils::setupDevice(rank);
         rootCout << "\nDFTEFE with GPU support, " << std::flush;
   #    ifdef DFTEFE_WITH_DEVICE_LANG_CUDA
         rootCout << "using CUDA, "<< std::flush;

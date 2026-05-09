@@ -33,114 +33,39 @@ namespace dftefe
     template <typename ValueType, typename RealType, utils::MemorySpace memorySpace>
     void
     DensityCalculatorKernels<ValueType, RealType, memorySpace>::computeRhoInBatch(
-        const utils::MemoryStorage<RealType, memorySpace> &occupationInBatch,
-        quadrature::QuadratureValuesContainer<ValueType, memorySpace>
-          &psiBatchQuad,
-        quadrature::QuadratureValuesContainer<RealType, memorySpace>
-          &modPsiSqBatchQuad,
+        const size_type batchSize,
+        const std::pair<size_type, size_type> cellRange,
+        const RealType* occupationInBatch,
+        ValueType *psiBatchQuad,
+        RealType *modPsiSqBatchQuad,
         std::shared_ptr<const quadrature::QuadratureRuleContainer>
           quadRuleContainer,
-        quadrature::QuadratureValuesContainer<RealType, memorySpace> &rhoBatch,
+        RealType *rhoBatch,
         linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext)
     {
-        size_type numPsiInBatch = occupationInBatch.size();
-        // hadamard for psi^C psi = mod psi^2
-        // linearAlgebra::blasLapack::
-        //   hadamardProduct<ValueType, ValueType, memorySpace>(
-        //     psiBatchQuad.nEntries(),
-        //     psiBatchQuad.begin(),
-        //     psiBatchQuad.begin(),
-        //     linearAlgebra::blasLapack::ScalarOp::Conj,
-        //     linearAlgebra::blasLapack::ScalarOp::Identity,
-        //     psiBatchQuad.begin(),
-        //     linAlgOpContext);
-
-        /*----------- TODO : Optimize this -------------------------------*/
-        // convert to psiBatchQuad to realType and multiply by 2
-        // for (size_type iCell = 0; iCell < psiBatchQuad.nCells(); iCell++)
-        //   {
-        //     std::vector<ValueType> a(
-        //       quadRuleContainer->nCellQuadraturePoints(iCell) *
-        //       numPsiInBatch);
-        //     std::vector<RealType> b(
-        //       quadRuleContainer->nCellQuadraturePoints(iCell) *
-        //       numPsiInBatch);
-        //     psiBatchQuad.template getCellValues<utils::MemorySpace::HOST>(
-        //       iCell, a.data());
-        //     for (size_type i = 0; i < b.size(); i++)
-        //       b[i] = 2.0 * utils::realPart<RealType>(a[i]);
-        //     psiModSqBatchQuad.template
-        //     setCellValues<utils::MemorySpace::HOST>(
-        //       iCell, b.data());
-        //   }
-
-        ValueType *psiBatchQuadIter     = psiBatchQuad.begin();
-        RealType * rhoBatchIter         = rhoBatch.begin();
-        size_type  cumulativeQuadInCell = 0, cumulativeQuadPsiInCell = 0;
-        for (size_type iCell = 0; iCell < psiBatchQuad.nCells(); iCell++)
+        size_type cumulativeQuadInCell = 0, cumulativeQuadPsiInCell = 0;
+        for (size_type iCell = cellRange.first; iCell < cellRange.second; iCell++)
           {
-            size_type numQuadInCell =
+            const size_type numQuadInCell =
               quadRuleContainer->nCellQuadraturePoints(iCell);
             for (size_type iQuad = 0; iQuad < numQuadInCell; iQuad++)
               {
                 RealType b = 0;
-                for (size_type i = 0; i < numPsiInBatch; i++)
+                for (size_type i = 0; i < batchSize; i++)
                   {
                     const ValueType psi =
-                      psiBatchQuadIter[cumulativeQuadPsiInCell +
-                                       numPsiInBatch * iQuad + i];
-                    b += 2.0 * utils::absSq(psi) * *(occupationInBatch.data() + i);
+                      psiBatchQuad[cumulativeQuadPsiInCell +
+                                   batchSize * iQuad + i];
+                    const RealType absSqPsi = utils::absSq(psi);
+                    modPsiSqBatchQuad[cumulativeQuadPsiInCell +
+                                      batchSize * iQuad + i] = absSqPsi;
+                    b += 2.0 * absSqPsi * occupationInBatch[i];
                   }
-                rhoBatchIter[cumulativeQuadInCell + iQuad] = b;
+                rhoBatch[cumulativeQuadInCell + iQuad] = b;
               }
-            cumulativeQuadPsiInCell += numQuadInCell * numPsiInBatch;
+            cumulativeQuadPsiInCell += numQuadInCell * batchSize;
             cumulativeQuadInCell += numQuadInCell;
           }
-
-        // // gemm for fi * mod psi^2
-
-        // size_type AStartOffset = 0;
-        // size_type CStartOffset = 0;
-        // for (size_type cellStartId = 0; cellStartId < numLocallyOwnedCells;
-        //      cellStartId += cellBlockSize)
-        //   {
-        //     const size_type cellEndId =
-        //       std::min(cellStartId + cellBlockSize, numLocallyOwnedCells);
-        //     const size_type numCellsInBlock = cellEndId - cellStartId;
-
-        //     RealType alpha = 1.0;
-        //     RealType beta  = 0.0;
-
-        //     RealType *C = rhoBatch.begin() + CStartOffset;
-
-        //     size_type n = 0;
-        //     for (size_type iCell = 0; iCell < numCellsInBlock; ++iCell)
-        //       {
-        //         n +=
-        //           quadRuleContainer->nCellQuadraturePoints(cellStartId +
-        //           iCell);
-        //       }
-
-        //     linearAlgebra::blasLapack::gemm<RealType, RealType, memorySpace>(
-        //       'T',
-        //       'N',
-        //       1,
-        //       n,
-        //       numPsiInBatch,
-        //       alpha,
-        //       occupationInBatchMemspace.data(),
-        //       numPsiInBatch,
-        //       psiModSqBatchQuad.begin() + AStartOffset,
-        //       numPsiInBatch,
-        //       beta,
-        //       C,
-        //       1,
-        //       linAlgOpContext);
-
-        //   AStartOffset +=
-        //     numPsiInBatch * n;
-        //   CStartOffset += n;
-        // }
     }
 
     template class DensityCalculatorKernels<double, double,
@@ -167,5 +92,5 @@ namespace dftefe
       dftefe::utils::MemorySpace::HOST_PINNED>;
 #endif
 
-  } // end of namespace basis
+  } // end of namespace ksdft
 } // end of namespace dftefe

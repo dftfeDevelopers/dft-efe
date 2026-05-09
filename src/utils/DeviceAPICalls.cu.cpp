@@ -69,8 +69,30 @@ namespace dftefe
     deviceError_t
     deviceMalloc(void **devPtr, std::size_t size)
     {
+      // {
+      //   std::size_t freeGPU = 0, totalGPU = 0;
+      //   cudaMemGetInfo(&freeGPU, &totalGPU);
+      //   double reqGB   = static_cast<double>(size) / (1024.0 * 1024.0 * 1024.0);
+      //   double usedGB  = static_cast<double>(totalGPU - freeGPU) /
+      //                    (1024.0 * 1024.0 * 1024.0);
+      //   double totalGB = static_cast<double>(totalGPU) /
+      //                    (1024.0 * 1024.0 * 1024.0);
+      //   std::cout << "[deviceMalloc] requesting: " << size << " bytes ("
+      //             << reqGB << " GB)  GPU used/total before: " << usedGB
+      //             << " / " << totalGB << " GB" << std::flush << std::endl;
+      // }
       deviceError_t err = cudaMalloc(devPtr, size);
       DEVICE_API_CHECK(err);
+      // {
+      //   std::size_t freeGPU = 0, totalGPU = 0;
+      //   cudaMemGetInfo(&freeGPU, &totalGPU);
+      //   double usedGB  = static_cast<double>(totalGPU - freeGPU) /
+      //                    (1024.0 * 1024.0 * 1024.0);
+      //   double totalGB = static_cast<double>(totalGPU) /
+      //                    (1024.0 * 1024.0 * 1024.0);
+      //   // std::cout << "[deviceMalloc] GPU used/total after:  " << usedGB
+      //   //           << " / " << totalGB << " GB" << std::flush << std::endl;
+      // }
       return err;
     }
 
@@ -86,11 +108,15 @@ namespace dftefe
     void
     deviceSetValue(ValueType *devPtr, ValueType value, std::size_t size)
     {
-      setValueKernel<<<size / dftefe::utils::DEVICE_BLOCK_SIZE + 1,
-                       dftefe::utils::DEVICE_BLOCK_SIZE>>>(
-        makeDataTypeDeviceCompatible(devPtr),
-        makeDataTypeDeviceCompatible(value),
-        size);
+      const unsigned int nBlocks =
+        (size + dftefe::utils::DEVICE_BLOCK_SIZE - 1) /
+        dftefe::utils::DEVICE_BLOCK_SIZE;
+
+      setValueKernel<<<nBlocks,
+                      dftefe::utils::DEVICE_BLOCK_SIZE>>>(
+          makeDataTypeDeviceCompatible(devPtr),
+          makeDataTypeDeviceCompatible(value),
+          size);
     }
 
     template void
@@ -139,6 +165,16 @@ namespace dftefe
     {
       deviceError_t err = cudaFree(devPtr);
       DEVICE_API_CHECK(err);
+      // {
+      //   std::size_t freeGPU = 0, totalGPU = 0;
+      //   cudaMemGetInfo(&freeGPU, &totalGPU);
+      //   double usedGB = static_cast<double>(totalGPU - freeGPU) /
+      //                   (1024.0 * 1024.0 * 1024.0);
+      //   double totalGB = static_cast<double>(totalGPU) /
+      //                    (1024.0 * 1024.0 * 1024.0);
+      //   std::cout << "[deviceFree]   GPU used/total after free: " << usedGB
+      //             << " / " << totalGB << " GB" << std::flush << std::endl;
+      // }
       return err;
     }
 
