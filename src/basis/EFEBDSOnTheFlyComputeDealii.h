@@ -68,7 +68,7 @@ namespace dftefe
         const BasisStorageAttributesBoolMap basisStorageAttributesBoolMap,
         const size_type                     maxCellBlock,
         linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext,
-        const bool calculateEnrichmentDataOnTheFly = false,
+        const bool calculateEnrichmentDataOnTheFly = true,
         const bool useMemOptGradScratchSpace = false 
         /*In gpu an extra scratch for grad helps in cuda strided gemm */
         /* instead of varStrided gemm which is optimal*/);

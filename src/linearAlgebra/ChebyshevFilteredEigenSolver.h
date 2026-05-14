@@ -37,6 +37,7 @@
 #include <linearAlgebra/ChebyshevFilter.h>
 #include <memory>
 #include <utils/Profiler.h>
+#include <linearAlgebra/MultivectorScratch.h>
 
 namespace dftefe
 {
@@ -102,7 +103,9 @@ namespace dftefe
         bool                  isGHEP                    = true,
         OrthogonalizationType orthoType =
           OrthogonalizationType::CHOLESKY_GRAMSCHMIDT,
-        bool storeIntermediateSubspaces = false);
+        bool storeIntermediateSubspaces = false,
+        std::shared_ptr<MultivectorScratch<ValueType, memorySpace>> scratch =
+          nullptr);
 
       /**
        *@brief Destructor
@@ -183,6 +186,8 @@ namespace dftefe
       const ElpaScalapackManager *d_elpaScala;
 
       const bool d_isGHEP;
+
+      std::shared_ptr<MultivectorScratch<ValueType, memorySpace>> d_scratch;
 
     }; // end of class ChebyshevFilteredEigenSolver
   }    // end of namespace linearAlgebra

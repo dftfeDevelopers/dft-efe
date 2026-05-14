@@ -53,7 +53,8 @@ namespace dftefe
         const size_type                               eigenVectorBatchSize,
         bool                                          isGHEP,
         OrthogonalizationType                         orthoType,
-        bool storeIntermediateSubspaces)
+        bool                                         storeIntermediateSubspaces,
+        std::shared_ptr<MultivectorScratch<ValueType, memorySpace>> scratch)
       : d_p(mpiPatternP2P->mpiCommunicator(), "CHFSI")
       , d_pTotal(mpiPatternP2P->mpiCommunicator(), "CHFSI Solve Time")
       , d_isResidualChebyFilter(isResidualChebyshevFilter)
@@ -71,6 +72,7 @@ namespace dftefe
       , d_orthoType(orthoType)
       , d_elpaScala(&elpaScala)
       , d_isGHEP(isGHEP)
+      , d_scratch(scratch)
     {
       if (d_storeIntermediateSubspaces && d_printL2Norms)
         {
@@ -82,6 +84,19 @@ namespace dftefe
               mpiPatternP2P, linAlgOpContext, 1, (ValueType)0);
         }
 
+      const bool useScratch =
+        scratch != nullptr && scratch->hasXinBatch() &&
+        scratch->hasXoutBatch() &&
+        scratch->getXinBatchSize() == eigenVectorBatchSize &&
+        scratch->getXoutBatchSize() == eigenVectorBatchSize;
+
+      if (useScratch)
+        {
+          d_XinBatch  = scratch->getXinBatch();
+          d_XoutBatch = scratch->getXoutBatch();
+        }
+      else
+        {
       d_XinBatch =
         std::make_shared<linearAlgebra::MultiVector<ValueType, memorySpace>>(
           d_mpiPatternP2P, linAlgOpContext, eigenVectorBatchSize, ValueType());
@@ -89,6 +104,7 @@ namespace dftefe
       d_XoutBatch =
         std::make_shared<linearAlgebra::MultiVector<ValueType, memorySpace>>(
           d_mpiPatternP2P, linAlgOpContext, eigenVectorBatchSize, ValueType());
+        }
 
       d_chfsiScratch1 = std::make_shared<
             linearAlgebra::MultiVector<ValueType, memorySpace>>(
@@ -119,11 +135,18 @@ namespace dftefe
             eigenVectorBatchSize,
             *d_elpaScala,
             d_mpiPatternP2P,
-            linAlgOpContext);
+            linAlgOpContext,
+            true,
+            scratch);
 
       d_rr = std::make_shared<
         RayleighRitzEigenSolver<ValueTypeOperator, ValueType, memorySpace>>(
-        eigenVectorBatchSize, *d_elpaScala, d_mpiPatternP2P, linAlgOpContext);
+        eigenVectorBatchSize,
+        *d_elpaScala,
+        d_mpiPatternP2P,
+        linAlgOpContext,
+        true,
+        scratch);
 
       reinit(wantedSpectrumLowerBound,
              wantedSpectrumUpperBound,
@@ -201,14 +224,18 @@ namespace dftefe
                 d_eigenVecBatchSize,
                 *d_elpaScala,
                 d_mpiPatternP2P,
-                linAlgOpContext);
+                linAlgOpContext,
+                true,
+                d_scratch);
 
           d_rr = std::make_shared<
             RayleighRitzEigenSolver<ValueTypeOperator, ValueType, memorySpace>>(
             d_eigenVecBatchSize,
             *d_elpaScala,
             d_mpiPatternP2P,
-            linAlgOpContext);
+            linAlgOpContext,
+            true,
+            d_scratch);
         }
     }
 
@@ -257,6 +284,9 @@ namespace dftefe
           subspaceBatchIn = nullptr, subspaceBatchOut = nullptr, 
           chfsiScratch1 = nullptr, chfsiScratch2 = nullptr,
           chfsiResidualScratch1 = nullptr, chfsiResidualScratch2 = nullptr;
+
+      if (d_scratch)
+        d_scratch->acquire();
 
       for (size_type eigVecStartId = 0; eigVecStartId < numEigenVectors;
            eigVecStartId += d_eigenVecBatchSize)
@@ -324,6 +354,19 @@ namespace dftefe
             {
               d_batchSizeSmall = numEigVecInBatch;
 
+              const bool useSmallScratch =
+                d_scratch != nullptr &&
+                d_scratch->hasXinBatchSmall() &&
+                d_scratch->hasXoutBatchSmall() &&
+                d_scratch->getXinBatchSmallSize() == numEigVecInBatch;
+
+              if (useSmallScratch)
+                {
+                  d_XinBatchSmall  = d_scratch->getXinBatchSmall();
+                  d_XoutBatchSmall = d_scratch->getXoutBatchSmall();
+                }
+              else
+                {
               d_XinBatchSmall = std::make_shared<
                 linearAlgebra::MultiVector<ValueType, memorySpace>>(
                 d_mpiPatternP2P,
@@ -337,6 +380,12 @@ namespace dftefe
                 eigenVectors.getLinAlgOpContext(),
                 numEigVecInBatch,
                 ValueType());
+                  if (d_scratch != nullptr)
+                    {
+                      d_scratch->setXinBatchSmall(d_XinBatchSmall);
+                      d_scratch->setXoutBatchSmall(d_XoutBatchSmall);
+                    }
+                }
 
               d_chfsiScratch1Small = std::make_shared<
                 linearAlgebra::MultiVector<ValueType, memorySpace>>(
@@ -437,6 +486,9 @@ namespace dftefe
           //                       subspaceBatchOut->data() +
           //                         numEigVecInBatch * iSize);                            
         }
+
+      if (d_scratch)
+        d_scratch->release();
 
       if (d_storeIntermediateSubspaces && d_printL2Norms)
         {

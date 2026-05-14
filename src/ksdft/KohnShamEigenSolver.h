@@ -36,6 +36,7 @@
 #include <memory>
 #include <utils/ConditionalOStream.h>
 #include <utils/Profiler.h>
+#include <linearAlgebra/MultivectorScratch.h>
 
 namespace dftefe
 {
@@ -109,7 +110,8 @@ namespace dftefe
         const bool                           isGHEP = true,
         linearAlgebra::OrthogonalizationType orthoType =
           linearAlgebra::OrthogonalizationType::CHOLESKY_GRAMSCHMIDT,
-        bool storeIntermediateSubspaces = false);
+        bool storeIntermediateSubspaces        = false,
+        bool useSameScratchInEigenSolver = true);
 
       /**
        *@brief Default Destructor
@@ -231,6 +233,10 @@ namespace dftefe
       linearAlgebra::OrthogonalizationType       d_orthoType;
       const linearAlgebra::ElpaScalapackManager *d_elpaScala;
       bool                                       d_isGHEP;
+      bool                                       d_useSameScratch;
+
+      std::shared_ptr<linearAlgebra::MultivectorScratch<ValueType, memorySpace>>
+        d_scratch;
 
     }; // end of class KohnShamEigenSolver
   }    // namespace ksdft

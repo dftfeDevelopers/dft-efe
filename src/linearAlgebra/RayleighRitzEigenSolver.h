@@ -35,6 +35,7 @@
 #include <linearAlgebra/OperatorContext.h>
 #include <memory>
 #include <linearAlgebra/ElpaScalapackManager.h>
+#include <linearAlgebra/MultivectorScratch.h>
 
 namespace dftefe
 {
@@ -79,7 +80,9 @@ namespace dftefe
         std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
                                                       mpiPatternP2P,
         std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext,
-        const bool                                    useScalpack = true);
+        const bool                                    useScalpack = true,
+        std::shared_ptr<MultivectorScratch<ValueType, memorySpace>> scratch =
+          nullptr);
 
       /**
        *@brief Default Destructor
@@ -137,6 +140,8 @@ namespace dftefe
 
       size_type       d_batchSizeSmall;
       const size_type d_eigenVecBatchSize;
+
+      std::shared_ptr<MultivectorScratch<ValueType, memorySpace>> d_scratch;
 
       const ElpaScalapackManager *d_elpaScala;
       const bool                  d_useELPA;
