@@ -197,7 +197,8 @@ namespace dftefe
         const size_type                           subspaceRotDofsBlockSize,
         const size_type                           wfcBlockSize,
         const bool                                rotationMatTranspose,
-        const bool                                isRotationMatLowerTria)
+        const bool                                isRotationMatLowerTria,
+        const bool                                allowFullCPUMemSubspaceRot)
       {
         size_type maxNumLocalDofs = 0;
         utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
@@ -219,8 +220,21 @@ namespace dftefe
         const size_type dofsBlockSize =
           std::min(maxNumLocalDofs, subspaceRotDofsBlockSize);
 
-        utils::MemoryStorage<ValueType, utils::MemorySpace::HOST>
-          rotationMatBlockHost(vectorsBlockSize * N, ValueType(0));
+        constexpr utils::MemorySpace hostMemSpace =
+          (memorySpace == utils::MemorySpace::DEVICE)
+            ? utils::MemorySpace::HOST_PINNED
+            : utils::MemorySpace::HOST;
+
+        utils::MemoryStorage<ValueType, hostMemSpace> rotationMatBlockHost;
+        if (allowFullCPUMemSubspaceRot)
+          {
+            rotationMatBlockHost.resize(N * N, ValueType(0));
+            rotationMatBlockHost.setValue(ValueType(0));
+          }
+        else
+          {
+            rotationMatBlockHost.resize(vectorsBlockSize * N, ValueType(0));
+          }
 
         utils::MemoryStorage<ValueType, memorySpace> rotationMatBlock(
           vectorsBlockSize * N, ValueType(0));
@@ -245,6 +259,76 @@ namespace dftefe
 
                 const size_type D = isRotationMatLowerTria ? (jvec + BVec) : N;
 
+                if (allowFullCPUMemSubspaceRot)
+                  {
+                    if (idof == 0)
+                      {
+                        // Extract QBVec from parallel ScaLAPACK matrix Q
+                        if (rotationMatTranspose)
+                          {
+                            if (processGrid->is_process_active())
+                              for (size_type i = 0; i < D; ++i)
+                                if (globalToLocalRowIdMap.find(i) !=
+                                    globalToLocalRowIdMap.end())
+                                  {
+                                    const size_type localRowId =
+                                      globalToLocalRowIdMap[i];
+                                    for (size_type j = 0; j < BVec; ++j)
+                                      {
+                                        std::unordered_map<size_type,
+                                                           size_type>::iterator
+                                          it = globalToLocalColumnIdMap.find(
+                                            j + jvec);
+                                        if (it !=
+                                            globalToLocalColumnIdMap.end())
+                                          *(rotationMatBlockHost.begin() +
+                                            jvec * N + i * BVec + j) =
+                                            rotationMatPar.local_el(localRowId,
+                                                                    it->second);
+                                      }
+                                  }
+                          }
+                        else
+                          {
+                            if (processGrid->is_process_active())
+                              for (size_type i = 0; i < D; ++i)
+                                if (globalToLocalColumnIdMap.find(i) !=
+                                    globalToLocalColumnIdMap.end())
+                                  {
+                                    const size_type localColumnId =
+                                      globalToLocalColumnIdMap[i];
+                                    for (size_type j = 0; j < BVec; ++j)
+                                      {
+                                        std::unordered_map<size_type,
+                                                           size_type>::iterator
+                                          it =
+                                            globalToLocalRowIdMap.find(j +
+                                                                       jvec);
+                                        if (it != globalToLocalRowIdMap.end())
+                                          *(rotationMatBlockHost.begin() +
+                                            jvec * N + i * BVec + j) =
+                                            rotationMatPar.local_el(
+                                              it->second, localColumnId);
+                                      }
+                                  }
+                          }
+
+                        utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
+                          utils::mpi::MPIInPlace,
+                          rotationMatBlockHost.begin() + jvec * N,
+                          BVec * D,
+                          utils::mpi::Types<ValueType>::getMPIDatatype(),
+                          utils::mpi::MPISum,
+                          mpiCommDomain);
+                      }
+
+                    utils::MemoryTransfer<memorySpace, hostMemSpace>::
+                      copy(BVec * D,
+                           rotationMatBlock.begin(),
+                           rotationMatBlockHost.begin() + jvec * N);
+                  }
+                else
+                  {
                 rotationMatBlockHost.setZero(BVec * N, 0);
 
                 // Extract QBVec from parallel ScaLAPACK matrix Q
@@ -300,10 +384,11 @@ namespace dftefe
                   utils::mpi::MPISum,
                   mpiCommDomain);
 
-                utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::
+                utils::MemoryTransfer<memorySpace, hostMemSpace>::
                   copy(BVec * D,
                        rotationMatBlock.begin(),
                        rotationMatBlockHost.begin());
+                  }
 
                 const ValueType scalarCoeffAlpha = ValueType(1.0);
                 const ValueType scalarCoeffBeta  = ValueType(0);
