@@ -515,6 +515,18 @@ namespace dftefe
       return a / b;
     }
 
+    inline double
+    div(float a, double b)
+    {
+      return (double)a / b;
+    }
+
+    inline double
+    div(double a, float b)
+    {
+      return a / (double)b;
+    }
+
     inline std::complex<double>
     div(std::complex<double> a, std::complex<double> b)
     {

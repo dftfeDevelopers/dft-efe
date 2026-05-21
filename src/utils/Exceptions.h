@@ -127,9 +127,9 @@ template parameter instead. Available typedefs LogicError - std::logic_error
 #  ifdef DFTEFE_WITH_DEVICE_LANG_CUDA
 #    include <utils/DeviceExceptions.cu.h>
 #  elif DFTEFE_WITH_DEVICE_LANG_HIP
-#    include <DeviceExceptions.hip.h>
+#    include <utils/DeviceExceptions.hip.h>
 #  elif DFTEFE_WITH_DEVICE_LANG_SYCL
-#    include <DeviceExceptions.sycl.h>
+#    include <utils/DeviceExceptions.sycl.h>
 #  endif
 #endif
 

@@ -18,19 +18,20 @@
 #define dftefeDeviceExceptions_cuh
 
 
-#define DEVICE_API_CHECK(cmd)                       \
-  do                                                \
-    {                                               \
-      cudaError_t e = cmd;                          \
-      if (e != cudaSuccess)                         \
-        {                                           \
-          printf("Failed: Cuda error %s:%d '%s'\n", \
-                 __FILE__,                          \
-                 __LINE__,                          \
-                 cudaGetErrorString(e));            \
-          exit(EXIT_FAILURE);                       \
-        }                                           \
-    }                                               \
+#define DEVICE_API_CHECK(cmd)                                     \
+  do                                                              \
+    {                                                            \
+      cudaError_t e = cmd;                                        \
+      if (e != cudaSuccess)                                        \
+        {                                                        \
+          printf("Failed: Cuda error in %s at %s:%d '%s'\n",     \
+                 __func__,                                        \
+                 __FILE__,                                        \
+                 __LINE__,                                        \
+                 cudaGetErrorString(e));                          \
+          exit(EXIT_FAILURE);                                     \
+        }                                                        \
+    }                                                            \
   while (0)
 
 #define DEVICEBLAS_API_CHECK(expr)                                                   \

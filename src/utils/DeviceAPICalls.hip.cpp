@@ -17,13 +17,13 @@
 
 
 #ifdef DFTEFE_WITH_DEVICE_LANG_HIP
-#  include <DeviceAPICalls.h>
+#  include <utils/DeviceAPICalls.h>
 #  include <stdio.h>
 #  include <vector>
-#  include <DeviceDataTypeOverloads.h>
-#  include <DeviceTypeConfigHalfPrec.h>
-#  include <DeviceKernelLauncherHelpers.h>
-#  include <Exceptions.h>
+#  include <utils/DeviceDataTypeOverloads.h>
+#  include <utils/DeviceTypeConfigHalfPrec.h>
+#  include <utils/DeviceKernelLauncherHelpers.h>
+#  include <utils/Exceptions.h>
 namespace dftefe
 {
   namespace utils
@@ -311,10 +311,11 @@ namespace dftefe
       else
         {
           int priority;
-          hipDeviceGetStreamPriorityRange(NULL, &priority);
-          deviceError_t err = hipStreamCreateWithPriority(&pStream,
-                                                          hipStreamNonBlocking,
-                                                          priority);
+          deviceError_t err = hipDeviceGetStreamPriorityRange(NULL, &priority);
+          DEVICE_API_CHECK(err);
+          err = hipStreamCreateWithPriority(&pStream,
+                                             hipStreamNonBlocking,
+                                             priority);
           DEVICE_API_CHECK(err);
           return err;
         }

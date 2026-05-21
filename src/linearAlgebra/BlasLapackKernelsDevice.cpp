@@ -4,7 +4,6 @@
 #  include <utils/DeviceKernelLauncherHelpers.h>
 #  include <utils/DeviceAPICalls.h>
 #  include <utils/DeviceDataTypeOverloads.h>
-#  include <utils/DeviceTypeConfigHalfPrec.h>
 #  include <utils/MemoryTransfer.h>
 #  include <linearAlgebra/BlasLapackKernels.h>
 #  include <linearAlgebra/BlasLapack.h>
@@ -651,7 +650,7 @@ namespace dftefe
                   }
 
                 for (int s = 0; s < numStreams; ++s)
-                  utils::deviceStreamSynchronize(streams[s]);
+                  { utils::deviceError_t err = utils::deviceStreamSynchronize(streams[s]); DEVICE_API_CHECK(err); }
               }
             if (scalarOpA == ScalarOp::Conj && scalarOpB == ScalarOp::Identity)
               {
@@ -682,7 +681,7 @@ namespace dftefe
                   }
 
                 for (int s = 0; s < numStreams; ++s)
-                  utils::deviceStreamSynchronize(streams[s]);
+                  { utils::deviceError_t err = utils::deviceStreamSynchronize(streams[s]); DEVICE_API_CHECK(err); }
               }
             if (scalarOpA == ScalarOp::Identity && scalarOpB == ScalarOp::Conj)
               {
@@ -713,7 +712,7 @@ namespace dftefe
                   }
 
                 for (int s = 0; s < numStreams; ++s)
-                  utils::deviceStreamSynchronize(streams[s]);
+                  { utils::deviceError_t err = utils::deviceStreamSynchronize(streams[s]); DEVICE_API_CHECK(err); }
               }
             if (scalarOpA == ScalarOp::Conj && scalarOpB == ScalarOp::Conj)
               {
@@ -744,7 +743,7 @@ namespace dftefe
                   }
 
                 for (int s = 0; s < numStreams; ++s)
-                  utils::deviceStreamSynchronize(streams[s]);
+                  { utils::deviceError_t err = utils::deviceStreamSynchronize(streams[s]); DEVICE_API_CHECK(err); }
               }
           }
         else
@@ -779,7 +778,7 @@ namespace dftefe
                   }
 
                 for (int s = 0; s < numStreams; ++s)
-                  utils::deviceStreamSynchronize(streams[s]);
+                  { utils::deviceError_t err = utils::deviceStreamSynchronize(streams[s]); DEVICE_API_CHECK(err); }
               }
             if (scalarOpA == ScalarOp::Conj && scalarOpB == ScalarOp::Identity)
               {
@@ -810,7 +809,7 @@ namespace dftefe
                   }
 
                 for (int s = 0; s < numStreams; ++s)
-                  utils::deviceStreamSynchronize(streams[s]);
+                  { utils::deviceError_t err = utils::deviceStreamSynchronize(streams[s]); DEVICE_API_CHECK(err); }
               }
             if (scalarOpA == ScalarOp::Identity && scalarOpB == ScalarOp::Conj)
               {
@@ -841,7 +840,7 @@ namespace dftefe
                   }
 
                 for (int s = 0; s < numStreams; ++s)
-                  utils::deviceStreamSynchronize(streams[s]);
+                  { utils::deviceError_t err = utils::deviceStreamSynchronize(streams[s]); DEVICE_API_CHECK(err); }
               }
             if (scalarOpA == ScalarOp::Conj && scalarOpB == ScalarOp::Conj)
               {
@@ -872,7 +871,7 @@ namespace dftefe
                   }
 
                 for (int s = 0; s < numStreams; ++s)
-                  utils::deviceStreamSynchronize(streams[s]);
+                  { utils::deviceError_t err = utils::deviceStreamSynchronize(streams[s]); DEVICE_API_CHECK(err); }
               }
           }
       }
@@ -1182,7 +1181,7 @@ namespace dftefe
           }
 
         for (int s = 0; s < numStreams; ++s)
-          utils::deviceStreamSynchronize(streams[s]);
+          { utils::deviceError_t err = utils::deviceStreamSynchronize(streams[s]); DEVICE_API_CHECK(err); }
       }
 
       template <typename ValueType1, typename ValueType2>

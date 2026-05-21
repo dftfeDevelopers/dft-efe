@@ -1513,7 +1513,7 @@ namespace dftefe
     const double *d_jacobi)
   {
     double local_sum = 0.0, sum = 0.0;
-    dftefe::utils::deviceMemset(d_devSumPtr, 0, sizeof(double));
+    { dftefe::utils::deviceError_t err = dftefe::utils::deviceMemset(d_devSumPtr, 0, sizeof(double)); DEVICE_API_CHECK(err); }
 
     applyPreconditionAndComputeDotProductDevice(
       d_dvec.begin(), d_devSumPtr, d_rvec.begin(), d_jacobi, d_xLocalDof);
@@ -1541,7 +1541,7 @@ namespace dftefe
     const double *d_jacobi)
   {
     double local_sum = 0.0, sum = 0.0;
-    dftefe::utils::deviceMemset(d_devSumPtr, 0, sizeof(double));
+    { dftefe::utils::deviceError_t err = dftefe::utils::deviceMemset(d_devSumPtr, 0, sizeof(double)); DEVICE_API_CHECK(err); }
 
     applyPreconditionComputeDotProductAndSaddDevice(
       d_qvec.begin(), d_devSumPtr, d_rvec.begin(), d_jacobi, d_xLocalDof);
@@ -1568,7 +1568,7 @@ namespace dftefe
   scaleXRandComputeNorm(double *x, const double &alpha)
   {
     double local_sum = 0.0, sum = 0.0;
-    dftefe::utils::deviceMemset(d_devSumPtr, 0, sizeof(double));
+    { dftefe::utils::deviceError_t err = dftefe::utils::deviceMemset(d_devSumPtr, 0, sizeof(double)); DEVICE_API_CHECK(err); }
 
     scaleXRandComputeNormDevice(x,
                                 d_rvec.begin(),

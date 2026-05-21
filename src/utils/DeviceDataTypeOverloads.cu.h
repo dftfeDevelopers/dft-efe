@@ -508,6 +508,18 @@ namespace dftefe
       return a / b;
     }
 
+    __forceinline__ __device__ double
+    div(float a, double b)
+    {
+      return (double)a / b;
+    }
+
+    __forceinline__ __device__ double
+    div(double a, float b)
+    {
+      return a / (double)b;
+    }
+
     __forceinline__ __device__ cuDoubleComplex
     div(cuDoubleComplex a, cuDoubleComplex b)
     {

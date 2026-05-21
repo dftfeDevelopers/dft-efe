@@ -22,6 +22,7 @@
 
 #include <electrostatics/MatrixFreeDevice.h>
 #include <utils/DeviceKernelLauncherHelpers.h>
+#include <utils/DeviceAPICalls.h>
 
 using namespace dftefe;
 

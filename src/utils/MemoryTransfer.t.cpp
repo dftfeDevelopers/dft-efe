@@ -26,6 +26,7 @@
 #include <algorithm>
 #include "MemoryTransfer.h"
 #include "DeviceAPICalls.h"
+#include "Exceptions.h"
 
 namespace dftefe
 {
@@ -59,7 +60,8 @@ namespace dftefe
       ValueType *      dst,
       const ValueType *src)
     {
-      deviceMemcpyD2H(dst, src, size * sizeof(ValueType));
+      deviceError_t err = deviceMemcpyD2H(dst, src, size * sizeof(ValueType));
+      DEVICE_API_CHECK(err);
     }
 
     template <typename ValueType>
@@ -89,7 +91,8 @@ namespace dftefe
       ValueType *      dst,
       const ValueType *src)
     {
-      deviceMemcpyD2H(dst, src, size * sizeof(ValueType));
+      deviceError_t err = deviceMemcpyD2H(dst, src, size * sizeof(ValueType));
+      DEVICE_API_CHECK(err);
     }
 
     template <typename ValueType>
@@ -99,7 +102,8 @@ namespace dftefe
       ValueType *      dst,
       const ValueType *src)
     {
-      deviceMemcpyH2D(dst, src, size * sizeof(ValueType));
+      deviceError_t err = deviceMemcpyH2D(dst, src, size * sizeof(ValueType));
+      DEVICE_API_CHECK(err);
     }
 
     template <typename ValueType>
@@ -109,7 +113,8 @@ namespace dftefe
       ValueType *      dst,
       const ValueType *src)
     {
-      deviceMemcpyH2D(dst, src, size * sizeof(ValueType));
+      deviceError_t err = deviceMemcpyH2D(dst, src, size * sizeof(ValueType));
+      DEVICE_API_CHECK(err);
     }
 
     template <typename ValueType>
@@ -119,7 +124,8 @@ namespace dftefe
       ValueType *      dst,
       const ValueType *src)
     {
-      deviceMemcpyD2D(dst, src, size * sizeof(ValueType));
+      deviceError_t err = deviceMemcpyD2D(dst, src, size * sizeof(ValueType));
+      DEVICE_API_CHECK(err);
     }
 #endif // DFTEFE_WITH_DEVICE
   }    // namespace utils

@@ -26,7 +26,7 @@
 #include <utils/MPIWrapper.h>
 #include <mutex>
 #include <utils/Profiler.h>
-#include <boost/io/ios_state.hpp>
+#include <iomanip>
 
 namespace dftefe
 {
@@ -77,7 +77,10 @@ namespace dftefe
     {
 #if defined(DFTEFE_WITH_DEVICE)
       if constexpr (memorySpace == dftefe::utils::MemorySpace::DEVICE)
-        utils::deviceSynchronize();
+        {
+          deviceError_t err = utils::deviceSynchronize();
+          DEVICE_API_CHECK(err);
+        }
 #endif
       // add device synchronize for gpu
       std::mutex                  mutex;
@@ -126,7 +129,10 @@ namespace dftefe
     {
 #if defined(DFTEFE_WITH_DEVICE)
       if constexpr (memorySpace == dftefe::utils::MemorySpace::DEVICE)
-        utils::deviceSynchronize();
+        {
+          deviceError_t err = utils::deviceSynchronize();
+          DEVICE_API_CHECK(err);
+        }
 #endif
       DFTEFE_AssertWithMsg(
         !d_activeSections.empty(),
@@ -169,7 +175,10 @@ namespace dftefe
     {
       // we are going to change the precision and width of output below. store
       // the old values so the get restored when exiting this function
-      const boost::io::ios_base_all_saver restore_stream(d_stream.getOStream());
+      std::ostream &os = d_stream.getOStream();
+      std::ios_base::fmtflags oldFlags = os.flags();
+      std::streamsize oldPrecision = os.precision();
+      std::streamsize oldWidth = os.width();
 
       // get the maximum width among all d_SectionsMap
       size_type maxWidth = 0;
@@ -256,6 +265,10 @@ namespace dftefe
                << "+-----------+"
                << "------------+------------+\n"
                << std::endl;
+
+      os.flags(oldFlags);
+      os.precision(oldPrecision);
+      os.width(oldWidth);
     }
 
     template <dftefe::utils::MemorySpace memorySpace>

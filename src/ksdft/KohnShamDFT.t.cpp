@@ -2611,12 +2611,12 @@ namespace dftefe
                 *d_linAlgOpContextHost,
                 d_mpiCommDomain);
 
-              d_mixingScheme.template addVariableToInHist<memorySpace>(
+              d_mixingScheme.template addVariableToInHist<memorySpaceHost>(
                 mixingVariable::rho,
                 d_densityInQuadValues.begin(),
                 d_densityInQuadValues.nQuadraturePoints());
 
-              d_mixingScheme.template addVariableToResidualHist<memorySpace>(
+              d_mixingScheme.template addVariableToResidualHist<memorySpaceHost>(
                 mixingVariable::rho,
                 d_densityResidualQuadValues.begin(),
                 d_densityResidualQuadValues.nQuadraturePoints());
@@ -2633,7 +2633,7 @@ namespace dftefe
 
               // update the mixing variables
               // get next input density
-              d_mixingScheme.template mixVariable<memorySpace>(
+              d_mixingScheme.template mixVariable<memorySpaceHost>(
                 mixingVariable::rho,
                 d_densityInQuadValues.begin(),
                 d_densityInQuadValues.nQuadraturePoints());

@@ -157,7 +157,8 @@ namespace dftefe
               {
                 if (d_commProtocol == communicationProtocol::mpiHost)
                   recvArrayStartPtr = d_ghostDataCopyHostPinned.begin();
-                dftefe::utils::deviceSynchronize();
+                deviceError_t err = dftefe::utils::deviceSynchronize();
+                DEVICE_API_CHECK(err);
               }
 #  endif // defined(DFTEFE_WITH_DEVICE)
 
@@ -231,7 +232,8 @@ namespace dftefe
 #  ifdef DFTEFE_WITH_DEVICE
             if constexpr (memorySpace == MemorySpace::DEVICE)
               {
-                dftefe::utils::deviceSynchronize();
+                deviceError_t err = dftefe::utils::deviceSynchronize();
+                DEVICE_API_CHECK(err);
                 if (d_commProtocol == communicationProtocol::mpiHost)
                   {
                     MemoryTransfer<MemorySpace::HOST_PINNED, memorySpace>
@@ -396,7 +398,8 @@ namespace dftefe
               {
                 if (d_commProtocol == communicationProtocol::mpiHost)
                   recvArrayStartPtr = d_sendRecvBufferHostPinned.begin();
-                dftefe::utils::deviceSynchronize();
+                deviceError_t err = dftefe::utils::deviceSynchronize();
+                DEVICE_API_CHECK(err);
               }
 #  endif // defined(DFTEFE_WITH_DEVICE)
 
@@ -601,7 +604,10 @@ namespace dftefe
           }
 #  ifdef DFTEFE_WITH_DEVICE
         if constexpr (memorySpace == MemorySpace::DEVICE)
-          dftefe::utils::deviceSynchronize();
+          {
+            deviceError_t err = dftefe::utils::deviceSynchronize();
+            DEVICE_API_CHECK(err);
+          }
 #  endif
 #endif // DFTEFE_WITH_MPI
       }

@@ -9,6 +9,7 @@
 #  include <utils/DeviceTypeConfigHalfPrec.h>
 #  include <linearAlgebra/BlasLapackKernels.h>
 #  include <linearAlgebra/BlasLapack.h>
+#  include<utils/Exceptions.h>
 #  include <complex>
 namespace dftefe
 {
@@ -21,9 +22,7 @@ namespace dftefe
         void,
         setValueKernel,
         {
-          utils::throwException(
-            false,
-            "setValueKernel() is not implemented for utils::MemorySpace::DEVICE .... ");
+          assert(false && "setValueKernel() is not implemented for utils::MemorySpace::DEVICE");
         },
         ValueTypeBasisCoeff *     xVec,
         const size_type *         constraintLocalRowIds,
@@ -128,9 +127,7 @@ namespace dftefe
         void,
         distributeParentToChildKernel,
         {
-          utils::throwException(
-            false,
-            "distributeParentToChildKernel() is not implemented for utils::MemorySpace::DEVICE .... ");
+          assert(false && "distributeParentToChildKernel() is not implemented for utils::MemorySpace::DEVICE");
         },
         const size_type      contiguousBlockSize,
         ValueTypeBasisCoeff *xVec,
@@ -343,9 +340,7 @@ namespace dftefe
         void,
         distributeChildToParentKernel,
         {
-          utils::throwException(
-            false,
-            "distributeChildToParentKernel() is not implemented for utils::MemorySpace::DEVICE .... ");
+          assert(false && "distributeChildToParentKernel() is not implemented for utils::MemorySpace::DEVICE");
         },
         const size_type      contiguousBlockSize,
         ValueTypeBasisCoeff *xVec,

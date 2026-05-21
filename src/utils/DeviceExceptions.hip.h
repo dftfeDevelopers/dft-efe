@@ -18,19 +18,20 @@
 #define dftefeDeviceExceptions_hiph
 
 
-#define DEVICE_API_CHECK(cmd)                      \
-  do                                               \
-    {                                              \
-      hipError_t e = cmd;                          \
-      if (e != hipSuccess)                         \
-        {                                          \
-          printf("Failed: HIP error %s:%d '%s'\n", \
-                 __FILE__,                         \
-                 __LINE__,                         \
-                 hipGetErrorString(e));            \
-          exit(EXIT_FAILURE);                      \
-        }                                          \
-    }                                              \
+#define DEVICE_API_CHECK(cmd)                                    \
+  do                                                             \
+    {                                                           \
+      hipError_t e = cmd;                                        \
+      if (e != hipSuccess)                                       \
+        {                                                       \
+          printf("Failed: HIP error in %s at %s:%d '%s'\n",     \
+                 __func__,                                       \
+                 __FILE__,                                       \
+                 __LINE__,                                       \
+                 hipGetErrorString(e));                          \
+          exit(EXIT_FAILURE);                                    \
+        }                                                       \
+    }                                                           \
   while (0)
 
 #define DEVICEBLAS_API_CHECK(expr)                                                    \

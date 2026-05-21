@@ -102,7 +102,7 @@ namespace dftefe
     {
       int rank;
       mpi::MPICommRank(mpiComm, &rank);
-      ConditionalOStream cout(ConditionalOStream(std::cout));
+      ConditionalOStream cout((ConditionalOStream(std::cout)));
       cout.setCondition(rank == 0);
       mpi::MPIBarrier(mpiComm);
 
@@ -122,7 +122,10 @@ namespace dftefe
       // --- Device (GPU) memory ---
 #ifdef DFTEFE_WITH_DEVICE
       std::size_t freeGPU = 0, totalGPU = 0;
-      deviceMemGetInfo(&freeGPU, &totalGPU);
+      {
+        deviceError_t err = deviceMemGetInfo(&freeGPU, &totalGPU);
+        DEVICE_API_CHECK(err);
+      }
       double gpuUsed  = static_cast<double>(totalGPU - freeGPU);
       double gpuTotal = static_cast<double>(totalGPU);
       auto   gpuMinMaxAvg =

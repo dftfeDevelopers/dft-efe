@@ -5,6 +5,7 @@
 #  include "DeviceKernelLauncherHelpers.h"
 #  include <stdexcept>
 #  include <string>
+#  include<utils/Exceptions.h>
 
 namespace dftefe
 {
@@ -14,7 +15,8 @@ namespace dftefe
     DeviceUtils::setupDevice(const int &mpi_rank)
     {
       int n_devices = 0;
-      dftefe::utils::getDeviceCount(&n_devices);
+      deviceError_t err = dftefe::utils::getDeviceCount(&n_devices);
+      DEVICE_API_CHECK(err);
       if (n_devices == 0)
         {
           std::string message = "Number of devices cannot be zero";
@@ -24,12 +26,14 @@ namespace dftefe
       int device_id = mpi_rank % n_devices;
       // std::cout<<"Device Id: "<<device_id<<" Task Id
       // "<<dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD)<<std::endl;
-      dftefe::utils::setDevice(device_id);
+      err = dftefe::utils::setDevice(device_id);
+      DEVICE_API_CHECK(err);
       // dftefe::Int device = 0;
       // dftefe::utils::getDevice(&device);
       // std::cout<< "Device Id currently used is "<<device<< " for taskId:
       // "<<dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD)<<std::endl;
-      dftefe::utils::deviceReset();
+      err = dftefe::utils::deviceReset();
+      DEVICE_API_CHECK(err);
     }
   } // namespace utils
 

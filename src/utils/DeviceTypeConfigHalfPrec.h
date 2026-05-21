@@ -23,7 +23,7 @@
 
 #    ifdef DFTEFE_WITH_DEVICE_LANG_CUDA
 #      include "DeviceTypeConfigHalfPrec.cu.h"
-#    elif DFTEFE_WITH_DEVICE_LANG_HIP
+#    elif defined(DFTEFE_WITH_DEVICE_LANG_HIP) && defined(__HIP__)
 #      include "DeviceTypeConfigHalfPrec.hip.h"
 #    elif DFTEFE_WITH_DEVICE_LANG_SYCL
 #      include "DeviceTypeConfigHalfPrec.sycl.h"

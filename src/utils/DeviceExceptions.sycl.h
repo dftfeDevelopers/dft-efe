@@ -17,35 +17,35 @@
 #ifndef dftefeDeviceExceptions_syclh
 #define dftefeDeviceExceptions_syclh
 
-#define DEVICE_API_CHECK(event)                                               \
-  {                                                                           \
-    try                                                                       \
-      {                                                                       \
-        event.wait();                                                         \
-      }                                                                       \
-    catch (const sycl::exception &e)                                          \
-      {                                                                       \
-        std::cerr << "SYCL error on or before line number" << __LINE__        \
-                  << " in file: " << __FILE__ << ". Error code: " << e.what() \
-                  << ".\n";                                                   \
-      }                                                                       \
+#define DEVICE_API_CHECK(event)                                                  \
+  {                                                                            \
+    try                                                                        \
+      {                                                                        \
+        event.wait();                                                          \
+      }                                                                        \
+    catch (const sycl::exception &e)                                           \
+      {                                                                        \
+        std::cerr << "SYCL error in " << __func__ << " at " << __FILE__ << ":" \
+                  << __LINE__ << ". Error code: " << e.what() << ".\n";       \
+      }                                                                        \
   }
 
-#define DEVICEBLAS_API_CHECK(expr)                           \
-  do                                                         \
-    {                                                        \
-      try                                                    \
-        {                                                    \
-          (void)(expr);                                      \
-        }                                                    \
-      catch (sycl::exception const &__sycl_err)              \
-        {                                                    \
-          std::printf("oneMKL enqueue error at %s:%d: %s\n", \
-                      __FILE__,                              \
-                      __LINE__,                              \
-                      __sycl_err.what());                    \
-        }                                                    \
-    }                                                        \
+#define DEVICEBLAS_API_CHECK(expr)                                      \
+  do                                                                    \
+    {                                                                   \
+      try                                                               \
+        {                                                               \
+          (void)(expr);                                                 \
+        }                                                               \
+      catch (sycl::exception const &__sycl_err)                         \
+        {                                                               \
+          std::printf("oneMKL enqueue error in %s at %s:%d: %s\n",     \
+                      __func__,                                         \
+                      __FILE__,                                         \
+                      __LINE__,                                         \
+                      __sycl_err.what());                               \
+        }                                                               \
+    }                                                                   \
   while (0)
 
 #endif // dftefeDeviceExceptions_syclh

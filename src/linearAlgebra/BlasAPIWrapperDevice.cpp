@@ -748,7 +748,7 @@ namespace dftefe
                 }
 
               for (int s = 0; s < numStreams; ++s)
-                utils::deviceStreamSynchronize(streams[s]);
+                { utils::deviceError_t err = utils::deviceStreamSynchronize(streams[s]); DEVICE_API_CHECK(err); }
             }
         }
 
@@ -933,7 +933,7 @@ namespace dftefe
                 }
 
               for (int s = 0; s < numStreams; ++s)
-                utils::deviceStreamSynchronize(streams[s]);
+                { utils::deviceError_t err = utils::deviceStreamSynchronize(streams[s]); DEVICE_API_CHECK(err); }
             }
         }
 

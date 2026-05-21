@@ -85,7 +85,8 @@ namespace dftefe
                                              const double * t,
                                              double *       q) const
     {
-      deviceMemset(q, 0, numPoints * sizeof(double));
+      deviceError_t err = deviceMemset(q, 0, numPoints * sizeof(double));
+      DEVICE_API_CHECK(err);
       const size_type total     = numPoints * d_numAtoms;
       const size_type blockSize = DEVICE_BLOCK_SIZE;
       const size_type gridSize  = (total + blockSize - 1) / blockSize;

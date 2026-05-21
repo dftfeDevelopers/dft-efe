@@ -25,6 +25,7 @@
 
 #include <basis/EnrichmentDataEvalKernels.h>
 #include <atoms/SphericalDataNumerical.h>
+#include <utils/Exceptions.h>
 
 namespace dftefe
 {
@@ -139,7 +140,7 @@ namespace dftefe
       }
 
       for (int s = 0; s < numStreams; ++s)
-        utils::deviceStreamSynchronize(streams[s]);
+        { utils::deviceError_t err = utils::deviceStreamSynchronize(streams[s]); DEVICE_API_CHECK(err); }
     }
 
     void
@@ -201,7 +202,7 @@ namespace dftefe
       }
 
       for (int s = 0; s < numStreams; ++s)
-        utils::deviceStreamSynchronize(streams[s]);
+        { utils::deviceError_t err = utils::deviceStreamSynchronize(streams[s]); DEVICE_API_CHECK(err); }
     }
 
     void
@@ -231,7 +232,7 @@ namespace dftefe
           cumulativeCoordsOffset += pointsPerEnrichId[i] * 3;
         }
         for (int s = 0; s < numStreams; ++s)
-          utils::deviceStreamSynchronize(streams[s]);
+          { utils::deviceError_t err = utils::deviceStreamSynchronize(streams[s]); DEVICE_API_CHECK(err); }
     }
 
     void
@@ -261,7 +262,7 @@ namespace dftefe
           cumulativeCoordsOffset += pointsPerEnrichId[i] * 3;
         }
         for (int s = 0; s < numStreams; ++s)
-          utils::deviceStreamSynchronize(streams[s]);
+          { utils::deviceError_t err = utils::deviceStreamSynchronize(streams[s]); DEVICE_API_CHECK(err); }
     }
 
   } // end of namespace basis

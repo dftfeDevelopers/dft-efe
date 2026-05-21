@@ -23,10 +23,6 @@
 #include <electrostatics/MatrixFreeDevice.h>
 #include <utils/DeviceKernelLauncherHelpers.h>
 #include <utils/DeviceExceptions.h>
-
-namespace dftefe
-{
-
 #ifdef DFTEFE_WITH_DEVICE_LANG_CUDA
 #  include "MatrixFreeDevice.cu.cpp"
 #elif DFTEFE_WITH_DEVICE_LANG_HIP
@@ -34,6 +30,9 @@ namespace dftefe
 #elif DFTEFE_WITH_DEVICE_LANG_SYCL
 #  include "MatrixFreeDevice.sycl.cpp"
 #endif
+
+namespace dftefe
+{
 
   template <typename T,
             dftefe::operatorList operatorID,

@@ -92,7 +92,11 @@ namespace dftefe
                               "Size to be allocated more than the dftefe::size_type.");
       }
       if (size > 0)
-        hostPinnedMalloc((void **)ptr, size * sizeof(ValueType));
+        {
+          deviceError_t err =
+            hostPinnedMalloc((void **)ptr, size * sizeof(ValueType));
+          DEVICE_API_CHECK(err);
+        }
       else
         *ptr = nullptr;
     }
@@ -103,7 +107,10 @@ namespace dftefe
       ValueType *ptr)
     {
       if (ptr != nullptr)
-        hostPinnedFree(ptr);
+        {
+          deviceError_t err = hostPinnedFree(ptr);
+          DEVICE_API_CHECK(err);
+        }
     }
 
     template <typename ValueType>
@@ -136,7 +143,11 @@ namespace dftefe
                               "Size to be allocated more than the dftefe::size_type.");
       }
       if (size > 0)
-        deviceMalloc((void **)ptr, size * sizeof(ValueType));
+        {
+          deviceError_t err =
+            deviceMalloc((void **)ptr, size * sizeof(ValueType));
+          DEVICE_API_CHECK(err);
+        }
       else
         *ptr = nullptr;
     }
@@ -146,7 +157,10 @@ namespace dftefe
     MemoryManager<ValueType, MemorySpace::DEVICE>::deallocate(ValueType *ptr)
     {
       if (ptr != nullptr)
-        deviceFree(ptr);
+        {
+          deviceError_t err = deviceFree(ptr);
+          DEVICE_API_CHECK(err);
+        }
     }
 
     template <typename ValueType>

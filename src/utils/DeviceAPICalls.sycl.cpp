@@ -17,13 +17,13 @@
 
 
 #ifdef DFTEFE_WITH_DEVICE_LANG_SYCL
-#  include <DeviceAPICalls.h>
+#  include <utils/DeviceAPICalls.h>
 #  include <stdio.h>
 #  include <vector>
-#  include <DeviceDataTypeOverloads.h>
-#  include <DeviceKernelLauncherHelpers.h>
-#  include <DeviceTypeConfigHalfPrec.sycl.h>
-#  include <Exceptions.h>
+#  include <utils/DeviceDataTypeOverloads.h>
+#  include <utils/DeviceKernelLauncherHelpers.h>
+#  include <utils/DeviceTypeConfigHalfPrec.sycl.h>
+#  include <utils/Exceptions.h>
 
 namespace dftefe
 {
