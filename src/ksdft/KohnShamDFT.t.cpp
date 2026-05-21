@@ -417,9 +417,9 @@ namespace dftefe
                                                    dim>>(
         feBDKineticHamiltonian,
         linAlgOpContext,
-        KSDFTDefaults::CELL_BATCH_SIZE_GRAD_EVAL,
-        numWantedEigenvalues > KSDFTDefaults::MAX_KINENG_WAVEFN_BATCH_SIZE ?
-          KSDFTDefaults::MAX_KINENG_WAVEFN_BATCH_SIZE :
+        KSDFTDefaults<memorySpace>::CELL_BATCH_SIZE_GRAD_EVAL,
+        numWantedEigenvalues > KSDFTDefaults<memorySpace>::MAX_KINENG_WAVEFN_BATCH_SIZE ?
+          KSDFTDefaults<memorySpace>::MAX_KINENG_WAVEFN_BATCH_SIZE :
           numWantedEigenvalues);
 
       d_hamitonianElec =
@@ -439,7 +439,7 @@ namespace dftefe
           feBDElectrostaticsHamiltonian,
           externalPotentialFunction,
           linAlgOpContext,
-          KSDFTDefaults::CELL_BATCH_SIZE);
+          KSDFTDefaults<memorySpace>::CELL_BATCH_SIZE);
       d_hamitonianXC =
         std::make_shared<ExchangeCorrelationFE<ValueTypeWaveFunctionBasis,
                                                ValueTypeWaveFunctionCoeff,
@@ -448,7 +448,7 @@ namespace dftefe
           d_densityInQuadValues,
           feBDEXCHamiltonian,
           linAlgOpContext,
-          KSDFTDefaults::CELL_BATCH_SIZE);
+          KSDFTDefaults<memorySpace>::CELL_BATCH_SIZE);
       d_p.registerEnd("Hamiltonian Components Initilization");
 
       d_hamiltonianElectroExc =
@@ -464,8 +464,8 @@ namespace dftefe
         d_hamitonianKin, d_hamiltonianElectroExc};
 
       size_type waveFnBatch =
-        numWantedEigenvalues > KSDFTDefaults::MAX_WAVEFN_BATCH_SIZE ?
-          KSDFTDefaults::MAX_WAVEFN_BATCH_SIZE :
+        numWantedEigenvalues > KSDFTDefaults<memorySpace>::MAX_WAVEFN_BATCH_SIZE ?
+          KSDFTDefaults<memorySpace>::MAX_WAVEFN_BATCH_SIZE :
           numWantedEigenvalues;
 
       d_p.registerStart("Hamiltonian Operator Creation");
@@ -480,7 +480,7 @@ namespace dftefe
           *feBMWaveFn,
           hamiltonianComponentsVec,
           linAlgOpContext,
-          KSDFTDefaults::CELL_BATCH_SIZE,
+          KSDFTDefaults<memorySpace>::CELL_BATCH_SIZE,
           waveFnBatch);
       d_p.registerEnd("Hamiltonian Operator Creation");
 
@@ -503,8 +503,8 @@ namespace dftefe
       const bool      useELPA             = true;
       const bool      useELPADeviceKernel = false;
       const size_type scalapackParalProcs =
-        KSDFTDefaults::SCALAPACK_PARAL_PROCS;
-      const size_type scalapackBlockSize = KSDFTDefaults::SCALAPACK_BLOCK_SIZE;
+        KSDFTDefaults<memorySpace>::SCALAPACK_PARAL_PROCS;
+      const size_type scalapackBlockSize = KSDFTDefaults<memorySpace>::SCALAPACK_BLOCK_SIZE;
       d_elpaScala = std::make_shared<linearAlgebra::ElpaScalapackManager>(
         d_mpiCommDomain,
         scalapackParalProcs,
@@ -569,8 +569,8 @@ namespace dftefe
           feBDEXCHamiltonian,
           *feBMWaveFn,
           linAlgOpContext,
-          KSDFTDefaults::CELL_BATCH_SIZE,
-          KSDFTDefaults::MAX_DENSCOMP_WAVEFN_BATCH_SIZE);
+          KSDFTDefaults<memorySpace>::CELL_BATCH_SIZE,
+          KSDFTDefaults<memorySpace>::MAX_DENSCOMP_WAVEFN_BATCH_SIZE);
 
       if (dynamic_cast<const utils::PointChargePotentialFunction *>(
             &externalPotentialFunction) != nullptr)
@@ -758,9 +758,9 @@ namespace dftefe
                                                    dim>>(
         feBDKineticHamiltonian,
         linAlgOpContext,
-        KSDFTDefaults::CELL_BATCH_SIZE_GRAD_EVAL,
-        numWantedEigenvalues > KSDFTDefaults::MAX_KINENG_WAVEFN_BATCH_SIZE ?
-          KSDFTDefaults::MAX_KINENG_WAVEFN_BATCH_SIZE :
+        KSDFTDefaults<memorySpace>::CELL_BATCH_SIZE_GRAD_EVAL,
+        numWantedEigenvalues > KSDFTDefaults<memorySpace>::MAX_KINENG_WAVEFN_BATCH_SIZE ?
+          KSDFTDefaults<memorySpace>::MAX_KINENG_WAVEFN_BATCH_SIZE :
           numWantedEigenvalues);
 
       d_hamitonianElec =
@@ -782,7 +782,7 @@ namespace dftefe
           feBDElectrostaticsHamiltonian,
           externalPotentialFunction,
           linAlgOpContext,
-          KSDFTDefaults::CELL_BATCH_SIZE);
+          KSDFTDefaults<memorySpace>::CELL_BATCH_SIZE);
       d_hamitonianXC =
         std::make_shared<ExchangeCorrelationFE<ValueTypeWaveFunctionBasis,
                                                ValueTypeWaveFunctionCoeff,
@@ -791,7 +791,7 @@ namespace dftefe
           d_densityInQuadValues,
           feBDEXCHamiltonian,
           linAlgOpContext,
-          KSDFTDefaults::CELL_BATCH_SIZE);
+          KSDFTDefaults<memorySpace>::CELL_BATCH_SIZE);
       d_p.registerEnd("Hamiltonian Components Initilization");
 
       d_hamiltonianElectroExc =
@@ -807,8 +807,8 @@ namespace dftefe
         d_hamitonianKin, d_hamiltonianElectroExc};
 
       size_type waveFnBatch =
-        numWantedEigenvalues > KSDFTDefaults::MAX_WAVEFN_BATCH_SIZE ?
-          KSDFTDefaults::MAX_WAVEFN_BATCH_SIZE :
+        numWantedEigenvalues > KSDFTDefaults<memorySpace>::MAX_WAVEFN_BATCH_SIZE ?
+          KSDFTDefaults<memorySpace>::MAX_WAVEFN_BATCH_SIZE :
           numWantedEigenvalues;
 
       d_p.registerStart("Hamiltonian Operator Creation");
@@ -823,7 +823,7 @@ namespace dftefe
           *feBMWaveFn,
           hamiltonianComponentsVec,
           linAlgOpContext,
-          KSDFTDefaults::CELL_BATCH_SIZE,
+          KSDFTDefaults<memorySpace>::CELL_BATCH_SIZE,
           waveFnBatch);
       d_p.registerEnd("Hamiltonian Operator Creation");
       d_p.print();
@@ -847,8 +847,8 @@ namespace dftefe
       const bool      useELPA             = true;
       const bool      useELPADeviceKernel = false;
       const size_type scalapackParalProcs =
-        KSDFTDefaults::SCALAPACK_PARAL_PROCS;
-      const size_type scalapackBlockSize = KSDFTDefaults::SCALAPACK_BLOCK_SIZE;
+        KSDFTDefaults<memorySpace>::SCALAPACK_PARAL_PROCS;
+      const size_type scalapackBlockSize = KSDFTDefaults<memorySpace>::SCALAPACK_BLOCK_SIZE;
       d_elpaScala = std::make_shared<linearAlgebra::ElpaScalapackManager>(
         d_mpiCommDomain,
         scalapackParalProcs,
@@ -913,8 +913,8 @@ namespace dftefe
           feBDEXCHamiltonian,
           *feBMWaveFn,
           linAlgOpContext,
-          KSDFTDefaults::CELL_BATCH_SIZE,
-          KSDFTDefaults::MAX_DENSCOMP_WAVEFN_BATCH_SIZE);
+          KSDFTDefaults<memorySpace>::CELL_BATCH_SIZE,
+          KSDFTDefaults<memorySpace>::MAX_DENSCOMP_WAVEFN_BATCH_SIZE);
 
       if (dynamic_cast<const utils::PointChargePotentialFunction *>(
             &externalPotentialFunction) != nullptr)
@@ -1125,9 +1125,9 @@ namespace dftefe
                                                    dim>>(
         feBDKineticHamiltonian,
         linAlgOpContext,
-        KSDFTDefaults::CELL_BATCH_SIZE_GRAD_EVAL,
-        numWantedEigenvalues > KSDFTDefaults::MAX_KINENG_WAVEFN_BATCH_SIZE ?
-          KSDFTDefaults::MAX_KINENG_WAVEFN_BATCH_SIZE :
+        KSDFTDefaults<memorySpace>::CELL_BATCH_SIZE_GRAD_EVAL,
+        numWantedEigenvalues > KSDFTDefaults<memorySpace>::MAX_KINENG_WAVEFN_BATCH_SIZE ?
+          KSDFTDefaults<memorySpace>::MAX_KINENG_WAVEFN_BATCH_SIZE :
           numWantedEigenvalues);
 
       std::unordered_map<std::string, std::shared_ptr<atoms::AtomTCIASpline>>
@@ -1214,7 +1214,7 @@ namespace dftefe
           feBDElectrostaticsHamiltonian,
           externalPotentialFunction,
           linAlgOpContext,
-          KSDFTDefaults::CELL_BATCH_SIZE,
+          KSDFTDefaults<memorySpace>::CELL_BATCH_SIZE,
           fieldToTCIASplineMap);
       d_hamitonianXC =
         std::make_shared<ExchangeCorrelationFE<ValueTypeWaveFunctionBasis,
@@ -1224,7 +1224,7 @@ namespace dftefe
           d_densityInQuadValues,
           feBDEXCHamiltonian,
           linAlgOpContext,
-          KSDFTDefaults::CELL_BATCH_SIZE);
+          KSDFTDefaults<memorySpace>::CELL_BATCH_SIZE);
       d_p.registerEnd("Hamiltonian Components Initilization");
 
       d_hamiltonianElectroExc =
@@ -1240,8 +1240,8 @@ namespace dftefe
         d_hamitonianKin, d_hamiltonianElectroExc};
 
       size_type waveFnBatch =
-        numWantedEigenvalues > KSDFTDefaults::MAX_WAVEFN_BATCH_SIZE ?
-          KSDFTDefaults::MAX_WAVEFN_BATCH_SIZE :
+        numWantedEigenvalues > KSDFTDefaults<memorySpace>::MAX_WAVEFN_BATCH_SIZE ?
+          KSDFTDefaults<memorySpace>::MAX_WAVEFN_BATCH_SIZE :
           numWantedEigenvalues;
 
       d_p.registerStart("Hamiltonian Operator Creation");
@@ -1256,7 +1256,7 @@ namespace dftefe
           *feBMWaveFn,
           hamiltonianComponentsVec,
           linAlgOpContext,
-          KSDFTDefaults::CELL_BATCH_SIZE,
+          KSDFTDefaults<memorySpace>::CELL_BATCH_SIZE,
           waveFnBatch);
       d_p.registerEnd("Hamiltonian Operator Creation");
 
@@ -1279,8 +1279,8 @@ namespace dftefe
       const bool      useELPA             = true;
       const bool      useELPADeviceKernel = false;
       const size_type scalapackParalProcs =
-        KSDFTDefaults::SCALAPACK_PARAL_PROCS;
-      const size_type scalapackBlockSize = KSDFTDefaults::SCALAPACK_BLOCK_SIZE;
+        KSDFTDefaults<memorySpace>::SCALAPACK_PARAL_PROCS;
+      const size_type scalapackBlockSize = KSDFTDefaults<memorySpace>::SCALAPACK_BLOCK_SIZE;
       d_elpaScala = std::make_shared<linearAlgebra::ElpaScalapackManager>(
         d_mpiCommDomain,
         scalapackParalProcs,
@@ -1344,8 +1344,8 @@ namespace dftefe
           feBDEXCHamiltonian,
           *feBMWaveFn,
           linAlgOpContext,
-          KSDFTDefaults::CELL_BATCH_SIZE,
-          KSDFTDefaults::MAX_DENSCOMP_WAVEFN_BATCH_SIZE);
+          KSDFTDefaults<memorySpace>::CELL_BATCH_SIZE,
+          KSDFTDefaults<memorySpace>::MAX_DENSCOMP_WAVEFN_BATCH_SIZE);
 
       if (dynamic_cast<const utils::PointChargePotentialFunction *>(
             &externalPotentialFunction) != nullptr)
@@ -1626,14 +1626,14 @@ namespace dftefe
                                                    dim>>(
         feBDKineticHamiltonian,
         linAlgOpContext,
-        KSDFTDefaults::CELL_BATCH_SIZE_GRAD_EVAL,
-        numWantedEigenvalues > KSDFTDefaults::MAX_KINENG_WAVEFN_BATCH_SIZE ?
-          KSDFTDefaults::MAX_KINENG_WAVEFN_BATCH_SIZE :
+        KSDFTDefaults<memorySpace>::CELL_BATCH_SIZE_GRAD_EVAL,
+        numWantedEigenvalues > KSDFTDefaults<memorySpace>::MAX_KINENG_WAVEFN_BATCH_SIZE ?
+          KSDFTDefaults<memorySpace>::MAX_KINENG_WAVEFN_BATCH_SIZE :
           numWantedEigenvalues);
 
       size_type waveFnBatch =
-        numWantedEigenvalues > KSDFTDefaults::MAX_WAVEFN_BATCH_SIZE ?
-          KSDFTDefaults::MAX_WAVEFN_BATCH_SIZE :
+        numWantedEigenvalues > KSDFTDefaults<memorySpace>::MAX_WAVEFN_BATCH_SIZE ?
+          KSDFTDefaults<memorySpace>::MAX_WAVEFN_BATCH_SIZE :
           numWantedEigenvalues;
 
       d_hamitonianElec =
@@ -1657,7 +1657,7 @@ namespace dftefe
           feBDElectrostaticsHamiltonian,
           feBDAtomCenterNonLocalOperator,
           linAlgOpContext,
-          KSDFTDefaults::CELL_BATCH_SIZE,
+          KSDFTDefaults<memorySpace>::CELL_BATCH_SIZE,
           waveFnBatch);
 
       if (d_isNlcc && d_isONCVNonLocPSP)
@@ -1712,7 +1712,7 @@ namespace dftefe
               d_coreCorrectedDensity,
               feBDEXCHamiltonian,
               linAlgOpContext,
-              KSDFTDefaults::CELL_BATCH_SIZE);
+              KSDFTDefaults<memorySpace>::CELL_BATCH_SIZE);
         }
       else
         {
@@ -1724,7 +1724,7 @@ namespace dftefe
               d_densityInQuadValues,
               feBDEXCHamiltonian,
               linAlgOpContext,
-              KSDFTDefaults::CELL_BATCH_SIZE);
+              KSDFTDefaults<memorySpace>::CELL_BATCH_SIZE);
         }
       d_p.registerEnd("Hamiltonian Components Initilization");
 
@@ -1752,7 +1752,7 @@ namespace dftefe
           *feBMWaveFn,
           hamiltonianComponentsVec,
           linAlgOpContext,
-          KSDFTDefaults::CELL_BATCH_SIZE,
+          KSDFTDefaults<memorySpace>::CELL_BATCH_SIZE,
           waveFnBatch);
       d_p.registerEnd("Hamiltonian Operator Creation");
 
@@ -1775,8 +1775,8 @@ namespace dftefe
       const bool      useELPA             = true;
       const bool      useELPADeviceKernel = false;
       const size_type scalapackParalProcs =
-        KSDFTDefaults::SCALAPACK_PARAL_PROCS;
-      const size_type scalapackBlockSize = KSDFTDefaults::SCALAPACK_BLOCK_SIZE;
+        KSDFTDefaults<memorySpace>::SCALAPACK_PARAL_PROCS;
+      const size_type scalapackBlockSize = KSDFTDefaults<memorySpace>::SCALAPACK_BLOCK_SIZE;
       d_elpaScala = std::make_shared<linearAlgebra::ElpaScalapackManager>(
         d_mpiCommDomain,
         scalapackParalProcs,
@@ -1841,8 +1841,8 @@ namespace dftefe
           feBDEXCHamiltonian,
           *feBMWaveFn,
           linAlgOpContext,
-          KSDFTDefaults::CELL_BATCH_SIZE,
-          KSDFTDefaults::MAX_DENSCOMP_WAVEFN_BATCH_SIZE);
+          KSDFTDefaults<memorySpace>::CELL_BATCH_SIZE,
+          KSDFTDefaults<memorySpace>::MAX_DENSCOMP_WAVEFN_BATCH_SIZE);
 
       d_isPSPCalculation = true;
       d_p.print();
@@ -2145,17 +2145,17 @@ namespace dftefe
                                                    dim>>(
         feBDKineticHamiltonian,
         linAlgOpContext,
-        KSDFTDefaults::CELL_BATCH_SIZE_GRAD_EVAL,
-        numWantedEigenvalues > KSDFTDefaults::MAX_KINENG_WAVEFN_BATCH_SIZE ?
-          KSDFTDefaults::MAX_KINENG_WAVEFN_BATCH_SIZE :
+        KSDFTDefaults<memorySpace>::CELL_BATCH_SIZE_GRAD_EVAL,
+        numWantedEigenvalues > KSDFTDefaults<memorySpace>::MAX_KINENG_WAVEFN_BATCH_SIZE ?
+          KSDFTDefaults<memorySpace>::MAX_KINENG_WAVEFN_BATCH_SIZE :
           numWantedEigenvalues);
       d_p.registerEnd("Hamiltonian Components Initilization Kinetic Op");
        utils::printCurrentMemoryUsage(d_mpiCommDomain, "After KinEngy Init");
       d_p.registerStart("Hamiltonian Components Initilization Electrostatic Op");
 
       size_type waveFnBatch =
-        numWantedEigenvalues > KSDFTDefaults::MAX_WAVEFN_BATCH_SIZE ?
-          KSDFTDefaults::MAX_WAVEFN_BATCH_SIZE :
+        numWantedEigenvalues > KSDFTDefaults<memorySpace>::MAX_WAVEFN_BATCH_SIZE ?
+          KSDFTDefaults<memorySpace>::MAX_WAVEFN_BATCH_SIZE :
           numWantedEigenvalues;
 
       std::unordered_map<std::string, std::shared_ptr<atoms::AtomTCIASpline>>
@@ -2299,7 +2299,7 @@ namespace dftefe
           feBDElectrostaticsHamiltonian,
           feBDAtomCenterNonLocalOperator,
           linAlgOpContext,
-          KSDFTDefaults::CELL_BATCH_SIZE,
+          KSDFTDefaults<memorySpace>::CELL_BATCH_SIZE,
           waveFnBatch,
           fieldToTCIASplineMap);
         d_p.registerEnd("Hamiltonian Components Initilization Electrostatic Op");
@@ -2375,7 +2375,7 @@ namespace dftefe
               d_coreCorrectedDensity,
               feBDEXCHamiltonian,
               linAlgOpContext,
-              KSDFTDefaults::CELL_BATCH_SIZE);
+              KSDFTDefaults<memorySpace>::CELL_BATCH_SIZE);
         }
       else
         {
@@ -2387,7 +2387,7 @@ namespace dftefe
               d_densityInQuadValues,
               feBDEXCHamiltonian,
               linAlgOpContext,
-              KSDFTDefaults::CELL_BATCH_SIZE);
+              KSDFTDefaults<memorySpace>::CELL_BATCH_SIZE);
         }
 
       d_hamiltonianElectroExc =
@@ -2416,7 +2416,7 @@ namespace dftefe
           *feBMWaveFn,
           hamiltonianComponentsVec,
           linAlgOpContext,
-          KSDFTDefaults::CELL_BATCH_SIZE,
+          KSDFTDefaults<memorySpace>::CELL_BATCH_SIZE,
           waveFnBatch);
       d_p.registerEnd("Hamiltonian Operator Creation");
       utils::printCurrentMemoryUsage(d_mpiCommDomain, "After Hamiltonian Operator Init");                                              
@@ -2439,8 +2439,8 @@ namespace dftefe
       const bool      useELPA             = true;
       const bool      useELPADeviceKernel = false;
       const size_type scalapackParalProcs =
-        KSDFTDefaults::SCALAPACK_PARAL_PROCS;
-      const size_type scalapackBlockSize = KSDFTDefaults::SCALAPACK_BLOCK_SIZE;
+        KSDFTDefaults<memorySpace>::SCALAPACK_PARAL_PROCS;
+      const size_type scalapackBlockSize = KSDFTDefaults<memorySpace>::SCALAPACK_BLOCK_SIZE;
       d_elpaScala = std::make_shared<linearAlgebra::ElpaScalapackManager>(
         d_mpiCommDomain,
         scalapackParalProcs,
@@ -2506,8 +2506,8 @@ namespace dftefe
           feBDEXCHamiltonian,
           *feBMWaveFn,
           linAlgOpContext,
-          KSDFTDefaults::CELL_BATCH_SIZE,
-          KSDFTDefaults::MAX_DENSCOMP_WAVEFN_BATCH_SIZE);
+          KSDFTDefaults<memorySpace>::CELL_BATCH_SIZE,
+          KSDFTDefaults<memorySpace>::MAX_DENSCOMP_WAVEFN_BATCH_SIZE);
       utils::printCurrentMemoryUsage(d_mpiCommDomain, "After DensityCalculator Init");                                              
 
       d_isPSPCalculation = true;

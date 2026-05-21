@@ -31,17 +31,41 @@ namespace dftefe
     /**
      * @brief Setting all the L2ProjectionDefaults
      */
-    const linearAlgebra::PreconditionerType L2ProjectionDefaults::PC_TYPE =
-      linearAlgebra::PreconditionerType::JACOBI;
-    const size_type L2ProjectionDefaults::CELL_BATCH_SIZE      = 50;
-    const size_type L2ProjectionDefaults::MAX_ITER             = 1e8;
-    const double    L2ProjectionDefaults::ABSOLUTE_TOL         = 1e-13;
-    const double    L2ProjectionDefaults::RELATIVE_TOL         = 1e-14;
-    const double    L2ProjectionDefaults::DIVERGENCE_TOL       = 1e6;
+    template <utils::MemorySpace memorySpace>
+    const linearAlgebra::PreconditionerType
+      L2ProjectionDefaults<memorySpace>::PC_TYPE =
+        linearAlgebra::PreconditionerType::JACOBI;
+    template <utils::MemorySpace memorySpace>
+    const size_type L2ProjectionDefaults<memorySpace>::MAX_ITER = 1e8;
+    template <utils::MemorySpace memorySpace>
+    const double L2ProjectionDefaults<memorySpace>::ABSOLUTE_TOL = 1e-13;
+    template <utils::MemorySpace memorySpace>
+    const double L2ProjectionDefaults<memorySpace>::RELATIVE_TOL = 1e-14;
+    template <utils::MemorySpace memorySpace>
+    const double L2ProjectionDefaults<memorySpace>::DIVERGENCE_TOL = 1e6;
+
+    template <>
+    const size_type
+      L2ProjectionDefaults<utils::MemorySpace::HOST>::CELL_BATCH_SIZE = 1;
+    template <>
+    const size_type
+      L2ProjectionDefaults<utils::MemorySpace::DEVICE>::CELL_BATCH_SIZE = 50;
+
+    template class L2ProjectionDefaults<utils::MemorySpace::HOST>;
+    template class L2ProjectionDefaults<utils::MemorySpace::DEVICE>;
     const size_type GenerateMeshDefaults::MAX_REFINEMENT_STEPS = 40;
     const size_type ECIDefaults::ENRICHMENT_BATCH_SIZE         = 400;
     const double ECIDefaults::ENRICHMENT_ORTHO_COEFF_TOL    = 1e-8;
-    const size_type BasisDataStorageDefaults::CELL_BATCH_SIZE  = 50;
+    template <>
+    const size_type
+      BasisDataStorageDefaults<utils::MemorySpace::HOST>::CELL_BATCH_SIZE = 1;
+    template <>
+    const size_type
+      BasisDataStorageDefaults<utils::MemorySpace::DEVICE>::CELL_BATCH_SIZE =
+        50;
+
+    template class BasisDataStorageDefaults<utils::MemorySpace::HOST>;
+    template class BasisDataStorageDefaults<utils::MemorySpace::DEVICE>;
     const size_type MaxSizeDefaults::SIZE_TYPE_MAX = std::numeric_limits<size_type>::max();
     const global_size_type MaxSizeDefaults::GLOBAL_SIZE_TYPE_MAX = std::numeric_limits<global_size_type>::max();
   } // end of namespace basis

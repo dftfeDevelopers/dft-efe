@@ -1833,7 +1833,7 @@ namespace dftefe
              cellStartIdsBasisJacobianInvQuadStorage,
              cellStartIdsBasisHessianQuadStorage,
              basisStorageAttributesBoolMap,
-             BasisDataStorageDefaults::CELL_BATCH_SIZE,
+             BasisDataStorageDefaults<memorySpace>::CELL_BATCH_SIZE,
              d_linAlgOpContext,
              d_calculateEnrichmentDataOnTheFly);
 
@@ -2147,7 +2147,7 @@ namespace dftefe
              cellStartIdsBasisJacobianInvQuadStorage,
              cellStartIdsBasisHessianQuadStorage,
              basisStorageAttributesBoolMap,
-             BasisDataStorageDefaults::CELL_BATCH_SIZE,
+             BasisDataStorageDefaults<memorySpace>::CELL_BATCH_SIZE,
              d_linAlgOpContext,
              d_calculateEnrichmentDataOnTheFly);
 

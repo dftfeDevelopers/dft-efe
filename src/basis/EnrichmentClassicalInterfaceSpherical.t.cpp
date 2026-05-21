@@ -390,7 +390,7 @@ namespace dftefe
                                                        dim>>(
               *d_cfeBasisManager,
               *cfeBasisDataStorageOverlapMatrix,
-              L2ProjectionDefaults::CELL_BATCH_SIZE,
+              L2ProjectionDefaults<memorySpace>::CELL_BATCH_SIZE,
               d_enrichBatchSize,
               linAlgOpContext);
 
@@ -407,9 +407,9 @@ namespace dftefe
               cfeBasisOverlapOperator,
               cfeBasisDataStorageRhs,
               quadValuesEnrichmentFunction,
-              L2ProjectionDefaults::PC_TYPE,
+              L2ProjectionDefaults<memorySpace>::PC_TYPE,
               linAlgOpContext,
-              L2ProjectionDefaults::CELL_BATCH_SIZE,
+              L2ProjectionDefaults<memorySpace>::CELL_BATCH_SIZE,
               d_enrichBatchSize);
 
           linearAlgebra::LinearAlgebraProfiler profiler1;
@@ -421,10 +421,10 @@ namespace dftefe
               std::make_shared<linearAlgebra::CGLinearSolver<ValueTypeBasisData,
                                                              ValueTypeBasisData,
                                                              memorySpace>>(
-                L2ProjectionDefaults::MAX_ITER,
-                L2ProjectionDefaults::ABSOLUTE_TOL,
-                L2ProjectionDefaults::RELATIVE_TOL,
-                L2ProjectionDefaults::DIVERGENCE_TOL,
+                L2ProjectionDefaults<memorySpace>::MAX_ITER,
+                L2ProjectionDefaults<memorySpace>::ABSOLUTE_TOL,
+                L2ProjectionDefaults<memorySpace>::RELATIVE_TOL,
+                L2ProjectionDefaults<memorySpace>::DIVERGENCE_TOL,
                 profiler1);
 
           profiler.registerEnd("Class Init");
@@ -452,7 +452,7 @@ namespace dftefe
 
           FEBasisOperations<ValueTypeBasisData, ValueTypeBasisData, memorySpace,
           dim> cfeBasisOperations(cfeBasisDataStorageRhs,
-          L2ProjectionDefaults::CELL_BATCH_SIZE, nTotalEnrichmentIds; rootCout
+          L2ProjectionDefaults<memorySpace>::CELL_BATCH_SIZE, nTotalEnrichmentIds; rootCout
           << "Begin creating integrateWithBasisValues\n";
           // Integrate this with different quarature rule. (i.e. adaptive for
           the

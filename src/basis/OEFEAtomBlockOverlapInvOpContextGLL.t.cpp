@@ -1349,7 +1349,7 @@ namespace dftefe
              cfeBDH,
              efeBDH,
              NiNjInAllCells,
-             BasisDataStorageDefaults::CELL_BATCH_SIZE);
+             BasisDataStorageDefaults<memorySpace>::CELL_BATCH_SIZE);
 
       // // access cell-wise discrete Laplace operator
       // auto NiNjInAllCells =

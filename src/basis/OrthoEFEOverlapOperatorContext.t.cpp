@@ -2116,7 +2116,7 @@ namespace dftefe
              d_basisOverlap,
              d_cellStartIdsBasisOverlap,
              d_dofsInCell,
-             BasisDataStorageDefaults::CELL_BATCH_SIZE,
+             BasisDataStorageDefaults<memorySpace>::CELL_BATCH_SIZE,
              calculateWings);
     }
 
@@ -2630,7 +2630,7 @@ namespace dftefe
              basisOverlap,
              d_cellStartIdsBasisOverlap,
              d_dofsInCell,
-             BasisDataStorageDefaults::CELL_BATCH_SIZE,
+             BasisDataStorageDefaults<memorySpace>::CELL_BATCH_SIZE,
              false);
 
       std::vector<size_type> locallyOwnedCellsNumDoFsSTL(numLocallyOwnedCells,

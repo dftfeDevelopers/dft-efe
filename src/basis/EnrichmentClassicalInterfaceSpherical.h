@@ -126,7 +126,7 @@ namespace dftefe
         const size_type            enrichmentBatchSize =
           ECIDefaults::ENRICHMENT_BATCH_SIZE,
         const size_type            cellBlockSize =
-          BasisDataStorageDefaults::CELL_BATCH_SIZE);
+          BasisDataStorageDefaults<memorySpace>::CELL_BATCH_SIZE);
 
       /**
        * @brief This Constructor for augmenting the EFE basis with classical FE basis.

@@ -809,7 +809,7 @@ namespace dftefe
           inpRhsMap,
           ksdft::PoissonProblemDefaults::PC_TYPE,
           d_linAlgOpContextHost,
-          ksdft::KSDFTDefaults::CELL_BATCH_SIZE_GRAD_EVAL,
+          ksdft::KSDFTDefaults<memorySpaceHost>::CELL_BATCH_SIZE_GRAD_EVAL,
           d_numComponents);
       else
         d_poissonSolverDealiiMatFree = std::make_shared<
@@ -1077,7 +1077,7 @@ namespace dftefe
           inpRhsMap,
           ksdft::PoissonProblemDefaults::PC_TYPE,
           d_linAlgOpContextHost,
-          ksdft::KSDFTDefaults::CELL_BATCH_SIZE_GRAD_EVAL,
+          ksdft::KSDFTDefaults<memorySpaceHost>::CELL_BATCH_SIZE_GRAD_EVAL,
           d_numComponents);
       else
         d_poissonSolverDealiiMatFree = std::make_shared<
@@ -1691,7 +1691,7 @@ namespace dftefe
           inpRhsMap,
           ksdft::PoissonProblemDefaults::PC_TYPE,
           d_linAlgOpContextHost,
-          ksdft::KSDFTDefaults::CELL_BATCH_SIZE_GRAD_EVAL,
+          ksdft::KSDFTDefaults<memorySpaceHost>::CELL_BATCH_SIZE_GRAD_EVAL,
           d_numComponents);
       else
         d_poissonSolverDealiiMatFree = std::make_shared<
@@ -2150,7 +2150,7 @@ namespace dftefe
                           *d_scratchDensNuclearQuad,
                           ksdft::PoissonProblemDefaults::PC_TYPE,
                           d_linAlgOpContextHost,
-                          ksdft::KSDFTDefaults::CELL_BATCH_SIZE_GRAD_EVAL,
+                          ksdft::KSDFTDefaults<memorySpaceHost>::CELL_BATCH_SIZE_GRAD_EVAL,
                           d_numComponents);
               else
                 poissonSolverDealiiMatFree = std::make_shared<
