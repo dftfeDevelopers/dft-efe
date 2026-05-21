@@ -101,11 +101,6 @@ namespace dftefe
       }
 
     private:
-#ifdef DFTEFE_WITH_DEVICE_AMD
-      void
-      initialize();
-#endif
-
       size_type                                            d_numBlasStreams;
       inline static std::vector<utils::deviceBlasHandle_t> d_deviceBlasHandles;
       inline static std::vector<utils::deviceStream_t>     d_streams;

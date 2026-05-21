@@ -66,28 +66,14 @@ namespace dftefe
 {
   namespace linearAlgebra
   {
-    template <utils::MemorySpace memorySpace>
-    inline void
-    LinAlgOpContext<memorySpace>::initialize()
-    {
-      // Default empty implementation for non-AMD backends
-    }
-
-#ifdef DFTEFE_WITH_DEVICE_AMD
-    template <>
-    inline void
-    LinAlgOpContext<utils::MemorySpace::DEVICE>::initialize()
-    {
-      rocblas_initialize();
-    }
-#endif
 
     template <utils::MemorySpace memorySpace>
     LinAlgOpContext<memorySpace>::LinAlgOpContext(size_type numBlasStreams)
       : d_numBlasStreams(numBlasStreams)
     {
 #ifdef DFTEFE_WITH_DEVICE_AMD
-      initialize();
+      if constexpr (memorySpace == utils::MemorySpace::DEVICE)
+        rocblas_initialize();
 #endif
 
 #if defined(DFTEFE_WITH_DEVICE)
