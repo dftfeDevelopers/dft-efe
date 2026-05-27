@@ -33,6 +33,9 @@
 #include <basis/FEBasisDofHandler.h>
 #include <basis/FEBasisOperations.h>
 #include <ksdft/Defaults.h>
+#include <ksdft/RDM1.h>
+#include <atoms/AtomSevereFunction.h>
+#include <utils/Point.h>
 #include <xc.h>
 
 namespace dftefe
@@ -59,37 +62,35 @@ namespace dftefe
       using Storage = utils::MemoryStorage<ValueType, memorySpace>;
 
     public:
-      /**
-       * @brief Constructor
-       */
+      // No NLCC.
       ExchangeCorrelationFE(
-        const quadrature::QuadratureValuesContainer<RealType, memorySpaceHost>
-          &electronChargeDensity,
-        std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
-          feBasisDataStorage,
-        std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
-                        linAlgOpContext,
-        const size_type cellBlockSize);
+        RDM1<ValueType, memorySpace>                                     &rdm1,
+        std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>      linAlgOpContext,
+        const size_type                                                   cellBlockSize);
 
+      // With NLCC. Core correction is added internally before every libxc call.
+      ExchangeCorrelationFE(
+        RDM1<ValueType, memorySpace>                                     &rdm1,
+        std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>      linAlgOpContext,
+        const size_type                                                   cellBlockSize,
+        std::shared_ptr<const atoms::AtomSphericalDataContainer>          atomSphericalDataContainerPSP,
+        const std::vector<std::string>                                   &atomSymbolVec,
+        const std::vector<utils::Point>                                  &atomCoordinates);
+      
       ~ExchangeCorrelationFE();
 
       void
-      reinitBasis(
-        std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
-          feBasisDataStorage);
+      reinitBasis(RDM1<ValueType, memorySpace> &rdm1);
 
       void
-      reinitField(
-        const quadrature::QuadratureValuesContainer<RealType, memorySpaceHost>
-          &electronChargeDensity);
+      reinitField(RDM1<ValueType, memorySpace> &rdm1);
 
       void
       getLocal(Storage &cellWiseStorage) const override;
 
       void
-      evalEnergy(const utils::mpi::MPIComm &comm);
+      evalEnergy(RDM1<ValueType, memorySpace> &rdm1,
+                 const utils::mpi::MPIComm    &comm);
 
       RealType
       getEnergy() const override;
@@ -126,8 +127,6 @@ namespace dftefe
       std::shared_ptr<
         quadrature::QuadratureValuesContainer<RealType, memorySpace>>
         d_xcPotentialQuadMemspace;
-      const quadrature::QuadratureValuesContainer<RealType, memorySpaceHost>
-        *d_electronChargeDensity;
       std::shared_ptr<
         const basis::FEBasisDofHandler<ValueTypeBasisCoeff, memorySpace, dim>>
         d_feBasisDofHandler;
@@ -147,7 +146,9 @@ namespace dftefe
       xc_func_type *d_funcX;
       xc_func_type *d_funcC;
 
-      utils::MemoryStorage<RealType, utils::MemorySpace::HOST> *d_rho;
+      std::shared_ptr<
+        quadrature::QuadratureValuesContainer<RealType, memorySpaceHost>>
+        d_coreCorrDensUPF;
 
     }; // end of class ExchangeCorrelationFE
   }    // end of namespace ksdft

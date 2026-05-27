@@ -35,8 +35,10 @@
 #include <ksdft/ElectrostaticExcFE.h>
 #include <ksdft/KohnShamEigenSolver.h>
 #include <ksdft/DensityCalculator.h>
+#include <ksdft/RDM1FE.h>
 #include <utils/ConditionalOStream.h>
 #include <ksdft/MixingScheme.h>
+#include <ksdft/RDM1Mixing.h>
 #include <utils/Profiler.h>
 #include <linearAlgebra/ScalapackTemplates.h>
 
@@ -500,17 +502,19 @@ namespace dftefe
 
     private:
       const size_type       d_numWantedEigenvalues;
-      std::vector<RealType> d_occupation;
       const double          d_SCFTol;
       std::vector<RealType> d_jxwDataHost;
       std::shared_ptr<
         KohnShamEigenSolver<ValueTypeOperator, ValueTypeOperand, memorySpace>>
         d_ksEigSolve;
-      std::shared_ptr<DensityCalculator<ValueTypeWaveFunctionBasis,
-                                        ValueTypeWaveFunctionCoeff,
-                                        memorySpace,
-                                        dim>>
-        d_densCalc;
+      std::shared_ptr<RDM1Spectral<
+        linearAlgebra::blasLapack::scalar_type<ValueTypeWaveFunctionBasis,
+                                               ValueTypeWaveFunctionCoeff>,
+        memorySpace>> d_rdm1Spectral;
+      std::shared_ptr<RDM1Mixing<
+        linearAlgebra::blasLapack::scalar_type<ValueTypeWaveFunctionBasis,
+                                               ValueTypeWaveFunctionCoeff>,
+        memorySpace>> d_rdm1Mix;
       std::shared_ptr<KohnShamOperatorContextFE<ValueTypeElectrostaticsCoeff,
                                                 ValueTypeElectrostaticsBasis,
                                                 ValueTypeWaveFunctionCoeff,
@@ -542,23 +546,13 @@ namespace dftefe
                                 d_feBMWaveFn;
       std::vector<RealType>     d_kohnShamEnergies;
       utils::ConditionalOStream d_rootCout;
-      size_type                 d_mixingHistory;
-      double                    d_mixingParameter;
-      bool                      d_isAdaptiveAndersonMixingParameter;
       bool                      d_evaluateEnergyEverySCF;
-      quadrature::QuadratureValuesContainer<RealType, memorySpaceHost>
-        d_densityInQuadValues, d_densityOutQuadValues,
-        d_densityResidualQuadValues, d_coreCorrDensUPF, d_coreCorrectedDensity;
       size_type                        d_numMaxSCFIter;
       const OpContext *                d_MContext, *d_MInvContext;
       const utils::mpi::MPIComm &      d_mpiCommDomain;
       MixingScheme<RealType, RealType> d_mixingScheme;
       std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
         d_linAlgOpContext;
-      linearAlgebra::Vector<ValueTypeWaveFunctionCoeff, memorySpace>
-        d_lanczosGuess;
-      linearAlgebra::MultiVector<ValueTypeWaveFunctionCoeff, memorySpace>
-                      d_kohnShamWaveFunctions;
       const size_type d_numElectrons;
 
       std::shared_ptr<

@@ -95,7 +95,10 @@ namespace dftefe
         const double    eigenSolveResidualTolerance,
         const size_type maxChebyshevFilterPass,
         const size_type numWantedEigenvalues,
-        linearAlgebra::Vector<ValueTypeOperand, memorySpace> &lanczosGuess,
+        std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
+                                                              mpiPatternP2P,
+        std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
+                                                              linAlgOpContext,
         const linearAlgebra::ElpaScalapackManager &           elpaScala,
         bool             isResidualChebyshevFilter = true,
         const size_type  waveFunctionBatchSize     = 0,
@@ -121,8 +124,11 @@ namespace dftefe
 
       void
       reinitBasis(
-        linearAlgebra::Vector<ValueTypeOperand, memorySpace> &lanczosGuess,
-        const OpContext &                                     MLanczos =
+        std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
+                                                              mpiPatternP2P,
+        std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
+                                                              linAlgOpContext,
+        const OpContext &MLanczos =
           linearAlgebra::IdentityOperatorContext<ValueTypeOperator,
                                                  ValueTypeOperand,
                                                  memorySpace>(),
@@ -195,7 +201,10 @@ namespace dftefe
       size_type       d_waveFunctionBatchSize;
       linearAlgebra::MultiVector<ValueTypeOperand, memorySpace>
         *d_waveFunctionSubspaceGuess;
-      linearAlgebra::Vector<ValueTypeOperand, memorySpace> *d_lanczosGuess;
+      std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
+        d_mpiPatternP2P;
+      std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
+        d_linAlgOpContext;
       const OpContext *                                     d_MLanczos;
       const OpContext *                                     d_MInvLanczos;
       std::vector<RealType>                                 d_fracOccupancy;

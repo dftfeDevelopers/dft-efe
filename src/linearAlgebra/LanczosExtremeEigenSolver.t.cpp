@@ -36,51 +36,6 @@ namespace dftefe
 {
   namespace linearAlgebra
   {
-    namespace LanczosExtremeEigenSolverInternal
-    {
-      template <typename T>
-      class generate
-      {
-      public:
-        inline static T
-        randomNumber()
-        {
-          T retVal;
-          retVal = static_cast<T>(std::rand()) / RAND_MAX;
-          return retVal;
-        }
-      };
-
-      template <>
-      class generate<std::complex<double>>
-      {
-      public:
-        inline static std::complex<double>
-        randomNumber()
-        {
-          std::complex<double> retVal;
-          retVal.real(static_cast<double>(std::rand()) / RAND_MAX);
-          retVal.imag(static_cast<double>(std::rand()) / RAND_MAX);
-          return retVal;
-        }
-      };
-
-      template <>
-      class generate<std::complex<float>>
-      {
-      public:
-        inline static std::complex<float>
-        randomNumber()
-        {
-          std::complex<float> retVal;
-          retVal.real(static_cast<float>(std::rand()) / RAND_MAX);
-          retVal.imag(static_cast<float>(std::rand()) / RAND_MAX);
-          return retVal;
-        }
-      };
-
-    } // namespace LanczosExtremeEigenSolverInternal
-
     template <typename ValueTypeOperator,
               typename ValueTypeOperand,
               utils::MemorySpace memorySpace>
@@ -174,29 +129,8 @@ namespace dftefe
                                                            mpiPatternP2P,
              std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext)
     {
-      // Get the rank of the process
-      int rank;
-      utils::mpi::MPICommRank(mpiPatternP2P->mpiCommunicator(), &rank);
-      std::srand(std::time(nullptr) * (rank + 1));
-
-      Vector<ValueTypeOperand, memorySpace> initialGuess(mpiPatternP2P,
-                                                         linAlgOpContext);
-
-      d_initialGuess = initialGuess;
-
-      std::vector<ValueTypeOperand> initialGuessSTL(
-        d_initialGuess.locallyOwnedSize());
-
-      LanczosExtremeEigenSolverInternal::generate<ValueTypeOperand>
-        generateNumber;
-      // todo - implement random class in utils and modify this
-      for (size_type i = 0; i < d_initialGuess.locallyOwnedSize(); i++)
-        {
-          *(initialGuessSTL.data() + i) = generateNumber.randomNumber();
-        }
-
-      utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
-        initialGuessSTL.size(), d_initialGuess.data(), initialGuessSTL.data());
+      d_initialGuess = Vector<ValueTypeOperand, memorySpace>(
+        mpiPatternP2P, linAlgOpContext, (ValueTypeOperand)0, (ValueTypeOperand)1);
 
       d_maxKrylovSubspaceSize = maxKrylovSubspaceSize;
       DFTEFE_Assert(numLowerExtermeEigenValues + numUpperExtermeEigenValues <=

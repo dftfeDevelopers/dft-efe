@@ -58,7 +58,10 @@ namespace dftefe
         const double    eigenSolveResidualTolerance,
         const size_type maxChebyshevFilterPass,
         const size_type numWantedEigenvalues,
-        linearAlgebra::Vector<ValueTypeOperand, memorySpace> &lanczosGuess,
+        std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
+                                                              mpiPatternP2P,
+        std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
+                                                              linAlgOpContext,
         const linearAlgebra::ElpaScalapackManager &           elpaScala,
         bool                                 isResidualChebyshevFilter,
         const size_type                      waveFunctionBatchSize,
@@ -80,8 +83,7 @@ namespace dftefe
       , d_numElectrons(numElectrons)
       , d_rootCout(std::cout)
       , d_batchSizeSmall(0)
-      , d_p(lanczosGuess.getMPIPatternP2P()->mpiCommunicator(),
-            "Kohn Sham EigenSolver")
+      , d_p(mpiPatternP2P->mpiCommunicator(), "Kohn Sham EigenSolver")
       , d_chebyPolyScalingFactor(1.0)
       , d_isResidualChebyFilter(isResidualChebyshevFilter)
       , d_setChebyPolDegExternally(false)
@@ -93,10 +95,10 @@ namespace dftefe
       , d_isGHEP(isGHEP)
       , d_useSameScratch(useSameScratchInEigenSolver)
       , d_scratch(nullptr)
-      , d_pTotal(lanczosGuess.getMPIPatternP2P()->mpiCommunicator(),
+      , d_pTotal(mpiPatternP2P->mpiCommunicator(),
                  "Kohn Sham EigenSolver Solve Time")
     {
-      reinitBasis(lanczosGuess, MLanczos, MInvLanczos);
+      reinitBasis(mpiPatternP2P, linAlgOpContext, MLanczos, MInvLanczos);
     }
 
     template <typename ValueTypeOperator,
@@ -105,30 +107,33 @@ namespace dftefe
     void
     KohnShamEigenSolver<ValueTypeOperator, ValueTypeOperand, memorySpace>::
       reinitBasis(
-        linearAlgebra::Vector<ValueTypeOperand, memorySpace> &lanczosGuess,
-        const OpContext &                                     MLanczos,
-        const OpContext &                                     MInvLanczos)
+        std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
+                                                              mpiPatternP2P,
+        std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
+                                                              linAlgOpContext,
+        const OpContext &MLanczos,
+        const OpContext &MInvLanczos)
     {
-      d_isSolved     = false;
-      d_isBoundKnown = false;
-      d_lanczosGuess = &lanczosGuess;
-      d_MLanczos     = &MLanczos;
-      d_MInvLanczos  = &MInvLanczos;
+      d_isSolved      = false;
+      d_isBoundKnown  = false;
+      d_mpiPatternP2P = mpiPatternP2P;
+      d_linAlgOpContext = linAlgOpContext;
+      d_MLanczos      = &MLanczos;
+      d_MInvLanczos   = &MInvLanczos;
       int rank;
-      utils::mpi::MPICommRank(
-        lanczosGuess.getMPIPatternP2P()->mpiCommunicator(), &rank);
+      utils::mpi::MPICommRank(mpiPatternP2P->mpiCommunicator(), &rank);
       d_rootCout.setCondition(rank == 0);
 
       d_waveFnBatch =
         std::make_shared<linearAlgebra::MultiVector<ValueType, memorySpace>>(
-          lanczosGuess.getMPIPatternP2P(),
-          lanczosGuess.getLinAlgOpContext(),
+          mpiPatternP2P,
+          linAlgOpContext,
           d_waveFunctionBatchSize,
           ValueType());
       d_HXBatch =
         std::make_shared<linearAlgebra::MultiVector<ValueType, memorySpace>>(
-          lanczosGuess.getMPIPatternP2P(),
-          lanczosGuess.getLinAlgOpContext(),
+          mpiPatternP2P,
+          linAlgOpContext,
           d_waveFunctionBatchSize,
           ValueType());
 
@@ -141,8 +146,8 @@ namespace dftefe
 
       d_MXBatch =
         std::make_shared<linearAlgebra::MultiVector<ValueType, memorySpace>>(
-          lanczosGuess.getMPIPatternP2P(),
-          lanczosGuess.getLinAlgOpContext(),
+          mpiPatternP2P,
+          linAlgOpContext,
           d_waveFunctionBatchSize,
           ValueType());
 
@@ -162,8 +167,8 @@ namespace dftefe
         0,
         0,
         ksdft::LinearEigenSolverDefaults::ILL_COND_TOL,
-        lanczosGuess.getMPIPatternP2P(),
-        lanczosGuess.getLinAlgOpContext(),
+        mpiPatternP2P,
+        linAlgOpContext,
         *d_elpaScala,
         d_isResidualChebyFilter,
         d_waveFunctionBatchSize,
@@ -257,7 +262,8 @@ namespace dftefe
                 1,
                 tol,
                 ksdft::LinearEigenSolverDefaults::LANCZOS_BETA_TOL,
-                *d_lanczosGuess,
+                d_mpiPatternP2P,
+                d_linAlgOpContext,
                 false);
 
       linearAlgebra::MultiVector<ValueType, memorySpace> eigenVectorsLanczos;
