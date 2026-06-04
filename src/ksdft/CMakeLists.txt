@@ -43,6 +43,10 @@ set(DFT-EFE-KSDFT-SOURCES
   ElectrostaticExcFE.cpp
 	KohnShamEigenSolver.cpp
 	ExchangeCorrelationFE.cpp
+	ExcManager.cpp
+  ExcDensityGGAClass.cpp
+  ExcDensityLDAClass.cpp
+  ExcTauMGGAClass.cpp
 	DensityCalculator.cpp
   MixingScheme.cpp
   KohnShamDFT.cpp

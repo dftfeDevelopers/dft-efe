@@ -42,6 +42,7 @@ namespace dftefe
                           memorySpace,
                           dim>::
       ExchangeCorrelationFE(
+        const std::string                                                  xcType,
         RDM1<ValueType, memorySpace>                                     &rdm1,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
                         linAlgOpContext,
@@ -49,19 +50,7 @@ namespace dftefe
       : d_cellBlockSize(cellBlockSize)
       , d_linAlgOpContext(linAlgOpContext)
     {
-      d_funcX = new xc_func_type;
-      d_funcC = new xc_func_type;
-      int         err;
-      std::string msg;
-      err = xc_func_init(d_funcX, 1, XC_UNPOLARIZED);
-      msg = "LDA Exchange Functional not found\n";
-      utils::throwException(err == 0, msg);
-      err = xc_func_init(d_funcC, 12, XC_UNPOLARIZED);
-      msg = "LDA Correlation Functional not found\n";
-      utils::throwException(err == 0, msg);
-      xc_func_set_dens_threshold(d_funcX, LibxcDefaults::DENSITY_ZERO_TOL);
-      xc_func_set_dens_threshold(d_funcC, LibxcDefaults::DENSITY_ZERO_TOL);
-
+      d_excManager.init(xcType);
       reinitBasis(rdm1);
       reinitField(rdm1);
     }
@@ -75,6 +64,7 @@ namespace dftefe
                           memorySpace,
                           dim>::
       ExchangeCorrelationFE(
+        const std::string                                                  xcType,
         RDM1<ValueType, memorySpace>                                     &rdm1,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
                         linAlgOpContext,
@@ -86,25 +76,13 @@ namespace dftefe
       : d_cellBlockSize(cellBlockSize)
       , d_linAlgOpContext(linAlgOpContext)
     {
-      d_funcX = new xc_func_type;
-      d_funcC = new xc_func_type;
-      int         err;
-      std::string msg;
-      err = xc_func_init(d_funcX, 1, XC_UNPOLARIZED);
-      msg = "LDA Exchange Functional not found\n";
-      utils::throwException(err == 0, msg);
-      err = xc_func_init(d_funcC, 12, XC_UNPOLARIZED);
-      msg = "LDA Correlation Functional not found\n";
-      utils::throwException(err == 0, msg);
-      xc_func_set_dens_threshold(d_funcX, LibxcDefaults::DENSITY_ZERO_TOL);
-      xc_func_set_dens_threshold(d_funcC, LibxcDefaults::DENSITY_ZERO_TOL);
-
+      d_excManager.init(xcType);
       reinitBasis(rdm1);
 
       auto quadRuleContainer =
         d_feBasisDataStorage->getQuadratureRuleContainer();
 
-      d_coreCorrDensUPF = std::make_shared<
+      d_coreCorrectionUPF = std::make_shared<
         quadrature::QuadratureValuesContainer<RealType, memorySpaceHost>>(
         quadRuleContainer, 1, (RealType)0.0);
 
@@ -119,17 +97,17 @@ namespace dftefe
                           linAlgOpContext.get());
 
       utils::MemoryStorage<RealType, memorySpace>
-        coreCorrDensUPFMemspace(quadRuleContainer->nQuadraturePoints());
+        coreCorrectionUPFMemspace(quadRuleContainer->nQuadraturePoints());
 
       rhoCoreCorrection.template eval<memorySpace>(
         quadRuleContainer->nQuadraturePoints(),
         quadRuleContainer->template getRealPointsPtr<memorySpace>(),
-        coreCorrDensUPFMemspace.data());
+        coreCorrectionUPFMemspace.data());
 
       utils::MemoryTransfer<memorySpaceHost, memorySpace> memTrans;
-      memTrans.copy(coreCorrDensUPFMemspace.size(),
-                    d_coreCorrDensUPF->begin(),
-                    coreCorrDensUPFMemspace.data());
+      memTrans.copy(coreCorrectionUPFMemspace.size(),
+                    d_coreCorrectionUPF->begin(),
+                    coreCorrectionUPFMemspace.data());
 
       reinitField(rdm1);
     }
@@ -142,20 +120,7 @@ namespace dftefe
                           ValueTypeBasisCoeff,
                           memorySpace,
                           dim>::~ExchangeCorrelationFE()
-    {
-      if (d_funcX != nullptr)
-        {
-          xc_func_end(d_funcX);
-          delete d_funcX;
-          d_funcX = nullptr;
-        }
-      if (d_funcC != nullptr)
-        {
-          xc_func_end(d_funcC);
-          delete d_funcC;
-          d_funcC = nullptr;
-        }
-    }
+    {}
 
     template <typename ValueTypeBasisData,
               typename ValueTypeBasisCoeff,
@@ -222,8 +187,11 @@ namespace dftefe
                           memorySpace,
                           dim>::reinitField(RDM1<ValueType, memorySpace> &rdm1)
     {
-      using AttrStorage = typename RDM1<ValueType, memorySpace>::AttrStorage;
-      using RDM1FEType = RDM1FE<ValueTypeBasisData, ValueTypeBasisCoeff, memorySpace, dim>;
+      using RDM1AttrStorage = typename RDM1<ValueType, memorySpace>::AttrStorage;
+      using ExcAttrStorage  = std::vector<utils::MemoryStorage<double, memorySpaceHost>>;
+      using RDM1FEType =
+        RDM1FE<ValueTypeBasisData, ValueTypeBasisCoeff, memorySpace, dim>;
+
       const RDM1FEType *p = dynamic_cast<const RDM1FEType *>(&rdm1);
       if (p == nullptr)
         {
@@ -239,55 +207,119 @@ namespace dftefe
         "FEBasisDataStorage than the one set in reinitBasis(). "
         "Call reinitBasis(rdm1) whenever the basis is reinitialised.");
 
-      std::unordered_map<DensityDescrAttr, AttrStorage> densAttr;
-      std::unordered_map<WfcDescrAttr, AttrStorage>     wfcAttr;
-      rdm1.getDescriptors({DensityDescrAttr::Val}, {}, densAttr, wfcAttr);
-      const auto &rhoQuad = densAttr.at(DensityDescrAttr::Val)[0];
+      const ExcFamilyType excFamily =
+        d_excManager.getExcSSDFunctionalObj()->getExcFamilyType();
       utils::throwException(
-        rhoQuad.getQuadratureRuleContainer() ==
+        excFamily == ExcFamilyType::LDA,
+        "ExchangeCorrelationFE::reinitField: only LDA is currently supported. "
+        "GGA (extend with DensityDescrAttr::Grad) and MGGA (extend with "
+        "WfcDescrAttr::Tau) are not yet implemented.");
+
+      std::unordered_map<DensityDescrAttr, RDM1AttrStorage> densAttr;
+      std::unordered_map<WfcDescrAttr, RDM1AttrStorage>     wfcAttr;
+      rdm1.getDescriptors({DensityDescrAttr::Val}, {}, densAttr, wfcAttr);
+      const auto &rhoTotalQuad = densAttr.at(DensityDescrAttr::Val)[0];
+      utils::throwException(
+        rhoTotalQuad.getQuadratureRuleContainer() ==
           d_feBasisDataStorage->getQuadratureRuleContainer(),
-        "ExchangeCorrelationFE::reinitField: density Quad from "
+        "ExchangeCorrelationFE::reinitField: density Quad from"
         "RDM1::getDescriptors has a different QuadratureRuleContainer "
         "than d_feBasisDataStorage.");
 
-      const size_type lenRho =
-        d_xcPotentialQuad->getQuadratureRuleContainer()->nQuadraturePoints();
+      utils::throwException(
+        !rdm1.isNonCollinear(),
+        "ExchangeCorrelationFE::reinitField: non-collinear spin is not yet "
+        "supported (requires a B_xc vector field and 2x2 spin Hamiltonian).");
 
-      utils::MemoryStorage<RealType, utils::MemorySpace::HOST> rho(lenRho),
-        vcRho(lenRho), vxRho(lenRho);
-      utils::MemoryTransfer<utils::MemorySpace::HOST, memorySpaceHost>
-        memoryTransfer;
-      memoryTransfer.copy(lenRho, rho.data(), rhoQuad.begin());
-      if (d_coreCorrDensUPF != nullptr)
+      const size_type nQuads = d_xcPotentialQuad->getQuadratureRuleContainer()->nQuadraturePoints();
+
+      ExcAttrStorage spinVals(2);
+      spinVals[0].resize(nQuads);
+      spinVals[1].resize(nQuads);
+      utils::MemoryTransfer<memorySpaceHost, memorySpaceHost> memTrans;
+      if (!rdm1.isSpinPolarized())
         {
-          const RealType *corrPtr = d_coreCorrDensUPF->begin();
-          for (size_type i = 0; i < lenRho; ++i)
-            rho.data()[i] += corrPtr[i];
+          // Unpolarized: [0] = ρ_total; ρ↑ = ρ↓ = (ρ_total + ρ_core (from PSP)) / 2
+          memTrans.copy(nQuads, spinVals[0].data(), rhoTotalQuad.begin());
+          if (d_coreCorrectionUPF != nullptr)
+            {
+              const RealType *coreCorrectionPtr = d_coreCorrectionUPF->begin();
+              for (size_type i = 0; i < nQuads; ++i)
+                spinVals[0][i] += static_cast<double>(coreCorrectionPtr[i]);
+            }
+          for (size_type i = 0; i < nQuads; ++i)
+            {
+              spinVals[0][i] *= 0.5;
+              spinVals[1][i]  = spinVals[0][i];
+            }
         }
-      xc_lda_vxc(d_funcX, lenRho, rho.data(), vxRho.data());
-      xc_lda_vxc(d_funcC, lenRho, rho.data(), vcRho.data());
+      else
+        {
+          // Collinear: [0] = ρ_total, [1] = Mz
+          // ρ↑ = (ρ_total + ρ_core + Mz) / 2
+          // ρ↓ = (ρ_total + ρ_core - Mz) / 2
+          const auto &MzQuad = densAttr.at(DensityDescrAttr::Val)[1];
+          utils::throwException(
+            MzQuad.getQuadratureRuleContainer() ==
+              d_feBasisDataStorage->getQuadratureRuleContainer(),
+            "ExchangeCorrelationFE::reinitField: Mz Quad has a different "
+            "QuadratureRuleContainer than d_feBasisDataStorage.");
+          utils::MemoryStorage<double, memorySpaceHost> rhoTotal(nQuads),
+            Mz(nQuads);
+          memTrans.copy(nQuads, rhoTotal.data(), rhoTotalQuad.begin());
+          memTrans.copy(nQuads, Mz.data(), MzQuad.begin());
+          if (d_coreCorrectionUPF != nullptr)
+            {
+              const RealType *coreCorrectionPtr = d_coreCorrectionUPF->begin();
+              for (size_type i = 0; i < nQuads; ++i)
+                rhoTotal[i] += static_cast<double>(coreCorrectionPtr[i]);
+            }
+          for (size_type i = 0; i < nQuads; ++i)
+            {
+              spinVals[0][i] = 0.5 * (rhoTotal[i] + Mz[i]);
+              spinVals[1][i] = 0.5 * (rhoTotal[i] - Mz[i]);
+            }
+        }
+      // GGA extension: also populate ExcAttrStorage for DensityDescrAttr::Grad
+      // MGGA extension: also populate ExcAttrStorage for WfcDescrAttr::Tau
+
+      std::unordered_map<DensityDescrAttr, ExcAttrStorage> densAttrSSD;
+      densAttrSSD[DensityDescrAttr::Val] = std::move(spinVals);
+      std::unordered_map<WfcDescrAttr, ExcAttrStorage> wfcAttrSSD;
+
+      std::unordered_map<xcRemainderOutputDataAttributes,
+                         utils::MemoryStorage<double, memorySpaceHost>>
+        xDataOut, cDataOut;
+      xDataOut[xcRemainderOutputDataAttributes::pdeDensitySpinUp];
+      cDataOut[xcRemainderOutputDataAttributes::pdeDensitySpinUp];
+
+      d_excManager.getExcSSDFunctionalObj()->computeRhoTauDependentXCData(
+        densAttrSSD, wfcAttrSSD, xDataOut, cDataOut);
+
+      // V_xc = ∂Ex/∂ρ↑ + ∂Ec/∂ρ↑  (equals total V_xc for unpolarized S=1)
+      const auto &vxSpinUp =
+        xDataOut.at(xcRemainderOutputDataAttributes::pdeDensitySpinUp);
+      const auto &vcSpinUp =
+        cDataOut.at(xcRemainderOutputDataAttributes::pdeDensitySpinUp);
 
       size_type count = 0;
-      for (size_type iCell = 0; iCell < d_xcPotentialQuad->nCells(); iCell++)
+      for (size_type iCell = 0; iCell < d_xcPotentialQuad->nCells(); ++iCell)
         {
-          std::vector<RealType> a(
+          const size_type nCellQuads =
             d_xcPotentialQuad->getQuadratureRuleContainer()
-              ->nCellQuadraturePoints(iCell));
-          for (size_type quadId = 0; quadId < d_xcPotentialQuad->getQuadratureRuleContainer()
-                ->nCellQuadraturePoints(iCell); quadId++)
-            {
-              a[quadId] = *(vxRho.data() + count) + *(vcRho.data() + count);
-              count += 1;
-            }
-          d_xcPotentialQuad->template setCellValues<utils::MemorySpace::HOST>(
-            iCell, a.data());
+              ->nCellQuadraturePoints(iCell);
+          std::vector<RealType> cellVxc(nCellQuads);
+          for (size_type q = 0; q < nCellQuads; ++q, ++count)
+            cellVxc[q] =
+              static_cast<RealType>(vxSpinUp[count] + vcSpinUp[count]);
+          d_xcPotentialQuad->template setCellValues<memorySpaceHost>(iCell,
+                                                                     cellVxc.data());
         }
 
-      utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>
-        memoryTransferH2M;
-      memoryTransferH2M.copy(d_xcPotentialQuad->nEntries(),
-                             d_xcPotentialQuadMemspace->data(),
-                             d_xcPotentialQuad->data());
+      utils::MemoryTransfer<memorySpace, memorySpaceHost> memTransH2M;
+      memTransH2M.copy(d_xcPotentialQuad->nEntries(),
+                       d_xcPotentialQuadMemspace->data(),
+                       d_xcPotentialQuad->data());
     }
 
     template <typename ValueTypeBasisData,
@@ -320,7 +352,8 @@ namespace dftefe
                           dim>::evalEnergy(RDM1<ValueType, memorySpace> &rdm1,
                                            const utils::mpi::MPIComm    &comm)
     {
-      using AttrStorage = typename RDM1<ValueType, memorySpace>::AttrStorage;
+      using RDM1AttrStorage = typename RDM1<ValueType, memorySpace>::AttrStorage;
+      using ExcAttrStorage  = std::vector<utils::MemoryStorage<double, memorySpaceHost>>;
       using RDM1FEType =
         RDM1FE<ValueTypeBasisData, ValueTypeBasisCoeff, memorySpace, dim>;
       const RDM1FEType *p = dynamic_cast<const RDM1FEType *>(&rdm1);
@@ -338,41 +371,104 @@ namespace dftefe
         "FEBasisDataStorage than the one set in reinitBasis(). "
         "Call reinitBasis(rdm1) whenever the basis is reinitialised.");
 
-      std::unordered_map<DensityDescrAttr, AttrStorage> densAttr;
-      std::unordered_map<WfcDescrAttr, AttrStorage>     wfcAttr;
-      rdm1.getDescriptors({DensityDescrAttr::Val}, {}, densAttr, wfcAttr);
-      const auto &rhoQuad = densAttr.at(DensityDescrAttr::Val)[0];
+      const ExcFamilyType excFamily =
+        d_excManager.getExcSSDFunctionalObj()->getExcFamilyType();
       utils::throwException(
-        rhoQuad.getQuadratureRuleContainer() ==
+        excFamily == ExcFamilyType::LDA,
+        "ExchangeCorrelationFE::evalEnergy: only LDA is currently supported.");
+
+      std::unordered_map<DensityDescrAttr, RDM1AttrStorage> densAttr;
+      std::unordered_map<WfcDescrAttr, RDM1AttrStorage>     wfcAttr;
+      rdm1.getDescriptors({DensityDescrAttr::Val}, {}, densAttr, wfcAttr);
+      const auto &rhoTotalQuad = densAttr.at(DensityDescrAttr::Val)[0];
+      utils::throwException(
+        rhoTotalQuad.getQuadratureRuleContainer() ==
           d_feBasisDataStorage->getQuadratureRuleContainer(),
-        "ExchangeCorrelationFE::evalEnergy: density Quad from "
+        "ExchangeCorrelationFE::evalEnergy: density Quad from"
         "RDM1::getDescriptors has a different QuadratureRuleContainer "
         "than d_feBasisDataStorage.");
 
-      const size_type lenRho =
+      utils::throwException(
+        !rdm1.isNonCollinear(),
+        "ExchangeCorrelationFE::evalEnergy: non-collinear spin is not yet "
+        "supported (requires a B_xc vector field and 2x2 spin Hamiltonian).");
+
+      const size_type nQuads =
         d_xcPotentialQuad->getQuadratureRuleContainer()->nQuadraturePoints();
 
-      utils::MemoryStorage<RealType, utils::MemorySpace::HOST> rho(lenRho),
-        ecRho(lenRho), exRho(lenRho);
-      utils::MemoryTransfer<utils::MemorySpace::HOST, memorySpaceHost>
-        memoryTransfer;
-      memoryTransfer.copy(lenRho, rho.data(), rhoQuad.begin());
-      if (d_coreCorrDensUPF != nullptr)
-        {
-          const RealType *corrPtr = d_coreCorrDensUPF->begin();
-          for (size_type i = 0; i < lenRho; ++i)
-            rho.data()[i] += corrPtr[i];
-        }
-      xc_lda_exc(d_funcX, lenRho, rho.data(), exRho.data());
-      xc_lda_exc(d_funcC, lenRho, rho.data(), ecRho.data());
+      ExcAttrStorage spinVals(2);
+      spinVals[0].resize(nQuads);
+      spinVals[1].resize(nQuads);
+      {
+        utils::MemoryTransfer<memorySpaceHost, memorySpaceHost> memTrans;
+        if (!rdm1.isSpinPolarized())
+          {
+            // Unpolarized: [0] = ρ_total; ρ↑ = ρ↓ = (ρ_total + ρ_core) / 2
+            memTrans.copy(nQuads, spinVals[0].data(), rhoTotalQuad.begin());
+            if (d_coreCorrectionUPF != nullptr)
+              {
+                const RealType *coreCorrectionPtr = d_coreCorrectionUPF->begin();
+                for (size_type i = 0; i < nQuads; ++i)
+                  spinVals[0][i] += static_cast<double>(coreCorrectionPtr[i]);
+              }
+            for (size_type i = 0; i < nQuads; ++i)
+              {
+                spinVals[0][i] *= 0.5;
+                spinVals[1][i]  = spinVals[0][i];
+              }
+          }
+        else
+          {
+            // Collinear: [0] = ρ_total, [1] = Mz
+            // ρ↑ = (ρ_total + ρ_core + Mz) / 2
+            // ρ↓ = (ρ_total + ρ_core - Mz) / 2
+            const auto &MzQuad = densAttr.at(DensityDescrAttr::Val)[1];
+            utils::throwException(
+              MzQuad.getQuadratureRuleContainer() ==
+                d_feBasisDataStorage->getQuadratureRuleContainer(),
+              "ExchangeCorrelationFE::evalEnergy: Mz Quad has a different "
+              "QuadratureRuleContainer than d_feBasisDataStorage.");
+            utils::MemoryStorage<double, memorySpaceHost> rhoTotal(nQuads),
+              Mz(nQuads);
+            memTrans.copy(nQuads, rhoTotal.data(), rhoTotalQuad.begin());
+            memTrans.copy(nQuads, Mz.data(), MzQuad.begin());
+            if (d_coreCorrectionUPF != nullptr)
+              {
+                const RealType *coreCorrectionPtr = d_coreCorrectionUPF->begin();
+                for (size_type i = 0; i < nQuads; ++i)
+                  rhoTotal[i] += static_cast<double>(coreCorrectionPtr[i]);
+              }
+            for (size_type i = 0; i < nQuads; ++i)
+              {
+                spinVals[0][i] = 0.5 * (rhoTotal[i] + Mz[i]);
+                spinVals[1][i] = 0.5 * (rhoTotal[i] - Mz[i]);
+              }
+          }
+      }
 
-      // ∫ (εx + εc) * (ρ_val + ρ_core) dV
-      const auto &    jxw    = d_feBasisDataStorage->getQuadratureRuleContainer()->getJxW();
-      const RealType *rhoPtr = rho.data();
-      RealType        totalEnergy = (RealType)0;
-      for (size_type i = 0; i < lenRho; ++i)
-        totalEnergy +=
-          (*(exRho.data() + i) + *(ecRho.data() + i)) * rhoPtr[i] * jxw[i];
+      std::unordered_map<DensityDescrAttr, ExcAttrStorage> densAttrSSD;
+      densAttrSSD[DensityDescrAttr::Val] = std::move(spinVals);
+      std::unordered_map<WfcDescrAttr, ExcAttrStorage> wfcAttrSSD;
+
+      std::unordered_map<xcRemainderOutputDataAttributes,
+                         utils::MemoryStorage<double, memorySpaceHost>>
+        xDataOut, cDataOut;
+      xDataOut[xcRemainderOutputDataAttributes::e];
+      cDataOut[xcRemainderOutputDataAttributes::e];
+
+      d_excManager.getExcSSDFunctionalObj()->computeRhoTauDependentXCData(
+        densAttrSSD, wfcAttrSSD, xDataOut, cDataOut);
+
+      // exVals[i] = εx * ρ_total[i] (already multiplied by ρ in ExcDensityLDAClass)
+      const auto &exVals = xDataOut.at(xcRemainderOutputDataAttributes::e);
+      const auto &ecVals = cDataOut.at(xcRemainderOutputDataAttributes::e);
+      const auto &jxw =
+        d_feBasisDataStorage->getQuadratureRuleContainer()->getJxW();
+
+      RealType totalEnergy = (RealType)0;
+      for (size_type i = 0; i < nQuads; ++i)
+        totalEnergy += static_cast<RealType>(exVals[i] + ecVals[i]) *
+                       static_cast<RealType>(jxw[i]);
 
       utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
         utils::mpi::MPIInPlace,

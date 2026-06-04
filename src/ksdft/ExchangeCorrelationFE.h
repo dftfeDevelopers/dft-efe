@@ -34,9 +34,9 @@
 #include <basis/FEBasisOperations.h>
 #include <ksdft/Defaults.h>
 #include <ksdft/RDM1.h>
+#include <ksdft/ExcManager.h>
 #include <atoms/AtomSevereFunction.h>
 #include <utils/Point.h>
-#include <xc.h>
 
 namespace dftefe
 {
@@ -64,12 +64,14 @@ namespace dftefe
     public:
       // No NLCC.
       ExchangeCorrelationFE(
+        const std::string                                                  xcType,
         RDM1<ValueType, memorySpace>                                     &rdm1,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>      linAlgOpContext,
         const size_type                                                   cellBlockSize);
 
       // With NLCC. Core correction is added internally before every libxc call.
       ExchangeCorrelationFE(
+        const std::string                                                  xcType,
         RDM1<ValueType, memorySpace>                                     &rdm1,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>      linAlgOpContext,
         const size_type                                                   cellBlockSize,
@@ -143,12 +145,11 @@ namespace dftefe
       std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
         d_linAlgOpContext;
 
-      xc_func_type *d_funcX;
-      xc_func_type *d_funcC;
+      ExcManager<memorySpace> d_excManager;
 
       std::shared_ptr<
         quadrature::QuadratureValuesContainer<RealType, memorySpaceHost>>
-        d_coreCorrDensUPF;
+        d_coreCorrectionUPF;
 
     }; // end of class ExchangeCorrelationFE
   }    // end of namespace ksdft

@@ -1240,6 +1240,7 @@ int main(int argc, char** argv)
                                           feBDEXCHamiltonian,      
                                           feBDAtomCenterNonLocalOperator,                                                                          
                                           atomSymbolToPSPFileName,
+                                          "LDA-PW",
                                           linAlgOpContext,
                                           *MContextForInv,
                                           *MContext,
@@ -1307,6 +1308,7 @@ int main(int argc, char** argv)
                                           feBDEXCHamiltonian,  
                                           feBDAtomCenterNonLocalOperator,                                                                              
                                           atomSymbolToPSPFileName,
+                                          "LDA-PW",
                                           linAlgOpContext,
                                           *MContextForInv,
                                           /**MContextForInv,*/

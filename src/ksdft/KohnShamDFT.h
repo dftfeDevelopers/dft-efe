@@ -136,6 +136,8 @@ namespace dftefe
                                           memorySpace>> feBDEXCHamiltonian,
         /* PSP/AE related info */
         const utils::ScalarSpatialFunctionReal &externalPotentialFunction,
+        /* exc type */
+        const std::string &xcType,
         /* linAgOperations Context*/
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
           linAlgOpContext,
@@ -221,6 +223,8 @@ namespace dftefe
                                           memorySpace>> feBDEXCHamiltonian,
         /* PSP/AE related info */
         const utils::ScalarSpatialFunctionReal &externalPotentialFunction,
+        /* exc type */
+        const std::string &xcType,
         /* linAgOperations Context*/
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
           linAlgOpContext,
@@ -300,6 +304,8 @@ namespace dftefe
                                           memorySpace>> feBDEXCHamiltonian,
         /* PSP/AE related info */
         const utils::ScalarSpatialFunctionReal &externalPotentialFunction,
+        /* exc type */
+        const std::string &xcType,
         /* linAgOperations Context*/
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
           linAlgOpContext,
@@ -381,6 +387,8 @@ namespace dftefe
                                           memorySpace>>
           feBDAtomCenterNonLocalOperator,
         const std::map<std::string, std::string> &atomSymbolToPSPFilename,
+        /* exc type */
+        const std::string &xcType,
         /* linAgOperations Context*/
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
           linAlgOpContext,
@@ -466,6 +474,8 @@ namespace dftefe
                                           memorySpace>>
           feBDAtomCenterNonLocalOperator,
         const std::map<std::string, std::string> &atomSymbolToPSPFilename,
+        /* exc type */
+        const std::string &xcType,
         /* linAgOperations Context*/
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
           linAlgOpContext,

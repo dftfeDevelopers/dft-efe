@@ -309,6 +309,8 @@ namespace dftefe
                                           memorySpace>> feBDEXCHamiltonian,
         /* PSP/AE related info */
         const utils::ScalarSpatialFunctionReal &externalPotentialFunction,
+        /* exc type */
+        const std::string &xcType,
         /* linAgOperations Context*/
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
           linAlgOpContext,
@@ -466,6 +468,7 @@ namespace dftefe
                                                ValueTypeWaveFunctionCoeff,
                                                memorySpace,
                                                dim>>(
+          xcType,
           *d_rdm1Spectral,
           linAlgOpContext,
           KSDFTDefaults<memorySpace>::CELL_BATCH_SIZE);
@@ -661,6 +664,8 @@ namespace dftefe
                                           memorySpace>> feBDEXCHamiltonian,
         /* PSP/AE related info */
         const utils::ScalarSpatialFunctionReal &externalPotentialFunction,
+        /* exc type */
+        const std::string &xcType,
         /* linAgOperations Context*/
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
           linAlgOpContext,
@@ -811,6 +816,7 @@ namespace dftefe
                                                ValueTypeWaveFunctionCoeff,
                                                memorySpace,
                                                dim>>(
+          xcType,
           *d_rdm1Spectral,
           linAlgOpContext,
           KSDFTDefaults<memorySpace>::CELL_BATCH_SIZE);
@@ -1005,6 +1011,8 @@ namespace dftefe
                                           memorySpace>> feBDEXCHamiltonian,
         /* PSP/AE related info */
         const utils::ScalarSpatialFunctionReal &externalPotentialFunction,
+        /* exc type */
+        const std::string &xcType,
         /* linAgOperations Context*/
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
           linAlgOpContext,
@@ -1245,6 +1253,7 @@ namespace dftefe
                                                ValueTypeWaveFunctionCoeff,
                                                memorySpace,
                                                dim>>(
+          xcType,
           *d_rdm1Spectral,
           linAlgOpContext,
           KSDFTDefaults<memorySpace>::CELL_BATCH_SIZE);
@@ -1437,6 +1446,8 @@ namespace dftefe
                                           memorySpace>>
           feBDAtomCenterNonLocalOperator,
         const std::map<std::string, std::string> &atomSymbolToPSPFilename,
+        /* exc type */
+        const std::string &xcType,
         /* linAgOperations Context*/
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
           linAlgOpContext,
@@ -1691,6 +1702,7 @@ namespace dftefe
                                                  ValueTypeWaveFunctionCoeff,
                                                  memorySpace,
                                                  dim>>(
+            xcType,
             *d_rdm1Spectral,
             linAlgOpContext,
             KSDFTDefaults<memorySpace>::CELL_BATCH_SIZE,
@@ -1703,6 +1715,7 @@ namespace dftefe
                                                  ValueTypeWaveFunctionCoeff,
                                                  memorySpace,
                                                  dim>>(
+            xcType,
             *d_rdm1Spectral,
             linAlgOpContext,
             KSDFTDefaults<memorySpace>::CELL_BATCH_SIZE);
@@ -1892,6 +1905,8 @@ namespace dftefe
                                           memorySpace>>
           feBDAtomCenterNonLocalOperator,
         const std::map<std::string, std::string> &atomSymbolToPSPFilename,
+        /* exc type */
+        const std::string &xcType,
         /* linAgOperations Context*/
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
           linAlgOpContext,
@@ -2294,6 +2309,7 @@ namespace dftefe
                                                  ValueTypeWaveFunctionCoeff,
                                                  memorySpace,
                                                  dim>>(
+            xcType,
             *d_rdm1Spectral,
             linAlgOpContext,
             KSDFTDefaults<memorySpace>::CELL_BATCH_SIZE,
@@ -2306,6 +2322,7 @@ namespace dftefe
                                                  ValueTypeWaveFunctionCoeff,
                                                  memorySpace,
                                                  dim>>(
+            xcType,
             *d_rdm1Spectral,
             linAlgOpContext,
             KSDFTDefaults<memorySpace>::CELL_BATCH_SIZE);
