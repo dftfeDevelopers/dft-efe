@@ -23,8 +23,6 @@
  * @author Avirup Sircar
  */
 
-#include <cmath>
-
 namespace dftefe
 {
   namespace atoms
@@ -33,43 +31,35 @@ namespace dftefe
     AtomSevereFunction<memorySpace>::AtomSevereFunction(
       std::shared_ptr<const AtomSphericalDataContainer>
                                        atomSphericalDataContainer,
-      const std::vector<std::string> & atomSymbolVec,
-      const std::vector<utils::Point> &atomCoordinatesVec,
+      const std::vector<std::string> & atomSymbol,
+      const std::vector<utils::Point> &atomCoordinates,
       const std::string                fieldName,
       const size_type                  derivativeType,
       const size_type                  sphericalValPower,
       const double                     constant,
       linearAlgebra::LinAlgOpContext<memorySpace> *linAlgOpContext)
-      : d_atomSphericalDataContainer(atomSphericalDataContainer)
-      , d_atomSymbolVec(atomSymbolVec)
-      , d_atomCoordinatesVec(atomCoordinatesVec)
-      , d_fieldName(fieldName)
-      , d_derivativeType(derivativeType)
-      , d_sphericalValPower(sphericalValPower)
+      : AtomSuperpositionFunction<memorySpace>(atomSphericalDataContainer,
+                                               atomSymbol,
+                                               atomCoordinates,
+                                               fieldName,
+                                               linAlgOpContext)
+      , d_dim(atomCoordinates[0].size())
       , d_constant(constant)
-      , d_numAtoms(atomCoordinatesVec.size())
-      , d_dim(atomCoordinatesVec[0].size())
-      , d_numEnrichmentFuncTotal(0)
-      , d_linAlgOpContext(linAlgOpContext)
     {
-      utils::throwException(derivativeType == 0 || derivativeType == 1,
-                            "The derivative type can only be 0 or 1");
+      utils::throwException(
+        (derivativeType == 0 || derivativeType == 1) &&
+          (sphericalValPower == 1 || sphericalValPower == 2) &&
+          !(derivativeType == 1 && sphericalValPower == 1),
+        "AtomSevereFunction: valid combinations are (derivativeType=0, "
+        "sphericalValPower=1), (derivativeType=0, sphericalValPower=2), "
+        "or (derivativeType=1, sphericalValPower=2).");
 
-      std::vector<double> originsFlat(0);
-      for (size_type atomId = 0; atomId < d_numAtoms; atomId++)
-        {
-          auto vec = d_atomSphericalDataContainer->getSphericalData(
-            d_atomSymbolVec[atomId], d_fieldName);
-          for (auto &enrichmentObjId : vec)
-            {
-              d_sphericalDataVecAll.push_back(enrichmentObjId);
-              for (size_type iDim = 0; iDim < d_dim; iDim++)
-                originsFlat.push_back(d_atomCoordinatesVec[atomId][iDim]);
-              d_numEnrichmentFuncTotal++;
-            }
-        }
-      d_originsFlat.resize(originsFlat.size());
-      d_originsFlat.copyFrom(originsFlat);
+      if (derivativeType == 0 && sphericalValPower == 1)
+        d_atomSupType = AtomSuperpositonFuncType::Identity;
+      else if (derivativeType == 0 && sphericalValPower == 2)
+        d_atomSupType = AtomSuperpositonFuncType::IdentitySq;
+      else
+        d_atomSupType = AtomSuperpositonFuncType::GradDotGradSq;
     }
 
     template <utils::MemorySpace memorySpace>
@@ -77,43 +67,13 @@ namespace dftefe
     AtomSevereFunction<memorySpace>::operator()(
       const utils::Point &point) const
     {
-      double retValue = 0;
-      if (d_derivativeType == 0)
-        {
-          for (size_type atomId = 0; atomId < d_atomCoordinatesVec.size();
-               atomId++)
-            {
-              auto vec = d_atomSphericalDataContainer->getSphericalData(
-                d_atomSymbolVec[atomId], d_fieldName);
-              utils::Point origin(d_atomCoordinatesVec[atomId]);
-              for (auto &enrichmentObjId : vec)
-                {
-                  double val = enrichmentObjId->getValue(point, origin);
-                  retValue   = retValue + pow(val, d_sphericalValPower);
-                }
-            }
-        }
-      if (d_derivativeType == 1)
-        {
-          for (size_type atomId = 0; atomId < d_atomCoordinatesVec.size();
-               atomId++)
-            {
-              auto vec = d_atomSphericalDataContainer->getSphericalData(
-                d_atomSymbolVec[atomId], d_fieldName);
-              utils::Point origin(d_atomCoordinatesVec[atomId]);
-              for (auto &enrichmentObjId : vec)
-                {
-                  std::vector<double> val =
-                    enrichmentObjId->getGradientValue(point, origin);
-                  for (size_type iDim = 0; iDim < d_dim; iDim++)
-                    {
-                      retValue =
-                        retValue + pow(val[iDim], d_sphericalValPower);
-                    }
-                }
-            }
-        }
-      return retValue * d_constant;
+      std::vector<double> t(d_dim);
+      for (size_type iDim = 0; iDim < d_dim; ++iDim)
+        t[iDim] = point[iDim];
+      double q = 0.0;
+      AtomSuperpositionFunction<memorySpace>::evalHost(
+        1, d_atomSupType, d_constant, t.data(), &q);
+      return q;
     }
 
     template <utils::MemorySpace memorySpace>
@@ -122,48 +82,14 @@ namespace dftefe
       const std::vector<utils::Point> &points) const
     {
       const size_type     N = points.size();
-      std::vector<double> retValue(N, 0.0);
-      if (d_derivativeType == 0)
-        {
-          for (size_type atomId = 0; atomId < d_atomCoordinatesVec.size();
-               atomId++)
-            {
-              auto vec = d_atomSphericalDataContainer->getSphericalData(
-                d_atomSymbolVec[atomId], d_fieldName);
-              utils::Point origin(d_atomCoordinatesVec[atomId]);
-              for (auto &enrichmentObjId : vec)
-                {
-                  std::vector<double> val =
-                    enrichmentObjId->getValue(points, origin);
-                  for (size_type iPoint = 0; iPoint < N; ++iPoint)
-                    retValue[iPoint] =
-                      retValue[iPoint] + pow(val[iPoint], d_sphericalValPower);
-                }
-            }
-        }
-      if (d_derivativeType == 1)
-        {
-          for (size_type atomId = 0; atomId < d_atomCoordinatesVec.size();
-               atomId++)
-            {
-              auto vec = d_atomSphericalDataContainer->getSphericalData(
-                d_atomSymbolVec[atomId], d_fieldName);
-              utils::Point origin(d_atomCoordinatesVec[atomId]);
-              for (auto &enrichmentObjId : vec)
-                {
-                  std::vector<double> val =
-                    enrichmentObjId->getGradientValue(points, origin);
-                  for (size_type iPoint = 0; iPoint < N; ++iPoint)
-                    for (size_type iDim = 0; iDim < d_dim; iDim++)
-                      retValue[iPoint] =
-                        retValue[iPoint] +
-                        pow(val[iPoint * d_dim + iDim], d_sphericalValPower);
-                }
-            }
-        }
-      for (int i = 0; i < retValue.size(); i++)
-        retValue[i] *= d_constant;
-      return retValue;
+      std::vector<double> t(N * d_dim);
+      for (size_type iPoint = 0; iPoint < N; ++iPoint)
+        for (size_type iDim = 0; iDim < d_dim; ++iDim)
+          t[iPoint * d_dim + iDim] = points[iPoint][iDim];
+      std::vector<double> q(N, 0.0);
+      AtomSuperpositionFunction<memorySpace>::evalHost(
+        N, d_atomSupType, d_constant, t.data(), q.data());
+      return q;
     }
 
     template <utils::MemorySpace memorySpace>
@@ -172,14 +98,21 @@ namespace dftefe
                                               const double *t,
                                               double *      q) const
     {
-      utils::Point              p(d_dim);
-      std::vector<utils::Point> points(numPoints, p);
-      for (size_type iPoint = 0; iPoint < numPoints; ++iPoint)
-        for (size_type iDim = 0; iDim < d_dim; ++iDim)
-          points[iPoint][iDim] = t[iPoint * d_dim + iDim];
-      std::vector<double> retValue = (*this)(points);
-      std::copy(retValue.begin(), retValue.end(), q);
+      AtomSuperpositionFunction<memorySpace>::evalHost(
+        numPoints, d_atomSupType, d_constant, t, q);
     }
+
+#ifdef DFTEFE_WITH_DEVICE
+    template <utils::MemorySpace memorySpace>
+    void
+    AtomSevereFunction<memorySpace>::evalDevice(size_type     numPoints,
+                                                const double *t,
+                                                double *      q) const
+    {
+      AtomSuperpositionFunction<memorySpace>::evalDevice(
+        numPoints, d_atomSupType, d_constant, t, q);
+    }
+#endif
 
   } // namespace atoms
 } // namespace dftefe

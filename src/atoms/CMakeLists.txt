@@ -25,6 +25,7 @@ set(DFT-EFE-ATOMS-SOURCES
     AtomSevereFunction.cpp
     AtomSphericalDataPSP.cpp
     SphericalDataMixed.cpp
+    AtomSuperpositionFunction.cpp
     SphericalDataAnalytical.cpp
     AtomSphericalDataAnalytical.cpp
     AtomTCIASpline.cpp
@@ -36,7 +37,7 @@ IF (ENABLE_GPU)
         SphericalHarmonicFunctionsDeviceKernels.cpp
         SphericalDataNumericalDeviceKernels.cpp
         SphericalDataMixedDeviceKernels.cpp
-        AtomSevereFunctionDeviceKernels.cpp
+        AtomSuperpositionFunctionDeviceKernels.cpp
         )
     IF ("${GPU_LANG}" STREQUAL "cuda")
         set_source_files_properties(${DFT-EFE-ATOMS-DEVICE-SOURCES} PROPERTIES LANGUAGE CUDA)
