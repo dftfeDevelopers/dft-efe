@@ -203,10 +203,8 @@ namespace dftefe
             "Re-evaluation of descriptors in RDM1FE::getDescriptors() requires the "
             "KS orbitals to be set via RDM1Spectral::setSpectral(), but d_ksSetFlag is false.");
 
-        DFTEFE_AssertWithMsg(
-            densityAttrs.find(DensityDescrAttr::Grad) == densityAttrs.end(),
-            "Gradient of density computation not yet implemented in dftefe "
-            "RDM1FE::getDescriptors - required for GGA functionals.");
+        utils::throwException(!d_isSpinPolarized,
+            "Spin-polarized density not yet implemented in RDM1FE::getDescriptors.");
 
         DFTEFE_AssertWithMsg(
             wfcAttrs.find(WfcDescrAttr::Tau) == wfcAttrs.end(),
@@ -236,7 +234,26 @@ namespace dftefe
               quadRuleContainer, 1, 0.0));
         }
 
-        d_densCalc->computeRho(occ, *this->d_ksOrbs, densVal[0]);
+        auto &gradDensVal = d_densityAttrVals[DensityDescrAttr::Grad];
+        const bool needGrad = densityAttrs.count(DensityDescrAttr::Grad);
+        if (needGrad)
+          {
+            if (gradDensVal.empty() ||
+                gradDensVal[0].getQuadratureRuleContainer() != quadRuleContainer)
+              gradDensVal = AttrStorage(
+                ncomp,
+                quadrature::QuadratureValuesContainer<double,
+                                                      utils::MemorySpace::HOST>(
+                  quadRuleContainer, dim, 0.0));
+          }
+        else
+          {
+            if (gradDensVal.empty())
+              gradDensVal.resize(1);
+          }
+
+        d_densCalc->computeRho(occ, *this->d_ksOrbs,
+                               densVal[0], gradDensVal[0], needGrad);
 
         this->d_evalFlag = false;
       }
@@ -342,7 +359,12 @@ namespace dftefe
                                                   utils::MemorySpace::HOST>(
               quadRuleContainer, 1, 0.0));
 
-        d_densCalc->computeRho(occ, *this->d_ksOrbs, densVal[0]);
+        auto &gradDensVal = d_densityAttrVals[DensityDescrAttr::Grad];
+        if (gradDensVal.empty())
+          gradDensVal.resize(1);
+
+        d_densCalc->computeRho(occ, *this->d_ksOrbs, densVal[0],
+                               gradDensVal[0], false);
       }
 
       // Determine the maximum moment order requested.

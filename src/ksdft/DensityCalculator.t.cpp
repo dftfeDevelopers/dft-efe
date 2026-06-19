@@ -57,6 +57,9 @@ namespace dftefe
       , d_psiBatchQuad(nullptr)
       , d_rhoBatch(nullptr)
       , d_rhoMemspace(nullptr)
+      , d_gradPsiBatchQuad(nullptr)
+      , d_gradRhoBatch(nullptr)
+      , d_gradRhoMemspace(nullptr)
       , d_psiBatch(nullptr)
       , d_psiBatchSmall(nullptr)
     {
@@ -86,6 +89,21 @@ namespace dftefe
         {
           delete d_rhoMemspace;
           d_rhoMemspace = nullptr;
+        }
+      if (d_gradPsiBatchQuad != nullptr)
+        {
+          delete d_gradPsiBatchQuad;
+          d_gradPsiBatchQuad = nullptr;
+        }
+      if (d_gradRhoBatch != nullptr)
+        {
+          delete d_gradRhoBatch;
+          d_gradRhoBatch = nullptr;
+        }
+      if (d_gradRhoMemspace != nullptr)
+        {
+          delete d_gradRhoMemspace;
+          d_gradRhoMemspace = nullptr;
         }
       if (d_psiBatch != nullptr)
         {
@@ -147,6 +165,22 @@ namespace dftefe
         new dftefe::utils::MemoryStorage<RealType, memorySpace>(
           d_cellBlockSize * maxQuadInCell);
 
+      d_gradPsiBatchQuad =
+        new dftefe::utils::MemoryStorage<ValueType, memorySpace>(
+          d_waveFuncBatchSize * d_cellBlockSize * maxQuadInCell * dim);
+
+      d_psiGradPsiBatch =
+        dftefe::utils::MemoryStorage<RealType, memorySpace>(
+          d_waveFuncBatchSize * d_cellBlockSize * maxQuadInCell * dim);
+
+      d_gradRhoMemspace =
+        new quadrature::QuadratureValuesContainer<RealType, memorySpace>(
+          d_quadRuleContainer, dim);
+
+      d_gradRhoBatch =
+        new dftefe::utils::MemoryStorage<RealType, memorySpace>(
+          d_cellBlockSize * maxQuadInCell * dim);
+
       d_psiBatch =
         new linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>(
           feBMPsi.getMPIPatternP2P(),
@@ -176,9 +210,14 @@ namespace dftefe
         const std::vector<RealType> &occupation,
         const linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
           &                                                           waveFunc,
-        quadrature::QuadratureValuesContainer<RealType, memorySpaceHost> &rho)
+        quadrature::QuadratureValuesContainer<RealType, memorySpaceHost> &rho,
+        quadrature::QuadratureValuesContainer<RealType, memorySpaceHost>
+          &                                                           gradRho,
+        const bool                                                    computeGrad)
     {
       d_rhoMemspace->setValue((RealType)0);
+      if (computeGrad)
+        d_gradRhoMemspace->setValue((RealType)0);
 
       utils::MemoryTransfer<memorySpace, memorySpaceHost> memoryTransferM2H;
       utils::MemoryTransfer<memorySpaceHost, memorySpace> memoryTransferH2M;
@@ -257,7 +296,7 @@ namespace dftefe
                                        cellRange,
                                        d_psiBatchQuad->data());
 
-              DensityCalculatorKernels<ValueType, RealType, memorySpace>::
+              DensityCalculatorKernels<ValueType, RealType, memorySpace, dim>::
                 computeRhoInBatch(numPsiInBatch,
                                   cellRange,
                                   d_occupationInBatch.data(),
@@ -275,12 +314,46 @@ namespace dftefe
                 d_rhoMemspace->begin(cellStartId),
                 1,
                 *d_linAlgOpContext);
+
+              if (computeGrad)
+                {
+                  d_feBasisOp->interpolateWithBasisGradient(
+                    *psiBatchInterim,
+                    *d_feBMPsi,
+                    cellRange,
+                    d_gradPsiBatchQuad->data());
+
+                  DensityCalculatorKernels<ValueType, RealType, memorySpace, dim>::
+                    computeGradRhoInBatch(numPsiInBatch,
+                                         cellRange,
+                                         d_occupationInBatch.data(),
+                                         d_psiBatchQuad->data(),
+                                         d_gradPsiBatchQuad->data(),
+                                         d_psiGradPsiBatch.data(),
+                                         d_quadRuleContainer,
+                                         d_gradRhoBatch->data(),
+                                         *d_linAlgOpContext);
+
+                  linearAlgebra::blasLapack::axpy<RealType, RealType, memorySpace>(
+                    numQuadInBlock * dim,
+                    (RealType)1.0,
+                    d_gradRhoBatch->data(),
+                    1,
+                    d_gradRhoMemspace->begin(cellStartId),
+                    1,
+                    *d_linAlgOpContext);
+                }
             }
         }
 
       memoryTransferM2H.copy(d_rhoMemspace->nEntries(),
                              rho.begin(),
                              d_rhoMemspace->begin());
+
+      if (computeGrad)
+        memoryTransferM2H.copy(d_gradRhoMemspace->nEntries(),
+                               gradRho.begin(),
+                               d_gradRhoMemspace->begin());
     }
   } // end of namespace ksdft
 } // end of namespace dftefe

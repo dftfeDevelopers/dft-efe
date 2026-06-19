@@ -35,8 +35,9 @@ namespace dftefe
   namespace ksdft
   {
     template <typename ValueType,
-                typename RealType, 
-                utils::MemorySpace memorySpace>
+              typename RealType,
+              utils::MemorySpace memorySpace,
+              size_type          dim>
     class DensityCalculatorKernels
     {
     public:
@@ -51,13 +52,26 @@ namespace dftefe
           quadRuleContainer,
         RealType *rhoBatch,
         linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext);
+
+      static void
+      computeGradRhoInBatch(
+        const size_type batchSize,
+        const std::pair<size_type, size_type> cellRange,
+        const RealType *occupationInBatch,
+        const ValueType *psiBatchQuad,
+        const ValueType *gradPsiBatchQuad,
+        RealType *psiGradPsiBatch,
+        std::shared_ptr<const quadrature::QuadratureRuleContainer>
+          quadRuleContainer,
+        RealType *gradRhoBatch,
+        linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext);
     }; // end of class DensityCalculatorKernels
 
 
 #ifdef DFTEFE_WITH_DEVICE
-    template <typename ValueType, typename RealType>
+    template <typename ValueType, typename RealType, size_type dim>
     class DensityCalculatorKernels<ValueType, RealType,
-                                   utils::MemorySpace::DEVICE>
+                                   utils::MemorySpace::DEVICE, dim>
     {
     public:
       static void
@@ -70,6 +84,19 @@ namespace dftefe
         std::shared_ptr<const quadrature::QuadratureRuleContainer>
           quadRuleContainer,
         RealType *rhoBatch,
+        linearAlgebra::LinAlgOpContext<utils::MemorySpace::DEVICE> &linAlgOpContext);
+
+      static void
+      computeGradRhoInBatch(
+        const size_type batchSize,
+        const std::pair<size_type, size_type> cellRange,
+        const RealType *occupationInBatch,
+        const ValueType *psiBatchQuad,
+        const ValueType *gradPsiBatchQuad,
+        RealType *psiGradPsiBatch,
+        std::shared_ptr<const quadrature::QuadratureRuleContainer>
+          quadRuleContainer,
+        RealType *gradRhoBatch,
         linearAlgebra::LinAlgOpContext<utils::MemorySpace::DEVICE> &linAlgOpContext);
     }; // end of class DensityCalculatorKernels
 #endif

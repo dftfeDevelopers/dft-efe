@@ -116,6 +116,16 @@ namespace dftefe
           memorySpace> &quadValuesContainer) const override;
 
       void
+      interpolateWithBasisGradient(
+        const linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
+          &                                                   vectorData,
+        const BasisManager<ValueTypeBasisCoeff, memorySpace> &basisManager,
+        const std::pair<size_type, size_type>                 cellRange,
+        linearAlgebra::blasLapack::scalar_type<ValueTypeBasisCoeff,
+                                               ValueTypeBasisData>
+          *quadValuesInCellRangePtr) const;
+
+      void
       integrateWithBasisValues(
         const quadrature::QuadratureValuesContainer<
           linearAlgebra::blasLapack::scalar_type<ValueTypeBasisCoeff,
@@ -136,17 +146,31 @@ namespace dftefe
           *quadValuesInCellRangePtr) const;
 
       /* FE functions for local kernel computations*/
+      /* \integral (L1 op1 N1) f (L2 op2 N2) dx */
       void
       computeFEMatrices(
         realspace::LinearLocalOp L1,
         realspace::VectorMathOp  Op1,
-        realspace::VectorMathOp  L2,
-        realspace::LinearLocalOp Op2,
         const quadrature::QuadratureValuesContainer<ValueTypeUnion, memorySpace>
           &                                          f,
+        realspace::VectorMathOp  L2,
+        realspace::LinearLocalOp Op2,
         StorageUnion &                               cellWiseFEData,
         linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext) const;
 
+      /* FE functions for local kernel computations*/
+      /* \integral f L12 op12 (N1.N2) dx */
+      void
+      computeFEMatrices(
+        const quadrature::QuadratureValuesContainer<ValueTypeUnion, memorySpace>
+          &                                          f,
+        realspace::VectorMathOp  Op12,
+        realspace::LinearLocalOp L12,
+        StorageUnion &                               cellWiseFEData,
+        linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext) const;
+
+     /* FE functions for local kernel computations*/
+      /* \integral (L1 op1 N1) (L2 op2 N2) dx */
       void
       computeFEMatrices(
         realspace::LinearLocalOp                     L1,
@@ -164,8 +188,10 @@ namespace dftefe
       /**---temporary scratch spaces----- */
       mutable StorageBasis d_basisDataInCellRange, d_basisGradientDataInCellRange, d_JxWxNBlock, d_JxWxGradNBlock;
       mutable StorageUnion d_fieldCellValues, d_fxJxWxNBlock;
-      mutable std::pair<size_type, size_type> d_basisDataCellRange;
-      mutable bool                            d_basisDataCellRangeCached;
+      mutable std::pair<size_type, size_type> d_cellRangeForBasisDataCache;
+      mutable bool                            d_isBasisDataCellRangeCached;
+      mutable std::pair<size_type, size_type> d_cellRangeForBasisGradientDataCache;
+      mutable bool                            d_isBasisGradientDataCellRangeCached;
       /**---temporary scratch spaces----- */
 
       std::vector<size_type> d_numCellDofs;
@@ -183,10 +209,23 @@ namespace dftefe
       BasisWeakFormKernelWithField(
         realspace::LinearLocalOp L1,
         realspace::VectorMathOp  Op1,
-        realspace::VectorMathOp  Op2,
-        realspace::LinearLocalOp L2,
         const quadrature::QuadratureValuesContainer<ValueTypeUnion,
-          memorySpace> &f,
+          memorySpace> &                                     f,
+        realspace::VectorMathOp                              Op2,
+        realspace::LinearLocalOp                             L2,
+        std::shared_ptr<
+          const FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+                                                             feBasisDataStorage,
+        const size_type                                      cellBlockSize,
+        StorageUnion &cellWiseFEData,
+        linearAlgebra::LinAlgOpContext<memorySpace> &        linAlgOpContext) const;
+
+      void
+      BasisWeakFormKernelWithField(
+        const quadrature::QuadratureValuesContainer<ValueTypeUnion,
+          memorySpace> &                                     f,
+        realspace::VectorMathOp                              Op12,
+        realspace::LinearLocalOp                             L12,
         std::shared_ptr<
           const FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
                                                              feBasisDataStorage,

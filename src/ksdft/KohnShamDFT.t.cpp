@@ -239,6 +239,49 @@ namespace dftefe
                             multiVectorGuessHost.data());
 
       }
+
+      std::set<DensityDescrAttr>
+      getDescrAttributes(const std::string &xcType)
+      {
+        if (xcType.rfind("GGA", 0) == 0)
+          return {DensityDescrAttr::Val, DensityDescrAttr::Grad};
+        return {DensityDescrAttr::Val};
+      }
+
+     template <typename RealType>
+      std::unordered_map<
+        DensityDescrAttr,
+        std::vector<
+          quadrature::QuadratureValuesContainer<RealType,
+                                                utils::MemorySpace::HOST>>>
+      buildDescrMap(
+        const std::set<DensityDescrAttr> &attrs,
+        const quadrature::QuadratureValuesContainer<RealType,
+                                                    utils::MemorySpace::HOST>
+          &       dens,
+        size_type dim)
+      {
+        std::unordered_map<
+          DensityDescrAttr,
+          std::vector<
+            quadrature::QuadratureValuesContainer<RealType,
+                                                  utils::MemorySpace::HOST>>>
+          descrMap;
+        for (const auto &attr : attrs)
+          {
+            if (attr == DensityDescrAttr::Val)
+              descrMap[attr] = {dens};
+            else if (attr == DensityDescrAttr::Grad)
+              {
+                descrMap[attr] = {
+                  quadrature::QuadratureValuesContainer<
+                    RealType,
+                    utils::MemorySpace::HOST>(
+                    dens.getQuadratureRuleContainer(), dim, (RealType)0.0)};
+              }
+          }
+        return descrMap;
+      }
     } // namespace KohnShamDFTInternal
 
     // used if analytical vself canellation route taken
@@ -344,6 +387,7 @@ namespace dftefe
       , d_isNlcc(false)
       , d_pTotal(feBMWaveFn->getMPIPatternP2P()->mpiCommunicator(),
                  "Kohn Sham DFT Solve time")
+      , d_xcType(xcType)
     {
       std::unique_ptr<linearAlgebra::MultiVector<ValueTypeWaveFunctionCoeff, memorySpace>> wfnPtr;
       std::vector<std::vector<double>> occupancies = {std::vector<double>(numWantedEigenvalues, 0.0)};
@@ -403,6 +447,15 @@ namespace dftefe
       //************* CHANGE THIS **********************
       d_jxwDataHost = quadRuleContainerRho->getJxW();
 
+      if (KohnShamDFTInternal::getDescrAttributes(xcType).count(
+            DensityDescrAttr::Grad) > 0)
+        d_mixingScheme.addMixingVariable(
+          mixingVariable::gradRho,
+          utils::MemoryStorage<RealType, utils::MemorySpace::HOST>(),
+          false,
+          mixingParameter,
+          isAdaptiveAndersonMixingParameter);
+
       d_rdm1Mix = std::make_shared<RDM1Mixing<
         linearAlgebra::blasLapack::scalar_type<ValueTypeWaveFunctionBasis,
                                                ValueTypeWaveFunctionCoeff>,
@@ -429,7 +482,10 @@ namespace dftefe
 
       d_rootCout << "Electron density in : " << totalDensityInQuad << "\n";
 
-      d_rdm1Mix->setDescriptors({{DensityDescrAttr::Val, {densIn}}}, {});
+      d_rdm1Mix->setDescriptors(
+        KohnShamDFTInternal::buildDescrMap(
+          KohnShamDFTInternal::getDescrAttributes(xcType), densIn, dim),
+        {});
 
       d_p.registerEnd("Pre Init Checks");
       d_p.registerStart("Hamiltonian Components Initilization");
@@ -462,7 +518,12 @@ namespace dftefe
           externalPotentialFunction,
           linAlgOpContext,
           KSDFTDefaults<memorySpace>::CELL_BATCH_SIZE);
-      d_rdm1Spectral->setDescriptors({{DensityDescrAttr::Val, {densIn}}}, {});
+
+      d_rdm1Spectral->setDescriptors(
+        KohnShamDFTInternal::buildDescrMap(
+          KohnShamDFTInternal::getDescrAttributes(xcType), densIn, dim),
+        {});
+
       d_hamitonianXC =
         std::make_shared<ExchangeCorrelationFE<ValueTypeWaveFunctionBasis,
                                                ValueTypeWaveFunctionCoeff,
@@ -474,17 +535,17 @@ namespace dftefe
           KSDFTDefaults<memorySpace>::CELL_BATCH_SIZE);
       d_p.registerEnd("Hamiltonian Components Initilization");
 
-      d_hamiltonianElectroExc =
-        std::make_shared<ElectrostaticExcFE<ValueTypeElectrostaticsCoeff,
-                                            ValueTypeElectrostaticsBasis,
-                                            ValueTypeWaveFunctionCoeff,
-                                            ValueTypeWaveFunctionBasis,
-                                            memorySpace,
-                                            dim>>(d_hamitonianElec,
-                                                  d_hamitonianXC);
+      // d_hamiltonianElectroExc =
+      //   std::make_shared<ElectrostaticExcFE<ValueTypeElectrostaticsCoeff,
+      //                                       ValueTypeElectrostaticsBasis,
+      //                                       ValueTypeWaveFunctionCoeff,
+      //                                       ValueTypeWaveFunctionBasis,
+      //                                       memorySpace,
+      //                                       dim>>(d_hamitonianElec,
+      //                                             d_hamitonianXC);
 
       std::vector<HamiltonianPtrVariant> hamiltonianComponentsVec{
-        d_hamitonianKin, d_hamiltonianElectroExc};
+        d_hamitonianKin, d_hamitonianElec, d_hamitonianXC /* d_hamiltonianElectroExc*/};
 
       size_type waveFnBatch =
         numWantedEigenvalues > KSDFTDefaults<memorySpace>::MAX_WAVEFN_BATCH_SIZE ?
@@ -699,6 +760,7 @@ namespace dftefe
       , d_isNlcc(false)
       , d_pTotal(feBMWaveFn->getMPIPatternP2P()->mpiCommunicator(),
                  "Kohn Sham DFT Solve time")
+      , d_xcType(xcType)
     {
       std::unique_ptr<linearAlgebra::MultiVector<ValueTypeWaveFunctionCoeff, memorySpace>> wfnPtr;
       std::vector<std::vector<double>> occupancies = {std::vector<double>(numWantedEigenvalues, 0.0)};
@@ -749,6 +811,15 @@ namespace dftefe
       //************* CHANGE THIS **********************
       d_jxwDataHost = quadRuleContainerRho->getJxW();
 
+      if (KohnShamDFTInternal::getDescrAttributes(xcType).count(
+            DensityDescrAttr::Grad) > 0)
+        d_mixingScheme.addMixingVariable(
+          mixingVariable::gradRho,
+          utils::MemoryStorage<RealType, utils::MemorySpace::HOST>(),
+          false,
+          mixingParameter,
+          isAdaptiveAndersonMixingParameter);
+
       d_rdm1Mix = std::make_shared<RDM1Mixing<
         linearAlgebra::blasLapack::scalar_type<ValueTypeWaveFunctionBasis,
                                                ValueTypeWaveFunctionCoeff>,
@@ -775,7 +846,10 @@ namespace dftefe
 
       d_rootCout << "Electron density in : " << totalDensityInQuad << "\n";
 
-      d_rdm1Mix->setDescriptors({{DensityDescrAttr::Val, {densIn}}}, {});
+      d_rdm1Mix->setDescriptors(
+        KohnShamDFTInternal::buildDescrMap(
+          KohnShamDFTInternal::getDescrAttributes(xcType), densIn, dim),
+        {});
 
       d_p.registerEnd("Pre Init Checks");
       d_p.registerStart("Hamiltonian Components Initilization");
@@ -810,7 +884,12 @@ namespace dftefe
           externalPotentialFunction,
           linAlgOpContext,
           KSDFTDefaults<memorySpace>::CELL_BATCH_SIZE);
-      d_rdm1Spectral->setDescriptors({{DensityDescrAttr::Val, {densIn}}}, {});
+
+      d_rdm1Spectral->setDescriptors(
+        KohnShamDFTInternal::buildDescrMap(
+          KohnShamDFTInternal::getDescrAttributes(xcType), densIn, dim),
+        {});
+
       d_hamitonianXC =
         std::make_shared<ExchangeCorrelationFE<ValueTypeWaveFunctionBasis,
                                                ValueTypeWaveFunctionCoeff,
@@ -820,19 +899,20 @@ namespace dftefe
           *d_rdm1Spectral,
           linAlgOpContext,
           KSDFTDefaults<memorySpace>::CELL_BATCH_SIZE);
+
       d_p.registerEnd("Hamiltonian Components Initilization");
 
-      d_hamiltonianElectroExc =
-        std::make_shared<ElectrostaticExcFE<ValueTypeElectrostaticsCoeff,
-                                            ValueTypeElectrostaticsBasis,
-                                            ValueTypeWaveFunctionCoeff,
-                                            ValueTypeWaveFunctionBasis,
-                                            memorySpace,
-                                            dim>>(d_hamitonianElec,
-                                                  d_hamitonianXC);
+      // d_hamiltonianElectroExc =
+      //   std::make_shared<ElectrostaticExcFE<ValueTypeElectrostaticsCoeff,
+      //                                       ValueTypeElectrostaticsBasis,
+      //                                       ValueTypeWaveFunctionCoeff,
+      //                                       ValueTypeWaveFunctionBasis,
+      //                                       memorySpace,
+      //                                       dim>>(d_hamitonianElec,
+      //                                             d_hamitonianXC);
 
       std::vector<HamiltonianPtrVariant> hamiltonianComponentsVec{
-        d_hamitonianKin, d_hamiltonianElectroExc};
+        d_hamitonianKin, d_hamitonianElec, d_hamitonianXC /* d_hamiltonianElectroExc*/};
 
       size_type waveFnBatch =
         numWantedEigenvalues > KSDFTDefaults<memorySpace>::MAX_WAVEFN_BATCH_SIZE ?
@@ -1050,6 +1130,7 @@ namespace dftefe
       , d_isNlcc(false)
       , d_pTotal(feBMWaveFn->getMPIPatternP2P()->mpiCommunicator(),
                  "Kohn Sham DFT Solve time")
+      , d_xcType(xcType)
     {
       std::unique_ptr<linearAlgebra::MultiVector<ValueTypeWaveFunctionCoeff, memorySpace>> wfnPtr;
       std::vector<std::vector<double>> occupancies = {std::vector<double>(numWantedEigenvalues, 0.0)};
@@ -1102,6 +1183,15 @@ namespace dftefe
       //************* CHANGE THIS **********************
       d_jxwDataHost = quadRuleContainerRho->getJxW();
 
+      if (KohnShamDFTInternal::getDescrAttributes(xcType).count(
+            DensityDescrAttr::Grad) > 0)
+        d_mixingScheme.addMixingVariable(
+          mixingVariable::gradRho,
+          utils::MemoryStorage<RealType, utils::MemorySpace::HOST>(),
+          false,
+          mixingParameter,
+          isAdaptiveAndersonMixingParameter);
+
       d_rdm1Mix = std::make_shared<RDM1Mixing<
         linearAlgebra::blasLapack::scalar_type<ValueTypeWaveFunctionBasis,
                                                ValueTypeWaveFunctionCoeff>,
@@ -1146,7 +1236,10 @@ namespace dftefe
 
       d_rootCout << "Electron density in : " << totalDensityInQuad << "\n";
 
-      d_rdm1Mix->setDescriptors({{DensityDescrAttr::Val, {densIn}}}, {});
+      d_rdm1Mix->setDescriptors(
+        KohnShamDFTInternal::buildDescrMap(
+          KohnShamDFTInternal::getDescrAttributes(xcType), densIn, dim),
+        {});
 
       d_p.registerEnd("Pre Init Checks");
       d_p.registerStart("Hamiltonian Components Initilization");
@@ -1247,7 +1340,12 @@ namespace dftefe
           linAlgOpContext,
           KSDFTDefaults<memorySpace>::CELL_BATCH_SIZE,
           fieldToTCIASplineMap);
-      d_rdm1Spectral->setDescriptors({{DensityDescrAttr::Val, {densIn}}}, {});
+
+      d_rdm1Spectral->setDescriptors(
+        KohnShamDFTInternal::buildDescrMap(
+          KohnShamDFTInternal::getDescrAttributes(xcType), densIn, dim),
+        {});
+
       d_hamitonianXC =
         std::make_shared<ExchangeCorrelationFE<ValueTypeWaveFunctionBasis,
                                                ValueTypeWaveFunctionCoeff,
@@ -1257,19 +1355,20 @@ namespace dftefe
           *d_rdm1Spectral,
           linAlgOpContext,
           KSDFTDefaults<memorySpace>::CELL_BATCH_SIZE);
+
       d_p.registerEnd("Hamiltonian Components Initilization");
 
-      d_hamiltonianElectroExc =
-        std::make_shared<ElectrostaticExcFE<ValueTypeElectrostaticsCoeff,
-                                            ValueTypeElectrostaticsBasis,
-                                            ValueTypeWaveFunctionCoeff,
-                                            ValueTypeWaveFunctionBasis,
-                                            memorySpace,
-                                            dim>>(d_hamitonianElec,
-                                                  d_hamitonianXC);
+      // d_hamiltonianElectroExc =
+      //   std::make_shared<ElectrostaticExcFE<ValueTypeElectrostaticsCoeff,
+      //                                       ValueTypeElectrostaticsBasis,
+      //                                       ValueTypeWaveFunctionCoeff,
+      //                                       ValueTypeWaveFunctionBasis,
+      //                                       memorySpace,
+      //                                       dim>>(d_hamitonianElec,
+      //                                             d_hamitonianXC);
 
       std::vector<HamiltonianPtrVariant> hamiltonianComponentsVec{
-        d_hamitonianKin, d_hamiltonianElectroExc};
+        d_hamitonianKin, d_hamitonianElec, d_hamitonianXC /* d_hamiltonianElectroExc*/};
 
       size_type waveFnBatch =
         numWantedEigenvalues > KSDFTDefaults<memorySpace>::MAX_WAVEFN_BATCH_SIZE ?
@@ -1479,6 +1578,7 @@ namespace dftefe
       , d_isResidualChebyshevFilter(isResidualChebyshevFilter)
       , d_pTotal(feBMWaveFn->getMPIPatternP2P()->mpiCommunicator(),
                  "Kohn Sham DFT Solve time")
+      , d_xcType(xcType)
     {
       std::unique_ptr<linearAlgebra::MultiVector<ValueTypeWaveFunctionCoeff, memorySpace>> wfnPtr;
       std::vector<std::vector<double>> occupancies = {std::vector<double>(numWantedEigenvalues, 0.0)};
@@ -1626,6 +1726,15 @@ namespace dftefe
       //************* CHANGE THIS **********************
       d_jxwDataHost = quadRuleContainerRho->getJxW();
 
+      if (KohnShamDFTInternal::getDescrAttributes(xcType).count(
+            DensityDescrAttr::Grad) > 0)
+        d_mixingScheme.addMixingVariable(
+          mixingVariable::gradRho,
+          utils::MemoryStorage<RealType, utils::MemorySpace::HOST>(),
+          false,
+          mixingParameter,
+          isAdaptiveAndersonMixingParameter);
+
       d_rdm1Mix = std::make_shared<RDM1Mixing<
         linearAlgebra::blasLapack::scalar_type<ValueTypeWaveFunctionBasis,
                                                ValueTypeWaveFunctionCoeff>,
@@ -1651,7 +1760,10 @@ namespace dftefe
 
       d_rootCout << "Electron density in : " << totalDensityInQuad << "\n";
 
-      d_rdm1Mix->setDescriptors({{DensityDescrAttr::Val, {densIn}}}, {});
+      d_rdm1Mix->setDescriptors(
+        KohnShamDFTInternal::buildDescrMap(
+          KohnShamDFTInternal::getDescrAttributes(xcType), densIn, dim),
+        {});
 
       d_p.registerEnd("Pre Init Checks");
       d_p.registerStart("Hamiltonian Components Initilization");
@@ -1695,7 +1807,11 @@ namespace dftefe
           KSDFTDefaults<memorySpace>::CELL_BATCH_SIZE,
           waveFnBatch);
 
-      d_rdm1Spectral->setDescriptors({{DensityDescrAttr::Val, {densIn}}}, {});
+      d_rdm1Spectral->setDescriptors(
+        KohnShamDFTInternal::buildDescrMap(
+          KohnShamDFTInternal::getDescrAttributes(xcType), densIn, dim),
+        {});
+
       if (d_isNlcc && d_isONCVNonLocPSP)
         d_hamitonianXC =
           std::make_shared<ExchangeCorrelationFE<ValueTypeWaveFunctionBasis,
@@ -1719,19 +1835,20 @@ namespace dftefe
             *d_rdm1Spectral,
             linAlgOpContext,
             KSDFTDefaults<memorySpace>::CELL_BATCH_SIZE);
+
       d_p.registerEnd("Hamiltonian Components Initilization");
 
-      d_hamiltonianElectroExc =
-        std::make_shared<ElectrostaticExcFE<ValueTypeElectrostaticsCoeff,
-                                            ValueTypeElectrostaticsBasis,
-                                            ValueTypeWaveFunctionCoeff,
-                                            ValueTypeWaveFunctionBasis,
-                                            memorySpace,
-                                            dim>>(d_hamitonianElec,
-                                                  d_hamitonianXC);
+      // d_hamiltonianElectroExc =
+      //   std::make_shared<ElectrostaticExcFE<ValueTypeElectrostaticsCoeff,
+      //                                       ValueTypeElectrostaticsBasis,
+      //                                       ValueTypeWaveFunctionCoeff,
+      //                                       ValueTypeWaveFunctionBasis,
+      //                                       memorySpace,
+      //                                       dim>>(d_hamitonianElec,
+      //                                             d_hamitonianXC);
 
       std::vector<HamiltonianPtrVariant> hamiltonianComponentsVec{
-        d_hamitonianKin, d_hamiltonianElectroExc};
+        d_hamitonianKin, d_hamitonianElec, d_hamitonianXC /* d_hamiltonianElectroExc*/};
 
       d_p.registerStart("Hamiltonian Operator Creation");
       // form the kohn sham operator
@@ -1940,6 +2057,7 @@ namespace dftefe
       , d_isResidualChebyshevFilter(isResidualChebyshevFilter)
       , d_pTotal(feBMWaveFn->getMPIPatternP2P()->mpiCommunicator(),
                  "Kohn Sham DFT Solve time")
+      , d_xcType(xcType)
     {
       std::unique_ptr<linearAlgebra::MultiVector<ValueTypeWaveFunctionCoeff, memorySpace>> wfnPtr;
       std::vector<std::vector<double>> occupancies = {std::vector<double>(numWantedEigenvalues, 0.0)};
@@ -2101,6 +2219,15 @@ namespace dftefe
       //************* CHANGE THIS **********************
       d_jxwDataHost = quadRuleContainerRho->getJxW();
 
+      if (KohnShamDFTInternal::getDescrAttributes(xcType).count(
+            DensityDescrAttr::Grad) > 0)
+        d_mixingScheme.addMixingVariable(
+          mixingVariable::gradRho,
+          utils::MemoryStorage<RealType, utils::MemorySpace::HOST>(),
+          false,
+          mixingParameter,
+          isAdaptiveAndersonMixingParameter);
+
       d_rdm1Mix = std::make_shared<RDM1Mixing<
         linearAlgebra::blasLapack::scalar_type<ValueTypeWaveFunctionBasis,
                                                ValueTypeWaveFunctionCoeff>,
@@ -2127,7 +2254,10 @@ namespace dftefe
       d_rootCout << "Electron density in : " << totalDensityInQuad << "\n";
       p.print();
 
-      d_rdm1Mix->setDescriptors({{DensityDescrAttr::Val, {densIn}}}, {});
+      d_rdm1Mix->setDescriptors(
+        KohnShamDFTInternal::buildDescrMap(
+          KohnShamDFTInternal::getDescrAttributes(xcType), densIn, dim),
+        {});
 
       d_p.registerEnd("Pre Init Checks");
 
@@ -2302,7 +2432,11 @@ namespace dftefe
         utils::printCurrentMemoryUsage(d_mpiCommDomain, "After Elec Init");
         d_p.registerStart("Hamiltonian Components Initilization Exc Op");
 
-      d_rdm1Spectral->setDescriptors({{DensityDescrAttr::Val, {densIn}}}, {});
+      d_rdm1Spectral->setDescriptors(
+        KohnShamDFTInternal::buildDescrMap(
+          KohnShamDFTInternal::getDescrAttributes(xcType), densIn, dim),
+        {});
+
       if (d_isNlcc && d_isONCVNonLocPSP)
         d_hamitonianXC =
           std::make_shared<ExchangeCorrelationFE<ValueTypeWaveFunctionBasis,
@@ -2327,17 +2461,17 @@ namespace dftefe
             linAlgOpContext,
             KSDFTDefaults<memorySpace>::CELL_BATCH_SIZE);
 
-      d_hamiltonianElectroExc =
-        std::make_shared<ElectrostaticExcFE<ValueTypeElectrostaticsCoeff,
-                                            ValueTypeElectrostaticsBasis,
-                                            ValueTypeWaveFunctionCoeff,
-                                            ValueTypeWaveFunctionBasis,
-                                            memorySpace,
-                                            dim>>(d_hamitonianElec,
-                                                  d_hamitonianXC);
+      // d_hamiltonianElectroExc =
+      //   std::make_shared<ElectrostaticExcFE<ValueTypeElectrostaticsCoeff,
+      //                                       ValueTypeElectrostaticsBasis,
+      //                                       ValueTypeWaveFunctionCoeff,
+      //                                       ValueTypeWaveFunctionBasis,
+      //                                       memorySpace,
+      //                                       dim>>(d_hamitonianElec,
+      //                                             d_hamitonianXC);
 
       std::vector<HamiltonianPtrVariant> hamiltonianComponentsVec{
-        d_hamitonianKin, d_hamiltonianElectroExc};
+        d_hamitonianKin, d_hamitonianElec, d_hamitonianXC /* d_hamiltonianElectroExc*/};
 
       d_p.registerEnd("Hamiltonian Components Initilization Exc Op");
       utils::printCurrentMemoryUsage(d_mpiCommDomain, "After Exc Init");
@@ -2530,7 +2664,10 @@ namespace dftefe
               d_p.registerStart("Hamiltonian Reinit");
 
               d_rdm1Mix->getDescriptors(
-                {DensityDescrAttr::Val}, {}, densAttrIn, wfcAttrIn);
+                KohnShamDFTInternal::getDescrAttributes(d_xcType),
+                {},
+                densAttrIn,
+                wfcAttrIn);
               auto &densIn = densAttrIn.at(DensityDescrAttr::Val)[0];
 
               RealType totalDensityInQuad =
@@ -2569,10 +2706,10 @@ namespace dftefe
 
               d_hamitonianXC->reinitField(*d_rdm1Mix);
 
-              d_hamiltonianElectroExc->reinit(d_hamitonianElec, d_hamitonianXC);
+              //d_hamiltonianElectroExc->reinit(d_hamitonianElec, d_hamitonianXC);
 
               std::vector<HamiltonianPtrVariant> hamiltonianComponentsVec{
-                d_hamitonianKin, d_hamiltonianElectroExc};
+                d_hamitonianKin, d_hamitonianElec, d_hamitonianXC /* d_hamiltonianElectroExc*/};
 
               d_hamitonianOperator->reinit(*d_feBMWaveFn,
                                            hamiltonianComponentsVec);
@@ -2618,7 +2755,11 @@ namespace dftefe
           d_p.registerStart("Density Compute");
           d_pTotal.registerStart("Density Compute");
 
-          d_rdm1Spectral->getDescriptors({DensityDescrAttr::Val}, {}, densAttrOut, wfcAttrOut);
+          d_rdm1Spectral->getDescriptors(
+            KohnShamDFTInternal::getDescrAttributes(d_xcType),
+            {},
+            densAttrOut,
+            wfcAttrOut);
           auto &densOut = densAttrOut.at(DensityDescrAttr::Val)[0];
 
           RealType totalDensityOutQuad =
@@ -2720,7 +2861,7 @@ namespace dftefe
 
               d_hamitonianXC->evalEnergy(*d_rdm1Spectral, d_mpiCommDomain);
               RealType xcEnergy = d_hamitonianXC->getEnergy();
-              d_rootCout << "LDA EXC energy: " << xcEnergy << "\n";
+              d_rootCout << " EXC energy: " << xcEnergy << "\n";
 
               // calculate band energy
               RealType bandEnergy = 0;
@@ -2818,7 +2959,7 @@ namespace dftefe
 
           d_hamitonianXC->evalEnergy(*d_rdm1Spectral, d_mpiCommDomain);
           RealType xcEnergy = d_hamitonianXC->getEnergy();
-          rootCout << "LDA EXC energy: " << xcEnergy << "\n";
+          rootCout << "EXC energy: " << xcEnergy << "\n";
 
           // calculate band energy
           RealType bandEnergy = 0;

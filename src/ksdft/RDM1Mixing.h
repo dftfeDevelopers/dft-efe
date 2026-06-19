@@ -155,6 +155,7 @@ namespace dftefe
       std::reference_wrapper<const MPI_Comm> d_mpiCommDomain;
 
       AttrStorage d_densityInAttrVals;
+      AttrStorage d_gradDensityInAttrVals;
     };
 
   } // namespace ksdft

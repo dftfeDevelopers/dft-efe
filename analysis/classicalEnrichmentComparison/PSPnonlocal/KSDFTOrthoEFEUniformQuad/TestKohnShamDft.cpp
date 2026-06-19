@@ -1039,7 +1039,7 @@ int main(int argc, char** argv)
   p.registerStart("Orbital basis datastorage eval");
 
   basisAttrMap[basis::BasisStorageAttributes::StoreValues] = true;
-  basisAttrMap[basis::BasisStorageAttributes::StoreGradient] = false;
+  basisAttrMap[basis::BasisStorageAttributes::StoreGradient] = true;
   basisAttrMap[basis::BasisStorageAttributes::StoreHessian] = false;
   basisAttrMap[basis::BasisStorageAttributes::StoreOverlap] = false;
   basisAttrMap[basis::BasisStorageAttributes::StoreGradNiGradNj] = false;
@@ -1240,7 +1240,7 @@ int main(int argc, char** argv)
                                           feBDEXCHamiltonian,      
                                           feBDAtomCenterNonLocalOperator,                                                                          
                                           atomSymbolToPSPFileName,
-                                          "LDA-PW",
+                                          "GGA-PBE",
                                           linAlgOpContext,
                                           *MContextForInv,
                                           *MContext,
@@ -1308,7 +1308,7 @@ int main(int argc, char** argv)
                                           feBDEXCHamiltonian,  
                                           feBDAtomCenterNonLocalOperator,                                                                              
                                           atomSymbolToPSPFileName,
-                                          "LDA-PW",
+                                          "GGA-PBE",
                                           linAlgOpContext,
                                           *MContextForInv,
                                           /**MContextForInv,*/

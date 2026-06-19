@@ -593,7 +593,8 @@ namespace dftefe
       std::shared_ptr<linearAlgebra::ElpaScalapackManager> d_elpaScala;
       std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpaceHost>>
       d_linAlgOpContextHost;    
-      double d_smearingTemperature, d_freeEnergy;
+      double      d_smearingTemperature, d_freeEnergy;
+      std::string d_xcType;
 
     }; // end of KohnShamDFT
   }    // end of namespace ksdft

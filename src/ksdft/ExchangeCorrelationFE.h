@@ -122,13 +122,19 @@ namespace dftefe
       std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
       getLinAlgOpContext() const;
 
+      ExcFamilyType
+      getExcFamilyType() const;
+
     private:
-      std::shared_ptr<
-        quadrature::QuadratureValuesContainer<RealType, memorySpaceHost>>
-        d_xcPotentialQuad;
       std::shared_ptr<
         quadrature::QuadratureValuesContainer<RealType, memorySpace>>
         d_xcPotentialQuadMemspace;
+      // GGA only: returns the dim-component field
+      // f_d = 2*(dEx/dσ_αα+dEc/dσ_αα)*∇ρ↑_d + (dEx/dσ_αβ+dEc/dσ_αβ)*∇ρ↓_d
+      // used by getLocal to assemble ∫ f·∇(φ_iφ_j) dV
+      std::shared_ptr<
+        quadrature::QuadratureValuesContainer<RealType, memorySpace>>
+        d_derExcWithSigmaTimesGradRhoQuadMemspace;
       std::shared_ptr<
         const basis::FEBasisDofHandler<ValueTypeBasisCoeff, memorySpace, dim>>
         d_feBasisDofHandler;
@@ -146,10 +152,15 @@ namespace dftefe
         d_linAlgOpContext;
 
       ExcManager<memorySpace> d_excManager;
+      mutable Storage         d_sigmaGradRhoCellStorage;
 
       std::shared_ptr<
         quadrature::QuadratureValuesContainer<RealType, memorySpaceHost>>
         d_coreCorrectionUPF;
+      // GGA + NLCC: dim-component gradient ∇ρ_core at each quad point.
+      std::shared_ptr<
+        quadrature::QuadratureValuesContainer<RealType, memorySpaceHost>>
+        d_coreCorrectionGradUPF;
 
     }; // end of class ExchangeCorrelationFE
   }    // end of namespace ksdft

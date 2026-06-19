@@ -133,9 +133,9 @@ namespace dftefe
       d_excHamiltonian->getHamiltonianFEBasisOperations()->computeFEMatrices(
         basis::realspace::LinearLocalOp::IDENTITY,
         basis::realspace::VectorMathOp::MULT,
+        *elextroxcPotentialQuad,        
         basis::realspace::VectorMathOp::MULT,
         basis::realspace::LinearLocalOp::IDENTITY,
-        *elextroxcPotentialQuad,
         cellWiseStorage,
         *d_excHamiltonian->getLinAlgOpContext());
     }

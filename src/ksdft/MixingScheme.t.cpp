@@ -434,5 +434,13 @@ namespace dftefe
             }
         }
     }
+    template <typename ValueTypeMixingVariable, typename ValueTypeWeights>
+    bool
+    MixingScheme<ValueTypeMixingVariable, ValueTypeWeights>::hasVariable(
+      mixingVariable var) const
+    {
+      return d_variableHistoryIn.count(var) > 0;
+    }
+
   } // namespace ksdft
 } // namespace dftefe

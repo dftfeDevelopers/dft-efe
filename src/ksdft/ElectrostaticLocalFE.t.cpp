@@ -2014,9 +2014,9 @@ namespace dftefe
       d_feBasisOpHamiltonian->computeFEMatrices(
         basis::realspace::LinearLocalOp::IDENTITY,
         basis::realspace::VectorMathOp::MULT,
+        *d_potentialHamQuadMemspace,        
         basis::realspace::VectorMathOp::MULT,
         basis::realspace::LinearLocalOp::IDENTITY,
-        *d_potentialHamQuadMemspace,
         cellWiseStorage,
         *d_linAlgOpContext);
     }
