@@ -67,7 +67,7 @@ namespace dftefe
     void
     AtomSuperpositionFunction<memorySpace>::evalHost(
       size_type                      numPoints,
-      const AtomSuperpositonFuncType atomSupType,
+      const AtomSuperpositionFuncType atomSupType,
       const double                   constant,
       const double *                 t,
       double *                       q) const
@@ -78,7 +78,7 @@ namespace dftefe
         for (size_type iDim = 0; iDim < d_dim; ++iDim)
           points[iPoint][iDim] = t[iPoint * d_dim + iDim];
 
-      if (atomSupType == AtomSuperpositonFuncType::Identity)
+      if (atomSupType == AtomSuperpositionFuncType::Identity)
         {
           for (size_type iPoint = 0; iPoint < numPoints; ++iPoint)
             q[iPoint] = 0.0;
@@ -98,7 +98,7 @@ namespace dftefe
           for (size_type iPoint = 0; iPoint < numPoints; ++iPoint)
             q[iPoint] *= constant;
         }
-      else if (atomSupType == AtomSuperpositonFuncType::IdentitySq)
+      else if (atomSupType == AtomSuperpositionFuncType::IdentitySq)
         {
           for (size_type iPoint = 0; iPoint < numPoints; ++iPoint)
             q[iPoint] = 0.0;
@@ -118,7 +118,7 @@ namespace dftefe
           for (size_type iPoint = 0; iPoint < numPoints; ++iPoint)
             q[iPoint] *= constant;
         }
-      else if (atomSupType == AtomSuperpositonFuncType::GradDotGradSq)
+      else if (atomSupType == AtomSuperpositionFuncType::GradDotGradSq)
         {
           for (size_type iPoint = 0; iPoint < numPoints; ++iPoint)
             q[iPoint] = 0.0;
@@ -140,7 +140,7 @@ namespace dftefe
           for (size_type iPoint = 0; iPoint < numPoints; ++iPoint)
             q[iPoint] *= constant;
         }
-      else if (atomSupType == AtomSuperpositonFuncType::Grad)
+      else if (atomSupType == AtomSuperpositionFuncType::Grad)
         {
           for (size_type iPoint = 0; iPoint < numPoints; ++iPoint)
             for (size_type iDim = 0; iDim < d_dim; ++iDim)

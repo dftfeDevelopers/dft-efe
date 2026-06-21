@@ -70,7 +70,7 @@ namespace dftefe
 #endif
 
     private:
-      AtomSuperpositonFuncType d_atomSupType;
+      AtomSuperpositionFuncType d_atomSupType;
       size_type                d_dim;
       double                   d_constant;
     };

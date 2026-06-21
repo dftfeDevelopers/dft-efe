@@ -86,21 +86,19 @@ namespace dftefe
         quadrature::QuadratureValuesContainer<RealType, memorySpaceHost>>(
         quadRuleContainer, 1, (RealType)0.0);
 
-      const atoms::AtomSevereFunction<memorySpace>
+      const atoms::AtomSuperpositionFunction<memorySpace>
         rhoCoreCorrection(atomSphericalDataContainerPSP,
                           atomSymbolVec,
                           atomCoordinates,
                           "nlcc",
-                          0,
-                          1,
-                          1,
                           linAlgOpContext.get());
 
       utils::MemoryStorage<RealType, memorySpace>
         coreCorrectionUPFMemspace(quadRuleContainer->nQuadraturePoints());
 
-      rhoCoreCorrection.template eval<memorySpace>(
+      rhoCoreCorrection.evaluate(
         quadRuleContainer->nQuadraturePoints(),
+        atoms::AtomSuperpositionFuncType::Identity,
         quadRuleContainer->template getRealPointsPtr<memorySpace>(),
         coreCorrectionUPFMemspace.data());
 
@@ -113,19 +111,12 @@ namespace dftefe
       if (d_excManager.getExcSSDFunctionalObj()->getExcFamilyType() ==
           ExcFamilyType::GGA)
         {
-          utils::throwException(
-            false,
-            "ExchangeCorrelation GGA with NLCC not implemented.");
-
-          // const atoms::AtomSevereFunction<memorySpace>
-          //   rhoCoreGrad(atomSphericalDataContainerPSP,
-          //               atomSymbolVec,
-          //               atomCoordinates,
-          //               "nlcc",
-          //               1,
-          //               1,
-          //               1,
-          //               linAlgOpContext.get());
+          const atoms::AtomSuperpositionFunction<memorySpace>
+            rhoCoreGrad(atomSphericalDataContainerPSP,
+                        atomSymbolVec,
+                        atomCoordinates,
+                        "nlcc",
+                        linAlgOpContext.get());
 
           d_coreCorrectionGradUPF = std::make_shared<
             quadrature::QuadratureValuesContainer<RealType, memorySpaceHost>>(
@@ -134,10 +125,11 @@ namespace dftefe
           utils::MemoryStorage<RealType, memorySpace>
             coreCorrGradMemspace(quadRuleContainer->nQuadraturePoints() * dim);
 
-          // rhoCoreGrad.template eval<memorySpace>(
-          //   quadRuleContainer->nQuadraturePoints(),
-          //   quadRuleContainer->template getRealPointsPtr<memorySpace>(),
-          //   coreCorrGradMemspace.data());
+          rhoCoreGrad.evaluate(
+            quadRuleContainer->nQuadraturePoints(),
+            atoms::AtomSuperpositionFuncType::Grad,
+            quadRuleContainer->template getRealPointsPtr<memorySpace>(),
+            coreCorrGradMemspace.data());
 
           memTrans.copy(coreCorrGradMemspace.size(),
                         d_coreCorrectionGradUPF->data(),

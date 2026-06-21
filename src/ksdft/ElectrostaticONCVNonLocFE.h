@@ -128,9 +128,9 @@ namespace dftefe
         const std::shared_ptr<atoms::AtomSphericalDataContainer>
                       atomSphericalDataContainerPSP,
         const double &smearedChargeRadius,
-        const utils::ScalarSpatialFunctionReal
+        const atoms::AtomSuperpositionFunction<memorySpace>
           &atomicTotalElectroPotentialFunction,
-        const utils::ScalarSpatialFunctionReal
+        const atoms::AtomSuperpositionFunction<memorySpace>
           &atomicElectronicChargeDensityFunction,
         std::shared_ptr<const basis::FEBasisManager<ValueTypeBasisCoeff,
                                                     ValueTypeBasisData,
@@ -201,9 +201,9 @@ namespace dftefe
       void
       reinitBasis(
         const std::vector<utils::Point> &atomCoordinates,
-        const utils::ScalarSpatialFunctionReal
+        const atoms::AtomSuperpositionFunction<memorySpace>
           &atomicTotalElectroPotentialFunction,
-        const utils::ScalarSpatialFunctionReal
+        const atoms::AtomSuperpositionFunction<memorySpace>
           &atomicElectronicChargeDensityFunction,
         std::shared_ptr<const basis::FEBasisManager<ValueTypeBasisCoeff,
                                                     ValueTypeBasisData,

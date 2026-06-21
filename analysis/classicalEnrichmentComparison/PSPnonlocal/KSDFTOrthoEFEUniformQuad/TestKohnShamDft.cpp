@@ -1199,7 +1199,15 @@ int main(int argc, char** argv)
                                         dim>* dftefeSolve = nullptr;
 
   utils::printCurrentMemoryUsage(comm, "Before Kohn Sham DFT Class Init");
-                                      
+                     
+  std::shared_ptr<atoms::AtomSuperpositionFunction<memorySpace>> elecChargeDens = 
+        std::make_shared<atoms::AtomSuperpositionFunction<memorySpace>>(
+          atomSphericalDataContainer,
+          atomSymbolVec,
+          atomCoordinatesVec,
+          "density",
+          linAlgOpContext.get());   
+
   if(isNumericalNuclearSolve && !isDeltaRhoPoissonSolve)
   {
     utils::throwException(false, "Option not there for KohnShamDFT class creation.");                        
@@ -1230,6 +1238,7 @@ int main(int argc, char** argv)
                                           mixingHistory,
                                           mixingParameter,
                                           isAdaptiveAndersonMixingParameter,
+                                          *elecChargeDens,
                                           basisManagerTotalPot,
                                           basisManagerWaveFn,
                                           feBDTotalChargeStiffnessMatrix,
@@ -1249,28 +1258,13 @@ int main(int argc, char** argv)
   }
   else if (!isNumericalNuclearSolve && isDeltaRhoPoissonSolve)
   {
-    std::shared_ptr<utils::ScalarSpatialFunctionReal> smfuncAtTotPot = 
-        std::make_shared<atoms::AtomSevereFunction<memorySpace>>(
+    std::shared_ptr<atoms::AtomSuperpositionFunction<memorySpace>> smfuncAtTotPot = 
+        std::make_shared<atoms::AtomSuperpositionFunction<memorySpace>>(
           atomSphericalDataContainer,
           atomSymbolVec,
           atomCoordinatesVec,
           "vtotal",
-          0,
-          1,
-          1/(atoms::Clm(0, 0) * atoms::Dm(0) * atoms::Qm(0, 0)),
-          linAlgOpContext.get());
-
-
-  std::shared_ptr<utils::ScalarSpatialFunctionReal> elecChargeDens = 
-        std::make_shared<atoms::AtomSevereFunction<memorySpace>>(
-          atomSphericalDataContainer,
-          atomSymbolVec,
-          atomCoordinatesVec,
-          "density",
-          0,
-          1,
-          1/(atoms::Clm(0, 0) * atoms::Dm(0) * atoms::Qm(0, 0)),
-          linAlgOpContext.get());                
+          linAlgOpContext.get());             
 
     dftefeSolve =
      new ksdft::KohnShamDFT<double,

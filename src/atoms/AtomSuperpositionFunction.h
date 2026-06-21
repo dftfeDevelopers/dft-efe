@@ -42,7 +42,7 @@ namespace dftefe
 {
   namespace atoms
   {
-    enum class AtomSuperpositonFuncType
+    enum class AtomSuperpositionFuncType
     {
       Identity,
       Grad,
@@ -65,7 +65,7 @@ namespace dftefe
 
       void
       evaluate(const size_type                numPoints,
-           const AtomSuperpositonFuncType atomSupType,
+           const AtomSuperpositionFuncType atomSupType,
            const double *                 t,
            double *                       q,
            const double                   constant = 1.0) const
@@ -81,7 +81,7 @@ namespace dftefe
     protected:
       void
       evalHost(size_type                      numPoints,
-               const AtomSuperpositonFuncType atomSupType,
+               const AtomSuperpositionFuncType atomSupType,
                const double                   constant,
                const double *                 t,
                double *                       q) const;
@@ -89,7 +89,7 @@ namespace dftefe
 #ifdef DFTEFE_WITH_DEVICE
       void
       evalDevice(size_type                      numPoints,
-                 const AtomSuperpositonFuncType atomSupType,
+                 const AtomSuperpositionFuncType atomSupType,
                  const double                   constant,
                  const double *                 t,
                  double *                       q) const;

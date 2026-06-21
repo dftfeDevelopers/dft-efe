@@ -796,6 +796,23 @@ std::shared_ptr<linearAlgebra::OperatorContext<double,
 
   utils::printCurrentMemoryUsage(comm, "Before Kohn Sham DFT Class Init");
 
+  std::vector<std::string> fieldNamesElecDens{"density"};
+  std::vector<std::string> metadataNamesElecDens{"symbol", "Z", "charge", "NR"};
+  std::shared_ptr<atoms::AtomSphericalDataContainer> atomSphericalDataContainerElecDens =
+    std::make_shared<atoms::AtomSphericalDataContainer>(
+      atoms::AtomSphericalDataType::ENRICHMENT,
+      atomSymbolToBasisFileName,
+      fieldNamesElecDens,
+      metadataNamesElecDens,
+      std::map<std::string, std::string>({{"rcsmear", std::to_string(rc)}, {"PSP/AE", "PSP"}}));
+  std::shared_ptr<atoms::AtomSuperpositionFunction<memorySpace>> elecChargeDens =
+    std::make_shared<atoms::AtomSuperpositionFunction<memorySpace>>(
+      atomSphericalDataContainerElecDens,
+      atomSymbolVec,
+      atomCoordinatesVec,
+      "density",
+      linAlgOpContext.get());
+
   if(isNumericalNuclearSolve && !isDeltaRhoPoissonSolve)
   {
     utils::throwException(false, "Option not there for KohnShamDFT class creation.");                        
@@ -826,16 +843,18 @@ std::shared_ptr<linearAlgebra::OperatorContext<double,
                                           mixingHistory,
                                           mixingParameter,
                                           isAdaptiveAndersonMixingParameter,
+                                          *elecChargeDens,
                                           basisManagerTotalPot,
                                           basisManagerWaveFn,
                                           feBDTotalChargeStiffnessMatrix,
-                                          feBDNucChargeRhs, 
-                                          feBDElecChargeRhs,  
-                                          feBDKineticHamiltonian,     
-                                          feBDElectrostaticsHamiltonian, 
-                                          feBDEXCHamiltonian,       
-                                          feBDAtomCenterNonLocalOperator,                                                                         
+                                          feBDNucChargeRhs,
+                                          feBDElecChargeRhs,
+                                          feBDKineticHamiltonian,
+                                          feBDElectrostaticsHamiltonian,
+                                          feBDEXCHamiltonian,
+                                          feBDAtomCenterNonLocalOperator,
                                           atomSymbolToPSPFileName,
+                                          "GGA-PBE",
                                           linAlgOpContext,
                                           *MContextForInv,
                                           /**MContextForInv,*/
@@ -844,26 +863,23 @@ std::shared_ptr<linearAlgebra::OperatorContext<double,
   }
   else if (!isNumericalNuclearSolve && isDeltaRhoPoissonSolve)
   {
-    std::vector<std::string> fieldNames{"density", "vtotal"};
-    std::vector<std::string> metadataNames{ "symbol", "Z", "charge", "NR"};
-    std::shared_ptr<atoms::AtomSphericalDataContainer>  atomSphericalDataContainer = 
-        std::make_shared<atoms::AtomSphericalDataContainer>(
-                                                        atoms::AtomSphericalDataType::ENRICHMENT,
-                                                        atomSymbolToBasisFileName,
-                                                        fieldNames,
-                                                        metadataNames,
-                                                        std::map<std::string, std::string>({{"rcsmear", std::to_string(rc)}, {"PSP/AE", "PSP"}}));    
+    std::vector<std::string> fieldNamesDelta{"density", "vtotal"};
+    std::vector<std::string> metadataNamesDelta{"symbol", "Z", "charge", "NR"};
+    std::shared_ptr<atoms::AtomSphericalDataContainer> atomSphericalDataContainerDelta =
+      std::make_shared<atoms::AtomSphericalDataContainer>(
+        atoms::AtomSphericalDataType::ENRICHMENT,
+        atomSymbolToBasisFileName,
+        fieldNamesDelta,
+        metadataNamesDelta,
+        std::map<std::string, std::string>({{"rcsmear", std::to_string(rc)}, {"PSP/AE", "PSP"}}));
 
-  std::shared_ptr<utils::ScalarSpatialFunctionReal> smfuncAtTotPot = 
-    std::make_shared<AtomicTotalElectrostaticPotentialFunction>(atomSphericalDataContainer,
-                    atomSymbolVec,
-                    atomCoordinatesVec);
-
-  std::shared_ptr<utils::ScalarSpatialFunctionReal> elecChargeDens = 
-    std::make_shared<RhoFunction>(atomSphericalDataContainer,
-                    atomSymbolVec,
-                    atomChargesVec,
-                    atomCoordinatesVec);
+    std::shared_ptr<atoms::AtomSuperpositionFunction<memorySpace>> smfuncAtTotPot =
+      std::make_shared<atoms::AtomSuperpositionFunction<memorySpace>>(
+        atomSphericalDataContainerDelta,
+        atomSymbolVec,
+        atomCoordinatesVec,
+        "vtotal",
+        linAlgOpContext.get());
 
     dftefeSolve =
     std::make_shared<ksdft::KohnShamDFT<double,
@@ -894,13 +910,14 @@ std::shared_ptr<linearAlgebra::OperatorContext<double,
                                           basisManagerTotalPot,
                                           basisManagerWaveFn,
                                           feBDTotalChargeStiffnessMatrix,
-                                          feBDNucChargeRhs, 
-                                          feBDElecChargeRhs,  
-                                          feBDKineticHamiltonian,     
-                                          feBDElectrostaticsHamiltonian, 
-                                          feBDEXCHamiltonian,  
-                                          feBDAtomCenterNonLocalOperator,                                                                              
+                                          feBDNucChargeRhs,
+                                          feBDElecChargeRhs,
+                                          feBDKineticHamiltonian,
+                                          feBDElectrostaticsHamiltonian,
+                                          feBDEXCHamiltonian,
+                                          feBDAtomCenterNonLocalOperator,
                                           atomSymbolToPSPFileName,
+                                          "GGA-PBE",
                                           linAlgOpContext,
                                           *MContextForInv,
                                           /**MContextForInv,*/

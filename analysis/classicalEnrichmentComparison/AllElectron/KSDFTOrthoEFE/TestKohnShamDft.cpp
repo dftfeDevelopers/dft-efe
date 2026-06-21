@@ -1039,33 +1039,15 @@ int main(int argc, char** argv)
     std::shared_ptr<const basis::FEBasisDataStorage<double, memorySpace>> feBDEXCHamiltonian = efeBasisDataAdaptiveOrbital;
   
     p.registerEnd("Orbital basis datastorage eval");
-    p.registerStart("Density Initilization");
-
-  std::shared_ptr<const quadrature::QuadratureRuleContainer> quadRuleContainerRho = 
-                efeBasisDataAdaptiveOrbital->getQuadratureRuleContainer();
-
-   quadrature::QuadratureValuesContainer<double, Host> 
-      electronChargeDensity(quadRuleContainerRho, 1, 0.0);
-
-    std::shared_ptr<const utils::ScalarSpatialFunctionReal> rho =
-      std::make_shared<atoms::AtomSevereFunction<memorySpace>>(
-        atomSphericalDataContainer, atomSymbolVec, atomCoordinatesVec,
-        "density", 0, 1,
-        1.0/(atoms::Clm(0, 0) * atoms::Dm(0) * atoms::Qm(0, 0)),
-        linAlgOpContext.get());
- 
-  for (size_type iCell = 0; iCell < electronChargeDensity.nCells(); iCell++)
-    {
-          size_type             quadId = 0;
-          std::vector<double> a(
-            electronChargeDensity.nCellQuadraturePoints(iCell));
-          a = (*rho)(quadRuleContainerRho->getCellRealPoints(iCell));
-          double *b = a.data();
-          electronChargeDensity.template 
-            setCellValues<Host>(iCell, b);
-    }
-    p.registerEnd("Density Initilization");
     p.registerStart("FE Basis Manager Init");
+
+  std::shared_ptr<atoms::AtomSuperpositionFunction<memorySpace>> elecChargeDens =
+    std::make_shared<atoms::AtomSuperpositionFunction<memorySpace>>(
+      atomSphericalDataContainer,
+      atomSymbolVec,
+      atomCoordinatesVec,
+      "density",
+      linAlgOpContext.get());
     std::shared_ptr<const utils::ScalarSpatialFunctionReal>
           zeroFunction = std::make_shared
             <utils::ScalarZeroFunctionReal>();
@@ -1207,23 +1189,23 @@ int main(int argc, char** argv)
                                   mixingHistory,
                                   mixingParameter,
                                   isAdaptiveAndersonMixingParameter,
-                                  electronChargeDensity,
+                                  *elecChargeDens,
                                   basisManagerTotalPot,
                                   basisManagerWaveFn,
                                   feBDTotalChargeStiffnessMatrix,
-                                  feBDNucChargeRhs, 
-                                  feBDElecChargeRhs, 
+                                  feBDNucChargeRhs,
+                                  feBDElecChargeRhs,
                                   feBDNuclearChargeStiffnessMatrix,
-                                  feBDNuclearChargeRhs, 
-                                  feBDKineticHamiltonian,     
-                                  feBDElectrostaticsHamiltonian, 
-                                  feBDEXCHamiltonian,                                                                                
+                                  feBDNuclearChargeRhs,
+                                  feBDKineticHamiltonian,
+                                  feBDElectrostaticsHamiltonian,
+                                  feBDEXCHamiltonian,
                                   *externalPotentialFunction,
                                   "LDA-PW",
                                   linAlgOpContext,
                                   *MContextForInv,
                                   *MContext,
-                                  *MInvContext);                                           
+                                  *MInvContext);
   }
   else if (!isNumericalNuclearSolve && !isDeltaRhoPoissonSolve)
   {
@@ -1250,15 +1232,15 @@ int main(int argc, char** argv)
                                   mixingHistory,
                                   mixingParameter,
                                   isAdaptiveAndersonMixingParameter,
-                                  electronChargeDensity,
+                                  *elecChargeDens,
                                   basisManagerTotalPot,
                                   basisManagerWaveFn,
                                   feBDTotalChargeStiffnessMatrix,
-                                  feBDNucChargeRhs, 
-                                  feBDElecChargeRhs,  
-                                  feBDKineticHamiltonian,     
-                                  feBDElectrostaticsHamiltonian, 
-                                  feBDEXCHamiltonian,                                                                      
+                                  feBDNucChargeRhs,
+                                  feBDElecChargeRhs,
+                                  feBDKineticHamiltonian,
+                                  feBDElectrostaticsHamiltonian,
+                                  feBDEXCHamiltonian,
                                   *externalPotentialFunction,
                                   "LDA-PW",
                                   linAlgOpContext,
@@ -1268,19 +1250,13 @@ int main(int argc, char** argv)
   }
   else if (!isNumericalNuclearSolve && isDeltaRhoPoissonSolve)
   {
-    std::shared_ptr<utils::ScalarSpatialFunctionReal> smfuncAtTotPot =
-      std::make_shared<atoms::AtomSevereFunction<memorySpace>>(
-        atomSphericalDataContainer, atomSymbolVec, atomCoordinatesVec,
-        "vtotal", 0, 1,
-        1.0/(atoms::Clm(0, 0) * atoms::Dm(0) * atoms::Qm(0, 0)),
+    std::shared_ptr<atoms::AtomSuperpositionFunction<memorySpace>> smfuncAtTotPot =
+      std::make_shared<atoms::AtomSuperpositionFunction<memorySpace>>(
+        atomSphericalDataContainer,
+        atomSymbolVec,
+        atomCoordinatesVec,
+        "vtotal",
         linAlgOpContext.get());
-
-  std::shared_ptr<utils::ScalarSpatialFunctionReal> elecChargeDens =
-    std::make_shared<atoms::AtomSevereFunction<memorySpace>>(
-      atomSphericalDataContainer, atomSymbolVec, atomCoordinatesVec,
-      "density", 0, 1,
-      1.0/(atoms::Clm(0, 0) * atoms::Dm(0) * atoms::Qm(0, 0)),
-      linAlgOpContext.get());
 
     dftefeSolve =
      new ksdft::KohnShamDFT<double,

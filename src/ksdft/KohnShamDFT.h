@@ -99,8 +99,8 @@ namespace dftefe
         const double    mixingParameter,
         const bool      isAdaptiveAndersonMixingParameter,
         /* Electron density related info */
-        const quadrature::QuadratureValuesContainer<RealType, memorySpaceHost>
-          &electronChargeDensityInput,
+        const atoms::AtomSuperpositionFunction<memorySpace>
+          &atomicElectronicChargeDensityFunction,
         /* Basis related info */
         /* Field boundary */
         std::shared_ptr<
@@ -179,8 +179,8 @@ namespace dftefe
         const double    mixingParameter,
         const bool      isAdaptiveAndersonMixingParameter,
         /* Electron density related info */
-        const quadrature::QuadratureValuesContainer<RealType, memorySpaceHost>
-          &electronChargeDensityInput,
+        const atoms::AtomSuperpositionFunction<memorySpace>
+          &atomicElectronicChargeDensityFunction,
         /* Basis related info */
         /* Field boundary */
         std::shared_ptr<
@@ -266,9 +266,10 @@ namespace dftefe
         const size_type mixingHistory,
         const double    mixingParameter,
         const bool      isAdaptiveAndersonMixingParameter,
-        const utils::ScalarSpatialFunctionReal
+        /* Atomic Field for delta rho ; Here vTotal atomic scalar sp fn.*/
+        const atoms::AtomSuperpositionFunction<memorySpace>
           &atomicTotalElectroPotentialFunction,
-        const utils::ScalarSpatialFunctionReal
+        const atoms::AtomSuperpositionFunction<memorySpace>
           &atomicElectronicChargeDensityFunction,
         /* Field boundary */
         std::shared_ptr<
@@ -348,6 +349,9 @@ namespace dftefe
         const size_type mixingHistory,
         const double    mixingParameter,
         const bool      isAdaptiveAndersonMixingParameter,
+        /* Electron density related info */
+        const atoms::AtomSuperpositionFunction<memorySpace>
+          &atomicElectronicChargeDensityFunction,
         /* Basis related info */
         /* Field boundary */
         std::shared_ptr<
@@ -432,9 +436,9 @@ namespace dftefe
         const double    mixingParameter,
         const bool      isAdaptiveAndersonMixingParameter,
         /* Atomic Field for delta rho ; Here vTotal atomic scalar sp fn.*/
-        const utils::ScalarSpatialFunctionReal
+        const atoms::AtomSuperpositionFunction<memorySpace>
           &atomicTotalElectroPotentialFunction,
-        const utils::ScalarSpatialFunctionReal
+        const atoms::AtomSuperpositionFunction<memorySpace>
           &atomicElectronicChargeDensityFunction,
         /* Field boundary */
         std::shared_ptr<

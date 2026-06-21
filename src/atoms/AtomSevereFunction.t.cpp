@@ -55,11 +55,11 @@ namespace dftefe
         "or (derivativeType=1, sphericalValPower=2).");
 
       if (derivativeType == 0 && sphericalValPower == 1)
-        d_atomSupType = AtomSuperpositonFuncType::Identity;
+        d_atomSupType = AtomSuperpositionFuncType::Identity;
       else if (derivativeType == 0 && sphericalValPower == 2)
-        d_atomSupType = AtomSuperpositonFuncType::IdentitySq;
+        d_atomSupType = AtomSuperpositionFuncType::IdentitySq;
       else
-        d_atomSupType = AtomSuperpositonFuncType::GradDotGradSq;
+        d_atomSupType = AtomSuperpositionFuncType::GradDotGradSq;
     }
 
     template <utils::MemorySpace memorySpace>

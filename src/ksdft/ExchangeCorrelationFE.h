@@ -35,7 +35,7 @@
 #include <ksdft/Defaults.h>
 #include <ksdft/RDM1.h>
 #include <ksdft/ExcManager.h>
-#include <atoms/AtomSevereFunction.h>
+#include <atoms/AtomSuperpositionFunction.h>
 #include <utils/Point.h>
 
 namespace dftefe

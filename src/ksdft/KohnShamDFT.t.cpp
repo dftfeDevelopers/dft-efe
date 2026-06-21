@@ -248,18 +248,18 @@ namespace dftefe
         return {DensityDescrAttr::Val};
       }
 
-     template <typename RealType>
+      template <typename RealType>
       std::unordered_map<
         DensityDescrAttr,
         std::vector<
           quadrature::QuadratureValuesContainer<RealType,
                                                 utils::MemorySpace::HOST>>>
       buildDescrMap(
-        const std::set<DensityDescrAttr> &attrs,
-        const quadrature::QuadratureValuesContainer<RealType,
-                                                    utils::MemorySpace::HOST>
-          &       dens,
-        size_type dim)
+        const std::map<
+          DensityDescrAttr,
+          quadrature::QuadratureValuesContainer<RealType,
+                                                utils::MemorySpace::HOST>>
+          &descrInput)
       {
         std::unordered_map<
           DensityDescrAttr,
@@ -267,19 +267,8 @@ namespace dftefe
             quadrature::QuadratureValuesContainer<RealType,
                                                   utils::MemorySpace::HOST>>>
           descrMap;
-        for (const auto &attr : attrs)
-          {
-            if (attr == DensityDescrAttr::Val)
-              descrMap[attr] = {dens};
-            else if (attr == DensityDescrAttr::Grad)
-              {
-                descrMap[attr] = {
-                  quadrature::QuadratureValuesContainer<
-                    RealType,
-                    utils::MemorySpace::HOST>(
-                    dens.getQuadratureRuleContainer(), dim, (RealType)0.0)};
-              }
-          }
+        for (const auto &[attr, qvc] : descrInput)
+          descrMap[attr] = {qvc};
         return descrMap;
       }
     } // namespace KohnShamDFTInternal
@@ -315,8 +304,10 @@ namespace dftefe
         const size_type                  mixingHistory,
         const double                     mixingParameter,
         const bool                       isAdaptiveAndersonMixingParameter,
-        const quadrature::QuadratureValuesContainer<RealType, memorySpaceHost>
-          &electronChargeDensityInput,
+        // const quadrature::QuadratureValuesContainer<RealType, memorySpaceHost>
+        //   &electronChargeDensityInput,
+        const atoms::AtomSuperpositionFunction<memorySpace>
+          &atomicElectronicChargeDensityFunction,
         /* Basis related info */
         /* Field boundary */
         std::shared_ptr<
@@ -409,6 +400,10 @@ namespace dftefe
         else
           d_isOEFEBasis = false;
 
+      auto densIn =
+        quadrature::QuadratureValuesContainer<RealType, memorySpaceHost>(
+          feBDElectronicChargeRhs->getQuadratureRuleContainer(), 1, 0.0);
+
       wfnPtr = std::make_unique<linearAlgebra::MultiVector<ValueTypeWaveFunctionCoeff, memorySpace>>(
         feBMWaveFn->getMPIPatternP2P(), linAlgOpContext, numWantedEigenvalues,
         (ValueTypeWaveFunctionCoeff)0.0);
@@ -427,18 +422,18 @@ namespace dftefe
         KSDFTDefaults<memorySpace>::CELL_BATCH_SIZE,
         KSDFTDefaults<memorySpace>::MAX_DENSCOMP_WAVEFN_BATCH_SIZE);
 
-      utils::throwException(electronChargeDensityInput.getNumberComponents() ==
+      utils::throwException(densIn.getNumberComponents() ==
                               1,
                             "Electron density should have only one component.");
 
       utils::throwException(
         feBDEXCHamiltonian->getQuadratureRuleContainer() ==
-          electronChargeDensityInput.getQuadratureRuleContainer(),
+          densIn.getQuadratureRuleContainer(),
         "The QuadratureRuleContainer for feBDElectrostaticsHamiltonian and electronChargeDensity should be same.");
 
       std::shared_ptr<const quadrature::QuadratureRuleContainer>
         quadRuleContainerRho =
-          electronChargeDensityInput.getQuadratureRuleContainer();
+          densIn.getQuadratureRuleContainer();
 
       int rank;
       utils::mpi::MPICommRank(d_mpiCommDomain, &rank);
@@ -468,7 +463,24 @@ namespace dftefe
         linearAlgebra::LinAlgOpContextDefaults::LINALG_OP_CONTXT_HOST,
         d_mpiCommDomain);
 
-      auto densIn = electronChargeDensityInput;
+      std::shared_ptr<const quadrature::QuadratureRuleContainer>
+                quadRuleContainerVal = quadRuleContainerRho;
+
+      utils::MemoryStorage<RealType, memorySpace> 
+        densityInQuadValuesMemspace(quadRuleContainerVal->nQuadraturePoints());
+
+      atomicElectronicChargeDensityFunction.evaluate(
+                                    quadRuleContainerVal->nQuadraturePoints(),
+                                    atoms::AtomSuperpositionFuncType::Identity,
+                                    quadRuleContainerVal->template getRealPointsPtr<memorySpace>(),
+                                    densityInQuadValuesMemspace.data(),
+                                    1/(atoms::Clm(0, 0) * atoms::Dm(0) * atoms::Qm(0, 0)));
+
+      utils::MemoryTransfer<memorySpaceHost, memorySpace> memTrans;                    
+      memTrans.copy(densityInQuadValuesMemspace.size(),
+                    densIn.begin(),
+                    densityInQuadValuesMemspace.data());
+
       // normalize electroncharge density
       RealType totalDensityInQuad =
         KohnShamDFTInternal::normalizeDensityQuadData(densIn,
@@ -482,9 +494,34 @@ namespace dftefe
 
       d_rootCout << "Electron density in : " << totalDensityInQuad << "\n";
 
+      std::map<DensityDescrAttr,
+               quadrature::QuadratureValuesContainer<RealType, memorySpaceHost>>
+        initDescrMap;
+      initDescrMap[DensityDescrAttr::Val] = densIn;
+
+      if (KohnShamDFTInternal::getDescrAttributes(xcType).count(
+            DensityDescrAttr::Grad) > 0)
+        {
+          auto gradIn =
+            quadrature::QuadratureValuesContainer<RealType, memorySpaceHost>(
+              quadRuleContainerVal, dim, (RealType)0.0);
+          utils::MemoryStorage<RealType, memorySpace>
+            gradInQuadValuesMemspace(quadRuleContainerVal->nQuadraturePoints() *
+                                     dim);
+          atomicElectronicChargeDensityFunction.evaluate(
+            quadRuleContainerVal->nQuadraturePoints(),
+            atoms::AtomSuperpositionFuncType::Grad,
+            quadRuleContainerVal->template getRealPointsPtr<memorySpace>(),
+            gradInQuadValuesMemspace.data(),
+            1 / (atoms::Clm(0, 0) * atoms::Dm(0) * atoms::Qm(0, 0)));
+          memTrans.copy(gradInQuadValuesMemspace.size(),
+                        gradIn.begin(),
+                        gradInQuadValuesMemspace.data());
+          initDescrMap[DensityDescrAttr::Grad] = gradIn;
+        }
+
       d_rdm1Mix->setDescriptors(
-        KohnShamDFTInternal::buildDescrMap(
-          KohnShamDFTInternal::getDescrAttributes(xcType), densIn, dim),
+        KohnShamDFTInternal::buildDescrMap(initDescrMap),
         {});
 
       d_p.registerEnd("Pre Init Checks");
@@ -520,8 +557,7 @@ namespace dftefe
           KSDFTDefaults<memorySpace>::CELL_BATCH_SIZE);
 
       d_rdm1Spectral->setDescriptors(
-        KohnShamDFTInternal::buildDescrMap(
-          KohnShamDFTInternal::getDescrAttributes(xcType), densIn, dim),
+        KohnShamDFTInternal::buildDescrMap(initDescrMap),
         {});
 
       d_hamitonianXC =
@@ -681,8 +717,9 @@ namespace dftefe
         const size_type                  mixingHistory,
         const double                     mixingParameter,
         const bool                       isAdaptiveAndersonMixingParameter,
-        const quadrature::QuadratureValuesContainer<RealType, memorySpaceHost>
-          &electronChargeDensityInput,
+        /* Electron density related info */
+        const atoms::AtomSuperpositionFunction<memorySpace>
+          &atomicElectronicChargeDensityFunction,
         /* Basis related info */
         /* Field boundary */
         std::shared_ptr<
@@ -777,6 +814,10 @@ namespace dftefe
       else
         d_isOEFEBasis = false;
 
+      auto densIn =
+        quadrature::QuadratureValuesContainer<RealType, memorySpaceHost>(
+          feBDElectronicChargeRhs->getQuadratureRuleContainer(), 1, 0.0);
+
       wfnPtr = std::make_unique<linearAlgebra::MultiVector<ValueTypeWaveFunctionCoeff, memorySpace>>(
         feBMWaveFn->getMPIPatternP2P(), linAlgOpContext, numWantedEigenvalues, (ValueTypeWaveFunctionCoeff)0.0);
 
@@ -791,18 +832,18 @@ namespace dftefe
         KSDFTDefaults<memorySpace>::CELL_BATCH_SIZE,
         KSDFTDefaults<memorySpace>::MAX_DENSCOMP_WAVEFN_BATCH_SIZE);
 
-      utils::throwException(electronChargeDensityInput.getNumberComponents() ==
+      utils::throwException(densIn.getNumberComponents() ==
                               1,
                             "Electron density should have only one component.");
 
       utils::throwException(
         feBDEXCHamiltonian->getQuadratureRuleContainer() ==
-          electronChargeDensityInput.getQuadratureRuleContainer(),
+          densIn.getQuadratureRuleContainer(),
         "The QuadratureRuleContainer for feBDHamiltonian and electronChargeDensity should be same.");
 
       std::shared_ptr<const quadrature::QuadratureRuleContainer>
         quadRuleContainerRho =
-          electronChargeDensityInput.getQuadratureRuleContainer();
+          densIn.getQuadratureRuleContainer();
 
       int rank;
       utils::mpi::MPICommRank(d_mpiCommDomain, &rank);
@@ -832,7 +873,24 @@ namespace dftefe
         linearAlgebra::LinAlgOpContextDefaults::LINALG_OP_CONTXT_HOST,
         d_mpiCommDomain);
 
-      auto densIn = electronChargeDensityInput;
+      std::shared_ptr<const quadrature::QuadratureRuleContainer>
+                quadRuleContainerVal = quadRuleContainerRho;
+
+      utils::MemoryStorage<RealType, memorySpace> 
+        densityInQuadValuesMemspace(quadRuleContainerVal->nQuadraturePoints());
+
+      atomicElectronicChargeDensityFunction.evaluate(
+                                    quadRuleContainerVal->nQuadraturePoints(),
+                                    atoms::AtomSuperpositionFuncType::Identity,
+                                    quadRuleContainerVal->template getRealPointsPtr<memorySpace>(),
+                                    densityInQuadValuesMemspace.data(),
+                                    1/(atoms::Clm(0, 0) * atoms::Dm(0) * atoms::Qm(0, 0)));
+
+      utils::MemoryTransfer<memorySpaceHost, memorySpace> memTrans;                    
+      memTrans.copy(densityInQuadValuesMemspace.size(),
+                    densIn.begin(),
+                    densityInQuadValuesMemspace.data());
+
       // normalize electroncharge density
       RealType totalDensityInQuad =
         KohnShamDFTInternal::normalizeDensityQuadData(densIn,
@@ -846,9 +904,34 @@ namespace dftefe
 
       d_rootCout << "Electron density in : " << totalDensityInQuad << "\n";
 
+      std::map<DensityDescrAttr,
+               quadrature::QuadratureValuesContainer<RealType, memorySpaceHost>>
+        initDescrMap;
+      initDescrMap[DensityDescrAttr::Val] = densIn;
+
+      if (KohnShamDFTInternal::getDescrAttributes(xcType).count(
+            DensityDescrAttr::Grad) > 0)
+        {
+          auto gradIn =
+            quadrature::QuadratureValuesContainer<RealType, memorySpaceHost>(
+              quadRuleContainerVal, dim, (RealType)0.0);
+          utils::MemoryStorage<RealType, memorySpace>
+            gradInQuadValuesMemspace(quadRuleContainerVal->nQuadraturePoints() *
+                                     dim);
+          atomicElectronicChargeDensityFunction.evaluate(
+            quadRuleContainerVal->nQuadraturePoints(),
+            atoms::AtomSuperpositionFuncType::Grad,
+            quadRuleContainerVal->template getRealPointsPtr<memorySpace>(),
+            gradInQuadValuesMemspace.data(),
+            1 / (atoms::Clm(0, 0) * atoms::Dm(0) * atoms::Qm(0, 0)));
+          memTrans.copy(gradInQuadValuesMemspace.size(),
+                        gradIn.begin(),
+                        gradInQuadValuesMemspace.data());
+          initDescrMap[DensityDescrAttr::Grad] = gradIn;
+        }
+
       d_rdm1Mix->setDescriptors(
-        KohnShamDFTInternal::buildDescrMap(
-          KohnShamDFTInternal::getDescrAttributes(xcType), densIn, dim),
+        KohnShamDFTInternal::buildDescrMap(initDescrMap),
         {});
 
       d_p.registerEnd("Pre Init Checks");
@@ -886,8 +969,7 @@ namespace dftefe
           KSDFTDefaults<memorySpace>::CELL_BATCH_SIZE);
 
       d_rdm1Spectral->setDescriptors(
-        KohnShamDFTInternal::buildDescrMap(
-          KohnShamDFTInternal::getDescrAttributes(xcType), densIn, dim),
+        KohnShamDFTInternal::buildDescrMap(initDescrMap),
         {});
 
       d_hamitonianXC =
@@ -1053,9 +1135,10 @@ namespace dftefe
         const size_type mixingHistory,
         const double    mixingParameter,
         const bool      isAdaptiveAndersonMixingParameter,
-        const utils::ScalarSpatialFunctionReal
+        /* Atomic Field for delta rho ; Here vTotal atomic scalar sp fn.*/
+        const atoms::AtomSuperpositionFunction<memorySpace>
           &atomicTotalElectroPotentialFunction,
-        const utils::ScalarSpatialFunctionReal
+        const atoms::AtomSuperpositionFunction<memorySpace>
           &atomicElectronicChargeDensityFunction,
         /* Field boundary */
         std::shared_ptr<
@@ -1204,24 +1287,23 @@ namespace dftefe
         linearAlgebra::LinAlgOpContextDefaults::LINALG_OP_CONTXT_HOST,
         d_mpiCommDomain);
 
-      RealType *quadValueIter = densIn.begin();
       std::shared_ptr<const quadrature::QuadratureRuleContainer>
                 quadRuleContainerVal = quadRuleContainerRho;
-      size_type cumulativeQuadInCell = 0;
-      for (size_type iCell = 0; iCell < quadRuleContainerVal->nCells(); iCell++)
-        {
-          size_type numQuadInCell =
-            quadRuleContainerVal->nCellQuadraturePoints(iCell);
-          std::vector<RealType> valInCellQuad =
-            (atomicElectronicChargeDensityFunction)(
-              quadRuleContainerVal->getCellRealPoints(iCell));
-          for (size_type iQuad = 0; iQuad < numQuadInCell; iQuad++)
-            {
-              quadValueIter[cumulativeQuadInCell + iQuad] =
-                valInCellQuad[iQuad];
-            }
-          cumulativeQuadInCell += numQuadInCell;
-        }
+
+      utils::MemoryStorage<RealType, memorySpace>
+        densityInQuadValuesMemspace(quadRuleContainerVal->nQuadraturePoints());
+
+      atomicElectronicChargeDensityFunction.evaluate(
+                                    quadRuleContainerVal->nQuadraturePoints(),
+                                    atoms::AtomSuperpositionFuncType::Identity,
+                                    quadRuleContainerVal->template getRealPointsPtr<memorySpace>(),
+                                    densityInQuadValuesMemspace.data(),
+                                    1/(atoms::Clm(0, 0) * atoms::Dm(0) * atoms::Qm(0, 0)));
+
+      utils::MemoryTransfer<memorySpaceHost, memorySpace> memTrans;
+      memTrans.copy(densityInQuadValuesMemspace.size(),
+                    densIn.begin(),
+                    densityInQuadValuesMemspace.data());
 
       // normalize electroncharge density
       RealType totalDensityInQuad =
@@ -1236,9 +1318,34 @@ namespace dftefe
 
       d_rootCout << "Electron density in : " << totalDensityInQuad << "\n";
 
+      std::map<DensityDescrAttr,
+               quadrature::QuadratureValuesContainer<RealType, memorySpaceHost>>
+        initDescrMap;
+      initDescrMap[DensityDescrAttr::Val] = densIn;
+
+      if (KohnShamDFTInternal::getDescrAttributes(xcType).count(
+            DensityDescrAttr::Grad) > 0)
+        {
+          auto gradIn =
+            quadrature::QuadratureValuesContainer<RealType, memorySpaceHost>(
+              quadRuleContainerVal, dim, (RealType)0.0);
+          utils::MemoryStorage<RealType, memorySpace>
+            gradInQuadValuesMemspace(quadRuleContainerVal->nQuadraturePoints() *
+                                     dim);
+          atomicElectronicChargeDensityFunction.evaluate(
+            quadRuleContainerVal->nQuadraturePoints(),
+            atoms::AtomSuperpositionFuncType::Grad,
+            quadRuleContainerVal->template getRealPointsPtr<memorySpace>(),
+            gradInQuadValuesMemspace.data(),
+            1 / (atoms::Clm(0, 0) * atoms::Dm(0) * atoms::Qm(0, 0)));
+          memTrans.copy(gradInQuadValuesMemspace.size(),
+                        gradIn.begin(),
+                        gradInQuadValuesMemspace.data());
+          initDescrMap[DensityDescrAttr::Grad] = gradIn;
+        }
+
       d_rdm1Mix->setDescriptors(
-        KohnShamDFTInternal::buildDescrMap(
-          KohnShamDFTInternal::getDescrAttributes(xcType), densIn, dim),
+        KohnShamDFTInternal::buildDescrMap(initDescrMap),
         {});
 
       d_p.registerEnd("Pre Init Checks");
@@ -1342,8 +1449,7 @@ namespace dftefe
           fieldToTCIASplineMap);
 
       d_rdm1Spectral->setDescriptors(
-        KohnShamDFTInternal::buildDescrMap(
-          KohnShamDFTInternal::getDescrAttributes(xcType), densIn, dim),
+        KohnShamDFTInternal::buildDescrMap(initDescrMap),
         {});
 
       d_hamitonianXC =
@@ -1506,6 +1612,9 @@ namespace dftefe
         const size_type mixingHistory,
         const double    mixingParameter,
         const bool      isAdaptiveAndersonMixingParameter,
+        /* Desnity Input*/
+        const atoms::AtomSuperpositionFunction<memorySpace>
+          &atomicElectronicChargeDensityFunction,
         /* Basis related info */
         /* Field boundary */
         std::shared_ptr<
@@ -1697,31 +1806,23 @@ namespace dftefe
       d_rootCout.setCondition(rank == 0);
 
       // --------TODO : use eval()-----
-      const atoms::AtomSevereFunction<utils::MemorySpace::HOST>
-        rho(d_atomSphericalDataContainerPSP,
-            atomSymbolVec,
-            atomCoordinates,
-            "rhoatom",
-            0,
-            1);
-
-      RealType *quadValueIter = densIn.begin();
-      std::shared_ptr<const quadrature::QuadratureRuleContainer>
+     std::shared_ptr<const quadrature::QuadratureRuleContainer>
                 quadRuleContainerVal = quadRuleContainerRho;
-      size_type cumulativeQuadInCell = 0;
-      for (size_type iCell = 0; iCell < quadRuleContainerVal->nCells(); iCell++)
-        {
-          size_type numQuadInCell =
-            quadRuleContainerVal->nCellQuadraturePoints(iCell);
-          std::vector<RealType> valInCellQuad =
-            (rho)(quadRuleContainerVal->getCellRealPoints(iCell));
-          for (size_type iQuad = 0; iQuad < numQuadInCell; iQuad++)
-            {
-              quadValueIter[cumulativeQuadInCell + iQuad] =
-                valInCellQuad[iQuad];
-            }
-          cumulativeQuadInCell += numQuadInCell;
-        }
+
+      utils::MemoryStorage<RealType, memorySpace> 
+        densityInQuadValuesMemspace(quadRuleContainerVal->nQuadraturePoints());
+
+      atomicElectronicChargeDensityFunction.evaluate(
+                                    quadRuleContainerVal->nQuadraturePoints(),
+                                    atoms::AtomSuperpositionFuncType::Identity,
+                                    quadRuleContainerVal->template getRealPointsPtr<memorySpace>(),
+                                    densityInQuadValuesMemspace.data(),
+                                    1/(atoms::Clm(0, 0) * atoms::Dm(0) * atoms::Qm(0, 0)));
+
+      utils::MemoryTransfer<memorySpaceHost, memorySpace> memTrans;                    
+      memTrans.copy(densityInQuadValuesMemspace.size(),
+                    densIn.begin(),
+                    densityInQuadValuesMemspace.data());
 
       //************* CHANGE THIS **********************
       d_jxwDataHost = quadRuleContainerRho->getJxW();
@@ -1760,9 +1861,34 @@ namespace dftefe
 
       d_rootCout << "Electron density in : " << totalDensityInQuad << "\n";
 
+      std::map<DensityDescrAttr,
+               quadrature::QuadratureValuesContainer<RealType, memorySpaceHost>>
+        initDescrMap;
+      initDescrMap[DensityDescrAttr::Val] = densIn;
+
+      if (KohnShamDFTInternal::getDescrAttributes(xcType).count(
+            DensityDescrAttr::Grad) > 0)
+        {
+          auto gradIn =
+            quadrature::QuadratureValuesContainer<RealType, memorySpaceHost>(
+              quadRuleContainerVal, dim, (RealType)0.0);
+          utils::MemoryStorage<RealType, memorySpace>
+            gradInQuadValuesMemspace(quadRuleContainerVal->nQuadraturePoints() *
+                                     dim);
+          atomicElectronicChargeDensityFunction.evaluate(
+            quadRuleContainerVal->nQuadraturePoints(),
+            atoms::AtomSuperpositionFuncType::Grad,
+            quadRuleContainerVal->template getRealPointsPtr<memorySpace>(),
+            gradInQuadValuesMemspace.data(),
+            1 / (atoms::Clm(0, 0) * atoms::Dm(0) * atoms::Qm(0, 0)));
+          memTrans.copy(gradInQuadValuesMemspace.size(),
+                        gradIn.begin(),
+                        gradInQuadValuesMemspace.data());
+          initDescrMap[DensityDescrAttr::Grad] = gradIn;
+        }
+
       d_rdm1Mix->setDescriptors(
-        KohnShamDFTInternal::buildDescrMap(
-          KohnShamDFTInternal::getDescrAttributes(xcType), densIn, dim),
+        KohnShamDFTInternal::buildDescrMap(initDescrMap),
         {});
 
       d_p.registerEnd("Pre Init Checks");
@@ -1808,8 +1934,7 @@ namespace dftefe
           waveFnBatch);
 
       d_rdm1Spectral->setDescriptors(
-        KohnShamDFTInternal::buildDescrMap(
-          KohnShamDFTInternal::getDescrAttributes(xcType), densIn, dim),
+        KohnShamDFTInternal::buildDescrMap(initDescrMap),
         {});
 
       if (d_isNlcc && d_isONCVNonLocPSP)
@@ -1980,9 +2105,9 @@ namespace dftefe
         const double    mixingParameter,
         const bool      isAdaptiveAndersonMixingParameter,
         /* Atomic Field for delta rho ; Here vTotal atomic scalar sp fn.*/
-        const utils::ScalarSpatialFunctionReal
+        const atoms::AtomSuperpositionFunction<memorySpace>
           &atomicTotalElectroPotentialFunction,
-        const utils::ScalarSpatialFunctionReal
+        const atoms::AtomSuperpositionFunction<memorySpace>
           &atomicElectronicChargeDensityFunction,
         /* Field boundary */
         std::shared_ptr<
@@ -2189,31 +2314,17 @@ namespace dftefe
       utils::MemoryStorage<RealType, memorySpace> 
         densityInQuadValuesMemspace(quadRuleContainerVal->nQuadraturePoints());
 
-      atomicElectronicChargeDensityFunction.template eval<memorySpace>(
+      atomicElectronicChargeDensityFunction.evaluate(
                                     quadRuleContainerVal->nQuadraturePoints(),
+                                    atoms::AtomSuperpositionFuncType::Identity,
                                     quadRuleContainerVal->template getRealPointsPtr<memorySpace>(),
-                                    densityInQuadValuesMemspace.data());
+                                    densityInQuadValuesMemspace.data(),
+                                    1/(atoms::Clm(0, 0) * atoms::Dm(0) * atoms::Qm(0, 0)));
+
       utils::MemoryTransfer<memorySpaceHost, memorySpace> memTrans;                    
       memTrans.copy(densityInQuadValuesMemspace.size(),
                     densIn.begin(),
                     densityInQuadValuesMemspace.data());
-
-      // RealType *quadValueIter = d_densityInQuadValues.begin();
-      // size_type cumulativeQuadInCell = 0;
-      // for (size_type iCell = 0; iCell < quadRuleContainerVal->nCells(); iCell++)
-      //   {
-      //     size_type numQuadInCell =
-      //       quadRuleContainerVal->nCellQuadraturePoints(iCell);
-      //     std::vector<RealType> valInCellQuad =
-      //       (atomicElectronicChargeDensityFunction)(
-      //         quadRuleContainerVal->getCellRealPoints(iCell));
-      //     for (size_type iQuad = 0; iQuad < numQuadInCell; iQuad++)
-      //       {
-      //         quadValueIter[cumulativeQuadInCell + iQuad] =
-      //           valInCellQuad[iQuad];
-      //       }
-      //     cumulativeQuadInCell += numQuadInCell;
-      //   }
 
       p.registerEnd("rhoAtFunc");
       //************* CHANGE THIS **********************
@@ -2254,9 +2365,34 @@ namespace dftefe
       d_rootCout << "Electron density in : " << totalDensityInQuad << "\n";
       p.print();
 
+      std::map<DensityDescrAttr,
+               quadrature::QuadratureValuesContainer<RealType, memorySpaceHost>>
+        initDescrMap;
+      initDescrMap[DensityDescrAttr::Val] = densIn;
+
+      if (KohnShamDFTInternal::getDescrAttributes(xcType).count(
+            DensityDescrAttr::Grad) > 0)
+        {
+          auto gradIn =
+            quadrature::QuadratureValuesContainer<RealType, memorySpaceHost>(
+              quadRuleContainerVal, dim, (RealType)0.0);
+          utils::MemoryStorage<RealType, memorySpace>
+            gradInQuadValuesMemspace(quadRuleContainerVal->nQuadraturePoints() *
+                                     dim);
+          atomicElectronicChargeDensityFunction.evaluate(
+            quadRuleContainerVal->nQuadraturePoints(),
+            atoms::AtomSuperpositionFuncType::Grad,
+            quadRuleContainerVal->template getRealPointsPtr<memorySpace>(),
+            gradInQuadValuesMemspace.data(),
+            1 / (atoms::Clm(0, 0) * atoms::Dm(0) * atoms::Qm(0, 0)));
+          memTrans.copy(gradInQuadValuesMemspace.size(),
+                        gradIn.begin(),
+                        gradInQuadValuesMemspace.data());
+          initDescrMap[DensityDescrAttr::Grad] = gradIn;
+        }
+
       d_rdm1Mix->setDescriptors(
-        KohnShamDFTInternal::buildDescrMap(
-          KohnShamDFTInternal::getDescrAttributes(xcType), densIn, dim),
+        KohnShamDFTInternal::buildDescrMap(initDescrMap),
         {});
 
       d_p.registerEnd("Pre Init Checks");
@@ -2433,8 +2569,7 @@ namespace dftefe
         d_p.registerStart("Hamiltonian Components Initilization Exc Op");
 
       d_rdm1Spectral->setDescriptors(
-        KohnShamDFTInternal::buildDescrMap(
-          KohnShamDFTInternal::getDescrAttributes(xcType), densIn, dim),
+        KohnShamDFTInternal::buildDescrMap(initDescrMap),
         {});
 
       if (d_isNlcc && d_isONCVNonLocPSP)

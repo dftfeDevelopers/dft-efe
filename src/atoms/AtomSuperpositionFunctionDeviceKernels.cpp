@@ -62,7 +62,7 @@ namespace dftefe
     void
     AtomSuperpositionFunction<utils::MemorySpace::HOST>::evalDevice(
       size_type                      numPoints,
-      const AtomSuperpositonFuncType atomSupType,
+      const AtomSuperpositionFuncType atomSupType,
       const double                   constant,
       const double *                 t,
       double *                       q) const
@@ -76,7 +76,7 @@ namespace dftefe
     void
     AtomSuperpositionFunction<utils::MemorySpace::DEVICE>::evalDevice(
       size_type                      numPoints,
-      const AtomSuperpositonFuncType atomSupType,
+      const AtomSuperpositionFuncType atomSupType,
       const double                   constant,
       const double *                 t,
       double *                       q) const
@@ -90,11 +90,11 @@ namespace dftefe
 
       utils::MemoryStorage<double, utils::MemorySpace::DEVICE> d_values;
 
-      if (atomSupType == AtomSuperpositonFuncType::Identity ||
-          atomSupType == AtomSuperpositonFuncType::IdentitySq)
+      if (atomSupType == AtomSuperpositionFuncType::Identity ||
+          atomSupType == AtomSuperpositionFuncType::IdentitySq)
         {
           const size_type nComp  = 1;
-          const size_type power  = (atomSupType == AtomSuperpositonFuncType::IdentitySq) ? 2 : 1;
+          const size_type power  = (atomSupType == AtomSuperpositionFuncType::IdentitySq) ? 2 : 1;
           const size_type addGrid = (numPoints + blockSize - 1) / blockSize;
 
           if (d_values.size() != numPoints * nComp)
@@ -129,7 +129,7 @@ namespace dftefe
                                    q);
             }
         }
-      else if (atomSupType == AtomSuperpositonFuncType::GradDotGradSq)
+      else if (atomSupType == AtomSuperpositionFuncType::GradDotGradSq)
         {
           const size_type nComp   = d_dim;
           const size_type power   = 2;
@@ -167,7 +167,7 @@ namespace dftefe
                                    q);
             }
         }
-      else if (atomSupType == AtomSuperpositonFuncType::Grad)
+      else if (atomSupType == AtomSuperpositionFuncType::Grad)
         {
           const size_type nComp      = d_dim;
           const size_type numElements = numPoints * d_dim;

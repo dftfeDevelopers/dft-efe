@@ -39,6 +39,7 @@
 #include <utils/ConditionalOStream.h>
 #include <electrostatics/PoissonSolverDealiiMatrixFreeFE.h>
 #include <atoms/AtomTCIASpline.h>
+#include <atoms/AtomSuperpositionFunction.h>
 #include "Defaults.h"
 
 namespace dftefe
@@ -149,9 +150,9 @@ namespace dftefe
         const std::vector<std::string> & atomSymbols,
         const std::vector<double> &      atomCharges,
         const double &                   smearedChargeRadius,
-        const utils::ScalarSpatialFunctionReal
+        const atoms::AtomSuperpositionFunction<memorySpace>
           &atomicTotalElectroPotentialFunction,
-        const utils::ScalarSpatialFunctionReal
+        const atoms::AtomSuperpositionFunction<memorySpace>
           &atomicElectronicChargeDensityFunction,
         std::shared_ptr<const basis::FEBasisManager<ValueTypeBasisCoeff,
                                                     ValueTypeBasisData,
@@ -239,9 +240,9 @@ namespace dftefe
       void
       reinitBasis(
         const std::vector<utils::Point> &atomCoordinates,
-        const utils::ScalarSpatialFunctionReal
+        const atoms::AtomSuperpositionFunction<memorySpace>
           &atomicTotalElectroPotentialFunction,
-        const utils::ScalarSpatialFunctionReal
+        const atoms::AtomSuperpositionFunction<memorySpace>
           &atomicElectronicChargeDensityFunction,
         std::shared_ptr<const basis::FEBasisManager<ValueTypeBasisCoeff,
                                                     ValueTypeBasisData,

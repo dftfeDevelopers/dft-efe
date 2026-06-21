@@ -669,12 +669,13 @@ int main(int argc, char** argv)
   std::shared_ptr<const basis::FEBasisDataStorage<double,Host>> feBDKineticHamiltonian =  feBDHamStiffnessMatrix;
   std::shared_ptr<const basis::FEBasisDataStorage<double, Host>> feBDEXCHamiltonian = feBDElectrostaticsHamiltonian;
 
-  std::shared_ptr<const quadrature::QuadratureRuleContainer> quadRuleContainerRho =  
-                feBDElectrostaticsHamiltonian->getQuadratureRuleContainer();
-
-  // scale the electronic charges
-   quadrature::QuadratureValuesContainer<double, Host> 
-      electronChargeDensity(quadRuleContainerRho, 1, 0.0);
+  std::shared_ptr<atoms::AtomSuperpositionFunction<Host>> elecChargeDens =
+    std::make_shared<atoms::AtomSuperpositionFunction<Host>>(
+      atomSphericalDataContainer,
+      atomSymbolVec,
+      atomCoordinatesVec,
+      "density",
+      linAlgOpContext.get());
 
   basisAttrMap[basis::BasisStorageAttributes::StoreValues] = true;
   basisAttrMap[basis::BasisStorageAttributes::StoreGradient] = false;
@@ -687,20 +688,6 @@ int main(int argc, char** argv)
     std::make_shared<basis::CFEBDSOnTheFlyComputeDealii<double, double, Host,dim>>
       (basisDofHandlerTotalPot, quadAttrGaussSubdivided, basisAttrMap, ksdft::KSDFTDefaults::CELL_BATCH_SIZE_GRAD_EVAL, *linAlgOpContext);
   feBDNucChargeRhs->evaluateBasisData(quadAttrGaussSubdivided, quadRuleContainerGaussSubdividedElec, basisAttrMap);
-
-  std::shared_ptr<const utils::ScalarSpatialFunctionReal> rho = std::make_shared
-                <RhoFunction>(atomSphericalDataContainer, atomSymbolVec, atomChargesVec, atomCoordinatesVec);
-  
-  for (size_type iCell = 0; iCell < electronChargeDensity.nCells(); iCell++)
-  {
-      size_type             quadId = 0;
-      std::vector<double> a(
-        electronChargeDensity.nCellQuadraturePoints(iCell));
-      a = (*rho)(quadRuleContainerRho->getCellRealPoints(iCell));
-      double *b = a.data();
-      electronChargeDensity.template 
-        setCellValues<Host>(iCell, b);
-  }
 
   // Create OperatorContext for Basisoverlap
   std::shared_ptr<const basis::CFEOverlapOperatorContext<double,
@@ -776,16 +763,17 @@ std::shared_ptr<linearAlgebra::OperatorContext<double,
                                           mixingHistory,
                                           mixingParameter,
                                           isAdaptiveAndersonMixingParameter,
-                                          electronChargeDensity,
+                                          *elecChargeDens,
                                           basisManagerTotalPot,
                                           basisManagerWaveFn,
                                           feBDTotalChargeStiffnessMatrix,
-                                          feBDNucChargeRhs, 
-                                          feBDElecChargeRhs,  
-                                          feBDKineticHamiltonian,     
-                                          feBDElectrostaticsHamiltonian, 
-                                          feBDEXCHamiltonian,                                                                      
+                                          feBDNucChargeRhs,
+                                          feBDElecChargeRhs,
+                                          feBDKineticHamiltonian,
+                                          feBDElectrostaticsHamiltonian,
+                                          feBDEXCHamiltonian,
                                           *externalPotentialFunction,
+                                          "LDA-PW",
                                           linAlgOpContext,
                                           *MContextForInv,
                                           *MContext,
@@ -820,35 +808,42 @@ std::shared_ptr<linearAlgebra::OperatorContext<double,
                                           mixingHistory,
                                           mixingParameter,
                                           isAdaptiveAndersonMixingParameter,
-                                          electronChargeDensity,
+                                          *elecChargeDens,
                                           basisManagerTotalPot,
                                           basisManagerWaveFn,
                                           feBDTotalChargeStiffnessMatrix,
-                                          feBDNucChargeRhs, 
-                                          feBDElecChargeRhs, 
+                                          feBDNucChargeRhs,
+                                          feBDElecChargeRhs,
                                           feBDNuclearChargeStiffnessMatrix,
-                                          feBDNuclearChargeRhs, 
-                                          feBDKineticHamiltonian,     
-                                          feBDElectrostaticsHamiltonian, 
-                                          feBDEXCHamiltonian,                                                                                
+                                          feBDNuclearChargeRhs,
+                                          feBDKineticHamiltonian,
+                                          feBDElectrostaticsHamiltonian,
+                                          feBDEXCHamiltonian,
                                           *externalPotentialFunction,
+                                          "LDA-PW",
                                           linAlgOpContext,
                                           *MContextForInv,
                                           *MContext,
-                                          *MInvContext);                                           
+                                          *MInvContext);
   }
   else if (!isNumericalNuclearSolve && isDeltaRhoPoissonSolve)
   {
-    std::shared_ptr<utils::ScalarSpatialFunctionReal> smfuncAtTotPot = 
-      std::make_shared<AtomicTotalElectrostaticPotentialFunction>(atomSphericalDataContainer,
-                      atomSymbolVec,
-                      atomCoordinatesVec);
+    std::vector<std::string> fieldNamesDelta{"density", "vtotal"};
+    std::vector<std::string> metadataNamesDelta{"symbol", "Z", "charge", "NR", "r"};
+    std::shared_ptr<atoms::AtomSphericalDataContainer> atomSphericalDataContainerDelta =
+      std::make_shared<atoms::AtomSphericalDataContainer>(
+        atoms::AtomSphericalDataType::ENRICHMENT,
+        atomSymbolToFilename,
+        fieldNamesDelta,
+        metadataNamesDelta);
 
-  std::shared_ptr<utils::ScalarSpatialFunctionReal> elecChargeDens = 
-    std::make_shared<RhoFunction>(atomSphericalDataContainer,
-                    atomSymbolVec,
-                    atomChargesVec,
-                    atomCoordinatesVec);                      
+    std::shared_ptr<atoms::AtomSuperpositionFunction<Host>> smfuncAtTotPot =
+      std::make_shared<atoms::AtomSuperpositionFunction<Host>>(
+        atomSphericalDataContainerDelta,
+        atomSymbolVec,
+        atomCoordinatesVec,
+        "vtotal",
+        linAlgOpContext.get());
 
     dftefeSolve =
      new ksdft::KohnShamDFT<double,
@@ -879,18 +874,19 @@ std::shared_ptr<linearAlgebra::OperatorContext<double,
                                           basisManagerTotalPot,
                                           basisManagerWaveFn,
                                           feBDTotalChargeStiffnessMatrix,
-                                          feBDNucChargeRhs, 
-                                          feBDElecChargeRhs,  
-                                          feBDKineticHamiltonian,     
-                                          feBDElectrostaticsHamiltonian, 
-                                          feBDEXCHamiltonian,                                                                            
+                                          feBDNucChargeRhs,
+                                          feBDElecChargeRhs,
+                                          feBDKineticHamiltonian,
+                                          feBDElectrostaticsHamiltonian,
+                                          feBDEXCHamiltonian,
                                           *externalPotentialFunction,
+                                          "LDA-PW",
                                           linAlgOpContext,
                                           *MContextForInv,
                                           *MContext,
                                           *MInvContext,
                                           true,
-                                          tciaparams);                                     
+                                          tciaparams);
   }
   else
   {
