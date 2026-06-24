@@ -59,8 +59,8 @@ namespace dftefe
                   double rci = rc[iAtom];
                   double val = z[iAtom] * -21.0 * dr * dr * dr *
                                (6.0 * r * r + 3.0 * r * rci + rci * rci) /
-                               (5.0 * M_PI * rci * rci * rci * rci *
-                                rci * rci * rci * rci);
+                               (5.0 * M_PI * rci * rci * rci * rci * rci * rci *
+                                rci * rci);
                   atomicAdd(&q[iPoint], val);
                 }
             }
@@ -76,9 +76,9 @@ namespace dftefe
     } // namespace
 
     void
-    SmearChargeDensityFunction::evalDevice(size_type      numPoints,
-                                           const double * t,
-                                           double *       q) const
+    SmearChargeDensityFunction::evalDevice(size_type     numPoints,
+                                           const double *t,
+                                           double *      q) const
     {
       deviceError_t err = deviceMemset(q, 0, numPoints * sizeof(double));
       DEVICE_API_CHECK(err);

@@ -142,8 +142,8 @@ namespace dftefe
       nLocalEnrichmentIds() const;
 
       std::vector<size_type>
-      overlappingCellsWithLocalEnrichmentIds() const;    
-      
+      overlappingCellsWithLocalEnrichmentIds() const;
+
       std::vector<size_type>
       localToCellLocalEIdsVec() const;
 
@@ -156,7 +156,7 @@ namespace dftefe
     private:
       std::vector<global_size_type> d_newAtomIdToEnrichmentIdOffset;
       std::vector<std::vector<global_size_type>>
-                                    d_overlappingEnrichmentIdsInCells;
+        d_overlappingEnrichmentIdsInCells;
       std::pair<global_size_type, global_size_type> d_locallyOwnedEnrichmentIds;
       std::vector<global_size_type>                 d_ghostEnrichmentIds;
       std::unordered_map<global_size_type, size_type>
@@ -173,10 +173,10 @@ namespace dftefe
       std::vector<size_type>   d_atomIdsForLocalEnrichments;
       std::vector<std::string> d_atomSymbolsForLocalEnrichments;
 
-      std::vector<size_type> d_overlappingCellsWithLocalEnrichmentIds; 
-      std::vector<size_type> d_localToCellLocalEIdsVec;
+      std::vector<size_type>        d_overlappingCellsWithLocalEnrichmentIds;
+      std::vector<size_type>        d_localToCellLocalEIdsVec;
       std::vector<global_size_type> d_localToGlobalEnrichmentIds;
-      std::vector<size_type> d_cellsInLocalEIdVec;
+      std::vector<size_type>        d_cellsInLocalEIdVec;
 
     }; // end of class EnrichmentIdsPartition
   }    // end of namespace basis

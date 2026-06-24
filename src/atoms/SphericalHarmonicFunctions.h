@@ -83,8 +83,8 @@ namespace dftefe
       //
 
       // Scalar single-point evaluation — DFTEFE_HOST_DEVICE_FUNC so that it is
-      // callable from both host and device (analytical path only; spline path is
-      // handled in the batch template specialisations).
+      // callable from both host and device (analytical path only; spline path
+      // is handled in the batch template specialisations).
       DFTEFE_HOST_DEVICE_FUNC double
       Plm(const int l, const int m, const double theta) const;
 
@@ -96,29 +96,29 @@ namespace dftefe
 
       template <dftefe::utils::MemorySpace memorySpace>
       void
-      Plm(size_type numPoints,
-          const int l,
-          const int m,
-          const double *theta,
-          double *out,
+      Plm(size_type             numPoints,
+          const int             l,
+          const int             m,
+          const double *        theta,
+          double *              out,
           utils::deviceStream_t streamId = utils::defaultStream) const;
 
       template <dftefe::utils::MemorySpace memorySpace>
       void
-      dPlmDTheta(size_type numPoints,
-                 const int l,
-                 const int m,
-                 const double *theta,
-                 double *out,
+      dPlmDTheta(size_type             numPoints,
+                 const int             l,
+                 const int             m,
+                 const double *        theta,
+                 double *              out,
                  utils::deviceStream_t streamId = utils::defaultStream) const;
 
       template <dftefe::utils::MemorySpace memorySpace>
       void
-      d2PlmDTheta2(size_type numPoints,
-                   const int l,
-                   const int m,
-                   const double *theta,
-                   double *out,
+      d2PlmDTheta2(size_type             numPoints,
+                   const int             l,
+                   const int             m,
+                   const double *        theta,
+                   double *              out,
                    utils::deviceStream_t streamId = utils::defaultStream) const;
 
       ///////////////////////////////////////////////////////////////////////////
@@ -149,14 +149,14 @@ namespace dftefe
 
     template <dftefe::utils::MemorySpace memorySpace>
     void
-    convertCartesianToSpherical(size_type             numPoints,
-                                const double *        x,
-                                double *              r,
-                                double *              theta,
-                                double *              phi,
-                                double                polarAngleTolerance,
-                                utils::deviceStream_t streamId =
-                                  utils::defaultStream);
+    convertCartesianToSpherical(
+      size_type             numPoints,
+      const double *        x,
+      double *              r,
+      double *              theta,
+      double *              phi,
+      double                polarAngleTolerance,
+      utils::deviceStream_t streamId = utils::defaultStream);
     double
     Dm(const int m);
 
@@ -251,8 +251,7 @@ namespace dftefe
         if (absm == l)
           return (double)l * plm(l, l - 1, cosTheta);
         double term1 =
-          (double)((l + absm) * (l - absm + 1)) *
-          plm(l, absm - 1, cosTheta);
+          (double)((l + absm) * (l - absm + 1)) * plm(l, absm - 1, cosTheta);
         double term2 = plm(l, absm + 1, cosTheta);
         return 0.5 * (term1 - term2);
       }

@@ -59,15 +59,15 @@ namespace dftefe
         Func();
 
         Func(utils::Spline::Func<memorySpace> radialSpline,
-             int    l,
-             int    m,
-             int    mEff,
-             double constant,
-             double cutoff,
-             double smoothness,
-             double polarAngleTolerance,
-             double cutoffTolerance,
-             double radiusTolerance);
+             int                              l,
+             int                              m,
+             int                              mEff,
+             double                           constant,
+             double                           cutoff,
+             double                           smoothness,
+             double                           polarAngleTolerance,
+             double                           cutoffTolerance,
+             double                           radiusTolerance);
 
         DFTEFE_HOST_DEVICE_FUNC double
         getValue(const double *point, const double *origin) const;
@@ -79,7 +79,7 @@ namespace dftefe
 
       private:
         utils::Spline::Func<memorySpace> d_radialSpline;
-        int    d_l, d_m, d_mEff;
+        int                              d_l, d_m, d_mEff;
         double d_constant, d_cutoff, d_smoothness, d_polarAngleTolerance;
         double d_cutoffTolerance, d_radiusTolerance;
       };
@@ -126,26 +126,29 @@ namespace dftefe
 
 #ifdef DFTEFE_WITH_DEVICE
       void
-      getValueDevice(const size_type numPoints, 
-              const double    *points, 
-              const double    *origin,
-              double *out,
-              utils::deviceStream_t  streamId = utils::defaultStream) override;
+      getValueDevice(
+        const size_type       numPoints,
+        const double *        points,
+        const double *        origin,
+        double *              out,
+        utils::deviceStream_t streamId = utils::defaultStream) override;
 
       void
-      getGradientValueDevice(const size_type numPoints, 
-              const double    *points, 
-              const double    *origin,
-              double *out,
-              utils::deviceStream_t  streamId = utils::defaultStream) override;
+      getGradientValueDevice(
+        const size_type       numPoints,
+        const double *        points,
+        const double *        origin,
+        double *              out,
+        utils::deviceStream_t streamId = utils::defaultStream) override;
 
       void
-      getHessianValueDevice(const size_type numPoints, 
-              const double    *points, 
-              const double    *origin,
-              double *out,
-              utils::deviceStream_t  streamId = utils::defaultStream) override;
-#endif              
+      getHessianValueDevice(
+        const size_type       numPoints,
+        const double *        points,
+        const double *        origin,
+        double *              out,
+        utils::deviceStream_t streamId = utils::defaultStream) override;
+#endif
 
       void
       getValue(const size_type numPoints,

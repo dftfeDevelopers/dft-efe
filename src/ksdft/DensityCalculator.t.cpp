@@ -145,41 +145,35 @@ namespace dftefe
       const size_type maxQuadInCell =
         *std::max_element(numCellQuad.begin(), numCellQuad.end());
 
-      d_psiBatchQuad =
-        new dftefe::utils::MemoryStorage<ValueType, memorySpace>(
-          d_waveFuncBatchSize * d_cellBlockSize * maxQuadInCell);
+      d_psiBatchQuad = new dftefe::utils::MemoryStorage<ValueType, memorySpace>(
+        d_waveFuncBatchSize * d_cellBlockSize * maxQuadInCell);
 
-      d_modPsiSqBatchQuad =
-        dftefe::utils::MemoryStorage<RealType, memorySpace>(
-          d_waveFuncBatchSize * d_cellBlockSize * maxQuadInCell);
+      d_modPsiSqBatchQuad = dftefe::utils::MemoryStorage<RealType, memorySpace>(
+        d_waveFuncBatchSize * d_cellBlockSize * maxQuadInCell);
 
-      d_occupationInBatch =
-        dftefe::utils::MemoryStorage<RealType, memorySpace>(
-          d_waveFuncBatchSize);
+      d_occupationInBatch = dftefe::utils::MemoryStorage<RealType, memorySpace>(
+        d_waveFuncBatchSize);
 
       d_rhoMemspace =
         new quadrature::QuadratureValuesContainer<RealType, memorySpace>(
           d_quadRuleContainer, 1);
 
-      d_rhoBatch =
-        new dftefe::utils::MemoryStorage<RealType, memorySpace>(
-          d_cellBlockSize * maxQuadInCell);
+      d_rhoBatch = new dftefe::utils::MemoryStorage<RealType, memorySpace>(
+        d_cellBlockSize * maxQuadInCell);
 
       d_gradPsiBatchQuad =
         new dftefe::utils::MemoryStorage<ValueType, memorySpace>(
           d_waveFuncBatchSize * d_cellBlockSize * maxQuadInCell * dim);
 
-      d_psiGradPsiBatch =
-        dftefe::utils::MemoryStorage<RealType, memorySpace>(
-          d_waveFuncBatchSize * d_cellBlockSize * maxQuadInCell * dim);
+      d_psiGradPsiBatch = dftefe::utils::MemoryStorage<RealType, memorySpace>(
+        d_waveFuncBatchSize * d_cellBlockSize * maxQuadInCell * dim);
 
       d_gradRhoMemspace =
         new quadrature::QuadratureValuesContainer<RealType, memorySpace>(
           d_quadRuleContainer, dim);
 
-      d_gradRhoBatch =
-        new dftefe::utils::MemoryStorage<RealType, memorySpace>(
-          d_cellBlockSize * maxQuadInCell * dim);
+      d_gradRhoBatch = new dftefe::utils::MemoryStorage<RealType, memorySpace>(
+        d_cellBlockSize * maxQuadInCell * dim);
 
       d_psiBatch =
         new linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>(
@@ -209,11 +203,11 @@ namespace dftefe
       computeRho(
         const std::vector<RealType> &occupation,
         const linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
-          &                                                           waveFunc,
+          &waveFunc,
         quadrature::QuadratureValuesContainer<RealType, memorySpaceHost> &rho,
         quadrature::QuadratureValuesContainer<RealType, memorySpaceHost>
-          &                                                           gradRho,
-        const bool                                                    computeGrad)
+          &        gradRho,
+        const bool computeGrad)
     {
       d_rhoMemspace->setValue((RealType)0);
       if (computeGrad)
@@ -222,7 +216,8 @@ namespace dftefe
       utils::MemoryTransfer<memorySpace, memorySpaceHost> memoryTransferM2H;
       utils::MemoryTransfer<memorySpaceHost, memorySpace> memoryTransferH2M;
 
-      utils::MemoryStorage<RealType, memorySpace> occMemspace(occupation.size());
+      utils::MemoryStorage<RealType, memorySpace> occMemspace(
+        occupation.size());
       memoryTransferH2M.copy(occupation.size(),
                              occMemspace.data(),
                              occupation.data());
@@ -237,8 +232,7 @@ namespace dftefe
 
           size_type numQuadInBlock = 0;
           for (size_type iCell = cellStartId; iCell < cellEndId; iCell++)
-            numQuadInBlock +=
-              d_quadRuleContainer->nCellQuadraturePoints(iCell);
+            numQuadInBlock += d_quadRuleContainer->nCellQuadraturePoints(iCell);
 
           for (size_type psiStartId = 0;
                psiStartId < waveFunc.getNumberComponents();
@@ -323,25 +317,29 @@ namespace dftefe
                     cellRange,
                     d_gradPsiBatchQuad->data());
 
-                  DensityCalculatorKernels<ValueType, RealType, memorySpace, dim>::
-                    computeGradRhoInBatch(numPsiInBatch,
-                                         cellRange,
-                                         d_occupationInBatch.data(),
-                                         d_psiBatchQuad->data(),
-                                         d_gradPsiBatchQuad->data(),
-                                         d_psiGradPsiBatch.data(),
-                                         d_quadRuleContainer,
-                                         d_gradRhoBatch->data(),
-                                         *d_linAlgOpContext);
+                  DensityCalculatorKernels<
+                    ValueType,
+                    RealType,
+                    memorySpace,
+                    dim>::computeGradRhoInBatch(numPsiInBatch,
+                                                cellRange,
+                                                d_occupationInBatch.data(),
+                                                d_psiBatchQuad->data(),
+                                                d_gradPsiBatchQuad->data(),
+                                                d_psiGradPsiBatch.data(),
+                                                d_quadRuleContainer,
+                                                d_gradRhoBatch->data(),
+                                                *d_linAlgOpContext);
 
-                  linearAlgebra::blasLapack::axpy<RealType, RealType, memorySpace>(
-                    numQuadInBlock * dim,
-                    (RealType)1.0,
-                    d_gradRhoBatch->data(),
-                    1,
-                    d_gradRhoMemspace->begin(cellStartId),
-                    1,
-                    *d_linAlgOpContext);
+                  linearAlgebra::blasLapack::
+                    axpy<RealType, RealType, memorySpace>(
+                      numQuadInBlock * dim,
+                      (RealType)1.0,
+                      d_gradRhoBatch->data(),
+                      1,
+                      d_gradRhoMemspace->begin(cellStartId),
+                      1,
+                      *d_linAlgOpContext);
                 }
             }
         }

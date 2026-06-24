@@ -67,9 +67,9 @@ namespace dftefe
     } // namespace
 
     void
-    PointChargePotentialFunction::evalDevice(size_type      numPoints,
-                                             const double * t,
-                                             double *       q) const
+    PointChargePotentialFunction::evalDevice(size_type     numPoints,
+                                             const double *t,
+                                             double *      q) const
     {
       deviceError_t err = deviceMemset(q, 0, numPoints * sizeof(double));
       DEVICE_API_CHECK(err);

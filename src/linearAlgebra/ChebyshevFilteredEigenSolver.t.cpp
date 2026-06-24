@@ -53,7 +53,7 @@ namespace dftefe
         const size_type                               eigenVectorBatchSize,
         bool                                          isGHEP,
         OrthogonalizationType                         orthoType,
-        bool                                         storeIntermediateSubspaces,
+        bool storeIntermediateSubspaces,
         std::shared_ptr<MultivectorScratch<ValueType, memorySpace>> scratch)
       : d_p(mpiPatternP2P->mpiCommunicator(), "CHFSI")
       , d_pTotal(mpiPatternP2P->mpiCommunicator(), "CHFSI Solve Time")
@@ -97,35 +97,41 @@ namespace dftefe
         }
       else
         {
-      d_XinBatch =
-        std::make_shared<linearAlgebra::MultiVector<ValueType, memorySpace>>(
-          d_mpiPatternP2P, linAlgOpContext, eigenVectorBatchSize, ValueType());
+          d_XinBatch = std::make_shared<
+            linearAlgebra::MultiVector<ValueType, memorySpace>>(
+            d_mpiPatternP2P,
+            linAlgOpContext,
+            eigenVectorBatchSize,
+            ValueType());
 
-      d_XoutBatch =
-        std::make_shared<linearAlgebra::MultiVector<ValueType, memorySpace>>(
-          d_mpiPatternP2P, linAlgOpContext, eigenVectorBatchSize, ValueType());
+          d_XoutBatch = std::make_shared<
+            linearAlgebra::MultiVector<ValueType, memorySpace>>(
+            d_mpiPatternP2P,
+            linAlgOpContext,
+            eigenVectorBatchSize,
+            ValueType());
         }
 
-      d_chfsiScratch1 = std::make_shared<
-            linearAlgebra::MultiVector<ValueType, memorySpace>>(
-            d_mpiPatternP2P, linAlgOpContext, d_eigenVecBatchSize, ValueType());
-      d_chfsiScratch2 = std::make_shared<
-            linearAlgebra::MultiVector<ValueType, memorySpace>>(
-            d_mpiPatternP2P, linAlgOpContext, d_eigenVecBatchSize, ValueType());
+      d_chfsiScratch1 =
+        std::make_shared<linearAlgebra::MultiVector<ValueType, memorySpace>>(
+          d_mpiPatternP2P, linAlgOpContext, d_eigenVecBatchSize, ValueType());
+      d_chfsiScratch2 =
+        std::make_shared<linearAlgebra::MultiVector<ValueType, memorySpace>>(
+          d_mpiPatternP2P, linAlgOpContext, d_eigenVecBatchSize, ValueType());
       if (d_isResidualChebyFilter)
-      {
-        d_chfsiResidualScratch1 = std::make_shared<
+        {
+          d_chfsiResidualScratch1 = std::make_shared<
             linearAlgebra::MultiVector<ValueType, memorySpace>>(
             d_mpiPatternP2P, linAlgOpContext, d_eigenVecBatchSize, ValueType());
-        d_chfsiResidualScratch2 = std::make_shared<
+          d_chfsiResidualScratch2 = std::make_shared<
             linearAlgebra::MultiVector<ValueType, memorySpace>>(
             d_mpiPatternP2P, linAlgOpContext, d_eigenVecBatchSize, ValueType());
-      }
+        }
       else
-      {
-        d_chfsiResidualScratch1 = nullptr;
-        d_chfsiResidualScratch2 = nullptr; 
-      }
+        {
+          d_chfsiResidualScratch1 = nullptr;
+          d_chfsiResidualScratch2 = nullptr;
+        }
 
       if (!d_isGHEP)
         d_ortho =
@@ -207,14 +213,20 @@ namespace dftefe
             linearAlgebra::MultiVector<ValueType, memorySpace>>(
             d_mpiPatternP2P, linAlgOpContext, d_eigenVecBatchSize, ValueType());
           if (d_isResidualChebyFilter)
-          {
-            d_chfsiResidualScratch1 = std::make_shared<
-            linearAlgebra::MultiVector<ValueType, memorySpace>>(
-            d_mpiPatternP2P, linAlgOpContext, d_eigenVecBatchSize, ValueType());
-            d_chfsiResidualScratch2 = std::make_shared<
-            linearAlgebra::MultiVector<ValueType, memorySpace>>(
-            d_mpiPatternP2P, linAlgOpContext, d_eigenVecBatchSize, ValueType());
-          }
+            {
+              d_chfsiResidualScratch1 = std::make_shared<
+                linearAlgebra::MultiVector<ValueType, memorySpace>>(
+                d_mpiPatternP2P,
+                linAlgOpContext,
+                d_eigenVecBatchSize,
+                ValueType());
+              d_chfsiResidualScratch2 = std::make_shared<
+                linearAlgebra::MultiVector<ValueType, memorySpace>>(
+                d_mpiPatternP2P,
+                linAlgOpContext,
+                d_eigenVecBatchSize,
+                ValueType());
+            }
 
           if (!d_isGHEP)
             d_ortho =
@@ -279,11 +291,12 @@ namespace dftefe
 
       size_type numEigenVectors   = eigenVectors.getNumberComponents();
       size_type eigenVecLocalSize = eigenVectors.localSize();
-      utils::MemoryTransfer<memorySpace, memorySpace>      memoryTransfer;
-      std::shared_ptr<MultiVector<ValueType, memorySpace>> 
-          subspaceBatchIn = nullptr, subspaceBatchOut = nullptr, 
-          chfsiScratch1 = nullptr, chfsiScratch2 = nullptr,
-          chfsiResidualScratch1 = nullptr, chfsiResidualScratch2 = nullptr;
+      utils::MemoryTransfer<memorySpace, memorySpace> memoryTransfer;
+      std::shared_ptr<MultiVector<ValueType, memorySpace>>
+        subspaceBatchIn  = nullptr,
+        subspaceBatchOut = nullptr, chfsiScratch1 = nullptr,
+        chfsiScratch2 = nullptr, chfsiResidualScratch1 = nullptr,
+        chfsiResidualScratch2 = nullptr;
 
       if (d_scratch)
         d_scratch->acquire();
@@ -308,45 +321,44 @@ namespace dftefe
               //                       d_XinBatch->data() +
               //                         numEigVecInBatch * iSize,
               //                       eigenVectors.data() +
-              //                         iSize * numEigenVectors + eigVecStartId);
+              //                         iSize * numEigenVectors +
+              //                         eigVecStartId);
 
-              blasLapack::stridedBlockCopy(
-                            eigenVecLocalSize,
-                            numEigVecInBatch,
-                            numEigenVectors,
-                            eigVecStartId,
-                            numEigVecInBatch,
-                            0,
-                            eigenVectors.data(),
-                            d_XinBatch->data(),
-                            *eigenVectors.getLinAlgOpContext());
+              blasLapack::stridedBlockCopy(eigenVecLocalSize,
+                                           numEigVecInBatch,
+                                           numEigenVectors,
+                                           eigVecStartId,
+                                           numEigVecInBatch,
+                                           0,
+                                           eigenVectors.data(),
+                                           d_XinBatch->data(),
+                                           *eigenVectors.getLinAlgOpContext());
 
               subspaceBatchIn  = d_XinBatch;
               subspaceBatchOut = d_XoutBatch;
 
-              chfsiScratch1 = d_chfsiScratch1;
-              chfsiScratch2 = d_chfsiScratch2;
+              chfsiScratch1         = d_chfsiScratch1;
+              chfsiScratch2         = d_chfsiScratch2;
               chfsiResidualScratch1 = d_chfsiResidualScratch1;
               chfsiResidualScratch2 = d_chfsiResidualScratch2;
             }
           else if (numEigVecInBatch % d_eigenVecBatchSize == d_batchSizeSmall)
             {
-              blasLapack::stridedBlockCopy(
-                            eigenVecLocalSize,
-                            numEigVecInBatch,
-                            numEigenVectors,
-                            eigVecStartId,
-                            numEigVecInBatch,
-                            0,
-                            eigenVectors.data(),
-                            d_XinBatchSmall->data(),
-                            *eigenVectors.getLinAlgOpContext());                                     
+              blasLapack::stridedBlockCopy(eigenVecLocalSize,
+                                           numEigVecInBatch,
+                                           numEigenVectors,
+                                           eigVecStartId,
+                                           numEigVecInBatch,
+                                           0,
+                                           eigenVectors.data(),
+                                           d_XinBatchSmall->data(),
+                                           *eigenVectors.getLinAlgOpContext());
 
               subspaceBatchIn  = d_XinBatchSmall;
               subspaceBatchOut = d_XoutBatchSmall;
 
-              chfsiScratch1 = d_chfsiScratch1Small;
-              chfsiScratch2 = d_chfsiScratch2Small;
+              chfsiScratch1         = d_chfsiScratch1Small;
+              chfsiScratch2         = d_chfsiScratch2Small;
               chfsiResidualScratch1 = d_chfsiResidualScratch1Small;
               chfsiResidualScratch2 = d_chfsiResidualScratch2Small;
             }
@@ -355,8 +367,7 @@ namespace dftefe
               d_batchSizeSmall = numEigVecInBatch;
 
               const bool useSmallScratch =
-                d_scratch != nullptr &&
-                d_scratch->hasXinBatchSmall() &&
+                d_scratch != nullptr && d_scratch->hasXinBatchSmall() &&
                 d_scratch->hasXoutBatchSmall() &&
                 d_scratch->getXinBatchSmallSize() == numEigVecInBatch;
 
@@ -367,19 +378,19 @@ namespace dftefe
                 }
               else
                 {
-              d_XinBatchSmall = std::make_shared<
-                linearAlgebra::MultiVector<ValueType, memorySpace>>(
-                d_mpiPatternP2P,
-                eigenVectors.getLinAlgOpContext(),
-                numEigVecInBatch,
-                ValueType());
+                  d_XinBatchSmall = std::make_shared<
+                    linearAlgebra::MultiVector<ValueType, memorySpace>>(
+                    d_mpiPatternP2P,
+                    eigenVectors.getLinAlgOpContext(),
+                    numEigVecInBatch,
+                    ValueType());
 
-              d_XoutBatchSmall = std::make_shared<
-                linearAlgebra::MultiVector<ValueType, memorySpace>>(
-                d_mpiPatternP2P,
-                eigenVectors.getLinAlgOpContext(),
-                numEigVecInBatch,
-                ValueType());
+                  d_XoutBatchSmall = std::make_shared<
+                    linearAlgebra::MultiVector<ValueType, memorySpace>>(
+                    d_mpiPatternP2P,
+                    eigenVectors.getLinAlgOpContext(),
+                    numEigVecInBatch,
+                    ValueType());
                   if (d_scratch != nullptr)
                     {
                       d_scratch->setXinBatchSmall(d_XinBatchSmall);
@@ -400,37 +411,36 @@ namespace dftefe
                 numEigVecInBatch,
                 ValueType());
               if (d_isResidualChebyFilter)
-              {
-                d_chfsiResidualScratch1Small = std::make_shared<
-                linearAlgebra::MultiVector<ValueType, memorySpace>>(
-                d_mpiPatternP2P,
-                eigenVectors.getLinAlgOpContext(),
-                numEigVecInBatch,
-                ValueType());
-                d_chfsiResidualScratch2Small = std::make_shared<
-                linearAlgebra::MultiVector<ValueType, memorySpace>>(
-                d_mpiPatternP2P,
-                eigenVectors.getLinAlgOpContext(),
-                numEigVecInBatch,
-                ValueType()); 
-              }
+                {
+                  d_chfsiResidualScratch1Small = std::make_shared<
+                    linearAlgebra::MultiVector<ValueType, memorySpace>>(
+                    d_mpiPatternP2P,
+                    eigenVectors.getLinAlgOpContext(),
+                    numEigVecInBatch,
+                    ValueType());
+                  d_chfsiResidualScratch2Small = std::make_shared<
+                    linearAlgebra::MultiVector<ValueType, memorySpace>>(
+                    d_mpiPatternP2P,
+                    eigenVectors.getLinAlgOpContext(),
+                    numEigVecInBatch,
+                    ValueType());
+                }
 
-              blasLapack::stridedBlockCopy(
-                            eigenVecLocalSize,
-                            numEigVecInBatch,
-                            numEigenVectors,
-                            eigVecStartId,
-                            numEigVecInBatch,
-                            0,
-                            eigenVectors.data(),
-                            d_XinBatchSmall->data(),
-                            *eigenVectors.getLinAlgOpContext());                                      
+              blasLapack::stridedBlockCopy(eigenVecLocalSize,
+                                           numEigVecInBatch,
+                                           numEigenVectors,
+                                           eigVecStartId,
+                                           numEigVecInBatch,
+                                           0,
+                                           eigenVectors.data(),
+                                           d_XinBatchSmall->data(),
+                                           *eigenVectors.getLinAlgOpContext());
 
               subspaceBatchIn  = d_XinBatchSmall;
               subspaceBatchOut = d_XoutBatchSmall;
 
-              chfsiScratch1 = d_chfsiScratch1Small;
-              chfsiScratch2 = d_chfsiScratch2Small;
+              chfsiScratch1         = d_chfsiScratch1Small;
+              chfsiScratch2         = d_chfsiScratch2Small;
               chfsiResidualScratch1 = d_chfsiResidualScratch1Small;
               chfsiResidualScratch2 = d_chfsiResidualScratch2Small;
             }
@@ -468,23 +478,23 @@ namespace dftefe
           utils::printCurrentMemoryUsage(d_mpiPatternP2P->mpiCommunicator(),
                                          "During blocked chebyshev filtering");
 
-              blasLapack::stridedBlockCopy(
-                            eigenVecLocalSize,
-                            numEigVecInBatch,
-                            numEigVecInBatch,
-                            0,                            
-                            numEigenVectors,
-                            eigVecStartId,
-                            subspaceBatchOut->data(),
-                            eigenVectors.data(),
-                            *eigenVectors.getLinAlgOpContext());
+          blasLapack::stridedBlockCopy(eigenVecLocalSize,
+                                       numEigVecInBatch,
+                                       numEigVecInBatch,
+                                       0,
+                                       numEigenVectors,
+                                       eigVecStartId,
+                                       subspaceBatchOut->data(),
+                                       eigenVectors.data(),
+                                       *eigenVectors.getLinAlgOpContext());
 
           // for (size_type iSize = 0; iSize < eigenVecLocalSize; iSize++)
           //   memoryTransfer.copy(numEigVecInBatch,
-          //                       eigenVectors.data() + iSize * numEigenVectors +
+          //                       eigenVectors.data() + iSize * numEigenVectors
+          //                       +
           //                         eigVecStartId,
           //                       subspaceBatchOut->data() +
-          //                         numEigVecInBatch * iSize);                            
+          //                         numEigVecInBatch * iSize);
         }
 
       if (d_scratch)

@@ -147,9 +147,9 @@ namespace dftefe
 
       //   else
       //     {
-      //       double term1 = (l + m) * (l - m + 1) * dPlmDTheta(l, m - 1, theta);
-      //       double term2 = dPlmDTheta(l, m + 1, theta);
-      //       return 0.5 * (term1 - term2);
+      //       double term1 = (l + m) * (l - m + 1) * dPlmDTheta(l, m - 1,
+      //       theta); double term2 = dPlmDTheta(l, m + 1, theta); return 0.5 *
+      //       (term1 - term2);
       //     }
       // }
 
@@ -280,21 +280,22 @@ namespace dftefe
         }
     }
 
-    template<>
+    template <>
     void
-    convertCartesianToSpherical<utils::MemorySpace::HOST>(size_type numPoints,
-                                const double *points,
-                                double *            r,
-                                double *            theta,
-                                double *           phi,
-                                double polarAngleTolerance,
-                                utils::deviceStream_t  streamId)
+    convertCartesianToSpherical<utils::MemorySpace::HOST>(
+      size_type             numPoints,
+      const double *        points,
+      double *              r,
+      double *              theta,
+      double *              phi,
+      double                polarAngleTolerance,
+      utils::deviceStream_t streamId)
     {
       for (int i = 0; i < numPoints; i++)
         {
           const double *x = points + i * 3;
-          r[i]             = sqrt(x[0] * x[0] + x[1] * x[1] + x[2] * x[2]);
-          double radius = r[i];
+          r[i]            = sqrt(x[0] * x[0] + x[1] * x[1] + x[2] * x[2]);
+          double radius   = r[i];
           if (radius == 0)
             {
               theta[i] = 0.0;
@@ -330,10 +331,10 @@ namespace dftefe
     template <>
     void
     Qm<utils::MemorySpace::HOST>(size_type             numPoints,
-                                  const int             m,
-                                  const double *        phi,
-                                  double *              out,
-                                  utils::deviceStream_t streamId)
+                                 const int             m,
+                                 const double *        phi,
+                                 double *              out,
+                                 utils::deviceStream_t streamId)
     {
       for (size_type i = 0; i < numPoints; i++)
         out[i] = Qm(m, phi[i]);
@@ -345,10 +346,10 @@ namespace dftefe
     template <>
     void
     dQmDPhi<utils::MemorySpace::HOST>(size_type             numPoints,
-                                       const int             m,
-                                       const double *        phi,
-                                       double *              out,
-                                       utils::deviceStream_t streamId)
+                                      const int             m,
+                                      const double *        phi,
+                                      double *              out,
+                                      utils::deviceStream_t streamId)
     {
       for (size_type i = 0; i < numPoints; i++)
         out[i] = dQmDPhi(m, phi[i]);
@@ -539,7 +540,8 @@ namespace dftefe
     // {
     //   if (!d_isAssocLegendreSplineEval)
     //     {
-    //       return SphericalHarmonicFunctionsInternal::d2PlmDTheta2(l, m, theta);
+    //       return SphericalHarmonicFunctionsInternal::d2PlmDTheta2(l, m,
+    //       theta);
     //     }
     //   else
     //     {
@@ -578,10 +580,7 @@ namespace dftefe
       if (d_isAssocLegendreSplineEval && l != 0)
         {
           const int    absm   = std::abs(m);
-          const double factor = (m < 0)
-                                  ? pow(-1.0, m) *
-                                      Rlm(l, absm)
-                                  : 1.0;
+          const double factor = (m < 0) ? pow(-1.0, m) * Rlm(l, absm) : 1.0;
           for (size_type i = 0; i < numPoints; i++)
             out[i] = (*d_assocLegendreSpline[l][absm])(theta[i]) * factor;
         }
@@ -610,10 +609,7 @@ namespace dftefe
       else if (d_isAssocLegendreSplineEval)
         {
           const int    absm   = std::abs(m);
-          const double factor = (m < 0)
-                                  ? pow(-1.0, m) *
-                                      Rlm(l, absm)
-                                  : 1.0;
+          const double factor = (m < 0) ? pow(-1.0, m) * Rlm(l, absm) : 1.0;
           for (size_type i = 0; i < numPoints; i++)
             out[i] =
               (*d_assocLegendreSpline[l][absm]).deriv(1, theta[i]) * factor;
@@ -643,10 +639,7 @@ namespace dftefe
       else if (d_isAssocLegendreSplineEval)
         {
           const int    absm   = std::abs(m);
-          const double factor = (m < 0)
-                                  ? pow(-1.0, m) *
-                                      Rlm(l, absm)
-                                  : 1.0;
+          const double factor = (m < 0) ? pow(-1.0, m) * Rlm(l, absm) : 1.0;
           for (size_type i = 0; i < numPoints; i++)
             out[i] =
               (*d_assocLegendreSpline[l][absm]).deriv(2, theta[i]) * factor;

@@ -61,8 +61,9 @@ namespace dftefe
                                    ValueTypeWaveFnBasisData,
                                    memorySpace,
                                    dim>::RealType,
-          memorySpaceHost> &                                             rho,
-        const utils::MemoryStorage<ValueTypeBasisData, memorySpaceHost> &jxwStorage,
+          memorySpaceHost> &rho,
+        const utils::MemoryStorage<ValueTypeBasisData, memorySpaceHost>
+          &jxwStorage,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
                                    linAlgOpContext,
         const utils::mpi::MPIComm &comm)
@@ -197,7 +198,8 @@ namespace dftefe
       , d_atomicTotalElecPotElectronicQuad(nullptr)
       , d_isCalculateIntegralDeltaRho(false)
       , d_isTCIEnabled(false)
-      , d_linAlgOpContextHost(linearAlgebra::LinAlgOpContextDefaults::LINALG_OP_CONTXT_HOST)
+      , d_linAlgOpContextHost(
+          linearAlgebra::LinAlgOpContextDefaults::LINALG_OP_CONTXT_HOST)
       , d_potentialHamQuadMemspace(nullptr)
     {
       int rank;
@@ -787,9 +789,9 @@ namespace dftefe
 
       computeNuclearSelfEnergy();
 
-      std::map<
-        std::string,
-        const quadrature::QuadratureValuesContainer<RealType, memorySpaceHost> &>
+      std::map<std::string,
+               const quadrature::QuadratureValuesContainer<RealType,
+                                                           memorySpaceHost> &>
         inpRhsMap;
 
       d_feBasisDataStorageRhsMap = {{"bSmear", d_feBDNuclearChargeRhs},
@@ -1055,9 +1057,9 @@ namespace dftefe
       computeNuclearSelfEnergy();
 
       d_scratchDensNuclearQuad->setValue(0);
-      std::map<
-        std::string,
-        const quadrature::QuadratureValuesContainer<RealType, memorySpaceHost> &>
+      std::map<std::string,
+               const quadrature::QuadratureValuesContainer<RealType,
+                                                           memorySpaceHost> &>
         inpRhsMap;
 
       d_feBasisDataStorageRhsMap = {{"bSmear", d_feBDNuclearChargeRhs},
@@ -1144,7 +1146,8 @@ namespace dftefe
             feBDHamiltonian->getQuadratureRuleContainer(),
         "The  feBDElectronicChargeRHS and feBDHamiltonian should have same Quadrature.");
 
-      //utils::Profiler<utils::MemorySpace::HOST> p(feBMTotalCharge->getMPIPatternP2P()->mpiCommunicator());
+      // utils::Profiler<utils::MemorySpace::HOST>
+      // p(feBMTotalCharge->getMPIPatternP2P()->mpiCommunicator());
 
       // d_atomicTotalElecPotElectronicQuad = &atomicTotalElecPotElectronicQuad;
       // d_atomicElectronChargeDensity      = atomicElectronChargeDensity;
@@ -1196,7 +1199,7 @@ namespace dftefe
       d_potentialHamQuadMemspace =
         new quadrature::QuadratureValuesContainer<ValueType, memorySpace>(
           quadRuleContainerHam, d_numComponents);
-          
+
       d_correctionPotHamQuad =
         new quadrature::QuadratureValuesContainer<ValueType, memorySpaceHost>(
           quadRuleContainerHam, d_numComponents);
@@ -1250,36 +1253,39 @@ namespace dftefe
       utils::Profiler<utils::MemorySpace::HOST> p(
         d_feBMTotalCharge->getMPIPatternP2P()->mpiCommunicator(),
         "Electrostiaitcs Reinit Basis");
-      p.registerStart("Quad Eval for rhoAtFunc, vTotAtFunc , smfuncDens , externalPotentialFunction , smfuncPot  + TCI + numSelf");
+      p.registerStart(
+        "Quad Eval for rhoAtFunc, vTotAtFunc , smfuncDens , externalPotentialFunction , smfuncPot  + TCI + numSelf");
 
       // --------TODO : use eval()-----
       std::shared_ptr<const quadrature::QuadratureRuleContainer>
         quadRuleContainerVal =
           feBDElectronicChargeRhs->getQuadratureRuleContainer();
 
-      RealType *quadValueIter1 = nullptr;
-      ValueTypeBasisCoeff *quadValueIter2 = nullptr;
-      size_type cumulativeQuadInCell = 0;
+      RealType *           quadValueIter1       = nullptr;
+      ValueTypeBasisCoeff *quadValueIter2       = nullptr;
+      size_type            cumulativeQuadInCell = 0;
 
-      utils::MemoryStorage<RealType, memorySpace> 
-        atomicElectronChargeDensityMemspace(quadRuleContainerVal->nQuadraturePoints());
-      utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace> 
-        atomicTotalElecPotElectronicQuadMemspace(quadRuleContainerVal->nQuadraturePoints());
+      utils::MemoryStorage<RealType, memorySpace>
+        atomicElectronChargeDensityMemspace(
+          quadRuleContainerVal->nQuadraturePoints());
+      utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>
+        atomicTotalElecPotElectronicQuadMemspace(
+          quadRuleContainerVal->nQuadraturePoints());
 
       atomicElectronicChargeDensityFunction.evaluate(
-                                    quadRuleContainerVal->nQuadraturePoints(),
-                                    atoms::AtomSuperpositionFuncType::Identity,
-                                    quadRuleContainerVal->template getRealPointsPtr<memorySpace>(),
-                                    atomicElectronChargeDensityMemspace.data(),
-                                    1/(atoms::Clm(0, 0) * atoms::Dm(0) * atoms::Qm(0, 0)));
+        quadRuleContainerVal->nQuadraturePoints(),
+        atoms::AtomSuperpositionFuncType::Identity,
+        quadRuleContainerVal->template getRealPointsPtr<memorySpace>(),
+        atomicElectronChargeDensityMemspace.data(),
+        1 / (atoms::Clm(0, 0) * atoms::Dm(0) * atoms::Qm(0, 0)));
 
       atomicTotalElectroPotentialFunction.evaluate(
-                                    quadRuleContainerVal->nQuadraturePoints(),
-                                    atoms::AtomSuperpositionFuncType::Identity,
-                                    quadRuleContainerVal->template getRealPointsPtr<memorySpace>(),
-                                    atomicTotalElecPotElectronicQuadMemspace.data(),
-                                    1/(atoms::Clm(0, 0) * atoms::Dm(0) * atoms::Qm(0, 0)));      
-                    
+        quadRuleContainerVal->nQuadraturePoints(),
+        atoms::AtomSuperpositionFuncType::Identity,
+        quadRuleContainerVal->template getRealPointsPtr<memorySpace>(),
+        atomicTotalElecPotElectronicQuadMemspace.data(),
+        1 / (atoms::Clm(0, 0) * atoms::Dm(0) * atoms::Qm(0, 0)));
+
       utils::MemoryTransfer<memorySpaceHost, memorySpace> memTrans;
       memTrans.copy(atomicElectronChargeDensityMemspace.size(),
                     d_atomicElectronChargeDensity.begin(),
@@ -1287,12 +1293,13 @@ namespace dftefe
 
       memTrans.copy(atomicTotalElecPotElectronicQuadMemspace.size(),
                     d_atomicTotalElecPotElectronicQuad->begin(),
-                    atomicTotalElecPotElectronicQuadMemspace.data());             
+                    atomicTotalElecPotElectronicQuadMemspace.data());
 
       // quadValueIter1 = d_atomicElectronChargeDensity.begin();
       // quadValueIter2 = d_atomicTotalElecPotElectronicQuad->begin();
 
-      // for (size_type iCell = 0; iCell < quadRuleContainerVal->nCells(); iCell++)
+      // for (size_type iCell = 0; iCell < quadRuleContainerVal->nCells();
+      // iCell++)
       //   {
       //     size_type numQuadInCell =
       //       quadRuleContainerVal->nCellQuadraturePoints(iCell);
@@ -1316,7 +1323,8 @@ namespace dftefe
       //   }
 
       size_type quadId = 0;
-      auto      jxwData = d_atomicElectronChargeDensity.getQuadratureRuleContainer()->getJxW();
+      auto      jxwData =
+        d_atomicElectronChargeDensity.getQuadratureRuleContainer()->getJxW();
       for (size_type iCell = 0; iCell < d_atomicElectronChargeDensity.nCells();
            iCell++)
         {
@@ -1347,25 +1355,26 @@ namespace dftefe
                                                          d_atomCharges,
                                                          d_smearedChargeRadius);
 
-      quadRuleContainerVal = feBDNuclearChargeRhs->getQuadratureRuleContainer();   
+      quadRuleContainerVal = feBDNuclearChargeRhs->getQuadratureRuleContainer();
 
-      utils::MemoryStorage<RealType, memorySpace> 
-        nuclearChargesDensityMemspace(quadRuleContainerVal->nQuadraturePoints());
+      utils::MemoryStorage<RealType, memorySpace> nuclearChargesDensityMemspace(
+        quadRuleContainerVal->nQuadraturePoints());
 
       smfuncDens.template eval<memorySpace>(
-                                    quadRuleContainerVal->nQuadraturePoints(),
-                                    quadRuleContainerVal->template getRealPointsPtr<memorySpace>(),
-                                    nuclearChargesDensityMemspace.data());
-                    
+        quadRuleContainerVal->nQuadraturePoints(),
+        quadRuleContainerVal->template getRealPointsPtr<memorySpace>(),
+        nuclearChargesDensityMemspace.data());
+
       memTrans.copy(nuclearChargesDensityMemspace.size(),
                     d_nuclearChargesDensity->begin(),
-                    nuclearChargesDensityMemspace.data());                    
+                    nuclearChargesDensityMemspace.data());
 
       // // quadValueIter1 = d_atomicElectronChargeDensityNucQuad.begin();
       // RealType *quadValueIter3 = d_nuclearChargesDensity->begin();
 
       // cumulativeQuadInCell          = 0;
-      // for (size_type iCell = 0; iCell < quadRuleContainerVal->nCells(); iCell++)
+      // for (size_type iCell = 0; iCell < quadRuleContainerVal->nCells();
+      // iCell++)
       //   {
       //     size_type numQuadInCell =
       //       quadRuleContainerVal->nCellQuadraturePoints(iCell);
@@ -1389,7 +1398,7 @@ namespace dftefe
       //   }
 
       RealType totNuclearChargeQuad = 0;
-      quadId = 0;
+      quadId                        = 0;
       jxwData = d_nuclearChargesDensity->getQuadratureRuleContainer()->getJxW();
       for (size_type iCell = 0; iCell < d_nuclearChargesDensity->nCells();
            iCell++)
@@ -1431,37 +1440,40 @@ namespace dftefe
 
       quadRuleContainerVal = quadRuleContainerHam;
 
-      utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace> 
-        externalPotentialFunctionQuadMemspace(quadRuleContainerVal->nQuadraturePoints());
-      utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace> 
+      utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>
+        externalPotentialFunctionQuadMemspace(
+          quadRuleContainerVal->nQuadraturePoints());
+      utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>
         smfuncPotQuadMemspace(quadRuleContainerVal->nQuadraturePoints());
 
       externalPotentialFunction.template eval<memorySpace>(
-                                    quadRuleContainerVal->nQuadraturePoints(),
-                                    quadRuleContainerVal->template getRealPointsPtr<memorySpace>(),
-                                    externalPotentialFunctionQuadMemspace.data());
+        quadRuleContainerVal->nQuadraturePoints(),
+        quadRuleContainerVal->template getRealPointsPtr<memorySpace>(),
+        externalPotentialFunctionQuadMemspace.data());
 
       smfuncPot.template eval<memorySpace>(
-                                    quadRuleContainerVal->nQuadraturePoints(),
-                                    quadRuleContainerVal->template getRealPointsPtr<memorySpace>(),
-                                    smfuncPotQuadMemspace.data());     
-                    
-      linearAlgebra::blasLapack::axpy(smfuncPotQuadMemspace.size(),
-                                      -1.0,
-                                      smfuncPotQuadMemspace.data(),
-                                      1.0,
-                                      externalPotentialFunctionQuadMemspace.data(),
-                                      1.0,
-                                      *d_linAlgOpContext);
-                    
+        quadRuleContainerVal->nQuadraturePoints(),
+        quadRuleContainerVal->template getRealPointsPtr<memorySpace>(),
+        smfuncPotQuadMemspace.data());
+
+      linearAlgebra::blasLapack::axpy(
+        smfuncPotQuadMemspace.size(),
+        -1.0,
+        smfuncPotQuadMemspace.data(),
+        1.0,
+        externalPotentialFunctionQuadMemspace.data(),
+        1.0,
+        *d_linAlgOpContext);
+
       memTrans.copy(externalPotentialFunctionQuadMemspace.size(),
                     d_correctionPotHamQuad->begin(),
-                    externalPotentialFunctionQuadMemspace.data());    
+                    externalPotentialFunctionQuadMemspace.data());
 
       // quadValueIter2       = d_correctionPotHamQuad->begin();
 
       // cumulativeQuadInCell = 0;
-      // for (size_type iCell = 0; iCell < quadRuleContainerVal->nCells(); iCell++)
+      // for (size_type iCell = 0; iCell < quadRuleContainerVal->nCells();
+      // iCell++)
       //   {
       //     size_type numQuadInCell =
       //       quadRuleContainerVal->nCellQuadraturePoints(iCell);
@@ -1502,33 +1514,39 @@ namespace dftefe
           // d_atomicElectronChargeDensityNucQuad.data();
           cumulativeQuadInCell = 0;
 
-      atomicElectronChargeDensityMemspace.resize(quadRuleContainerNucl->nQuadraturePoints());
-      atomicTotalElecPotElectronicQuadMemspace.resize(quadRuleContainerNucl->nQuadraturePoints());
+          atomicElectronChargeDensityMemspace.resize(
+            quadRuleContainerNucl->nQuadraturePoints());
+          atomicTotalElecPotElectronicQuadMemspace.resize(
+            quadRuleContainerNucl->nQuadraturePoints());
 
-      utils::MemoryStorage<RealType, memorySpaceHost> atomicElectronChargeDensityHost(quadRuleContainerNucl->nQuadraturePoints());
-      utils::MemoryStorage<ValueTypeBasisCoeff, memorySpaceHost> atomicTotalElecPotElectronicQuadHost(quadRuleContainerNucl->nQuadraturePoints());
-      atomicElectronicChargeDensityFunction.evaluate(
-                                    quadRuleContainerNucl->nQuadraturePoints(),
-                                    atoms::AtomSuperpositionFuncType::Identity,
-                                    quadRuleContainerNucl->template getRealPointsPtr<memorySpace>(),
-                                    atomicElectronChargeDensityMemspace.data(),
-                                    1/(atoms::Clm(0, 0) * atoms::Dm(0) * atoms::Qm(0, 0)));
+          utils::MemoryStorage<RealType, memorySpaceHost>
+            atomicElectronChargeDensityHost(
+              quadRuleContainerNucl->nQuadraturePoints());
+          utils::MemoryStorage<ValueTypeBasisCoeff, memorySpaceHost>
+            atomicTotalElecPotElectronicQuadHost(
+              quadRuleContainerNucl->nQuadraturePoints());
+          atomicElectronicChargeDensityFunction.evaluate(
+            quadRuleContainerNucl->nQuadraturePoints(),
+            atoms::AtomSuperpositionFuncType::Identity,
+            quadRuleContainerNucl->template getRealPointsPtr<memorySpace>(),
+            atomicElectronChargeDensityMemspace.data(),
+            1 / (atoms::Clm(0, 0) * atoms::Dm(0) * atoms::Qm(0, 0)));
 
-      atomicTotalElectroPotentialFunction.evaluate(
-                                    quadRuleContainerNucl->nQuadraturePoints(),
-                                    atoms::AtomSuperpositionFuncType::Identity,
-                                    quadRuleContainerNucl->template getRealPointsPtr<memorySpace>(),
-                                    atomicTotalElecPotElectronicQuadMemspace.data(),
-                                    1/(atoms::Clm(0, 0) * atoms::Dm(0) * atoms::Qm(0, 0)));      
-                    
-      utils::MemoryTransfer<memorySpaceHost, memorySpace> memTrans;
-      memTrans.copy(atomicElectronChargeDensityMemspace.size(),
-                    atomicElectronChargeDensityHost.begin(),
-                    atomicElectronChargeDensityMemspace.data());
+          atomicTotalElectroPotentialFunction.evaluate(
+            quadRuleContainerNucl->nQuadraturePoints(),
+            atoms::AtomSuperpositionFuncType::Identity,
+            quadRuleContainerNucl->template getRealPointsPtr<memorySpace>(),
+            atomicTotalElecPotElectronicQuadMemspace.data(),
+            1 / (atoms::Clm(0, 0) * atoms::Dm(0) * atoms::Qm(0, 0)));
 
-      memTrans.copy(atomicTotalElecPotElectronicQuadMemspace.size(),
-                    atomicTotalElecPotElectronicQuadHost.begin(),
-                    atomicTotalElecPotElectronicQuadMemspace.data());  
+          utils::MemoryTransfer<memorySpaceHost, memorySpace> memTrans;
+          memTrans.copy(atomicElectronChargeDensityMemspace.size(),
+                        atomicElectronChargeDensityHost.begin(),
+                        atomicElectronChargeDensityMemspace.data());
+
+          memTrans.copy(atomicTotalElecPotElectronicQuadMemspace.size(),
+                        atomicTotalElecPotElectronicQuadHost.begin(),
+                        atomicTotalElecPotElectronicQuadMemspace.data());
 
           // --------TODO : use eval()-----
           for (size_type iCell = 0; iCell < quadRuleContainerNucl->nCells();
@@ -1546,14 +1564,19 @@ namespace dftefe
                 {
                   d_integralPhiAtxbSmear +=
                     nuclChargeDensIter[cumulativeQuadInCell + iQuad] *
-                    atomicTotalElecPotElectronicQuadHost[cumulativeQuadInCell + iQuad] *
+                    atomicTotalElecPotElectronicQuadHost[cumulativeQuadInCell +
+                                                         iQuad] *
                     jxwStorageIter[cumulativeQuadInCell + iQuad];
                   d_intRhoAtPhiAt +=
-                    atomicElectronChargeDensityHost[cumulativeQuadInCell + iQuad] * 
-                    atomicTotalElecPotElectronicQuadHost[cumulativeQuadInCell + iQuad] *
+                    atomicElectronChargeDensityHost[cumulativeQuadInCell +
+                                                    iQuad] *
+                    atomicTotalElecPotElectronicQuadHost[cumulativeQuadInCell +
+                                                         iQuad] *
                     jxwStorageIter[cumulativeQuadInCell + iQuad];
                   d_correctionEnergyAtomic +=
-                    atomicElectronChargeDensityHost[cumulativeQuadInCell + iQuad] * (vext[iQuad] - vsmear[iQuad]) *
+                    atomicElectronChargeDensityHost[cumulativeQuadInCell +
+                                                    iQuad] *
+                    (vext[iQuad] - vsmear[iQuad]) *
                     jxwStorageIter[cumulativeQuadInCell + iQuad];
                 }
               cumulativeQuadInCell += numQuadInCell;
@@ -1641,7 +1664,7 @@ namespace dftefe
                 {
                   double r, theta, phi;
                   atoms::convertCartesianToSpherical((atomCoordinates[iAtom] -
-                                                       atomCoordinates[jAtom]),
+                                                      atomCoordinates[jAtom]),
                                                      r,
                                                      theta,
                                                      phi,
@@ -1694,13 +1717,14 @@ namespace dftefe
                  << "\t" << d_integralDiffVZZCorrVSmearxSumBZZCorrBSmear
                  << "\n";
 
-      p.registerEnd("Quad Eval for rhoAtFunc, vTotAtFunc , smfuncDens , externalPotentialFunction , smfuncPot  + TCI + numSelf");
+      p.registerEnd(
+        "Quad Eval for rhoAtFunc, vTotAtFunc , smfuncDens , externalPotentialFunction , smfuncPot  + TCI + numSelf");
       p.registerStart("Poisson Solve Object Creation");
 
       d_scratchDensNuclearQuad->setValue(0);
-      std::map<
-        std::string,
-        const quadrature::QuadratureValuesContainer<RealType, memorySpaceHost> &>
+      std::map<std::string,
+               const quadrature::QuadratureValuesContainer<RealType,
+                                                           memorySpaceHost> &>
         inpRhsMap;
 
       d_feBasisDataStorageRhsMap = {{"deltarho", d_feBDElectronicChargeRhs}};
@@ -1878,8 +1902,8 @@ namespace dftefe
           /*---- solve poisson problem for delta rho system ---*/
 
           std::map<std::string,
-                   const quadrature::QuadratureValuesContainer<RealType,
-                                                               memorySpaceHost> &>
+                   const quadrature::
+                     QuadratureValuesContainer<RealType, memorySpaceHost> &>
             inpRhsMap = {{"deltarho", *d_scratchDensRhoQuad}};
 
           utils::Profiler<utils::MemorySpace::HOST> p(
@@ -1945,8 +1969,8 @@ namespace dftefe
           /*---- solve poisson problem for b+rho system ---*/
 
           std::map<std::string,
-                   const quadrature::QuadratureValuesContainer<RealType,
-                                                               memorySpaceHost> &>
+                   const quadrature::
+                     QuadratureValuesContainer<RealType, memorySpaceHost> &>
             inpRhsMap = {{"bSmear", *d_scratchDensNuclearQuad},
                          {"rho", *d_scratchDensRhoQuad}};
 
@@ -2031,8 +2055,7 @@ namespace dftefe
                       *d_scratchPotHamQuad,
                       *d_linAlgOpContextHost);
 
-      utils::MemoryTransfer<memorySpace, memorySpaceHost>
-        memoryTransfer;
+      utils::MemoryTransfer<memorySpace, memorySpaceHost> memoryTransfer;
 
       memoryTransfer.copy(d_scratchPotHamQuad->nEntries(),
                           d_potentialHamQuadMemspace->data(),
@@ -2041,7 +2064,7 @@ namespace dftefe
       d_feBasisOpHamiltonian->computeFEMatrices(
         basis::realspace::LinearLocalOp::IDENTITY,
         basis::realspace::VectorMathOp::MULT,
-        *d_potentialHamQuadMemspace,        
+        *d_potentialHamQuadMemspace,
         basis::realspace::VectorMathOp::MULT,
         basis::realspace::LinearLocalOp::IDENTITY,
         cellWiseStorage,
@@ -2068,8 +2091,9 @@ namespace dftefe
           feBDNuclearChargeRhs)
     {
       // Solve poisson problem for individual atoms
-      std::shared_ptr<
-        const basis::FEBasisDofHandler<ValueTypeBasisCoeff, memorySpaceHost, dim>>
+      std::shared_ptr<const basis::FEBasisDofHandler<ValueTypeBasisCoeff,
+                                                     memorySpaceHost,
+                                                     dim>>
         feBDHNuclearCharge = std::dynamic_pointer_cast<
           const basis::
             FEBasisDofHandler<ValueTypeBasisCoeff, memorySpaceHost, dim>>(
@@ -2114,7 +2138,7 @@ namespace dftefe
                                                    dim>>(feBDHNuclearCharge,
                                                          smfunc);
 
-          // --------TODO : use eval()-----                                                         
+          // --------TODO : use eval()-----
           smfunc = std::make_shared<const utils::SmearChargeDensityFunction>(
             d_atomCoordinates[iAtom],
             d_atomCharges[iAtom],
@@ -2177,7 +2201,8 @@ namespace dftefe
                           *d_scratchDensNuclearQuad,
                           ksdft::PoissonProblemDefaults::PC_TYPE,
                           d_linAlgOpContextHost,
-                          ksdft::KSDFTDefaults<memorySpaceHost>::CELL_BATCH_SIZE_GRAD_EVAL,
+                          ksdft::KSDFTDefaults<
+                            memorySpaceHost>::CELL_BATCH_SIZE_GRAD_EVAL,
                           d_numComponents);
               else
                 poissonSolverDealiiMatFree = std::make_shared<
@@ -2685,12 +2710,11 @@ namespace dftefe
                       *d_scratchPotHamQuad,
                       *d_linAlgOpContextHost);
 
-      utils::MemoryTransfer<memorySpace, memorySpaceHost>
-        memoryTransfer;
+      utils::MemoryTransfer<memorySpace, memorySpaceHost> memoryTransfer;
 
       memoryTransfer.copy(d_scratchPotHamQuad->nEntries(),
                           d_potentialHamQuadMemspace->data(),
-                          d_scratchPotHamQuad->data()); 
+                          d_scratchPotHamQuad->data());
 
       return *d_potentialHamQuadMemspace;
     }

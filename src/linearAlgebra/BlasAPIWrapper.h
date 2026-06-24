@@ -110,12 +110,12 @@ namespace dftefe
                   typename ValueType2,
                   typename utils::MemorySpace memorySpace>
         scalar_type<ValueType1, ValueType2>
-        dot(const size_type           n,
-            const ValueType1 *x,
-            const size_type           incx,
-            const ValueType2 *y,
-            const size_type           incy,
-            LinAlgOpContext<memorySpace> &            context);
+        dot(const size_type               n,
+            const ValueType1 *            x,
+            const size_type               incx,
+            const ValueType2 *            y,
+            const size_type               incy,
+            LinAlgOpContext<memorySpace> &context);
 
       } // namespace blasWrapper
     }   // namespace blasLapack

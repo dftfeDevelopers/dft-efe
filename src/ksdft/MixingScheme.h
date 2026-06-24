@@ -46,7 +46,7 @@ namespace dftefe
     enum class mixingVariable
     {
       rho,
-      gradRho,   // GGA — dependent (empty weights)
+      gradRho, // GGA — dependent (empty weights)
       /*magZ,      // spin-polarized / non-collinear
       gradMagZ,  // spin-polarized GGA / non-collinear GGA — dependent
       magY,      // non-collinear only

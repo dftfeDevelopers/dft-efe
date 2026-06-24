@@ -53,26 +53,35 @@ namespace dftefe
       {
       public:
         Func()
-          : d_knotX(nullptr), d_knotY(nullptr), d_coefB(nullptr),
-            d_coefC(nullptr), d_coefD(nullptr), d_nKnots(0),
-            d_c0(0.0), d_isSubdivGrid(false), d_a(0.0), d_r(0.0),
-            d_numSubDiv(0)
+          : d_knotX(nullptr)
+          , d_knotY(nullptr)
+          , d_coefB(nullptr)
+          , d_coefC(nullptr)
+          , d_coefD(nullptr)
+          , d_nKnots(0)
+          , d_c0(0.0)
+          , d_isSubdivGrid(false)
+          , d_a(0.0)
+          , d_r(0.0)
+          , d_numSubDiv(0)
         {}
 
         Func(const double *    knotX,
-                   const double *    knotY,
-                   const double *    coefB,
-                   const double *    coefC,
-                   const double *    coefD,
-                   size_type         nKnots,
-                   double            c0,
-                   bool              isSubdivGrid,
-                   double            a,
-                   double            r,
-                   dftefe::size_type numSubDiv);
+             const double *    knotY,
+             const double *    coefB,
+             const double *    coefC,
+             const double *    coefD,
+             size_type         nKnots,
+             double            c0,
+             bool              isSubdivGrid,
+             double            a,
+             double            r,
+             dftefe::size_type numSubDiv);
 
-        DFTEFE_HOST_DEVICE_FUNC double eval(double xi) const;
-        DFTEFE_HOST_DEVICE_FUNC double deriv(int order, double xi) const;
+        DFTEFE_HOST_DEVICE_FUNC double
+        eval(double xi) const;
+        DFTEFE_HOST_DEVICE_FUNC double
+        deriv(int order, double xi) const;
 
       private:
         const double *    d_knotX;
@@ -116,7 +125,7 @@ namespace dftefe
       bool                d_made_monotonic;
       bool                d_isSubdivPowerLawGrid;
       double              d_a, d_r;
-      dftefe::size_type        d_numSubDiv;
+      dftefe::size_type   d_numSubDiv;
       void
       set_coeffs_from_b(); // calculate c_i, d_i from b_i
       size_t
@@ -133,7 +142,8 @@ namespace dftefe
 
       // ---- device-resident MemoryStorage (managed on host) ----
       MemoryStorage<double, utils::MemorySpace::DEVICE> d_x_device, d_y_device;
-      MemoryStorage<double, utils::MemorySpace::DEVICE> d_b_device, d_c_device, d_d_device;
+      MemoryStorage<double, utils::MemorySpace::DEVICE> d_b_device, d_c_device,
+        d_d_device;
 #endif
 
     public:
@@ -216,18 +226,18 @@ namespace dftefe
 
       template <dftefe::utils::MemorySpace memorySpace>
       void
-      evalAll(size_type   numPoints,
-              const double *x, 
-              double *y,
-              utils::deviceStream_t  streamId = utils::defaultStream) const;
+      evalAll(size_type             numPoints,
+              const double *        x,
+              double *              y,
+              utils::deviceStream_t streamId = utils::defaultStream) const;
 
       template <dftefe::utils::MemorySpace memorySpace>
       void
-      derivAll(size_type        numPoints,
-                int              order,
-                const double *x,
-                double *      y,
-                utils::deviceStream_t  streamId = utils::defaultStream) const;
+      derivAll(size_type             numPoints,
+               int                   order,
+               const double *        x,
+               double *              y,
+               utils::deviceStream_t streamId = utils::defaultStream) const;
     };
 
     namespace splineInternal

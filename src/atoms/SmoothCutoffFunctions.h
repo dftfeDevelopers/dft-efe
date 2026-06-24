@@ -17,7 +17,8 @@ namespace dftefe
     ///////////////////////////////////////////////////////////////////////////
 
     // scalar single-point evaluation — inline so every TU (CPU or GPU) that
-    // includes this header gets its own inline copy callable from host and device.
+    // includes this header gets its own inline copy callable from host and
+    // device.
     DFTEFE_HOST_DEVICE_FUNC double
     smoothCutoffValue(const double x, const double r, const double d)
     {
@@ -59,13 +60,14 @@ namespace dftefe
 
     template <dftefe::utils::MemorySpace memorySpace>
     void
-    smoothCutoffDerivative(size_type             numPoints,
-                           const double *        x,
-                           const double          r,
-                           const double          d,
-                           const double          tolerance,
-                           double *              out,
-                           utils::deviceStream_t streamId = utils::defaultStream);
+    smoothCutoffDerivative(
+      size_type             numPoints,
+      const double *        x,
+      const double          r,
+      const double          d,
+      const double          tolerance,
+      double *              out,
+      utils::deviceStream_t streamId = utils::defaultStream);
 
     ///////////////////////////////////////////////////////////////////////////
     ///////////// END OF SMOOTH CUTOFF FUNCTION RELATED FUNCTIONS ///////////

@@ -42,10 +42,10 @@ namespace dftefe
                                                           ValueType **ptr)
     {
       if (size > std::numeric_limits<size_type>::max())
-      {
-        utils::throwException(false,
-                              "Size to be allocated more than the dftefe::size_type.");
-      }
+        {
+          utils::throwException(
+            false, "Size to be allocated more than the dftefe::size_type.");
+        }
       if (size > 0)
         *ptr = new ValueType[size];
       else
@@ -87,10 +87,10 @@ namespace dftefe
       ValueType **ptr)
     {
       if (size > std::numeric_limits<size_type>::max())
-      {
-        utils::throwException(false,
-                              "Size to be allocated more than the dftefe::size_type.");
-      }
+        {
+          utils::throwException(
+            false, "Size to be allocated more than the dftefe::size_type.");
+        }
       if (size > 0)
         {
           deviceError_t err =
@@ -138,10 +138,10 @@ namespace dftefe
                                                             ValueType **ptr)
     {
       if (size > std::numeric_limits<size_type>::max())
-      {
-        utils::throwException(false,
-                              "Size to be allocated more than the dftefe::size_type.");
-      }
+        {
+          utils::throwException(
+            false, "Size to be allocated more than the dftefe::size_type.");
+        }
       if (size > 0)
         {
           deviceError_t err =

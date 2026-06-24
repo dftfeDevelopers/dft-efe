@@ -12,7 +12,7 @@ namespace dftefe
       DFTEFE_AssertWithMsg(
         dim == point.size(),
         "Mismatch of dimension for dealii and the dimension of the point");
-      ///std::copy(point.begin(), point.end(), dealiiPoint.begin_raw());
+      /// std::copy(point.begin(), point.end(), dealiiPoint.begin_raw());
       for (size_type i = 0; i < dim; ++i)
         dealiiPoint[i] = point[i];
     }
@@ -45,7 +45,7 @@ namespace dftefe
       DFTEFE_AssertWithMsg(
         dim == v.size(),
         "Mismatch of dimension for dealii and the dimension of the vector");
-      //std::copy(v.begin(), v.end(), dealiiPoint.begin_raw());
+      // std::copy(v.begin(), v.end(), dealiiPoint.begin_raw());
       for (size_type i = 0; i < dim; ++i)
         dealiiPoint[i] = v[i];
     }
@@ -56,7 +56,8 @@ namespace dftefe
                          utils::Point &                    point)
     {
       point = utils::Point(dim);
-      //std::copy(dealiiPoint.begin_raw(), dealiiPoint.end_raw(), point.begin());
+      // std::copy(dealiiPoint.begin_raw(), dealiiPoint.end_raw(),
+      // point.begin());
       for (size_type i = 0; i < dim; ++i)
         point[i] = dealiiPoint[i];
     }
@@ -75,7 +76,7 @@ namespace dftefe
           //           dealiiPoints[j].end_raw(),
           //           points[j].begin());
           for (size_type i = 0; i < dim; ++i)
-            points[j][i] = dealiiPoints[j][i];                    
+            points[j][i] = dealiiPoints[j][i];
         }
     }
 
@@ -94,7 +95,7 @@ namespace dftefe
           //           (iter->second).end_raw(),
           //           pointTmp.begin());
           for (size_type i = 0; i < dim; ++i)
-            pointTmp[i] = (iter->second)[i];                    
+            pointTmp[i] = (iter->second)[i];
           // points[iter->first] = pointTmp;
           points.insert({iter->first, pointTmp});
         }

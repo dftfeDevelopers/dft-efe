@@ -296,8 +296,7 @@ namespace dftefe
                     for (size_type jNode = 0; jNode < dofsPerCell; jNode++)
                       {
                         *basisOverlapTmpIter = 0.0;
-                        for (size_type qPoint = 0;
-                             qPoint < nQuadPointsPerCell;
+                        for (size_type qPoint = 0; qPoint < nQuadPointsPerCell;
                              qPoint++)
                           {
                             *basisOverlapTmpIter +=
@@ -1767,7 +1766,7 @@ namespace dftefe
         const std::vector<double> &         relativeTolerances,
         const std::vector<double> &         integralThresholds,
         const double                        smallestCellVolume,
-        const size_type                  maxRecursion,
+        const size_type                     maxRecursion,
         const BasisStorageAttributesBoolMap basisStorageAttributesBoolMap)
     {
       d_evaluateBasisData = true;
@@ -2058,7 +2057,7 @@ namespace dftefe
         sizeToCopy,
         basisQuadStorage->data() + cellStartIds[cellId],
         returnValue.data(),
-        d_linAlgOpContext);  
+        d_linAlgOpContext);
 
       return returnValue;
     }
@@ -2109,27 +2108,28 @@ namespace dftefe
       //     basisQuadStorage->data() + cellStartIds[cellId],
       //     basisData.data() + cellStartIds[cellId] -
       //       cellStartIds[cellRange.first],
-      //     d_linAlgOpContext); 
-      // }   
+      //     d_linAlgOpContext);
+      // }
 
-        size_type cumulativeOffset = 0;
-        for (size_type cellId = cellRange.first; cellId < cellRange.second; cellId++)
+      size_type cumulativeOffset = 0;
+      for (size_type cellId = cellRange.first; cellId < cellRange.second;
+           cellId++)
         {
-            const size_type nQuad = d_nQuadPointsIncell[cellId];
-            const size_type nDofs  = d_dofsInCell[cellId];
+          const size_type nQuad = d_nQuadPointsIncell[cellId];
+          const size_type nDofs = d_dofsInCell[cellId];
 
-            linearAlgebra::blasLapack::stridedBlockCopy(
-                nQuad,               // vecSize: number of quadrature points (slowest)
-                nDofs,          // numVec: number of classical DOFs (fastest)
-                nDofs,          // srcLeadingDim
-                0,                   // srcBlockStartId
-                nDofs,               // dstLeadingDim
-                0,                   // dstBlockStartId
-                d_basisQuadStorage->data() + cellStartIds[cellId], // src
-                basisData.data() + cumulativeOffset, // dst
-                d_linAlgOpContext);
+          linearAlgebra::blasLapack::stridedBlockCopy(
+            nQuad, // vecSize: number of quadrature points (slowest)
+            nDofs, // numVec: number of classical DOFs (fastest)
+            nDofs, // srcLeadingDim
+            0,     // srcBlockStartId
+            nDofs, // dstLeadingDim
+            0,     // dstBlockStartId
+            d_basisQuadStorage->data() + cellStartIds[cellId], // src
+            basisData.data() + cumulativeOffset,               // dst
+            d_linAlgOpContext);
 
-            cumulativeOffset += nDofs * nQuad;
+          cumulativeOffset += nDofs * nQuad;
         }
     }
 
@@ -2172,7 +2172,7 @@ namespace dftefe
         sizeToCopy,
         basisGradientQuadStorage->data() + cellStartIds[cellId],
         returnValue.data(),
-        d_linAlgOpContext); 
+        d_linAlgOpContext);
 
       return returnValue;
     }
@@ -2212,19 +2212,19 @@ namespace dftefe
       for (size_type cellId = cellRange.first; cellId < cellRange.second;
            cellId++)
         {
-        // utils::MemoryTransfer<memorySpace, memorySpace>::copy(
-        //   nQuadPointsInCell[cellId] * d_dofsInCell[cellId] * dim,
-        //   basisGradientData.data() + cellStartIds[cellId] -
-        //     cellStartIds[cellRange.first],
-        //   basisGradientQuadStorage->data() + cellStartIds[cellId]);
+          // utils::MemoryTransfer<memorySpace, memorySpace>::copy(
+          //   nQuadPointsInCell[cellId] * d_dofsInCell[cellId] * dim,
+          //   basisGradientData.data() + cellStartIds[cellId] -
+          //     cellStartIds[cellRange.first],
+          //   basisGradientQuadStorage->data() + cellStartIds[cellId]);
 
-        linearAlgebra::blasLapack::copyValueType1ArrToValueType2Arr(
-          nQuadPointsInCell[cellId] * d_dofsInCell[cellId] * dim,
-          basisGradientQuadStorage->data() + cellStartIds[cellId],
-          basisGradientData.data() + cellStartIds[cellId] -
-            cellStartIds[cellRange.first],
-          d_linAlgOpContext);  
-        }  
+          linearAlgebra::blasLapack::copyValueType1ArrToValueType2Arr(
+            nQuadPointsInCell[cellId] * d_dofsInCell[cellId] * dim,
+            basisGradientQuadStorage->data() + cellStartIds[cellId],
+            basisGradientData.data() + cellStartIds[cellId] -
+              cellStartIds[cellRange.first],
+            d_linAlgOpContext);
+        }
     }
 
     template <typename ValueTypeBasisCoeff,
@@ -2266,7 +2266,7 @@ namespace dftefe
         sizeToCopy,
         basisHessianQuadStorage->data() + cellStartIds[cellId],
         returnValue.data(),
-        d_linAlgOpContext);  
+        d_linAlgOpContext);
       return returnValue;
     }
 
@@ -2307,7 +2307,7 @@ namespace dftefe
         jxwQuadStorage->data() +
           d_quadratureRuleContainer->getCellQuadStartId(cellId),
         returnValue.data(),
-        d_linAlgOpContext);  
+        d_linAlgOpContext);
       return returnValue;
     }
 
@@ -2404,7 +2404,7 @@ namespace dftefe
               quadPointId * d_dofsInCell[cellId] * dim +
               iDim * d_dofsInCell[cellId] + basisId,
             returnValue.data() + iDim,
-            d_linAlgOpContext); 
+            d_linAlgOpContext);
         }
       return returnValue;
     }
@@ -2458,7 +2458,7 @@ namespace dftefe
                   quadPointId * d_dofsInCell[cellId] * dim * dim +
                   (iDim * dim + jDim) * d_dofsInCell[cellId] + basisId,
                 returnValue.data() + iDim * dim + jDim,
-                d_linAlgOpContext);    
+                d_linAlgOpContext);
             }
         }
       return returnValue;
@@ -2522,7 +2522,7 @@ namespace dftefe
         sizeToCopy,
         basisOverlapStorage->data() + d_cellStartIdsBasisOverlap[cellId],
         returnValue.data(),
-        d_linAlgOpContext);          
+        d_linAlgOpContext);
       return returnValue;
     }
 
@@ -2565,7 +2565,7 @@ namespace dftefe
         basisOverlapStorage->data() + d_cellStartIdsBasisOverlap[cellId] +
           basisId1 * d_dofsInCell[cellId] + basisId2,
         returnValue.data(),
-        d_linAlgOpContext); 
+        d_linAlgOpContext);
       return returnValue;
     }
 
@@ -2711,7 +2711,7 @@ namespace dftefe
         sizeToCopy,
         basisGradNiNj->data() + d_cellStartIdsGradNiGradNj[cellId],
         returnValue.data(),
-        d_linAlgOpContext);  
+        d_linAlgOpContext);
       return returnValue;
     }
 

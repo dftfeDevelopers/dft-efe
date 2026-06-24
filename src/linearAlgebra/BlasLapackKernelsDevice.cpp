@@ -25,7 +25,7 @@ namespace dftefe
             for (size_type i = globalThreadId; i < size;
                  i += nThreadsPerBlock * nThreadBlock)
               {
-                dftefe::utils::copyValue(z + i , utils::mult(alpha, x[i]));
+                dftefe::utils::copyValue(z + i, utils::mult(alpha, x[i]));
               }
           },
           const size_type   size,
@@ -41,7 +41,7 @@ namespace dftefe
             for (size_type i = globalThreadId; i < size;
                  i += nThreadsPerBlock * nThreadBlock)
               {
-                dftefe::utils::copyValue(z + i , utils::div(alpha, x[i]));
+                dftefe::utils::copyValue(z + i, utils::div(alpha, x[i]));
               }
           },
           const size_type   size,
@@ -57,7 +57,7 @@ namespace dftefe
             for (size_type i = globalThreadId; i < size;
                  i += nThreadsPerBlock * nThreadBlock)
               {
-                dftefe::utils::copyValue(z + i , utils::mult(x[i], y[i]));
+                dftefe::utils::copyValue(z + i, utils::mult(x[i], y[i]));
               }
           },
           const size_type   size,
@@ -73,7 +73,8 @@ namespace dftefe
             for (size_type i = globalThreadId; i < size;
                  i += nThreadsPerBlock * nThreadBlock)
               {
-                dftefe::utils::copyValue(z + i , utils::mult(utils::conj(x[i]), y[i]));
+                dftefe::utils::copyValue(z + i,
+                                         utils::mult(utils::conj(x[i]), y[i]));
               }
           },
           const size_type   size,
@@ -89,7 +90,9 @@ namespace dftefe
             for (size_type i = globalThreadId; i < size;
                  i += nThreadsPerBlock * nThreadBlock)
               {
-                dftefe::utils::copyValue(z + i , utils::mult(utils::conj(x[i]), utils::conj(y[i])));
+                dftefe::utils::copyValue(z + i,
+                                         utils::mult(utils::conj(x[i]),
+                                                     utils::conj(y[i])));
               }
           },
           const size_type   size,
@@ -110,7 +113,9 @@ namespace dftefe
                 const size_type ijRem = kij - k * sizeI * sizeJ;
                 const size_type i     = ijRem / sizeJ;
                 const size_type j     = ijRem - i * sizeJ;
-                dftefe::utils::copyValue(Z + kij , utils::mult(A[k * sizeI + i], B[k * sizeJ + j]));
+                dftefe::utils::copyValue(Z + kij,
+                                         utils::mult(A[k * sizeI + i],
+                                                     B[k * sizeJ + j]));
               }
           },
           const size_type   sizeI,
@@ -133,7 +138,9 @@ namespace dftefe
                 const size_type ikRem = jik - j * sizeK * sizeI;
                 const size_type i     = ikRem / sizeK;
                 const size_type k     = ikRem - i * sizeK;
-                dftefe::utils::copyValue(Z + jik , utils::mult(A[i * sizeK + k], B[j * sizeK + k]));
+                dftefe::utils::copyValue(Z + jik,
+                                         utils::mult(A[i * sizeK + k],
+                                                     B[j * sizeK + k]));
               }
           },
           const size_type   sizeI,
@@ -151,8 +158,9 @@ namespace dftefe
             for (size_type i = globalThreadId; i < size;
                  i += nThreadsPerBlock * nThreadBlock)
               {
-                 dftefe::utils::copyValue(z + i ,
-                  utils::add(utils::mult(alpha, x[i]), utils::mult(beta, y[i])));
+                dftefe::utils::copyValue(z + i,
+                                         utils::add(utils::mult(alpha, x[i]),
+                                                    utils::mult(beta, y[i])));
               }
           },
           const size_type   size,
@@ -171,7 +179,7 @@ namespace dftefe
                  i += nThreadsPerBlock * nThreadBlock)
               {
                 const double temp = utils::abs(x[i]);
-                dftefe::utils::copyValue(y + i , temp * temp);
+                dftefe::utils::copyValue(y + i, temp * temp);
               }
           },
           const size_type  size,
@@ -191,8 +199,10 @@ namespace dftefe
                 size_type        sizeId = index % blockSize;
                 const ValueType3 coeff1 = utils::mult(alpha1, alpha[sizeId]);
                 const ValueType3 coeff2 = utils::mult(beta1, beta[sizeId]);
-                dftefe::utils::copyValue(z + index , utils::add(utils::mult(coeff1, x[index]),
-                                      utils::mult(coeff2, y[index])));
+                dftefe::utils::copyValue(
+                  z + index,
+                  utils::add(utils::mult(coeff1, x[index]),
+                             utils::mult(coeff2, y[index])));
               }
           },
           const size_type   size,      // vecsize
@@ -222,7 +232,7 @@ namespace dftefe
                 ValueType1 A_val = dA[i * K + k];
                 ValueType2 B_val = dB[j * K + k];
 
-                dftefe::utils::copyValue(dC + ijk , utils::mult(A_val, B_val));
+                dftefe::utils::copyValue(dC + ijk, utils::mult(A_val, B_val));
               }
           },
           const size_type   M,
@@ -249,7 +259,9 @@ namespace dftefe
                 ValueType1 A_val = dA[i * K + k];
                 ValueType2 B_val = dB[j * K + k];
 
-                dftefe::utils::copyValue(dC + ijk , utils::mult(utils::conj(A_val), B_val));
+                dftefe::utils::copyValue(dC + ijk,
+                                         utils::mult(utils::conj(A_val),
+                                                     B_val));
               }
           },
           const size_type   M,
@@ -276,7 +288,9 @@ namespace dftefe
                 ValueType1 A_val = dA[i * K + k];
                 ValueType2 B_val = dB[j * K + k];
 
-                dftefe::utils::copyValue(dC + ijk , utils::mult(A_val, utils::conj(B_val)));
+                dftefe::utils::copyValue(dC + ijk,
+                                         utils::mult(A_val,
+                                                     utils::conj(B_val)));
               }
           },
           const size_type   M,
@@ -303,7 +317,9 @@ namespace dftefe
                 ValueType1 A_val = dA[i * K + k];
                 ValueType2 B_val = dB[j * K + k];
 
-                dftefe::utils::copyValue(dC + ijk , utils::mult(utils::conj(A_val), utils::conj(B_val)));
+                dftefe::utils::copyValue(dC + ijk,
+                                         utils::mult(utils::conj(A_val),
+                                                     utils::conj(B_val)));
               }
           },
           const size_type   M,
@@ -330,7 +346,7 @@ namespace dftefe
                 ValueType1 A_val = dA[k * M + i];
                 ValueType2 B_val = dB[k * N + j];
 
-                dftefe::utils::copyValue(dC + kij , utils::mult(A_val, B_val));
+                dftefe::utils::copyValue(dC + kij, utils::mult(A_val, B_val));
               }
           },
           const size_type   M,
@@ -357,7 +373,9 @@ namespace dftefe
                 ValueType1 A_val = dA[k * M + i];
                 ValueType2 B_val = dB[k * N + j];
 
-                dftefe::utils::copyValue(dC + kij , utils::mult(utils::conj(A_val), B_val));
+                dftefe::utils::copyValue(dC + kij,
+                                         utils::mult(utils::conj(A_val),
+                                                     B_val));
               }
           },
           const size_type   M,
@@ -384,7 +402,9 @@ namespace dftefe
                 ValueType1 A_val = dA[k * M + i];
                 ValueType2 B_val = dB[k * N + j];
 
-                dftefe::utils::copyValue(dC + kij , utils::mult(A_val, utils::conj(B_val)));
+                dftefe::utils::copyValue(dC + kij,
+                                         utils::mult(A_val,
+                                                     utils::conj(B_val)));
               }
           },
           const size_type   M,
@@ -411,7 +431,9 @@ namespace dftefe
                 ValueType1 A_val = dA[k * M + i];
                 ValueType2 B_val = dB[k * N + j];
 
-                dftefe::utils::copyValue(dC + kij , utils::mult(utils::conj(A_val), utils::conj(B_val)));
+                dftefe::utils::copyValue(dC + kij,
+                                         utils::mult(utils::conj(A_val),
+                                                     utils::conj(B_val)));
               }
           },
           const size_type   M,
@@ -426,49 +448,49 @@ namespace dftefe
           void,
           stridedBlockCopyDeviceKernel,
           {
-            const size_type numberEntries =
-                vecSize * numVec;
+            const size_type numberEntries = vecSize * numVec;
 
-              for (size_type index = globalThreadId;
-                  index < numberEntries;
-                  index += nThreadsPerBlock * nThreadBlock)
+            for (size_type index = globalThreadId; index < numberEntries;
+                 index += nThreadsPerBlock * nThreadBlock)
               {
                 const size_type blockIndex = index / numVec;
 
                 const size_type intraBlockIndex = index - blockIndex * numVec;
 
                 const size_type srcIndex = blockIndex * srcLeadingDim +
-                  srcBlockStartId + intraBlockIndex;
+                                           srcBlockStartId + intraBlockIndex;
 
                 const size_type dstIndex = blockIndex * dstLeadingDim +
-                  dstBlockStartId + intraBlockIndex;
+                                           dstBlockStartId + intraBlockIndex;
 
-                dftefe::utils::copyValue(copyToVec + dstIndex , copyFromVec[srcIndex]);
+                dftefe::utils::copyValue(copyToVec + dstIndex,
+                                         copyFromVec[srcIndex]);
               }
-            },
-            const size_type vecSize,
-            const size_type numVec,
-            const size_type srcLeadingDim,
-            const size_type srcBlockStartId,
-            const size_type dstLeadingDim,
-            const size_type dstBlockStartId,
-            const ValueType1 *copyFromVec,
-            ValueType2       *copyToVec);
+          },
+          const size_type   vecSize,
+          const size_type   numVec,
+          const size_type   srcLeadingDim,
+          const size_type   srcBlockStartId,
+          const size_type   dstLeadingDim,
+          const size_type   dstBlockStartId,
+          const ValueType1 *copyFromVec,
+          ValueType2 *      copyToVec);
 
-          template <typename ValueType1, typename ValueType2>
-          DFTEFE_CREATE_KERNEL(
-            void,
-            copyValueType1ArrToValueType2ArrDeviceKernel,
-            {
-              for (size_type index = globalThreadId; index < size;
-                  index += nThreadsPerBlock * nThreadBlock)
+        template <typename ValueType1, typename ValueType2>
+        DFTEFE_CREATE_KERNEL(
+          void,
+          copyValueType1ArrToValueType2ArrDeviceKernel,
+          {
+            for (size_type index = globalThreadId; index < size;
+                 index += nThreadsPerBlock * nThreadBlock)
               {
-                dftefe::utils::copyValue(valueType2Arr + index, valueType1Arr[index]);
+                dftefe::utils::copyValue(valueType2Arr + index,
+                                         valueType1Arr[index]);
               }
-            },
-            const size_type size,
-            const ValueType1 *valueType1Arr,
-            ValueType2       *valueType2Arr);
+          },
+          const size_type   size,
+          const ValueType1 *valueType1Arr,
+          ValueType2 *      valueType2Arr);
       } // namespace
 
       template <typename ValueType1, typename ValueType2>
@@ -650,7 +672,11 @@ namespace dftefe
                   }
 
                 for (int s = 0; s < numStreams; ++s)
-                  { utils::deviceError_t err = utils::deviceStreamSynchronize(streams[s]); DEVICE_API_CHECK(err); }
+                  {
+                    utils::deviceError_t err =
+                      utils::deviceStreamSynchronize(streams[s]);
+                    DEVICE_API_CHECK(err);
+                  }
               }
             if (scalarOpA == ScalarOp::Conj && scalarOpB == ScalarOp::Identity)
               {
@@ -681,7 +707,11 @@ namespace dftefe
                   }
 
                 for (int s = 0; s < numStreams; ++s)
-                  { utils::deviceError_t err = utils::deviceStreamSynchronize(streams[s]); DEVICE_API_CHECK(err); }
+                  {
+                    utils::deviceError_t err =
+                      utils::deviceStreamSynchronize(streams[s]);
+                    DEVICE_API_CHECK(err);
+                  }
               }
             if (scalarOpA == ScalarOp::Identity && scalarOpB == ScalarOp::Conj)
               {
@@ -712,7 +742,11 @@ namespace dftefe
                   }
 
                 for (int s = 0; s < numStreams; ++s)
-                  { utils::deviceError_t err = utils::deviceStreamSynchronize(streams[s]); DEVICE_API_CHECK(err); }
+                  {
+                    utils::deviceError_t err =
+                      utils::deviceStreamSynchronize(streams[s]);
+                    DEVICE_API_CHECK(err);
+                  }
               }
             if (scalarOpA == ScalarOp::Conj && scalarOpB == ScalarOp::Conj)
               {
@@ -743,7 +777,11 @@ namespace dftefe
                   }
 
                 for (int s = 0; s < numStreams; ++s)
-                  { utils::deviceError_t err = utils::deviceStreamSynchronize(streams[s]); DEVICE_API_CHECK(err); }
+                  {
+                    utils::deviceError_t err =
+                      utils::deviceStreamSynchronize(streams[s]);
+                    DEVICE_API_CHECK(err);
+                  }
               }
           }
         else
@@ -778,7 +816,11 @@ namespace dftefe
                   }
 
                 for (int s = 0; s < numStreams; ++s)
-                  { utils::deviceError_t err = utils::deviceStreamSynchronize(streams[s]); DEVICE_API_CHECK(err); }
+                  {
+                    utils::deviceError_t err =
+                      utils::deviceStreamSynchronize(streams[s]);
+                    DEVICE_API_CHECK(err);
+                  }
               }
             if (scalarOpA == ScalarOp::Conj && scalarOpB == ScalarOp::Identity)
               {
@@ -809,7 +851,11 @@ namespace dftefe
                   }
 
                 for (int s = 0; s < numStreams; ++s)
-                  { utils::deviceError_t err = utils::deviceStreamSynchronize(streams[s]); DEVICE_API_CHECK(err); }
+                  {
+                    utils::deviceError_t err =
+                      utils::deviceStreamSynchronize(streams[s]);
+                    DEVICE_API_CHECK(err);
+                  }
               }
             if (scalarOpA == ScalarOp::Identity && scalarOpB == ScalarOp::Conj)
               {
@@ -840,7 +886,11 @@ namespace dftefe
                   }
 
                 for (int s = 0; s < numStreams; ++s)
-                  { utils::deviceError_t err = utils::deviceStreamSynchronize(streams[s]); DEVICE_API_CHECK(err); }
+                  {
+                    utils::deviceError_t err =
+                      utils::deviceStreamSynchronize(streams[s]);
+                    DEVICE_API_CHECK(err);
+                  }
               }
             if (scalarOpA == ScalarOp::Conj && scalarOpB == ScalarOp::Conj)
               {
@@ -871,7 +921,11 @@ namespace dftefe
                   }
 
                 for (int s = 0; s < numStreams; ++s)
-                  { utils::deviceError_t err = utils::deviceStreamSynchronize(streams[s]); DEVICE_API_CHECK(err); }
+                  {
+                    utils::deviceError_t err =
+                      utils::deviceStreamSynchronize(streams[s]);
+                    DEVICE_API_CHECK(err);
+                  }
               }
           }
       }
@@ -1107,47 +1161,50 @@ namespace dftefe
 
       template <typename ValueType1, typename ValueType2>
       void
-      CopyKernelTwoValueTypes<ValueType1, ValueType2, utils::MemorySpace::DEVICE>::
-        stridedBlockCopy(
-          const size_type vecSize,
-          const size_type numVec,
-          const size_type srcLeadingDim,
-          const size_type srcBlockStartId,
-          const size_type dstLeadingDim,
-          const size_type dstBlockStartId,
-          const ValueType1 *copyFromVec,
-          ValueType2       *copyToVec,
-          LinAlgOpContext<utils::MemorySpace::DEVICE> &context)
+      CopyKernelTwoValueTypes<ValueType1,
+                              ValueType2,
+                              utils::MemorySpace::DEVICE>::
+        stridedBlockCopy(const size_type   vecSize,
+                         const size_type   numVec,
+                         const size_type   srcLeadingDim,
+                         const size_type   srcBlockStartId,
+                         const size_type   dstLeadingDim,
+                         const size_type   dstBlockStartId,
+                         const ValueType1 *copyFromVec,
+                         ValueType2 *      copyToVec,
+                         LinAlgOpContext<utils::MemorySpace::DEVICE> &context)
       {
         DFTEFE_LAUNCH_KERNEL(stridedBlockCopyDeviceKernel,
                              (vecSize * numVec) / utils::DEVICE_BLOCK_SIZE + 1,
                              utils::DEVICE_BLOCK_SIZE,
                              context.getBlasStream(),
-                              vecSize,
-                              numVec,
-                              srcLeadingDim,
-                              srcBlockStartId,
-                              dstLeadingDim,
-                              dstBlockStartId,
+                             vecSize,
+                             numVec,
+                             srcLeadingDim,
+                             srcBlockStartId,
+                             dstLeadingDim,
+                             dstBlockStartId,
                              utils::makeDataTypeDeviceCompatible(copyFromVec),
                              utils::makeDataTypeDeviceCompatible(copyToVec));
       }
 
       template <typename ValueType1, typename ValueType2>
       void
-      CopyKernelTwoValueTypes<ValueType1, ValueType2, utils::MemorySpace::DEVICE>::
+      CopyKernelTwoValueTypes<ValueType1,
+                              ValueType2,
+                              utils::MemorySpace::DEVICE>::
         varBatchedStridedBlockCopy(
-          const size_type   numBatch,
-          const size_type * strideSrc,
-          const size_type * strideDst,
-          const size_type * vecSizeArr,
-          const size_type * numVecArr,
-          const size_type * srcLeadingDimArr,
-          const size_type * srcBlockStartIdArr,
-          const size_type * dstLeadingDimArr,
-          const size_type * dstBlockStartIdArr,
-          const ValueType1 *copyFromVec,
-          ValueType2       *copyToVec,
+          const size_type                              numBatch,
+          const size_type *                            strideSrc,
+          const size_type *                            strideDst,
+          const size_type *                            vecSizeArr,
+          const size_type *                            numVecArr,
+          const size_type *                            srcLeadingDimArr,
+          const size_type *                            srcBlockStartIdArr,
+          const size_type *                            dstLeadingDimArr,
+          const size_type *                            dstBlockStartIdArr,
+          const ValueType1 *                           copyFromVec,
+          ValueType2 *                                 copyToVec,
           LinAlgOpContext<utils::MemorySpace::DEVICE> &context)
       {
         size_type       cumulativeSrc = 0;
@@ -1157,10 +1214,10 @@ namespace dftefe
 
         for (size_type ibatch = 0; ibatch < numBatch; ++ibatch)
           {
-            size_type sid        = ibatch % numStreams;
-            size_type vSize      = vecSizeArr[ibatch];
-            size_type nVec       = numVecArr[ibatch];
-            size_type totalSize  = vSize * nVec;
+            size_type sid       = ibatch % numStreams;
+            size_type vSize     = vecSizeArr[ibatch];
+            size_type nVec      = numVecArr[ibatch];
+            size_type totalSize = vSize * nVec;
 
             DFTEFE_LAUNCH_KERNEL(
               stridedBlockCopyDeviceKernel,
@@ -1181,17 +1238,23 @@ namespace dftefe
           }
 
         for (int s = 0; s < numStreams; ++s)
-          { utils::deviceError_t err = utils::deviceStreamSynchronize(streams[s]); DEVICE_API_CHECK(err); }
+          {
+            utils::deviceError_t err =
+              utils::deviceStreamSynchronize(streams[s]);
+            DEVICE_API_CHECK(err);
+          }
       }
 
       template <typename ValueType1, typename ValueType2>
       void
-      CopyKernelTwoValueTypes<ValueType1, ValueType2, utils::MemorySpace::DEVICE>::
+      CopyKernelTwoValueTypes<ValueType1,
+                              ValueType2,
+                              utils::MemorySpace::DEVICE>::
         copyValueType1ArrToValueType2Arr(
-          const size_type size,
-          const ValueType1 *valueType1Arr,
-          ValueType2       *valueType2Arr,
-        LinAlgOpContext<utils::MemorySpace::DEVICE> &context)
+          const size_type                              size,
+          const ValueType1 *                           valueType1Arr,
+          ValueType2 *                                 valueType2Arr,
+          LinAlgOpContext<utils::MemorySpace::DEVICE> &context)
       {
         DFTEFE_LAUNCH_KERNEL(copyValueType1ArrToValueType2ArrDeviceKernel,
                              (size) / utils::DEVICE_BLOCK_SIZE + 1,
@@ -1199,7 +1262,8 @@ namespace dftefe
                              context.getBlasStream(),
                              size,
                              utils::makeDataTypeDeviceCompatible(valueType1Arr),
-                             utils::makeDataTypeDeviceCompatible(valueType2Arr));
+                             utils::makeDataTypeDeviceCompatible(
+                               valueType2Arr));
       }
 
 #  define EXPLICITLY_INSTANTIATE_2T(T1, T2, M) \
@@ -1208,24 +1272,24 @@ namespace dftefe
 #  define EXPLICITLY_INSTANTIATE_1T(T, M) \
     template class KernelsOneValueType<T, M>;
 
-#define EXPLICITLY_INSTANTIATE_COPY_2T(T1, T2, M) \
-  template class CopyKernelTwoValueTypes<T1, T2, M>;
+#  define EXPLICITLY_INSTANTIATE_COPY_2T(T1, T2, M) \
+    template class CopyKernelTwoValueTypes<T1, T2, M>;
 
-#define EXPLICITLY_INSTANTIATE_COPY_1T(T, M) \
-  template class CopyKernelOneValueType<T, M>;
+#  define EXPLICITLY_INSTANTIATE_COPY_1T(T, M) \
+    template class CopyKernelOneValueType<T, M>;
 
       EXPLICITLY_INSTANTIATE_COPY_2T(float,
-                                float,
-                                dftefe::utils::MemorySpace::DEVICE);
+                                     float,
+                                     dftefe::utils::MemorySpace::DEVICE);
       EXPLICITLY_INSTANTIATE_COPY_2T(double,
-                                double,
-                                dftefe::utils::MemorySpace::DEVICE);
+                                     double,
+                                     dftefe::utils::MemorySpace::DEVICE);
       EXPLICITLY_INSTANTIATE_COPY_2T(std::complex<float>,
-                                std::complex<float>,
-                                dftefe::utils::MemorySpace::DEVICE);
+                                     std::complex<float>,
+                                     dftefe::utils::MemorySpace::DEVICE);
       EXPLICITLY_INSTANTIATE_COPY_2T(std::complex<double>,
-                                std::complex<double>,
-                                dftefe::utils::MemorySpace::DEVICE);
+                                     std::complex<double>,
+                                     dftefe::utils::MemorySpace::DEVICE);
 
       EXPLICITLY_INSTANTIATE_COPY_1T(float, utils::MemorySpace::DEVICE);
       EXPLICITLY_INSTANTIATE_COPY_1T(double, utils::MemorySpace::DEVICE);

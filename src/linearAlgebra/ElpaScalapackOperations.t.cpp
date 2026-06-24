@@ -221,9 +221,9 @@ namespace dftefe
           std::min(maxNumLocalDofs, subspaceRotDofsBlockSize);
 
         constexpr utils::MemorySpace hostMemSpace =
-          (memorySpace == utils::MemorySpace::DEVICE)
-            ? utils::MemorySpace::HOST_PINNED
-            : utils::MemorySpace::HOST;
+          (memorySpace == utils::MemorySpace::DEVICE) ?
+            utils::MemorySpace::HOST_PINNED :
+            utils::MemorySpace::HOST;
 
         utils::MemoryStorage<ValueType, hostMemSpace> rotationMatBlockHost;
         if (allowFullCPUMemSubspaceRot)
@@ -301,9 +301,8 @@ namespace dftefe
                                       {
                                         std::unordered_map<size_type,
                                                            size_type>::iterator
-                                          it =
-                                            globalToLocalRowIdMap.find(j +
-                                                                       jvec);
+                                          it = globalToLocalRowIdMap.find(j +
+                                                                          jvec);
                                         if (it != globalToLocalRowIdMap.end())
                                           *(rotationMatBlockHost.begin() +
                                             jvec * N + i * BVec + j) =
@@ -322,72 +321,74 @@ namespace dftefe
                           mpiCommDomain);
                       }
 
-                    utils::MemoryTransfer<memorySpace, hostMemSpace>::
-                      copy(BVec * D,
-                           rotationMatBlock.begin(),
-                           rotationMatBlockHost.begin() + jvec * N);
+                    utils::MemoryTransfer<memorySpace, hostMemSpace>::copy(
+                      BVec * D,
+                      rotationMatBlock.begin(),
+                      rotationMatBlockHost.begin() + jvec * N);
                   }
                 else
                   {
-                rotationMatBlockHost.setZero(BVec * N, 0);
+                    rotationMatBlockHost.setZero(BVec * N, 0);
 
-                // Extract QBVec from parallel ScaLAPACK matrix Q
-                if (rotationMatTranspose)
-                  {
-                    if (processGrid->is_process_active())
-                      for (size_type i = 0; i < D; ++i)
-                        if (globalToLocalRowIdMap.find(i) !=
-                            globalToLocalRowIdMap.end())
-                          {
-                            const size_type localRowId =
-                              globalToLocalRowIdMap[i];
-                            for (size_type j = 0; j < BVec; ++j)
+                    // Extract QBVec from parallel ScaLAPACK matrix Q
+                    if (rotationMatTranspose)
+                      {
+                        if (processGrid->is_process_active())
+                          for (size_type i = 0; i < D; ++i)
+                            if (globalToLocalRowIdMap.find(i) !=
+                                globalToLocalRowIdMap.end())
                               {
-                                std::unordered_map<size_type,
-                                                   size_type>::iterator it =
-                                  globalToLocalColumnIdMap.find(j + jvec);
-                                if (it != globalToLocalColumnIdMap.end())
-                                  *(rotationMatBlockHost.begin() + i * BVec +
-                                    j) = rotationMatPar.local_el(localRowId,
-                                                                 it->second);
+                                const size_type localRowId =
+                                  globalToLocalRowIdMap[i];
+                                for (size_type j = 0; j < BVec; ++j)
+                                  {
+                                    std::unordered_map<size_type,
+                                                       size_type>::iterator it =
+                                      globalToLocalColumnIdMap.find(j + jvec);
+                                    if (it != globalToLocalColumnIdMap.end())
+                                      *(rotationMatBlockHost.begin() +
+                                        i * BVec + j) =
+                                        rotationMatPar.local_el(localRowId,
+                                                                it->second);
+                                  }
                               }
-                          }
-                  }
-                else
-                  {
-                    if (processGrid->is_process_active())
-                      for (size_type i = 0; i < D; ++i)
-                        if (globalToLocalColumnIdMap.find(i) !=
-                            globalToLocalColumnIdMap.end())
-                          {
-                            const size_type localColumnId =
-                              globalToLocalColumnIdMap[i];
-                            for (size_type j = 0; j < BVec; ++j)
+                      }
+                    else
+                      {
+                        if (processGrid->is_process_active())
+                          for (size_type i = 0; i < D; ++i)
+                            if (globalToLocalColumnIdMap.find(i) !=
+                                globalToLocalColumnIdMap.end())
                               {
-                                std::unordered_map<size_type,
-                                                   size_type>::iterator it =
-                                  globalToLocalRowIdMap.find(j + jvec);
-                                if (it != globalToLocalRowIdMap.end())
-                                  *(rotationMatBlockHost.begin() + i * BVec +
-                                    j) = rotationMatPar.local_el(it->second,
-                                                                 localColumnId);
+                                const size_type localColumnId =
+                                  globalToLocalColumnIdMap[i];
+                                for (size_type j = 0; j < BVec; ++j)
+                                  {
+                                    std::unordered_map<size_type,
+                                                       size_type>::iterator it =
+                                      globalToLocalRowIdMap.find(j + jvec);
+                                    if (it != globalToLocalRowIdMap.end())
+                                      *(rotationMatBlockHost.begin() +
+                                        i * BVec + j) =
+                                        rotationMatPar.local_el(it->second,
+                                                                localColumnId);
+                                  }
                               }
-                          }
-                  }
+                      }
 
 
-                utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
-                  utils::mpi::MPIInPlace,
-                  rotationMatBlockHost.begin(),
-                  BVec * D,
-                  utils::mpi::Types<ValueType>::getMPIDatatype(),
-                  utils::mpi::MPISum,
-                  mpiCommDomain);
+                    utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
+                      utils::mpi::MPIInPlace,
+                      rotationMatBlockHost.begin(),
+                      BVec * D,
+                      utils::mpi::Types<ValueType>::getMPIDatatype(),
+                      utils::mpi::MPISum,
+                      mpiCommDomain);
 
-                utils::MemoryTransfer<memorySpace, hostMemSpace>::
-                  copy(BVec * D,
-                       rotationMatBlock.begin(),
-                       rotationMatBlockHost.begin());
+                    utils::MemoryTransfer<memorySpace, hostMemSpace>::copy(
+                      BVec * D,
+                      rotationMatBlock.begin(),
+                      rotationMatBlockHost.begin());
                   }
 
                 const ValueType scalarCoeffAlpha = ValueType(1.0);
@@ -420,7 +421,7 @@ namespace dftefe
                   N * BDof,
                   rotatedVectorsMatBlock.begin(),
                   X + idof * N,
-                  linAlgOpContext);   
+                  linAlgOpContext);
                 // utils::MemoryTransfer<memorySpace, memorySpace>::copy(
                 //   N * BDof, X + idof * N, rotatedVectorsMatBlock.begin());
               }

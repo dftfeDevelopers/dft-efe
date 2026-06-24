@@ -63,8 +63,8 @@ constraintsDistributeKernel(
   __shared__ T sharedConstrainingData[batchSize * nDofsPerDim * nDofsPerDim];
 
   constexpr int yThreads                = 64;
-  dftefe::uInt   constrainingBucketStart = constrainingNodeOffset[blockIdx.x];
-  dftefe::uInt   constrainingBucketSize =
+  dftefe::uInt  constrainingBucketStart = constrainingNodeOffset[blockIdx.x];
+  dftefe::uInt  constrainingBucketSize =
     constrainingNodeOffset[blockIdx.x + 1] - constrainingNodeOffset[blockIdx.x];
 
   for (dftefe::uInt k = threadIdx.y; k < constrainingBucketSize; k += yThreads)
@@ -138,8 +138,8 @@ constraintsDistributeTransposeKernel(
   __shared__ T sharedConstrainedData[batchSize * nDofsPerDim * nDofsPerDim * 4];
 
   constexpr int yThreads                = 64;
-  dftefe::uInt   constrainingBucketStart = constrainingNodeOffset[blockIdx.x];
-  dftefe::uInt   constrainingBucketSize =
+  dftefe::uInt  constrainingBucketStart = constrainingNodeOffset[blockIdx.x];
+  dftefe::uInt  constrainingBucketSize =
     constrainingNodeOffset[blockIdx.x + 1] - constrainingNodeOffset[blockIdx.x];
 
   dftefe::uInt constrainedBucketStart = constrainedNodeOffset[blockIdx.x];
@@ -254,8 +254,8 @@ LaplaceKernel(T *__restrict__ dst,
   constexpr std::uint32_t qEven = nQuadPointsPerDim % 2 == 1 ? qOdd + 1 : qOdd;
   constexpr std::uint32_t yThreads =
     dftefe::utils::DEVICE_WARP_SIZE * ((nQuadPointsPerDim * nQuadPointsPerDim +
-                                       dftefe::utils::DEVICE_WARP_SIZE - 1) /
-                                      dftefe::utils::DEVICE_WARP_SIZE);
+                                        dftefe::utils::DEVICE_WARP_SIZE - 1) /
+                                       dftefe::utils::DEVICE_WARP_SIZE);
 
   T *__restrict__ sharedU = reinterpret_cast<T *>(sharedMem);
   T *__restrict__ sharedV = &sharedU[batchSize * nQuadPointsPerDim *
@@ -274,7 +274,7 @@ LaplaceKernel(T *__restrict__ dst,
     regT[qEven + qOdd];
 
   const dftefe::uInt mapOffset = (blockIdx.x + blockIdx.y * gridDim.x) *
-                                nDofsPerDim * nDofsPerDim * nDofsPerDim;
+                                 nDofsPerDim * nDofsPerDim * nDofsPerDim;
 
   //////////////////////////////////////////////////////////////////
   // Interpolation combined with Extraction
@@ -1076,8 +1076,8 @@ HelmholtzKernel(T *__restrict__ dst,
   constexpr std::uint32_t qEven = nQuadPointsPerDim % 2 == 1 ? qOdd + 1 : qOdd;
   constexpr std::uint32_t yThreads =
     dftefe::utils::DEVICE_WARP_SIZE * ((nQuadPointsPerDim * nQuadPointsPerDim +
-                                       dftefe::utils::DEVICE_WARP_SIZE - 1) /
-                                      dftefe::utils::DEVICE_WARP_SIZE);
+                                        dftefe::utils::DEVICE_WARP_SIZE - 1) /
+                                       dftefe::utils::DEVICE_WARP_SIZE);
 
   T *__restrict__ sharedU = reinterpret_cast<T *>(sharedMem);
   T *__restrict__ sharedV = &sharedU[batchSize * nQuadPointsPerDim *
@@ -1096,7 +1096,7 @@ HelmholtzKernel(T *__restrict__ dst,
     regT[qEven + qOdd];
 
   const dftefe::uInt mapOffset = (blockIdx.x + blockIdx.y * gridDim.x) *
-                                nDofsPerDim * nDofsPerDim * nDofsPerDim;
+                                 nDofsPerDim * nDofsPerDim * nDofsPerDim;
 
   //////////////////////////////////////////////////////////////////
   // Interpolation combined with Extraction

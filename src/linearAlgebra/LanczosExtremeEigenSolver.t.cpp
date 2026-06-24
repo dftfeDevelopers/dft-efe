@@ -129,8 +129,11 @@ namespace dftefe
                                                            mpiPatternP2P,
              std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext)
     {
-      d_initialGuess = Vector<ValueTypeOperand, memorySpace>(
-        mpiPatternP2P, linAlgOpContext, (ValueTypeOperand)0, (ValueTypeOperand)1);
+      d_initialGuess =
+        Vector<ValueTypeOperand, memorySpace>(mpiPatternP2P,
+                                              linAlgOpContext,
+                                              (ValueTypeOperand)0,
+                                              (ValueTypeOperand)1);
 
       d_maxKrylovSubspaceSize = maxKrylovSubspaceSize;
       DFTEFE_Assert(numLowerExtermeEigenValues + numUpperExtermeEigenValues <=
@@ -193,8 +196,8 @@ namespace dftefe
         krylovSubspOrthoVecMemStorage(0);
 
       // memory for the eigenVectors
-      utils::MemoryStorage<ValueType, utils::MemorySpace::HOST> eigenVectorsKrylovSubspace(
-        0);
+      utils::MemoryStorage<ValueType, utils::MemorySpace::HOST>
+        eigenVectorsKrylovSubspace(0);
       utils::MemoryStorage<ValueType, memorySpace>
         wantedEigenVectorsKrylovSubspace(0);
 
@@ -324,12 +327,12 @@ namespace dftefe
 
               if (d_isAdaptiveSolve || iter == d_maxKrylovSubspaceSize)
                 {
-                  utils::MemoryStorage<RealType, utils::MemorySpace::HOST> eigenValuesIter(
-                    alphaVec.size());
+                  utils::MemoryStorage<RealType, utils::MemorySpace::HOST>
+                    eigenValuesIter(alphaVec.size());
                   eigenValuesIter.template copyFrom<utils::MemorySpace::HOST>(
                     alphaVec.data());
-                  utils::MemoryStorage<RealType, utils::MemorySpace::HOST> betaVecTemp(
-                    betaVec.size() - 1);
+                  utils::MemoryStorage<RealType, utils::MemorySpace::HOST>
+                    betaVecTemp(betaVec.size() - 1);
                   betaVecTemp.template copyFrom<utils::MemorySpace::HOST>(
                     betaVec.data(), betaVec.size() - 1, 0, 0);
 
@@ -461,11 +464,11 @@ namespace dftefe
           // std::cout << "krylovSubspOrthoVec: \n";
           for (size_type vecId = 0; vecId < krylovSubspaceSize; vecId++)
             {
-              utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
-                q.locallyOwnedSize(),
-                krylovSubspOrthoVecMemStorage.data() +
-                  vecId * q.locallyOwnedSize(),
-                krylovSubspOrthoVec[vecId].data());
+              utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::
+                copy(q.locallyOwnedSize(),
+                     krylovSubspOrthoVecMemStorage.data() +
+                       vecId * q.locallyOwnedSize(),
+                     krylovSubspOrthoVec[vecId].data());
 
               // for(size_type j = 0 ; j <
               // krylovSubspOrthoVec[vecId].locallyOwnedSize() ; j++)

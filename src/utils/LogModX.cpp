@@ -7,7 +7,7 @@ namespace dftefe
   namespace utils
   {
     LogModX::LogModX(const size_type component,
-                     const double       base /*= e (Euler's constant)*/)
+                     const double    base /*= e (Euler's constant)*/)
       : d_logBase(std::log(base))
       , d_component(component)
     {}

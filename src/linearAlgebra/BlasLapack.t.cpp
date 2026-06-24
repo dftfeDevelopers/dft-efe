@@ -249,8 +249,8 @@ namespace dftefe
           LinAlgOpContext<memorySpace> &context)
       {
         scalar_type<ValueType1, ValueType2> output;
-        output = blasWrapper::dot<ValueType1, ValueType2, memorySpace>
-          (n, x, incx, y, incy, context); 
+        output = blasWrapper::dot<ValueType1, ValueType2, memorySpace>(
+          n, x, incx, y, incy, context);
         return output;
       }
 
@@ -304,87 +304,84 @@ namespace dftefe
           vecSize, numVec, multiVecData, context);
       }
 
-     template <typename ValueType1, typename ValueType2,
-               typename dftefe::utils::MemorySpace memorySpace>
-     void
-     stridedBlockCopy(const size_type vecSize,
-          const size_type numVec,
-          const size_type srcLeadingDim,
-          const size_type srcBlockStartId,
-          const size_type dstLeadingDim,
-          const size_type dstBlockStartId,
-          const ValueType1 *copyFromVec,
-          ValueType2       *copyToVec,
-          LinAlgOpContext<memorySpace> &       context)
+      template <typename ValueType1,
+                typename ValueType2,
+                typename dftefe::utils::MemorySpace memorySpace>
+      void
+      stridedBlockCopy(const size_type               vecSize,
+                       const size_type               numVec,
+                       const size_type               srcLeadingDim,
+                       const size_type               srcBlockStartId,
+                       const size_type               dstLeadingDim,
+                       const size_type               dstBlockStartId,
+                       const ValueType1 *            copyFromVec,
+                       ValueType2 *                  copyToVec,
+                       LinAlgOpContext<memorySpace> &context)
       {
         if (srcLeadingDim < numVec)
-          utils::throwException(
-            false,
-            "srcLeadingDim smaller than block size");
+          utils::throwException(false, "srcLeadingDim smaller than block size");
 
         if (dstLeadingDim < numVec)
-          utils::throwException(
-            false,
-            "dstLeadingDim smaller than block size");
+          utils::throwException(false, "dstLeadingDim smaller than block size");
 
-        return CopyKernelTwoValueTypes<ValueType1, ValueType2, memorySpace>::stridedBlockCopy(
-          vecSize,
-          numVec,
-          srcLeadingDim,
-          srcBlockStartId,
-          dstLeadingDim,
-          dstBlockStartId,
-          copyFromVec,
-          copyToVec,
-          context);
+        return CopyKernelTwoValueTypes<ValueType1, ValueType2, memorySpace>::
+          stridedBlockCopy(vecSize,
+                           numVec,
+                           srcLeadingDim,
+                           srcBlockStartId,
+                           dstLeadingDim,
+                           dstBlockStartId,
+                           copyFromVec,
+                           copyToVec,
+                           context);
       }
 
-     template <typename ValueType1, typename ValueType2,
-               typename dftefe::utils::MemorySpace memorySpace>
-     void
-     varBatchedStridedBlockCopy(
-          const size_type   numBatch,
-          const size_type * strideSrc,
-          const size_type * strideDst,
-          const size_type * vecSizeArr,
-          const size_type * numVecArr,
-          const size_type * srcLeadingDimArr,
-          const size_type * srcBlockStartIdArr,
-          const size_type * dstLeadingDimArr,
-          const size_type * dstBlockStartIdArr,
-          const ValueType1 *copyFromVec,
-          ValueType2       *copyToVec,
-          LinAlgOpContext<memorySpace> &context)
+      template <typename ValueType1,
+                typename ValueType2,
+                typename dftefe::utils::MemorySpace memorySpace>
+      void
+      varBatchedStridedBlockCopy(const size_type   numBatch,
+                                 const size_type * strideSrc,
+                                 const size_type * strideDst,
+                                 const size_type * vecSizeArr,
+                                 const size_type * numVecArr,
+                                 const size_type * srcLeadingDimArr,
+                                 const size_type * srcBlockStartIdArr,
+                                 const size_type * dstLeadingDimArr,
+                                 const size_type * dstBlockStartIdArr,
+                                 const ValueType1 *copyFromVec,
+                                 ValueType2 *      copyToVec,
+                                 LinAlgOpContext<memorySpace> &context)
       {
-        return CopyKernelTwoValueTypes<ValueType1, ValueType2, memorySpace>::varBatchedStridedBlockCopy(
-          numBatch,
-          strideSrc,
-          strideDst,
-          vecSizeArr,
-          numVecArr,
-          srcLeadingDimArr,
-          srcBlockStartIdArr,
-          dstLeadingDimArr,
-          dstBlockStartIdArr,
-          copyFromVec,
-          copyToVec,
-          context);
+        return CopyKernelTwoValueTypes<ValueType1, ValueType2, memorySpace>::
+          varBatchedStridedBlockCopy(numBatch,
+                                     strideSrc,
+                                     strideDst,
+                                     vecSizeArr,
+                                     numVecArr,
+                                     srcLeadingDimArr,
+                                     srcBlockStartIdArr,
+                                     dstLeadingDimArr,
+                                     dstBlockStartIdArr,
+                                     copyFromVec,
+                                     copyToVec,
+                                     context);
       }
 
-     template <typename ValueType1, typename ValueType2,
-               typename dftefe::utils::MemorySpace memorySpace>
-     void
-      copyValueType1ArrToValueType2Arr(
-          const size_type size,
-          const ValueType1 *valueType1Arr,
-          ValueType2       *valueType2Arr,
-          LinAlgOpContext<memorySpace> &       context)
+      template <typename ValueType1,
+                typename ValueType2,
+                typename dftefe::utils::MemorySpace memorySpace>
+      void
+      copyValueType1ArrToValueType2Arr(const size_type   size,
+                                       const ValueType1 *valueType1Arr,
+                                       ValueType2 *      valueType2Arr,
+                                       LinAlgOpContext<memorySpace> &context)
       {
-        return CopyKernelTwoValueTypes<ValueType1, ValueType2, memorySpace>::copyValueType1ArrToValueType2Arr(
-          size,
-          valueType1Arr,
-          valueType2Arr,
-          context);
+        return CopyKernelTwoValueTypes<ValueType1, ValueType2, memorySpace>::
+          copyValueType1ArrToValueType2Arr(size,
+                                           valueType1Arr,
+                                           valueType2Arr,
+                                           context);
       }
 
       template <typename ValueType1,

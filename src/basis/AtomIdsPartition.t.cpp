@@ -307,7 +307,8 @@ namespace dftefe
          * of vector to 0,1 in proc 0. Then do natom0+0 .. .do mpi_max at last
          * and return the current proc vector.*/
         // get the set of local atom ids
-        // store a vector of size (nAtomIds, basis::MaxSizeDefaults::SIZE_TYPE_MAX)
+        // store a vector of size (nAtomIds,
+        // basis::MaxSizeDefaults::SIZE_TYPE_MAX)
 
         int                          rank;
         int                          err = utils::mpi::MPICommRank(comm, &rank);

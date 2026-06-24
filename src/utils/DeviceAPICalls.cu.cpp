@@ -72,8 +72,8 @@ namespace dftefe
       // {
       //   std::size_t freeGPU = 0, totalGPU = 0;
       //   cudaMemGetInfo(&freeGPU, &totalGPU);
-      //   double reqGB   = static_cast<double>(size) / (1024.0 * 1024.0 * 1024.0);
-      //   double usedGB  = static_cast<double>(totalGPU - freeGPU) /
+      //   double reqGB   = static_cast<double>(size) / (1024.0 * 1024.0 *
+      //   1024.0); double usedGB  = static_cast<double>(totalGPU - freeGPU) /
       //                    (1024.0 * 1024.0 * 1024.0);
       //   double totalGB = static_cast<double>(totalGPU) /
       //                    (1024.0 * 1024.0 * 1024.0);
@@ -112,11 +112,10 @@ namespace dftefe
         (size + dftefe::utils::DEVICE_BLOCK_SIZE - 1) /
         dftefe::utils::DEVICE_BLOCK_SIZE;
 
-      setValueKernel<<<nBlocks,
-                      dftefe::utils::DEVICE_BLOCK_SIZE>>>(
-          makeDataTypeDeviceCompatible(devPtr),
-          makeDataTypeDeviceCompatible(value),
-          size);
+      setValueKernel<<<nBlocks, dftefe::utils::DEVICE_BLOCK_SIZE>>>(
+        makeDataTypeDeviceCompatible(devPtr),
+        makeDataTypeDeviceCompatible(value),
+        size);
     }
 
     template void
@@ -134,7 +133,7 @@ namespace dftefe
     template void
     deviceSetValue(unsigned long int *devPtr,
                    unsigned long int  value,
-                   std::size_t          size);
+                   std::size_t        size);
 
     template void
     deviceSetValue(double *devPtr, double value, std::size_t size);
@@ -145,12 +144,12 @@ namespace dftefe
     template void
     deviceSetValue(std::complex<float> *devPtr,
                    std::complex<float>  value,
-                   std::size_t            size);
+                   std::size_t          size);
 
     template void
     deviceSetValue(std::complex<double> *devPtr,
                    std::complex<double>  value,
-                   std::size_t             size);
+                   std::size_t           size);
 
     template void
     deviceSetValue(uint16_t *devPtr, uint16_t value, std::size_t size);
@@ -158,7 +157,7 @@ namespace dftefe
     template void
     deviceSetValue(std::complex<uint16_t> *devPtr,
                    std::complex<uint16_t>  value,
-                   std::size_t               size);
+                   std::size_t             size);
 
     deviceError_t
     deviceFree(void *devPtr)
@@ -220,11 +219,11 @@ namespace dftefe
 
     deviceError_t
     deviceMemcpyD2H_2D(void *      dst,
-                       std::size_t   dpitch,
+                       std::size_t dpitch,
                        const void *src,
-                       std::size_t   spitch,
-                       std::size_t   width,
-                       std::size_t   height)
+                       std::size_t spitch,
+                       std::size_t width,
+                       std::size_t height)
     {
       deviceError_t err = cudaMemcpy2D(
         dst, dpitch, src, spitch, width, height, cudaMemcpyDeviceToHost);
@@ -235,11 +234,11 @@ namespace dftefe
 
     deviceError_t
     deviceMemcpyD2D_2D(void *      dst,
-                       std::size_t   dpitch,
+                       std::size_t dpitch,
                        const void *src,
-                       std::size_t   spitch,
-                       std::size_t   width,
-                       std::size_t   height)
+                       std::size_t spitch,
+                       std::size_t width,
+                       std::size_t height)
     {
       deviceError_t err = cudaMemcpy2D(
         dst, dpitch, src, spitch, width, height, cudaMemcpyDeviceToDevice);
@@ -249,11 +248,11 @@ namespace dftefe
 
     deviceError_t
     deviceMemcpyH2D_2D(void *      dst,
-                       std::size_t   dpitch,
+                       std::size_t dpitch,
                        const void *src,
-                       std::size_t   spitch,
-                       std::size_t   width,
-                       std::size_t   height)
+                       std::size_t spitch,
+                       std::size_t width,
+                       std::size_t height)
     {
       deviceError_t err = cudaMemcpy2D(
         dst, dpitch, src, spitch, width, height, cudaMemcpyHostToDevice);
@@ -272,7 +271,7 @@ namespace dftefe
     deviceError_t
     deviceMemcpyAsyncD2H(void *         dst,
                          const void *   src,
-                         std::size_t      count,
+                         std::size_t    count,
                          deviceStream_t stream)
     {
       deviceError_t err =
@@ -284,7 +283,7 @@ namespace dftefe
     deviceError_t
     deviceMemcpyAsyncD2D(void *         dst,
                          const void *   src,
-                         std::size_t      count,
+                         std::size_t    count,
                          deviceStream_t stream)
     {
       deviceError_t err =
@@ -296,7 +295,7 @@ namespace dftefe
     deviceError_t
     deviceMemcpyAsyncH2D(void *         dst,
                          const void *   src,
-                         std::size_t      count,
+                         std::size_t    count,
                          deviceStream_t stream)
     {
       deviceError_t err =

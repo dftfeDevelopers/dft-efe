@@ -5,7 +5,7 @@
 #  include "DeviceKernelLauncherHelpers.h"
 #  include <stdexcept>
 #  include <string>
-#  include<utils/Exceptions.h>
+#  include <utils/Exceptions.h>
 
 namespace dftefe
 {
@@ -14,8 +14,8 @@ namespace dftefe
     void
     DeviceUtils::setupDevice(const int &mpi_rank)
     {
-      int n_devices = 0;
-      deviceError_t err = dftefe::utils::getDeviceCount(&n_devices);
+      int           n_devices = 0;
+      deviceError_t err       = dftefe::utils::getDeviceCount(&n_devices);
       DEVICE_API_CHECK(err);
       if (n_devices == 0)
         {

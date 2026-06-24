@@ -52,14 +52,14 @@ namespace dftefe
                     t[iPoint * dim + j] - atomCoordsFlat[iAtom * dim + j];
                   r += diff * diff;
                 }
-              r = sqrt(r);
+              r          = sqrt(r);
               double val = 0.0;
               if (r > rc[iAtom])
                 val = z[iAtom] / r;
               else
                 {
                   double rci = rc[iAtom];
-                  val = z[iAtom] *
+                  val        = z[iAtom] *
                         (9.0 * r * r * r * r * r * r * r -
                          30.0 * r * r * r * r * r * r * rci +
                          28.0 * r * r * r * r * r * rci * rci -
@@ -81,9 +81,9 @@ namespace dftefe
     } // namespace
 
     void
-    SmearChargePotentialFunction::evalDevice(size_type      numPoints,
-                                             const double * t,
-                                             double *       q) const
+    SmearChargePotentialFunction::evalDevice(size_type     numPoints,
+                                             const double *t,
+                                             double *      q) const
     {
       deviceError_t err = deviceMemset(q, 0, numPoints * sizeof(double));
       DEVICE_API_CHECK(err);

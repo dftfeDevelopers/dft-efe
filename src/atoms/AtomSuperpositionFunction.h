@@ -46,29 +46,28 @@ namespace dftefe
     {
       Identity,
       Grad,
-      IdentitySq,// for the adaptive quadrature builfing
+      IdentitySq, // for the adaptive quadrature builfing
       GradDotGradSq,
     };
-    
+
     template <utils::MemorySpace memorySpace>
     class AtomSuperpositionFunction
     {
     public:
       AtomSuperpositionFunction(
         std::shared_ptr<const AtomSphericalDataContainer>
-                                         atomSphericalDataContainer,
-        const std::vector<std::string> & atomSymbol,
-        const std::vector<utils::Point> &atomCoordinates,
-        const std::string                fieldName,
-        linearAlgebra::LinAlgOpContext<memorySpace> *linAlgOpContext =
-          nullptr);
+                                                     atomSphericalDataContainer,
+        const std::vector<std::string> &             atomSymbol,
+        const std::vector<utils::Point> &            atomCoordinates,
+        const std::string                            fieldName,
+        linearAlgebra::LinAlgOpContext<memorySpace> *linAlgOpContext = nullptr);
 
       void
-      evaluate(const size_type                numPoints,
-           const AtomSuperpositionFuncType atomSupType,
-           const double *                 t,
-           double *                       q,
-           const double                   constant = 1.0) const
+      evaluate(const size_type                 numPoints,
+               const AtomSuperpositionFuncType atomSupType,
+               const double *                  t,
+               double *                        q,
+               const double                    constant = 1.0) const
       {
 #ifdef DFTEFE_WITH_DEVICE
         if (memorySpace == utils::MemorySpace::DEVICE)
@@ -80,19 +79,19 @@ namespace dftefe
 
     protected:
       void
-      evalHost(size_type                      numPoints,
+      evalHost(size_type                       numPoints,
                const AtomSuperpositionFuncType atomSupType,
-               const double                   constant,
-               const double *                 t,
-               double *                       q) const;
+               const double                    constant,
+               const double *                  t,
+               double *                        q) const;
 
 #ifdef DFTEFE_WITH_DEVICE
       void
-      evalDevice(size_type                      numPoints,
+      evalDevice(size_type                       numPoints,
                  const AtomSuperpositionFuncType atomSupType,
-                 const double                   constant,
-                 const double *                 t,
-                 double *                       q) const;
+                 const double                    constant,
+                 const double *                  t,
+                 double *                        q) const;
 #endif
 
     private:
@@ -108,8 +107,8 @@ namespace dftefe
       size_type                                   d_numEnrichmentFuncTotal;
 
       linearAlgebra::LinAlgOpContext<memorySpace> *d_linAlgOpContext;
-      utils::MemoryStorage<double, memorySpace>   d_originsFlat;
-      //mutable utils::MemoryStorage<double, memorySpace> d_values;
+      utils::MemoryStorage<double, memorySpace>    d_originsFlat;
+      // mutable utils::MemoryStorage<double, memorySpace> d_values;
     };
 
   } // namespace atoms

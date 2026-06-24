@@ -25,50 +25,49 @@ namespace dftefe
 {
   namespace ksdft
   {
-  template <dftefe::utils::MemorySpace memorySpace>
-  class ExcManager
-  {
-  public:
-    /**
-     * @brief Constructor
-     *
-     */
-    ExcManager();
+    template <dftefe::utils::MemorySpace memorySpace>
+    class ExcManager
+    {
+    public:
+      /**
+       * @brief Constructor
+       *
+       */
+      ExcManager();
 
-    /**
-     * @brief  destructor
-     */
-    ~ExcManager();
+      /**
+       * @brief  destructor
+       */
+      ~ExcManager();
 
-    void
-    clear();
-
-
-    void
-    init(std::string XCType,
-         const bool  printXCInfo = true);
-
-    ExcSSDFunctionalBaseClass<memorySpace> *
-    getExcSSDFunctionalObj();
+      void
+      clear();
 
 
-    const ExcSSDFunctionalBaseClass<memorySpace> *
-    getExcSSDFunctionalObj() const;
+      void
+      init(std::string XCType, const bool printXCInfo = true);
 
-    const std::shared_ptr<ExcSSDFunctionalBaseClass<memorySpace>> &
-    getSSDSharedObj() const;
-
-    std::shared_ptr<ExcSSDFunctionalBaseClass<memorySpace>> &
-    getSSDSharedObj();
+      ExcSSDFunctionalBaseClass<memorySpace> *
+      getExcSSDFunctionalObj();
 
 
-  private:
-    /// objects for various exchange-correlations (from libxc package)
-    std::shared_ptr<xc_func_type> d_funcXPtr;
-    std::shared_ptr<xc_func_type> d_funcCPtr;
+      const ExcSSDFunctionalBaseClass<memorySpace> *
+      getExcSSDFunctionalObj() const;
 
-    std::shared_ptr<ExcSSDFunctionalBaseClass<memorySpace>> d_excObj;
-  };
+      const std::shared_ptr<ExcSSDFunctionalBaseClass<memorySpace>> &
+      getSSDSharedObj() const;
+
+      std::shared_ptr<ExcSSDFunctionalBaseClass<memorySpace>> &
+      getSSDSharedObj();
+
+
+    private:
+      /// objects for various exchange-correlations (from libxc package)
+      std::shared_ptr<xc_func_type> d_funcXPtr;
+      std::shared_ptr<xc_func_type> d_funcCPtr;
+
+      std::shared_ptr<ExcSSDFunctionalBaseClass<memorySpace>> d_excObj;
+    };
   } // namespace ksdft
 } // namespace dftefe
 

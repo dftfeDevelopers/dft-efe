@@ -63,8 +63,10 @@ namespace dftefe
         // find newAtomIdToEnrichmentIdOffset vector
         std::vector<global_size_type> newAtomIdToEnrichmentIdOffsetTmp;
         size_type                     nAtomIds = atomSymbol.size();
-        newAtomIdToEnrichmentIdOffsetTmp.resize(nAtomIds, basis::MaxSizeDefaults::GLOBAL_SIZE_TYPE_MAX);
-        newAtomIdToEnrichmentIdOffset.resize(nAtomIds, basis::MaxSizeDefaults::GLOBAL_SIZE_TYPE_MAX);
+        newAtomIdToEnrichmentIdOffsetTmp.resize(
+          nAtomIds, basis::MaxSizeDefaults::GLOBAL_SIZE_TYPE_MAX);
+        newAtomIdToEnrichmentIdOffset.resize(
+          nAtomIds, basis::MaxSizeDefaults::GLOBAL_SIZE_TYPE_MAX);
 
         std::vector<size_type> localAtomIds =
           atomIdsPartition->locallyOwnedAtomIds();
@@ -361,16 +363,16 @@ namespace dftefe
       template <size_type dim>
       void
       getGhostEnrichmentIds(
-        std::vector<global_size_type> &              localToGlobalEnrichmentIds,
+        std::vector<global_size_type> &localToGlobalEnrichmentIds,
         std::unordered_map<global_size_type, size_type>
           &enrichmentIdToOldAtomIdMap,
         std::unordered_map<global_size_type, size_type>
-          &enrichmentIdToQuantumIdMap,
+          &                            enrichmentIdToQuantumIdMap,
         std::vector<global_size_type> &ghostEnrichmentIds,
         std::vector<size_type> &       atomIdsForLocalEnrichments,
-        std::vector<size_type> &overlappingCellsWithLocalEnrichmentIds,
-        std::vector<size_type> &localToCellLocalEIdsVec,
-        std::vector<size_type> &cellsInLocalEIdVec,
+        std::vector<size_type> &       overlappingCellsWithLocalEnrichmentIds,
+        std::vector<size_type> &       localToCellLocalEIdsVec,
+        std::vector<size_type> &       cellsInLocalEIdVec,
         std::shared_ptr<const AtomIdsPartition<dim>> atomIdsPartition,
         const std::pair<global_size_type, global_size_type>
           &locallyOwnedEnrichmentIds,
@@ -450,29 +452,37 @@ namespace dftefe
                   std::back_inserter(atomIdsForLocalEnrichments));
 
         for (size_type i = locallyOwnedEnrichmentIds.first;
-            i < locallyOwnedEnrichmentIds.second ; i++)
+             i < locallyOwnedEnrichmentIds.second;
+             i++)
           localToGlobalEnrichmentIds.push_back(i);
-        for(auto i : ghostEnrichmentIds)
+        for (auto i : ghostEnrichmentIds)
           localToGlobalEnrichmentIds.push_back(i);
 
-        for(size_type iLocalEnrich = 0 ; iLocalEnrich < localToGlobalEnrichmentIds.size() ; iLocalEnrich++)
-        {
-          size_type numCellForLocalEnrich = 0;
-          for (size_type iCell = 0 ; iCell < overlappingEnrichmentIdsInCells.size(); iCell++)
-            {
-              auto enrichInCellVec = overlappingEnrichmentIdsInCells[iCell];
-              for (size_type iEnrichInCell = 0 ; iEnrichInCell < enrichInCellVec.size() ; iEnrichInCell++)
-                {
-                  if(localToGlobalEnrichmentIds[iLocalEnrich] == enrichInCellVec[iEnrichInCell])
+        for (size_type iLocalEnrich = 0;
+             iLocalEnrich < localToGlobalEnrichmentIds.size();
+             iLocalEnrich++)
+          {
+            size_type numCellForLocalEnrich = 0;
+            for (size_type iCell = 0;
+                 iCell < overlappingEnrichmentIdsInCells.size();
+                 iCell++)
+              {
+                auto enrichInCellVec = overlappingEnrichmentIdsInCells[iCell];
+                for (size_type iEnrichInCell = 0;
+                     iEnrichInCell < enrichInCellVec.size();
+                     iEnrichInCell++)
                   {
-                    numCellForLocalEnrich += 1;
-                    overlappingCellsWithLocalEnrichmentIds.push_back(iCell);
-                    localToCellLocalEIdsVec.push_back(iEnrichInCell);
+                    if (localToGlobalEnrichmentIds[iLocalEnrich] ==
+                        enrichInCellVec[iEnrichInCell])
+                      {
+                        numCellForLocalEnrich += 1;
+                        overlappingCellsWithLocalEnrichmentIds.push_back(iCell);
+                        localToCellLocalEIdsVec.push_back(iEnrichInCell);
+                      }
                   }
-                }
-            }
-          cellsInLocalEIdVec.push_back(numCellForLocalEnrich);
-        }
+              }
+            cellsInLocalEIdVec.push_back(numCellForLocalEnrich);
+          }
       }
     } // end of namespace EnrichmentIdsPartitionInternal
 
@@ -599,7 +609,7 @@ namespace dftefe
         }
     }
 
-    // Only change overlap of enrich ids in cells, 
+    // Only change overlap of enrich ids in cells,
     // Note: locallyOwnedEnrichedIds depend on atom partitioning
     // hence do not change
     template <size_type dim>
@@ -673,7 +683,8 @@ namespace dftefe
       auto it = d_enrichmentIdToOldAtomIdMap.find(enrichmentId);
       utils::throwException(
         it != d_enrichmentIdToOldAtomIdMap.end(),
-        "Cannot find the enrichmentId " + std::to_string(enrichmentId) + " in locally Owned or Ghost Enrichment Ids of the processor");
+        "Cannot find the enrichmentId " + std::to_string(enrichmentId) +
+          " in locally Owned or Ghost Enrichment Ids of the processor");
       return it->second;
 
       // auto it = std::find(d_enrichmentIdsVec.begin(),
@@ -784,8 +795,8 @@ namespace dftefe
     EnrichmentIdsPartition<dim>::overlappingCellsWithLocalEnrichmentIds() const
     {
       return d_overlappingCellsWithLocalEnrichmentIds;
-    }  
-      
+    }
+
     template <size_type dim>
     std::vector<size_type>
     EnrichmentIdsPartition<dim>::localToCellLocalEIdsVec() const

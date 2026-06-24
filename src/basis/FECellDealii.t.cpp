@@ -44,8 +44,7 @@ namespace dftefe
     void
     FECellDealii<dim>::getVertices(std::vector<utils::Point> &points) const
     {
-      const size_type nVertices =
-        dealii::GeometryInfo<dim>::vertices_per_cell;
+      const size_type nVertices = dealii::GeometryInfo<dim>::vertices_per_cell;
       points.resize(nVertices, utils::Point(dim));
       std::vector<dealii::Point<dim, double>> pointsDealii;
       pointsDealii.resize(nVertices);

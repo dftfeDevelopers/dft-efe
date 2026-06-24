@@ -28,22 +28,20 @@ namespace dftefe
 
     protected:
       void
-      evalHost(size_type      numPoints,
-               const double * t,
-               double *       q) const override;
+      evalHost(size_type numPoints, const double *t, double *q) const override;
 
 #ifdef DFTEFE_WITH_DEVICE
       void
-      evalDevice(size_type      numPoints,
-                 const double * t,
-                 double *       q) const override;
+      evalDevice(size_type     numPoints,
+                 const double *t,
+                 double *      q) const override;
 #endif
 
     private:
       std::vector<utils::Point> d_atomCoordinates;
-      std::vector<double> d_z;
-      size_type           d_numAtoms;
-      size_type           d_dim;
+      std::vector<double>       d_z;
+      size_type                 d_numAtoms;
+      size_type                 d_dim;
 
 #ifdef DFTEFE_WITH_DEVICE
       MemoryStorage<double, MemorySpace::DEVICE> d_atomCoordsFlatDevice;

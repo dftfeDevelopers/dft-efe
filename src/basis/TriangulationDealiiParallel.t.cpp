@@ -48,8 +48,8 @@ namespace dftefe
     void
     TriangulationDealiiParallel<dim>::finalizeTriangulationConstruction()
     {
-      isInitialized      = false;
-      isFinalized        = true;
+      isInitialized   = false;
+      isFinalized     = true;
       size_type iCell = 0;
       d_triaVectorCell.resize(nLocallyOwnedCells());
 
@@ -101,7 +101,7 @@ namespace dftefe
     template <size_type dim>
     void
     TriangulationDealiiParallel<dim>::createUniformParallelepiped(
-      const std::vector<size_type> &subdivisions,
+      const std::vector<size_type> &   subdivisions,
       const std::vector<utils::Point> &domainVectors,
       const std::vector<bool> &        isPeriodicFlags)
     {
@@ -142,7 +142,7 @@ namespace dftefe
                             "initializeTriangulationConstruction");
       DFTEFE_AssertWithMsg(dim == vertices[0].size(),
                            "Mismatch of dimension for dealii and the vertices");
-      const size_type                      numPoints = vertices.size();
+      const size_type                         numPoints = vertices.size();
       std::vector<dealii::Point<dim, double>> dealiiVertices(numPoints);
       for (size_type i = 0; i < numPoints; ++i)
         {

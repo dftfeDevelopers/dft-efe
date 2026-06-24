@@ -36,7 +36,7 @@ namespace dftefe
       setValueKernel(sycl::nd_item<1> ind,
                      ValueType *      devPtr,
                      ValueType        value,
-                     std::size_t        size)
+                     std::size_t      size)
       {
         const std::size_t globalThreadId = ind.get_global_id(0);
         std::size_t       n_workgroups   = ind.get_group_range(0);
@@ -172,7 +172,7 @@ namespace dftefe
     template void
     deviceSetValue(unsigned long int *devPtr,
                    unsigned long int  value,
-                   std::size_t          size);
+                   std::size_t        size);
 
     template void
     deviceSetValue(double *devPtr, double value, std::size_t size);
@@ -183,12 +183,12 @@ namespace dftefe
     template void
     deviceSetValue(std::complex<float> *devPtr,
                    std::complex<float>  value,
-                   std::size_t            size);
+                   std::size_t          size);
 
     template void
     deviceSetValue(std::complex<double> *devPtr,
                    std::complex<double>  value,
-                   std::size_t             size);
+                   std::size_t           size);
 
     template void
     deviceSetValue(uint16_t *devPtr, uint16_t value, std::size_t size);
@@ -196,7 +196,7 @@ namespace dftefe
     template void
     deviceSetValue(std::complex<uint16_t> *devPtr,
                    std::complex<uint16_t>  value,
-                   std::size_t               size);
+                   std::size_t             size);
 
 
     deviceError_t
@@ -283,11 +283,11 @@ namespace dftefe
 
     deviceError_t
     deviceMemcpyD2H_2D(void *      dst,
-                       std::size_t   dpitch,
+                       std::size_t dpitch,
                        const void *src,
-                       std::size_t   spitch,
-                       std::size_t   width,
-                       std::size_t   height)
+                       std::size_t spitch,
+                       std::size_t width,
+                       std::size_t height)
     {
       // dftefe::utils::deviceStream_t queue{sycl::gpu_selector_v};
       // deviceEvent_t event = queue.sycl::_V1::queue::ext_oneapi_memcpy2d(dst,
@@ -298,11 +298,11 @@ namespace dftefe
 
     deviceError_t
     deviceMemcpyD2D_2D(void *      dst,
-                       std::size_t   dpitch,
+                       std::size_t dpitch,
                        const void *src,
-                       std::size_t   spitch,
-                       std::size_t   width,
-                       std::size_t   height)
+                       std::size_t spitch,
+                       std::size_t width,
+                       std::size_t height)
     {
       // dftefe::utils::deviceStream_t queue{sycl::gpu_selector_v};
       // deviceEvent_t event = queue.sycl::_V1::queue::ext_oneapi_memcpy2d(dst,
@@ -312,11 +312,11 @@ namespace dftefe
 
     deviceError_t
     deviceMemcpyH2D_2D(void *      dst,
-                       std::size_t   dpitch,
+                       std::size_t dpitch,
                        const void *src,
-                       std::size_t   spitch,
-                       std::size_t   width,
-                       std::size_t   height)
+                       std::size_t spitch,
+                       std::size_t width,
+                       std::size_t height)
     {
       // dftefe::utils::deviceStream_t queue{sycl::gpu_selector_v};
       // deviceEvent_t event = queue.sycl::_V1::queue::ext_oneapi_memcpy2d(dst,
@@ -335,7 +335,7 @@ namespace dftefe
     deviceError_t
     deviceMemcpyAsyncD2H(void *         dst,
                          const void *   src,
-                         std::size_t      count,
+                         std::size_t    count,
                          deviceStream_t stream)
     {
       try
@@ -354,7 +354,7 @@ namespace dftefe
     deviceError_t
     deviceMemcpyAsyncD2D(void *         dst,
                          const void *   src,
-                         std::size_t      count,
+                         std::size_t    count,
                          deviceStream_t stream)
     {
       try
@@ -373,7 +373,7 @@ namespace dftefe
     deviceError_t
     deviceMemcpyAsyncH2D(void *         dst,
                          const void *   src,
-                         std::size_t      count,
+                         std::size_t    count,
                          deviceStream_t stream)
     {
       try

@@ -34,20 +34,19 @@ namespace dftefe
   namespace atoms
   {
     template <utils::MemorySpace memorySpace>
-    class AtomSevereFunction
-      : public AtomSuperpositionFunction<memorySpace>
-      , public utils::ScalarSpatialFunctionReal
+    class AtomSevereFunction : public AtomSuperpositionFunction<memorySpace>,
+                               public utils::ScalarSpatialFunctionReal
     {
     public:
       AtomSevereFunction(
         std::shared_ptr<const AtomSphericalDataContainer>
-                                         atomSphericalDataContainer,
-        const std::vector<std::string> & atomSymbol,
-        const std::vector<utils::Point> &atomCoordinates,
-        const std::string                fieldName,
-        const size_type                  derivativeType,
-        const size_type                  sphericalValPower = 2,
-        const double                     constant          = 1.0,
+                                                     atomSphericalDataContainer,
+        const std::vector<std::string> &             atomSymbol,
+        const std::vector<utils::Point> &            atomCoordinates,
+        const std::string                            fieldName,
+        const size_type                              derivativeType,
+        const size_type                              sphericalValPower = 2,
+        const double                                 constant          = 1.0,
         linearAlgebra::LinAlgOpContext<memorySpace> *linAlgOpContext = nullptr);
 
       double
@@ -58,21 +57,19 @@ namespace dftefe
 
     protected:
       void
-      evalHost(size_type      numPoints,
-               const double * t,
-               double *       q) const override;
+      evalHost(size_type numPoints, const double *t, double *q) const override;
 
 #ifdef DFTEFE_WITH_DEVICE
       void
-      evalDevice(size_type      numPoints,
-                 const double * t,
-                 double *       q) const override;
+      evalDevice(size_type     numPoints,
+                 const double *t,
+                 double *      q) const override;
 #endif
 
     private:
       AtomSuperpositionFuncType d_atomSupType;
-      size_type                d_dim;
-      double                   d_constant;
+      size_type                 d_dim;
+      double                    d_constant;
     };
 
   } // namespace atoms

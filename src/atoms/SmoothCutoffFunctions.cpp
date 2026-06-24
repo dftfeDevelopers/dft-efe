@@ -118,13 +118,12 @@ namespace dftefe
     //=========================================================================
     template <>
     void
-    smoothCutoffValue<utils::MemorySpace::HOST>(
-      size_type             numPoints,
-      const double *        x,
-      const double          r,
-      const double          d,
-      double *              out,
-      utils::deviceStream_t streamId)
+    smoothCutoffValue<utils::MemorySpace::HOST>(size_type             numPoints,
+                                                const double *        x,
+                                                const double          r,
+                                                const double          d,
+                                                double *              out,
+                                                utils::deviceStream_t streamId)
     {
       for (size_type i = 0; i < numPoints; i++)
         out[i] = smoothCutoffValue(x[i], r, d);

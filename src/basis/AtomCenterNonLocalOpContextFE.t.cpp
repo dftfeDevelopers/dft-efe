@@ -328,7 +328,7 @@ namespace dftefe
       auto                                   endc = triangulation->endLocal();
 
       size_type cellIndex                        = 0;
-      size_type       locallyOwnedCellsInTriangulation = 0;
+      size_type locallyOwnedCellsInTriangulation = 0;
 
       for (; cell != endc; cell++)
         {
@@ -523,7 +523,8 @@ namespace dftefe
 
       // create the d_locallyOwnedCellLocalProjectorIds
       d_locallyOwnedCellLocalProjectorIds.resize(d_totProjInProc);
-      dftefe::utils::MemoryStorage<size_type, utils::MemorySpace::HOST> locallyOwnedCellLocalProjectorIdsHost(d_totProjInProc);
+      dftefe::utils::MemoryStorage<size_type, utils::MemorySpace::HOST>
+                 locallyOwnedCellLocalProjectorIdsHost(d_totProjInProc);
       size_type *ptr         = locallyOwnedCellLocalProjectorIdsHost.data();
       d_numLocallyOwnedCells = feBasisDofHandler->nLocallyOwnedCells();
       size_type cumulativeProjectors = 0;
@@ -663,18 +664,19 @@ namespace dftefe
       // Assumption for each l,p pair the m values are consecutive
       std::vector<global_size_type> projIdVec =
         d_overlappingProjectorIdsInCells[cellId];
-      size_type        numProjIdsInCell = projIdVec.size();
-      size_type        numPoints        = points.size();
+      size_type           numProjIdsInCell = projIdVec.size();
+      size_type           numPoints        = points.size();
       std::vector<double> retValue(numPoints * numProjIdsInCell, 0),
         rVec(numPoints, 0), thetaVec(numPoints, 0), phiVec(numPoints, 0);
       std::vector<dftefe::utils::Point> x(numPoints, utils::Point(dim));
       DFTEFE_AssertWithMsg(!projIdVec.empty(),
                            "The requested cell does not have any proj ids.");
       size_type numProjIdsSkipped = 0;
-      int l                 = 0;
-      size_type  atomIdPrev = std::numeric_limits<size_type>::max();
+      int       l                 = 0;
+      size_type atomIdPrev        = std::numeric_limits<size_type>::max();
 
-      for (size_type iProj = 0; iProj < numProjIdsInCell; iProj += numProjIdsSkipped)
+      for (size_type iProj = 0; iProj < numProjIdsInCell;
+           iProj += numProjIdsSkipped)
         {
           basis::EnrichmentIdAttribute pIdAttr =
             d_projectorIdsPartition->getEnrichmentIdAttribute(projIdVec[iProj]);
@@ -682,22 +684,22 @@ namespace dftefe
           size_type atomId  = pIdAttr.atomId;
           size_type localId = pIdAttr.localIdInAtom;
 
-          if(atomIdPrev != atomId)
-          {
-          utils::Point origin(d_atomCoordinatesVec[atomId]);
-          std::transform(points.begin(),
-                         points.end(),
-                         x.begin(),
-                         [origin](utils::Point p) { return p - origin; });
+          if (atomIdPrev != atomId)
+            {
+              utils::Point origin(d_atomCoordinatesVec[atomId]);
+              std::transform(points.begin(),
+                             points.end(),
+                             x.begin(),
+                             [origin](utils::Point p) { return p - origin; });
 
-          for(size_type iPts = 0 ; iPts < points.size() ; iPts++)
-            atoms::convertCartesianToSpherical(
-              x[iPts],
-              rVec[iPts],
-              thetaVec[iPts],
-              phiVec[iPts],
-              atoms::SphericalDataDefaults::POL_ANG_TOL);
-          }
+              for (size_type iPts = 0; iPts < points.size(); iPts++)
+                atoms::convertCartesianToSpherical(
+                  x[iPts],
+                  rVec[iPts],
+                  thetaVec[iPts],
+                  phiVec[iPts],
+                  atoms::SphericalDataDefaults::POL_ANG_TOL);
+            }
 
           auto sphericalDataVec =
             d_atomSphericalDataContainer->getSphericalData(
@@ -729,7 +731,7 @@ namespace dftefe
                   LINALG_OP_CONTXT_HOST);
             }
           numProjIdsSkipped = (2 * l + 1);
-          atomIdPrev = atomId;
+          atomIdPrev        = atomId;
         }
       return retValue;
     }

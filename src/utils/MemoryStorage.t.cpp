@@ -190,14 +190,12 @@ namespace dftefe
     typename MemoryStorage<ValueType, memorySpace>::reference
     MemoryStorage<ValueType, memorySpace>::operator[](const size_type i)
     {
-
       return d_data[i];
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     typename MemoryStorage<ValueType, memorySpace>::const_reference
-    MemoryStorage<ValueType, memorySpace>::operator[](const size_type i)
-    const
+    MemoryStorage<ValueType, memorySpace>::operator[](const size_type i) const
     {
       return d_data[i];
     }

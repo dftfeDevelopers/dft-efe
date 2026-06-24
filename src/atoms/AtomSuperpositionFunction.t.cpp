@@ -32,10 +32,10 @@ namespace dftefe
     template <utils::MemorySpace memorySpace>
     AtomSuperpositionFunction<memorySpace>::AtomSuperpositionFunction(
       std::shared_ptr<const AtomSphericalDataContainer>
-                                         atomSphericalDataContainer,
-      const std::vector<std::string> &   atomSymbol,
-      const std::vector<utils::Point> &  atomCoordinates,
-      const std::string                  fieldName,
+                                                   atomSphericalDataContainer,
+      const std::vector<std::string> &             atomSymbol,
+      const std::vector<utils::Point> &            atomCoordinates,
+      const std::string                            fieldName,
       linearAlgebra::LinAlgOpContext<memorySpace> *linAlgOpContext)
       : d_atomSphericalDataContainer(atomSphericalDataContainer)
       , d_atomSymbolVec(atomSymbol)
@@ -66,11 +66,11 @@ namespace dftefe
     template <utils::MemorySpace memorySpace>
     void
     AtomSuperpositionFunction<memorySpace>::evalHost(
-      size_type                      numPoints,
+      size_type                       numPoints,
       const AtomSuperpositionFuncType atomSupType,
-      const double                   constant,
-      const double *                 t,
-      double *                       q) const
+      const double                    constant,
+      const double *                  t,
+      double *                        q) const
     {
       utils::Point              p(d_dim);
       std::vector<utils::Point> points(numPoints, p);
@@ -84,7 +84,7 @@ namespace dftefe
             q[iPoint] = 0.0;
           for (size_type atomId = 0; atomId < d_numAtoms; atomId++)
             {
-              auto         vec = d_atomSphericalDataContainer->getSphericalData(
+              auto vec = d_atomSphericalDataContainer->getSphericalData(
                 d_atomSymbolVec[atomId], d_fieldName);
               utils::Point origin(d_atomCoordinatesVec[atomId]);
               for (auto &enrichmentObjId : vec)
@@ -104,7 +104,7 @@ namespace dftefe
             q[iPoint] = 0.0;
           for (size_type atomId = 0; atomId < d_numAtoms; atomId++)
             {
-              auto         vec = d_atomSphericalDataContainer->getSphericalData(
+              auto vec = d_atomSphericalDataContainer->getSphericalData(
                 d_atomSymbolVec[atomId], d_fieldName);
               utils::Point origin(d_atomCoordinatesVec[atomId]);
               for (auto &enrichmentObjId : vec)
@@ -124,7 +124,7 @@ namespace dftefe
             q[iPoint] = 0.0;
           for (size_type atomId = 0; atomId < d_numAtoms; atomId++)
             {
-              auto         vec = d_atomSphericalDataContainer->getSphericalData(
+              auto vec = d_atomSphericalDataContainer->getSphericalData(
                 d_atomSymbolVec[atomId], d_fieldName);
               utils::Point origin(d_atomCoordinatesVec[atomId]);
               for (auto &enrichmentObjId : vec)
@@ -147,7 +147,7 @@ namespace dftefe
               q[iPoint * d_dim + iDim] = 0.0;
           for (size_type atomId = 0; atomId < d_numAtoms; atomId++)
             {
-              auto         vec = d_atomSphericalDataContainer->getSphericalData(
+              auto vec = d_atomSphericalDataContainer->getSphericalData(
                 d_atomSymbolVec[atomId], d_fieldName);
               utils::Point origin(d_atomCoordinatesVec[atomId]);
               for (auto &enrichmentObjId : vec)

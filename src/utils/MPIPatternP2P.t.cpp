@@ -414,14 +414,15 @@ namespace dftefe
                 std::vector<global_size_type> ownedRangesAcrossProcs(2 *
                                                                      nprocs);
 
-                MPIAllgatherv<MemorySpace::HOST>(&ownedRanges[0],
-                                                 2,
-                                                 Types<global_size_type>::getMPIDatatype(),
-                                                 &ownedRangesAcrossProcs[0],
-                                                 &recvCounts[0],
-                                                 &displs[0],
-                                                 Types<global_size_type>::getMPIDatatype(),
-                                                 mpiComm);
+                MPIAllgatherv<MemorySpace::HOST>(
+                  &ownedRanges[0],
+                  2,
+                  Types<global_size_type>::getMPIDatatype(),
+                  &ownedRangesAcrossProcs[0],
+                  &recvCounts[0],
+                  &displs[0],
+                  Types<global_size_type>::getMPIDatatype(),
+                  mpiComm);
 
                 for (size_type iProc = 0; iProc < nprocs; ++iProc)
                   {
@@ -1021,7 +1022,7 @@ namespace dftefe
 
         std::vector<size_type> flattenedLocalGhostIndicesTmp(0);
         auto                   it = ghostProcIdToLocalGhostIndices.begin();
-        size_type           iGhostProc = 0;
+        size_type              iGhostProc = 0;
         size_type              offset     = 0;
         for (; it != ghostProcIdToLocalGhostIndices.end(); ++it)
           {
@@ -1204,8 +1205,7 @@ namespace dftefe
             // We need to send what is the local index in the ghost processor
             // (i.e., the processor that owns the current processor's ghost
             // index)
-            for (size_type iIndex = 0; iIndex < numGhostIndicesInProc;
-                 ++iIndex)
+            for (size_type iIndex = 0; iIndex < numGhostIndicesInProc; ++iIndex)
               {
                 const size_type ghostLocalIndex =
                   flattenedLocalGhostIndicesTmp[startIndex + iIndex];
@@ -1252,7 +1252,7 @@ namespace dftefe
         startIndex = 0;
         for (size_type iTarget = 0; iTarget < d_numTargetProcs; ++iTarget)
           {
-            const int targetProcId = d_targetProcIds[iTarget];
+            const int       targetProcId = d_targetProcIds[iTarget];
             const size_type numOwnedIndicesForTarget =
               d_numOwnedIndicesForTargetProcs[iTarget];
             err = MPIIrecv<MemorySpace::HOST>(

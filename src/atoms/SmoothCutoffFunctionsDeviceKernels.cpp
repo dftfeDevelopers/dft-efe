@@ -23,8 +23,9 @@
  * @author Avirup Sircar
  *
  * Batch (all-points) kernel launchers for smooth cutoff functions on DEVICE.
- * Scalar smoothCutoffValue/smoothCutoffDerivative are inline DFTEFE_HOST_DEVICE_FUNC
- * in SmoothCutoffFunctions.h and are called directly from the device kernels below.
+ * Scalar smoothCutoffValue/smoothCutoffDerivative are inline
+ * DFTEFE_HOST_DEVICE_FUNC in SmoothCutoffFunctions.h and are called directly
+ * from the device kernels below.
  */
 
 #ifdef DFTEFE_WITH_DEVICE

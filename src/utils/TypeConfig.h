@@ -6,9 +6,9 @@
 
 namespace dftefe
 {
-  using size_type        = std::uint64_t; //unsigned int;
-  using global_size_type = std::uint64_t; //unsigned long int;
-  using uInt = std::uint64_t; // only in matrix free. check later.
+  using size_type        = std::uint64_t; // unsigned int;
+  using global_size_type = std::uint64_t; // unsigned long int;
+  using uInt             = std::uint64_t; // only in matrix free. check later.
 
   /* define RealType of a ValueType */
 

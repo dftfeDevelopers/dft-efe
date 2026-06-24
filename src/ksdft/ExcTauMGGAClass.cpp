@@ -109,7 +109,7 @@ namespace dftefe
         densityAttrVals.at(DensityDescrAttr::Grad)[0];
       const auto &gradValuesSpinDown =
         densityAttrVals.at(DensityDescrAttr::Grad)[1];
-      const auto &tauValuesSpinUp  = wfcAttrVals.at(WfcDescrAttr::Tau)[0];
+      const auto &tauValuesSpinUp   = wfcAttrVals.at(WfcDescrAttr::Tau)[0];
       const auto &tauValuesSpinDown = wfcAttrVals.at(WfcDescrAttr::Tau)[1];
 
       const size_type nquad = densityValuesSpinUp.size();
@@ -301,33 +301,31 @@ namespace dftefe
               std::abs(tauValues[2 * i + 0] + tauValues[2 * i + 1]) <=
                 tauThresholdMgga)
             {
-              exValues[i]                 = 0.0;
+              exValues[i]                  = 0.0;
               pdexDensityValues[2 * i + 0] = 0.0;
-              pdexSigmaValues[3 * i + 0]  = 0.0;
-              pdexTauValues[2 * i + 0]    = 0.0;
+              pdexSigmaValues[3 * i + 0]   = 0.0;
+              pdexTauValues[2 * i + 0]     = 0.0;
 
               pdexDensityValues[2 * i + 1] = 0.0;
-              pdexSigmaValues[3 * i + 1]  = 0.0;
-              pdexSigmaValues[3 * i + 2]  = 0.0;
-              pdexTauValues[2 * i + 1]    = 0.0;
+              pdexSigmaValues[3 * i + 1]   = 0.0;
+              pdexSigmaValues[3 * i + 2]   = 0.0;
+              pdexTauValues[2 * i + 1]     = 0.0;
 
-              ecValues[i]                 = 0.0;
+              ecValues[i]                  = 0.0;
               pdecDensityValues[2 * i + 0] = 0.0;
-              pdecSigmaValues[3 * i + 0]  = 0.0;
-              pdecTauValues[2 * i + 0]    = 0.0;
+              pdecSigmaValues[3 * i + 0]   = 0.0;
+              pdecTauValues[2 * i + 0]     = 0.0;
 
               pdecDensityValues[2 * i + 1] = 0.0;
-              pdecSigmaValues[3 * i + 1]  = 0.0;
-              pdecSigmaValues[3 * i + 2]  = 0.0;
-              pdecTauValues[2 * i + 1]    = 0.0;
+              pdecSigmaValues[3 * i + 1]   = 0.0;
+              pdecSigmaValues[3 * i + 2]   = 0.0;
+              pdecTauValues[2 * i + 1]     = 0.0;
             }
 
           exValues[i] =
-            exValues[i] *
-            (densityValues[2 * i + 0] + densityValues[2 * i + 1]);
+            exValues[i] * (densityValues[2 * i + 0] + densityValues[2 * i + 1]);
           ecValues[i] =
-            ecValues[i] *
-            (densityValues[2 * i + 0] + densityValues[2 * i + 1]);
+            ecValues[i] * (densityValues[2 * i + 0] + densityValues[2 * i + 1]);
           pdexDensitySpinUpValues[i]   = pdexDensityValues[2 * i + 0];
           pdexDensitySpinDownValues[i] = pdexDensityValues[2 * i + 1];
           pdecDensitySpinUpValues[i]   = pdecDensityValues[2 * i + 0];

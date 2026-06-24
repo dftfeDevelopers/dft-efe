@@ -22,7 +22,7 @@ namespace dftefe
       finalizeTriangulationConstruction() override;
       void
       createUniformParallelepiped(
-        const std::vector<size_type> &subdivisions,
+        const std::vector<size_type> &   subdivisions,
         const std::vector<utils::Point> &domainVectors,
         const std::vector<bool> &        isPeriodicFlags) override;
       void

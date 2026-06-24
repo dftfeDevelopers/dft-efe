@@ -182,7 +182,8 @@ namespace dftefe
 
   } // end of namespace ksdft
 
-  static constexpr utils::MemorySpace memorySpaceHost = utils::MemorySpace::HOST;  
+  static constexpr utils::MemorySpace memorySpaceHost =
+    utils::MemorySpace::HOST;
 
 } // end of namespace dftefe
 #endif // dftefeDFTDefaults_h

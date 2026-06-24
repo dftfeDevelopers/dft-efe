@@ -43,63 +43,67 @@ namespace dftefe
     public:
       static void
       computeRhoInBatch(
-        const size_type batchSize,
+        const size_type                       batchSize,
         const std::pair<size_type, size_type> cellRange,
-        const RealType* occupationInBatch,
-        ValueType *psiBatchQuad,
-        RealType *modPsiSqBatchQuad,
+        const RealType *                      occupationInBatch,
+        ValueType *                           psiBatchQuad,
+        RealType *                            modPsiSqBatchQuad,
         std::shared_ptr<const quadrature::QuadratureRuleContainer>
-          quadRuleContainer,
-        RealType *rhoBatch,
+                                                     quadRuleContainer,
+        RealType *                                   rhoBatch,
         linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext);
 
       static void
       computeGradRhoInBatch(
-        const size_type batchSize,
+        const size_type                       batchSize,
         const std::pair<size_type, size_type> cellRange,
-        const RealType *occupationInBatch,
-        const ValueType *psiBatchQuad,
-        const ValueType *gradPsiBatchQuad,
-        RealType *psiGradPsiBatch,
+        const RealType *                      occupationInBatch,
+        const ValueType *                     psiBatchQuad,
+        const ValueType *                     gradPsiBatchQuad,
+        RealType *                            psiGradPsiBatch,
         std::shared_ptr<const quadrature::QuadratureRuleContainer>
-          quadRuleContainer,
-        RealType *gradRhoBatch,
+                                                     quadRuleContainer,
+        RealType *                                   gradRhoBatch,
         linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext);
     }; // end of class DensityCalculatorKernels
 
 
 #ifdef DFTEFE_WITH_DEVICE
     template <typename ValueType, typename RealType, size_type dim>
-    class DensityCalculatorKernels<ValueType, RealType,
-                                   utils::MemorySpace::DEVICE, dim>
+    class DensityCalculatorKernels<ValueType,
+                                   RealType,
+                                   utils::MemorySpace::DEVICE,
+                                   dim>
     {
     public:
       static void
       computeRhoInBatch(
-        const size_type batchSize,
+        const size_type                       batchSize,
         const std::pair<size_type, size_type> cellRange,
-        const RealType* occupationInBatch,
-        ValueType *psiBatchQuad,
-        RealType *modPsiSqBatchQuad,
+        const RealType *                      occupationInBatch,
+        ValueType *                           psiBatchQuad,
+        RealType *                            modPsiSqBatchQuad,
         std::shared_ptr<const quadrature::QuadratureRuleContainer>
-          quadRuleContainer,
+                  quadRuleContainer,
         RealType *rhoBatch,
-        linearAlgebra::LinAlgOpContext<utils::MemorySpace::DEVICE> &linAlgOpContext);
+        linearAlgebra::LinAlgOpContext<utils::MemorySpace::DEVICE>
+          &linAlgOpContext);
 
       static void
       computeGradRhoInBatch(
-        const size_type batchSize,
+        const size_type                       batchSize,
         const std::pair<size_type, size_type> cellRange,
-        const RealType *occupationInBatch,
-        const ValueType *psiBatchQuad,
-        const ValueType *gradPsiBatchQuad,
-        RealType *psiGradPsiBatch,
+        const RealType *                      occupationInBatch,
+        const ValueType *                     psiBatchQuad,
+        const ValueType *                     gradPsiBatchQuad,
+        RealType *                            psiGradPsiBatch,
         std::shared_ptr<const quadrature::QuadratureRuleContainer>
-          quadRuleContainer,
+                  quadRuleContainer,
         RealType *gradRhoBatch,
-        linearAlgebra::LinAlgOpContext<utils::MemorySpace::DEVICE> &linAlgOpContext);
+        linearAlgebra::LinAlgOpContext<utils::MemorySpace::DEVICE>
+          &linAlgOpContext);
     }; // end of class DensityCalculatorKernels
 #endif
-  } // end of namespace basis
+  } // namespace ksdft
 } // end of namespace dftefe
 #endif // dftefeDensityCalculatorKernels_h

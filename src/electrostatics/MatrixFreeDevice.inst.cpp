@@ -2,16 +2,16 @@ constexpr int batchSizeDeviceFP64 = 1;
 constexpr int batchSizeDeviceFP32 = 1;
 
 #ifdef DFTEFE_WITH_DEVICE
-#  define MatrixFreeDeviceTemplates(NDOFSPERDIM)                    \
-    template class MatrixFreeDevice<double,                         \
+#  define MatrixFreeDeviceTemplates(NDOFSPERDIM)                     \
+    template class MatrixFreeDevice<double,                          \
                                     dftefe::operatorList::Laplace,   \
-                                    NDOFSPERDIM,                    \
-                                    NDOFSPERDIM,                    \
-                                    batchSizeDeviceFP64>;           \
-    template class MatrixFreeDevice<double,                         \
+                                    NDOFSPERDIM,                     \
+                                    NDOFSPERDIM,                     \
+                                    batchSizeDeviceFP64>;            \
+    template class MatrixFreeDevice<double,                          \
                                     dftefe::operatorList::Helmholtz, \
-                                    NDOFSPERDIM,                    \
-                                    NDOFSPERDIM,                    \
+                                    NDOFSPERDIM,                     \
+                                    NDOFSPERDIM,                     \
                                     batchSizeDeviceFP64>;
 
 MatrixFreeDeviceTemplates(2) MatrixFreeDeviceTemplates(3)

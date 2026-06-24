@@ -2,23 +2,23 @@ constexpr int batchSizeDeviceFP64    = 1;
 constexpr int subBatchSizeDeviceFP64 = 1;
 
 #ifdef DFTEFE_WITH_DEVICE
-#  define MatrixFreeTemplates(NDOFSPERDIM)                              \
-    template class dftefe::MatrixFree<double,                            \
-                                     dftefe::operatorList::Laplace,      \
-                                     dftefe::utils::MemorySpace::DEVICE, \
-                                     false,                             \
-                                     NDOFSPERDIM,                       \
-                                     NDOFSPERDIM,                       \
-                                     batchSizeDeviceFP64,               \
-                                     subBatchSizeDeviceFP64>;           \
-    template class dftefe::MatrixFree<double,                            \
-                                     dftefe::operatorList::Helmholtz,    \
-                                     dftefe::utils::MemorySpace::DEVICE, \
-                                     false,                             \
-                                     NDOFSPERDIM,                       \
-                                     NDOFSPERDIM,                       \
-                                     batchSizeDeviceFP64,               \
-                                     subBatchSizeDeviceFP64>;
+#  define MatrixFreeTemplates(NDOFSPERDIM)                                \
+    template class dftefe::MatrixFree<double,                             \
+                                      dftefe::operatorList::Laplace,      \
+                                      dftefe::utils::MemorySpace::DEVICE, \
+                                      false,                              \
+                                      NDOFSPERDIM,                        \
+                                      NDOFSPERDIM,                        \
+                                      batchSizeDeviceFP64,                \
+                                      subBatchSizeDeviceFP64>;            \
+    template class dftefe::MatrixFree<double,                             \
+                                      dftefe::operatorList::Helmholtz,    \
+                                      dftefe::utils::MemorySpace::DEVICE, \
+                                      false,                              \
+                                      NDOFSPERDIM,                        \
+                                      NDOFSPERDIM,                        \
+                                      batchSizeDeviceFP64,                \
+                                      subBatchSizeDeviceFP64>;
 
 MatrixFreeTemplates(2) MatrixFreeTemplates(3) MatrixFreeTemplates(4)
   MatrixFreeTemplates(5) MatrixFreeTemplates(6) MatrixFreeTemplates(7)

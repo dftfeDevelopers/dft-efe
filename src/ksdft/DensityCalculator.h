@@ -85,10 +85,10 @@ namespace dftefe
       computeRho(
         const std::vector<RealType> &occupation,
         const linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
-          &                                                           waveFunc,
+          &waveFunc,
         quadrature::QuadratureValuesContainer<RealType, memorySpaceHost> &rho,
         quadrature::QuadratureValuesContainer<RealType, memorySpaceHost>
-          &                                                           gradRho,
+          &        gradRho,
         const bool computeGrad = false);
 
     private:
@@ -108,8 +108,7 @@ namespace dftefe
       std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
         d_linAlgOpContext;
 
-      dftefe::utils::MemoryStorage<ValueType, memorySpace> 
-         *d_psiBatchQuad;
+      dftefe::utils::MemoryStorage<ValueType, memorySpace> *d_psiBatchQuad;
       // quadrature::QuadratureValuesContainer<ValueType, memorySpace>
       //   *d_psiBatchQuad;
 
@@ -118,11 +117,12 @@ namespace dftefe
 
       dftefe::utils::MemoryStorage<RealType, memorySpace> *d_rhoBatch;
 
-      quadrature::QuadratureValuesContainer<RealType, memorySpace> *d_rhoMemspace;
+      quadrature::QuadratureValuesContainer<RealType, memorySpace>
+        *d_rhoMemspace;
 
       dftefe::utils::MemoryStorage<ValueType, memorySpace> *d_gradPsiBatchQuad;
-      dftefe::utils::MemoryStorage<RealType, memorySpace>  *d_gradRhoBatch;
-      dftefe::utils::MemoryStorage<RealType, memorySpace>  d_psiGradPsiBatch;
+      dftefe::utils::MemoryStorage<RealType, memorySpace> * d_gradRhoBatch;
+      dftefe::utils::MemoryStorage<RealType, memorySpace>   d_psiGradPsiBatch;
       quadrature::QuadratureValuesContainer<RealType, memorySpace>
         *d_gradRhoMemspace;
 

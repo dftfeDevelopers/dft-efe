@@ -27,11 +27,11 @@ namespace dftefe
   template <typename T,
             dftefe::operatorList       operatorID,
             dftefe::utils::MemorySpace memorySpace,
-            bool                      isComplex,
-            std::uint32_t             nDofsPerDim,
-            std::uint32_t             nQuadPointsPerDim,
-            std::uint32_t             batchSize,
-            std::uint32_t             subBatchSize>
+            bool                       isComplex,
+            std::uint32_t              nDofsPerDim,
+            std::uint32_t              nQuadPointsPerDim,
+            std::uint32_t              batchSize,
+            std::uint32_t              subBatchSize>
   MatrixFree<T,
              operatorID,
              memorySpace,
@@ -39,13 +39,14 @@ namespace dftefe
              nDofsPerDim,
              nQuadPointsPerDim,
              batchSize,
-             subBatchSize>::
-    MatrixFree(const MPI_Comm                          &mpi_comm,
-               const dealii::MatrixFree<3, double>     *matrixFreeDataPtr,
-               const dealii::AffineConstraints<double> &constraintMatrix,
-               const std::uint32_t dofHandlerID,
-               const std::uint32_t quadratureID,
-               const dftefe::uInt   nVectors)
+             subBatchSize>::MatrixFree(const MPI_Comm &mpi_comm,
+                                       const dealii::MatrixFree<3, double>
+                                         *matrixFreeDataPtr,
+                                       const dealii::AffineConstraints<double>
+                                         &                 constraintMatrix,
+                                       const std::uint32_t dofHandlerID,
+                                       const std::uint32_t quadratureID,
+                                       const dftefe::uInt  nVectors)
     : mpi_communicator(mpi_comm)
     , n_mpi_processes(dealii::Utilities::MPI::n_mpi_processes(mpi_comm))
     , this_mpi_process(dealii::Utilities::MPI::this_mpi_process(mpi_comm))
@@ -80,11 +81,11 @@ namespace dftefe
   template <typename T,
             dftefe::operatorList       operatorID,
             dftefe::utils::MemorySpace memorySpace,
-            bool                      isComplex,
-            std::uint32_t             nDofsPerDim,
-            std::uint32_t             nQuadPointsPerDim,
-            std::uint32_t             batchSize,
-            std::uint32_t             subBatchSize>
+            bool                       isComplex,
+            std::uint32_t              nDofsPerDim,
+            std::uint32_t              nQuadPointsPerDim,
+            std::uint32_t              batchSize,
+            std::uint32_t              subBatchSize>
   void
   MatrixFree<T,
              operatorID,
@@ -398,7 +399,7 @@ namespace dftefe
             quadratureWeights[iQuad];
 
         dftefe::utils::MemoryStorage<dftefe::uInt,
-                                    dftefe::utils::MemorySpace::HOST>
+                                     dftefe::utils::MemorySpace::HOST>
           constrainingNodeOffset(d_constrainingNodeBuckets.size() + 1),
           constrainedNodeOffset(d_constrainedNodeBuckets.size() + 1),
           weightMatrixOffset(d_weightMatrixList.size() + 1);
@@ -416,7 +417,7 @@ namespace dftefe
 
         for (dftefe::uInt i = 0; i < d_constrainingNodeBuckets.size(); i++)
           dftefe::utils::MemoryTransfer<dftefe::utils::MemorySpace::DEVICE,
-                                       dftefe::utils::MemorySpace::HOST>::
+                                        dftefe::utils::MemorySpace::HOST>::
             copy(d_constrainingNodeBuckets[i].size(),
                  d_constrainingNodeBucketsDevice.data() +
                    constrainingNodeOffset[i],
@@ -435,7 +436,7 @@ namespace dftefe
 
         for (dftefe::uInt i = 0; i < d_constrainedNodeBuckets.size(); i++)
           dftefe::utils::MemoryTransfer<dftefe::utils::MemorySpace::DEVICE,
-                                       dftefe::utils::MemorySpace::HOST>::
+                                        dftefe::utils::MemorySpace::HOST>::
             copy(d_constrainedNodeBuckets[i].size(),
                  d_constrainedNodeBucketsDevice.data() +
                    constrainedNodeOffset[i],
@@ -454,7 +455,7 @@ namespace dftefe
 
         for (dftefe::uInt i = 0; i < d_weightMatrixList.size(); i++)
           dftefe::utils::MemoryTransfer<dftefe::utils::MemorySpace::DEVICE,
-                                       dftefe::utils::MemorySpace::HOST>::
+                                        dftefe::utils::MemorySpace::HOST>::
             copy(d_weightMatrixList[i].size(),
                  d_weightMatrixListDevice.data() + weightMatrixOffset[i],
                  d_weightMatrixList[i].data());
@@ -479,7 +480,7 @@ namespace dftefe
           (d_maxDofsPerDim * d_maxDofsPerDim * 5 + d_maxDofsPerDim));
 
         dftefe::utils::MemoryTransfer<dftefe::utils::MemorySpace::DEVICE,
-                                     dftefe::utils::MemorySpace::HOST>::
+                                      dftefe::utils::MemorySpace::HOST>::
           copy(shapeFunctionValueGradient.size(),
                shapeBufferDevice.data(),
                shapeFunctionValueGradient.data());
@@ -494,66 +495,66 @@ namespace dftefe
 #endif
       }
 
-      // const auto mpi_comm =
-      //   d_matrixFreeDataPtr->get_vector_partitioner(d_dofHandlerID)
-      //     ->get_mpi_communicator();
+    // const auto mpi_comm =
+    //   d_matrixFreeDataPtr->get_vector_partitioner(d_dofHandlerID)
+    //     ->get_mpi_communicator();
 
-      // const unsigned int my_rank =
-      //   dealii::Utilities::MPI::this_mpi_process(mpi_comm);
-      // const unsigned int n_procs =
-      //   dealii::Utilities::MPI::n_mpi_processes(mpi_comm);
+    // const unsigned int my_rank =
+    //   dealii::Utilities::MPI::this_mpi_process(mpi_comm);
+    // const unsigned int n_procs =
+    //   dealii::Utilities::MPI::n_mpi_processes(mpi_comm);
 
-      // std::ostringstream oss;
-      // oss << std::fixed << std::setprecision(8);
+    // std::ostringstream oss;
+    // oss << std::fixed << std::setprecision(8);
 
-      // oss << "\n===== Rank " << my_rank << " =====\n";
+    // oss << "\n===== Rank " << my_rank << " =====\n";
 
-      // oss << "\n===== d_nCells " << d_nCells << " =====\n";
-      // oss << "\n===== d_nOwnedDofs " << d_nOwnedDofs << " =====\n";
-      // oss << "\n===== d_nGhostDofs " << d_nGhostDofs << " =====\n";
-      // oss << "\n===== d_nRelaventDofs " << d_nRelaventDofs << " =====\n";
+    // oss << "\n===== d_nCells " << d_nCells << " =====\n";
+    // oss << "\n===== d_nOwnedDofs " << d_nOwnedDofs << " =====\n";
+    // oss << "\n===== d_nGhostDofs " << d_nGhostDofs << " =====\n";
+    // oss << "\n===== d_nRelaventDofs " << d_nRelaventDofs << " =====\n";
 
 
-      // //cellIndexToMacroCellSubCellIndexMap
-      // oss << "cellIndexToMacroCellSubCellIndexMap:\n";
-      // for (size_t i = 0; i < cellIndexToMacroCellSubCellIndexMap.size(); ++i)
-      //   oss << cellIndexToMacroCellSubCellIndexMap[i] << " ";
-      // oss << "\n";
+    // //cellIndexToMacroCellSubCellIndexMap
+    // oss << "cellIndexToMacroCellSubCellIndexMap:\n";
+    // for (size_t i = 0; i < cellIndexToMacroCellSubCellIndexMap.size(); ++i)
+    //   oss << cellIndexToMacroCellSubCellIndexMap[i] << " ";
+    // oss << "\n";
 
-      // // d_map
-      // oss << "d_map:\n";
-      // for (size_t i = 0; i < singleVectorGlobalToLocalMap.size(); ++i)
-      //   oss << singleVectorGlobalToLocalMap[i] << " ";
-      // oss << "\n";
+    // // d_map
+    // oss << "d_map:\n";
+    // for (size_t i = 0; i < singleVectorGlobalToLocalMap.size(); ++i)
+    //   oss << singleVectorGlobalToLocalMap[i] << " ";
+    // oss << "\n";
 
-      // // d_jacobianFactor
-      // oss << "d_jacobianFactor:\n";
-      // for (size_t i = 0; i < jacobianFactor.size(); ++i)
-      //   oss << jacobianFactor[i] << " ";
-      // oss << "\n";
+    // // d_jacobianFactor
+    // oss << "d_jacobianFactor:\n";
+    // for (size_t i = 0; i < jacobianFactor.size(); ++i)
+    //   oss << jacobianFactor[i] << " ";
+    // oss << "\n";
 
-      // std::string local_str = oss.str();
+    // std::string local_str = oss.str();
 
-      // // ---- gather all strings to rank 0 ----
-      // std::vector<std::string> all_strings =
-      //   dealii::Utilities::MPI::gather(mpi_comm, local_str, 0);
+    // // ---- gather all strings to rank 0 ----
+    // std::vector<std::string> all_strings =
+    //   dealii::Utilities::MPI::gather(mpi_comm, local_str, 0);
 
-      // if (my_rank == 0)
-      // {
-      //   for (const auto &s : all_strings)
-      //     std::cout << s;
-      // }
+    // if (my_rank == 0)
+    // {
+    //   for (const auto &s : all_strings)
+    //     std::cout << s;
+    // }
   }
 
 
   template <typename T,
             dftefe::operatorList       operatorID,
             dftefe::utils::MemorySpace memorySpace,
-            bool                      isComplex,
-            std::uint32_t             nDofsPerDim,
-            std::uint32_t             nQuadPointsPerDim,
-            std::uint32_t             batchSize,
-            std::uint32_t             subBatchSize>
+            bool                       isComplex,
+            std::uint32_t              nDofsPerDim,
+            std::uint32_t              nQuadPointsPerDim,
+            std::uint32_t              batchSize,
+            std::uint32_t              subBatchSize>
   void
   MatrixFree<T,
              operatorID,
@@ -571,11 +572,11 @@ namespace dftefe
   template <typename T,
             dftefe::operatorList       operatorID,
             dftefe::utils::MemorySpace memorySpace,
-            bool                      isComplex,
-            std::uint32_t             nDofsPerDim,
-            std::uint32_t             nQuadPointsPerDim,
-            std::uint32_t             batchSize,
-            std::uint32_t             subBatchSize>
+            bool                       isComplex,
+            std::uint32_t              nDofsPerDim,
+            std::uint32_t              nQuadPointsPerDim,
+            std::uint32_t              batchSize,
+            std::uint32_t              subBatchSize>
   void
   MatrixFree<T,
              operatorID,
@@ -604,11 +605,11 @@ namespace dftefe
   template <typename T,
             dftefe::operatorList       operatorID,
             dftefe::utils::MemorySpace memorySpace,
-            bool                      isComplex,
-            std::uint32_t             nDofsPerDim,
-            std::uint32_t             nQuadPointsPerDim,
-            std::uint32_t             batchSize,
-            std::uint32_t             subBatchSize>
+            bool                       isComplex,
+            std::uint32_t              nDofsPerDim,
+            std::uint32_t              nQuadPointsPerDim,
+            std::uint32_t              batchSize,
+            std::uint32_t              subBatchSize>
   void
   MatrixFree<T,
              operatorID,
@@ -645,7 +646,7 @@ namespace dftefe
             continue;
 
           std::vector<dftefe::uInt> constrainingData(rowData->size());
-          std::vector<T>           weightData(rowData->size());
+          std::vector<T>            weightData(rowData->size());
 
           for (auto i = 0; i < rowData->size(); i++)
             {
@@ -656,7 +657,7 @@ namespace dftefe
               weightData[i] = (*rowData)[i].second;
             }
 
-          bool        constraintExists = false;
+          bool         constraintExists = false;
           dftefe::uInt constraintIndex  = 0;
           T inhomogenity = d_constraintMatrixPtr->get_inhomogeneity(lineDof);
 
@@ -698,11 +699,11 @@ namespace dftefe
   template <typename T,
             dftefe::operatorList       operatorID,
             dftefe::utils::MemorySpace memorySpace,
-            bool                      isComplex,
-            std::uint32_t             nDofsPerDim,
-            std::uint32_t             nQuadPointsPerDim,
-            std::uint32_t             batchSize,
-            std::uint32_t             subBatchSize>
+            bool                       isComplex,
+            std::uint32_t              nDofsPerDim,
+            std::uint32_t              nQuadPointsPerDim,
+            std::uint32_t              batchSize,
+            std::uint32_t              subBatchSize>
   inline void
   MatrixFree<T,
              operatorID,
@@ -719,10 +720,10 @@ namespace dftefe
           return;
 
         dftefe::MatrixFreeDevice<T,
-                                operatorID,
-                                nDofsPerDim,
-                                nQuadPointsPerDim,
-                                batchSize>::
+                                 operatorID,
+                                 nDofsPerDim,
+                                 nQuadPointsPerDim,
+                                 batchSize>::
           constraintsDistribute(src,
                                 d_constrainingNodeBucketsDevice.data(),
                                 d_constrainingNodeOffsetDevice.data(),
@@ -743,11 +744,11 @@ namespace dftefe
   template <typename T,
             dftefe::operatorList       operatorID,
             dftefe::utils::MemorySpace memorySpace,
-            bool                      isComplex,
-            std::uint32_t             nDofsPerDim,
-            std::uint32_t             nQuadPointsPerDim,
-            std::uint32_t             batchSize,
-            std::uint32_t             subBatchSize>
+            bool                       isComplex,
+            std::uint32_t              nDofsPerDim,
+            std::uint32_t              nQuadPointsPerDim,
+            std::uint32_t              batchSize,
+            std::uint32_t              subBatchSize>
   inline void
   MatrixFree<T,
              operatorID,
@@ -764,10 +765,10 @@ namespace dftefe
           return;
 
         dftefe::MatrixFreeDevice<T,
-                                operatorID,
-                                nDofsPerDim,
-                                nQuadPointsPerDim,
-                                batchSize>::
+                                 operatorID,
+                                 nDofsPerDim,
+                                 nQuadPointsPerDim,
+                                 batchSize>::
           constraintsDistributeTranspose(dst,
                                          src,
                                          d_constrainingNodeBucketsDevice.data(),
@@ -788,11 +789,11 @@ namespace dftefe
   template <typename T,
             dftefe::operatorList       operatorID,
             dftefe::utils::MemorySpace memorySpace,
-            bool                      isComplex,
-            std::uint32_t             nDofsPerDim,
-            std::uint32_t             nQuadPointsPerDim,
-            std::uint32_t             batchSize,
-            std::uint32_t             subBatchSize>
+            bool                       isComplex,
+            std::uint32_t              nDofsPerDim,
+            std::uint32_t              nQuadPointsPerDim,
+            std::uint32_t              batchSize,
+            std::uint32_t              subBatchSize>
   inline void
   MatrixFree<T,
              operatorID,

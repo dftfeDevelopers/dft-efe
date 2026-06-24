@@ -169,11 +169,11 @@ namespace dftefe
                 dValueDPhiByrsinTheta =
                   (radialValue / r) * cutoffValue * dYlmDPhiBysinTheta;
 
-              if ((r < 1e-4 && l > 0))
-                {
-                  dValueDThetaByr = dValueDR * dYlmDTheta;
-                  dValueDPhiByrsinTheta = dValueDR * dYlmDPhiBysinTheta;
-                }
+                if ((r < 1e-4 && l > 0))
+                  {
+                    dValueDThetaByr       = dValueDR * dYlmDTheta;
+                    dValueDPhiByrsinTheta = dValueDR * dYlmDPhiBysinTheta;
+                  }
 
                 gradient[3 * i + 0] =
                   dValueDR * (sin(theta) * cos(phi)) +
@@ -344,7 +344,9 @@ namespace dftefe
       const int m = d_qNumbers[2];
       return Func<utils::MemorySpace::HOST>(
         d_spline->getFunc<utils::MemorySpace::HOST>(),
-        l, m, std::abs(m),
+        l,
+        m,
+        std::abs(m),
         Clm(l, m) * Dm(m),
         d_cutoff,
         d_smoothness,
@@ -607,14 +609,13 @@ namespace dftefe
               double dYlmDPhiBysinTheta = 0.;
               if (m != 0)
                 {
-                  const double d2PlmDTheta2_theta = 
+                  const double d2PlmDTheta2_theta =
                     d_sphericalHarmonicFunc.d2PlmDTheta2(l, std::abs(m), theta);
-                  dYlmDPhiBysinTheta =
-                    constant *
-                    (sin(theta) * d2PlmDTheta2_theta +
-                     cos(theta) * dPlmDTheta_theta +
-                     sin(theta) * l * (l + 1) * plm_theta) *
-                    (1. / (m * m)) * dQmDPhi(m, phi);
+                  dYlmDPhiBysinTheta = constant *
+                                       (sin(theta) * d2PlmDTheta2_theta +
+                                        cos(theta) * dPlmDTheta_theta +
+                                        sin(theta) * l * (l + 1) * plm_theta) *
+                                       (1. / (m * m)) * dQmDPhi(m, phi);
                 }
 
               // if (!(r[i] < d_radiusTolerance && l > 0))
@@ -655,9 +656,9 @@ namespace dftefe
 
     void
     SphericalDataNumerical::getGradientValue(const size_type numPoints,
-                                              const double *  points,
-                                              const double *  origin,
-                                              double *        out)
+                                             const double *  points,
+                                             const double *  origin,
+                                             double *        out)
     {
       utils::Point originPt(std::vector<double>(origin, origin + d_dim));
       for (size_type i = 0; i < numPoints; i++)
@@ -672,9 +673,9 @@ namespace dftefe
 
     void
     SphericalDataNumerical::getHessianValue(const size_type numPoints,
-                                             const double *  points,
-                                             const double *  origin,
-                                             double *        out)
+                                            const double *  points,
+                                            const double *  origin,
+                                            double *        out)
     {
       utils::throwException(
         false, "getHessianValue not implemented for SphericalDataNumerical.");

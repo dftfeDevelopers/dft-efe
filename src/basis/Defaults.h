@@ -90,7 +90,7 @@ namespace dftefe
       // algorithm.
       //
       static const size_type ENRICHMENT_BATCH_SIZE;
-      static const double ENRICHMENT_ORTHO_COEFF_TOL;
+      static const double    ENRICHMENT_ORTHO_COEFF_TOL;
 
     }; // end of class ECIDefaults
 
@@ -108,9 +108,9 @@ namespace dftefe
     class MaxSizeDefaults
     {
     public:
-      static const size_type SIZE_TYPE_MAX;
+      static const size_type        SIZE_TYPE_MAX;
       static const global_size_type GLOBAL_SIZE_TYPE_MAX;
     }; // end of class MaxSizeDefaults
-  } // end of namespace basis
+  }    // end of namespace basis
 } // end of namespace dftefe
 #endif // dftefebasisDefaults_h

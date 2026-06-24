@@ -55,7 +55,7 @@ namespace dftefe
     template class L2ProjectionDefaults<utils::MemorySpace::DEVICE>;
     const size_type GenerateMeshDefaults::MAX_REFINEMENT_STEPS = 40;
     const size_type ECIDefaults::ENRICHMENT_BATCH_SIZE         = 400;
-    const double ECIDefaults::ENRICHMENT_ORTHO_COEFF_TOL    = 1e-8;
+    const double    ECIDefaults::ENRICHMENT_ORTHO_COEFF_TOL    = 1e-8;
     template <>
     const size_type
       BasisDataStorageDefaults<utils::MemorySpace::HOST>::CELL_BATCH_SIZE = 1;
@@ -66,7 +66,9 @@ namespace dftefe
 
     template class BasisDataStorageDefaults<utils::MemorySpace::HOST>;
     template class BasisDataStorageDefaults<utils::MemorySpace::DEVICE>;
-    const size_type MaxSizeDefaults::SIZE_TYPE_MAX = std::numeric_limits<size_type>::max();
-    const global_size_type MaxSizeDefaults::GLOBAL_SIZE_TYPE_MAX = std::numeric_limits<global_size_type>::max();
+    const size_type MaxSizeDefaults::SIZE_TYPE_MAX =
+      std::numeric_limits<size_type>::max();
+    const global_size_type MaxSizeDefaults::GLOBAL_SIZE_TYPE_MAX =
+      std::numeric_limits<global_size_type>::max();
   } // end of namespace basis
 } // end of namespace dftefe

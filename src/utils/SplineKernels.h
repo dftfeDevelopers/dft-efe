@@ -45,12 +45,12 @@ namespace dftefe
       // that knotX[i] <= x < knotX[i+1] (or the boundary indices).
       //-----------------------------------------------------------------------
       DFTEFE_HOST_DEVICE_FUNC size_type
-      splineFindIdx(const double       xi,
-                    const double *     knotX,
-                    const size_type    nKnots,
-                    const bool         isSubdivGrid,
-                    const double       a_param,
-                    const double       r_param,
+      splineFindIdx(const double            xi,
+                    const double *          knotX,
+                    const size_type         nKnots,
+                    const bool              isSubdivGrid,
+                    const double            a_param,
+                    const double            r_param,
                     const dftefe::size_type numSubDiv)
       {
         if (isSubdivGrid)
@@ -59,7 +59,7 @@ namespace dftefe
               return nKnots - 1;
             if (xi < knotX[0])
               return 0;
-            double       rDiff = r_param - 1.0;
+            double            rDiff = r_param - 1.0;
             dftefe::size_type n_gp  = 0;
             dftefe::size_type subId = 0;
             if (rDiff < 1e-6 && rDiff > -1e-6)
@@ -71,15 +71,14 @@ namespace dftefe
                 n_gp = static_cast<dftefe::size_type>(
                   log(xi * rDiff / a_param + 1.0) / log(r_param));
                 double segStart =
-                  a_param *
-                  (pow(r_param, static_cast<double>(n_gp)) - 1.0) / rDiff;
+                  a_param * (pow(r_param, static_cast<double>(n_gp)) - 1.0) /
+                  rDiff;
                 double segWidth =
                   a_param * pow(r_param, static_cast<double>(n_gp));
                 subId = static_cast<dftefe::size_type>(
                   static_cast<double>(numSubDiv) * (xi - segStart) / segWidth);
               }
-            size_type idx =
-              static_cast<size_type>(n_gp * numSubDiv + subId);
+            size_type idx = static_cast<size_type>(n_gp * numSubDiv + subId);
             return (idx >= nKnots) ? nKnots - 1 : idx;
           }
         else
@@ -106,34 +105,32 @@ namespace dftefe
       // Scalar device helper: evaluate spline at a single point x.
       //-----------------------------------------------------------------------
       DFTEFE_HOST_DEVICE_FUNC double
-      SplineEvalKernel(const double       x,
-                       const double *     knotX,
-                       const double *     knotY,
-                       const double *     coefB,
-                       const double *     coefC,
-                       const double *     coefD,
-                       const size_type    nKnots,
-                       const double       c0,
-                       const bool         isSubdivGrid,
-                       const double       a_param,
-                       const double       r_param,
+      SplineEvalKernel(const double            x,
+                       const double *          knotX,
+                       const double *          knotY,
+                       const double *          coefB,
+                       const double *          coefC,
+                       const double *          coefD,
+                       const size_type         nKnots,
+                       const double            c0,
+                       const bool              isSubdivGrid,
+                       const double            a_param,
+                       const double            r_param,
                        const dftefe::size_type numSubDiv)
       {
         double          xi  = x;
-        const size_type idx =
-          splineFindIdx(xi, knotX, nKnots, isSubdivGrid, a_param, r_param, numSubDiv);
+        const size_type idx = splineFindIdx(
+          xi, knotX, nKnots, isSubdivGrid, a_param, r_param, numSubDiv);
         double h = xi - knotX[idx];
         double interpol;
         if (xi < knotX[0])
           interpol = (c0 * h + coefB[0]) * h + knotY[0];
         else if (xi > knotX[nKnots - 1])
           interpol =
-            (coefC[nKnots - 1] * h + coefB[nKnots - 1]) * h +
-            knotY[nKnots - 1];
+            (coefC[nKnots - 1] * h + coefB[nKnots - 1]) * h + knotY[nKnots - 1];
         else
           interpol =
-            ((coefD[idx] * h + coefC[idx]) * h + coefB[idx]) * h +
-            knotY[idx];
+            ((coefD[idx] * h + coefC[idx]) * h + coefB[idx]) * h + knotY[idx];
         return interpol;
       }
 
@@ -141,22 +138,22 @@ namespace dftefe
       // Scalar device helper: evaluate spline derivative at a single point x.
       //-----------------------------------------------------------------------
       DFTEFE_HOST_DEVICE_FUNC double
-      SplineDerivKernel(const int          derivOrder,
-                        const double       x,
-                        const double *     knotX,
-                        const double *     coefB,
-                        const double *     coefC,
-                        const double *     coefD,
-                        const size_type    nKnots,
-                        const double       c0,
-                        const bool         isSubdivGrid,
-                        const double       a_param,
-                        const double       r_param,
+      SplineDerivKernel(const int               derivOrder,
+                        const double            x,
+                        const double *          knotX,
+                        const double *          coefB,
+                        const double *          coefC,
+                        const double *          coefD,
+                        const size_type         nKnots,
+                        const double            c0,
+                        const bool              isSubdivGrid,
+                        const double            a_param,
+                        const double            r_param,
                         const dftefe::size_type numSubDiv)
       {
         double          xi  = x;
-        const size_type idx =
-          splineFindIdx(xi, knotX, nKnots, isSubdivGrid, a_param, r_param, numSubDiv);
+        const size_type idx = splineFindIdx(
+          xi, knotX, nKnots, isSubdivGrid, a_param, r_param, numSubDiv);
         double h        = xi - knotX[idx];
         double interpol = 0.0;
         if (xi < knotX[0])
@@ -169,8 +166,7 @@ namespace dftefe
         else if (xi > knotX[nKnots - 1])
           {
             if (derivOrder == 1)
-              interpol =
-                2.0 * coefC[nKnots - 1] * h + coefB[nKnots - 1];
+              interpol = 2.0 * coefC[nKnots - 1] * h + coefB[nKnots - 1];
             else if (derivOrder == 2)
               interpol = 2.0 * coefC[nKnots - 1];
           }
@@ -178,8 +174,7 @@ namespace dftefe
           {
             if (derivOrder == 1)
               interpol =
-                (3.0 * coefD[idx] * h + 2.0 * coefC[idx]) * h +
-                coefB[idx];
+                (3.0 * coefD[idx] * h + 2.0 * coefC[idx]) * h + coefB[idx];
             else if (derivOrder == 2)
               interpol = 6.0 * coefD[idx] * h + 2.0 * coefC[idx];
             else if (derivOrder == 3)
@@ -191,18 +186,17 @@ namespace dftefe
     } // anonymous namespace
 
     template <dftefe::utils::MemorySpace memorySpace>
-    Spline::Func<memorySpace>::Func(
-      const double *    knotX,
-      const double *    knotY,
-      const double *    coefB,
-      const double *    coefC,
-      const double *    coefD,
-      size_type         nKnots,
-      double            c0,
-      bool              isSubdivGrid,
-      double            a,
-      double            r,
-      dftefe::size_type numSubDiv)
+    Spline::Func<memorySpace>::Func(const double *    knotX,
+                                    const double *    knotY,
+                                    const double *    coefB,
+                                    const double *    coefC,
+                                    const double *    coefD,
+                                    size_type         nKnots,
+                                    double            c0,
+                                    bool              isSubdivGrid,
+                                    double            a,
+                                    double            r,
+                                    dftefe::size_type numSubDiv)
       : d_knotX(knotX)
       , d_knotY(knotY)
       , d_coefB(coefB)
@@ -221,21 +215,35 @@ namespace dftefe
     Spline::Func<memorySpace>::eval(double xi) const
     {
       return SplineEvalKernel(xi,
-                              d_knotX, d_knotY,
-                              d_coefB, d_coefC, d_coefD,
-                              d_nKnots, d_c0, d_isSubdivGrid,
-                              d_a, d_r, d_numSubDiv);
+                              d_knotX,
+                              d_knotY,
+                              d_coefB,
+                              d_coefC,
+                              d_coefD,
+                              d_nKnots,
+                              d_c0,
+                              d_isSubdivGrid,
+                              d_a,
+                              d_r,
+                              d_numSubDiv);
     }
 
     template <dftefe::utils::MemorySpace memorySpace>
     DFTEFE_HOST_DEVICE_FUNC double
     Spline::Func<memorySpace>::deriv(int order, double xi) const
     {
-      return SplineDerivKernel(order, xi,
+      return SplineDerivKernel(order,
+                               xi,
                                d_knotX,
-                               d_coefB, d_coefC, d_coefD,
-                               d_nKnots, d_c0, d_isSubdivGrid,
-                               d_a, d_r, d_numSubDiv);
+                               d_coefB,
+                               d_coefC,
+                               d_coefD,
+                               d_nKnots,
+                               d_c0,
+                               d_isSubdivGrid,
+                               d_a,
+                               d_r,
+                               d_numSubDiv);
     }
 
   } // namespace utils

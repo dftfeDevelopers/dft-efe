@@ -31,11 +31,11 @@ namespace dftefe
   {
     template <typename NumberType>
     ScaLAPACKMatrix<NumberType>::ScaLAPACKMatrix(
-      const size_type_scalapack                           n_rows_,
-      const size_type_scalapack                           n_columns_,
+      const size_type_scalapack                 n_rows_,
+      const size_type_scalapack                 n_columns_,
       const std::shared_ptr<const ProcessGrid> &process_grid,
-      const size_type_scalapack                           row_block_size_,
-      const size_type_scalapack                           column_block_size_,
+      const size_type_scalapack                 row_block_size_,
+      const size_type_scalapack                 column_block_size_,
       const LAPACKSupport::Property             property_)
       : uplo('L')
       , // for non-hermitian matrices this is not needed
@@ -54,9 +54,9 @@ namespace dftefe
 
     template <typename NumberType>
     ScaLAPACKMatrix<NumberType>::ScaLAPACKMatrix(
-      const size_type_scalapack                           size,
+      const size_type_scalapack                 size,
       const std::shared_ptr<const ProcessGrid> &process_grid,
-      const size_type_scalapack                           block_size,
+      const size_type_scalapack                 block_size,
       const LAPACKSupport::Property             property)
       : ScaLAPACKMatrix<NumberType>(size,
                                     size,
@@ -69,11 +69,11 @@ namespace dftefe
     template <typename NumberType>
     void
     ScaLAPACKMatrix<NumberType>::reinit(
-      const size_type_scalapack                           n_rows_,
-      const size_type_scalapack                           n_columns_,
+      const size_type_scalapack                 n_rows_,
+      const size_type_scalapack                 n_columns_,
       const std::shared_ptr<const ProcessGrid> &process_grid,
-      const size_type_scalapack                           row_block_size_,
-      const size_type_scalapack                           column_block_size_,
+      const size_type_scalapack                 row_block_size_,
+      const size_type_scalapack                 column_block_size_,
       const LAPACKSupport::Property             property_)
     {
       DFTEFE_AssertWithMsg(row_block_size_ > 0,
@@ -147,9 +147,9 @@ namespace dftefe
     template <typename NumberType>
     void
     ScaLAPACKMatrix<NumberType>::reinit(
-      const size_type_scalapack                           size,
+      const size_type_scalapack                 size,
       const std::shared_ptr<const ProcessGrid> &process_grid,
-      const size_type_scalapack                           block_size,
+      const size_type_scalapack                 block_size,
       const LAPACKSupport::Property             property)
     {
       reinit(size, size, process_grid, block_size, block_size, property);
@@ -603,14 +603,12 @@ namespace dftefe
                                 std::to_string(C.n_columns)));
           DFTEFE_AssertWithMsg(this->row_block_size == C.row_block_size,
                                (std::string("Dimension mismatch between ") +
-                                std::to_string(this->row_block_size) +
-                                " and " +
+                                std::to_string(this->row_block_size) + " and " +
                                 std::to_string(C.row_block_size)));
           DFTEFE_AssertWithMsg(this->column_block_size == B.row_block_size,
                                (std::string("Dimension mismatch between ") +
                                 std::to_string(this->column_block_size) +
-                                " and " +
-                                std::to_string(B.row_block_size)));
+                                " and " + std::to_string(B.row_block_size)));
           DFTEFE_AssertWithMsg(B.column_block_size == C.column_block_size,
                                (std::string("Dimension mismatch between ") +
                                 std::to_string(B.column_block_size) + " and " +
@@ -633,12 +631,10 @@ namespace dftefe
           DFTEFE_AssertWithMsg(this->column_block_size == C.row_block_size,
                                (std::string("Dimension mismatch between ") +
                                 std::to_string(this->column_block_size) +
-                                " and " +
-                                std::to_string(C.row_block_size)));
+                                " and " + std::to_string(C.row_block_size)));
           DFTEFE_AssertWithMsg(this->row_block_size == B.row_block_size,
                                (std::string("Dimension mismatch between ") +
-                                std::to_string(this->row_block_size) +
-                                " and " +
+                                std::to_string(this->row_block_size) + " and " +
                                 std::to_string(B.row_block_size)));
           DFTEFE_AssertWithMsg(B.column_block_size == C.column_block_size,
                                (std::string("Dimension mismatch between ") +
@@ -661,14 +657,12 @@ namespace dftefe
                                 std::to_string(C.n_columns)));
           DFTEFE_AssertWithMsg(this->row_block_size == C.row_block_size,
                                (std::string("Dimension mismatch between ") +
-                                std::to_string(this->row_block_size) +
-                                " and " +
+                                std::to_string(this->row_block_size) + " and " +
                                 std::to_string(C.row_block_size)));
           DFTEFE_AssertWithMsg(this->column_block_size == B.column_block_size,
                                (std::string("Dimension mismatch between ") +
                                 std::to_string(this->column_block_size) +
-                                " and " +
-                                std::to_string(B.column_block_size)));
+                                " and " + std::to_string(B.column_block_size)));
           DFTEFE_AssertWithMsg(B.row_block_size == C.column_block_size,
                                (std::string("Dimension mismatch between ") +
                                 std::to_string(B.row_block_size) + " and " +
@@ -690,14 +684,12 @@ namespace dftefe
                                 std::to_string(C.n_columns)));
           DFTEFE_AssertWithMsg(this->column_block_size == C.row_block_size,
                                (std::string("Dimension mismatch between ") +
-                                std::to_string(this->row_block_size) +
-                                " and " +
+                                std::to_string(this->row_block_size) + " and " +
                                 std::to_string(C.row_block_size)));
           DFTEFE_AssertWithMsg(this->row_block_size == B.column_block_size,
                                (std::string("Dimension mismatch between ") +
                                 std::to_string(this->column_block_size) +
-                                " and " +
-                                std::to_string(B.row_block_size)));
+                                " and " + std::to_string(B.row_block_size)));
           DFTEFE_AssertWithMsg(B.row_block_size == C.column_block_size,
                                (std::string("Dimension mismatch between ") +
                                 std::to_string(B.column_block_size) + " and " +
@@ -775,14 +767,12 @@ namespace dftefe
                                 std::to_string(C.n_columns)));
           DFTEFE_AssertWithMsg(this->row_block_size == C.row_block_size,
                                (std::string("Dimension mismatch between ") +
-                                std::to_string(this->row_block_size) +
-                                " and " +
+                                std::to_string(this->row_block_size) + " and " +
                                 std::to_string(C.row_block_size)));
           DFTEFE_AssertWithMsg(this->column_block_size == B.row_block_size,
                                (std::string("Dimension mismatch between ") +
                                 std::to_string(this->column_block_size) +
-                                " and " +
-                                std::to_string(B.row_block_size)));
+                                " and " + std::to_string(B.row_block_size)));
           DFTEFE_AssertWithMsg(B.column_block_size == C.column_block_size,
                                (std::string("Dimension mismatch between ") +
                                 std::to_string(B.column_block_size) + " and " +
@@ -805,12 +795,10 @@ namespace dftefe
           DFTEFE_AssertWithMsg(this->column_block_size == C.row_block_size,
                                (std::string("Dimension mismatch between ") +
                                 std::to_string(this->column_block_size) +
-                                " and " +
-                                std::to_string(C.row_block_size)));
+                                " and " + std::to_string(C.row_block_size)));
           DFTEFE_AssertWithMsg(this->row_block_size == B.row_block_size,
                                (std::string("Dimension mismatch between ") +
-                                std::to_string(this->row_block_size) +
-                                " and " +
+                                std::to_string(this->row_block_size) + " and " +
                                 std::to_string(B.row_block_size)));
           DFTEFE_AssertWithMsg(B.column_block_size == C.column_block_size,
                                (std::string("Dimension mismatch between ") +
@@ -833,14 +821,12 @@ namespace dftefe
                                 std::to_string(C.n_columns)));
           DFTEFE_AssertWithMsg(this->row_block_size == C.row_block_size,
                                (std::string("Dimension mismatch between ") +
-                                std::to_string(this->row_block_size) +
-                                " and " +
+                                std::to_string(this->row_block_size) + " and " +
                                 std::to_string(C.row_block_size)));
           DFTEFE_AssertWithMsg(this->column_block_size == B.column_block_size,
                                (std::string("Dimension mismatch between ") +
                                 std::to_string(this->column_block_size) +
-                                " and " +
-                                std::to_string(B.column_block_size)));
+                                " and " + std::to_string(B.column_block_size)));
           DFTEFE_AssertWithMsg(B.row_block_size == C.column_block_size,
                                (std::string("Dimension mismatch between ") +
                                 std::to_string(B.row_block_size) + " and " +
@@ -862,14 +848,12 @@ namespace dftefe
                                 std::to_string(C.n_columns)));
           DFTEFE_AssertWithMsg(this->column_block_size == C.row_block_size,
                                (std::string("Dimension mismatch between ") +
-                                std::to_string(this->row_block_size) +
-                                " and " +
+                                std::to_string(this->row_block_size) + " and " +
                                 std::to_string(C.row_block_size)));
           DFTEFE_AssertWithMsg(this->row_block_size == B.column_block_size,
                                (std::string("Dimension mismatch between ") +
                                 std::to_string(this->column_block_size) +
-                                " and " +
-                                std::to_string(B.row_block_size)));
+                                " and " + std::to_string(B.row_block_size)));
           DFTEFE_AssertWithMsg(B.row_block_size == C.column_block_size,
                                (std::string("Dimension mismatch between ") +
                                 std::to_string(B.column_block_size) + " and " +

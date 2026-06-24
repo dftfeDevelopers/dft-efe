@@ -59,8 +59,8 @@ namespace dftefe
       QuadratureValuesContainer(
         std::shared_ptr<const QuadratureRuleContainer> quadratureRuleContainer,
         const size_type                                numberComponents,
-        //const std::pair<size_type, size_type>          cellRange,
-        const ValueType                                initVal = ValueType());
+        // const std::pair<size_type, size_type>          cellRange,
+        const ValueType initVal = ValueType());
 
       ~QuadratureValuesContainer() = default;
 

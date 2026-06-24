@@ -81,15 +81,13 @@ namespace dftefe
       // --- small-batch setters (called once on first remainder batch) ---
 
       void
-      setXinBatchSmall(
-        std::shared_ptr<MultiVector<ValueType, memorySpace>> v)
+      setXinBatchSmall(std::shared_ptr<MultiVector<ValueType, memorySpace>> v)
       {
         d_XinBatchSmall = v;
       }
 
       void
-      setXoutBatchSmall(
-        std::shared_ptr<MultiVector<ValueType, memorySpace>> v)
+      setXoutBatchSmall(std::shared_ptr<MultiVector<ValueType, memorySpace>> v)
       {
         d_XoutBatchSmall = v;
       }
@@ -169,7 +167,7 @@ namespace dftefe
       std::shared_ptr<MultiVector<ValueType, memorySpace>> d_XoutBatch;
       std::shared_ptr<MultiVector<ValueType, memorySpace>> d_XinBatchSmall;
       std::shared_ptr<MultiVector<ValueType, memorySpace>> d_XoutBatchSmall;
-      bool d_inUse;
+      bool                                                 d_inUse;
     };
 
   } // end of namespace linearAlgebra

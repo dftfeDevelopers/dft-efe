@@ -91,8 +91,9 @@ namespace dftefe
           *(dealiiMatrixFree.get_vector_partitioner());
         const dealii::IndexSet &ghostIndexSet =
           dealiiPartitioner.ghost_indices();
-        // const size_type numGhostIndicesClassical = ghostIndexSet.n_elements();
-        // std::vector<global_size_type> ghostIndicesClassical(0);
+        // const size_type numGhostIndicesClassical =
+        // ghostIndexSet.n_elements(); std::vector<global_size_type>
+        // ghostIndicesClassical(0);
         // ghostIndicesClassical.resize(numGhostIndicesClassical, 0);
         // ghostIndexSet.fill_index_vector(ghostIndicesClassical);
         std::vector<global_size_type> ghostIndicesClassical =

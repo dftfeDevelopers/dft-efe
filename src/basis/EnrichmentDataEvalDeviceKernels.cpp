@@ -34,189 +34,215 @@ namespace dftefe
     namespace
     {
       DFTEFE_CREATE_KERNEL(
-      void,
-      evalEnrichmentInCell,
-      {
-        for(size_type iThread = globalThreadId ; iThread < numEnrichInCell * numQuadInCell ;
-              iThread += nThreadsPerBlock * nThreadBlock)
+        void,
+        evalEnrichmentInCell,
         {
-          size_type enrichId = iThread % numEnrichInCell;
-          size_type quadId   = iThread / numEnrichInCell;
+          for (size_type iThread = globalThreadId;
+               iThread < numEnrichInCell * numQuadInCell;
+               iThread += nThreadsPerBlock * nThreadBlock)
+            {
+              size_type enrichId = iThread % numEnrichInCell;
+              size_type quadId   = iThread / numEnrichInCell;
 
-          output[iThread] = sphericalDataFunc[enrichId].getValue(quadPtsInCell + quadId * 3, origin + enrichId * 3);
-        }
-      },
-      const double * quadPtsInCell,
-      const double *origin,
-      const size_type numEnrichInCell,
-      const size_type numQuadInCell,
-      const atoms::SphericalDataNumerical::Func<utils::MemorySpace::DEVICE> * sphericalDataFunc,
-      double *output);
+              output[iThread] =
+                sphericalDataFunc[enrichId].getValue(quadPtsInCell + quadId * 3,
+                                                     origin + enrichId * 3);
+            }
+        },
+        const double *  quadPtsInCell,
+        const double *  origin,
+        const size_type numEnrichInCell,
+        const size_type numQuadInCell,
+        const atoms::SphericalDataNumerical::Func<utils::MemorySpace::DEVICE>
+          *     sphericalDataFunc,
+        double *output);
       DFTEFE_CREATE_KERNEL(
-      void,
-      evalEnrichmentGradientInCell,
-      {
-        for(size_type iThread = globalThreadId ; iThread < numEnrichInCell * numQuadInCell ;
-              iThread += nThreadsPerBlock * nThreadBlock)
+        void,
+        evalEnrichmentGradientInCell,
         {
-          // layout: quadId (slow) x dim x enrichId (fast)
-          size_type enrichId = iThread % numEnrichInCell;
-          size_type quadId   = iThread / numEnrichInCell;
+          for (size_type iThread = globalThreadId;
+               iThread < numEnrichInCell * numQuadInCell;
+               iThread += nThreadsPerBlock * nThreadBlock)
+            {
+              // layout: quadId (slow) x dim x enrichId (fast)
+              size_type enrichId = iThread % numEnrichInCell;
+              size_type quadId   = iThread / numEnrichInCell;
 
-          double grad[3];
-          sphericalDataFunc[enrichId].getGradientValue(
-            quadPtsInCell + quadId * 3,
-            origin + enrichId * 3,
-            grad);
-          output[quadId * 3 * numEnrichInCell + 0 * numEnrichInCell + enrichId] = grad[0];
-          output[quadId * 3 * numEnrichInCell + 1 * numEnrichInCell + enrichId] = grad[1];
-          output[quadId * 3 * numEnrichInCell + 2 * numEnrichInCell + enrichId] = grad[2];
-        }
-      },
-      const double * quadPtsInCell,
-      const double *origin,
-      const size_type numEnrichInCell,
-      const size_type numQuadInCell,
-      const atoms::SphericalDataNumerical::Func<utils::MemorySpace::DEVICE> * sphericalDataFunc,
-      double *output);
-    }
+              double grad[3];
+              sphericalDataFunc[enrichId].getGradientValue(
+                quadPtsInCell + quadId * 3, origin + enrichId * 3, grad);
+              output[quadId * 3 * numEnrichInCell + 0 * numEnrichInCell +
+                     enrichId] = grad[0];
+              output[quadId * 3 * numEnrichInCell + 1 * numEnrichInCell +
+                     enrichId] = grad[1];
+              output[quadId * 3 * numEnrichInCell + 2 * numEnrichInCell +
+                     enrichId] = grad[2];
+            }
+        },
+        const double *  quadPtsInCell,
+        const double *  origin,
+        const size_type numEnrichInCell,
+        const size_type numQuadInCell,
+        const atoms::SphericalDataNumerical::Func<utils::MemorySpace::DEVICE>
+          *     sphericalDataFunc,
+        double *output);
+    } // namespace
 
     void
-    EnrichmentDataEvalKernels<utils::MemorySpace::DEVICE>::getEnrichmentValuesInCellRange(
-      const double * quadPtsInAllCells,
-      const double * originPtsInAllCells,
-      std::pair<size_type, size_type> cellRange, 
-      const std::vector<size_type> numEnrichIdsInAllCells,
-      const std::vector<size_type> numQuadPtsInAllCells,
-      const atoms::SphericalDataNumerical::Func<utils::MemorySpace::DEVICE> *sphericalDataFuncInAllCells,
-      double *output,
-      linearAlgebra::LinAlgOpContext<utils::MemorySpace::DEVICE> &linAlgOpContext)
+    EnrichmentDataEvalKernels<utils::MemorySpace::DEVICE>::
+      getEnrichmentValuesInCellRange(
+        const double *                  quadPtsInAllCells,
+        const double *                  originPtsInAllCells,
+        std::pair<size_type, size_type> cellRange,
+        const std::vector<size_type>    numEnrichIdsInAllCells,
+        const std::vector<size_type>    numQuadPtsInAllCells,
+        const atoms::SphericalDataNumerical::Func<utils::MemorySpace::DEVICE>
+          *     sphericalDataFuncInAllCells,
+        double *output,
+        linearAlgebra::LinAlgOpContext<utils::MemorySpace::DEVICE>
+          &linAlgOpContext)
     {
-      const size_type numStreams  = linAlgOpContext.numBlasStreams();
-      auto *          streams     = linAlgOpContext.getBlasStreamsVec();
-      size_type dim = 3;
+      const size_type numStreams = linAlgOpContext.numBlasStreams();
+      auto *          streams    = linAlgOpContext.getBlasStreamsVec();
+      size_type       dim        = 3;
 
-      size_type cumulativeEnrichInCellRange = 0;
-      size_type cumulativeQuadPtsInCellRange = 0;
+      size_type cumulativeEnrichInCellRange      = 0;
+      size_type cumulativeQuadPtsInCellRange     = 0;
       size_type cumulativeQuadxEnrichInCellRange = 0;
-      for(int iCell = 0 ; iCell < cellRange.first ; iCell++)
-      {
-        const size_type numEnrichInCell = numEnrichIdsInAllCells[iCell];
-        const size_type numQuadInCell = numQuadPtsInAllCells[iCell];
+      for (int iCell = 0; iCell < cellRange.first; iCell++)
+        {
+          const size_type numEnrichInCell = numEnrichIdsInAllCells[iCell];
+          const size_type numQuadInCell   = numQuadPtsInAllCells[iCell];
 
-        cumulativeEnrichInCellRange += numEnrichInCell;
-        cumulativeQuadPtsInCellRange += numQuadInCell;
-      }
+          cumulativeEnrichInCellRange += numEnrichInCell;
+          cumulativeQuadPtsInCellRange += numQuadInCell;
+        }
 
       size_type cumulativeCellWithNonZeroNumEnrich = 0;
-      for(int iCell = cellRange.first ; iCell < cellRange.second ; iCell++)
-      {
-        const size_type numEnrichInCell = numEnrichIdsInAllCells[iCell];
-        const size_type numQuadInCell = numQuadPtsInAllCells[iCell];
-
-        if(numEnrichInCell > 0)
+      for (int iCell = cellRange.first; iCell < cellRange.second; iCell++)
         {
-          const size_type sid = cumulativeCellWithNonZeroNumEnrich % numStreams;
-          const size_type total     = numEnrichInCell * numQuadInCell;
-          const size_type blockSize = utils::DEVICE_BLOCK_SIZE;
-          const size_type grid      = (total + blockSize - 1) / blockSize;
+          const size_type numEnrichInCell = numEnrichIdsInAllCells[iCell];
+          const size_type numQuadInCell   = numQuadPtsInAllCells[iCell];
 
-          DFTEFE_LAUNCH_KERNEL(evalEnrichmentInCell,
-                              grid,
-                              blockSize,
-                              streams[sid],
-                              quadPtsInAllCells + cumulativeQuadPtsInCellRange * dim,
-                              originPtsInAllCells + cumulativeEnrichInCellRange * dim,
-                              numEnrichInCell,
-                              numQuadInCell,
-                              sphericalDataFuncInAllCells + cumulativeEnrichInCellRange,
-                              output + cumulativeQuadxEnrichInCellRange);
+          if (numEnrichInCell > 0)
+            {
+              const size_type sid =
+                cumulativeCellWithNonZeroNumEnrich % numStreams;
+              const size_type total     = numEnrichInCell * numQuadInCell;
+              const size_type blockSize = utils::DEVICE_BLOCK_SIZE;
+              const size_type grid      = (total + blockSize - 1) / blockSize;
 
-          cumulativeCellWithNonZeroNumEnrich += 1;
+              DFTEFE_LAUNCH_KERNEL(
+                evalEnrichmentInCell,
+                grid,
+                blockSize,
+                streams[sid],
+                quadPtsInAllCells + cumulativeQuadPtsInCellRange * dim,
+                originPtsInAllCells + cumulativeEnrichInCellRange * dim,
+                numEnrichInCell,
+                numQuadInCell,
+                sphericalDataFuncInAllCells + cumulativeEnrichInCellRange,
+                output + cumulativeQuadxEnrichInCellRange);
+
+              cumulativeCellWithNonZeroNumEnrich += 1;
+            }
+          cumulativeQuadPtsInCellRange += numQuadInCell;
+          cumulativeEnrichInCellRange += numEnrichInCell;
+          cumulativeQuadxEnrichInCellRange += numEnrichInCell * numQuadInCell;
         }
-        cumulativeQuadPtsInCellRange += numQuadInCell;
-        cumulativeEnrichInCellRange += numEnrichInCell;
-        cumulativeQuadxEnrichInCellRange += numEnrichInCell * numQuadInCell;
-      }
 
       for (int s = 0; s < numStreams; ++s)
-        { utils::deviceError_t err = utils::deviceStreamSynchronize(streams[s]); DEVICE_API_CHECK(err); }
+        {
+          utils::deviceError_t err = utils::deviceStreamSynchronize(streams[s]);
+          DEVICE_API_CHECK(err);
+        }
     }
 
     void
-    EnrichmentDataEvalKernels<utils::MemorySpace::DEVICE>::getEnrichmentGradientsInCellRange(
-      const double * quadPtsInAllCells,
-      const double * originPtsInAllCells,
-      std::pair<size_type, size_type> cellRange,
-      const std::vector<size_type> numEnrichIdsInAllCells,
-      const std::vector<size_type> numQuadPtsInAllCells,
-      const atoms::SphericalDataNumerical::Func<utils::MemorySpace::DEVICE> *sphericalDataFuncInAllCells,
-      double *output,
-      linearAlgebra::LinAlgOpContext<utils::MemorySpace::DEVICE> &linAlgOpContext)
+    EnrichmentDataEvalKernels<utils::MemorySpace::DEVICE>::
+      getEnrichmentGradientsInCellRange(
+        const double *                  quadPtsInAllCells,
+        const double *                  originPtsInAllCells,
+        std::pair<size_type, size_type> cellRange,
+        const std::vector<size_type>    numEnrichIdsInAllCells,
+        const std::vector<size_type>    numQuadPtsInAllCells,
+        const atoms::SphericalDataNumerical::Func<utils::MemorySpace::DEVICE>
+          *     sphericalDataFuncInAllCells,
+        double *output,
+        linearAlgebra::LinAlgOpContext<utils::MemorySpace::DEVICE>
+          &linAlgOpContext)
     {
-      const size_type numStreams  = linAlgOpContext.numBlasStreams();
-      auto *          streams     = linAlgOpContext.getBlasStreamsVec();
-      size_type dim = 3;
+      const size_type numStreams = linAlgOpContext.numBlasStreams();
+      auto *          streams    = linAlgOpContext.getBlasStreamsVec();
+      size_type       dim        = 3;
 
-      size_type cumulativeEnrichInCellRange        = 0;
-      size_type cumulativeQuadPtsInCellRange       = 0;
+      size_type cumulativeEnrichInCellRange          = 0;
+      size_type cumulativeQuadPtsInCellRange         = 0;
       size_type cumulativeQuadxEnrichxDimInCellRange = 0;
-      for(int iCell = 0 ; iCell < cellRange.first ; iCell++)
-      {
-        const size_type numEnrichInCell = numEnrichIdsInAllCells[iCell];
-        const size_type numQuadInCell   = numQuadPtsInAllCells[iCell];
+      for (int iCell = 0; iCell < cellRange.first; iCell++)
+        {
+          const size_type numEnrichInCell = numEnrichIdsInAllCells[iCell];
+          const size_type numQuadInCell   = numQuadPtsInAllCells[iCell];
 
-        cumulativeEnrichInCellRange          += numEnrichInCell;
-        cumulativeQuadPtsInCellRange         += numQuadInCell;
-      }
+          cumulativeEnrichInCellRange += numEnrichInCell;
+          cumulativeQuadPtsInCellRange += numQuadInCell;
+        }
 
       size_type cumulativeCellWithNonZeroNumEnrich = 0;
-      for(int iCell = cellRange.first ; iCell < cellRange.second ; iCell++)
-      {
-        const size_type numEnrichInCell = numEnrichIdsInAllCells[iCell];
-        const size_type numQuadInCell   = numQuadPtsInAllCells[iCell];
-
-        if(numEnrichInCell > 0)
+      for (int iCell = cellRange.first; iCell < cellRange.second; iCell++)
         {
-          const size_type sid       = cumulativeCellWithNonZeroNumEnrich % numStreams;
-          const size_type total     = numEnrichInCell * numQuadInCell;
-          const size_type blockSize = utils::DEVICE_BLOCK_SIZE;
-          const size_type grid      = (total + blockSize - 1) / blockSize;
+          const size_type numEnrichInCell = numEnrichIdsInAllCells[iCell];
+          const size_type numQuadInCell   = numQuadPtsInAllCells[iCell];
 
-          DFTEFE_LAUNCH_KERNEL(evalEnrichmentGradientInCell,
-                              grid,
-                              blockSize,
-                              streams[sid],
-                              quadPtsInAllCells + cumulativeQuadPtsInCellRange * dim,
-                              originPtsInAllCells + cumulativeEnrichInCellRange * dim,
-                              numEnrichInCell,
-                              numQuadInCell,
-                              sphericalDataFuncInAllCells + cumulativeEnrichInCellRange,
-                              output + cumulativeQuadxEnrichxDimInCellRange);
+          if (numEnrichInCell > 0)
+            {
+              const size_type sid =
+                cumulativeCellWithNonZeroNumEnrich % numStreams;
+              const size_type total     = numEnrichInCell * numQuadInCell;
+              const size_type blockSize = utils::DEVICE_BLOCK_SIZE;
+              const size_type grid      = (total + blockSize - 1) / blockSize;
 
-          cumulativeCellWithNonZeroNumEnrich += 1;
+              DFTEFE_LAUNCH_KERNEL(
+                evalEnrichmentGradientInCell,
+                grid,
+                blockSize,
+                streams[sid],
+                quadPtsInAllCells + cumulativeQuadPtsInCellRange * dim,
+                originPtsInAllCells + cumulativeEnrichInCellRange * dim,
+                numEnrichInCell,
+                numQuadInCell,
+                sphericalDataFuncInAllCells + cumulativeEnrichInCellRange,
+                output + cumulativeQuadxEnrichxDimInCellRange);
+
+              cumulativeCellWithNonZeroNumEnrich += 1;
+            }
+          cumulativeQuadPtsInCellRange += numQuadInCell;
+          cumulativeEnrichInCellRange += numEnrichInCell;
+          cumulativeQuadxEnrichxDimInCellRange +=
+            numEnrichInCell * numQuadInCell * dim;
         }
-        cumulativeQuadPtsInCellRange         += numQuadInCell;
-        cumulativeEnrichInCellRange          += numEnrichInCell;
-        cumulativeQuadxEnrichxDimInCellRange += numEnrichInCell * numQuadInCell * dim;
-      }
 
       for (int s = 0; s < numStreams; ++s)
-        { utils::deviceError_t err = utils::deviceStreamSynchronize(streams[s]); DEVICE_API_CHECK(err); }
+        {
+          utils::deviceError_t err = utils::deviceStreamSynchronize(streams[s]);
+          DEVICE_API_CHECK(err);
+        }
     }
 
     void
     EnrichmentDataEvalKernels<utils::MemorySpace::DEVICE>::getEnrichmentValues(
-      const size_type  numEnrichmentFunc,
+      const size_type               numEnrichmentFunc,
       const std::vector<size_type> &pointsPerEnrichId,
-      const std::vector<std::shared_ptr<atoms::SphericalData>> &sphericalDataVec,
+      const std::vector<std::shared_ptr<atoms::SphericalData>>
+        &           sphericalDataVec,
       const double *points,
       const double *origin,
-      double * values,
-      linearAlgebra::LinAlgOpContext<utils::MemorySpace::DEVICE> &linAlgOpContext)
+      double *      values,
+      linearAlgebra::LinAlgOpContext<utils::MemorySpace::DEVICE>
+        &linAlgOpContext)
     {
-      const size_type numStreams  = linAlgOpContext.numBlasStreams();
-      auto *          streams     = linAlgOpContext.getBlasStreamsVec();
+      const size_type numStreams = linAlgOpContext.numBlasStreams();
+      auto *          streams    = linAlgOpContext.getBlasStreamsVec();
 
       size_type cumulativeValuesOffset = 0;
       size_type cumulativeCoordsOffset = 0;
@@ -231,22 +257,28 @@ namespace dftefe
           cumulativeValuesOffset += pointsPerEnrichId[i];
           cumulativeCoordsOffset += pointsPerEnrichId[i] * 3;
         }
-        for (int s = 0; s < numStreams; ++s)
-          { utils::deviceError_t err = utils::deviceStreamSynchronize(streams[s]); DEVICE_API_CHECK(err); }
+      for (int s = 0; s < numStreams; ++s)
+        {
+          utils::deviceError_t err = utils::deviceStreamSynchronize(streams[s]);
+          DEVICE_API_CHECK(err);
+        }
     }
 
     void
-    EnrichmentDataEvalKernels<utils::MemorySpace::DEVICE>::getEnrichmentGradients(
-      const size_type  numEnrichmentFunc,
-      const std::vector<size_type> &pointsPerEnrichId,
-      const std::vector<std::shared_ptr<atoms::SphericalData>> &sphericalDataVec,
-      const double *points,
-      const double *origin,
-      double * values,
-      linearAlgebra::LinAlgOpContext<utils::MemorySpace::DEVICE> &linAlgOpContext)
+    EnrichmentDataEvalKernels<utils::MemorySpace::DEVICE>::
+      getEnrichmentGradients(
+        const size_type               numEnrichmentFunc,
+        const std::vector<size_type> &pointsPerEnrichId,
+        const std::vector<std::shared_ptr<atoms::SphericalData>>
+          &           sphericalDataVec,
+        const double *points,
+        const double *origin,
+        double *      values,
+        linearAlgebra::LinAlgOpContext<utils::MemorySpace::DEVICE>
+          &linAlgOpContext)
     {
-      const size_type numStreams  = linAlgOpContext.numBlasStreams();
-      auto *          streams     = linAlgOpContext.getBlasStreamsVec();
+      const size_type numStreams = linAlgOpContext.numBlasStreams();
+      auto *          streams    = linAlgOpContext.getBlasStreamsVec();
 
       size_type cumulativeValuesOffset = 0;
       size_type cumulativeCoordsOffset = 0;
@@ -254,15 +286,20 @@ namespace dftefe
         {
           size_type sid = i % numStreams;
           sphericalDataVec[i]->getGradientValueDevice(pointsPerEnrichId[i],
-                                                      points + cumulativeCoordsOffset,
+                                                      points +
+                                                        cumulativeCoordsOffset,
                                                       origin + i * 3,
-                                                      values + cumulativeValuesOffset,
+                                                      values +
+                                                        cumulativeValuesOffset,
                                                       streams[sid]);
           cumulativeValuesOffset += pointsPerEnrichId[i] * 3;
           cumulativeCoordsOffset += pointsPerEnrichId[i] * 3;
         }
-        for (int s = 0; s < numStreams; ++s)
-          { utils::deviceError_t err = utils::deviceStreamSynchronize(streams[s]); DEVICE_API_CHECK(err); }
+      for (int s = 0; s < numStreams; ++s)
+        {
+          utils::deviceError_t err = utils::deviceStreamSynchronize(streams[s]);
+          DEVICE_API_CHECK(err);
+        }
     }
 
   } // end of namespace basis

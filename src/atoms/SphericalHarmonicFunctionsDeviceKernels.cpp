@@ -34,7 +34,7 @@
 #  include <utils/DeviceTypeConfig.h>
 #  include <utils/DeviceAPICalls.h>
 #  include <utils/Exceptions.h>
-#  include <atoms/SphericalHarmonicFunctions.h>  // also pulls in DeviceKernels header
+#  include <atoms/SphericalHarmonicFunctions.h> // also pulls in DeviceKernels header
 #  include <cmath>
 
 namespace dftefe
@@ -234,10 +234,10 @@ namespace dftefe
       double *              out,
       utils::deviceStream_t streamId) const
     {
-      const size_type grid  = numPoints / dftefe::utils::DEVICE_BLOCK_SIZE + 1;
-      const size_type block = dftefe::utils::DEVICE_BLOCK_SIZE;
-      const int       absm  = std::abs(m);
-      const double factor   = (m < 0) ? pow(-1.0, m) * Rlm(l, absm) : 1.0;
+      const size_type grid   = numPoints / dftefe::utils::DEVICE_BLOCK_SIZE + 1;
+      const size_type block  = dftefe::utils::DEVICE_BLOCK_SIZE;
+      const int       absm   = std::abs(m);
+      const double    factor = (m < 0) ? pow(-1.0, m) * Rlm(l, absm) : 1.0;
 
       if (d_isAssocLegendreSplineEval)
         {
@@ -248,11 +248,19 @@ namespace dftefe
             }
           else
             {
-              d_assocLegendreSpline[l][absm]->evalAll<utils::MemorySpace::DEVICE>(
-                numPoints, theta, out, streamId);
+              d_assocLegendreSpline[l][absm]
+                ->evalAll<utils::MemorySpace::DEVICE>(numPoints,
+                                                      theta,
+                                                      out,
+                                                      streamId);
               if (m < 0)
-                DFTEFE_LAUNCH_KERNEL(
-                  ScaleArrayKernel, grid, block, streamId, numPoints, factor, out);
+                DFTEFE_LAUNCH_KERNEL(ScaleArrayKernel,
+                                     grid,
+                                     block,
+                                     streamId,
+                                     numPoints,
+                                     factor,
+                                     out);
             }
         }
       else
@@ -294,16 +302,22 @@ namespace dftefe
         }
       else
         {
-          const int    absm  = std::abs(m);
+          const int    absm   = std::abs(m);
           const double factor = (m < 0) ? pow(-1.0, m) * Rlm(l, absm) : 1.0;
 
           if (d_isAssocLegendreSplineEval)
             {
-              d_assocLegendreSpline[l][absm]->derivAll<utils::MemorySpace::DEVICE>(
-                numPoints, 1, theta, out, streamId);
+              d_assocLegendreSpline[l][absm]
+                ->derivAll<utils::MemorySpace::DEVICE>(
+                  numPoints, 1, theta, out, streamId);
               if (m < 0)
-                DFTEFE_LAUNCH_KERNEL(
-                  ScaleArrayKernel, grid, block, streamId, numPoints, factor, out);
+                DFTEFE_LAUNCH_KERNEL(ScaleArrayKernel,
+                                     grid,
+                                     block,
+                                     streamId,
+                                     numPoints,
+                                     factor,
+                                     out);
             }
           else
             {
@@ -341,16 +355,22 @@ namespace dftefe
         }
       else
         {
-          const int    absm  = std::abs(m);
+          const int    absm   = std::abs(m);
           const double factor = (m < 0) ? pow(-1.0, m) * Rlm(l, absm) : 1.0;
 
           if (d_isAssocLegendreSplineEval)
             {
-              d_assocLegendreSpline[l][absm]->derivAll<utils::MemorySpace::DEVICE>(
-                numPoints, 2, theta, out, streamId);
+              d_assocLegendreSpline[l][absm]
+                ->derivAll<utils::MemorySpace::DEVICE>(
+                  numPoints, 2, theta, out, streamId);
               if (m < 0)
-                DFTEFE_LAUNCH_KERNEL(
-                  ScaleArrayKernel, grid, block, streamId, numPoints, factor, out);
+                DFTEFE_LAUNCH_KERNEL(ScaleArrayKernel,
+                                     grid,
+                                     block,
+                                     streamId,
+                                     numPoints,
+                                     factor,
+                                     out);
             }
           else
             {

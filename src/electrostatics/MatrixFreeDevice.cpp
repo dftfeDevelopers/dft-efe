@@ -20,25 +20,24 @@
  *
  */
 #ifdef DFTEFE_WITH_DEVICE
-#include <electrostatics/MatrixFreeDevice.h>
-#include <utils/DeviceKernelLauncherHelpers.h>
-#include <utils/DeviceExceptions.h>
-#ifdef DFTEFE_WITH_DEVICE_LANG_CUDA
-#  include "MatrixFreeDevice.cu.cpp"
-#elif DFTEFE_WITH_DEVICE_LANG_HIP
-#  include "MatrixFreeDevice.hip.cpp"
-#elif DFTEFE_WITH_DEVICE_LANG_SYCL
-#  include "MatrixFreeDevice.sycl.cpp"
-#endif
+#  include <electrostatics/MatrixFreeDevice.h>
+#  include <utils/DeviceKernelLauncherHelpers.h>
+#  include <utils/DeviceExceptions.h>
+#  ifdef DFTEFE_WITH_DEVICE_LANG_CUDA
+#    include "MatrixFreeDevice.cu.cpp"
+#  elif DFTEFE_WITH_DEVICE_LANG_HIP
+#    include "MatrixFreeDevice.hip.cpp"
+#  elif DFTEFE_WITH_DEVICE_LANG_SYCL
+#    include "MatrixFreeDevice.sycl.cpp"
+#  endif
 
 namespace dftefe
 {
-
   template <typename T,
             dftefe::operatorList operatorID,
-            std::uint32_t       nDofsPerDim,
-            std::uint32_t       nQuadPointsPerDim,
-            std::uint32_t       batchSize>
+            std::uint32_t        nDofsPerDim,
+            std::uint32_t        nQuadPointsPerDim,
+            std::uint32_t        batchSize>
   inline void
   MatrixFreeDevice<T, operatorID, nDofsPerDim, nQuadPointsPerDim, batchSize>::
     init(T *constMemHost, std::size_t constMemSize)
@@ -49,7 +48,7 @@ namespace dftefe
                                           nQuadPointsPerDim * sizeof(T);
     constexpr std::uint32_t maxDofsPerDim = 17;
 
-#ifdef DFTEFE_WITH_DEVICE_LANG_CUDA
+#  ifdef DFTEFE_WITH_DEVICE_LANG_CUDA
     // Copy shape functions and gradients to constant memory on device
     DEVICE_API_CHECK(cudaMemcpyToSymbol(
       constMem,
@@ -64,17 +63,17 @@ namespace dftefe
 
     int maxDynSharedDefault = 0;
 
-#  ifdef cudaDevAttrMaxDynamicSharedMemoryPerBlock
+#    ifdef cudaDevAttrMaxDynamicSharedMemoryPerBlock
     DEVICE_API_CHECK(
       cudaDeviceGetAttribute(&maxDynSharedDefault,
                              cudaDevAttrMaxDynamicSharedMemoryPerBlock,
                              deviceId));
-#  else
+#    else
     // Fallback for older CUDA versions without the dynamic shared attribute
     DEVICE_API_CHECK(cudaDeviceGetAttribute(&maxDynSharedDefault,
                                             cudaDevAttrMaxSharedMemoryPerBlock,
                                             deviceId));
-#  endif
+#    endif
 
     int maxDynSharedOptIn = 0;
     DEVICE_API_CHECK(cudaDeviceGetAttribute(
@@ -99,7 +98,7 @@ namespace dftefe
             sharedMemSize));
       }
 
-#elif DFTEFE_WITH_DEVICE_LANG_HIP
+#  elif DFTEFE_WITH_DEVICE_LANG_HIP
     // Copy shape functions and gradients to constant memory on device
     DEVICE_API_CHECK(hipMemcpyToSymbol(
       constMem,
@@ -121,25 +120,25 @@ namespace dftefe
     if (sharedMemSize > static_cast<std::size_t>(maxDynSharedDefault))
       throw std::runtime_error(
         "Requested dynamic shared memory exceeds max limit");
-#endif
+#  endif
   }
 
 
   template <typename T,
             dftefe::operatorList operatorID,
-            std::uint32_t       nDofsPerDim,
-            std::uint32_t       nQuadPointsPerDim,
-            std::uint32_t       batchSize>
+            std::uint32_t        nDofsPerDim,
+            std::uint32_t        nQuadPointsPerDim,
+            std::uint32_t        batchSize>
   inline void
   MatrixFreeDevice<T, operatorID, nDofsPerDim, nQuadPointsPerDim, batchSize>::
-    constraintsDistribute(T                 *src,
+    constraintsDistribute(T *                 src,
                           const dftefe::uInt *constrainingNodeBuckets,
                           const dftefe::uInt *constrainingNodeOffset,
                           const dftefe::uInt *constrainedNodeBuckets,
                           const dftefe::uInt *constrainedNodeOffset,
-                          const T           *weightMatrixList,
+                          const T *           weightMatrixList,
                           const dftefe::uInt *weightMatrixOffset,
-                          const T           *inhomogenityList,
+                          const T *           inhomogenityList,
                           const dftefe::uInt *ghostMap,
                           const dftefe::uInt  inhomogenityListSize,
                           const dftefe::uInt  nBatch,
@@ -148,7 +147,7 @@ namespace dftefe
   {
     constexpr int yThreads = 64;
 
-#ifdef DFTEFE_WITH_DEVICE_LANG_CUDA
+#  ifdef DFTEFE_WITH_DEVICE_LANG_CUDA
 
     dim3 blocks(inhomogenityListSize, nBatch, 1);
     dim3 threads(batchSize, yThreads, 1);
@@ -166,7 +165,7 @@ namespace dftefe
                             nOwnedDofs,
                             nGhostDofs);
 
-#elif DFTEFE_WITH_DEVICE_LANG_HIP
+#  elif DFTEFE_WITH_DEVICE_LANG_HIP
 
     dim3 blocks(inhomogenityListSize, nBatch, 1);
     dim3 threads(batchSize, yThreads, 1);
@@ -190,7 +189,7 @@ namespace dftefe
       nOwnedDofs,
       nGhostDofs);
 
-#elif DFTEFE_WITH_DEVICE_LANG_SYCL
+#  elif DFTEFE_WITH_DEVICE_LANG_SYCL
     sycl::queue &queue =
       dftefe::utils::queueRegistry.find(dftefe::utils::defaultStream)->second;
 
@@ -221,24 +220,24 @@ namespace dftefe
             sharedConstrainingData);
         });
     });
-#endif
+#  endif
   }
 
 
   template <typename T,
             dftefe::operatorList operatorID,
-            std::uint32_t       nDofsPerDim,
-            std::uint32_t       nQuadPointsPerDim,
-            std::uint32_t       batchSize>
+            std::uint32_t        nDofsPerDim,
+            std::uint32_t        nQuadPointsPerDim,
+            std::uint32_t        batchSize>
   inline void
   MatrixFreeDevice<T, operatorID, nDofsPerDim, nQuadPointsPerDim, batchSize>::
-    constraintsDistributeTranspose(T                 *dst,
-                                   T                 *src,
+    constraintsDistributeTranspose(T *                 dst,
+                                   T *                 src,
                                    const dftefe::uInt *constrainingNodeBuckets,
                                    const dftefe::uInt *constrainingNodeOffset,
                                    const dftefe::uInt *constrainedNodeBuckets,
                                    const dftefe::uInt *constrainedNodeOffset,
-                                   const T           *weightMatrixList,
+                                   const T *           weightMatrixList,
                                    const dftefe::uInt *weightMatrixOffset,
                                    const dftefe::uInt *ghostMap,
                                    const dftefe::uInt  inhomogenityListSize,
@@ -248,7 +247,7 @@ namespace dftefe
   {
     constexpr int yThreads = 64;
 
-#ifdef DFTEFE_WITH_DEVICE_LANG_CUDA
+#  ifdef DFTEFE_WITH_DEVICE_LANG_CUDA
 
     dim3 blocks(inhomogenityListSize, nBatch, 1);
     dim3 threads(batchSize, yThreads, 1);
@@ -266,7 +265,7 @@ namespace dftefe
                             nOwnedDofs,
                             nGhostDofs);
 
-#elif DFTEFE_WITH_DEVICE_LANG_HIP
+#  elif DFTEFE_WITH_DEVICE_LANG_HIP
 
     dim3 blocks(inhomogenityListSize, nBatch, 1);
     dim3 threads(batchSize, yThreads, 1);
@@ -290,7 +289,7 @@ namespace dftefe
       nOwnedDofs,
       nGhostDofs);
 
-#elif DFTEFE_WITH_DEVICE_LANG_SYCL
+#  elif DFTEFE_WITH_DEVICE_LANG_SYCL
     sycl::queue &queue =
       dftefe::utils::queueRegistry.find(dftefe::utils::defaultStream)->second;
 
@@ -321,35 +320,35 @@ namespace dftefe
             sharedConstrainedData);
         });
     });
-#endif
+#  endif
   }
 
 
   template <typename T,
             dftefe::operatorList operatorID,
-            std::uint32_t       nDofsPerDim,
-            std::uint32_t       nQuadPointsPerDim,
-            std::uint32_t       batchSize>
+            std::uint32_t        nDofsPerDim,
+            std::uint32_t        nQuadPointsPerDim,
+            std::uint32_t        batchSize>
   inline void
   MatrixFreeDevice<T, operatorID, nDofsPerDim, nQuadPointsPerDim, batchSize>::
-    computeLaplaceX(T           *dst,
-                    T           *src,
-                    T           *jacobianFactor,
+    computeLaplaceX(T *           dst,
+                    T *           src,
+                    T *           jacobianFactor,
                     dftefe::uInt *map,
-                    T           *shapeBuffer,
+                    T *           shapeBuffer,
                     dftefe::uInt  nCells,
                     dftefe::uInt  nBatch)
   {
-    constexpr std::uint32_t dim = 3;
-    constexpr std::uint32_t yThreads =
-      dftefe::utils::DEVICE_WARP_SIZE * ((nQuadPointsPerDim * nQuadPointsPerDim +
+    constexpr std::uint32_t dim      = 3;
+    constexpr std::uint32_t yThreads = dftefe::utils::DEVICE_WARP_SIZE *
+                                       ((nQuadPointsPerDim * nQuadPointsPerDim +
                                          dftefe::utils::DEVICE_WARP_SIZE - 1) /
                                         dftefe::utils::DEVICE_WARP_SIZE);
     constexpr std::size_t sharedMemSize = 2 * batchSize * nQuadPointsPerDim *
                                           nQuadPointsPerDim *
                                           nQuadPointsPerDim * sizeof(T);
 
-#ifdef DFTEFE_WITH_DEVICE_LANG_CUDA
+#  ifdef DFTEFE_WITH_DEVICE_LANG_CUDA
 
     const dim3 blocks(nCells, nBatch, 1);
     const dim3 threads(batchSize, yThreads, 1);
@@ -357,7 +356,7 @@ namespace dftefe
     LaplaceKernel<T, nDofsPerDim, nQuadPointsPerDim, batchSize, dim>
       <<<blocks, threads, sharedMemSize>>>(dst, src, jacobianFactor, map);
 
-#elif DFTEFE_WITH_DEVICE_LANG_HIP
+#  elif DFTEFE_WITH_DEVICE_LANG_HIP
 
     const dim3 blocks(nCells, nBatch, 1);
     const dim3 threads(batchSize, yThreads, 1);
@@ -374,7 +373,7 @@ namespace dftefe
       jacobianFactor,
       map);
 
-#elif DFTEFE_WITH_DEVICE_LANG_SYCL
+#  elif DFTEFE_WITH_DEVICE_LANG_SYCL
     sycl::queue &queue =
       dftefe::utils::queueRegistry.find(dftefe::utils::defaultStream)->second;
 
@@ -402,35 +401,35 @@ namespace dftefe
             item, dst, src, jacobianFactor, map, shapeBuffer, sharedMem);
         });
     });
-#endif
+#  endif
   }
 
   template <typename T,
             dftefe::operatorList operatorID,
-            std::uint32_t       nDofsPerDim,
-            std::uint32_t       nQuadPointsPerDim,
-            std::uint32_t       batchSize>
+            std::uint32_t        nDofsPerDim,
+            std::uint32_t        nQuadPointsPerDim,
+            std::uint32_t        batchSize>
   inline void
   MatrixFreeDevice<T, operatorID, nDofsPerDim, nQuadPointsPerDim, batchSize>::
-    computeHelmholtzX(T           *dst,
-                      T           *src,
-                      T           *jacobianFactor,
+    computeHelmholtzX(T *           dst,
+                      T *           src,
+                      T *           jacobianFactor,
                       dftefe::uInt *map,
-                      T           *shapeBuffer,
-                      T            coeffHelmholtz,
+                      T *           shapeBuffer,
+                      T             coeffHelmholtz,
                       dftefe::uInt  nCells,
                       dftefe::uInt  nBatch)
   {
-    constexpr std::uint32_t dim = 3;
-    constexpr std::uint32_t yThreads =
-      dftefe::utils::DEVICE_WARP_SIZE * ((nQuadPointsPerDim * nQuadPointsPerDim +
+    constexpr std::uint32_t dim      = 3;
+    constexpr std::uint32_t yThreads = dftefe::utils::DEVICE_WARP_SIZE *
+                                       ((nQuadPointsPerDim * nQuadPointsPerDim +
                                          dftefe::utils::DEVICE_WARP_SIZE - 1) /
                                         dftefe::utils::DEVICE_WARP_SIZE);
     constexpr std::size_t sharedMemSize = 2 * batchSize * nQuadPointsPerDim *
                                           nQuadPointsPerDim *
                                           nQuadPointsPerDim * sizeof(T);
 
-#ifdef DFTEFE_WITH_DEVICE_LANG_CUDA
+#  ifdef DFTEFE_WITH_DEVICE_LANG_CUDA
 
     const dim3 blocks(nCells, nBatch, 1);
     const dim3 threads(batchSize, yThreads, 1);
@@ -439,7 +438,7 @@ namespace dftefe
       <<<blocks, threads, sharedMemSize>>>(
         dst, src, jacobianFactor, map, coeffHelmholtz);
 
-#elif DFTEFE_WITH_DEVICE_LANG_HIP
+#  elif DFTEFE_WITH_DEVICE_LANG_HIP
 
     const dim3 blocks(nCells, nBatch, 1);
     const dim3 threads(batchSize, yThreads, 1);
@@ -457,7 +456,7 @@ namespace dftefe
       map,
       coeffHelmholtz);
 
-#elif DFTEFE_WITH_DEVICE_LANG_SYCL
+#  elif DFTEFE_WITH_DEVICE_LANG_SYCL
     sycl::queue &queue =
       dftefe::utils::queueRegistry.find(dftefe::utils::defaultStream)->second;
 
@@ -492,9 +491,9 @@ namespace dftefe
             sharedMem);
         });
     });
-#endif
+#  endif
   }
 
-#include "MatrixFreeDevice.inst.cpp"
+#  include "MatrixFreeDevice.inst.cpp"
 } // namespace dftefe
 #endif

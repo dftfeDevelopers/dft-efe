@@ -43,13 +43,13 @@ namespace dftefe
   namespace basis
   {
     enum class FEBasisOpScratchSpaceAttr
-      {
-        fieldCellValues,
-        basisDataInCellRange,
-        basisGradientDataInCellRange,
-        JxWxNBlock,
-        JxWxGradNBlock
-      };
+    {
+      fieldCellValues,
+      basisDataInCellRange,
+      basisGradientDataInCellRange,
+      JxWxNBlock,
+      JxWxGradNBlock
+    };
     /**
      * An abstract class to handle interactions between a basis and a
      * field (e.g., integration of field with basis).
@@ -153,8 +153,8 @@ namespace dftefe
         realspace::VectorMathOp  Op1,
         const quadrature::QuadratureValuesContainer<ValueTypeUnion, memorySpace>
           &                                          f,
-        realspace::VectorMathOp  L2,
-        realspace::LinearLocalOp Op2,
+        realspace::VectorMathOp                      L2,
+        realspace::LinearLocalOp                     Op2,
         StorageUnion &                               cellWiseFEData,
         linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext) const;
 
@@ -164,12 +164,12 @@ namespace dftefe
       computeFEMatrices(
         const quadrature::QuadratureValuesContainer<ValueTypeUnion, memorySpace>
           &                                          f,
-        realspace::VectorMathOp  Op12,
-        realspace::LinearLocalOp L12,
+        realspace::VectorMathOp                      Op12,
+        realspace::LinearLocalOp                     L12,
         StorageUnion &                               cellWiseFEData,
         linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext) const;
 
-     /* FE functions for local kernel computations*/
+      /* FE functions for local kernel computations*/
       /* \integral (L1 op1 N1) (L2 op2 N2) dx */
       void
       computeFEMatrices(
@@ -181,57 +181,62 @@ namespace dftefe
 
     private:
       std::shared_ptr<const FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
-        d_feBasisDataStorage;
+                d_feBasisDataStorage;
       size_type d_maxCellBlock;
       size_type d_maxFieldBlock;
 
       /**---temporary scratch spaces----- */
-      mutable StorageBasis d_basisDataInCellRange, d_basisGradientDataInCellRange, d_JxWxNBlock, d_JxWxGradNBlock;
-      mutable StorageUnion d_fieldCellValues, d_fxJxWxNBlock;
+      mutable StorageBasis d_basisDataInCellRange,
+        d_basisGradientDataInCellRange, d_JxWxNBlock, d_JxWxGradNBlock;
+      mutable StorageUnion                    d_fieldCellValues, d_fxJxWxNBlock;
       mutable std::pair<size_type, size_type> d_cellRangeForBasisDataCache;
       mutable bool                            d_isBasisDataCellRangeCached;
-      mutable std::pair<size_type, size_type> d_cellRangeForBasisGradientDataCache;
-      mutable bool                            d_isBasisGradientDataCellRangeCached;
+      mutable std::pair<size_type, size_type>
+                   d_cellRangeForBasisGradientDataCache;
+      mutable bool d_isBasisGradientDataCellRangeCached;
       /**---temporary scratch spaces----- */
 
       std::vector<size_type> d_numCellDofs;
       std::vector<size_type> d_numCellQuad;
-      const FEBasisDofHandler<ValueTypeBasisCoeff, memorySpace, dim> *d_feBasisDofHandler;
+      const FEBasisDofHandler<ValueTypeBasisCoeff, memorySpace, dim>
+        *       d_feBasisDofHandler;
       size_type d_maxDofInCell;
       size_type d_maxQuadInCell;
       size_type d_numLocallyOwnedCells;
-      bool d_variableDofsPerCell, d_sameQuadRuleInAllCells;
-      std::shared_ptr<const quadrature::QuadratureRuleContainer> d_quadratureRuleContainer;
+      bool      d_variableDofsPerCell, d_sameQuadRuleInAllCells;
+      std::shared_ptr<const quadrature::QuadratureRuleContainer>
+        d_quadratureRuleContainer;
 
-      void deleteScratch() const;
+      void
+      deleteScratch() const;
 
       void
       BasisWeakFormKernelWithField(
         realspace::LinearLocalOp L1,
         realspace::VectorMathOp  Op1,
-        const quadrature::QuadratureValuesContainer<ValueTypeUnion,
-          memorySpace> &                                     f,
-        realspace::VectorMathOp                              Op2,
-        realspace::LinearLocalOp                             L2,
+        const quadrature::QuadratureValuesContainer<ValueTypeUnion, memorySpace>
+          &                      f,
+        realspace::VectorMathOp  Op2,
+        realspace::LinearLocalOp L2,
         std::shared_ptr<
           const FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
-                                                             feBasisDataStorage,
-        const size_type                                      cellBlockSize,
-        StorageUnion &cellWiseFEData,
-        linearAlgebra::LinAlgOpContext<memorySpace> &        linAlgOpContext) const;
+                                                     feBasisDataStorage,
+        const size_type                              cellBlockSize,
+        StorageUnion &                               cellWiseFEData,
+        linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext) const;
 
       void
       BasisWeakFormKernelWithField(
-        const quadrature::QuadratureValuesContainer<ValueTypeUnion,
-          memorySpace> &                                     f,
-        realspace::VectorMathOp                              Op12,
-        realspace::LinearLocalOp                             L12,
+        const quadrature::QuadratureValuesContainer<ValueTypeUnion, memorySpace>
+          &                      f,
+        realspace::VectorMathOp  Op12,
+        realspace::LinearLocalOp L12,
         std::shared_ptr<
           const FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
-                                                             feBasisDataStorage,
-        const size_type                                      cellBlockSize,
-        StorageUnion &cellWiseFEData,
-        linearAlgebra::LinAlgOpContext<memorySpace> &        linAlgOpContext) const;
+                                                     feBasisDataStorage,
+        const size_type                              cellBlockSize,
+        StorageUnion &                               cellWiseFEData,
+        linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext) const;
 
       void
       BasisWeakFormKernel(
@@ -240,10 +245,10 @@ namespace dftefe
         realspace::LinearLocalOp L2,
         std::shared_ptr<
           const FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
-                                                             feBasisDataStorage,
-        const size_type                                      cellBlockSize,
-        StorageBasis &cellWiseFEData,
-        linearAlgebra::LinAlgOpContext<memorySpace> &        linAlgOpContext) const;
+                                                     feBasisDataStorage,
+        const size_type                              cellBlockSize,
+        StorageBasis &                               cellWiseFEData,
+        linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext) const;
 
     }; // end of FEBasisOperations
   }    // end of namespace basis

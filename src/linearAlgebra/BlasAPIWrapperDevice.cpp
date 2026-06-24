@@ -748,7 +748,11 @@ namespace dftefe
                 }
 
               for (int s = 0; s < numStreams; ++s)
-                { utils::deviceError_t err = utils::deviceStreamSynchronize(streams[s]); DEVICE_API_CHECK(err); }
+                {
+                  utils::deviceError_t err =
+                    utils::deviceStreamSynchronize(streams[s]);
+                  DEVICE_API_CHECK(err);
+                }
             }
         }
 
@@ -933,7 +937,11 @@ namespace dftefe
                 }
 
               for (int s = 0; s < numStreams; ++s)
-                { utils::deviceError_t err = utils::deviceStreamSynchronize(streams[s]); DEVICE_API_CHECK(err); }
+                {
+                  utils::deviceError_t err =
+                    utils::deviceStreamSynchronize(streams[s]);
+                  DEVICE_API_CHECK(err);
+                }
             }
         }
 
@@ -1268,16 +1276,14 @@ namespace dftefe
           const size_type                              incx,
           LinAlgOpContext<utils::MemorySpace::DEVICE> &context);
 
-        template <typename ValueType1,
-                  typename ValueType2>
+        template <typename ValueType1, typename ValueType2>
         scalar_type<ValueType1, ValueType2>
-        dot(
-            const size_type           n,
-            const ValueType1 *x,
-            const size_type           incx,
-            const ValueType2 *y,
-            const size_type           incy,
-             LinAlgOpContext<utils::MemorySpace::DEVICE> &context)
+        dot(const size_type                              n,
+            const ValueType1 *                           x,
+            const size_type                              incx,
+            const ValueType2 *                           y,
+            const size_type                              incy,
+            LinAlgOpContext<utils::MemorySpace::DEVICE> &context)
         {
           utils::throwException(
             false, "The input valuetypes are not supported by dot");
@@ -1287,225 +1293,249 @@ namespace dftefe
         template <>
         float
         dot<float, float, utils::MemorySpace::DEVICE>(
-            const size_type           n,
-            const float *x,
-            const size_type           incx,
-            const float *y,
-            const size_type           incy,
+          const size_type                              n,
+          const float *                                x,
+          const size_type                              incx,
+          const float *                                y,
+          const size_type                              incy,
           LinAlgOpContext<utils::MemorySpace::DEVICE> &context)
         {
           float result = {};
-#if defined(DFTEFE_WITH_DEVICE_LANG_CUDA) || defined(DFTEFE_WITH_DEVICE_LANG_HIP)
+#  if defined(DFTEFE_WITH_DEVICE_LANG_CUDA) || \
+    defined(DFTEFE_WITH_DEVICE_LANG_HIP)
+          unsigned int                      nTmp    = n;
+          unsigned int                      incxTmp = incx;
+          unsigned int                      incyTmp = incy;
+          dftefe::utils::deviceBlasStatus_t status =
+            DFTEFE_DEVICE_BLAS_INT(S, dot)(context.getDeviceBlasHandle(),
+                                           nTmp,
+                                           x,
+                                           incxTmp,
+                                           y,
+                                           incyTmp,
+                                           &result);
+          DEVICEBLAS_API_CHECK(status);
+#  elif defined(DFTEFE_WITH_DEVICE_LANG_SYCL)
           unsigned int nTmp    = n;
           unsigned int incxTmp = incx;
           unsigned int incyTmp = incy;
-      dftefe::utils::deviceBlasStatus_t status =
-        DFTEFE_DEVICE_BLAS_INT(S, dot)(context.getDeviceBlasHandle(),
-                                      nTmp,
-                                      x,
-                                      incxTmp,
-                                      y,
-                                      incyTmp,
-                                      &result);
-      DEVICEBLAS_API_CHECK(status);
-#elif defined(DFTEFE_WITH_DEVICE_LANG_SYCL)
-          unsigned int nTmp    = n;
-          unsigned int incxTmp = incx;
-          unsigned int incyTmp = incy;
-      float *dev_res = sycl::malloc_device<float>(1, context.getDeviceBlasHandle());
-      if (!dev_res)
-        throw std::bad_alloc{};
-      deviceEvent_t event =
-        DFTEFE_DEVICE_BLAS_INT(S, dot)(context.getDeviceBlasHandle(),
-                                      nTmp,
-                                      x,
-                                      incxTmp,
-                                      y,
-                                      incyTmp,
-                                      dev_res);
-      context.getDeviceBlasHandle().memcpy(&result, dev_res, sizeof(float)).wait();
-      sycl::free(dev_res, context.getDeviceBlasHandle());
-      context.getDeviceBlasHandle().wait();
-#endif
-        return result;
+          float *      dev_res =
+            sycl::malloc_device<float>(1, context.getDeviceBlasHandle());
+          if (!dev_res)
+            throw std::bad_alloc{};
+          deviceEvent_t event =
+            DFTEFE_DEVICE_BLAS_INT(S, dot)(context.getDeviceBlasHandle(),
+                                           nTmp,
+                                           x,
+                                           incxTmp,
+                                           y,
+                                           incyTmp,
+                                           dev_res);
+          context.getDeviceBlasHandle()
+            .memcpy(&result, dev_res, sizeof(float))
+            .wait();
+          sycl::free(dev_res, context.getDeviceBlasHandle());
+          context.getDeviceBlasHandle().wait();
+#  endif
+          return result;
         }
 
         template <>
         double
         dot<double, double, utils::MemorySpace::DEVICE>(
-            const size_type           n,
-            const double *x,
-            const size_type           incx,
-            const double *y,
-            const size_type           incy,
+          const size_type                              n,
+          const double *                               x,
+          const size_type                              incx,
+          const double *                               y,
+          const size_type                              incy,
           LinAlgOpContext<utils::MemorySpace::DEVICE> &context)
         {
           double result = {};
-#if defined(DFTEFE_WITH_DEVICE_LANG_CUDA) || defined(DFTEFE_WITH_DEVICE_LANG_HIP)
+#  if defined(DFTEFE_WITH_DEVICE_LANG_CUDA) || \
+    defined(DFTEFE_WITH_DEVICE_LANG_HIP)
+          unsigned int                      nTmp    = n;
+          unsigned int                      incxTmp = incx;
+          unsigned int                      incyTmp = incy;
+          dftefe::utils::deviceBlasStatus_t status =
+            DFTEFE_DEVICE_BLAS_INT(D, dot)(context.getDeviceBlasHandle(),
+                                           nTmp,
+                                           x,
+                                           incxTmp,
+                                           y,
+                                           incyTmp,
+                                           &result);
+          DEVICEBLAS_API_CHECK(status);
+#  elif defined(DFTEFE_WITH_DEVICE_LANG_SYCL)
           unsigned int nTmp    = n;
           unsigned int incxTmp = incx;
           unsigned int incyTmp = incy;
-      dftefe::utils::deviceBlasStatus_t status =
-        DFTEFE_DEVICE_BLAS_INT(D, dot)(context.getDeviceBlasHandle(),
-                                      nTmp,
-                                      x,
-                                      incxTmp,
-                                      y,
-                                      incyTmp,
-                                      &result);
-      DEVICEBLAS_API_CHECK(status);
-#elif defined(DFTEFE_WITH_DEVICE_LANG_SYCL)
-          unsigned int nTmp    = n;
-          unsigned int incxTmp = incx;
-          unsigned int incyTmp = incy;
-      double *dev_res = sycl::malloc_device<double>(1, context.getDeviceBlasHandle());
-      if (!dev_res)
-        throw std::bad_alloc{};
-      deviceEvent_t event =
-        DFTEFE_DEVICE_BLAS_INT(D, dot)(context.getDeviceBlasHandle(),
-                                      nTmp,
-                                      x,
-                                      incxTmp,
-                                      y,
-                                      incyTmp,
-                                      dev_res);
-      context.getDeviceBlasHandle().memcpy(&result, dev_res, sizeof(double)).wait();
-      sycl::free(dev_res, context.getDeviceBlasHandle());
-      context.getDeviceBlasHandle().wait();
-#endif
-        return result;
+          double *     dev_res =
+            sycl::malloc_device<double>(1, context.getDeviceBlasHandle());
+          if (!dev_res)
+            throw std::bad_alloc{};
+          deviceEvent_t event =
+            DFTEFE_DEVICE_BLAS_INT(D, dot)(context.getDeviceBlasHandle(),
+                                           nTmp,
+                                           x,
+                                           incxTmp,
+                                           y,
+                                           incyTmp,
+                                           dev_res);
+          context.getDeviceBlasHandle()
+            .memcpy(&result, dev_res, sizeof(double))
+            .wait();
+          sycl::free(dev_res, context.getDeviceBlasHandle());
+          context.getDeviceBlasHandle().wait();
+#  endif
+          return result;
         }
 
         template <>
         std::complex<float>
-        dot<std::complex<float>, std::complex<float>, utils::MemorySpace::DEVICE>(
-            const size_type           n,
-            const std::complex<float> *x,
-            const size_type           incx,
-            const std::complex<float> *y,
-            const size_type           incy,
+        dot<std::complex<float>,
+            std::complex<float>,
+            utils::MemorySpace::DEVICE>(
+          const size_type                              n,
+          const std::complex<float> *                  x,
+          const size_type                              incx,
+          const std::complex<float> *                  y,
+          const size_type                              incy,
           LinAlgOpContext<utils::MemorySpace::DEVICE> &context)
         {
           std::complex<float> result = {};
-#if defined(DFTEFE_WITH_DEVICE_LANG_CUDA) || defined(DFTEFE_WITH_DEVICE_LANG_HIP)
-          unsigned int nTmp    = n;
-          unsigned int incxTmp = incx;
-          unsigned int incyTmp = incy;
-      dftefe::utils::deviceBlasStatus_t status = DFTEFE_DEVICE_BLAS_INT(C, dotc)(
-        context.getDeviceBlasHandle(),
-        nTmp,
-        makeDataTypeDeviceBlasCompatible(x),
-        incxTmp,
-        makeDataTypeDeviceBlasCompatible(y),
-        incyTmp,
-        makeDataTypeDeviceBlasCompatible(&result));
-      DEVICEBLAS_API_CHECK(status);
-#elif defined(DFTEFE_WITH_DEVICE_LANG_SYCL)
-          unsigned int nTmp    = n;
-          unsigned int incxTmp = incx;
-          unsigned int incyTmp = incy;
-      std::complex<float> *dev_res =
-        sycl::malloc_device<std::complex<float>>(1, context.getDeviceBlasHandle());
-      if (!dev_res)
-        throw std::bad_alloc{};
-      DEVICEBLAS_API_CHECK(DFTEFE_DEVICE_BLAS_INT(C, dotu)(
-        context.getDeviceBlasHandle(),
-        nTmp,
-        makeDataTypeDeviceBlasCompatible(x),
-        incxTmp,
-        makeDataTypeDeviceBlasCompatible(y),
-        incyTmp,
-        makeDataTypeDeviceBlasCompatible(dev_res)));
-      context.getDeviceBlasHandle().memcpy(&result, dev_res, sizeof(std::complex<float>))
-        .wait();
-      sycl::free(dev_res, context.getDeviceBlasHandle());
-      context.getDeviceBlasHandle().wait();
-#endif
-        return result;
+#  if defined(DFTEFE_WITH_DEVICE_LANG_CUDA) || \
+    defined(DFTEFE_WITH_DEVICE_LANG_HIP)
+          unsigned int                      nTmp    = n;
+          unsigned int                      incxTmp = incx;
+          unsigned int                      incyTmp = incy;
+          dftefe::utils::deviceBlasStatus_t status =
+            DFTEFE_DEVICE_BLAS_INT(C, dotc)(context.getDeviceBlasHandle(),
+                                            nTmp,
+                                            makeDataTypeDeviceBlasCompatible(x),
+                                            incxTmp,
+                                            makeDataTypeDeviceBlasCompatible(y),
+                                            incyTmp,
+                                            makeDataTypeDeviceBlasCompatible(
+                                              &result));
+          DEVICEBLAS_API_CHECK(status);
+#  elif defined(DFTEFE_WITH_DEVICE_LANG_SYCL)
+          unsigned int         nTmp    = n;
+          unsigned int         incxTmp = incx;
+          unsigned int         incyTmp = incy;
+          std::complex<float> *dev_res =
+            sycl::malloc_device<std::complex<float>>(
+              1, context.getDeviceBlasHandle());
+          if (!dev_res)
+            throw std::bad_alloc{};
+          DEVICEBLAS_API_CHECK(DFTEFE_DEVICE_BLAS_INT(C, dotu)(
+            context.getDeviceBlasHandle(),
+            nTmp,
+            makeDataTypeDeviceBlasCompatible(x),
+            incxTmp,
+            makeDataTypeDeviceBlasCompatible(y),
+            incyTmp,
+            makeDataTypeDeviceBlasCompatible(dev_res)));
+          context.getDeviceBlasHandle()
+            .memcpy(&result, dev_res, sizeof(std::complex<float>))
+            .wait();
+          sycl::free(dev_res, context.getDeviceBlasHandle());
+          context.getDeviceBlasHandle().wait();
+#  endif
+          return result;
         }
 
         template <>
         std::complex<double>
-        dot<std::complex<double>, std::complex<double>, utils::MemorySpace::DEVICE>(
-            const size_type           n,
-            const std::complex<double> *x,
-            const size_type           incx,
-            const std::complex<double> *y,
-            const size_type           incy,
+        dot<std::complex<double>,
+            std::complex<double>,
+            utils::MemorySpace::DEVICE>(
+          const size_type                              n,
+          const std::complex<double> *                 x,
+          const size_type                              incx,
+          const std::complex<double> *                 y,
+          const size_type                              incy,
           LinAlgOpContext<utils::MemorySpace::DEVICE> &context)
         {
           std::complex<double> result = {};
-#if defined(DFTEFE_WITH_DEVICE_LANG_CUDA) || defined(DFTEFE_WITH_DEVICE_LANG_HIP)
-          unsigned int nTmp    = n;
-          unsigned int incxTmp = incx;
-          unsigned int incyTmp = incy;
-      dftefe::utils::deviceBlasStatus_t status = DFTEFE_DEVICE_BLAS_INT(Z, dotc)(
-        context.getDeviceBlasHandle(),
-        nTmp,
-        makeDataTypeDeviceBlasCompatible(x),
-        incxTmp,
-        makeDataTypeDeviceBlasCompatible(y),
-        incyTmp,
-        makeDataTypeDeviceBlasCompatible(&result));
-      DEVICEBLAS_API_CHECK(status);
-#elif defined(DFTEFE_WITH_DEVICE_LANG_SYCL)
-          unsigned int nTmp    = n;
-          unsigned int incxTmp = incx;
-          unsigned int incyTmp = incy;
-      std::complex<double> *dev_res =
-        sycl::malloc_device<std::complex<double>>(1, context.getDeviceBlasHandle());
-      if (!dev_res)
-        throw std::bad_alloc{};
-      DEVICEBLAS_API_CHECK(DFTEFE_DEVICE_BLAS_INT(Z, dotc)(
-        context.getDeviceBlasHandle(),
-        nTmp,
-        makeDataTypeDeviceBlasCompatible(x),
-        incxTmp,
-        makeDataTypeDeviceBlasCompatible(y),
-        incyTmp,
-        makeDataTypeDeviceBlasCompatible(dev_res)));
-      context.getDeviceBlasHandle().memcpy(&result, dev_res, sizeof(std::complex<double>))
-        .wait();
-      sycl::free(dev_res, context.getDeviceBlasHandle());
-      context.getDeviceBlasHandle().wait();
-#endif
-        return result;
+#  if defined(DFTEFE_WITH_DEVICE_LANG_CUDA) || \
+    defined(DFTEFE_WITH_DEVICE_LANG_HIP)
+          unsigned int                      nTmp    = n;
+          unsigned int                      incxTmp = incx;
+          unsigned int                      incyTmp = incy;
+          dftefe::utils::deviceBlasStatus_t status =
+            DFTEFE_DEVICE_BLAS_INT(Z, dotc)(context.getDeviceBlasHandle(),
+                                            nTmp,
+                                            makeDataTypeDeviceBlasCompatible(x),
+                                            incxTmp,
+                                            makeDataTypeDeviceBlasCompatible(y),
+                                            incyTmp,
+                                            makeDataTypeDeviceBlasCompatible(
+                                              &result));
+          DEVICEBLAS_API_CHECK(status);
+#  elif defined(DFTEFE_WITH_DEVICE_LANG_SYCL)
+          unsigned int          nTmp    = n;
+          unsigned int          incxTmp = incx;
+          unsigned int          incyTmp = incy;
+          std::complex<double> *dev_res =
+            sycl::malloc_device<std::complex<double>>(
+              1, context.getDeviceBlasHandle());
+          if (!dev_res)
+            throw std::bad_alloc{};
+          DEVICEBLAS_API_CHECK(DFTEFE_DEVICE_BLAS_INT(Z, dotc)(
+            context.getDeviceBlasHandle(),
+            nTmp,
+            makeDataTypeDeviceBlasCompatible(x),
+            incxTmp,
+            makeDataTypeDeviceBlasCompatible(y),
+            incyTmp,
+            makeDataTypeDeviceBlasCompatible(dev_res)));
+          context.getDeviceBlasHandle()
+            .memcpy(&result, dev_res, sizeof(std::complex<double>))
+            .wait();
+          sycl::free(dev_res, context.getDeviceBlasHandle());
+          context.getDeviceBlasHandle().wait();
+#  endif
+          return result;
         }
 
-       template float
+        template float
         dot<float, float, utils::MemorySpace::DEVICE>(
-            const size_type           n,
-            const float *x,
-            const size_type           incx,
-            const float *y,
-            const size_type           incy,
+          const size_type                              n,
+          const float *                                x,
+          const size_type                              incx,
+          const float *                                y,
+          const size_type                              incy,
           LinAlgOpContext<utils::MemorySpace::DEVICE> &context);
 
         template double
         dot<double, double, utils::MemorySpace::DEVICE>(
-            const size_type           n,
-            const double *x,
-            const size_type           incx,
-            const double *y,
-            const size_type           incy,
+          const size_type                              n,
+          const double *                               x,
+          const size_type                              incx,
+          const double *                               y,
+          const size_type                              incy,
           LinAlgOpContext<utils::MemorySpace::DEVICE> &context);
 
         template std::complex<float>
-        dot<std::complex<float>, std::complex<float>, utils::MemorySpace::DEVICE>(
-            const size_type           n,
-            const std::complex<float> *x,
-            const size_type           incx,
-            const std::complex<float> *y,
-            const size_type           incy,
+        dot<std::complex<float>,
+            std::complex<float>,
+            utils::MemorySpace::DEVICE>(
+          const size_type                              n,
+          const std::complex<float> *                  x,
+          const size_type                              incx,
+          const std::complex<float> *                  y,
+          const size_type                              incy,
           LinAlgOpContext<utils::MemorySpace::DEVICE> &context);
 
         template std::complex<double>
-        dot<std::complex<double>, std::complex<double>, utils::MemorySpace::DEVICE>(
-            const size_type           n,
-            const std::complex<double> *x,
-            const size_type           incx,
-            const std::complex<double> *y,
-            const size_type           incy,
+        dot<std::complex<double>,
+            std::complex<double>,
+            utils::MemorySpace::DEVICE>(
+          const size_type                              n,
+          const std::complex<double> *                 x,
+          const size_type                              incx,
+          const std::complex<double> *                 y,
+          const size_type                              incy,
           LinAlgOpContext<utils::MemorySpace::DEVICE> &context);
 
       } // namespace blasWrapper

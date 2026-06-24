@@ -28,7 +28,7 @@ namespace dftefe
         size_type &                                        numQuadPoints)
       {
         const dftefe::size_type dim      = triangulation->getDim();
-        const size_type    numCells = triangulation->nLocallyOwnedCells();
+        const size_type         numCells = triangulation->nLocallyOwnedCells();
         numCellQuadPoints.resize(numCells, 0);
         cellQuadStartIds.resize(numCells, 0);
         numQuadPoints = 0;
@@ -121,15 +121,15 @@ namespace dftefe
                  d_JxW,
                  d_numQuadPoints);
 
-      const dftefe::size_type dim      = triangulation->getDim();
+      const dftefe::size_type dim = triangulation->getDim();
       d_realPointsHost.resize(d_realPoints.size() * dim);
-      for(dftefe::size_type i = 0 ; i < d_realPoints.size() ; i++)
-      {
-        for(dftefe::size_type j = 0 ; j < dim ; j++)
+      for (dftefe::size_type i = 0; i < d_realPoints.size(); i++)
         {
-          d_realPointsHost[i * dim + j] = d_realPoints[i][j];
+          for (dftefe::size_type j = 0; j < dim; j++)
+            {
+              d_realPointsHost[i * dim + j] = d_realPoints[i][j];
+            }
         }
-      }
 #ifdef DFTEFE_WITH_DEVICE
       d_realPointsDevice.resize(d_realPoints.size() * dim);
       d_realPointsDevice.copyFrom(d_realPointsHost);
@@ -187,21 +187,21 @@ namespace dftefe
                  d_JxW,
                  d_numQuadPoints);
 
-      const dftefe::size_type dim      = triangulation->getDim();
+      const dftefe::size_type dim = triangulation->getDim();
       d_realPointsHost.resize(d_realPoints.size() * dim);
-      for(dftefe::size_type i = 0 ; i < d_realPoints.size() ; i++)
-      {
-        for(dftefe::size_type j = 0 ; j < dim ; j++)
+      for (dftefe::size_type i = 0; i < d_realPoints.size(); i++)
         {
-          d_realPointsHost[i * dim + j] = d_realPoints[i][j];
+          for (dftefe::size_type j = 0; j < dim; j++)
+            {
+              d_realPointsHost[i * dim + j] = d_realPoints[i][j];
+            }
         }
-      }
 #ifdef DFTEFE_WITH_DEVICE
       d_realPointsDevice.resize(d_realPoints.size() * dim);
       d_realPointsDevice.copyFrom(d_realPointsHost);
       d_JxWDevice.resize(d_JxW.size());
       d_JxWDevice.copyFrom(d_JxW);
-#endif              
+#endif
     }
 
 
@@ -217,7 +217,7 @@ namespace dftefe
       const std::vector<double> &relativeTolerances,
       const std::vector<double> &integralThresholds,
       const double               smallestCellVolume /*= 1e-12*/,
-      const dftefe::size_type         maxRecursion /*= 100*/)
+      const dftefe::size_type    maxRecursion /*= 100*/)
       : d_quadratureRuleAttributes(quadratureRuleAttributes)
       , d_dim(triangulation->getDim())
       , d_triangulation(triangulation)
@@ -243,7 +243,7 @@ namespace dftefe
       d_numCellQuadPoints.resize(d_numCells, 0);
       d_cellQuadStartIds.resize(d_numCells, 0);
       d_numQuadPoints                                                 = 0;
-      dftefe::size_type                                              iCell = 0;
+      dftefe::size_type                                         iCell = 0;
       basis::TriangulationBase::const_TriangulationCellIterator cellIter =
         triangulation->beginLocal();
 
@@ -332,15 +332,15 @@ namespace dftefe
           iCell++;
         }
 
-      const dftefe::size_type dim      = triangulation->getDim();
+      const dftefe::size_type dim = triangulation->getDim();
       d_realPointsHost.resize(d_realPoints.size() * dim);
-      for(dftefe::size_type i = 0 ; i < d_realPoints.size() ; i++)
-      {
-        for(dftefe::size_type j = 0 ; j < dim ; j++)
+      for (dftefe::size_type i = 0; i < d_realPoints.size(); i++)
         {
-          d_realPointsHost[i * dim + j] = d_realPoints[i][j];
+          for (dftefe::size_type j = 0; j < dim; j++)
+            {
+              d_realPointsHost[i * dim + j] = d_realPoints[i][j];
+            }
         }
-      }
 #ifdef DFTEFE_WITH_DEVICE
       d_realPointsDevice.resize(d_realPoints.size() * dim);
       d_realPointsDevice.copyFrom(d_realPointsHost);
@@ -673,15 +673,15 @@ namespace dftefe
       //       std::cout << i.first << "\t" << i.second/1e6 << std::flush <<
       //       "\n";
 
-      const dftefe::size_type dim      = triangulation->getDim();
+      const dftefe::size_type dim = triangulation->getDim();
       d_realPointsHost.resize(d_realPoints.size() * dim);
-      for(dftefe::size_type i = 0 ; i < d_realPoints.size() ; i++)
-      {
-        for(dftefe::size_type j = 0 ; j < dim ; j++)
+      for (dftefe::size_type i = 0; i < d_realPoints.size(); i++)
         {
-          d_realPointsHost[i * dim + j] = d_realPoints[i][j];
+          for (dftefe::size_type j = 0; j < dim; j++)
+            {
+              d_realPointsHost[i * dim + j] = d_realPoints[i][j];
+            }
         }
-      }
 #ifdef DFTEFE_WITH_DEVICE
       d_realPointsDevice.resize(d_realPoints.size() * dim);
       d_realPointsDevice.copyFrom(d_realPointsHost);
@@ -710,7 +710,8 @@ namespace dftefe
     }
 
     std::vector<dftefe::utils::Point>
-    QuadratureRuleContainer::getCellRealPoints(const dftefe::size_type cellId) const
+    QuadratureRuleContainer::getCellRealPoints(
+      const dftefe::size_type cellId) const
     {
       const size_type numCellQuadPoints = d_numCellQuadPoints[cellId];
       const size_type cellQuadStartId   = d_cellQuadStartIds[cellId];
@@ -761,7 +762,8 @@ namespace dftefe
     }
 
     const QuadratureRule &
-    QuadratureRuleContainer::getQuadratureRule(const dftefe::size_type cellId) const
+    QuadratureRuleContainer::getQuadratureRule(
+      const dftefe::size_type cellId) const
     {
       return *d_quadratureRuleVec[cellId];
     }

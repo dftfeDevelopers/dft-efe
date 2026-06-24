@@ -82,10 +82,11 @@ namespace dftefe
           *(dealiiMatrixFree.get_vector_partitioner());
         const dealii::IndexSet &ghostIndexSet =
           dealiiPartitioner.ghost_indices();
-        // const size_type numGhostIndicesClassical = ghostIndexSet.n_elements();
-        // std::vector<global_size_type> ghostIndicesClassical(0);
+        // const size_type numGhostIndicesClassical =
+        // ghostIndexSet.n_elements(); std::vector<global_size_type>
+        // ghostIndicesClassical(0);
         // ghostIndicesClassical.resize(numGhostIndicesClassical, 0);
-        // ghostIndexSet.fill_index_vector(ghostIndicesClassical);          
+        // ghostIndexSet.fill_index_vector(ghostIndicesClassical);
         std::vector<global_size_type> ghostIndicesClassical =
           ghostIndexSet.get_index_vector();
         ghostIndices.clear();
@@ -224,7 +225,7 @@ namespace dftefe
       //                                                 locally_relevant_dofs);
       dealii::IndexSet locally_relevant_dofs =
         dealii::DoFTools::extract_locally_relevant_dofs(
-          *(this->getDoFHandler()));                                                      
+          *(this->getDoFHandler()));
       dealiiAffineConstraintMatrix.reinit(
         this->getDoFHandler()->locally_owned_dofs(), locally_relevant_dofs);
       dealii::DoFTools::make_hanging_node_constraints(

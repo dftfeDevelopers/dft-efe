@@ -117,23 +117,23 @@ namespace dftefe
       integrateValue() = 0;
 
       virtual void
-      submitValueAtQuadpoint(const size_type                     iQuadPoint,
+      submitValueAtQuadpoint(const size_type                        iQuadPoint,
                              const dealii::VectorizedArray<double> &value) = 0;
 
       virtual void
       alphaTimesQuadValuesPlusYFromSubCell(const size_type subCellIndex,
-                                           const double       alpha,
-                                           double *           outputVector) = 0;
+                                           const double    alpha,
+                                           double *        outputVector) = 0;
 
       virtual void
       getQuadGradientsForSubCell(const size_type subCellIndex,
-                                 const double       alpha,
-                                 double *           outputVector) = 0;
+                                 const double    alpha,
+                                 double *        outputVector) = 0;
 
       virtual void
       getQuadHessianForSubCell(const size_type subCellIndex,
-                               const double       alpha,
-                               double *           outputVector) = 0;
+                               const double    alpha,
+                               double *        outputVector) = 0;
 
 
       virtual void
@@ -157,16 +157,14 @@ namespace dftefe
       distributeLocalToGlobal(distributedCPUVec<double> &tempvec) = 0;
     };
 
-    template <int          FEOrder,
-              size_type num_1d_quadPoints,
-              size_type n_components>
+    template <int FEOrder, size_type num_1d_quadPoints, size_type n_components>
     class FEEvaluationWrapperDerived : public FEEvaluationWrapperBase
     {
     public:
       FEEvaluationWrapperDerived(
         const dealii::MatrixFree<3, double> &matrixFreeData,
-        const size_type                   matrixFreeVectorComponent,
-        const size_type                   matrixFreeQuadratureComponent);
+        const size_type                      matrixFreeVectorComponent,
+        const size_type                      matrixFreeQuadratureComponent);
 
       ~FEEvaluationWrapperDerived();
 
@@ -229,7 +227,7 @@ namespace dftefe
 
       void
       submitValueAtQuadpoint(
-        const size_type                     iQuadPoint,
+        const size_type                        iQuadPoint,
         const dealii::VectorizedArray<double> &value) override;
 
       dealii::Point<3, dealii::VectorizedArray<double>>
@@ -237,18 +235,18 @@ namespace dftefe
 
       void
       alphaTimesQuadValuesPlusYFromSubCell(const size_type subCellIndex,
-                                           const double       alpha,
+                                           const double    alpha,
                                            double *outputVector) override;
 
       void
       getQuadGradientsForSubCell(const size_type subCellIndex,
-                                 const double       alpha,
-                                 double *           outputVector) override;
+                                 const double    alpha,
+                                 double *        outputVector) override;
 
       void
       getQuadHessianForSubCell(const size_type subCellIndex,
-                               const double       alpha,
-                               double *           outputVector) override;
+                               const double    alpha,
+                               double *        outputVector) override;
 
       void
       submitInterpolatedValuesSubmitInterpolatedGradients(
@@ -286,11 +284,11 @@ namespace dftefe
        * quadrature location in the MatrixFree object.
        */
       DealiiFEEvaluationWrapper(
-        size_type                         fe_degree,
-        size_type                         num_1d_quad,
+        size_type                            fe_degree,
+        size_type                            num_1d_quad,
         const dealii::MatrixFree<3, double> &matrixFreeData,
-        const size_type                   matrixFreeVectorComponent,
-        const size_type                   matrixFreeQuadratureComponent);
+        const size_type                      matrixFreeVectorComponent,
+        const size_type                      matrixFreeQuadratureComponent);
 
       ~DealiiFEEvaluationWrapper();
 

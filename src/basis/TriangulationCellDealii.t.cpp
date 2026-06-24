@@ -22,8 +22,7 @@ namespace dftefe
     TriangulationCellDealii<dim>::getVertices(
       std::vector<utils::Point> &points) const
     {
-      const size_type nVertices =
-        dealii::GeometryInfo<dim>::vertices_per_cell;
+      const size_type nVertices = dealii::GeometryInfo<dim>::vertices_per_cell;
       points.resize(nVertices, utils::Point(dim, 0.0));
       std::vector<dealii::Point<dim, double>> pointsDealii;
       pointsDealii.resize(nVertices);
@@ -78,8 +77,7 @@ namespace dftefe
 
     template <size_type dim>
     bool
-    TriangulationCellDealii<dim>::hasPeriodicNeighbor(
-      const size_type i) const
+    TriangulationCellDealii<dim>::hasPeriodicNeighbor(const size_type i) const
     {
       return d_cellItr->has_periodic_neighbor(i);
     }

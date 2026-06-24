@@ -54,16 +54,16 @@ namespace dftefe
       void
       setSpectral(
         std::unique_ptr<linearAlgebra::MultiVector<ValueType, memorySpace>>
-                                                     ksOrbitals,
-        const std::vector<std::vector<double>> &     occupancies,
-        const size_type                              nKSOrbs);
+                                                ksOrbitals,
+        const std::vector<std::vector<double>> &occupancies,
+        const size_type                         nKSOrbs);
 
       void
       getSpectral(
         std::unique_ptr<linearAlgebra::MultiVector<ValueType, memorySpace>>
-          &                                      ksOrbitals,
-        std::vector<std::vector<double>> &       occupancies,
-        size_type &                              nKSOrbs);
+          &                               ksOrbitals,
+        std::vector<std::vector<double>> &occupancies,
+        size_type &                       nKSOrbs);
 
       bool
       getKSSetFlag() const;

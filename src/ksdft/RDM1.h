@@ -44,7 +44,6 @@ namespace dftefe
 {
   namespace ksdft
   {
-
     /**
      * @brief Abstract class for the one-particle reduced density matrix
      */
@@ -55,9 +54,9 @@ namespace dftefe
        * @brief typdefs
        */
     public:
-      using AttrStorage =
-        std::vector<dftefe::quadrature::QuadratureValuesContainer<
-          double, dftefe::utils::MemorySpace::HOST>>;
+      using AttrStorage = std::vector<
+        dftefe::quadrature::
+          QuadratureValuesContainer<double, dftefe::utils::MemorySpace::HOST>>;
       using AttrStorageRef      = std::reference_wrapper<AttrStorage>;
       using AttrStorageConstRef = std::reference_wrapper<const AttrStorage>;
 
@@ -72,15 +71,16 @@ namespace dftefe
 
       virtual void
       getDescriptors(
-        const std::set<DensityDescrAttr> &densityAttrs,
-        const std::set<WfcDescrAttr> &    wfcAttrs,
+        const std::set<DensityDescrAttr> &                 densityAttrs,
+        const std::set<WfcDescrAttr> &                     wfcAttrs,
         std::unordered_map<DensityDescrAttr, AttrStorage> &densityAttrVals,
-        std::unordered_map<WfcDescrAttr, AttrStorage> &   wfcAttrVals) = 0;
+        std::unordered_map<WfcDescrAttr, AttrStorage> &    wfcAttrVals) = 0;
 
       virtual void
       setDescriptors(
-        const std::unordered_map<DensityDescrAttr, AttrStorage> &densityAttrVals,
-        const std::unordered_map<WfcDescrAttr, AttrStorage> &    wfcAttrVals) = 0;
+        const std::unordered_map<DensityDescrAttr, AttrStorage>
+          &                                                  densityAttrVals,
+        const std::unordered_map<WfcDescrAttr, AttrStorage> &wfcAttrVals) = 0;
 
       virtual void
       getDensityObs(

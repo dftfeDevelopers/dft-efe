@@ -18,7 +18,7 @@ namespace dftefe
 
     private:
       size_type d_component;
-      double       d_exponent;
+      double    d_exponent;
     };
 
   } // namespace utils

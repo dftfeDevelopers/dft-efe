@@ -38,9 +38,9 @@ namespace dftefe
     void
     RDM1Spectral<ValueType, memorySpace>::setSpectral(
       std::unique_ptr<linearAlgebra::MultiVector<ValueType, memorySpace>>
-                                                   ksOrbitals,
-      const std::vector<std::vector<double>> &     occupancies,
-      const size_type                              nKSOrbs)
+                                              ksOrbitals,
+      const std::vector<std::vector<double>> &occupancies,
+      const size_type                         nKSOrbs)
     {
       d_ksOrbs      = std::move(ksOrbitals);
       d_occupancies = occupancies;
@@ -53,9 +53,9 @@ namespace dftefe
     void
     RDM1Spectral<ValueType, memorySpace>::getSpectral(
       std::unique_ptr<linearAlgebra::MultiVector<ValueType, memorySpace>>
-        &                                      ksOrbitals,
-      std::vector<std::vector<double>> &       occupancies,
-      size_type &                              nKSOrbs)
+        &                               ksOrbitals,
+      std::vector<std::vector<double>> &occupancies,
+      size_type &                       nKSOrbs)
     {
       ksOrbitals  = std::move(d_ksOrbs);
       occupancies = d_occupancies;

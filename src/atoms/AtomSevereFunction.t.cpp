@@ -30,13 +30,13 @@ namespace dftefe
     template <utils::MemorySpace memorySpace>
     AtomSevereFunction<memorySpace>::AtomSevereFunction(
       std::shared_ptr<const AtomSphericalDataContainer>
-                                       atomSphericalDataContainer,
-      const std::vector<std::string> & atomSymbol,
-      const std::vector<utils::Point> &atomCoordinates,
-      const std::string                fieldName,
-      const size_type                  derivativeType,
-      const size_type                  sphericalValPower,
-      const double                     constant,
+                                                   atomSphericalDataContainer,
+      const std::vector<std::string> &             atomSymbol,
+      const std::vector<utils::Point> &            atomCoordinates,
+      const std::string                            fieldName,
+      const size_type                              derivativeType,
+      const size_type                              sphericalValPower,
+      const double                                 constant,
       linearAlgebra::LinAlgOpContext<memorySpace> *linAlgOpContext)
       : AtomSuperpositionFunction<memorySpace>(atomSphericalDataContainer,
                                                atomSymbol,
@@ -64,8 +64,7 @@ namespace dftefe
 
     template <utils::MemorySpace memorySpace>
     double
-    AtomSevereFunction<memorySpace>::operator()(
-      const utils::Point &point) const
+    AtomSevereFunction<memorySpace>::operator()(const utils::Point &point) const
     {
       std::vector<double> t(d_dim);
       for (size_type iDim = 0; iDim < d_dim; ++iDim)

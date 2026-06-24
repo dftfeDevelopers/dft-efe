@@ -297,7 +297,7 @@ namespace dftefe
               {
                 // get the parametric points and jxw in each cell according to
                 // the attribute.
-                size_type                     cellIndex = 0;
+                size_type                        cellIndex = 0;
                 const std::vector<utils::Point> &cellParametricQuadPoints =
                   quadratureRuleContainer->getCellParametricPoints(cellIndex);
                 std::vector<dealii::Point<dim, double>>
@@ -510,7 +510,8 @@ namespace dftefe
         cellIndex                            = 0;
         size_type cumulativeQuadPointsxnDofs = 0;
 
-        // classical storage for quad and gradients , class + enriched for hessian
+        // classical storage for quad and gradients , class + enriched for
+        // hessian
         for (; locallyOwnedCellIter != efeBDH->endLocallyOwnedCells();
              ++locallyOwnedCellIter)
           {
@@ -581,8 +582,7 @@ namespace dftefe
                   }
                 auto &mappingJacInv = dealiiFEValues.get_inverse_jacobians();
                 size_type numJacobiansPerCell = nQuadPointInCell;
-                for (size_type iQuad = 0; iQuad < numJacobiansPerCell;
-                     ++iQuad)
+                for (size_type iQuad = 0; iQuad < numJacobiansPerCell; ++iQuad)
                   {
                     for (size_type iDim = 0; iDim < dim; iDim++)
                       {
@@ -700,46 +700,48 @@ namespace dftefe
               basisHessianQuadStorageTmp.data());
           }
 
-        // enriched storage for quad and gradients 
-        
-          bool storeEnrichValues = false, storeEnrichGrad = false;
-          if (basisStorageAttributesBoolMap
-                .find(BasisStorageAttributes::StoreValues)
-                ->second)
-            storeEnrichValues = true;
+        // enriched storage for quad and gradients
 
-          if (basisStorageAttributesBoolMap
-                .find(BasisStorageAttributes::StoreGradient)
-                ->second)
-            storeEnrichGrad = true;
-        if(storeEnrichValues)
-        {
-          efeBDH->getEnrichmentClassicalInterface()->getEnrichmentValuesInCellRangeAtQuadPts(
-            *quadratureRuleContainer,
-            basisEnrichQuadStorage->data(),
-            linAlgOpContext,
-            std::make_pair((size_type)0, numLocallyOwnedCells));
-          utils::MemoryTransfer<utils::MemorySpace::HOST, memorySpace>::copy(
-            enrichQuadValStorageSize,
-            basisEnrichQuadStorageTmp.data(),
-            basisEnrichQuadStorage->data());
-        }
-        if(storeEnrichGrad)
-        {
-          efeBDH->getEnrichmentClassicalInterface()->getEnrichmentGradientsInCellRangeAtQuadPts(
-            *quadratureRuleContainer,
-            basisGradientEnrichQuadStorage->data(),
-            linAlgOpContext,
-            std::make_pair((size_type)0, numLocallyOwnedCells));
-          utils::MemoryTransfer<utils::MemorySpace::HOST, memorySpace>::copy(
-            enrichQuadValStorageSize * dim,
-            basisGradientEnrichQuadStorageTmp.data(),
-            basisGradientEnrichQuadStorage->data());
-        }
+        bool storeEnrichValues = false, storeEnrichGrad = false;
+        if (basisStorageAttributesBoolMap
+              .find(BasisStorageAttributes::StoreValues)
+              ->second)
+          storeEnrichValues = true;
 
-        cellIndex                            = 0;
-        size_type cumulativeEnrichQuadxDof   = 0;
-        locallyOwnedCellIter = efeBDH->beginLocallyOwnedCells();
+        if (basisStorageAttributesBoolMap
+              .find(BasisStorageAttributes::StoreGradient)
+              ->second)
+          storeEnrichGrad = true;
+        if (storeEnrichValues)
+          {
+            efeBDH->getEnrichmentClassicalInterface()
+              ->getEnrichmentValuesInCellRangeAtQuadPts(
+                *quadratureRuleContainer,
+                basisEnrichQuadStorage->data(),
+                linAlgOpContext,
+                std::make_pair((size_type)0, numLocallyOwnedCells));
+            utils::MemoryTransfer<utils::MemorySpace::HOST, memorySpace>::copy(
+              enrichQuadValStorageSize,
+              basisEnrichQuadStorageTmp.data(),
+              basisEnrichQuadStorage->data());
+          }
+        if (storeEnrichGrad)
+          {
+            efeBDH->getEnrichmentClassicalInterface()
+              ->getEnrichmentGradientsInCellRangeAtQuadPts(
+                *quadratureRuleContainer,
+                basisGradientEnrichQuadStorage->data(),
+                linAlgOpContext,
+                std::make_pair((size_type)0, numLocallyOwnedCells));
+            utils::MemoryTransfer<utils::MemorySpace::HOST, memorySpace>::copy(
+              enrichQuadValStorageSize * dim,
+              basisGradientEnrichQuadStorageTmp.data(),
+              basisGradientEnrichQuadStorage->data());
+          }
+
+        cellIndex                          = 0;
+        size_type cumulativeEnrichQuadxDof = 0;
+        locallyOwnedCellIter               = efeBDH->beginLocallyOwnedCells();
         for (; locallyOwnedCellIter != efeBDH->endLocallyOwnedCells();
              ++locallyOwnedCellIter)
           {
@@ -773,7 +775,8 @@ namespace dftefe
             if (efeBDH->isOrthogonalized() && numEnrichmentIdsInCell > 0)
               {
                 coeffsInCell =
-                  efeBDH->getEnrichmentClassicalInterface()->getClassicalComponentCoeffsInCellOEFE(cellIndex);
+                  efeBDH->getEnrichmentClassicalInterface()
+                    ->getClassicalComponentCoeffsInCellOEFE(cellIndex);
               }
 
             //
@@ -805,7 +808,8 @@ namespace dftefe
                     ValueTypeBasisData *iter =
                       classicalComponentInQuadValues.data();
                     // const std::vector<double> &enrichValAtQuadPts =
-                    //   efeBDH->getEnrichmentValue(cellIndex, quadRealPointsVec);
+                    //   efeBDH->getEnrichmentValue(cellIndex,
+                    //   quadRealPointsVec);
                     for (size_type iNode = 0; iNode < numEnrichmentIdsInCell;
                          iNode++)
                       {
@@ -838,7 +842,7 @@ namespace dftefe
               {
                 cellStartIdsBasisJacobianInvQuadStorage[cellIndex] =
                   cellIndex * nDimSqxNumQuad;
-  
+
                 if (numEnrichmentIdsInCell > 0)
                   {
                     if (efeBDH->isOrthogonalized())
@@ -892,8 +896,8 @@ namespace dftefe
                                   qPoint * dim * numEnrichmentIdsInCell +
                                   iDim * numEnrichmentIdsInCell + iNode;
                                 *it -= *(iter +
-                                        numEnrichmentIdsInCell * dim * qPoint +
-                                        iDim * numEnrichmentIdsInCell + iNode);
+                                         numEnrichmentIdsInCell * dim * qPoint +
+                                         iDim * numEnrichmentIdsInCell + iNode);
                               }
                           }
                       }
@@ -966,7 +970,7 @@ namespace dftefe
         std::vector<size_type> &cellStartIdsBasisJacobianInvQuadStorage,
         std::vector<size_type> &cellStartIdsBasisHessianQuadStorage,
         const BasisStorageAttributesBoolMap basisStorageAttributesBoolMap,
-        const size_type cellBlockSize,
+        const size_type                     cellBlockSize,
         linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext,
         const bool calculateEnrichmentDataOnTheFly = false)
       {
@@ -992,7 +996,7 @@ namespace dftefe
               {
                 // get the parametric points and jxw in each cell according to
                 // the attribute.
-                size_type                     cellIndex = 0;
+                size_type                        cellIndex = 0;
                 const std::vector<utils::Point> &cellParametricQuadPoints =
                   quadratureRuleContainer->getCellParametricPoints(cellIndex);
                 std::vector<dealii::Point<dim, double>>
@@ -1130,10 +1134,10 @@ namespace dftefe
                                                       nQuadPointInCell,
                                                     ValueTypeBasisData(0));
             if (!calculateEnrichmentDataOnTheFly)
-              basisEnrichQuadStorage =
-                std::make_shared<typename BasisDataStorage<ValueTypeBasisData,
-                                                           memorySpace>::Storage>(
-                  enrichQuadValStorageSize);
+              basisEnrichQuadStorage = std::make_shared<
+                typename BasisDataStorage<ValueTypeBasisData,
+                                          memorySpace>::Storage>(
+                enrichQuadValStorageSize);
           }
 
         if (basisStorageAttributesBoolMap
@@ -1160,10 +1164,10 @@ namespace dftefe
             cellStartIdsBasisJacobianInvQuadStorage.resize(numLocallyOwnedCells,
                                                            0);
             if (!calculateEnrichmentDataOnTheFly)
-              basisGradientEnrichQuadStorage =
-                std::make_shared<typename BasisDataStorage<ValueTypeBasisData,
-                                                           memorySpace>::Storage>(
-                  enrichQuadValStorageSize * dim);
+              basisGradientEnrichQuadStorage = std::make_shared<
+                typename BasisDataStorage<ValueTypeBasisData,
+                                          memorySpace>::Storage>(
+                enrichQuadValStorageSize * dim);
           }
         if (basisStorageAttributesBoolMap
               .find(BasisStorageAttributes::StoreHessian)
@@ -1195,7 +1199,8 @@ namespace dftefe
         cellIndex                            = 0;
         size_type cumulativeQuadPointsxnDofs = 0;
 
-        // classical storage for quad and gradients , class + enriched for hessian
+        // classical storage for quad and gradients , class + enriched for
+        // hessian
         for (; locallyOwnedCellIter != efeBDH->endLocallyOwnedCells();
              ++locallyOwnedCellIter)
           {
@@ -1266,8 +1271,7 @@ namespace dftefe
                   }
                 auto &mappingJacInv = dealiiFEValues.get_inverse_jacobians();
                 size_type numJacobiansPerCell = nQuadPointInCell;
-                for (size_type iQuad = 0; iQuad < numJacobiansPerCell;
-                     ++iQuad)
+                for (size_type iQuad = 0; iQuad < numJacobiansPerCell; ++iQuad)
                   {
                     for (size_type iDim = 0; iDim < dim; iDim++)
                       {
@@ -1385,36 +1389,47 @@ namespace dftefe
               basisHessianQuadStorageTmp.data());
           }
 
-        // enriched storage for quad and gradients and remove the classical projected components
+        // enriched storage for quad and gradients and remove the classical
+        // projected components
         if (!calculateEnrichmentDataOnTheFly)
           {
-            utils::MemoryStorage<ValueTypeBasisData, memorySpace> coeffsInAllCells(0);
+            utils::MemoryStorage<ValueTypeBasisData, memorySpace>
+              coeffsInAllCells(0);
             if (efeBDH->isOrthogonalized())
-            {
-            auto coeffsInAllCellsHost = efeBDH->getEnrichmentClassicalInterface()->getClassicalComponentCoeffsInAllCellsOEFE();
-            coeffsInAllCells.resize(coeffsInAllCellsHost.size());      
-            utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
-              coeffsInAllCellsHost.size(), coeffsInAllCells.data(), coeffsInAllCellsHost.data());
-            }
+              {
+                auto coeffsInAllCellsHost =
+                  efeBDH->getEnrichmentClassicalInterface()
+                    ->getClassicalComponentCoeffsInAllCellsOEFE();
+                coeffsInAllCells.resize(coeffsInAllCellsHost.size());
+                utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::
+                  copy(coeffsInAllCellsHost.size(),
+                       coeffsInAllCells.data(),
+                       coeffsInAllCellsHost.data());
+              }
 
-            utils::MemoryStorage<ValueTypeBasisData, memorySpace> tmpGradientInCellBlock(0);
-            utils::MemoryStorage<ValueTypeBasisData, memorySpace> tmpGradientBlock(0);
+            utils::MemoryStorage<ValueTypeBasisData, memorySpace>
+              tmpGradientInCellBlock(0);
+            utils::MemoryStorage<ValueTypeBasisData, memorySpace>
+              tmpGradientBlock(0);
             if (efeBDH->isOrthogonalized() &&
                 basisStorageAttributesBoolMap
                   .find(BasisStorageAttributes::StoreGradient)
                   ->second)
               {
-                tmpGradientInCellBlock.resize(classicalDofsPerCell * nQuadPointInCell * dim * cellBlockSize);
-                tmpGradientBlock.resize(classicalDofsPerCell * nQuadPointInCell * dim * cellBlockSize);
+                tmpGradientInCellBlock.resize(classicalDofsPerCell *
+                                              nQuadPointInCell * dim *
+                                              cellBlockSize);
+                tmpGradientBlock.resize(classicalDofsPerCell *
+                                        nQuadPointInCell * dim * cellBlockSize);
               }
 
-            size_type cumulativeCoeffsInCellRange = 0;
+            size_type cumulativeCoeffsInCellRange    = 0;
             size_type cumulativeDofsxQuadInCellRange = 0;
             for (size_type cellStartId = 0; cellStartId < numLocallyOwnedCells;
-                  cellStartId += cellBlockSize)
+                 cellStartId += cellBlockSize)
               {
                 const size_type cellEndId =
-                    std::min(cellStartId + cellBlockSize, numLocallyOwnedCells);
+                  std::min(cellStartId + cellBlockSize, numLocallyOwnedCells);
                 const size_type numCellsInBlock = cellEndId - cellStartId;
 
                 std::vector<size_type> mSizes(numCellsInBlock, 0);
@@ -1426,160 +1441,177 @@ namespace dftefe
                 std::vector<size_type> strideA(numCellsInBlock, 0);
                 std::vector<size_type> strideB(numCellsInBlock, 0);
                 std::vector<size_type> strideC(numCellsInBlock, 0);
-                std::vector<size_type> dofsPerCellInCellBlock(numCellsInBlock, 0);
-                std::vector<size_type> numEnrichmentIdsInCellBlock(numCellsInBlock, 0);
-                std::vector<size_type> nQuadPointInCellBlock(numCellsInBlock, 0);
+                std::vector<size_type> dofsPerCellInCellBlock(numCellsInBlock,
+                                                              0);
+                std::vector<size_type> numEnrichmentIdsInCellBlock(
+                  numCellsInBlock, 0);
+                std::vector<size_type> nQuadPointInCellBlock(numCellsInBlock,
+                                                             0);
 
                 for (size_type iCell = 0; iCell < numCellsInBlock; iCell++)
                   {
-                    cellIndex = iCell + cellStartId;
+                    cellIndex                   = iCell + cellStartId;
                     const size_type dofsPerCell = efeBDH->nCellDofs(cellIndex);
                     dofsPerCellInCellBlock[iCell] = dofsPerCell;
-                    numEnrichmentIdsInCellBlock[iCell] = dofsPerCellInCellBlock[iCell] - classicalDofsPerCell;                                     
-                    nQuadPointInCellBlock[iCell] = 
-                      quadratureRuleContainer->nCellQuadraturePoints(cellIndex);                   
+                    numEnrichmentIdsInCellBlock[iCell] =
+                      dofsPerCellInCellBlock[iCell] - classicalDofsPerCell;
+                    nQuadPointInCellBlock[iCell] =
+                      quadratureRuleContainer->nCellQuadraturePoints(cellIndex);
                   }
 
                 if (basisStorageAttributesBoolMap
                       .find(BasisStorageAttributes::StoreValues)
                       ->second)
-                {
-                  efeBDH->getEnrichmentClassicalInterface()->getEnrichmentValuesInCellRangeAtQuadPts(
-                    *quadratureRuleContainer,
-                    basisEnrichQuadStorage->data() + cumulativeDofsxQuadInCellRange,
-                    linAlgOpContext,
-                    std::make_pair(cellStartId, cellEndId));
-
-                  if (efeBDH->isOrthogonalized())
                   {
-                  std::vector<char>      transA(numCellsInBlock, 'N');
-                  std::vector<char>      transB(numCellsInBlock, 'N');
-                  for (size_type iCell = 0; iCell < numCellsInBlock; ++iCell)
-                    {
-                      mSizes[iCell]   = numEnrichmentIdsInCellBlock[iCell];
-                      nSizes[iCell]   = nQuadPointInCellBlock[iCell];
-                      kSizes[iCell]   = classicalDofsPerCell;
-                      ldaSizes[iCell] = mSizes[iCell];
-                      ldbSizes[iCell] = kSizes[iCell];
-                      ldcSizes[iCell] = mSizes[iCell];
-                      strideA[iCell] = mSizes[iCell] * kSizes[iCell];
-                      strideB[iCell] = 0;
-                      strideC[iCell] = mSizes[iCell] * nSizes[iCell];
-                    }
+                    efeBDH->getEnrichmentClassicalInterface()
+                      ->getEnrichmentValuesInCellRangeAtQuadPts(
+                        *quadratureRuleContainer,
+                        basisEnrichQuadStorage->data() +
+                          cumulativeDofsxQuadInCellRange,
+                        linAlgOpContext,
+                        std::make_pair(cellStartId, cellEndId));
 
-                  linearAlgebra::blasLapack::gemmStridedVarBatched<
-                    ValueTypeBasisData,
-                    ValueTypeBasisData,
-                    memorySpace>(
-                    numCellsInBlock, 
-                    transA.data(),
-                    transB.data(),
-                    strideA.data(),
-                    strideB.data(),
-                    strideC.data(),
-                    mSizes.data(),
-                    nSizes.data(),
-                    kSizes.data(),
-                    (ValueTypeBasisData)-1.0,
-                    coeffsInAllCells.data() + cumulativeCoeffsInCellRange,
-                    ldaSizes.data(),
-                    basisParaCellClassQuadStorage->data(),
-                    ldbSizes.data(),
-                    (ValueTypeBasisData)1.0,
-                    basisEnrichQuadStorage->data() + cumulativeDofsxQuadInCellRange,
-                    ldcSizes.data(),
-                    linAlgOpContext);
+                    if (efeBDH->isOrthogonalized())
+                      {
+                        std::vector<char> transA(numCellsInBlock, 'N');
+                        std::vector<char> transB(numCellsInBlock, 'N');
+                        for (size_type iCell = 0; iCell < numCellsInBlock;
+                             ++iCell)
+                          {
+                            mSizes[iCell] = numEnrichmentIdsInCellBlock[iCell];
+                            nSizes[iCell] = nQuadPointInCellBlock[iCell];
+                            kSizes[iCell] = classicalDofsPerCell;
+                            ldaSizes[iCell] = mSizes[iCell];
+                            ldbSizes[iCell] = kSizes[iCell];
+                            ldcSizes[iCell] = mSizes[iCell];
+                            strideA[iCell]  = mSizes[iCell] * kSizes[iCell];
+                            strideB[iCell]  = 0;
+                            strideC[iCell]  = mSizes[iCell] * nSizes[iCell];
+                          }
+
+                        linearAlgebra::blasLapack::gemmStridedVarBatched<
+                          ValueTypeBasisData,
+                          ValueTypeBasisData,
+                          memorySpace>(numCellsInBlock,
+                                       transA.data(),
+                                       transB.data(),
+                                       strideA.data(),
+                                       strideB.data(),
+                                       strideC.data(),
+                                       mSizes.data(),
+                                       nSizes.data(),
+                                       kSizes.data(),
+                                       (ValueTypeBasisData)-1.0,
+                                       coeffsInAllCells.data() +
+                                         cumulativeCoeffsInCellRange,
+                                       ldaSizes.data(),
+                                       basisParaCellClassQuadStorage->data(),
+                                       ldbSizes.data(),
+                                       (ValueTypeBasisData)1.0,
+                                       basisEnrichQuadStorage->data() +
+                                         cumulativeDofsxQuadInCellRange,
+                                       ldcSizes.data(),
+                                       linAlgOpContext);
+                      }
                   }
-                }
 
                 if (basisStorageAttributesBoolMap
                       .find(BasisStorageAttributes::StoreGradient)
                       ->second)
-                {
-                  efeBDH->getEnrichmentClassicalInterface()->getEnrichmentGradientsInCellRangeAtQuadPts(
-                    *quadratureRuleContainer,
-                    basisGradientEnrichQuadStorage->data() + cumulativeDofsxQuadInCellRange * dim,
-                    linAlgOpContext,
-                    std::make_pair(cellStartId, cellEndId));
-                  
+                  {
+                    efeBDH->getEnrichmentClassicalInterface()
+                      ->getEnrichmentGradientsInCellRangeAtQuadPts(
+                        *quadratureRuleContainer,
+                        basisGradientEnrichQuadStorage->data() +
+                          cumulativeDofsxQuadInCellRange * dim,
+                        linAlgOpContext,
+                        std::make_pair(cellStartId, cellEndId));
+
                     if (efeBDH->isOrthogonalized())
-                    {
-                    size_type cumulativeOffset = 0;
-                    for (size_type cellId = 0; cellId < numCellsInBlock; cellId++)
-                    {
-                      const size_type nQuad = nQuadPointInCellBlock[cellId];
-                      linearAlgebra::blasLapack::stridedBlockCopy(
-                                  nQuad * dim,               
-                                  classicalDofsPerCell,          
-                                  classicalDofsPerCell,         
-                                  0,                   
-                                  classicalDofsPerCell,               
-                                  0,                   
-                                  basisGradientParaCellClassQuadStorage->data(), 
-                                  tmpGradientBlock.data() + cumulativeOffset,
-                                  linAlgOpContext);
-                      cumulativeOffset += classicalDofsPerCell * nQuad * dim;
-                    }
-
-                    computeJacobianInvTimesGradPara<
-                      ValueTypeBasisData,
-                      memorySpace,
-                      dim>(std::make_pair(cellStartId, cellEndId),
-                            classicalDofsPerCell,
-                            classDofsInCell,
-                            nQuadPointsInCell,
-                            basisJacobianInvQuadStorageTmp.data(),
-                            cellStartIdsBasisJacobianInvQuadStorage,
-                            tmpGradientBlock.data(),
-                            linAlgOpContext,
-                            tmpGradientInCellBlock.begin());
-
-
-                  std::vector<char>      transA(numCellsInBlock, 'N');
-                    std::vector<char>      transB(numCellsInBlock, 'N');
-                    for (size_type iCell = 0; iCell < numCellsInBlock; ++iCell)
                       {
-                        mSizes[iCell]   = numEnrichmentIdsInCellBlock[iCell];
-                        nSizes[iCell]   = nQuadPointInCellBlock[iCell] * dim;
-                        kSizes[iCell]   = classicalDofsPerCell;
-                        ldaSizes[iCell] = mSizes[iCell];
-                        ldbSizes[iCell] = kSizes[iCell];
-                        ldcSizes[iCell] = mSizes[iCell];
-                        strideA[iCell] = mSizes[iCell] * kSizes[iCell];
-                        strideB[iCell] = kSizes[iCell] * nSizes[iCell];
-                        strideC[iCell] = mSizes[iCell] * nSizes[iCell];
-                      }
+                        size_type cumulativeOffset = 0;
+                        for (size_type cellId = 0; cellId < numCellsInBlock;
+                             cellId++)
+                          {
+                            const size_type nQuad =
+                              nQuadPointInCellBlock[cellId];
+                            linearAlgebra::blasLapack::stridedBlockCopy(
+                              nQuad * dim,
+                              classicalDofsPerCell,
+                              classicalDofsPerCell,
+                              0,
+                              classicalDofsPerCell,
+                              0,
+                              basisGradientParaCellClassQuadStorage->data(),
+                              tmpGradientBlock.data() + cumulativeOffset,
+                              linAlgOpContext);
+                            cumulativeOffset +=
+                              classicalDofsPerCell * nQuad * dim;
+                          }
 
-                    linearAlgebra::blasLapack::gemmStridedVarBatched<
-                      ValueTypeBasisData,
-                      ValueTypeBasisData,
-                      memorySpace>(
-                      numCellsInBlock, 
-                      transA.data(),
-                      transB.data(),
-                      strideA.data(),
-                      strideB.data(),
-                      strideC.data(),
-                      mSizes.data(),
-                      nSizes.data(),
-                      kSizes.data(),
-                      (ValueTypeBasisData)-1.0,
-                      coeffsInAllCells.data() + cumulativeCoeffsInCellRange,
-                      ldaSizes.data(),
-                      tmpGradientInCellBlock.data(),
-                      ldbSizes.data(),
-                      (ValueTypeBasisData)1.0,
-                      basisGradientEnrichQuadStorage->data() + cumulativeDofsxQuadInCellRange * dim,
-                      ldcSizes.data(),
-                      linAlgOpContext);     
-                    }                     
-                }
+                        computeJacobianInvTimesGradPara<ValueTypeBasisData,
+                                                        memorySpace,
+                                                        dim>(
+                          std::make_pair(cellStartId, cellEndId),
+                          classicalDofsPerCell,
+                          classDofsInCell,
+                          nQuadPointsInCell,
+                          basisJacobianInvQuadStorageTmp.data(),
+                          cellStartIdsBasisJacobianInvQuadStorage,
+                          tmpGradientBlock.data(),
+                          linAlgOpContext,
+                          tmpGradientInCellBlock.begin());
+
+
+                        std::vector<char> transA(numCellsInBlock, 'N');
+                        std::vector<char> transB(numCellsInBlock, 'N');
+                        for (size_type iCell = 0; iCell < numCellsInBlock;
+                             ++iCell)
+                          {
+                            mSizes[iCell] = numEnrichmentIdsInCellBlock[iCell];
+                            nSizes[iCell] = nQuadPointInCellBlock[iCell] * dim;
+                            kSizes[iCell] = classicalDofsPerCell;
+                            ldaSizes[iCell] = mSizes[iCell];
+                            ldbSizes[iCell] = kSizes[iCell];
+                            ldcSizes[iCell] = mSizes[iCell];
+                            strideA[iCell]  = mSizes[iCell] * kSizes[iCell];
+                            strideB[iCell]  = kSizes[iCell] * nSizes[iCell];
+                            strideC[iCell]  = mSizes[iCell] * nSizes[iCell];
+                          }
+
+                        linearAlgebra::blasLapack::gemmStridedVarBatched<
+                          ValueTypeBasisData,
+                          ValueTypeBasisData,
+                          memorySpace>(numCellsInBlock,
+                                       transA.data(),
+                                       transB.data(),
+                                       strideA.data(),
+                                       strideB.data(),
+                                       strideC.data(),
+                                       mSizes.data(),
+                                       nSizes.data(),
+                                       kSizes.data(),
+                                       (ValueTypeBasisData)-1.0,
+                                       coeffsInAllCells.data() +
+                                         cumulativeCoeffsInCellRange,
+                                       ldaSizes.data(),
+                                       tmpGradientInCellBlock.data(),
+                                       ldbSizes.data(),
+                                       (ValueTypeBasisData)1.0,
+                                       basisGradientEnrichQuadStorage->data() +
+                                         cumulativeDofsxQuadInCellRange * dim,
+                                       ldcSizes.data(),
+                                       linAlgOpContext);
+                      }
+                  }
 
                 for (size_type iCell = 0; iCell < numCellsInBlock; iCell++)
                   {
                     cumulativeCoeffsInCellRange +=
                       classicalDofsPerCell * numEnrichmentIdsInCellBlock[iCell];
-                    cumulativeDofsxQuadInCellRange += numEnrichmentIdsInCellBlock[iCell] * nQuadPointInCellBlock[iCell];
+                    cumulativeDofsxQuadInCellRange +=
+                      numEnrichmentIdsInCellBlock[iCell] *
+                      nQuadPointInCellBlock[iCell];
                   }
               }
           }
@@ -1629,9 +1661,9 @@ namespace dftefe
         {
           d_dofsInCell[iCell] = d_efeBDH->nCellDofs(iCell);
         }
-      d_tmpGradientBlock = nullptr;
-      d_basisGradientDataClass = nullptr;
-      d_basisEnrichScratch = nullptr;
+      d_tmpGradientBlock           = nullptr;
+      d_basisGradientDataClass     = nullptr;
+      d_basisEnrichScratch         = nullptr;
       d_basisGradientEnrichScratch = nullptr;
       d_classialDofsInCell =
         utils::mathFunctions::sizeTypePow((d_efeBDH->getFEOrder(0) + 1), dim);
@@ -1816,26 +1848,27 @@ namespace dftefe
       std::vector<size_type> nQuadPointsInCell(0);
       std::vector<size_type> cellStartIdsBasisJacobianInvQuadStorage(0);
       std::vector<size_type> cellStartIdsBasisHessianQuadStorage(0);
-      EFEBDSOnTheFlyComputeDealiiInternal::storeValuesHRefinedSameQuadEveryCellBlocked<
-        ValueTypeBasisCoeff,
-        ValueTypeBasisData,
-        memorySpace,
-        dim>(d_efeBDH,
-             basisParaCellClassQuadStorage,
-             basisEnrichQuadStorage,
-             basisGradientParaCellClassQuadStorage,
-             basisGradientEnrichQuadStorage,
-             basisJacobianInvQuadStorage,
-             basisHessianQuadStorage,
-             quadratureRuleAttributes,
-             d_quadratureRuleContainer,
-             nQuadPointsInCell,
-             cellStartIdsBasisJacobianInvQuadStorage,
-             cellStartIdsBasisHessianQuadStorage,
-             basisStorageAttributesBoolMap,
-             BasisDataStorageDefaults<memorySpace>::CELL_BATCH_SIZE,
-             d_linAlgOpContext,
-             d_calculateEnrichmentDataOnTheFly);
+      EFEBDSOnTheFlyComputeDealiiInternal::
+        storeValuesHRefinedSameQuadEveryCellBlocked<ValueTypeBasisCoeff,
+                                                    ValueTypeBasisData,
+                                                    memorySpace,
+                                                    dim>(
+          d_efeBDH,
+          basisParaCellClassQuadStorage,
+          basisEnrichQuadStorage,
+          basisGradientParaCellClassQuadStorage,
+          basisGradientEnrichQuadStorage,
+          basisJacobianInvQuadStorage,
+          basisHessianQuadStorage,
+          quadratureRuleAttributes,
+          d_quadratureRuleContainer,
+          nQuadPointsInCell,
+          cellStartIdsBasisJacobianInvQuadStorage,
+          cellStartIdsBasisHessianQuadStorage,
+          basisStorageAttributesBoolMap,
+          BasisDataStorageDefaults<memorySpace>::CELL_BATCH_SIZE,
+          d_linAlgOpContext,
+          d_calculateEnrichmentDataOnTheFly);
 
       if (basisStorageAttributesBoolMap
             .find(BasisStorageAttributes::StoreValues)
@@ -1863,13 +1896,14 @@ namespace dftefe
                 d_classialDofsInCell * nQuadPointsInCell[0] * dim *
                 d_maxCellBlock);
 
-              size_type cumulativeOffset = 0;
-              const size_type numCopies = (d_maxCellBlock != 1) ? d_maxCellBlock : 1;
+              size_type       cumulativeOffset = 0;
+              const size_type numCopies =
+                (d_maxCellBlock != 1) ? d_maxCellBlock : 1;
               for (size_type iCell = 0; iCell < numCopies; ++iCell)
-              {
-                const size_type nQuad = nQuadPointsInCell[0];
-                const size_type nDofs  = d_classialDofsInCell;
-                linearAlgebra::blasLapack::stridedBlockCopy(
+                {
+                  const size_type nQuad = nQuadPointsInCell[0];
+                  const size_type nDofs = d_classialDofsInCell;
+                  linearAlgebra::blasLapack::stridedBlockCopy(
                     nQuad * dim,
                     d_classialDofsInCell,
                     d_classialDofsInCell,
@@ -1880,12 +1914,13 @@ namespace dftefe
                     d_tmpGradientBlock->data() + cumulativeOffset,
                     d_linAlgOpContext);
 
-                cumulativeOffset += nDofs * nQuad * dim;
-              }
+                  cumulativeOffset += nDofs * nQuad * dim;
+                }
             }
-          if(!d_useMemOptGradScratchSpace || d_calculateEnrichmentDataOnTheFly)
+          if (!d_useMemOptGradScratchSpace || d_calculateEnrichmentDataOnTheFly)
             d_basisGradientDataClass = std::make_shared<Storage>(
-                  d_classialDofsInCell * nQuadPointsInCell[0] * dim * d_maxCellBlock);
+              d_classialDofsInCell * nQuadPointsInCell[0] * dim *
+              d_maxCellBlock);
           if (!d_calculateEnrichmentDataOnTheFly)
             d_basisGradientEnrichQuadStorage =
               std::move(basisGradientEnrichQuadStorage);
@@ -1929,14 +1964,13 @@ namespace dftefe
 
           if (d_efeBDH->isOrthogonalized())
             {
-              auto coeffsHost =
-                d_efeBDH->getEnrichmentClassicalInterface()
-                  ->getClassicalComponentCoeffsInAllCellsOEFE();
+              auto coeffsHost = d_efeBDH->getEnrichmentClassicalInterface()
+                                  ->getClassicalComponentCoeffsInAllCellsOEFE();
               d_coeffsInAllCells.resize(coeffsHost.size());
-              utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
-                coeffsHost.size(),
-                d_coeffsInAllCells.data(),
-                coeffsHost.data());
+              utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::
+                copy(coeffsHost.size(),
+                     d_coeffsInAllCells.data(),
+                     coeffsHost.data());
             }
         }
 
@@ -2130,26 +2164,27 @@ namespace dftefe
                   }
               }
       */
-      EFEBDSOnTheFlyComputeDealiiInternal::storeValuesHRefinedSameQuadEveryCellBlocked<
-        ValueTypeBasisCoeff,
-        ValueTypeBasisData,
-        memorySpace,
-        dim>(d_efeBDH,
-             basisParaCellClassQuadStorage,
-             basisEnrichQuadStorage,
-             basisGradientParaCellClassQuadStorage,
-             basisGradientEnrichQuadStorage,
-             basisJacobianInvQuadStorage,
-             basisHessianQuadStorage,
-             quadratureRuleAttributes,
-             d_quadratureRuleContainer,
-             nQuadPointsInCell,
-             cellStartIdsBasisJacobianInvQuadStorage,
-             cellStartIdsBasisHessianQuadStorage,
-             basisStorageAttributesBoolMap,
-             BasisDataStorageDefaults<memorySpace>::CELL_BATCH_SIZE,
-             d_linAlgOpContext,
-             d_calculateEnrichmentDataOnTheFly);
+      EFEBDSOnTheFlyComputeDealiiInternal::
+        storeValuesHRefinedSameQuadEveryCellBlocked<ValueTypeBasisCoeff,
+                                                    ValueTypeBasisData,
+                                                    memorySpace,
+                                                    dim>(
+          d_efeBDH,
+          basisParaCellClassQuadStorage,
+          basisEnrichQuadStorage,
+          basisGradientParaCellClassQuadStorage,
+          basisGradientEnrichQuadStorage,
+          basisJacobianInvQuadStorage,
+          basisHessianQuadStorage,
+          quadratureRuleAttributes,
+          d_quadratureRuleContainer,
+          nQuadPointsInCell,
+          cellStartIdsBasisJacobianInvQuadStorage,
+          cellStartIdsBasisHessianQuadStorage,
+          basisStorageAttributesBoolMap,
+          BasisDataStorageDefaults<memorySpace>::CELL_BATCH_SIZE,
+          d_linAlgOpContext,
+          d_calculateEnrichmentDataOnTheFly);
 
       if (basisStorageAttributesBoolMap
             .find(BasisStorageAttributes::StoreValues)
@@ -2177,13 +2212,14 @@ namespace dftefe
                 d_classialDofsInCell * nQuadPointsInCell[0] * dim *
                 d_maxCellBlock);
 
-              size_type cumulativeOffset = 0;
-              const size_type numCopies = (d_maxCellBlock != 1) ? d_maxCellBlock : 1;
+              size_type       cumulativeOffset = 0;
+              const size_type numCopies =
+                (d_maxCellBlock != 1) ? d_maxCellBlock : 1;
               for (size_type iCell = 0; iCell < numCopies; ++iCell)
-            {
-                const size_type nQuad = nQuadPointsInCell[0];
-                const size_type nDofs  = d_classialDofsInCell;
-                linearAlgebra::blasLapack::stridedBlockCopy(
+                {
+                  const size_type nQuad = nQuadPointsInCell[0];
+                  const size_type nDofs = d_classialDofsInCell;
+                  linearAlgebra::blasLapack::stridedBlockCopy(
                     nQuad * dim,
                     d_classialDofsInCell,
                     d_classialDofsInCell,
@@ -2194,12 +2230,13 @@ namespace dftefe
                     d_tmpGradientBlock->data() + cumulativeOffset,
                     d_linAlgOpContext);
 
-                cumulativeOffset += nDofs * nQuad * dim;
-              }
+                  cumulativeOffset += nDofs * nQuad * dim;
+                }
             }
-          if(!d_useMemOptGradScratchSpace || d_calculateEnrichmentDataOnTheFly)
+          if (!d_useMemOptGradScratchSpace || d_calculateEnrichmentDataOnTheFly)
             d_basisGradientDataClass = std::make_shared<Storage>(
-                  d_classialDofsInCell * nQuadPointsInCell[0] * dim * d_maxCellBlock);
+              d_classialDofsInCell * nQuadPointsInCell[0] * dim *
+              d_maxCellBlock);
           if (!d_calculateEnrichmentDataOnTheFly)
             d_basisGradientEnrichQuadStorage =
               std::move(basisGradientEnrichQuadStorage);
@@ -2236,14 +2273,13 @@ namespace dftefe
 
           if (d_efeBDH->isOrthogonalized())
             {
-              auto coeffsHost =
-                d_efeBDH->getEnrichmentClassicalInterface()
-                  ->getClassicalComponentCoeffsInAllCellsOEFE();
+              auto coeffsHost = d_efeBDH->getEnrichmentClassicalInterface()
+                                  ->getClassicalComponentCoeffsInAllCellsOEFE();
               d_coeffsInAllCells.resize(coeffsHost.size());
-              utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
-                coeffsHost.size(),
-                d_coeffsInAllCells.data(),
-                coeffsHost.data());
+              utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::
+                copy(coeffsHost.size(),
+                     d_coeffsInAllCells.data(),
+                     coeffsHost.data());
             }
         }
 
@@ -2317,7 +2353,7 @@ namespace dftefe
         const std::vector<double> &         relativeTolerances,
         const std::vector<double> &         integralThresholds,
         const double                        smallestCellVolume,
-        const size_type                  maxRecursion,
+        const size_type                     maxRecursion,
         const BasisStorageAttributesBoolMap basisStorageAttributesBoolMap)
     {
       utils::throwException<utils::InvalidArgument>(
@@ -2505,7 +2541,8 @@ namespace dftefe
             d_nQuadPointsIncell[cellId];
         }
       // size_type cumulativeOffset = 0;
-      // for (size_type cellId = cellRange.first; cellId < cellRange.second; cellId++)
+      // for (size_type cellId = cellRange.first; cellId < cellRange.second;
+      // cellId++)
       // {
       //     const size_type nQuad     = d_nQuadPointsIncell[cellId];
       //     const size_type nDofs     = d_dofsInCell[cellId];
@@ -2520,74 +2557,75 @@ namespace dftefe
       //     if (nEnriched > 0)
       //       linearAlgebra::blasLapack::stridedBlockCopy(
       //           nQuad, nEnriched, nEnriched, 0, nDofs, d_classialDofsInCell,
-      //           d_basisEnrichQuadStorage->data() + cumulativeOffsetEnrichQuad,
-      //           basisData.data() + cumulativeOffset, d_linAlgOpContext);
+      //           d_basisEnrichQuadStorage->data() +
+      //           cumulativeOffsetEnrichQuad, basisData.data() +
+      //           cumulativeOffset, d_linAlgOpContext);
       //
       //     cumulativeOffset           += nDofs * nQuad;
       //     cumulativeOffsetEnrichQuad += nEnriched * nQuad;
       // }
 
-        const size_type numBatch = cellRange.second - cellRange.first;
-        std::vector<size_type> batchStrideSrcClass(numBatch, 0);
-        std::vector<size_type> batchStrideDst(numBatch);
-        std::vector<size_type> batchVecSize(numBatch);
-        std::vector<size_type> batchNumVecClass(numBatch, d_classialDofsInCell);
-        std::vector<size_type> batchSrcLDClass(numBatch, d_classialDofsInCell);
-        std::vector<size_type> batchSrcStartClass(numBatch, 0);
-        std::vector<size_type> batchDstLD(numBatch);
-        std::vector<size_type> batchDstStartClass(numBatch, 0);
-        std::vector<size_type> batchStrideSrcEnrich(numBatch);
-        std::vector<size_type> batchNumVecEnrich(numBatch);
-        std::vector<size_type> batchSrcLDEnrich(numBatch);
-        std::vector<size_type> batchSrcStartEnrich(numBatch, 0);
-        std::vector<size_type> batchDstStartEnrich(numBatch,
-                                                    d_classialDofsInCell);
+      const size_type        numBatch = cellRange.second - cellRange.first;
+      std::vector<size_type> batchStrideSrcClass(numBatch, 0);
+      std::vector<size_type> batchStrideDst(numBatch);
+      std::vector<size_type> batchVecSize(numBatch);
+      std::vector<size_type> batchNumVecClass(numBatch, d_classialDofsInCell);
+      std::vector<size_type> batchSrcLDClass(numBatch, d_classialDofsInCell);
+      std::vector<size_type> batchSrcStartClass(numBatch, 0);
+      std::vector<size_type> batchDstLD(numBatch);
+      std::vector<size_type> batchDstStartClass(numBatch, 0);
+      std::vector<size_type> batchStrideSrcEnrich(numBatch);
+      std::vector<size_type> batchNumVecEnrich(numBatch);
+      std::vector<size_type> batchSrcLDEnrich(numBatch);
+      std::vector<size_type> batchSrcStartEnrich(numBatch, 0);
+      std::vector<size_type> batchDstStartEnrich(numBatch,
+                                                 d_classialDofsInCell);
 
-        for (size_type ibatch = 0; ibatch < numBatch; ++ibatch)
-          {
-            const size_type cellId    = cellRange.first + ibatch;
-            const size_type nQuad     = d_nQuadPointsIncell[cellId];
-            const size_type nDofs     = d_dofsInCell[cellId];
-            const size_type nEnriched = nDofs - d_classialDofsInCell;
-            batchVecSize[ibatch]         = nQuad;
-            batchDstLD[ibatch]           = nDofs;
-            batchStrideDst[ibatch]       = nDofs * nQuad;
-            batchNumVecEnrich[ibatch]    = nEnriched;
-            batchSrcLDEnrich[ibatch]     = nEnriched;
-            batchStrideSrcEnrich[ibatch] = nEnriched * nQuad;
-          }
-
-        linearAlgebra::blasLapack::varBatchedStridedBlockCopy(
-          numBatch,
-          batchStrideSrcClass.data(),
-          batchStrideDst.data(),
-          batchVecSize.data(),
-          batchNumVecClass.data(),
-          batchSrcLDClass.data(),
-          batchSrcStartClass.data(),
-          batchDstLD.data(),
-          batchDstStartClass.data(),
-          d_basisParaCellClassQuadStorage->data(),
-          basisData.data(),
-          d_linAlgOpContext);
-
-        if(!d_calculateEnrichmentDataOnTheFly)
+      for (size_type ibatch = 0; ibatch < numBatch; ++ibatch)
         {
-        linearAlgebra::blasLapack::varBatchedStridedBlockCopy(
-          numBatch,
-          batchStrideSrcEnrich.data(),
-          batchStrideDst.data(),
-          batchVecSize.data(),
-          batchNumVecEnrich.data(),
-          batchSrcLDEnrich.data(),
-          batchSrcStartEnrich.data(),
-          batchDstLD.data(),
-          batchDstStartEnrich.data(),
-          d_basisEnrichQuadStorage->data() + cumulativeOffsetEnrichQuad,
-          basisData.data(),
-          d_linAlgOpContext);
+          const size_type cellId       = cellRange.first + ibatch;
+          const size_type nQuad        = d_nQuadPointsIncell[cellId];
+          const size_type nDofs        = d_dofsInCell[cellId];
+          const size_type nEnriched    = nDofs - d_classialDofsInCell;
+          batchVecSize[ibatch]         = nQuad;
+          batchDstLD[ibatch]           = nDofs;
+          batchStrideDst[ibatch]       = nDofs * nQuad;
+          batchNumVecEnrich[ibatch]    = nEnriched;
+          batchSrcLDEnrich[ibatch]     = nEnriched;
+          batchStrideSrcEnrich[ibatch] = nEnriched * nQuad;
         }
-        else
+
+      linearAlgebra::blasLapack::varBatchedStridedBlockCopy(
+        numBatch,
+        batchStrideSrcClass.data(),
+        batchStrideDst.data(),
+        batchVecSize.data(),
+        batchNumVecClass.data(),
+        batchSrcLDClass.data(),
+        batchSrcStartClass.data(),
+        batchDstLD.data(),
+        batchDstStartClass.data(),
+        d_basisParaCellClassQuadStorage->data(),
+        basisData.data(),
+        d_linAlgOpContext);
+
+      if (!d_calculateEnrichmentDataOnTheFly)
+        {
+          linearAlgebra::blasLapack::varBatchedStridedBlockCopy(
+            numBatch,
+            batchStrideSrcEnrich.data(),
+            batchStrideDst.data(),
+            batchVecSize.data(),
+            batchNumVecEnrich.data(),
+            batchSrcLDEnrich.data(),
+            batchSrcStartEnrich.data(),
+            batchDstLD.data(),
+            batchDstStartEnrich.data(),
+            d_basisEnrichQuadStorage->data() + cumulativeOffsetEnrichQuad,
+            basisData.data(),
+            d_linAlgOpContext);
+        }
+      else
         {
           d_efeBDH->getEnrichmentClassicalInterface()
             ->getEnrichmentValuesInCellRangeAtQuadPts(
@@ -2601,7 +2639,8 @@ namespace dftefe
               size_type cumulativeCoeffsOffset = 0;
               for (size_type c = 0; c < cellRange.first; c++)
                 cumulativeCoeffsOffset +=
-                  (d_dofsInCell[c] - d_classialDofsInCell) * d_classialDofsInCell;
+                  (d_dofsInCell[c] - d_classialDofsInCell) *
+                  d_classialDofsInCell;
 
               std::vector<size_type> mSizes(numBatch, 0);
               std::vector<size_type> nSizes(numBatch, 0);
@@ -2619,38 +2658,38 @@ namespace dftefe
                 {
                   const size_type nEnrich = batchNumVecEnrich[iCell];
                   const size_type nQuad   = batchVecSize[iCell];
-                  mSizes[iCell]   = nEnrich;
-                  nSizes[iCell]   = nQuad;
-                  kSizes[iCell]   = d_classialDofsInCell;
-                  ldaSizes[iCell] = nEnrich;
-                  ldbSizes[iCell] = d_classialDofsInCell;
-                  ldcSizes[iCell] = nEnrich;
-                  strideA[iCell]  = nEnrich * d_classialDofsInCell;
-                  strideB[iCell]  = 0;
-                  strideC[iCell]  = nEnrich * nQuad;
+                  mSizes[iCell]           = nEnrich;
+                  nSizes[iCell]           = nQuad;
+                  kSizes[iCell]           = d_classialDofsInCell;
+                  ldaSizes[iCell]         = nEnrich;
+                  ldbSizes[iCell]         = d_classialDofsInCell;
+                  ldcSizes[iCell]         = nEnrich;
+                  strideA[iCell]          = nEnrich * d_classialDofsInCell;
+                  strideB[iCell]          = 0;
+                  strideC[iCell]          = nEnrich * nQuad;
                 }
 
-              linearAlgebra::blasLapack::gemmStridedVarBatched<ValueTypeBasisData,
-                                                                ValueTypeBasisData,
-                                                                memorySpace>(
-                numBatch,
-                transA.data(),
-                transB.data(),
-                strideA.data(),
-                strideB.data(),
-                strideC.data(),
-                mSizes.data(),
-                nSizes.data(),
-                kSizes.data(),
-                (ValueTypeBasisData)-1.0,
-                d_coeffsInAllCells.data() + cumulativeCoeffsOffset,
-                ldaSizes.data(),
-                d_basisParaCellClassQuadStorage->data(),
-                ldbSizes.data(),
-                (ValueTypeBasisData)1.0,
-                d_basisEnrichScratch->data(),
-                ldcSizes.data(),
-                d_linAlgOpContext);
+              linearAlgebra::blasLapack::gemmStridedVarBatched<
+                ValueTypeBasisData,
+                ValueTypeBasisData,
+                memorySpace>(numBatch,
+                             transA.data(),
+                             transB.data(),
+                             strideA.data(),
+                             strideB.data(),
+                             strideC.data(),
+                             mSizes.data(),
+                             nSizes.data(),
+                             kSizes.data(),
+                             (ValueTypeBasisData)-1.0,
+                             d_coeffsInAllCells.data() + cumulativeCoeffsOffset,
+                             ldaSizes.data(),
+                             d_basisParaCellClassQuadStorage->data(),
+                             ldbSizes.data(),
+                             (ValueTypeBasisData)1.0,
+                             d_basisEnrichScratch->data(),
+                             ldcSizes.data(),
+                             d_linAlgOpContext);
             }
 
           linearAlgebra::blasLapack::varBatchedStridedBlockCopy(
@@ -2749,7 +2788,8 @@ namespace dftefe
           //   }
 
           // size_type cumulativeOffset = 0;
-          // for (size_type cellId = cellRange.first; cellId < cellRange.second; cellId++)
+          // for (size_type cellId = cellRange.first; cellId < cellRange.second;
+          // cellId++)
           // {
           //     const size_type nQuad = d_nQuadPointsIncell[cellId];
           //     const size_type nDofs = d_classialDofsInCell;
@@ -2757,7 +2797,8 @@ namespace dftefe
           //         nQuad * dim, d_classialDofsInCell, d_classialDofsInCell, 0,
           //         d_classialDofsInCell, 0,
           //         d_basisGradientParaCellClassQuadStorage->data(),
-          //         tmpGradientBlock->data() + cumulativeOffset, d_linAlgOpContext);
+          //         tmpGradientBlock->data() + cumulativeOffset,
+          //         d_linAlgOpContext);
           //     cumulativeOffset += nDofs * nQuad * dim;
           // }
 
@@ -2766,18 +2807,18 @@ namespace dftefe
           std::vector<size_type> batchStrideDstGrad(numBatchGrad);
           std::vector<size_type> batchVecSizeGrad(numBatchGrad);
           std::vector<size_type> batchNumVecGradClass(numBatchGrad,
-                                                       d_classialDofsInCell);
-          std::vector<size_type> batchSrcLDGradClass(numBatchGrad,
                                                       d_classialDofsInCell);
+          std::vector<size_type> batchSrcLDGradClass(numBatchGrad,
+                                                     d_classialDofsInCell);
           std::vector<size_type> batchSrcStartGradClass(numBatchGrad, 0);
           std::vector<size_type> batchDstLDGradClass(numBatchGrad,
-                                                      d_classialDofsInCell);
+                                                     d_classialDofsInCell);
           std::vector<size_type> batchDstStartGradClass(numBatchGrad, 0);
 
           for (size_type ibatch = 0; ibatch < numBatchGrad; ++ibatch)
             {
-              const size_type cellId = cellRange.first + ibatch;
-              const size_type nQuad  = d_nQuadPointsIncell[cellId];
+              const size_type cellId     = cellRange.first + ibatch;
+              const size_type nQuad      = d_nQuadPointsIncell[cellId];
               batchVecSizeGrad[ibatch]   = nQuad * dim;
               batchStrideDstGrad[ibatch] = d_classialDofsInCell * nQuad * dim;
             }
@@ -2796,7 +2837,7 @@ namespace dftefe
             tmpGradientBlock->data(),
             d_linAlgOpContext);
 
-          if(!d_useMemOptGradScratchSpace || d_calculateEnrichmentDataOnTheFly)
+          if (!d_useMemOptGradScratchSpace || d_calculateEnrichmentDataOnTheFly)
             d_basisGradientDataClass->resize(
               d_classialDofsInCell * d_nQuadPointsIncell[0] * dim *
               (cellRange.second - cellRange.first));
@@ -2807,8 +2848,9 @@ namespace dftefe
               for (size_type cellId = cellRange.first;
                    cellId < cellRange.second;
                    cellId++)
-                maxEnrich = std::max(maxEnrich,
-                                     d_dofsInCell[cellId] - d_classialDofsInCell);
+                maxEnrich =
+                  std::max(maxEnrich,
+                           d_dofsInCell[cellId] - d_classialDofsInCell);
               d_basisGradientEnrichScratch->resize(
                 maxEnrich * d_nQuadPointsIncell[0] * dim *
                 (cellRange.second - cellRange.first));
@@ -2821,74 +2863,78 @@ namespace dftefe
                                d_basisGradientParaCellClassQuadStorage;
         }
 
-      if(!d_useMemOptGradScratchSpace || d_calculateEnrichmentDataOnTheFly)
-      {
-      const std::vector<size_type> classDofsInCell(d_efeBDH->nLocallyOwnedCells(),
-                                                     d_classialDofsInCell);
-
-      EFEBDSOnTheFlyComputeDealiiInternal::
-        computeJacobianInvTimesGradPara<ValueTypeBasisData, memorySpace, dim>(
-          cellRange,
-          d_classialDofsInCell,
-          classDofsInCell,
-          d_nQuadPointsIncell,
-          d_basisJacobianInvQuadStorage->data(),
-          d_cellStartIdsBasisJacobianInvQuadStorage,
-          tmpGradientBlock->data(),
-          d_linAlgOpContext,
-          d_basisGradientDataClass->data());
-
-      const size_type numBatchClassGrad = cellRange.second - cellRange.first;
-      std::vector<size_type> batchStrideSrcClassGrad(numBatchClassGrad);
-      std::vector<size_type> batchStrideDstClassGrad(numBatchClassGrad);
-      std::vector<size_type> batchVecSizeClassGrad(numBatchClassGrad);
-      std::vector<size_type> batchNumVecClassGrad(numBatchClassGrad,
-                                                   d_classialDofsInCell);
-      std::vector<size_type> batchSrcLDClassGrad(numBatchClassGrad,
-                                                  d_classialDofsInCell);
-      std::vector<size_type> batchSrcStartClassGrad(numBatchClassGrad, 0);
-      std::vector<size_type> batchDstLDClassGrad(numBatchClassGrad);
-      std::vector<size_type> batchDstStartClassGrad(numBatchClassGrad, 0);
-
-      for (size_type ibatch = 0; ibatch < numBatchClassGrad; ++ibatch)
+      if (!d_useMemOptGradScratchSpace || d_calculateEnrichmentDataOnTheFly)
         {
-          const size_type cellId = cellRange.first + ibatch;
-          const size_type nDofs  = d_dofsInCell[cellId];
-          const size_type nQuad  = d_nQuadPointsIncell[cellId];
-          batchVecSizeClassGrad[ibatch]   = nQuad * dim;
-          batchStrideSrcClassGrad[ibatch] = d_classialDofsInCell * nQuad * dim;
-          batchDstLDClassGrad[ibatch]     = nDofs;
-          batchStrideDstClassGrad[ibatch] = nDofs * nQuad * dim;
-        }
+          const std::vector<size_type> classDofsInCell(
+            d_efeBDH->nLocallyOwnedCells(), d_classialDofsInCell);
 
-      linearAlgebra::blasLapack::varBatchedStridedBlockCopy(
-        numBatchClassGrad,
-        batchStrideSrcClassGrad.data(),
-        batchStrideDstClassGrad.data(),
-        batchVecSizeClassGrad.data(),
-        batchNumVecClassGrad.data(),
-        batchSrcLDClassGrad.data(),
-        batchSrcStartClassGrad.data(),
-        batchDstLDClassGrad.data(),
-        batchDstStartClassGrad.data(),
-        d_basisGradientDataClass->data(),
-        basisGradientData.data(),
-        d_linAlgOpContext);
-      }
+          EFEBDSOnTheFlyComputeDealiiInternal::computeJacobianInvTimesGradPara<
+            ValueTypeBasisData,
+            memorySpace,
+            dim>(cellRange,
+                 d_classialDofsInCell,
+                 classDofsInCell,
+                 d_nQuadPointsIncell,
+                 d_basisJacobianInvQuadStorage->data(),
+                 d_cellStartIdsBasisJacobianInvQuadStorage,
+                 tmpGradientBlock->data(),
+                 d_linAlgOpContext,
+                 d_basisGradientDataClass->data());
+
+          const size_type numBatchClassGrad =
+            cellRange.second - cellRange.first;
+          std::vector<size_type> batchStrideSrcClassGrad(numBatchClassGrad);
+          std::vector<size_type> batchStrideDstClassGrad(numBatchClassGrad);
+          std::vector<size_type> batchVecSizeClassGrad(numBatchClassGrad);
+          std::vector<size_type> batchNumVecClassGrad(numBatchClassGrad,
+                                                      d_classialDofsInCell);
+          std::vector<size_type> batchSrcLDClassGrad(numBatchClassGrad,
+                                                     d_classialDofsInCell);
+          std::vector<size_type> batchSrcStartClassGrad(numBatchClassGrad, 0);
+          std::vector<size_type> batchDstLDClassGrad(numBatchClassGrad);
+          std::vector<size_type> batchDstStartClassGrad(numBatchClassGrad, 0);
+
+          for (size_type ibatch = 0; ibatch < numBatchClassGrad; ++ibatch)
+            {
+              const size_type cellId        = cellRange.first + ibatch;
+              const size_type nDofs         = d_dofsInCell[cellId];
+              const size_type nQuad         = d_nQuadPointsIncell[cellId];
+              batchVecSizeClassGrad[ibatch] = nQuad * dim;
+              batchStrideSrcClassGrad[ibatch] =
+                d_classialDofsInCell * nQuad * dim;
+              batchDstLDClassGrad[ibatch]     = nDofs;
+              batchStrideDstClassGrad[ibatch] = nDofs * nQuad * dim;
+            }
+
+          linearAlgebra::blasLapack::varBatchedStridedBlockCopy(
+            numBatchClassGrad,
+            batchStrideSrcClassGrad.data(),
+            batchStrideDstClassGrad.data(),
+            batchVecSizeClassGrad.data(),
+            batchNumVecClassGrad.data(),
+            batchSrcLDClassGrad.data(),
+            batchSrcStartClassGrad.data(),
+            batchDstLDClassGrad.data(),
+            batchDstStartClassGrad.data(),
+            d_basisGradientDataClass->data(),
+            basisGradientData.data(),
+            d_linAlgOpContext);
+        }
       else
-      {
-      EFEBDSOnTheFlyComputeDealiiInternal::
-        computeJacobianInvTimesGradPara<ValueTypeBasisData, memorySpace, dim>(
-          cellRange,
-          d_classialDofsInCell,
-          d_dofsInCell,
-          d_nQuadPointsIncell,
-          d_basisJacobianInvQuadStorage->data(),
-          d_cellStartIdsBasisJacobianInvQuadStorage,
-          tmpGradientBlock->data(),
-          d_linAlgOpContext,
-          basisGradientData.data());
-      }
+        {
+          EFEBDSOnTheFlyComputeDealiiInternal::computeJacobianInvTimesGradPara<
+            ValueTypeBasisData,
+            memorySpace,
+            dim>(cellRange,
+                 d_classialDofsInCell,
+                 d_dofsInCell,
+                 d_nQuadPointsIncell,
+                 d_basisJacobianInvQuadStorage->data(),
+                 d_cellStartIdsBasisJacobianInvQuadStorage,
+                 tmpGradientBlock->data(),
+                 d_linAlgOpContext,
+                 basisGradientData.data());
+        }
 
       size_type cumulativeOffsetEnrichQuad = 0;
       for (size_type cellId = 0; cellId < cellRange.first; cellId++)
@@ -2903,7 +2949,8 @@ namespace dftefe
       //   {
       //     if (d_dofsInCell[cellId] - d_classialDofsInCell > 0)
       //       {
-      //         for (size_type quadId = 0; quadId < d_nQuadPointsIncell[cellId];
+      //         for (size_type quadId = 0; quadId <
+      //         d_nQuadPointsIncell[cellId];
       //              quadId++)
       //           {
       //             for (size_type iDim = 0; iDim < dim; iDim++)
@@ -2912,11 +2959,15 @@ namespace dftefe
       //                   d_basisGradientEnrichQuadStorage->data(),
       //                   (d_dofsInCell[cellId] - d_classialDofsInCell),
       //                   cumulativeOffsetEnrichQuad +
-      //                     (d_dofsInCell[cellId] - d_classialDofsInCell) * dim *
+      //                     (d_dofsInCell[cellId] - d_classialDofsInCell) * dim
+      //                     *
       //                       quadId +
-      //                     iDim * (d_dofsInCell[cellId] - d_classialDofsInCell),
-      //                   cumulativeOffset + d_dofsInCell[cellId] * dim * quadId +
-      //                     d_dofsInCell[cellId] * iDim + d_classialDofsInCell);
+      //                     iDim * (d_dofsInCell[cellId] -
+      //                     d_classialDofsInCell),
+      //                   cumulativeOffset + d_dofsInCell[cellId] * dim *
+      //                   quadId +
+      //                     d_dofsInCell[cellId] * iDim +
+      //                     d_classialDofsInCell);
       //               }
       //           }
       //       }
@@ -2928,16 +2979,18 @@ namespace dftefe
       //   }
 
       // size_type cumulativeOffset = 0;
-      // for (size_type cellId = cellRange.first; cellId < cellRange.second; cellId++)
+      // for (size_type cellId = cellRange.first; cellId < cellRange.second;
+      // cellId++)
       // {
       //   const size_type nDofs     = d_dofsInCell[cellId];
       //   const size_type nEnriched = nDofs - d_classialDofsInCell;
       //   const size_type nQuad     = d_nQuadPointsIncell[cellId];
       //   if (nEnriched > 0)
       //     linearAlgebra::blasLapack::stridedBlockCopy(
-      //         nQuad * dim, nEnriched, nEnriched, 0, nDofs, d_classialDofsInCell,
-      //         d_basisGradientEnrichQuadStorage->data() + cumulativeOffsetEnrichQuad,
-      //         basisGradientData.data() + cumulativeOffset, d_linAlgOpContext);
+      //         nQuad * dim, nEnriched, nEnriched, 0, nDofs,
+      //         d_classialDofsInCell, d_basisGradientEnrichQuadStorage->data()
+      //         + cumulativeOffsetEnrichQuad, basisGradientData.data() +
+      //         cumulativeOffset, d_linAlgOpContext);
       //   cumulativeOffset           += nDofs * nQuad * dim;
       //   cumulativeOffsetEnrichQuad += nEnriched * nQuad * dim;
       // }
@@ -2951,122 +3004,127 @@ namespace dftefe
       std::vector<size_type> batchSrcStartEnrichGrad(numBatchEnrichGrad, 0);
       std::vector<size_type> batchDstLDEnrichGrad(numBatchEnrichGrad);
       std::vector<size_type> batchDstStartEnrichGrad(numBatchEnrichGrad,
-                                                      d_classialDofsInCell);
+                                                     d_classialDofsInCell);
 
       for (size_type ibatch = 0; ibatch < numBatchEnrichGrad; ++ibatch)
         {
-          const size_type cellId    = cellRange.first + ibatch;
-          const size_type nDofs     = d_dofsInCell[cellId];
-          const size_type nEnriched = nDofs - d_classialDofsInCell;
-          const size_type nQuad     = d_nQuadPointsIncell[cellId];
-          batchVecSizeEnrichGrad[ibatch]     = nQuad * dim;
-          batchNumVecEnrichGrad[ibatch]      = nEnriched;
-          batchSrcLDEnrichGrad[ibatch]       = nEnriched;
-          batchStrideSrcEnrichGrad[ibatch]   = nEnriched * nQuad * dim;
-          batchDstLDEnrichGrad[ibatch]       = nDofs;
-          batchStrideDstEnrichGrad[ibatch]   = nDofs * nQuad * dim;
+          const size_type cellId           = cellRange.first + ibatch;
+          const size_type nDofs            = d_dofsInCell[cellId];
+          const size_type nEnriched        = nDofs - d_classialDofsInCell;
+          const size_type nQuad            = d_nQuadPointsIncell[cellId];
+          batchVecSizeEnrichGrad[ibatch]   = nQuad * dim;
+          batchNumVecEnrichGrad[ibatch]    = nEnriched;
+          batchSrcLDEnrichGrad[ibatch]     = nEnriched;
+          batchStrideSrcEnrichGrad[ibatch] = nEnriched * nQuad * dim;
+          batchDstLDEnrichGrad[ibatch]     = nDofs;
+          batchStrideDstEnrichGrad[ibatch] = nDofs * nQuad * dim;
         }
 
-      if(!d_calculateEnrichmentDataOnTheFly)
-      {
-      linearAlgebra::blasLapack::varBatchedStridedBlockCopy(
-        numBatchEnrichGrad,
-        batchStrideSrcEnrichGrad.data(),
-        batchStrideDstEnrichGrad.data(),
-        batchVecSizeEnrichGrad.data(),
-        batchNumVecEnrichGrad.data(),
-        batchSrcLDEnrichGrad.data(),
-        batchSrcStartEnrichGrad.data(),
-        batchDstLDEnrichGrad.data(),
-        batchDstStartEnrichGrad.data(),
-        d_basisGradientEnrichQuadStorage->data() + cumulativeOffsetEnrichQuad,
-        basisGradientData.data(),
-        d_linAlgOpContext);
-      }
+      if (!d_calculateEnrichmentDataOnTheFly)
+        {
+          linearAlgebra::blasLapack::varBatchedStridedBlockCopy(
+            numBatchEnrichGrad,
+            batchStrideSrcEnrichGrad.data(),
+            batchStrideDstEnrichGrad.data(),
+            batchVecSizeEnrichGrad.data(),
+            batchNumVecEnrichGrad.data(),
+            batchSrcLDEnrichGrad.data(),
+            batchSrcStartEnrichGrad.data(),
+            batchDstLDEnrichGrad.data(),
+            batchDstStartEnrichGrad.data(),
+            d_basisGradientEnrichQuadStorage->data() +
+              cumulativeOffsetEnrichQuad,
+            basisGradientData.data(),
+            d_linAlgOpContext);
+        }
       else
-      {
-        // d_basisGradientDataClass already has J^{-T}*grad(phi) in compact form
-        // (computed by the !d_useMemOptGradScratchSpace || d_calculateEnrichmentDataOnTheFly
-        //  branch above). Use d_basisGradientEnrichScratch (separate from tmpGradientBlock)
-        // so that tmpGradientBlock (ref-space grads) is not corrupted for future calls.
-        d_efeBDH->getEnrichmentClassicalInterface()
-          ->getEnrichmentGradientsInCellRangeAtQuadPts(
-            *d_quadratureRuleContainer,
-            d_basisGradientEnrichScratch->data(),
-            d_linAlgOpContext,
-            cellRange);
-
-        if (d_efeBDH->isOrthogonalized())
-          {
-            size_type cumulativeCoeffsOffset = 0;
-            for (size_type c = 0; c < cellRange.first; c++)
-              cumulativeCoeffsOffset +=
-                (d_dofsInCell[c] - d_classialDofsInCell) * d_classialDofsInCell;
-
-            std::vector<size_type> mSizes(numBatchEnrichGrad, 0);
-            std::vector<size_type> nSizes(numBatchEnrichGrad, 0);
-            std::vector<size_type> kSizes(numBatchEnrichGrad, 0);
-            std::vector<size_type> ldaSizes(numBatchEnrichGrad, 0);
-            std::vector<size_type> ldbSizes(numBatchEnrichGrad, 0);
-            std::vector<size_type> ldcSizes(numBatchEnrichGrad, 0);
-            std::vector<size_type> strideA(numBatchEnrichGrad, 0);
-            std::vector<size_type> strideB(numBatchEnrichGrad, 0);
-            std::vector<size_type> strideC(numBatchEnrichGrad, 0);
-            std::vector<char>      transA(numBatchEnrichGrad, 'N');
-            std::vector<char>      transB(numBatchEnrichGrad, 'N');
-
-            for (size_type iCell = 0; iCell < numBatchEnrichGrad; ++iCell)
-              {
-                const size_type nEnrich  = batchNumVecEnrichGrad[iCell];
-                const size_type nQuadDim = batchVecSizeEnrichGrad[iCell];
-                mSizes[iCell]   = nEnrich;
-                nSizes[iCell]   = nQuadDim;
-                kSizes[iCell]   = d_classialDofsInCell;
-                ldaSizes[iCell] = nEnrich;
-                ldbSizes[iCell] = d_classialDofsInCell;
-                ldcSizes[iCell] = nEnrich;
-                strideA[iCell]  = nEnrich * d_classialDofsInCell;
-                strideB[iCell]  = d_classialDofsInCell * nQuadDim;
-                strideC[iCell]  = nEnrich * nQuadDim;
-              }
-
-            linearAlgebra::blasLapack::gemmStridedVarBatched<ValueTypeBasisData,
-                                                              ValueTypeBasisData,
-                                                              memorySpace>(
-              numBatchEnrichGrad,
-              transA.data(),
-              transB.data(),
-              strideA.data(),
-              strideB.data(),
-              strideC.data(),
-              mSizes.data(),
-              nSizes.data(),
-              kSizes.data(),
-              (ValueTypeBasisData)-1.0,
-              d_coeffsInAllCells.data() + cumulativeCoeffsOffset,
-              ldaSizes.data(),
-              d_basisGradientDataClass->data(),
-              ldbSizes.data(),
-              (ValueTypeBasisData)1.0,
+        {
+          // d_basisGradientDataClass already has J^{-T}*grad(phi) in compact
+          // form (computed by the !d_useMemOptGradScratchSpace ||
+          // d_calculateEnrichmentDataOnTheFly
+          //  branch above). Use d_basisGradientEnrichScratch (separate from
+          //  tmpGradientBlock)
+          // so that tmpGradientBlock (ref-space grads) is not corrupted for
+          // future calls.
+          d_efeBDH->getEnrichmentClassicalInterface()
+            ->getEnrichmentGradientsInCellRangeAtQuadPts(
+              *d_quadratureRuleContainer,
               d_basisGradientEnrichScratch->data(),
-              ldcSizes.data(),
-              d_linAlgOpContext);
-          }
+              d_linAlgOpContext,
+              cellRange);
 
-        linearAlgebra::blasLapack::varBatchedStridedBlockCopy(
-          numBatchEnrichGrad,
-          batchStrideSrcEnrichGrad.data(),
-          batchStrideDstEnrichGrad.data(),
-          batchVecSizeEnrichGrad.data(),
-          batchNumVecEnrichGrad.data(),
-          batchSrcLDEnrichGrad.data(),
-          batchSrcStartEnrichGrad.data(),
-          batchDstLDEnrichGrad.data(),
-          batchDstStartEnrichGrad.data(),
-          d_basisGradientEnrichScratch->data(),
-          basisGradientData.data(),
-          d_linAlgOpContext);
-      }
+          if (d_efeBDH->isOrthogonalized())
+            {
+              size_type cumulativeCoeffsOffset = 0;
+              for (size_type c = 0; c < cellRange.first; c++)
+                cumulativeCoeffsOffset +=
+                  (d_dofsInCell[c] - d_classialDofsInCell) *
+                  d_classialDofsInCell;
+
+              std::vector<size_type> mSizes(numBatchEnrichGrad, 0);
+              std::vector<size_type> nSizes(numBatchEnrichGrad, 0);
+              std::vector<size_type> kSizes(numBatchEnrichGrad, 0);
+              std::vector<size_type> ldaSizes(numBatchEnrichGrad, 0);
+              std::vector<size_type> ldbSizes(numBatchEnrichGrad, 0);
+              std::vector<size_type> ldcSizes(numBatchEnrichGrad, 0);
+              std::vector<size_type> strideA(numBatchEnrichGrad, 0);
+              std::vector<size_type> strideB(numBatchEnrichGrad, 0);
+              std::vector<size_type> strideC(numBatchEnrichGrad, 0);
+              std::vector<char>      transA(numBatchEnrichGrad, 'N');
+              std::vector<char>      transB(numBatchEnrichGrad, 'N');
+
+              for (size_type iCell = 0; iCell < numBatchEnrichGrad; ++iCell)
+                {
+                  const size_type nEnrich  = batchNumVecEnrichGrad[iCell];
+                  const size_type nQuadDim = batchVecSizeEnrichGrad[iCell];
+                  mSizes[iCell]            = nEnrich;
+                  nSizes[iCell]            = nQuadDim;
+                  kSizes[iCell]            = d_classialDofsInCell;
+                  ldaSizes[iCell]          = nEnrich;
+                  ldbSizes[iCell]          = d_classialDofsInCell;
+                  ldcSizes[iCell]          = nEnrich;
+                  strideA[iCell]           = nEnrich * d_classialDofsInCell;
+                  strideB[iCell]           = d_classialDofsInCell * nQuadDim;
+                  strideC[iCell]           = nEnrich * nQuadDim;
+                }
+
+              linearAlgebra::blasLapack::gemmStridedVarBatched<
+                ValueTypeBasisData,
+                ValueTypeBasisData,
+                memorySpace>(numBatchEnrichGrad,
+                             transA.data(),
+                             transB.data(),
+                             strideA.data(),
+                             strideB.data(),
+                             strideC.data(),
+                             mSizes.data(),
+                             nSizes.data(),
+                             kSizes.data(),
+                             (ValueTypeBasisData)-1.0,
+                             d_coeffsInAllCells.data() + cumulativeCoeffsOffset,
+                             ldaSizes.data(),
+                             d_basisGradientDataClass->data(),
+                             ldbSizes.data(),
+                             (ValueTypeBasisData)1.0,
+                             d_basisGradientEnrichScratch->data(),
+                             ldcSizes.data(),
+                             d_linAlgOpContext);
+            }
+
+          linearAlgebra::blasLapack::varBatchedStridedBlockCopy(
+            numBatchEnrichGrad,
+            batchStrideSrcEnrichGrad.data(),
+            batchStrideDstEnrichGrad.data(),
+            batchVecSizeEnrichGrad.data(),
+            batchNumVecEnrichGrad.data(),
+            batchSrcLDEnrichGrad.data(),
+            batchSrcStartEnrichGrad.data(),
+            batchDstLDEnrichGrad.data(),
+            batchDstStartEnrichGrad.data(),
+            d_basisGradientEnrichScratch->data(),
+            basisGradientData.data(),
+            d_linAlgOpContext);
+        }
     }
 
     template <typename ValueTypeBasisCoeff,

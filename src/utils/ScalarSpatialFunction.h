@@ -40,8 +40,7 @@ namespace dftefe
             evalDevice(numPoints, t, q);
 #else
             utils::throwException(
-              false,
-              "eval<DEVICE>() called but DEVICE support not compiled.");
+              false, "eval<DEVICE>() called but DEVICE support not compiled.");
 #endif
           }
         else
@@ -55,8 +54,7 @@ namespace dftefe
       evalHost(size_type numPoints, const double *t, Q *q) const
       {
         utils::throwException(
-          false,
-          "evalHost() not implemented for this ScalarSpatialFunction.");
+          false, "evalHost() not implemented for this ScalarSpatialFunction.");
       }
 
 #ifdef DFTEFE_WITH_DEVICE
@@ -102,8 +100,7 @@ namespace dftefe
             evalDevice(numPoints, t, q);
 #else
             utils::throwException(
-              false,
-              "eval<DEVICE>() called but DEVICE support not compiled.");
+              false, "eval<DEVICE>() called but DEVICE support not compiled.");
 #endif
           }
         else

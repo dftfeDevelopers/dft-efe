@@ -35,7 +35,8 @@ namespace dftefe
   {
     namespace
     {
-      // Contracts nComp values per point: q[iPoint] += constant * sum_k pow(values[iPoint*nComp+k], power)
+      // Contracts nComp values per point: q[iPoint] += constant * sum_k
+      // pow(values[iPoint*nComp+k], power)
       DFTEFE_CREATE_KERNEL(
         void,
         addPowSumKernel,
@@ -45,7 +46,8 @@ namespace dftefe
             {
               double s = 0.0;
               for (size_type k = 0; k < nComp; ++k)
-                s += pow(values[iPoint * nComp + k], static_cast<double>(power));
+                s +=
+                  pow(values[iPoint * nComp + k], static_cast<double>(power));
               q[iPoint] += constant * s;
             }
         },
@@ -61,11 +63,11 @@ namespace dftefe
     template <>
     void
     AtomSuperpositionFunction<utils::MemorySpace::HOST>::evalDevice(
-      size_type                      numPoints,
+      size_type                       numPoints,
       const AtomSuperpositionFuncType atomSupType,
-      const double                   constant,
-      const double *                 t,
-      double *                       q) const
+      const double                    constant,
+      const double *                  t,
+      double *                        q) const
     {
       utils::throwException(
         false,
@@ -75,11 +77,11 @@ namespace dftefe
     template <>
     void
     AtomSuperpositionFunction<utils::MemorySpace::DEVICE>::evalDevice(
-      size_type                      numPoints,
+      size_type                       numPoints,
       const AtomSuperpositionFuncType atomSupType,
-      const double                   constant,
-      const double *                 t,
-      double *                       q) const
+      const double                    constant,
+      const double *                  t,
+      double *                        q) const
     {
       utils::throwException(
         d_linAlgOpContext != nullptr,
@@ -93,8 +95,9 @@ namespace dftefe
       if (atomSupType == AtomSuperpositionFuncType::Identity ||
           atomSupType == AtomSuperpositionFuncType::IdentitySq)
         {
-          const size_type nComp  = 1;
-          const size_type power  = (atomSupType == AtomSuperpositionFuncType::IdentitySq) ? 2 : 1;
+          const size_type nComp = 1;
+          const size_type power =
+            (atomSupType == AtomSuperpositionFuncType::IdentitySq) ? 2 : 1;
           const size_type addGrid = (numPoints + blockSize - 1) / blockSize;
 
           if (d_values.size() != numPoints * nComp)
@@ -107,16 +110,14 @@ namespace dftefe
             {
               const std::vector<std::shared_ptr<atoms::SphericalData>>
                 singleVec = {d_sphericalDataVecAll[e]};
-              basis::EnrichmentDataEvalKernels<
-                utils::MemorySpace::DEVICE>::getEnrichmentValues(1,
-                                                                 pointsPerEnrich,
-                                                                 singleVec,
-                                                                 t,
-                                                                 d_originsFlat
-                                                                     .data() +
-                                                                   e * d_dim,
-                                                                 d_values.data(),
-                                                                 *d_linAlgOpContext);
+              basis::EnrichmentDataEvalKernels<utils::MemorySpace::DEVICE>::
+                getEnrichmentValues(1,
+                                    pointsPerEnrich,
+                                    singleVec,
+                                    t,
+                                    d_originsFlat.data() + e * d_dim,
+                                    d_values.data(),
+                                    *d_linAlgOpContext);
               DFTEFE_LAUNCH_KERNEL(addPowSumKernel,
                                    addGrid,
                                    blockSize,
@@ -145,16 +146,14 @@ namespace dftefe
             {
               const std::vector<std::shared_ptr<atoms::SphericalData>>
                 singleVec = {d_sphericalDataVecAll[e]};
-              basis::EnrichmentDataEvalKernels<
-                utils::MemorySpace::DEVICE>::getEnrichmentGradients(1,
-                                                                    pointsPerEnrich,
-                                                                    singleVec,
-                                                                    t,
-                                                                    d_originsFlat
-                                                                        .data() +
-                                                                      e * d_dim,
-                                                                    d_values.data(),
-                                                                    *d_linAlgOpContext);
+              basis::EnrichmentDataEvalKernels<utils::MemorySpace::DEVICE>::
+                getEnrichmentGradients(1,
+                                       pointsPerEnrich,
+                                       singleVec,
+                                       t,
+                                       d_originsFlat.data() + e * d_dim,
+                                       d_values.data(),
+                                       *d_linAlgOpContext);
               DFTEFE_LAUNCH_KERNEL(addPowSumKernel,
                                    addGrid,
                                    blockSize,
@@ -169,9 +168,9 @@ namespace dftefe
         }
       else if (atomSupType == AtomSuperpositionFuncType::Grad)
         {
-          const size_type nComp      = d_dim;
+          const size_type nComp       = d_dim;
           const size_type numElements = numPoints * d_dim;
-          const size_type addGrid    = (numElements + blockSize - 1) / blockSize;
+          const size_type addGrid = (numElements + blockSize - 1) / blockSize;
 
           if (d_values.size() != numElements)
             d_values.resize(numElements);
@@ -183,16 +182,14 @@ namespace dftefe
             {
               const std::vector<std::shared_ptr<atoms::SphericalData>>
                 singleVec = {d_sphericalDataVecAll[e]};
-              basis::EnrichmentDataEvalKernels<
-                utils::MemorySpace::DEVICE>::getEnrichmentGradients(1,
-                                                                    pointsPerEnrich,
-                                                                    singleVec,
-                                                                    t,
-                                                                    d_originsFlat
-                                                                        .data() +
-                                                                      e * d_dim,
-                                                                    d_values.data(),
-                                                                    *d_linAlgOpContext);
+              basis::EnrichmentDataEvalKernels<utils::MemorySpace::DEVICE>::
+                getEnrichmentGradients(1,
+                                       pointsPerEnrich,
+                                       singleVec,
+                                       t,
+                                       d_originsFlat.data() + e * d_dim,
+                                       d_values.data(),
+                                       *d_linAlgOpContext);
               DFTEFE_LAUNCH_KERNEL(addPowSumKernel,
                                    addGrid,
                                    blockSize,

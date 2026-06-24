@@ -69,7 +69,7 @@ namespace dftefe
         const size_type                     maxCellBlock,
         linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext,
         const bool calculateEnrichmentDataOnTheFly = true,
-        const bool useMemOptGradScratchSpace = false 
+        const bool useMemOptGradScratchSpace       = false
         /*In gpu an extra scratch for grad helps in cuda strided gemm */
         /* instead of varStrided gemm which is optimal*/);
 
@@ -111,7 +111,7 @@ namespace dftefe
         const std::vector<double> &         relativeTolerances,
         const std::vector<double> &         integralThresholds,
         const double                        smallestCellVolume,
-        const size_type                  maxRecursion,
+        const size_type                     maxRecursion,
         const BasisStorageAttributesBoolMap basisStorageAttributesBoolMap)
         override;
 
@@ -237,15 +237,15 @@ namespace dftefe
       std::vector<size_type>        d_cellStartIdsBasisJacobianInvQuadStorage;
       std::vector<size_type>        d_cellStartIdsBasisHessianQuadStorage;
       size_type                     d_maxCellBlock;
-      std::shared_ptr<Storage>      d_tmpGradientBlock , d_basisGradientDataClass;
+      std::shared_ptr<Storage> d_tmpGradientBlock, d_basisGradientDataClass;
       linearAlgebra::LinAlgOpContext<memorySpace> &d_linAlgOpContext;
       size_type                                    d_classialDofsInCell;
       std::shared_ptr<Storage> d_basisGradientEnrichQuadStorage,
         d_basisEnrichQuadStorage;
-      const bool d_useMemOptGradScratchSpace;
-      const bool d_calculateEnrichmentDataOnTheFly;
-      std::shared_ptr<Storage>      d_basisEnrichScratch;
-      std::shared_ptr<Storage>      d_basisGradientEnrichScratch;
+      const bool               d_useMemOptGradScratchSpace;
+      const bool               d_calculateEnrichmentDataOnTheFly;
+      std::shared_ptr<Storage> d_basisEnrichScratch;
+      std::shared_ptr<Storage> d_basisGradientEnrichScratch;
       utils::MemoryStorage<ValueTypeBasisData, memorySpace> d_coeffsInAllCells;
 
     }; // end of EFEBDSOnTheFlyComputeDealii

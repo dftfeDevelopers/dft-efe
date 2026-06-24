@@ -43,45 +43,49 @@ namespace dftefe
     public:
       static void
       getEnrichmentValues(
-        const size_type  numEnrichmentFunc,
+        const size_type               numEnrichmentFunc,
         const std::vector<size_type> &pointsPerEnrichId,
-        const std::vector<std::shared_ptr<atoms::SphericalData>> &sphericalDataVec,
-        const double *points,
-        const double *origin,
-        double * values,
+        const std::vector<std::shared_ptr<atoms::SphericalData>>
+          &                                          sphericalDataVec,
+        const double *                               points,
+        const double *                               origin,
+        double *                                     values,
         linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext);
 
       static void
       getEnrichmentGradients(
-        const size_type  numEnrichmentFunc,
+        const size_type               numEnrichmentFunc,
         const std::vector<size_type> &pointsPerEnrichId,
-        const std::vector<std::shared_ptr<atoms::SphericalData>> &sphericalDataVec,
-        const double *points,
-        const double *origin,
-        double * values,
+        const std::vector<std::shared_ptr<atoms::SphericalData>>
+          &                                          sphericalDataVec,
+        const double *                               points,
+        const double *                               origin,
+        double *                                     values,
         linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext);
 
       static void
       getEnrichmentValuesInCellRange(
-        const double *                                                  quadPtsInAllCells,
-        const double *                                                  originPtsInAllCells,
-        std::pair<size_type, size_type>                                 cellRange,
-        const std::vector<size_type>                                    numEnrichIdsInAllCells,
-        const std::vector<size_type>                                    numQuadPtsInAllCells,
-        const atoms::SphericalDataNumerical::Func<memorySpace> *        sphericalDataFuncInAllCells,
-        double *                                                        output,
-        linearAlgebra::LinAlgOpContext<memorySpace> &                   linAlgOpContext);
+        const double *                  quadPtsInAllCells,
+        const double *                  originPtsInAllCells,
+        std::pair<size_type, size_type> cellRange,
+        const std::vector<size_type>    numEnrichIdsInAllCells,
+        const std::vector<size_type>    numQuadPtsInAllCells,
+        const atoms::SphericalDataNumerical::Func<memorySpace>
+          *     sphericalDataFuncInAllCells,
+        double *output,
+        linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext);
 
       static void
       getEnrichmentGradientsInCellRange(
-        const double *                                                  quadPtsInAllCells,
-        const double *                                                  originPtsInAllCells,
-        std::pair<size_type, size_type>                                 cellRange,
-        const std::vector<size_type>                                    numEnrichIdsInAllCells,
-        const std::vector<size_type>                                    numQuadPtsInAllCells,
-        const atoms::SphericalDataNumerical::Func<memorySpace> *        sphericalDataFuncInAllCells,
-        double *                                                        output,
-        linearAlgebra::LinAlgOpContext<memorySpace> &                   linAlgOpContext);
+        const double *                  quadPtsInAllCells,
+        const double *                  originPtsInAllCells,
+        std::pair<size_type, size_type> cellRange,
+        const std::vector<size_type>    numEnrichIdsInAllCells,
+        const std::vector<size_type>    numQuadPtsInAllCells,
+        const atoms::SphericalDataNumerical::Func<memorySpace>
+          *     sphericalDataFuncInAllCells,
+        double *output,
+        linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext);
     }; // end of class EnrichmentDataEvalKernels
 
 #ifdef DFTEFE_WITH_DEVICE
@@ -91,45 +95,53 @@ namespace dftefe
     public:
       static void
       getEnrichmentValues(
-        const size_type  numEnrichmentFunc,
+        const size_type               numEnrichmentFunc,
         const std::vector<size_type> &pointsPerEnrichId,
-        const std::vector<std::shared_ptr<atoms::SphericalData>> &sphericalDataVec,
+        const std::vector<std::shared_ptr<atoms::SphericalData>>
+          &           sphericalDataVec,
         const double *points,
         const double *origin,
-        double * values,
-        linearAlgebra::LinAlgOpContext<dftefe::utils::MemorySpace::DEVICE> &linAlgOpContext);
+        double *      values,
+        linearAlgebra::LinAlgOpContext<dftefe::utils::MemorySpace::DEVICE>
+          &linAlgOpContext);
 
       static void
       getEnrichmentGradients(
-        const size_type  numEnrichmentFunc,
+        const size_type               numEnrichmentFunc,
         const std::vector<size_type> &pointsPerEnrichId,
-        const std::vector<std::shared_ptr<atoms::SphericalData>> &sphericalDataVec,
+        const std::vector<std::shared_ptr<atoms::SphericalData>>
+          &           sphericalDataVec,
         const double *points,
         const double *origin,
-        double * values,
-        linearAlgebra::LinAlgOpContext<dftefe::utils::MemorySpace::DEVICE> &linAlgOpContext);
+        double *      values,
+        linearAlgebra::LinAlgOpContext<dftefe::utils::MemorySpace::DEVICE>
+          &linAlgOpContext);
 
       static void
       getEnrichmentValuesInCellRange(
-        const double *                                                         quadPtsInAllCells,
-        const double *                                                         originPtsInAllCells,
-        std::pair<size_type, size_type>                                        cellRange,
-        const std::vector<size_type>                                           numEnrichIdsInAllCells,
-        const std::vector<size_type>                                           numQuadPtsInAllCells,
-        const atoms::SphericalDataNumerical::Func<dftefe::utils::MemorySpace::DEVICE> *sphericalDataFuncInAllCells,
-        double *                                                               output,
-        linearAlgebra::LinAlgOpContext<dftefe::utils::MemorySpace::DEVICE> &  linAlgOpContext);
+        const double *                  quadPtsInAllCells,
+        const double *                  originPtsInAllCells,
+        std::pair<size_type, size_type> cellRange,
+        const std::vector<size_type>    numEnrichIdsInAllCells,
+        const std::vector<size_type>    numQuadPtsInAllCells,
+        const atoms::SphericalDataNumerical::Func<
+          dftefe::utils::MemorySpace::DEVICE> *sphericalDataFuncInAllCells,
+        double *                               output,
+        linearAlgebra::LinAlgOpContext<dftefe::utils::MemorySpace::DEVICE>
+          &linAlgOpContext);
 
       static void
       getEnrichmentGradientsInCellRange(
-        const double *                                                         quadPtsInAllCells,
-        const double *                                                         originPtsInAllCells,
-        std::pair<size_type, size_type>                                        cellRange,
-        const std::vector<size_type>                                           numEnrichIdsInAllCells,
-        const std::vector<size_type>                                           numQuadPtsInAllCells,
-        const atoms::SphericalDataNumerical::Func<dftefe::utils::MemorySpace::DEVICE> *sphericalDataFuncInAllCells,
-        double *                                                               output,
-        linearAlgebra::LinAlgOpContext<dftefe::utils::MemorySpace::DEVICE> &  linAlgOpContext);
+        const double *                  quadPtsInAllCells,
+        const double *                  originPtsInAllCells,
+        std::pair<size_type, size_type> cellRange,
+        const std::vector<size_type>    numEnrichIdsInAllCells,
+        const std::vector<size_type>    numQuadPtsInAllCells,
+        const atoms::SphericalDataNumerical::Func<
+          dftefe::utils::MemorySpace::DEVICE> *sphericalDataFuncInAllCells,
+        double *                               output,
+        linearAlgebra::LinAlgOpContext<dftefe::utils::MemorySpace::DEVICE>
+          &linAlgOpContext);
     }; // end of class EnrichmentDataEvalKernels
 #endif
   } // end of namespace basis

@@ -329,7 +329,8 @@ namespace dftefe
         *d_nuclearChargesDensity;
       const quadrature::QuadratureValuesContainer<RealType, memorySpaceHost>
         *d_electronChargeDensity;
-      quadrature::QuadratureValuesContainer<ValueTypeBasisCoeff, memorySpaceHost>
+      quadrature::QuadratureValuesContainer<ValueTypeBasisCoeff,
+                                            memorySpaceHost>
         *d_atomicTotalElecPotElectronicQuad;
       quadrature::QuadratureValuesContainer<RealType, memorySpaceHost>
         d_atomicElectronChargeDensity /*,d_atomicElectronChargeDensityNucQuad*/;
@@ -397,9 +398,9 @@ namespace dftefe
         const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpaceHost>>
         d_feBDNuclChargeRhsNumSol;
       std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
-                            d_linAlgOpContext;
+        d_linAlgOpContext;
       std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpaceHost>>
-      d_linAlgOpContextHost;               
+                            d_linAlgOpContextHost;
       std::vector<RealType> d_nuclearChargeQuad;
       size_type             d_cellTimesNumVecPoisson;
       std::shared_ptr<

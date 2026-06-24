@@ -74,7 +74,7 @@ namespace dftefe
       getSubdivPowerLawGridParams(const std::vector<double> &X,
                                   double &                   a,
                                   double &                   r,
-                                  dftefe::size_type &             numSubDiv)
+                                  dftefe::size_type &        numSubDiv)
       {
         dftefe::size_type N = X.size();
         if (N < 2)
@@ -93,14 +93,14 @@ namespace dftefe
             numSubDiv = 1;
             return;
           }
-        double       q     = X[1] - X[0];
-        double       s     = X[N - 1] - X[0];
-        const double alpha = q * (N - 1) / (s);
-        r                  = bisection(alpha, p);
-        dftefe::size_type n     = std::round(alpha * (r * p - 1) / (r - 1));
-        numSubDiv          = (N - 1) / n;
-        r                  = std::pow(p * 1.0, 1.0 / (n - 1));
-        a                  = numSubDiv * q;
+        double       q      = X[1] - X[0];
+        double       s      = X[N - 1] - X[0];
+        const double alpha  = q * (N - 1) / (s);
+        r                   = bisection(alpha, p);
+        dftefe::size_type n = std::round(alpha * (r * p - 1) / (r - 1));
+        numSubDiv           = (N - 1) / n;
+        r                   = std::pow(p * 1.0, 1.0 / (n - 1));
+        a                   = numSubDiv * q;
       }
     } // namespace SplineInternal
     // spline implementation
@@ -278,10 +278,12 @@ namespace dftefe
           else if (d_left == Spline::first_deriv)
             {
               // d_b[0] = f', needs to be re-expressed in terms of c:
-              // (2c[0]+c[1])(d_x[1]-d_x[0]) = 3 ((d_y[1]-d_y[0])/(d_x[1]-d_x[0]) - f')
+              // (2c[0]+c[1])(d_x[1]-d_x[0]) = 3
+              // ((d_y[1]-d_y[0])/(d_x[1]-d_x[0]) - f')
               A(0, 0) = 2.0 * (d_x[1] - d_x[0]);
               A(0, 1) = 1.0 * (d_x[1] - d_x[0]);
-              rhs[0]  = 3.0 * ((d_y[1] - d_y[0]) / (d_x[1] - d_x[0]) - d_left_value);
+              rhs[0] =
+                3.0 * ((d_y[1] - d_y[0]) / (d_x[1] - d_x[0]) - d_left_value);
             }
           else
             {
@@ -301,7 +303,7 @@ namespace dftefe
               // = 3 (f' - (d_y[n-1]-d_y[n-2])/(d_x[n-1]-d_x[n-2]))
               A(n - 1, n - 1) = 2.0 * (d_x[n - 1] - d_x[n - 2]);
               A(n - 1, n - 2) = 1.0 * (d_x[n - 1] - d_x[n - 2]);
-              rhs[n - 1]      = 3.0 * (d_right_value - (d_y[n - 1] - d_y[n - 2]) /
+              rhs[n - 1] = 3.0 * (d_right_value - (d_y[n - 1] - d_y[n - 2]) /
                                                     (d_x[n - 1] - d_x[n - 2]));
             }
           else
@@ -317,7 +319,8 @@ namespace dftefe
           d_b.resize(n);
           for (int i = 0; i < n - 1; i++)
             {
-              d_d[i] = 1.0 / 3.0 * (d_c[i + 1] - d_c[i]) / (d_x[i + 1] - d_x[i]);
+              d_d[i] =
+                1.0 / 3.0 * (d_c[i + 1] - d_c[i]) / (d_x[i + 1] - d_x[i]);
               d_b[i] =
                 (d_y[i + 1] - d_y[i]) / (d_x[i + 1] - d_x[i]) -
                 1.0 / 3.0 * (2.0 * d_c[i] + d_c[i + 1]) * (d_x[i + 1] - d_x[i]);
@@ -401,15 +404,14 @@ namespace dftefe
     //-------------------------------------------------------------------------
 
     void
-    Spline::set_points(
-      const std::vector<double> &x,
-      const std::vector<double> &y,
-      spline_type                               type)
+    Spline::set_points(const std::vector<double> &x,
+                       const std::vector<double> &y,
+                       spline_type                type)
     {
       assert(x.size() == y.size());
       assert(x.size() > 2);
-      d_x              = x;
-      d_y              = y;
+      d_x = x;
+      d_y = y;
       computeAndSync(type);
     }
 
@@ -435,8 +437,8 @@ namespace dftefe
               d_b[i]   = 0.0;
             }
         }
-      // if input data is monotonic (d_b[i], d_b[i+1], avg have all the same sign)
-      // ensure a sufficient criteria for monotonicity is satisfied:
+      // if input data is monotonic (d_b[i], d_b[i+1], avg have all the same
+      // sign) ensure a sufficient criteria for monotonicity is satisfied:
       //     sqrt(d_b[i]^2+d_b[i+1]^2) <= 3 |avg|, with avg=(d_y[i+1]-d_y[i])/h,
       for (int i = 0; i < n - 1; i++)
         {
@@ -483,7 +485,7 @@ namespace dftefe
     {
       if (d_isSubdivPowerLawGrid == true)
         {
-          size_t       idx = 0;
+          size_t            idx = 0;
           dftefe::size_type n = 0, subId = 0;
           if (x > d_x.back())
             {
@@ -685,36 +687,44 @@ namespace dftefe
     Spline::Func<utils::MemorySpace::HOST>
     Spline::getFunc<utils::MemorySpace::HOST>() const
     {
-      return Func<utils::MemorySpace::HOST>(
-        d_x.data(), d_y.data(),
-        d_b.data(), d_c.data(), d_d.data(),
-        static_cast<size_type>(d_x.size()),
-        d_c0, d_isSubdivPowerLawGrid, d_a, d_r, d_numSubDiv);
+      return Func<utils::MemorySpace::HOST>(d_x.data(),
+                                            d_y.data(),
+                                            d_b.data(),
+                                            d_c.data(),
+                                            d_d.data(),
+                                            static_cast<size_type>(d_x.size()),
+                                            d_c0,
+                                            d_isSubdivPowerLawGrid,
+                                            d_a,
+                                            d_r,
+                                            d_numSubDiv);
     }
 
-    template<>
+    template <>
     void
-    Spline::evalAll<utils::MemorySpace::HOST>(size_type   n,
-              const double *x, 
-              double *y,
-              utils::deviceStream_t  streamId) const
+    Spline::evalAll<utils::MemorySpace::HOST>(
+      size_type             n,
+      const double *        x,
+      double *              y,
+      utils::deviceStream_t streamId) const
     {
       for (size_type i = 0; i < n; ++i)
         y[i] = ((*this)((x[i])));
     }
 
-    template<>
+    template <>
     void
-    Spline::derivAll<utils::MemorySpace::HOST>(size_type        n,
-                int              order,
-                const double *x,
-                double *      y,
-              utils::deviceStream_t  streamId) const
+    Spline::derivAll<utils::MemorySpace::HOST>(
+      size_type             n,
+      int                   order,
+      const double *        x,
+      double *              y,
+      utils::deviceStream_t streamId) const
     {
       for (size_type i = 0; i < n; ++i)
         y[i] = (this->deriv(order, (x[i])));
     }
-    
+
     namespace splineInternal
     {
       // band_matrix implementation

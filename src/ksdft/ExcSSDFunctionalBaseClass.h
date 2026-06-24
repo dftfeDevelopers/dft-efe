@@ -64,12 +64,13 @@ namespace dftefe
       e,         // energy density per unit volume for the remainder functional
       vSpinUp,   // the local multiplicative potential for spin up arising from
                  // remainder functional
-      vSpinDown, // the local multiplicative potential for spin down arising from
-                 // remainder functional
-      pdeDensitySpinUp,   // partial derivative of remainder functional energy
-                          // density wrt spin-up electron density: d(e)/d(rho_up)
+      vSpinDown, // the local multiplicative potential for spin down arising
+                 // from remainder functional
+      pdeDensitySpinUp, // partial derivative of remainder functional energy
+                        // density wrt spin-up electron density: d(e)/d(rho_up)
       pdeDensitySpinDown, // partial derivative of remainder functional energy
-                          // density wrt spin-down electron density: d(e)/d(rho_down)
+                          // density wrt spin-down electron density:
+                          // d(e)/d(rho_down)
       pdeSigma,
       pdeLaplacianSpinUp,
       pdeLaplacianSpinDown,
@@ -92,9 +93,8 @@ namespace dftefe
     class ExcSSDFunctionalBaseClass
     {
     public:
-      using AttrStorage =
-        std::vector<dftefe::utils::MemoryStorage<double,
-                                                 dftefe::utils::MemorySpace::HOST>>;
+      using AttrStorage = std::vector<
+        dftefe::utils::MemoryStorage<double, dftefe::utils::MemorySpace::HOST>>;
 
       ExcSSDFunctionalBaseClass(
         const ExcFamilyType                              excFamType,
@@ -127,11 +127,13 @@ namespace dftefe
           &wfcAttrVals,
         std::unordered_map<
           xcRemainderOutputDataAttributes,
-          dftefe::utils::MemoryStorage<double, dftefe::utils::MemorySpace::HOST>>
+          dftefe::utils::MemoryStorage<double,
+                                       dftefe::utils::MemorySpace::HOST>>
           &xDataOut,
         std::unordered_map<
           xcRemainderOutputDataAttributes,
-          dftefe::utils::MemoryStorage<double, dftefe::utils::MemorySpace::HOST>>
+          dftefe::utils::MemoryStorage<double,
+                                       dftefe::utils::MemorySpace::HOST>>
           &cDataOut) const = 0;
 
       ExcFamilyType
@@ -139,8 +141,8 @@ namespace dftefe
 
       virtual void
       checkInputOutputDataAttributesConsistency(
-        const std::vector<xcRemainderOutputDataAttributes> &outputDataAttributes)
-        const = 0;
+        const std::vector<xcRemainderOutputDataAttributes>
+          &outputDataAttributes) const = 0;
 
     protected:
       const std::set<dftefe::ksdft::DensityDescrAttr> d_densityDescrAttrs;
@@ -149,14 +151,17 @@ namespace dftefe
       ExcFamilyType     d_ExcFamilyType;
       densityFamilyType d_densityFamilyType;
 
-      mutable dftefe::utils::MemoryStorage<double, dftefe::utils::MemorySpace::HOST>
+      mutable dftefe::utils::MemoryStorage<double,
+                                           dftefe::utils::MemorySpace::HOST>
         s_densityValues, s_sigmaValues, s_tauValues;
 
-      mutable dftefe::utils::MemoryStorage<double, dftefe::utils::MemorySpace::HOST>
+      mutable dftefe::utils::MemoryStorage<double,
+                                           dftefe::utils::MemorySpace::HOST>
         s_pdexDensityValues, s_pdecDensityValues, s_pdexTauValues,
         s_pdecTauValues;
 
-      mutable dftefe::utils::MemoryStorage<double, dftefe::utils::MemorySpace::HOST>
+      mutable dftefe::utils::MemoryStorage<double,
+                                           dftefe::utils::MemorySpace::HOST>
         s_exValues, s_ecValues, s_pdexDensitySpinUpValues,
         s_pdexDensitySpinDownValues, s_pdecDensitySpinUpValues,
         s_pdecDensitySpinDownValues, s_pdexSigmaValues, s_pdecSigmaValues,

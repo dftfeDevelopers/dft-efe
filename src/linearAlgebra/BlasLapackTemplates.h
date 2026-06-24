@@ -468,17 +468,17 @@ namespace dftefe
             const unsigned int *INCY);
 
       std::complex<float>
-      cdotc_(const unsigned int *        N,
+      cdotc_(const unsigned int *       N,
              const std::complex<float> *X,
-             const unsigned int *        INCX,
+             const unsigned int *       INCX,
              const std::complex<float> *Y,
-             const unsigned int *        INCY);
+             const unsigned int *       INCY);
       float
       sdot_(const unsigned int *N,
-            const float *      X,
+            const float *       X,
             const unsigned int *INCX,
-            const float *      Y,
-            const unsigned int *INCY);            
+            const float *       Y,
+            const unsigned int *INCY);
 
       double
       dnrm2_(const unsigned int *n, const double *x, const unsigned int *incx);

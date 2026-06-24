@@ -48,16 +48,16 @@ namespace dftefe
           const size_type numberEntries = quadPtsInCellsBlockSize * numVectors;
 
           for (size_type index = globalThreadId; index < numberEntries;
-              index += nThreadsPerBlock * nThreadBlock)
+               index += nThreadsPerBlock * nThreadBlock)
             {
-              const double psi = psiBatchQuad[index];
+              const double psi             = psiBatchQuad[index];
               modPsiSqBatchQuadIter[index] = psi * psi;
             }
         },
         const size_type numVectors,
         const size_type quadPtsInCellsBlockSize,
-        ValueType           *psiBatchQuad,
-        RealType           *modPsiSqBatchQuadIter);
+        ValueType *     psiBatchQuad,
+        RealType *      modPsiSqBatchQuadIter);
 
       template <typename RealType>
       DFTEFE_CREATE_KERNEL(
@@ -67,19 +67,18 @@ namespace dftefe
           const size_type numberEntries = quadPtsInCellsBlockSize * numVectors;
 
           for (size_type index = globalThreadId; index < numberEntries;
-              index += nThreadsPerBlock * nThreadBlock)
+               index += nThreadsPerBlock * nThreadBlock)
             {
               const utils::deviceDoubleComplex psi = psiBatchQuad[index];
-              modPsiSqBatchQuadIter[index] = (RealType)(utils::realPartDevice(psi) *
-                                utils::realPartDevice(psi) +
-                              utils::imagPartDevice(psi) *
-                                utils::imagPartDevice(psi));
+              modPsiSqBatchQuadIter[index]         = (RealType)(
+                utils::realPartDevice(psi) * utils::realPartDevice(psi) +
+                utils::imagPartDevice(psi) * utils::imagPartDevice(psi));
             }
         },
-        const size_type numVectors,
-        const size_type quadPtsInCellsBlockSize,
+        const size_type                     numVectors,
+        const size_type                     quadPtsInCellsBlockSize,
         dftefe::utils::deviceDoubleComplex *psiBatchQuad,
-        RealType           *modPsiSqBatchQuadIter);
+        RealType *                          modPsiSqBatchQuadIter);
 
       template <typename RealType>
       DFTEFE_CREATE_KERNEL(
@@ -89,19 +88,18 @@ namespace dftefe
           const size_type numberEntries = quadPtsInCellsBlockSize * numVectors;
 
           for (size_type index = globalThreadId; index < numberEntries;
-              index += nThreadsPerBlock * nThreadBlock)
+               index += nThreadsPerBlock * nThreadBlock)
             {
               const utils::deviceFloatComplex psi = psiBatchQuad[index];
-              modPsiSqBatchQuadIter[index] = (RealType)(utils::realPartDevice(psi) *
-                                utils::realPartDevice(psi) +
-                              utils::imagPartDevice(psi) *
-                                utils::imagPartDevice(psi));
+              modPsiSqBatchQuadIter[index]        = (RealType)(
+                utils::realPartDevice(psi) * utils::realPartDevice(psi) +
+                utils::imagPartDevice(psi) * utils::imagPartDevice(psi));
             }
         },
-        const size_type numVectors,
-        const size_type quadPtsInCellsBlockSize,
+        const size_type                    numVectors,
+        const size_type                    quadPtsInCellsBlockSize,
         dftefe::utils::deviceFloatComplex *psiBatchQuad,
-        RealType           *modPsiSqBatchQuadIter);
+        RealType *                         modPsiSqBatchQuadIter);
     } // namespace
 
     namespace
@@ -111,115 +109,127 @@ namespace dftefe
         void,
         computePsiGradPsiFromInterpolatedValues,
         {
-          const size_type numberEntries = quadPtsInCellsBlockSize * dimVal * numVectors;
+          const size_type numberEntries =
+            quadPtsInCellsBlockSize * dimVal * numVectors;
 
           for (size_type index = globalThreadId; index < numberEntries;
-              index += nThreadsPerBlock * nThreadBlock)
+               index += nThreadsPerBlock * nThreadBlock)
             {
-              const size_type i   = index % numVectors;
-              const size_type qd  = index / numVectors;
-              const size_type q   = qd / dimVal;
-              const double psiVal = psiBatchQuad[q * numVectors + i];
-              const double gVal   = gradPsiBatchQuad[i + numVectors * qd];
+              const size_type i      = index % numVectors;
+              const size_type qd     = index / numVectors;
+              const size_type q      = qd / dimVal;
+              const double    psiVal = psiBatchQuad[q * numVectors + i];
+              const double    gVal   = gradPsiBatchQuad[i + numVectors * qd];
               psiGradPsiBatch[index] = (RealType)(psiVal * gVal);
             }
         },
-        const size_type numVectors,
-        const size_type quadPtsInCellsBlockSize,
-        const size_type dimVal,
+        const size_type  numVectors,
+        const size_type  quadPtsInCellsBlockSize,
+        const size_type  dimVal,
         const ValueType *psiBatchQuad,
         const ValueType *gradPsiBatchQuad,
-        RealType  *psiGradPsiBatch);
+        RealType *       psiGradPsiBatch);
 
       template <typename RealType>
       DFTEFE_CREATE_KERNEL(
         void,
         computePsiGradPsiFromInterpolatedValues,
         {
-          const size_type numberEntries = quadPtsInCellsBlockSize * dimVal * numVectors;
+          const size_type numberEntries =
+            quadPtsInCellsBlockSize * dimVal * numVectors;
 
           for (size_type index = globalThreadId; index < numberEntries;
-              index += nThreadsPerBlock * nThreadBlock)
+               index += nThreadsPerBlock * nThreadBlock)
             {
-              const size_type i  = index % numVectors;
-              const size_type qd = index / numVectors;
-              const size_type q  = qd / dimVal;
-              const utils::deviceDoubleComplex psiVal = psiBatchQuad[q * numVectors + i];
-              const utils::deviceDoubleComplex gVal   = gradPsiBatchQuad[i + numVectors * qd];
-              psiGradPsiBatch[index] =
-                (RealType)(utils::realPartDevice(psiVal) * utils::realPartDevice(gVal) +
-                           utils::imagPartDevice(psiVal) * utils::imagPartDevice(gVal));
+              const size_type                  i  = index % numVectors;
+              const size_type                  qd = index / numVectors;
+              const size_type                  q  = qd / dimVal;
+              const utils::deviceDoubleComplex psiVal =
+                psiBatchQuad[q * numVectors + i];
+              const utils::deviceDoubleComplex gVal =
+                gradPsiBatchQuad[i + numVectors * qd];
+              psiGradPsiBatch[index] = (RealType)(
+                utils::realPartDevice(psiVal) * utils::realPartDevice(gVal) +
+                utils::imagPartDevice(psiVal) * utils::imagPartDevice(gVal));
             }
         },
-        const size_type numVectors,
-        const size_type quadPtsInCellsBlockSize,
-        const size_type dimVal,
+        const size_type                           numVectors,
+        const size_type                           quadPtsInCellsBlockSize,
+        const size_type                           dimVal,
         const dftefe::utils::deviceDoubleComplex *psiBatchQuad,
         const dftefe::utils::deviceDoubleComplex *gradPsiBatchQuad,
-        RealType *psiGradPsiBatch);
+        RealType *                                psiGradPsiBatch);
 
       template <typename RealType>
       DFTEFE_CREATE_KERNEL(
         void,
         computePsiGradPsiFromInterpolatedValues,
         {
-          const size_type numberEntries = quadPtsInCellsBlockSize * dimVal * numVectors;
+          const size_type numberEntries =
+            quadPtsInCellsBlockSize * dimVal * numVectors;
 
           for (size_type index = globalThreadId; index < numberEntries;
-              index += nThreadsPerBlock * nThreadBlock)
+               index += nThreadsPerBlock * nThreadBlock)
             {
-              const size_type i  = index % numVectors;
-              const size_type qd = index / numVectors;
-              const size_type q  = qd / dimVal;
-              const utils::deviceFloatComplex psiVal = psiBatchQuad[q * numVectors + i];
-              const utils::deviceFloatComplex gVal   = gradPsiBatchQuad[i + numVectors * qd];
-              psiGradPsiBatch[index] =
-                (RealType)(utils::realPartDevice(psiVal) * utils::realPartDevice(gVal) +
-                           utils::imagPartDevice(psiVal) * utils::imagPartDevice(gVal));
+              const size_type                 i  = index % numVectors;
+              const size_type                 qd = index / numVectors;
+              const size_type                 q  = qd / dimVal;
+              const utils::deviceFloatComplex psiVal =
+                psiBatchQuad[q * numVectors + i];
+              const utils::deviceFloatComplex gVal =
+                gradPsiBatchQuad[i + numVectors * qd];
+              psiGradPsiBatch[index] = (RealType)(
+                utils::realPartDevice(psiVal) * utils::realPartDevice(gVal) +
+                utils::imagPartDevice(psiVal) * utils::imagPartDevice(gVal));
             }
         },
-        const size_type numVectors,
-        const size_type quadPtsInCellsBlockSize,
-        const size_type dimVal,
+        const size_type                          numVectors,
+        const size_type                          quadPtsInCellsBlockSize,
+        const size_type                          dimVal,
         const dftefe::utils::deviceFloatComplex *psiBatchQuad,
         const dftefe::utils::deviceFloatComplex *gradPsiBatchQuad,
-        RealType *psiGradPsiBatch);
-    } // namespace (grad kernels)
+        RealType *                               psiGradPsiBatch);
+    } // namespace
 
     template <typename ValueType, typename RealType, size_type dim>
     void
-    DensityCalculatorKernels<ValueType, RealType, utils::MemorySpace::DEVICE, dim>::
+    DensityCalculatorKernels<ValueType,
+                             RealType,
+                             utils::MemorySpace::DEVICE,
+                             dim>::
       computeRhoInBatch(
-        const size_type batchSize,
+        const size_type                       batchSize,
         const std::pair<size_type, size_type> cellRange,
-        const RealType* occupationInBatch,
-        ValueType *psiBatchQuad,
-        RealType *modPsiSqBatchQuad,
+        const RealType *                      occupationInBatch,
+        ValueType *                           psiBatchQuad,
+        RealType *                            modPsiSqBatchQuad,
         std::shared_ptr<const quadrature::QuadratureRuleContainer>
-          quadRuleContainer,
+                  quadRuleContainer,
         RealType *rhoBatch,
-        linearAlgebra::LinAlgOpContext<utils::MemorySpace::DEVICE> &linAlgOpContext)
+        linearAlgebra::LinAlgOpContext<utils::MemorySpace::DEVICE>
+          &linAlgOpContext)
     {
-        size_type quadPtsInCellsBlockSize = 0;
-        for (size_type iCell = cellRange.first; iCell < cellRange.second; iCell++)
-          quadPtsInCellsBlockSize +=
-            quadRuleContainer->nCellQuadraturePoints(iCell);
+      size_type quadPtsInCellsBlockSize = 0;
+      for (size_type iCell = cellRange.first; iCell < cellRange.second; iCell++)
+        quadPtsInCellsBlockSize +=
+          quadRuleContainer->nCellQuadraturePoints(iCell);
 
-        DFTEFE_LAUNCH_KERNEL(
-          computeModPsiSqFromInterpolatedValues,
-          (batchSize + (utils::DEVICE_BLOCK_SIZE - 1)) /
-            utils::DEVICE_BLOCK_SIZE * quadPtsInCellsBlockSize,
-          utils::DEVICE_BLOCK_SIZE,
-          utils::defaultStream,
-          batchSize,
-          quadPtsInCellsBlockSize,
-          utils::makeDataTypeDeviceCompatible(psiBatchQuad),
-          utils::makeDataTypeDeviceCompatible(modPsiSqBatchQuad));
+      DFTEFE_LAUNCH_KERNEL(computeModPsiSqFromInterpolatedValues,
+                           (batchSize + (utils::DEVICE_BLOCK_SIZE - 1)) /
+                             utils::DEVICE_BLOCK_SIZE * quadPtsInCellsBlockSize,
+                           utils::DEVICE_BLOCK_SIZE,
+                           utils::defaultStream,
+                           batchSize,
+                           quadPtsInCellsBlockSize,
+                           utils::makeDataTypeDeviceCompatible(psiBatchQuad),
+                           utils::makeDataTypeDeviceCompatible(
+                             modPsiSqBatchQuad));
 
-        const RealType alpha = 2.0; // 2 for spin up and down
-        const RealType beta  = 0.0;
+      const RealType alpha = 2.0; // 2 for spin up and down
+      const RealType beta  = 0.0;
 
-        linearAlgebra::blasLapack::gemm<RealType, RealType, utils::MemorySpace::DEVICE>(
+      linearAlgebra::blasLapack::
+        gemm<RealType, RealType, utils::MemorySpace::DEVICE>(
           'N',
           'N',
           1,
@@ -238,43 +248,49 @@ namespace dftefe
 
     template <typename ValueType, typename RealType, size_type dim>
     void
-    DensityCalculatorKernels<ValueType, RealType, utils::MemorySpace::DEVICE, dim>::
+    DensityCalculatorKernels<ValueType,
+                             RealType,
+                             utils::MemorySpace::DEVICE,
+                             dim>::
       computeGradRhoInBatch(
-        const size_type batchSize,
+        const size_type                       batchSize,
         const std::pair<size_type, size_type> cellRange,
-        const RealType *occupationInBatch,
-        const ValueType *psiBatchQuad,
-        const ValueType *gradPsiBatchQuad,
-        RealType *psiGradPsiBatch,
+        const RealType *                      occupationInBatch,
+        const ValueType *                     psiBatchQuad,
+        const ValueType *                     gradPsiBatchQuad,
+        RealType *                            psiGradPsiBatch,
         std::shared_ptr<const quadrature::QuadratureRuleContainer>
-          quadRuleContainer,
+                  quadRuleContainer,
         RealType *gradRhoBatch,
-        linearAlgebra::LinAlgOpContext<utils::MemorySpace::DEVICE> &linAlgOpContext)
+        linearAlgebra::LinAlgOpContext<utils::MemorySpace::DEVICE>
+          &linAlgOpContext)
     {
-        size_type quadPtsInCellsBlockSize = 0;
-        for (size_type iCell = cellRange.first; iCell < cellRange.second; iCell++)
-          quadPtsInCellsBlockSize +=
-            quadRuleContainer->nCellQuadraturePoints(iCell);
+      size_type quadPtsInCellsBlockSize = 0;
+      for (size_type iCell = cellRange.first; iCell < cellRange.second; iCell++)
+        quadPtsInCellsBlockSize +=
+          quadRuleContainer->nCellQuadraturePoints(iCell);
 
-        const size_type totalEntries = batchSize * quadPtsInCellsBlockSize * dim;
+      const size_type totalEntries = batchSize * quadPtsInCellsBlockSize * dim;
 
-        DFTEFE_LAUNCH_KERNEL(
-          computePsiGradPsiFromInterpolatedValues,
-          (totalEntries + (utils::DEVICE_BLOCK_SIZE - 1)) /
-            utils::DEVICE_BLOCK_SIZE,
+      DFTEFE_LAUNCH_KERNEL(
+        computePsiGradPsiFromInterpolatedValues,
+        (totalEntries + (utils::DEVICE_BLOCK_SIZE - 1)) /
           utils::DEVICE_BLOCK_SIZE,
-          utils::defaultStream,
-          batchSize,
-          quadPtsInCellsBlockSize,
-          dim,
-          utils::makeDataTypeDeviceCompatible(psiBatchQuad),
-          utils::makeDataTypeDeviceCompatible(gradPsiBatchQuad),
-          utils::makeDataTypeDeviceCompatible(psiGradPsiBatch));
+        utils::DEVICE_BLOCK_SIZE,
+        utils::defaultStream,
+        batchSize,
+        quadPtsInCellsBlockSize,
+        dim,
+        utils::makeDataTypeDeviceCompatible(psiBatchQuad),
+        utils::makeDataTypeDeviceCompatible(gradPsiBatchQuad),
+        utils::makeDataTypeDeviceCompatible(psiGradPsiBatch));
 
-        const RealType alpha = 4.0; // 2 for spin up and down, 2 for grad(|psi|^2) = 2Re(psi* grad psi)
-        const RealType beta  = 0.0;
+      const RealType alpha =
+        4.0; // 2 for spin up and down, 2 for grad(|psi|^2) = 2Re(psi* grad psi)
+      const RealType beta = 0.0;
 
-        linearAlgebra::blasLapack::gemm<RealType, RealType, utils::MemorySpace::DEVICE>(
+      linearAlgebra::blasLapack::
+        gemm<RealType, RealType, utils::MemorySpace::DEVICE>(
           'N',
           'N',
           1,
@@ -291,14 +307,22 @@ namespace dftefe
           linAlgOpContext);
     }
 
-    template class DensityCalculatorKernels<double, double,
-                                            dftefe::utils::MemorySpace::DEVICE, 3>;
-    template class DensityCalculatorKernels<float, double,
-                                            dftefe::utils::MemorySpace::DEVICE, 3>;
-    template class DensityCalculatorKernels<std::complex<double>, double,
-                                            dftefe::utils::MemorySpace::DEVICE, 3>;
-    template class DensityCalculatorKernels<std::complex<float>, double,
-                                            dftefe::utils::MemorySpace::DEVICE, 3>;
+    template class DensityCalculatorKernels<double,
+                                            double,
+                                            dftefe::utils::MemorySpace::DEVICE,
+                                            3>;
+    template class DensityCalculatorKernels<float,
+                                            double,
+                                            dftefe::utils::MemorySpace::DEVICE,
+                                            3>;
+    template class DensityCalculatorKernels<std::complex<double>,
+                                            double,
+                                            dftefe::utils::MemorySpace::DEVICE,
+                                            3>;
+    template class DensityCalculatorKernels<std::complex<float>,
+                                            double,
+                                            dftefe::utils::MemorySpace::DEVICE,
+                                            3>;
   } // namespace ksdft
 } // namespace dftefe
 #endif

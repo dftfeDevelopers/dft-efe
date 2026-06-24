@@ -81,11 +81,11 @@ namespace dftefe
     template <utils::MemorySpace memorySpace>
     const size_type KSDFTDefaults<memorySpace>::MAX_WAVEFN_BATCH_SIZE = 400;
     template <utils::MemorySpace memorySpace>
-    const size_type
-      KSDFTDefaults<memorySpace>::MAX_KINENG_WAVEFN_BATCH_SIZE = 100;
+    const size_type KSDFTDefaults<memorySpace>::MAX_KINENG_WAVEFN_BATCH_SIZE =
+      100;
     template <utils::MemorySpace memorySpace>
-    const size_type
-      KSDFTDefaults<memorySpace>::MAX_DENSCOMP_WAVEFN_BATCH_SIZE = 100;
+    const size_type KSDFTDefaults<memorySpace>::MAX_DENSCOMP_WAVEFN_BATCH_SIZE =
+      100;
     template <utils::MemorySpace memorySpace>
     const size_type KSDFTDefaults<memorySpace>::SCALAPACK_PARAL_PROCS = 0;
     template <utils::MemorySpace memorySpace>
@@ -95,16 +95,15 @@ namespace dftefe
     const size_type KSDFTDefaults<utils::MemorySpace::HOST>::CELL_BATCH_SIZE =
       1;
     template <>
-    const size_type
-      KSDFTDefaults<utils::MemorySpace::DEVICE>::CELL_BATCH_SIZE = 50;
+    const size_type KSDFTDefaults<utils::MemorySpace::DEVICE>::CELL_BATCH_SIZE =
+      50;
 
     template <>
     const size_type
       KSDFTDefaults<utils::MemorySpace::HOST>::CELL_BATCH_SIZE_GRAD_EVAL = 1;
     template <>
     const size_type
-      KSDFTDefaults<utils::MemorySpace::DEVICE>::CELL_BATCH_SIZE_GRAD_EVAL =
-        50;
+      KSDFTDefaults<utils::MemorySpace::DEVICE>::CELL_BATCH_SIZE_GRAD_EVAL = 50;
 
     template class KSDFTDefaults<utils::MemorySpace::HOST>;
     template class KSDFTDefaults<utils::MemorySpace::DEVICE>;
@@ -116,6 +115,7 @@ namespace dftefe
 
     const atoms::TCIADataParams TCIADataDefaults::TCIA_PARAMS = {"", ""};
 
-    const size_type MaxSizeDefaults::SIZE_TYPE_MAX = std::numeric_limits<size_type>::max();
+    const size_type MaxSizeDefaults::SIZE_TYPE_MAX =
+      std::numeric_limits<size_type>::max();
   } // end of namespace ksdft
 } // end of namespace dftefe

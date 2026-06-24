@@ -788,7 +788,8 @@ namespace dftefe
         "The coefficients are not comptible with the vector local size");
 
       utils::MemoryStorage<blasLapack::scalar_type<ValueType1, ValueType2>,
-                           memorySpace> aMemSpace(a.size()) , bMemSpace(b.size());
+                           memorySpace>
+        aMemSpace(a.size()), bMemSpace(b.size());
 
       utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
         a.size(), aMemSpace.data(), a.data());
@@ -817,8 +818,9 @@ namespace dftefe
         const blasLapack::ScalarOp &opU /*= blasLapack::ScalarOp::Identity*/,
         const blasLapack::ScalarOp &opV /*= blasLapack::ScalarOp::Identity*/)
     {
-      utils::throwException(false,
-                            "Use dot prod in multivector with precaution of All Reduce in memorySpace.");
+      utils::throwException(
+        false,
+        "Use dot prod in multivector with precaution of All Reduce in memorySpace.");
       DFTEFE_AssertWithMsg(
         u.isCompatible(v),
         "u and v MultiVectors used for dot product are not compatible.");

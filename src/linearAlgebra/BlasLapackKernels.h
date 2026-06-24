@@ -287,47 +287,48 @@ namespace dftefe
       public:
       };
 
-      template <typename ValueType1, typename ValueType2, dftefe::utils::MemorySpace memorySpace>
+      template <typename ValueType1,
+                typename ValueType2,
+                dftefe::utils::MemorySpace memorySpace>
       class CopyKernelTwoValueTypes
       {
       public:
         static void
-        stridedBlockCopy(const size_type vecSize,
-          const size_type numVec,
-          const size_type srcLeadingDim,
-          const size_type srcBlockStartId,
-          const size_type dstLeadingDim,
-          const size_type dstBlockStartId,
-          const ValueType1 *copyFromVec,
-          ValueType2       *copyToVec,
-              LinAlgOpContext<memorySpace> &       context);   
-
-     static void
-     copyValueType1ArrToValueType2Arr(
-          const size_type size,
-          const ValueType1 *valueType1Arr,
-          ValueType2       *valueType2Arr,
-        LinAlgOpContext<memorySpace> &context);
+        stridedBlockCopy(const size_type               vecSize,
+                         const size_type               numVec,
+                         const size_type               srcLeadingDim,
+                         const size_type               srcBlockStartId,
+                         const size_type               dstLeadingDim,
+                         const size_type               dstBlockStartId,
+                         const ValueType1 *            copyFromVec,
+                         ValueType2 *                  copyToVec,
+                         LinAlgOpContext<memorySpace> &context);
 
         static void
-        varBatchedStridedBlockCopy(
-          const size_type   numBatch,
-          const size_type * strideSrc,
-          const size_type * strideDst,
-          const size_type * vecSizeArr,
-          const size_type * numVecArr,
-          const size_type * srcLeadingDimArr,
-          const size_type * srcBlockStartIdArr,
-          const size_type * dstLeadingDimArr,
-          const size_type * dstBlockStartIdArr,
-          const ValueType1 *copyFromVec,
-          ValueType2       *copyToVec,
-          LinAlgOpContext<memorySpace> &context);
+        copyValueType1ArrToValueType2Arr(const size_type   size,
+                                         const ValueType1 *valueType1Arr,
+                                         ValueType2 *      valueType2Arr,
+                                         LinAlgOpContext<memorySpace> &context);
+
+        static void
+        varBatchedStridedBlockCopy(const size_type   numBatch,
+                                   const size_type * strideSrc,
+                                   const size_type * strideDst,
+                                   const size_type * vecSizeArr,
+                                   const size_type * numVecArr,
+                                   const size_type * srcLeadingDimArr,
+                                   const size_type * srcBlockStartIdArr,
+                                   const size_type * dstLeadingDimArr,
+                                   const size_type * dstBlockStartIdArr,
+                                   const ValueType1 *copyFromVec,
+                                   ValueType2 *      copyToVec,
+                                   LinAlgOpContext<memorySpace> &context);
       };
 
 #ifdef DFTEFE_WITH_DEVICE
       template <typename ValueType>
-      class CopyKernelOneValueType<ValueType, dftefe::utils::MemorySpace::DEVICE>
+      class CopyKernelOneValueType<ValueType,
+                                   dftefe::utils::MemorySpace::DEVICE>
       {
       public:
       };
@@ -469,41 +470,42 @@ namespace dftefe
 
       template <typename ValueType1, typename ValueType2>
       class CopyKernelTwoValueTypes<ValueType1,
-                                 ValueType2,
-                                 dftefe::utils::MemorySpace::DEVICE>
+                                    ValueType2,
+                                    dftefe::utils::MemorySpace::DEVICE>
       {
       public:
         static void
-        stridedBlockCopy(const size_type vecSize,
-          const size_type numVec,
-          const size_type srcLeadingDim,
-          const size_type srcBlockStartId,
-          const size_type dstLeadingDim,
-          const size_type dstBlockStartId,
-          const ValueType1 *copyFromVec,
-          ValueType2       *copyToVec,
-              LinAlgOpContext<dftefe::utils::MemorySpace::DEVICE> &       context);   
+        stridedBlockCopy(
+          const size_type                                      vecSize,
+          const size_type                                      numVec,
+          const size_type                                      srcLeadingDim,
+          const size_type                                      srcBlockStartId,
+          const size_type                                      dstLeadingDim,
+          const size_type                                      dstBlockStartId,
+          const ValueType1 *                                   copyFromVec,
+          ValueType2 *                                         copyToVec,
+          LinAlgOpContext<dftefe::utils::MemorySpace::DEVICE> &context);
 
         static void
         copyValueType1ArrToValueType2Arr(
-              const size_type size,
-              const ValueType1 *valueType1Arr,
-              ValueType2       *valueType2Arr,
-            LinAlgOpContext<dftefe::utils::MemorySpace::DEVICE> &context);
+          const size_type                                      size,
+          const ValueType1 *                                   valueType1Arr,
+          ValueType2 *                                         valueType2Arr,
+          LinAlgOpContext<dftefe::utils::MemorySpace::DEVICE> &context);
 
         static void
         varBatchedStridedBlockCopy(
-          const size_type                                      numBatch,
-          const size_type *                                    strideSrc,
-          const size_type *                                    strideDst,
-          const size_type *                                    vecSizeArr,
-          const size_type *                                    numVecArr,
-          const size_type *                                    srcLeadingDimArr,
-          const size_type *                                    srcBlockStartIdArr,
-          const size_type *                                    dstLeadingDimArr,
-          const size_type *                                    dstBlockStartIdArr,
-          const ValueType1 *                                   copyFromVec,
-          ValueType2 *                                         copyToVec,
+          const size_type   numBatch,
+          const size_type * strideSrc,
+          const size_type * strideDst,
+          const size_type * vecSizeArr,
+          const size_type * numVecArr,
+          const size_type * srcLeadingDimArr,
+          const size_type * srcBlockStartIdArr,
+          const size_type * dstLeadingDimArr,
+          const size_type * dstBlockStartIdArr,
+          const ValueType1 *copyFromVec,
+          ValueType2 *      copyToVec,
           LinAlgOpContext<dftefe::utils::MemorySpace::DEVICE> &context);
       };
 

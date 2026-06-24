@@ -52,22 +52,21 @@ namespace dftefe
   template <typename T,
             dftefe::operatorList       operatorID,
             dftefe::utils::MemorySpace memorySpace,
-            bool                      isComplex,
-            std::uint32_t             nDofsPerDim,
-            std::uint32_t             nQuadPointsPerDim,
-            std::uint32_t             batchSize,
-            std::uint32_t             subBatchSize>
+            bool                       isComplex,
+            std::uint32_t              nDofsPerDim,
+            std::uint32_t              nQuadPointsPerDim,
+            std::uint32_t              batchSize,
+            std::uint32_t              subBatchSize>
   class MatrixFree
   {
   public:
     /// Constructor
-    MatrixFree(
-      const MPI_Comm                          &mpi_comm,
-      const dealii::MatrixFree<3, double>     *matrixFreeDataPtr,
-      const dealii::AffineConstraints<double> &constraintMatrix,
-      const std::uint32_t dofHandlerID,
-      const std::uint32_t quadratureID,
-      const dftefe::uInt   nVectors);
+    MatrixFree(const MPI_Comm &                         mpi_comm,
+               const dealii::MatrixFree<3, double> *    matrixFreeDataPtr,
+               const dealii::AffineConstraints<double> &constraintMatrix,
+               const std::uint32_t                      dofHandlerID,
+               const std::uint32_t                      quadratureID,
+               const dftefe::uInt                       nVectors);
 
     /**
      * @brief Initialize data structures for MatrixFree class
@@ -141,7 +140,7 @@ namespace dftefe
                                      quadShapeFunctionGradientsAtQuadPointsEO;
     std::array<T, nQuadPointsPerDim> quadratureWeights;
 
-    dftefe::utils::MemoryStorage<T, memorySpace>           d_jacobianFactor;
+    dftefe::utils::MemoryStorage<T, memorySpace>            d_jacobianFactor;
     dftefe::utils::MemoryStorage<dftefe::uInt, memorySpace> d_map;
 
     // HOST only Data Structures
@@ -154,7 +153,8 @@ namespace dftefe
     dftefe::utils::MemoryStorage<T, dftefe::utils::MemorySpace::DEVICE>
       d_weightMatrixListDevice, d_inhomogenityListDevice;
 
-    dftefe::utils::MemoryStorage<dftefe::uInt, dftefe::utils::MemorySpace::DEVICE>
+    dftefe::utils::MemoryStorage<dftefe::uInt,
+                                 dftefe::utils::MemorySpace::DEVICE>
       d_constrainingNodeBucketsDevice, d_constrainedNodeBucketsDevice,
       d_constrainingNodeOffsetDevice, d_constrainedNodeOffsetDevice,
       d_weightMatrixOffsetDevice;
@@ -174,12 +174,12 @@ namespace dftefe
     std::shared_ptr<const dealii::Utilities::MPI::Partitioner>
       d_singleVectorPartitioner, d_singleBatchPartitioner;
 
-    const MPI_Comm             mpi_communicator;
-    const std::uint32_t        n_mpi_processes;
-    const std::uint32_t        this_mpi_process;
-    std::vector<T>             tempGhostStorage, tempCompressStorage;
-    std::vector<MPI_Request>   mpiRequestsGhost;
-    std::vector<MPI_Request>   mpiRequestsCompress;
+    const MPI_Comm           mpi_communicator;
+    const std::uint32_t      n_mpi_processes;
+    const std::uint32_t      this_mpi_process;
+    std::vector<T>           tempGhostStorage, tempCompressStorage;
+    std::vector<MPI_Request> mpiRequestsGhost;
+    std::vector<MPI_Request> mpiRequestsCompress;
   };
 
 } // namespace dftefe

@@ -41,7 +41,7 @@ namespace dftefe
 
     template <dftefe::utils::MemorySpace memorySpace>
     Profiler<memorySpace>::Profiler(const mpi::MPIComm &mpiComm,
-                       const std::string & profileName)
+                                    const std::string & profileName)
       : d_mpiComm(mpiComm)
       , d_stream(ConditionalOStream(std::cout))
       , d_profileName(profileName)
@@ -54,8 +54,8 @@ namespace dftefe
 
     template <dftefe::utils::MemorySpace memorySpace>
     Profiler<memorySpace>::Profiler(const mpi::MPIComm &      mpiComm,
-                       const ConditionalOStream &stream,
-                       const std::string &       profileName)
+                                    const ConditionalOStream &stream,
+                                    const std::string &       profileName)
       : d_stream(stream)
       , d_mpiComm(mpiComm)
       , d_profileName(profileName)
@@ -175,16 +175,15 @@ namespace dftefe
     {
       // we are going to change the precision and width of output below. store
       // the old values so the get restored when exiting this function
-      std::ostream &os = d_stream.getOStream();
-      std::ios_base::fmtflags oldFlags = os.flags();
-      std::streamsize oldPrecision = os.precision();
-      std::streamsize oldWidth = os.width();
+      std::ostream &          os           = d_stream.getOStream();
+      std::ios_base::fmtflags oldFlags     = os.flags();
+      std::streamsize         oldPrecision = os.precision();
+      std::streamsize         oldWidth     = os.width();
 
       // get the maximum width among all d_SectionsMap
       size_type maxWidth = 0;
       for (const auto &i : d_SectionsMap)
-        maxWidth =
-          std::max(maxWidth, static_cast<size_type>(i.first.size()));
+        maxWidth = std::max(maxWidth, static_cast<size_type>(i.first.size()));
 
       // 32 is the default width until | character
       maxWidth = std::max(maxWidth + 1, static_cast<size_type>(32));
@@ -292,7 +291,8 @@ namespace dftefe
 
     template <dftefe::utils::MemorySpace memorySpace>
     double
-    Profiler<memorySpace>::getSectionTotalWallTime(const std::string &sectionName) const
+    Profiler<memorySpace>::getSectionTotalWallTime(
+      const std::string &sectionName) const
     {
       auto it = d_SectionsMap.find(sectionName);
       if (!sectionName.empty())

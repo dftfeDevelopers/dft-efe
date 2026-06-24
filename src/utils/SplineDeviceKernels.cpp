@@ -36,7 +36,7 @@
 #  include <utils/DeviceTypeConfig.h>
 #  include <utils/DeviceAPICalls.h>
 #  include <utils/Exceptions.h>
-#  include <utils/Spline.h>   // also pulls in SplineDeviceKernels.h
+#  include <utils/Spline.h> // also pulls in SplineDeviceKernels.h
 
 namespace dftefe
 {
@@ -67,19 +67,19 @@ namespace dftefe
                                     r_param,
                                     numSubDiv);
         },
-        const size_type    nQuery,
-        const double *     x,
-        double *           y,
-        const double *     knotX,
-        const double *     knotY,
-        const double *     coefB,
-        const double *     coefC,
-        const double *     coefD,
-        const size_type    nKnots,
-        const double       c0,
-        const bool         isSubdivGrid,
-        const double       a_param,
-        const double       r_param,
+        const size_type         nQuery,
+        const double *          x,
+        double *                y,
+        const double *          knotX,
+        const double *          knotY,
+        const double *          coefB,
+        const double *          coefC,
+        const double *          coefD,
+        const size_type         nKnots,
+        const double            c0,
+        const bool              isSubdivGrid,
+        const double            a_param,
+        const double            r_param,
         const dftefe::size_type numSubDiv);
 
       //-----------------------------------------------------------------------
@@ -105,19 +105,19 @@ namespace dftefe
                                      r_param,
                                      numSubDiv);
         },
-        const size_type    nQuery,
-        const int          derivOrder,
-        const double *     x,
-        double *           y,
-        const double *     knotX,
-        const double *     coefB,
-        const double *     coefC,
-        const double *     coefD,
-        const size_type    nKnots,
-        const double       c0,
-        const bool         isSubdivGrid,
-        const double       a_param,
-        const double       r_param,
+        const size_type         nQuery,
+        const int               derivOrder,
+        const double *          x,
+        double *                y,
+        const double *          knotX,
+        const double *          coefB,
+        const double *          coefC,
+        const double *          coefD,
+        const size_type         nKnots,
+        const double            c0,
+        const bool              isSubdivGrid,
+        const double            a_param,
+        const double            r_param,
         const dftefe::size_type numSubDiv);
 
     } // anonymous namespace
@@ -129,11 +129,18 @@ namespace dftefe
     Spline::Func<utils::MemorySpace::DEVICE>
     Spline::getFunc<utils::MemorySpace::DEVICE>() const
     {
-      return Func<utils::MemorySpace::DEVICE>(
-        d_x_device.data(), d_y_device.data(),
-        d_b_device.data(), d_c_device.data(), d_d_device.data(),
-        static_cast<size_type>(d_x_device.size()),
-        d_c0, d_isSubdivPowerLawGrid, d_a, d_r, d_numSubDiv);
+      return Func<utils::MemorySpace::DEVICE>(d_x_device.data(),
+                                              d_y_device.data(),
+                                              d_b_device.data(),
+                                              d_c_device.data(),
+                                              d_d_device.data(),
+                                              static_cast<size_type>(
+                                                d_x_device.size()),
+                                              d_c0,
+                                              d_isSubdivPowerLawGrid,
+                                              d_a,
+                                              d_r,
+                                              d_numSubDiv);
     }
 
     //-------------------------------------------------------------------------
@@ -147,25 +154,24 @@ namespace dftefe
       double *              y,
       utils::deviceStream_t streamId) const
     {
-      DFTEFE_LAUNCH_KERNEL(
-        SplineEvalAllKernel,
-        n / dftefe::utils::DEVICE_BLOCK_SIZE + 1,
-        dftefe::utils::DEVICE_BLOCK_SIZE,
-        streamId,
-        n,
-        x,
-        y,
-        d_x_device.data(),
-        d_y_device.data(),
-        d_b_device.data(),
-        d_c_device.data(),
-        d_d_device.data(),
-        static_cast<size_type>(d_x_device.size()),
-        d_c0,
-        d_isSubdivPowerLawGrid,
-        d_a,
-        d_r,
-        d_numSubDiv);
+      DFTEFE_LAUNCH_KERNEL(SplineEvalAllKernel,
+                           n / dftefe::utils::DEVICE_BLOCK_SIZE + 1,
+                           dftefe::utils::DEVICE_BLOCK_SIZE,
+                           streamId,
+                           n,
+                           x,
+                           y,
+                           d_x_device.data(),
+                           d_y_device.data(),
+                           d_b_device.data(),
+                           d_c_device.data(),
+                           d_d_device.data(),
+                           static_cast<size_type>(d_x_device.size()),
+                           d_c0,
+                           d_isSubdivPowerLawGrid,
+                           d_a,
+                           d_r,
+                           d_numSubDiv);
     }
 
     //-------------------------------------------------------------------------
@@ -180,25 +186,24 @@ namespace dftefe
       double *              y,
       utils::deviceStream_t streamId) const
     {
-      DFTEFE_LAUNCH_KERNEL(
-        SplineDerivAllKernel,
-        n / dftefe::utils::DEVICE_BLOCK_SIZE + 1,
-        dftefe::utils::DEVICE_BLOCK_SIZE,
-        streamId,
-        n,
-        order,
-        x,
-        y,
-        d_x_device.data(),
-        d_b_device.data(),
-        d_c_device.data(),
-        d_d_device.data(),
-        static_cast<size_type>(d_x_device.size()),
-        d_c0,
-        d_isSubdivPowerLawGrid,
-        d_a,
-        d_r,
-        d_numSubDiv);
+      DFTEFE_LAUNCH_KERNEL(SplineDerivAllKernel,
+                           n / dftefe::utils::DEVICE_BLOCK_SIZE + 1,
+                           dftefe::utils::DEVICE_BLOCK_SIZE,
+                           streamId,
+                           n,
+                           order,
+                           x,
+                           y,
+                           d_x_device.data(),
+                           d_b_device.data(),
+                           d_c_device.data(),
+                           d_d_device.data(),
+                           static_cast<size_type>(d_x_device.size()),
+                           d_c0,
+                           d_isSubdivPowerLawGrid,
+                           d_a,
+                           d_r,
+                           d_numSubDiv);
     }
 
   } // namespace utils

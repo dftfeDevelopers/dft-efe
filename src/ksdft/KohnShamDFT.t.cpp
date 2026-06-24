@@ -73,11 +73,11 @@ namespace dftefe
         const quadrature::QuadratureValuesContainer<RealType, memorySpaceHost>
           &inValues,
         quadrature::QuadratureValuesContainer<RealType, memorySpaceHost>
-          &residualValues,
-        const std::vector<RealType> &JxW,
-        const bool                                   computeNorm,
+          &                                              residualValues,
+        const std::vector<RealType> &                    JxW,
+        const bool                                       computeNorm,
         linearAlgebra::LinAlgOpContext<memorySpaceHost> &linAlgOpContext,
-        const utils::mpi::MPIComm &                  mpiComm)
+        const utils::mpi::MPIComm &                      mpiComm)
       {
         linearAlgebra::blasLapack::axpby<RealType, RealType, memorySpaceHost>(
           outValues.nQuadraturePoints() * outValues.getNumberComponents(),
@@ -119,14 +119,15 @@ namespace dftefe
       template <typename RealType>
       RealType
       normalizeDensityQuadData(
-        quadrature::QuadratureValuesContainer<RealType, memorySpaceHost> &inValues,
-        const size_type numElectrons,
-        const std::vector<RealType> &JxW,
+        quadrature::QuadratureValuesContainer<RealType, memorySpaceHost>
+          &                                              inValues,
+        const size_type                                  numElectrons,
+        const std::vector<RealType> &                    JxW,
         linearAlgebra::LinAlgOpContext<memorySpaceHost> &linAlgOpContext,
-        const utils::mpi::MPIComm &                  mpiComm,
-        bool                                         computeTotalDensity,
-        bool                                         scaleDensity,
-        utils::ConditionalOStream &                  rootCout)
+        const utils::mpi::MPIComm &                      mpiComm,
+        bool                                             computeTotalDensity,
+        bool                                             scaleDensity,
+        utils::ConditionalOStream &                      rootCout)
       {
         RealType totalDensityInQuad = 0.0;
         if (computeTotalDensity || scaleDensity)
@@ -171,8 +172,9 @@ namespace dftefe
       generateRandNormDistMultivec(
         linearAlgebra::MultiVector<ValueType, memorySpace> &multiVectorGuess)
       {
-        utils::MemoryStorage<ValueType, memorySpaceHost> multiVectorGuessHost
-          (multiVectorGuess.localSize() * multiVectorGuess.numVectors(), ValueType());
+        utils::MemoryStorage<ValueType, memorySpaceHost> multiVectorGuessHost(
+          multiVectorGuess.localSize() * multiVectorGuess.numVectors(),
+          ValueType());
         int rank;
         utils::mpi::MPICommRank(
           multiVectorGuess.getMPIPatternP2P()->mpiCommunicator(), &rank);
@@ -237,7 +239,6 @@ namespace dftefe
         memoryTransfer.copy(multiVectorGuessHost.size(),
                             multiVectorGuess.data(),
                             multiVectorGuessHost.data());
-
       }
 
       std::set<DensityDescrAttr>
@@ -249,23 +250,19 @@ namespace dftefe
       }
 
       template <typename RealType>
-      std::unordered_map<
-        DensityDescrAttr,
-        std::vector<
-          quadrature::QuadratureValuesContainer<RealType,
-                                                utils::MemorySpace::HOST>>>
-      buildDescrMap(
-        const std::map<
-          DensityDescrAttr,
-          quadrature::QuadratureValuesContainer<RealType,
-                                                utils::MemorySpace::HOST>>
-          &descrInput)
+      std::unordered_map<DensityDescrAttr,
+                         std::vector<quadrature::QuadratureValuesContainer<
+                           RealType,
+                           utils::MemorySpace::HOST>>>
+      buildDescrMap(const std::map<DensityDescrAttr,
+                                   quadrature::QuadratureValuesContainer<
+                                     RealType,
+                                     utils::MemorySpace::HOST>> &descrInput)
       {
-        std::unordered_map<
-          DensityDescrAttr,
-          std::vector<
-            quadrature::QuadratureValuesContainer<RealType,
-                                                  utils::MemorySpace::HOST>>>
+        std::unordered_map<DensityDescrAttr,
+                           std::vector<quadrature::QuadratureValuesContainer<
+                             RealType,
+                             utils::MemorySpace::HOST>>>
           descrMap;
         for (const auto &[attr, qvc] : descrInput)
           descrMap[attr] = {qvc};
@@ -304,7 +301,8 @@ namespace dftefe
         const size_type                  mixingHistory,
         const double                     mixingParameter,
         const bool                       isAdaptiveAndersonMixingParameter,
-        // const quadrature::QuadratureValuesContainer<RealType, memorySpaceHost>
+        // const quadrature::QuadratureValuesContainer<RealType,
+        // memorySpaceHost>
         //   &electronChargeDensityInput,
         const atoms::AtomSuperpositionFunction<memorySpace>
           &atomicElectronicChargeDensityFunction,
@@ -326,10 +324,12 @@ namespace dftefe
           feBDTotalChargeStiffnessMatrix,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeElectrostaticsBasis,
-                                          memorySpaceHost>> feBDNuclearChargeRhs,
+                                          memorySpaceHost>>
+          feBDNuclearChargeRhs,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeElectrostaticsBasis,
-                                          memorySpaceHost>> feBDElectronicChargeRhs,
+                                          memorySpaceHost>>
+          feBDElectronicChargeRhs,
         /* Field data storages eigen solve*/
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeWaveFunctionBasis,
@@ -362,7 +362,8 @@ namespace dftefe
       , d_mixingScheme(d_mpiCommDomain)
       , d_numWantedEigenvalues(numWantedEigenvalues)
       , d_linAlgOpContext(linAlgOpContext)
-      , d_linAlgOpContextHost(linearAlgebra::LinAlgOpContextDefaults::LINALG_OP_CONTXT_HOST)
+      , d_linAlgOpContextHost(
+          linearAlgebra::LinAlgOpContextDefaults::LINALG_OP_CONTXT_HOST)
       , d_kohnShamEnergies(numWantedEigenvalues, 0.0)
       , d_SCFTol(scfDensityResidualNormTolerance)
       , d_rootCout(std::cout)
@@ -380,8 +381,11 @@ namespace dftefe
                  "Kohn Sham DFT Solve time")
       , d_xcType(xcType)
     {
-      std::unique_ptr<linearAlgebra::MultiVector<ValueTypeWaveFunctionCoeff, memorySpace>> wfnPtr;
-      std::vector<std::vector<double>> occupancies = {std::vector<double>(numWantedEigenvalues, 0.0)};
+      std::unique_ptr<
+        linearAlgebra::MultiVector<ValueTypeWaveFunctionCoeff, memorySpace>>
+                                       wfnPtr;
+      std::vector<std::vector<double>> occupancies = {
+        std::vector<double>(numWantedEigenvalues, 0.0)};
       size_type nKSOrbs;
       d_p.registerStart("Pre Init Checks");
       if (dynamic_cast<
@@ -404,26 +408,30 @@ namespace dftefe
         quadrature::QuadratureValuesContainer<RealType, memorySpaceHost>(
           feBDElectronicChargeRhs->getQuadratureRuleContainer(), 1, 0.0);
 
-      wfnPtr = std::make_unique<linearAlgebra::MultiVector<ValueTypeWaveFunctionCoeff, memorySpace>>(
-        feBMWaveFn->getMPIPatternP2P(), linAlgOpContext, numWantedEigenvalues,
+      wfnPtr = std::make_unique<
+        linearAlgebra::MultiVector<ValueTypeWaveFunctionCoeff, memorySpace>>(
+        feBMWaveFn->getMPIPatternP2P(),
+        linAlgOpContext,
+        numWantedEigenvalues,
         (ValueTypeWaveFunctionCoeff)0.0);
 
       KohnShamDFTInternal::generateRandNormDistMultivec(*wfnPtr);
       wfnPtr->updateGhostValues();
-      feBMWaveFn->getConstraints().distributeParentToChild(*wfnPtr,
-                                                            numWantedEigenvalues);
+      feBMWaveFn->getConstraints().distributeParentToChild(
+        *wfnPtr, numWantedEigenvalues);
 
       d_rdm1Spectral = std::make_shared<RDM1FE<ValueTypeWaveFunctionBasis,
-                                        ValueTypeWaveFunctionCoeff,
-                                        memorySpace,
-                                        dim>>(
-        feBDEXCHamiltonian, *feBMWaveFn, linAlgOpContext,
+                                               ValueTypeWaveFunctionCoeff,
+                                               memorySpace,
+                                               dim>>(
+        feBDEXCHamiltonian,
+        *feBMWaveFn,
+        linAlgOpContext,
         d_mpiCommDomain,
         KSDFTDefaults<memorySpace>::CELL_BATCH_SIZE,
         KSDFTDefaults<memorySpace>::MAX_DENSCOMP_WAVEFN_BATCH_SIZE);
 
-      utils::throwException(densIn.getNumberComponents() ==
-                              1,
+      utils::throwException(densIn.getNumberComponents() == 1,
                             "Electron density should have only one component.");
 
       utils::throwException(
@@ -432,8 +440,7 @@ namespace dftefe
         "The QuadratureRuleContainer for feBDElectrostaticsHamiltonian and electronChargeDensity should be same.");
 
       std::shared_ptr<const quadrature::QuadratureRuleContainer>
-        quadRuleContainerRho =
-          densIn.getQuadratureRuleContainer();
+        quadRuleContainerRho = densIn.getQuadratureRuleContainer();
 
       int rank;
       utils::mpi::MPICommRank(d_mpiCommDomain, &rank);
@@ -464,19 +471,19 @@ namespace dftefe
         d_mpiCommDomain);
 
       std::shared_ptr<const quadrature::QuadratureRuleContainer>
-                quadRuleContainerVal = quadRuleContainerRho;
+        quadRuleContainerVal = quadRuleContainerRho;
 
-      utils::MemoryStorage<RealType, memorySpace> 
-        densityInQuadValuesMemspace(quadRuleContainerVal->nQuadraturePoints());
+      utils::MemoryStorage<RealType, memorySpace> densityInQuadValuesMemspace(
+        quadRuleContainerVal->nQuadraturePoints());
 
       atomicElectronicChargeDensityFunction.evaluate(
-                                    quadRuleContainerVal->nQuadraturePoints(),
-                                    atoms::AtomSuperpositionFuncType::Identity,
-                                    quadRuleContainerVal->template getRealPointsPtr<memorySpace>(),
-                                    densityInQuadValuesMemspace.data(),
-                                    1/(atoms::Clm(0, 0) * atoms::Dm(0) * atoms::Qm(0, 0)));
+        quadRuleContainerVal->nQuadraturePoints(),
+        atoms::AtomSuperpositionFuncType::Identity,
+        quadRuleContainerVal->template getRealPointsPtr<memorySpace>(),
+        densityInQuadValuesMemspace.data(),
+        1 / (atoms::Clm(0, 0) * atoms::Dm(0) * atoms::Qm(0, 0)));
 
-      utils::MemoryTransfer<memorySpaceHost, memorySpace> memTrans;                    
+      utils::MemoryTransfer<memorySpaceHost, memorySpace> memTrans;
       memTrans.copy(densityInQuadValuesMemspace.size(),
                     densIn.begin(),
                     densityInQuadValuesMemspace.data());
@@ -505,9 +512,8 @@ namespace dftefe
           auto gradIn =
             quadrature::QuadratureValuesContainer<RealType, memorySpaceHost>(
               quadRuleContainerVal, dim, (RealType)0.0);
-          utils::MemoryStorage<RealType, memorySpace>
-            gradInQuadValuesMemspace(quadRuleContainerVal->nQuadraturePoints() *
-                                     dim);
+          utils::MemoryStorage<RealType, memorySpace> gradInQuadValuesMemspace(
+            quadRuleContainerVal->nQuadraturePoints() * dim);
           atomicElectronicChargeDensityFunction.evaluate(
             quadRuleContainerVal->nQuadraturePoints(),
             atoms::AtomSuperpositionFuncType::Grad,
@@ -521,8 +527,7 @@ namespace dftefe
         }
 
       d_rdm1Mix->setDescriptors(
-        KohnShamDFTInternal::buildDescrMap(initDescrMap),
-        {});
+        KohnShamDFTInternal::buildDescrMap(initDescrMap), {});
 
       d_p.registerEnd("Pre Init Checks");
       d_p.registerStart("Hamiltonian Components Initilization");
@@ -533,7 +538,8 @@ namespace dftefe
         feBDKineticHamiltonian,
         linAlgOpContext,
         KSDFTDefaults<memorySpace>::CELL_BATCH_SIZE_GRAD_EVAL,
-        numWantedEigenvalues > KSDFTDefaults<memorySpace>::MAX_KINENG_WAVEFN_BATCH_SIZE ?
+        numWantedEigenvalues >
+            KSDFTDefaults<memorySpace>::MAX_KINENG_WAVEFN_BATCH_SIZE ?
           KSDFTDefaults<memorySpace>::MAX_KINENG_WAVEFN_BATCH_SIZE :
           numWantedEigenvalues);
 
@@ -557,8 +563,7 @@ namespace dftefe
           KSDFTDefaults<memorySpace>::CELL_BATCH_SIZE);
 
       d_rdm1Spectral->setDescriptors(
-        KohnShamDFTInternal::buildDescrMap(initDescrMap),
-        {});
+        KohnShamDFTInternal::buildDescrMap(initDescrMap), {});
 
       d_hamitonianXC =
         std::make_shared<ExchangeCorrelationFE<ValueTypeWaveFunctionBasis,
@@ -581,10 +586,13 @@ namespace dftefe
       //                                             d_hamitonianXC);
 
       std::vector<HamiltonianPtrVariant> hamiltonianComponentsVec{
-        d_hamitonianKin, d_hamitonianElec, d_hamitonianXC /* d_hamiltonianElectroExc*/};
+        d_hamitonianKin,
+        d_hamitonianElec,
+        d_hamitonianXC /* d_hamiltonianElectroExc*/};
 
       size_type waveFnBatch =
-        numWantedEigenvalues > KSDFTDefaults<memorySpace>::MAX_WAVEFN_BATCH_SIZE ?
+        numWantedEigenvalues >
+            KSDFTDefaults<memorySpace>::MAX_WAVEFN_BATCH_SIZE ?
           KSDFTDefaults<memorySpace>::MAX_WAVEFN_BATCH_SIZE :
           numWantedEigenvalues;
 
@@ -617,7 +625,8 @@ namespace dftefe
       const bool      useELPADeviceKernel = false;
       const size_type scalapackParalProcs =
         KSDFTDefaults<memorySpace>::SCALAPACK_PARAL_PROCS;
-      const size_type scalapackBlockSize = KSDFTDefaults<memorySpace>::SCALAPACK_BLOCK_SIZE;
+      const size_type scalapackBlockSize =
+        KSDFTDefaults<memorySpace>::SCALAPACK_BLOCK_SIZE;
       d_elpaScala = std::make_shared<linearAlgebra::ElpaScalapackManager>(
         d_mpiCommDomain,
         scalapackParalProcs,
@@ -674,7 +683,9 @@ namespace dftefe
         MContextForInv,
         MInvContext);
 
-      d_rdm1Spectral->setSpectral(std::move(wfnPtr), occupancies, numWantedEigenvalues);
+      d_rdm1Spectral->setSpectral(std::move(wfnPtr),
+                                  occupancies,
+                                  numWantedEigenvalues);
 
       d_p.registerEnd("KS EigenSolver Init");
 
@@ -738,17 +749,20 @@ namespace dftefe
           feBDTotalChargeStiffnessMatrix,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeElectrostaticsBasis,
-                                          memorySpaceHost>> feBDNuclearChargeRhs,
+                                          memorySpaceHost>>
+          feBDNuclearChargeRhs,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeElectrostaticsBasis,
-                                          memorySpaceHost>> feBDElectronicChargeRhs,
+                                          memorySpaceHost>>
+          feBDElectronicChargeRhs,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeElectrostaticsBasis,
                                           memorySpaceHost>>
           feBDNuclChargeStiffnessMatrixNumSol,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeElectrostaticsBasis,
-                                          memorySpaceHost>> feBDNuclChargeRhsNumSol,
+                                          memorySpaceHost>>
+          feBDNuclChargeRhsNumSol,
         /* Field data storages eigen solve*/
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeWaveFunctionBasis,
@@ -781,7 +795,8 @@ namespace dftefe
       , d_mixingScheme(d_mpiCommDomain)
       , d_numWantedEigenvalues(numWantedEigenvalues)
       , d_linAlgOpContext(linAlgOpContext)
-      , d_linAlgOpContextHost(linearAlgebra::LinAlgOpContextDefaults::LINALG_OP_CONTXT_HOST)
+      , d_linAlgOpContextHost(
+          linearAlgebra::LinAlgOpContextDefaults::LINALG_OP_CONTXT_HOST)
       , d_kohnShamEnergies(numWantedEigenvalues, 0.0)
       , d_SCFTol(scfDensityResidualNormTolerance)
       , d_rootCout(std::cout)
@@ -799,8 +814,11 @@ namespace dftefe
                  "Kohn Sham DFT Solve time")
       , d_xcType(xcType)
     {
-      std::unique_ptr<linearAlgebra::MultiVector<ValueTypeWaveFunctionCoeff, memorySpace>> wfnPtr;
-      std::vector<std::vector<double>> occupancies = {std::vector<double>(numWantedEigenvalues, 0.0)};
+      std::unique_ptr<
+        linearAlgebra::MultiVector<ValueTypeWaveFunctionCoeff, memorySpace>>
+                                       wfnPtr;
+      std::vector<std::vector<double>> occupancies = {
+        std::vector<double>(numWantedEigenvalues, 0.0)};
       size_type nKSOrbs;
 
       d_p.registerStart("Pre Init Checks");
@@ -818,22 +836,30 @@ namespace dftefe
         quadrature::QuadratureValuesContainer<RealType, memorySpaceHost>(
           feBDElectronicChargeRhs->getQuadratureRuleContainer(), 1, 0.0);
 
-      wfnPtr = std::make_unique<linearAlgebra::MultiVector<ValueTypeWaveFunctionCoeff, memorySpace>>(
-        feBMWaveFn->getMPIPatternP2P(), linAlgOpContext, numWantedEigenvalues, (ValueTypeWaveFunctionCoeff)0.0);
+      wfnPtr = std::make_unique<
+        linearAlgebra::MultiVector<ValueTypeWaveFunctionCoeff, memorySpace>>(
+        feBMWaveFn->getMPIPatternP2P(),
+        linAlgOpContext,
+        numWantedEigenvalues,
+        (ValueTypeWaveFunctionCoeff)0.0);
 
       KohnShamDFTInternal::generateRandNormDistMultivec(*wfnPtr);
       wfnPtr->updateGhostValues();
-      feBMWaveFn->getConstraints().distributeParentToChild(*wfnPtr,
-                                                            numWantedEigenvalues);
+      feBMWaveFn->getConstraints().distributeParentToChild(
+        *wfnPtr, numWantedEigenvalues);
 
-      d_rdm1Spectral = std::make_shared<RDM1FE<ValueTypeWaveFunctionBasis, ValueTypeWaveFunctionCoeff, memorySpace, dim>>(
-        feBDEXCHamiltonian, *feBMWaveFn, linAlgOpContext,
+      d_rdm1Spectral = std::make_shared<RDM1FE<ValueTypeWaveFunctionBasis,
+                                               ValueTypeWaveFunctionCoeff,
+                                               memorySpace,
+                                               dim>>(
+        feBDEXCHamiltonian,
+        *feBMWaveFn,
+        linAlgOpContext,
         d_mpiCommDomain,
         KSDFTDefaults<memorySpace>::CELL_BATCH_SIZE,
         KSDFTDefaults<memorySpace>::MAX_DENSCOMP_WAVEFN_BATCH_SIZE);
 
-      utils::throwException(densIn.getNumberComponents() ==
-                              1,
+      utils::throwException(densIn.getNumberComponents() == 1,
                             "Electron density should have only one component.");
 
       utils::throwException(
@@ -842,8 +868,7 @@ namespace dftefe
         "The QuadratureRuleContainer for feBDHamiltonian and electronChargeDensity should be same.");
 
       std::shared_ptr<const quadrature::QuadratureRuleContainer>
-        quadRuleContainerRho =
-          densIn.getQuadratureRuleContainer();
+        quadRuleContainerRho = densIn.getQuadratureRuleContainer();
 
       int rank;
       utils::mpi::MPICommRank(d_mpiCommDomain, &rank);
@@ -874,19 +899,19 @@ namespace dftefe
         d_mpiCommDomain);
 
       std::shared_ptr<const quadrature::QuadratureRuleContainer>
-                quadRuleContainerVal = quadRuleContainerRho;
+        quadRuleContainerVal = quadRuleContainerRho;
 
-      utils::MemoryStorage<RealType, memorySpace> 
-        densityInQuadValuesMemspace(quadRuleContainerVal->nQuadraturePoints());
+      utils::MemoryStorage<RealType, memorySpace> densityInQuadValuesMemspace(
+        quadRuleContainerVal->nQuadraturePoints());
 
       atomicElectronicChargeDensityFunction.evaluate(
-                                    quadRuleContainerVal->nQuadraturePoints(),
-                                    atoms::AtomSuperpositionFuncType::Identity,
-                                    quadRuleContainerVal->template getRealPointsPtr<memorySpace>(),
-                                    densityInQuadValuesMemspace.data(),
-                                    1/(atoms::Clm(0, 0) * atoms::Dm(0) * atoms::Qm(0, 0)));
+        quadRuleContainerVal->nQuadraturePoints(),
+        atoms::AtomSuperpositionFuncType::Identity,
+        quadRuleContainerVal->template getRealPointsPtr<memorySpace>(),
+        densityInQuadValuesMemspace.data(),
+        1 / (atoms::Clm(0, 0) * atoms::Dm(0) * atoms::Qm(0, 0)));
 
-      utils::MemoryTransfer<memorySpaceHost, memorySpace> memTrans;                    
+      utils::MemoryTransfer<memorySpaceHost, memorySpace> memTrans;
       memTrans.copy(densityInQuadValuesMemspace.size(),
                     densIn.begin(),
                     densityInQuadValuesMemspace.data());
@@ -915,9 +940,8 @@ namespace dftefe
           auto gradIn =
             quadrature::QuadratureValuesContainer<RealType, memorySpaceHost>(
               quadRuleContainerVal, dim, (RealType)0.0);
-          utils::MemoryStorage<RealType, memorySpace>
-            gradInQuadValuesMemspace(quadRuleContainerVal->nQuadraturePoints() *
-                                     dim);
+          utils::MemoryStorage<RealType, memorySpace> gradInQuadValuesMemspace(
+            quadRuleContainerVal->nQuadraturePoints() * dim);
           atomicElectronicChargeDensityFunction.evaluate(
             quadRuleContainerVal->nQuadraturePoints(),
             atoms::AtomSuperpositionFuncType::Grad,
@@ -931,8 +955,7 @@ namespace dftefe
         }
 
       d_rdm1Mix->setDescriptors(
-        KohnShamDFTInternal::buildDescrMap(initDescrMap),
-        {});
+        KohnShamDFTInternal::buildDescrMap(initDescrMap), {});
 
       d_p.registerEnd("Pre Init Checks");
       d_p.registerStart("Hamiltonian Components Initilization");
@@ -943,7 +966,8 @@ namespace dftefe
         feBDKineticHamiltonian,
         linAlgOpContext,
         KSDFTDefaults<memorySpace>::CELL_BATCH_SIZE_GRAD_EVAL,
-        numWantedEigenvalues > KSDFTDefaults<memorySpace>::MAX_KINENG_WAVEFN_BATCH_SIZE ?
+        numWantedEigenvalues >
+            KSDFTDefaults<memorySpace>::MAX_KINENG_WAVEFN_BATCH_SIZE ?
           KSDFTDefaults<memorySpace>::MAX_KINENG_WAVEFN_BATCH_SIZE :
           numWantedEigenvalues);
 
@@ -969,8 +993,7 @@ namespace dftefe
           KSDFTDefaults<memorySpace>::CELL_BATCH_SIZE);
 
       d_rdm1Spectral->setDescriptors(
-        KohnShamDFTInternal::buildDescrMap(initDescrMap),
-        {});
+        KohnShamDFTInternal::buildDescrMap(initDescrMap), {});
 
       d_hamitonianXC =
         std::make_shared<ExchangeCorrelationFE<ValueTypeWaveFunctionBasis,
@@ -994,10 +1017,13 @@ namespace dftefe
       //                                             d_hamitonianXC);
 
       std::vector<HamiltonianPtrVariant> hamiltonianComponentsVec{
-        d_hamitonianKin, d_hamitonianElec, d_hamitonianXC /* d_hamiltonianElectroExc*/};
+        d_hamitonianKin,
+        d_hamitonianElec,
+        d_hamitonianXC /* d_hamiltonianElectroExc*/};
 
       size_type waveFnBatch =
-        numWantedEigenvalues > KSDFTDefaults<memorySpace>::MAX_WAVEFN_BATCH_SIZE ?
+        numWantedEigenvalues >
+            KSDFTDefaults<memorySpace>::MAX_WAVEFN_BATCH_SIZE ?
           KSDFTDefaults<memorySpace>::MAX_WAVEFN_BATCH_SIZE :
           numWantedEigenvalues;
 
@@ -1031,7 +1057,8 @@ namespace dftefe
       const bool      useELPADeviceKernel = false;
       const size_type scalapackParalProcs =
         KSDFTDefaults<memorySpace>::SCALAPACK_PARAL_PROCS;
-      const size_type scalapackBlockSize = KSDFTDefaults<memorySpace>::SCALAPACK_BLOCK_SIZE;
+      const size_type scalapackBlockSize =
+        KSDFTDefaults<memorySpace>::SCALAPACK_BLOCK_SIZE;
       d_elpaScala = std::make_shared<linearAlgebra::ElpaScalapackManager>(
         d_mpiCommDomain,
         scalapackParalProcs,
@@ -1063,11 +1090,11 @@ namespace dftefe
           ksEigSolve.setChebyshevPolynomialDegree(1);
 
           ksEigSolve.solve(*d_hamitonianOperator,
-                            d_kohnShamEnergies,
-                            *wfnPtr,
-                            false,
-                            *d_MContext,
-                            *d_MInvContext);
+                           d_kohnShamEnergies,
+                           *wfnPtr,
+                           false,
+                           *d_MContext,
+                           *d_MInvContext);
         }
 
       // form the kohn sham operator
@@ -1088,7 +1115,9 @@ namespace dftefe
         MContextForInv,
         MInvContext);
 
-      d_rdm1Spectral->setSpectral(std::move(wfnPtr), occupancies, numWantedEigenvalues);
+      d_rdm1Spectral->setSpectral(std::move(wfnPtr),
+                                  occupancies,
+                                  numWantedEigenvalues);
 
       d_p.registerEnd("KS EigenSolver Init");
 
@@ -1100,8 +1129,8 @@ namespace dftefe
       d_p.print();
     }
 
-      // used if delta rho approach is taken with phi total from 1D KS solve
-      // with analytical vself energy cancellation
+    // used if delta rho approach is taken with phi total from 1D KS solve
+    // with analytical vself energy cancellation
     template <typename ValueTypeElectrostaticsCoeff,
               typename ValueTypeElectrostaticsBasis,
               typename ValueTypeWaveFunctionCoeff,
@@ -1157,10 +1186,12 @@ namespace dftefe
           feBDTotalChargeStiffnessMatrix,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeElectrostaticsBasis,
-                                          memorySpaceHost>> feBDNuclearChargeRhs,
+                                          memorySpaceHost>>
+          feBDNuclearChargeRhs,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeElectrostaticsBasis,
-                                          memorySpaceHost>> feBDElectronicChargeRhs,
+                                          memorySpaceHost>>
+          feBDElectronicChargeRhs,
         /* Field data storages eigen solve*/
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeWaveFunctionBasis,
@@ -1183,7 +1214,7 @@ namespace dftefe
         const OpContext &MContextForInv,
         const OpContext &MContext,
         const OpContext &MInvContext,
-        bool isResidualChebyshevFilter,
+        bool             isResidualChebyshevFilter,
         /* TCI related info */
         const atoms::TCIADataParams &params)
       : d_feBMWaveFn(feBMWaveFn)
@@ -1197,7 +1228,8 @@ namespace dftefe
       , d_mixingScheme(d_mpiCommDomain)
       , d_numWantedEigenvalues(numWantedEigenvalues)
       , d_linAlgOpContext(linAlgOpContext)
-      , d_linAlgOpContextHost(linearAlgebra::LinAlgOpContextDefaults::LINALG_OP_CONTXT_HOST)
+      , d_linAlgOpContextHost(
+          linearAlgebra::LinAlgOpContextDefaults::LINALG_OP_CONTXT_HOST)
       , d_kohnShamEnergies(numWantedEigenvalues, 0.0)
       , d_SCFTol(scfDensityResidualNormTolerance)
       , d_rootCout(std::cout)
@@ -1215,8 +1247,11 @@ namespace dftefe
                  "Kohn Sham DFT Solve time")
       , d_xcType(xcType)
     {
-      std::unique_ptr<linearAlgebra::MultiVector<ValueTypeWaveFunctionCoeff, memorySpace>> wfnPtr;
-      std::vector<std::vector<double>> occupancies = {std::vector<double>(numWantedEigenvalues, 0.0)};
+      std::unique_ptr<
+        linearAlgebra::MultiVector<ValueTypeWaveFunctionCoeff, memorySpace>>
+                                       wfnPtr;
+      std::vector<std::vector<double>> occupancies = {
+        std::vector<double>(numWantedEigenvalues, 0.0)};
       size_type nKSOrbs;
       d_p.registerStart("Pre Init Checks");
       if (dynamic_cast<
@@ -1233,16 +1268,25 @@ namespace dftefe
         quadrature::QuadratureValuesContainer<RealType, memorySpaceHost>(
           feBDElectronicChargeRhs->getQuadratureRuleContainer(), 1, 0.0);
 
-      wfnPtr = std::make_unique<linearAlgebra::MultiVector<ValueTypeWaveFunctionCoeff, memorySpace>>(
-        feBMWaveFn->getMPIPatternP2P(), linAlgOpContext, numWantedEigenvalues, (ValueTypeWaveFunctionCoeff)0.0);
+      wfnPtr = std::make_unique<
+        linearAlgebra::MultiVector<ValueTypeWaveFunctionCoeff, memorySpace>>(
+        feBMWaveFn->getMPIPatternP2P(),
+        linAlgOpContext,
+        numWantedEigenvalues,
+        (ValueTypeWaveFunctionCoeff)0.0);
 
       KohnShamDFTInternal::generateRandNormDistMultivec(*wfnPtr);
       wfnPtr->updateGhostValues();
-      feBMWaveFn->getConstraints().distributeParentToChild(*wfnPtr,
-                                                            numWantedEigenvalues);
+      feBMWaveFn->getConstraints().distributeParentToChild(
+        *wfnPtr, numWantedEigenvalues);
 
-      d_rdm1Spectral = std::make_shared<RDM1FE<ValueTypeWaveFunctionBasis, ValueTypeWaveFunctionCoeff, memorySpace, dim>>(
-        feBDEXCHamiltonian, *feBMWaveFn, linAlgOpContext,
+      d_rdm1Spectral = std::make_shared<RDM1FE<ValueTypeWaveFunctionBasis,
+                                               ValueTypeWaveFunctionCoeff,
+                                               memorySpace,
+                                               dim>>(
+        feBDEXCHamiltonian,
+        *feBMWaveFn,
+        linAlgOpContext,
         d_mpiCommDomain,
         KSDFTDefaults<memorySpace>::CELL_BATCH_SIZE,
         KSDFTDefaults<memorySpace>::MAX_DENSCOMP_WAVEFN_BATCH_SIZE);
@@ -1256,8 +1300,7 @@ namespace dftefe
         "The QuadratureRuleContainer for feBDElectrostaticsHamiltonian and electronChargeDensity should be same.");
 
       std::shared_ptr<const quadrature::QuadratureRuleContainer>
-        quadRuleContainerRho =
-          densIn.getQuadratureRuleContainer();
+        quadRuleContainerRho = densIn.getQuadratureRuleContainer();
 
       int rank;
       utils::mpi::MPICommRank(d_mpiCommDomain, &rank);
@@ -1288,17 +1331,17 @@ namespace dftefe
         d_mpiCommDomain);
 
       std::shared_ptr<const quadrature::QuadratureRuleContainer>
-                quadRuleContainerVal = quadRuleContainerRho;
+        quadRuleContainerVal = quadRuleContainerRho;
 
-      utils::MemoryStorage<RealType, memorySpace>
-        densityInQuadValuesMemspace(quadRuleContainerVal->nQuadraturePoints());
+      utils::MemoryStorage<RealType, memorySpace> densityInQuadValuesMemspace(
+        quadRuleContainerVal->nQuadraturePoints());
 
       atomicElectronicChargeDensityFunction.evaluate(
-                                    quadRuleContainerVal->nQuadraturePoints(),
-                                    atoms::AtomSuperpositionFuncType::Identity,
-                                    quadRuleContainerVal->template getRealPointsPtr<memorySpace>(),
-                                    densityInQuadValuesMemspace.data(),
-                                    1/(atoms::Clm(0, 0) * atoms::Dm(0) * atoms::Qm(0, 0)));
+        quadRuleContainerVal->nQuadraturePoints(),
+        atoms::AtomSuperpositionFuncType::Identity,
+        quadRuleContainerVal->template getRealPointsPtr<memorySpace>(),
+        densityInQuadValuesMemspace.data(),
+        1 / (atoms::Clm(0, 0) * atoms::Dm(0) * atoms::Qm(0, 0)));
 
       utils::MemoryTransfer<memorySpaceHost, memorySpace> memTrans;
       memTrans.copy(densityInQuadValuesMemspace.size(),
@@ -1329,9 +1372,8 @@ namespace dftefe
           auto gradIn =
             quadrature::QuadratureValuesContainer<RealType, memorySpaceHost>(
               quadRuleContainerVal, dim, (RealType)0.0);
-          utils::MemoryStorage<RealType, memorySpace>
-            gradInQuadValuesMemspace(quadRuleContainerVal->nQuadraturePoints() *
-                                     dim);
+          utils::MemoryStorage<RealType, memorySpace> gradInQuadValuesMemspace(
+            quadRuleContainerVal->nQuadraturePoints() * dim);
           atomicElectronicChargeDensityFunction.evaluate(
             quadRuleContainerVal->nQuadraturePoints(),
             atoms::AtomSuperpositionFuncType::Grad,
@@ -1345,8 +1387,7 @@ namespace dftefe
         }
 
       d_rdm1Mix->setDescriptors(
-        KohnShamDFTInternal::buildDescrMap(initDescrMap),
-        {});
+        KohnShamDFTInternal::buildDescrMap(initDescrMap), {});
 
       d_p.registerEnd("Pre Init Checks");
       d_p.registerStart("Hamiltonian Components Initilization");
@@ -1357,7 +1398,8 @@ namespace dftefe
         feBDKineticHamiltonian,
         linAlgOpContext,
         KSDFTDefaults<memorySpace>::CELL_BATCH_SIZE_GRAD_EVAL,
-        numWantedEigenvalues > KSDFTDefaults<memorySpace>::MAX_KINENG_WAVEFN_BATCH_SIZE ?
+        numWantedEigenvalues >
+            KSDFTDefaults<memorySpace>::MAX_KINENG_WAVEFN_BATCH_SIZE ?
           KSDFTDefaults<memorySpace>::MAX_KINENG_WAVEFN_BATCH_SIZE :
           numWantedEigenvalues);
 
@@ -1449,8 +1491,7 @@ namespace dftefe
           fieldToTCIASplineMap);
 
       d_rdm1Spectral->setDescriptors(
-        KohnShamDFTInternal::buildDescrMap(initDescrMap),
-        {});
+        KohnShamDFTInternal::buildDescrMap(initDescrMap), {});
 
       d_hamitonianXC =
         std::make_shared<ExchangeCorrelationFE<ValueTypeWaveFunctionBasis,
@@ -1474,10 +1515,13 @@ namespace dftefe
       //                                             d_hamitonianXC);
 
       std::vector<HamiltonianPtrVariant> hamiltonianComponentsVec{
-        d_hamitonianKin, d_hamitonianElec, d_hamitonianXC /* d_hamiltonianElectroExc*/};
+        d_hamitonianKin,
+        d_hamitonianElec,
+        d_hamitonianXC /* d_hamiltonianElectroExc*/};
 
       size_type waveFnBatch =
-        numWantedEigenvalues > KSDFTDefaults<memorySpace>::MAX_WAVEFN_BATCH_SIZE ?
+        numWantedEigenvalues >
+            KSDFTDefaults<memorySpace>::MAX_WAVEFN_BATCH_SIZE ?
           KSDFTDefaults<memorySpace>::MAX_WAVEFN_BATCH_SIZE :
           numWantedEigenvalues;
 
@@ -1510,7 +1554,8 @@ namespace dftefe
       const bool      useELPADeviceKernel = false;
       const size_type scalapackParalProcs =
         KSDFTDefaults<memorySpace>::SCALAPACK_PARAL_PROCS;
-      const size_type scalapackBlockSize = KSDFTDefaults<memorySpace>::SCALAPACK_BLOCK_SIZE;
+      const size_type scalapackBlockSize =
+        KSDFTDefaults<memorySpace>::SCALAPACK_BLOCK_SIZE;
       d_elpaScala = std::make_shared<linearAlgebra::ElpaScalapackManager>(
         d_mpiCommDomain,
         scalapackParalProcs,
@@ -1566,7 +1611,9 @@ namespace dftefe
         MContextForInv,
         MInvContext);
 
-      d_rdm1Spectral->setSpectral(std::move(wfnPtr), occupancies, numWantedEigenvalues);
+      d_rdm1Spectral->setSpectral(std::move(wfnPtr),
+                                  occupancies,
+                                  numWantedEigenvalues);
 
       d_p.registerEnd("KS EigenSolver Init");
 
@@ -1578,7 +1625,7 @@ namespace dftefe
       d_p.print();
     }
 
-      //// used if analytical vself canellation route taken with PSP
+    //// used if analytical vself canellation route taken with PSP
     template <typename ValueTypeElectrostaticsCoeff,
               typename ValueTypeElectrostaticsBasis,
               typename ValueTypeWaveFunctionCoeff,
@@ -1592,7 +1639,7 @@ namespace dftefe
                 memorySpace,
                 dim>::
       KohnShamDFT(
-      /* Atom related info */
+        /* Atom related info */
         const std::vector<utils::Point> &atomCoordinates,
         const std::vector<double> &      atomCharges,
         const std::vector<std::string> & atomSymbolVec,
@@ -1633,10 +1680,12 @@ namespace dftefe
           feBDTotalChargeStiffnessMatrix,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeElectrostaticsBasis,
-                                          memorySpaceHost>> feBDNuclearChargeRhs,
+                                          memorySpaceHost>>
+          feBDNuclearChargeRhs,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeElectrostaticsBasis,
-                                          memorySpaceHost>> feBDElectronicChargeRhs,
+                                          memorySpaceHost>>
+          feBDElectronicChargeRhs,
         /* Field data storages eigen solve*/
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeWaveFunctionBasis,
@@ -1673,7 +1722,8 @@ namespace dftefe
       , d_mixingScheme(d_mpiCommDomain)
       , d_numWantedEigenvalues(numWantedEigenvalues)
       , d_linAlgOpContext(linAlgOpContext)
-      , d_linAlgOpContextHost(linearAlgebra::LinAlgOpContextDefaults::LINALG_OP_CONTXT_HOST)
+      , d_linAlgOpContextHost(
+          linearAlgebra::LinAlgOpContextDefaults::LINALG_OP_CONTXT_HOST)
       , d_kohnShamEnergies(numWantedEigenvalues, 0.0)
       , d_SCFTol(scfDensityResidualNormTolerance)
       , d_rootCout(std::cout)
@@ -1689,8 +1739,11 @@ namespace dftefe
                  "Kohn Sham DFT Solve time")
       , d_xcType(xcType)
     {
-      std::unique_ptr<linearAlgebra::MultiVector<ValueTypeWaveFunctionCoeff, memorySpace>> wfnPtr;
-      std::vector<std::vector<double>> occupancies = {std::vector<double>(numWantedEigenvalues, 0.0)};
+      std::unique_ptr<
+        linearAlgebra::MultiVector<ValueTypeWaveFunctionCoeff, memorySpace>>
+                                       wfnPtr;
+      std::vector<std::vector<double>> occupancies = {
+        std::vector<double>(numWantedEigenvalues, 0.0)};
       size_type nKSOrbs;
 
       d_p.registerStart("Pre Init Checks");
@@ -1775,16 +1828,25 @@ namespace dftefe
       else
         d_isOEFEBasis = false;
 
-      wfnPtr = std::make_unique<linearAlgebra::MultiVector<ValueTypeWaveFunctionCoeff, memorySpace>>(
-        feBMWaveFn->getMPIPatternP2P(), linAlgOpContext, numWantedEigenvalues, (ValueTypeWaveFunctionCoeff)0.0);
+      wfnPtr = std::make_unique<
+        linearAlgebra::MultiVector<ValueTypeWaveFunctionCoeff, memorySpace>>(
+        feBMWaveFn->getMPIPatternP2P(),
+        linAlgOpContext,
+        numWantedEigenvalues,
+        (ValueTypeWaveFunctionCoeff)0.0);
 
       KohnShamDFTInternal::generateRandNormDistMultivec(*wfnPtr);
       wfnPtr->updateGhostValues();
-      feBMWaveFn->getConstraints().distributeParentToChild(*wfnPtr,
-                                                            numWantedEigenvalues);
+      feBMWaveFn->getConstraints().distributeParentToChild(
+        *wfnPtr, numWantedEigenvalues);
 
-      d_rdm1Spectral = std::make_shared<RDM1FE<ValueTypeWaveFunctionBasis, ValueTypeWaveFunctionCoeff, memorySpace, dim>>(
-        feBDEXCHamiltonian, *feBMWaveFn, linAlgOpContext,
+      d_rdm1Spectral = std::make_shared<RDM1FE<ValueTypeWaveFunctionBasis,
+                                               ValueTypeWaveFunctionCoeff,
+                                               memorySpace,
+                                               dim>>(
+        feBDEXCHamiltonian,
+        *feBMWaveFn,
+        linAlgOpContext,
         d_mpiCommDomain,
         KSDFTDefaults<memorySpace>::CELL_BATCH_SIZE,
         KSDFTDefaults<memorySpace>::MAX_DENSCOMP_WAVEFN_BATCH_SIZE);
@@ -1798,28 +1860,27 @@ namespace dftefe
         "The QuadratureRuleContainer for feBDElectrostaticsHamiltonian and electronChargeDensity should be same.");
 
       std::shared_ptr<const quadrature::QuadratureRuleContainer>
-        quadRuleContainerRho =
-          densIn.getQuadratureRuleContainer();
+        quadRuleContainerRho = densIn.getQuadratureRuleContainer();
 
       int rank;
       utils::mpi::MPICommRank(d_mpiCommDomain, &rank);
       d_rootCout.setCondition(rank == 0);
 
       // --------TODO : use eval()-----
-     std::shared_ptr<const quadrature::QuadratureRuleContainer>
-                quadRuleContainerVal = quadRuleContainerRho;
+      std::shared_ptr<const quadrature::QuadratureRuleContainer>
+        quadRuleContainerVal = quadRuleContainerRho;
 
-      utils::MemoryStorage<RealType, memorySpace> 
-        densityInQuadValuesMemspace(quadRuleContainerVal->nQuadraturePoints());
+      utils::MemoryStorage<RealType, memorySpace> densityInQuadValuesMemspace(
+        quadRuleContainerVal->nQuadraturePoints());
 
       atomicElectronicChargeDensityFunction.evaluate(
-                                    quadRuleContainerVal->nQuadraturePoints(),
-                                    atoms::AtomSuperpositionFuncType::Identity,
-                                    quadRuleContainerVal->template getRealPointsPtr<memorySpace>(),
-                                    densityInQuadValuesMemspace.data(),
-                                    1/(atoms::Clm(0, 0) * atoms::Dm(0) * atoms::Qm(0, 0)));
+        quadRuleContainerVal->nQuadraturePoints(),
+        atoms::AtomSuperpositionFuncType::Identity,
+        quadRuleContainerVal->template getRealPointsPtr<memorySpace>(),
+        densityInQuadValuesMemspace.data(),
+        1 / (atoms::Clm(0, 0) * atoms::Dm(0) * atoms::Qm(0, 0)));
 
-      utils::MemoryTransfer<memorySpaceHost, memorySpace> memTrans;                    
+      utils::MemoryTransfer<memorySpaceHost, memorySpace> memTrans;
       memTrans.copy(densityInQuadValuesMemspace.size(),
                     densIn.begin(),
                     densityInQuadValuesMemspace.data());
@@ -1872,9 +1933,8 @@ namespace dftefe
           auto gradIn =
             quadrature::QuadratureValuesContainer<RealType, memorySpaceHost>(
               quadRuleContainerVal, dim, (RealType)0.0);
-          utils::MemoryStorage<RealType, memorySpace>
-            gradInQuadValuesMemspace(quadRuleContainerVal->nQuadraturePoints() *
-                                     dim);
+          utils::MemoryStorage<RealType, memorySpace> gradInQuadValuesMemspace(
+            quadRuleContainerVal->nQuadraturePoints() * dim);
           atomicElectronicChargeDensityFunction.evaluate(
             quadRuleContainerVal->nQuadraturePoints(),
             atoms::AtomSuperpositionFuncType::Grad,
@@ -1888,8 +1948,7 @@ namespace dftefe
         }
 
       d_rdm1Mix->setDescriptors(
-        KohnShamDFTInternal::buildDescrMap(initDescrMap),
-        {});
+        KohnShamDFTInternal::buildDescrMap(initDescrMap), {});
 
       d_p.registerEnd("Pre Init Checks");
       d_p.registerStart("Hamiltonian Components Initilization");
@@ -1900,12 +1959,14 @@ namespace dftefe
         feBDKineticHamiltonian,
         linAlgOpContext,
         KSDFTDefaults<memorySpace>::CELL_BATCH_SIZE_GRAD_EVAL,
-        numWantedEigenvalues > KSDFTDefaults<memorySpace>::MAX_KINENG_WAVEFN_BATCH_SIZE ?
+        numWantedEigenvalues >
+            KSDFTDefaults<memorySpace>::MAX_KINENG_WAVEFN_BATCH_SIZE ?
           KSDFTDefaults<memorySpace>::MAX_KINENG_WAVEFN_BATCH_SIZE :
           numWantedEigenvalues);
 
       size_type waveFnBatch =
-        numWantedEigenvalues > KSDFTDefaults<memorySpace>::MAX_WAVEFN_BATCH_SIZE ?
+        numWantedEigenvalues >
+            KSDFTDefaults<memorySpace>::MAX_WAVEFN_BATCH_SIZE ?
           KSDFTDefaults<memorySpace>::MAX_WAVEFN_BATCH_SIZE :
           numWantedEigenvalues;
 
@@ -1934,8 +1995,7 @@ namespace dftefe
           waveFnBatch);
 
       d_rdm1Spectral->setDescriptors(
-        KohnShamDFTInternal::buildDescrMap(initDescrMap),
-        {});
+        KohnShamDFTInternal::buildDescrMap(initDescrMap), {});
 
       if (d_isNlcc && d_isONCVNonLocPSP)
         d_hamitonianXC =
@@ -1973,7 +2033,9 @@ namespace dftefe
       //                                             d_hamitonianXC);
 
       std::vector<HamiltonianPtrVariant> hamiltonianComponentsVec{
-        d_hamitonianKin, d_hamitonianElec, d_hamitonianXC /* d_hamiltonianElectroExc*/};
+        d_hamitonianKin,
+        d_hamitonianElec,
+        d_hamitonianXC /* d_hamiltonianElectroExc*/};
 
       d_p.registerStart("Hamiltonian Operator Creation");
       // form the kohn sham operator
@@ -2004,7 +2066,8 @@ namespace dftefe
       const bool      useELPADeviceKernel = false;
       const size_type scalapackParalProcs =
         KSDFTDefaults<memorySpace>::SCALAPACK_PARAL_PROCS;
-      const size_type scalapackBlockSize = KSDFTDefaults<memorySpace>::SCALAPACK_BLOCK_SIZE;
+      const size_type scalapackBlockSize =
+        KSDFTDefaults<memorySpace>::SCALAPACK_BLOCK_SIZE;
       d_elpaScala = std::make_shared<linearAlgebra::ElpaScalapackManager>(
         d_mpiCommDomain,
         scalapackParalProcs,
@@ -2061,7 +2124,9 @@ namespace dftefe
         MContextForInv,
         MInvContext);
 
-      d_rdm1Spectral->setSpectral(std::move(wfnPtr), occupancies, numWantedEigenvalues);
+      d_rdm1Spectral->setSpectral(std::move(wfnPtr),
+                                  occupancies,
+                                  numWantedEigenvalues);
 
       d_p.registerEnd("KS EigenSolver Init");
 
@@ -2069,8 +2134,8 @@ namespace dftefe
       d_p.print();
     }
 
-      // used if delta rho with PSP approach is taken with phi total from 1D KS
-      // solve with analytical vself energy cancellation
+    // used if delta rho with PSP approach is taken with phi total from 1D KS
+    // solve with analytical vself energy cancellation
     template <typename ValueTypeElectrostaticsCoeff,
               typename ValueTypeElectrostaticsBasis,
               typename ValueTypeWaveFunctionCoeff,
@@ -2084,7 +2149,7 @@ namespace dftefe
                 memorySpace,
                 dim>::
       KohnShamDFT(
-       /* Atom related info */
+        /* Atom related info */
         const std::vector<utils::Point> &atomCoordinates,
         const std::vector<double> &      atomCharges,
         const std::vector<std::string> & atomSymbolVec,
@@ -2126,10 +2191,12 @@ namespace dftefe
           feBDTotalChargeStiffnessMatrix,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeElectrostaticsBasis,
-                                          memorySpaceHost>> feBDNuclearChargeRhs,
+                                          memorySpaceHost>>
+          feBDNuclearChargeRhs,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeElectrostaticsBasis,
-                                          memorySpaceHost>> feBDElectronicChargeRhs,
+                                          memorySpaceHost>>
+          feBDElectronicChargeRhs,
         /* Field data storages eigen solve*/
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeWaveFunctionBasis,
@@ -2168,7 +2235,8 @@ namespace dftefe
       , d_mixingScheme(d_mpiCommDomain)
       , d_numWantedEigenvalues(numWantedEigenvalues)
       , d_linAlgOpContext(linAlgOpContext)
-      , d_linAlgOpContextHost(linearAlgebra::LinAlgOpContextDefaults::LINALG_OP_CONTXT_HOST)
+      , d_linAlgOpContextHost(
+          linearAlgebra::LinAlgOpContextDefaults::LINALG_OP_CONTXT_HOST)
       , d_kohnShamEnergies(numWantedEigenvalues, 0.0)
       , d_SCFTol(scfDensityResidualNormTolerance)
       , d_rootCout(std::cout)
@@ -2184,12 +2252,14 @@ namespace dftefe
                  "Kohn Sham DFT Solve time")
       , d_xcType(xcType)
     {
-      std::unique_ptr<linearAlgebra::MultiVector<ValueTypeWaveFunctionCoeff, memorySpace>> wfnPtr;
-      std::vector<std::vector<double>> occupancies = {std::vector<double>(numWantedEigenvalues, 0.0)};
-      size_type nKSOrbs;
+      std::unique_ptr<
+        linearAlgebra::MultiVector<ValueTypeWaveFunctionCoeff, memorySpace>>
+                                       wfnPtr;
+      std::vector<std::vector<double>> occupancies = {
+        std::vector<double>(numWantedEigenvalues, 0.0)};
+      size_type                                 nKSOrbs;
       utils::Profiler<utils::MemorySpace::HOST> p(
-        feBMWaveFn->getMPIPatternP2P()->mpiCommunicator(),
-        "Pre Init Checks");
+        feBMWaveFn->getMPIPatternP2P()->mpiCommunicator(), "Pre Init Checks");
       d_p.registerStart("Pre Init Checks");
       p.registerStart("atomSphericalDataContainerPSP create");
       const std::vector<std::string> metadataNames =
@@ -2275,16 +2345,25 @@ namespace dftefe
       else
         d_isOEFEBasis = false;
 
-      wfnPtr = std::make_unique<linearAlgebra::MultiVector<ValueTypeWaveFunctionCoeff, memorySpace>>(
-        feBMWaveFn->getMPIPatternP2P(), linAlgOpContext, numWantedEigenvalues, (ValueTypeWaveFunctionCoeff)0.0);
+      wfnPtr = std::make_unique<
+        linearAlgebra::MultiVector<ValueTypeWaveFunctionCoeff, memorySpace>>(
+        feBMWaveFn->getMPIPatternP2P(),
+        linAlgOpContext,
+        numWantedEigenvalues,
+        (ValueTypeWaveFunctionCoeff)0.0);
 
       KohnShamDFTInternal::generateRandNormDistMultivec(*wfnPtr);
       wfnPtr->updateGhostValues();
-      feBMWaveFn->getConstraints().distributeParentToChild(*wfnPtr,
-                                                            numWantedEigenvalues);
+      feBMWaveFn->getConstraints().distributeParentToChild(
+        *wfnPtr, numWantedEigenvalues);
 
-      d_rdm1Spectral = std::make_shared<RDM1FE<ValueTypeWaveFunctionBasis, ValueTypeWaveFunctionCoeff, memorySpace, dim>>(
-        feBDEXCHamiltonian, *feBMWaveFn, linAlgOpContext,
+      d_rdm1Spectral = std::make_shared<RDM1FE<ValueTypeWaveFunctionBasis,
+                                               ValueTypeWaveFunctionCoeff,
+                                               memorySpace,
+                                               dim>>(
+        feBDEXCHamiltonian,
+        *feBMWaveFn,
+        linAlgOpContext,
         d_mpiCommDomain,
         KSDFTDefaults<memorySpace>::CELL_BATCH_SIZE,
         KSDFTDefaults<memorySpace>::MAX_DENSCOMP_WAVEFN_BATCH_SIZE);
@@ -2299,8 +2378,7 @@ namespace dftefe
         "The QuadratureRuleContainer for feBDElectrostaticsHamiltonian and electronChargeDensity should be same.");
 
       std::shared_ptr<const quadrature::QuadratureRuleContainer>
-        quadRuleContainerRho =
-          densIn.getQuadratureRuleContainer();
+        quadRuleContainerRho = densIn.getQuadratureRuleContainer();
 
       int rank;
       utils::mpi::MPICommRank(d_mpiCommDomain, &rank);
@@ -2309,19 +2387,19 @@ namespace dftefe
       // --------TODO : use eval()-----
 
       std::shared_ptr<const quadrature::QuadratureRuleContainer>
-                quadRuleContainerVal = quadRuleContainerRho;
+        quadRuleContainerVal = quadRuleContainerRho;
 
-      utils::MemoryStorage<RealType, memorySpace> 
-        densityInQuadValuesMemspace(quadRuleContainerVal->nQuadraturePoints());
+      utils::MemoryStorage<RealType, memorySpace> densityInQuadValuesMemspace(
+        quadRuleContainerVal->nQuadraturePoints());
 
       atomicElectronicChargeDensityFunction.evaluate(
-                                    quadRuleContainerVal->nQuadraturePoints(),
-                                    atoms::AtomSuperpositionFuncType::Identity,
-                                    quadRuleContainerVal->template getRealPointsPtr<memorySpace>(),
-                                    densityInQuadValuesMemspace.data(),
-                                    1/(atoms::Clm(0, 0) * atoms::Dm(0) * atoms::Qm(0, 0)));
+        quadRuleContainerVal->nQuadraturePoints(),
+        atoms::AtomSuperpositionFuncType::Identity,
+        quadRuleContainerVal->template getRealPointsPtr<memorySpace>(),
+        densityInQuadValuesMemspace.data(),
+        1 / (atoms::Clm(0, 0) * atoms::Dm(0) * atoms::Qm(0, 0)));
 
-      utils::MemoryTransfer<memorySpaceHost, memorySpace> memTrans;                    
+      utils::MemoryTransfer<memorySpaceHost, memorySpace> memTrans;
       memTrans.copy(densityInQuadValuesMemspace.size(),
                     densIn.begin(),
                     densityInQuadValuesMemspace.data());
@@ -2376,9 +2454,8 @@ namespace dftefe
           auto gradIn =
             quadrature::QuadratureValuesContainer<RealType, memorySpaceHost>(
               quadRuleContainerVal, dim, (RealType)0.0);
-          utils::MemoryStorage<RealType, memorySpace>
-            gradInQuadValuesMemspace(quadRuleContainerVal->nQuadraturePoints() *
-                                     dim);
+          utils::MemoryStorage<RealType, memorySpace> gradInQuadValuesMemspace(
+            quadRuleContainerVal->nQuadraturePoints() * dim);
           atomicElectronicChargeDensityFunction.evaluate(
             quadRuleContainerVal->nQuadraturePoints(),
             atoms::AtomSuperpositionFuncType::Grad,
@@ -2392,8 +2469,7 @@ namespace dftefe
         }
 
       d_rdm1Mix->setDescriptors(
-        KohnShamDFTInternal::buildDescrMap(initDescrMap),
-        {});
+        KohnShamDFTInternal::buildDescrMap(initDescrMap), {});
 
       d_p.registerEnd("Pre Init Checks");
 
@@ -2408,15 +2484,18 @@ namespace dftefe
         feBDKineticHamiltonian,
         linAlgOpContext,
         KSDFTDefaults<memorySpace>::CELL_BATCH_SIZE_GRAD_EVAL,
-        numWantedEigenvalues > KSDFTDefaults<memorySpace>::MAX_KINENG_WAVEFN_BATCH_SIZE ?
+        numWantedEigenvalues >
+            KSDFTDefaults<memorySpace>::MAX_KINENG_WAVEFN_BATCH_SIZE ?
           KSDFTDefaults<memorySpace>::MAX_KINENG_WAVEFN_BATCH_SIZE :
           numWantedEigenvalues);
       d_p.registerEnd("Hamiltonian Components Initilization Kinetic Op");
-       utils::printCurrentMemoryUsage(d_mpiCommDomain, "After KinEngy Init");
-      d_p.registerStart("Hamiltonian Components Initilization Electrostatic Op");
+      utils::printCurrentMemoryUsage(d_mpiCommDomain, "After KinEngy Init");
+      d_p.registerStart(
+        "Hamiltonian Components Initilization Electrostatic Op");
 
       size_type waveFnBatch =
-        numWantedEigenvalues > KSDFTDefaults<memorySpace>::MAX_WAVEFN_BATCH_SIZE ?
+        numWantedEigenvalues >
+            KSDFTDefaults<memorySpace>::MAX_WAVEFN_BATCH_SIZE ?
           KSDFTDefaults<memorySpace>::MAX_WAVEFN_BATCH_SIZE :
           numWantedEigenvalues;
 
@@ -2550,7 +2629,7 @@ namespace dftefe
           d_atomSphericalDataContainerPSP,
           smearedChargeRadius,
           // d_densityOutQuadValues, /*NOTE: Atomic density input should not be
-          // normalized*/ 
+          // normalized*/
           atomicTotalElectroPotentialFunction,
           atomicElectronicChargeDensityFunction,
           feBMTotalCharge,
@@ -2564,13 +2643,12 @@ namespace dftefe
           KSDFTDefaults<memorySpace>::CELL_BATCH_SIZE,
           waveFnBatch,
           fieldToTCIASplineMap);
-        d_p.registerEnd("Hamiltonian Components Initilization Electrostatic Op");
-        utils::printCurrentMemoryUsage(d_mpiCommDomain, "After Elec Init");
-        d_p.registerStart("Hamiltonian Components Initilization Exc Op");
+      d_p.registerEnd("Hamiltonian Components Initilization Electrostatic Op");
+      utils::printCurrentMemoryUsage(d_mpiCommDomain, "After Elec Init");
+      d_p.registerStart("Hamiltonian Components Initilization Exc Op");
 
       d_rdm1Spectral->setDescriptors(
-        KohnShamDFTInternal::buildDescrMap(initDescrMap),
-        {});
+        KohnShamDFTInternal::buildDescrMap(initDescrMap), {});
 
       if (d_isNlcc && d_isONCVNonLocPSP)
         d_hamitonianXC =
@@ -2606,7 +2684,9 @@ namespace dftefe
       //                                             d_hamitonianXC);
 
       std::vector<HamiltonianPtrVariant> hamiltonianComponentsVec{
-        d_hamitonianKin, d_hamitonianElec, d_hamitonianXC /* d_hamiltonianElectroExc*/};
+        d_hamitonianKin,
+        d_hamitonianElec,
+        d_hamitonianXC /* d_hamiltonianElectroExc*/};
 
       d_p.registerEnd("Hamiltonian Components Initilization Exc Op");
       utils::printCurrentMemoryUsage(d_mpiCommDomain, "After Exc Init");
@@ -2625,7 +2705,8 @@ namespace dftefe
           KSDFTDefaults<memorySpace>::CELL_BATCH_SIZE,
           waveFnBatch);
       d_p.registerEnd("Hamiltonian Operator Creation");
-      utils::printCurrentMemoryUsage(d_mpiCommDomain, "After Hamiltonian Operator Init");                                              
+      utils::printCurrentMemoryUsage(d_mpiCommDomain,
+                                     "After Hamiltonian Operator Init");
       d_p.registerStart("KS EigenSolver Init");
       // call the eigensolver
 
@@ -2639,7 +2720,8 @@ namespace dftefe
       const bool      useELPADeviceKernel = false;
       const size_type scalapackParalProcs =
         KSDFTDefaults<memorySpace>::SCALAPACK_PARAL_PROCS;
-      const size_type scalapackBlockSize = KSDFTDefaults<memorySpace>::SCALAPACK_BLOCK_SIZE;
+      const size_type scalapackBlockSize =
+        KSDFTDefaults<memorySpace>::SCALAPACK_BLOCK_SIZE;
       d_elpaScala = std::make_shared<linearAlgebra::ElpaScalapackManager>(
         d_mpiCommDomain,
         scalapackParalProcs,
@@ -2672,7 +2754,7 @@ namespace dftefe
 
           ksEigSolve.solve(*d_hamitonianOperator,
                            d_kohnShamEnergies,
-                            *wfnPtr,
+                           *wfnPtr,
                            false,
                            *d_MContext,
                            *d_MInvContext);
@@ -2696,10 +2778,13 @@ namespace dftefe
         MContextForInv,
         MInvContext);
 
-      d_rdm1Spectral->setSpectral(std::move(wfnPtr), occupancies, numWantedEigenvalues);
+      d_rdm1Spectral->setSpectral(std::move(wfnPtr),
+                                  occupancies,
+                                  numWantedEigenvalues);
 
       d_p.registerEnd("KS EigenSolver Init");
-      utils::printCurrentMemoryUsage(d_mpiCommDomain, "After KS EigenSolver Init");
+      utils::printCurrentMemoryUsage(d_mpiCommDomain,
+                                     "After KS EigenSolver Init");
 
       d_isPSPCalculation = true;
       d_p.print();
@@ -2738,28 +2823,30 @@ namespace dftefe
       d_pTotal.reset();
       d_isSolved = true;
 
-      std::unique_ptr<linearAlgebra::MultiVector<ValueTypeWaveFunctionCoeff, memorySpace>> wfnPtr;
+      std::unique_ptr<
+        linearAlgebra::MultiVector<ValueTypeWaveFunctionCoeff, memorySpace>>
+                                         wfnPtr;
       std::vector<std::vector<RealType>> occupancies;
-      size_type nKSOrbs;
+      size_type                          nKSOrbs;
 
       d_rdm1Spectral->getSpectral(wfnPtr, occupancies, nKSOrbs);
 
       if (auto hamiltonian = std::dynamic_pointer_cast<
             ElectrostaticLocalFE<ValueTypeElectrostaticsBasis,
-                                  ValueTypeElectrostaticsCoeff,
-                                  ValueTypeWaveFunctionBasis,
-                                  memorySpace,
-                                  dim>>(d_hamitonianElec))
+                                 ValueTypeElectrostaticsCoeff,
+                                 ValueTypeWaveFunctionBasis,
+                                 memorySpace,
+                                 dim>>(d_hamitonianElec))
         {
           hamiltonian->evalEnergy();
         }
       else if (auto hamiltonian = std::dynamic_pointer_cast<
-                  ElectrostaticONCVNonLocFE<ValueTypeElectrostaticsBasis,
-                                            ValueTypeElectrostaticsCoeff,
-                                            ValueTypeWaveFunctionBasis,
-                                            ValueTypeWaveFunctionCoeff,
-                                            memorySpace,
-                                            dim>>(d_hamitonianElec))
+                 ElectrostaticONCVNonLocFE<ValueTypeElectrostaticsBasis,
+                                           ValueTypeElectrostaticsCoeff,
+                                           ValueTypeWaveFunctionBasis,
+                                           ValueTypeWaveFunctionCoeff,
+                                           memorySpace,
+                                           dim>>(d_hamitonianElec))
         {
           hamiltonian->evalEnergy(occupancies[0], *wfnPtr);
         }
@@ -2774,14 +2861,18 @@ namespace dftefe
       // Begin SCF iteration
       //
       size_type scfIter = 0;
-      double       norm    = 1.0;
+      double    norm    = 1.0;
       d_rootCout << "Starting SCF iterations....\n";
 
-      std::unordered_map<DensityDescrAttr,
-        std::vector<quadrature::QuadratureValuesContainer<RealType, memorySpaceHost>>>
+      std::unordered_map<
+        DensityDescrAttr,
+        std::vector<
+          quadrature::QuadratureValuesContainer<RealType, memorySpaceHost>>>
         densAttrIn, densAttrOut;
-      std::unordered_map<WfcDescrAttr,
-        std::vector<quadrature::QuadratureValuesContainer<RealType, memorySpaceHost>>>
+      std::unordered_map<
+        WfcDescrAttr,
+        std::vector<
+          quadrature::QuadratureValuesContainer<RealType, memorySpaceHost>>>
         wfcAttrIn, wfcAttrOut;
 
       while (((norm > d_SCFTol) && (scfIter < d_numMaxSCFIter)))
@@ -2792,17 +2883,18 @@ namespace dftefe
             << "************************Begin Self-Consistent-Field Iteration: "
             << std::setw(2) << scfIter + 1 << " ***********************\n";
 
-          // reinit the components of hamiltonian with mixed density (scfIter > 0)
+          // reinit the components of hamiltonian with mixed density (scfIter >
+          // 0)
           if (scfIter > 0)
             {
               d_pTotal.registerStart("Hamiltonian Reinit");
               d_p.registerStart("Hamiltonian Reinit");
 
-              d_rdm1Mix->getDescriptors(
-                KohnShamDFTInternal::getDescrAttributes(d_xcType),
-                {},
-                densAttrIn,
-                wfcAttrIn);
+              d_rdm1Mix->getDescriptors(KohnShamDFTInternal::getDescrAttributes(
+                                          d_xcType),
+                                        {},
+                                        densAttrIn,
+                                        wfcAttrIn);
               auto &densIn = densAttrIn.at(DensityDescrAttr::Val)[0];
 
               RealType totalDensityInQuad =
@@ -2841,10 +2933,13 @@ namespace dftefe
 
               d_hamitonianXC->reinitField(*d_rdm1Mix);
 
-              //d_hamiltonianElectroExc->reinit(d_hamitonianElec, d_hamitonianXC);
+              // d_hamiltonianElectroExc->reinit(d_hamitonianElec,
+              // d_hamitonianXC);
 
               std::vector<HamiltonianPtrVariant> hamiltonianComponentsVec{
-                d_hamitonianKin, d_hamitonianElec, d_hamitonianXC /* d_hamiltonianElectroExc*/};
+                d_hamitonianKin,
+                d_hamitonianElec,
+                d_hamitonianXC /* d_hamiltonianElectroExc*/};
 
               d_hamitonianOperator->reinit(*d_feBMWaveFn,
                                            hamiltonianComponentsVec);
@@ -2885,7 +2980,7 @@ namespace dftefe
             d_ksEigSolve->getEigenSolveResidualNorm();
 
           d_pTotal.registerEnd("EigenSolve");
-          d_p.registerEnd("EigenSolve");            
+          d_p.registerEnd("EigenSolve");
 
           d_p.registerStart("Density Compute");
           d_pTotal.registerStart("Density Compute");
@@ -2908,7 +3003,8 @@ namespace dftefe
               false,
               d_rootCout);
 
-          d_rootCout << "Electron density out : " << totalDensityOutQuad << "\n";
+          d_rootCout << "Electron density out : " << totalDensityOutQuad
+                     << "\n";
           d_pTotal.registerEnd("Density Compute");
           d_p.registerEnd("Density Compute");
 
@@ -2919,22 +3015,22 @@ namespace dftefe
           d_rdm1Mix->setRDM1(d_rdm1Spectral);
 
           if (scfIter > 0)
-          {
-            auto &densIn = densAttrIn.at(DensityDescrAttr::Val)[0];
-            quadrature::QuadratureValuesContainer<RealType, memorySpaceHost>
-              densityResidualQuadValues(densIn);
-            norm = KohnShamDFTInternal::computeResidualQuadData(
-              densOut,
-              densIn,
-              densityResidualQuadValues,
-              d_jxwDataHost,
-              true,
-              *d_linAlgOpContextHost,
-              d_mpiCommDomain);
-          }
+            {
+              auto &densIn = densAttrIn.at(DensityDescrAttr::Val)[0];
+              quadrature::QuadratureValuesContainer<RealType, memorySpaceHost>
+                densityResidualQuadValues(densIn);
+              norm = KohnShamDFTInternal::computeResidualQuadData(
+                densOut,
+                densIn,
+                densityResidualQuadValues,
+                d_jxwDataHost,
+                true,
+                *d_linAlgOpContextHost,
+                d_mpiCommDomain);
+            }
 
           d_rdm1Mix->mix();
-          
+
           d_pTotal.registerEnd("Density Mixing");
           d_p.registerEnd("Density Mixing");
 
@@ -2989,7 +3085,9 @@ namespace dftefe
                   hamiltonian->evalEnergy(occupancies[0], *wfnPtr);
                 }
 
-              d_rdm1Spectral->setSpectral(std::move(wfnPtr), occupancies, nKSOrbs);
+              d_rdm1Spectral->setSpectral(std::move(wfnPtr),
+                                          occupancies,
+                                          nKSOrbs);
 
               RealType elecEnergy = d_hamitonianElec->getEnergy();
               d_rootCout << "Electrostatic energy: " << elecEnergy << "\n";
@@ -3028,7 +3126,7 @@ namespace dftefe
             d_rootCout << "Density Residual Norm : " << norm << "\n";
 
           d_p.print();
-          
+
           scfIter += 1;
         }
 
@@ -3061,33 +3159,31 @@ namespace dftefe
               hamiltonian->reinitField(densOut);
             }
 
-            d_rdm1Spectral->getSpectral(wfnPtr, occupancies, nKSOrbs);
-            d_hamitonianKin->evalEnergy(occupancies[0],
-                                        *d_feBMWaveFn,
-                                        *wfnPtr);
-            RealType kinEnergy = d_hamitonianKin->getEnergy();
-            rootCout << "Kinetic energy: " << kinEnergy << "\n";
+          d_rdm1Spectral->getSpectral(wfnPtr, occupancies, nKSOrbs);
+          d_hamitonianKin->evalEnergy(occupancies[0], *d_feBMWaveFn, *wfnPtr);
+          RealType kinEnergy = d_hamitonianKin->getEnergy();
+          rootCout << "Kinetic energy: " << kinEnergy << "\n";
 
-            if (auto hamiltonian = std::dynamic_pointer_cast<
-                  ElectrostaticLocalFE<ValueTypeElectrostaticsBasis,
-                                       ValueTypeElectrostaticsCoeff,
-                                       ValueTypeWaveFunctionBasis,
-                                       memorySpace,
-                                       dim>>(d_hamitonianElec))
-              {
-                hamiltonian->evalEnergy();
-              }
-            else if (auto hamiltonian = std::dynamic_pointer_cast<
-                       ElectrostaticONCVNonLocFE<ValueTypeElectrostaticsBasis,
-                                                 ValueTypeElectrostaticsCoeff,
-                                                 ValueTypeWaveFunctionBasis,
-                                                 ValueTypeWaveFunctionCoeff,
-                                                 memorySpace,
-                                                 dim>>(d_hamitonianElec))
-              {
-                hamiltonian->evalEnergy(occupancies[0], *wfnPtr);
-              }
-            d_rdm1Spectral->setSpectral(std::move(wfnPtr), occupancies, nKSOrbs);
+          if (auto hamiltonian = std::dynamic_pointer_cast<
+                ElectrostaticLocalFE<ValueTypeElectrostaticsBasis,
+                                     ValueTypeElectrostaticsCoeff,
+                                     ValueTypeWaveFunctionBasis,
+                                     memorySpace,
+                                     dim>>(d_hamitonianElec))
+            {
+              hamiltonian->evalEnergy();
+            }
+          else if (auto hamiltonian = std::dynamic_pointer_cast<
+                     ElectrostaticONCVNonLocFE<ValueTypeElectrostaticsBasis,
+                                               ValueTypeElectrostaticsCoeff,
+                                               ValueTypeWaveFunctionBasis,
+                                               ValueTypeWaveFunctionCoeff,
+                                               memorySpace,
+                                               dim>>(d_hamitonianElec))
+            {
+              hamiltonian->evalEnergy(occupancies[0], *wfnPtr);
+            }
+          d_rdm1Spectral->setSpectral(std::move(wfnPtr), occupancies, nKSOrbs);
 
           RealType elecEnergy = d_hamitonianElec->getEnergy();
           rootCout << "Electrostatic energy: " << elecEnergy << "\n";
@@ -3123,118 +3219,120 @@ namespace dftefe
           d_pTotal.registerEnd("Energy Compute");
         }
 
-          /*
-          /////============== DEBUG : Integral \psi and \psi_orthonormalized = Numelectrons========= /////
+      /*
+      /////============== DEBUG : Integral \psi and \psi_orthonormalized =
+      Numelectrons========= /////
 
-          std::shared_ptr<const quadrature::QuadratureRuleContainer> quadRuleContainer =
-            d_feBDEXCHamiltonian->getQuadratureRuleContainer();
+      std::shared_ptr<const quadrature::QuadratureRuleContainer>
+      quadRuleContainer = d_feBDEXCHamiltonian->getQuadratureRuleContainer();
 
-              std::shared_ptr<const
-            basis::FEBasisOperations<ValueTypeWaveFunctionCoeff,
-                                                                  ValueTypeWaveFunctionBasis,
-                                                                  memorySpace,
-                                                                  dim>>
-          feBasisOp = std::make_shared<const
-            basis::FEBasisOperations<ValueTypeWaveFunctionCoeff,
-                                                                  ValueTypeWaveFunctionBasis,
-                                                                  memorySpace,
-                                                                  dim>>(
-                    d_feBDEXCHamiltonian, 50,
-          d_kohnShamWaveFunctions->getNumberComponents());
+          std::shared_ptr<const
+        basis::FEBasisOperations<ValueTypeWaveFunctionCoeff,
+                                                              ValueTypeWaveFunctionBasis,
+                                                              memorySpace,
+                                                              dim>>
+      feBasisOp = std::make_shared<const
+        basis::FEBasisOperations<ValueTypeWaveFunctionCoeff,
+                                                              ValueTypeWaveFunctionBasis,
+                                                              memorySpace,
+                                                              dim>>(
+                d_feBDEXCHamiltonian, 50,
+      d_kohnShamWaveFunctions->getNumberComponents());
 
-            quadrature::QuadratureValuesContainer<ValueType, memorySpace>
-              waveFuncQuad( quadRuleContainer,
-          d_kohnShamWaveFunctions->getNumberComponents());
+        quadrature::QuadratureValuesContainer<ValueType, memorySpace>
+          waveFuncQuad( quadRuleContainer,
+      d_kohnShamWaveFunctions->getNumberComponents());
 
-              feBasisOp->interpolate(d_kohnShamWaveFunctions,
-                                        *d_feBMWaveFn,
-                                        waveFuncQuad);
+          feBasisOp->interpolate(d_kohnShamWaveFunctions,
+                                    *d_feBMWaveFn,
+                                    waveFuncQuad);
 
-              double denSum = 0;
-              for(dftefe::size_type i = 0 ; i < waveFuncQuad.nCells() ; i++)
+          double denSum = 0;
+          for(dftefe::size_type i = 0 ; i < waveFuncQuad.nCells() ; i++)
+          {
+            std::vector<double> jxwCell = quadRuleContainer->getCellJxW(i);
+            for(int j = 0 ; j < jxwCell.size() ; j++)
               {
-                std::vector<double> jxwCell = quadRuleContainer->getCellJxW(i);
-                for(int j = 0 ; j < jxwCell.size() ; j++)
-                  {
-                    std::vector<double>
-          a(d_kohnShamWaveFunctions->getNumberComponents(), 0);
-                    waveFuncQuad.template
-          getCellQuadValues<utils::MemorySpace::HOST>(i, j, a.data()); for(int k
-          = 0 ; k < a.size() ; k++) denSum += jxwCell[j] * std::abs(a[k]) *
-          std::abs(a[k]);
-                  }
+                std::vector<double>
+      a(d_kohnShamWaveFunctions->getNumberComponents(), 0);
+                waveFuncQuad.template
+      getCellQuadValues<utils::MemorySpace::HOST>(i, j, a.data()); for(int k
+      = 0 ; k < a.size() ; k++) denSum += jxwCell[j] * std::abs(a[k]) *
+      std::abs(a[k]);
               }
+          }
 
-              utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
-                utils::mpi::MPIInPlace,
-                &denSum,
-                1,
-                utils::mpi::Types<double>::getMPIDatatype(),
-                utils::mpi::MPISum,
-                d_kohnShamWaveFunctions->getMPIPatternP2P()->mpiCommunicator());
+          utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
+            utils::mpi::MPIInPlace,
+            &denSum,
+            1,
+            utils::mpi::Types<double>::getMPIDatatype(),
+            utils::mpi::MPISum,
+            d_kohnShamWaveFunctions->getMPIPatternP2P()->mpiCommunicator());
 
-              std::cout << "Wavefn sum: "<< denSum << std::endl;
+          std::cout << "Wavefn sum: "<< denSum << std::endl;
 
-              feBasisOp->interpolate(d_ksEigSolve->getOrthogonalizedFilteredSubspace(),
-                                        *d_feBMWaveFn,
-                                        waveFuncQuad);
+          feBasisOp->interpolate(d_ksEigSolve->getOrthogonalizedFilteredSubspace(),
+                                    *d_feBMWaveFn,
+                                    waveFuncQuad);
 
-              denSum = 0;
-              for(dftefe::size_type i = 0 ; i < waveFuncQuad.nCells() ; i++)
+          denSum = 0;
+          for(dftefe::size_type i = 0 ; i < waveFuncQuad.nCells() ; i++)
+          {
+            std::vector<double> jxwCell = quadRuleContainer->getCellJxW(i);
+            for(int j = 0 ; j < jxwCell.size() ; j++)
               {
-                std::vector<double> jxwCell = quadRuleContainer->getCellJxW(i);
-                for(int j = 0 ; j < jxwCell.size() ; j++)
-                  {
-                    std::vector<double>
-          a(d_kohnShamWaveFunctions->getNumberComponents(), 0);
-                    waveFuncQuad.template
-          getCellQuadValues<utils::MemorySpace::HOST>(i, j, a.data()); for(int k
-          = 0 ; k < a.size() ; k++) denSum += jxwCell[j] * std::abs(a[k]) *
-          std::abs(a[k]);
-                  }
+                std::vector<double>
+      a(d_kohnShamWaveFunctions->getNumberComponents(), 0);
+                waveFuncQuad.template
+      getCellQuadValues<utils::MemorySpace::HOST>(i, j, a.data()); for(int k
+      = 0 ; k < a.size() ; k++) denSum += jxwCell[j] * std::abs(a[k]) *
+      std::abs(a[k]);
               }
+          }
 
-              utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
-                utils::mpi::MPIInPlace,
-                &denSum,
-                1,
-                utils::mpi::Types<double>::getMPIDatatype(),
-                utils::mpi::MPISum,
-                d_kohnShamWaveFunctions->getMPIPatternP2P()->mpiCommunicator());
+          utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
+            utils::mpi::MPIInPlace,
+            &denSum,
+            1,
+            utils::mpi::Types<double>::getMPIDatatype(),
+            utils::mpi::MPISum,
+            d_kohnShamWaveFunctions->getMPIPatternP2P()->mpiCommunicator());
 
-              std::cout << "getOrthogonalizedFilteredSubspace sum: "<< denSum <<
-          std::endl;
+          std::cout << "getOrthogonalizedFilteredSubspace sum: "<< denSum <<
+      std::endl;
 
-              feBasisOp->interpolate(d_ksEigSolve->getFilteredSubspace(),
-                                        *d_feBMWaveFn,
-                                        waveFuncQuad);
+          feBasisOp->interpolate(d_ksEigSolve->getFilteredSubspace(),
+                                    *d_feBMWaveFn,
+                                    waveFuncQuad);
 
-              denSum = 0;
-              for(dftefe::size_type i = 0 ; i < waveFuncQuad.nCells() ; i++)
+          denSum = 0;
+          for(dftefe::size_type i = 0 ; i < waveFuncQuad.nCells() ; i++)
+          {
+            std::vector<double> jxwCell = quadRuleContainer->getCellJxW(i);
+            for(int j = 0 ; j < jxwCell.size() ; j++)
               {
-                std::vector<double> jxwCell = quadRuleContainer->getCellJxW(i);
-                for(int j = 0 ; j < jxwCell.size() ; j++)
-                  {
-                    std::vector<double>
-          a(d_kohnShamWaveFunctions->getNumberComponents(), 0);
-                    waveFuncQuad.template
-          getCellQuadValues<utils::MemorySpace::HOST>(i, j, a.data()); for(int k
-          = 0 ; k < a.size() ; k++) denSum += jxwCell[j] * std::abs(a[k]) *
-          std::abs(a[k]);
-                  }
+                std::vector<double>
+      a(d_kohnShamWaveFunctions->getNumberComponents(), 0);
+                waveFuncQuad.template
+      getCellQuadValues<utils::MemorySpace::HOST>(i, j, a.data()); for(int k
+      = 0 ; k < a.size() ; k++) denSum += jxwCell[j] * std::abs(a[k]) *
+      std::abs(a[k]);
               }
+          }
 
-              utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
-                utils::mpi::MPIInPlace,
-                &denSum,
-                1,
-                utils::mpi::Types<double>::getMPIDatatype(),
-                utils::mpi::MPISum,
-                d_kohnShamWaveFunctions->getMPIPatternP2P()->mpiCommunicator());
+          utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
+            utils::mpi::MPIInPlace,
+            &denSum,
+            1,
+            utils::mpi::Types<double>::getMPIDatatype(),
+            utils::mpi::MPISum,
+            d_kohnShamWaveFunctions->getMPIPatternP2P()->mpiCommunicator());
 
-              std::cout << "getFilteredSubspace sum: "<< denSum << std::endl;
-          ///// ============== DEBUG : Integral \psi and \psi_orthonormalized = Numelectrons ========= /////
-          */
+          std::cout << "getFilteredSubspace sum: "<< denSum << std::endl;
+      ///// ============== DEBUG : Integral \psi and \psi_orthonormalized =
+      Numelectrons ========= /////
+      */
     }
 
     template <typename ValueTypeElectrostaticsCoeff,

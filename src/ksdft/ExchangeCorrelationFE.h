@@ -64,21 +64,24 @@ namespace dftefe
     public:
       // No NLCC.
       ExchangeCorrelationFE(
-        const std::string                                                  xcType,
-        RDM1<ValueType, memorySpace>                                     &rdm1,
-        std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>      linAlgOpContext,
-        const size_type                                                   cellBlockSize);
+        const std::string             xcType,
+        RDM1<ValueType, memorySpace> &rdm1,
+        std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
+                        linAlgOpContext,
+        const size_type cellBlockSize);
 
       // With NLCC. Core correction is added internally before every libxc call.
       ExchangeCorrelationFE(
-        const std::string                                                  xcType,
-        RDM1<ValueType, memorySpace>                                     &rdm1,
-        std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>      linAlgOpContext,
-        const size_type                                                   cellBlockSize,
-        std::shared_ptr<const atoms::AtomSphericalDataContainer>          atomSphericalDataContainerPSP,
-        const std::vector<std::string>                                   &atomSymbolVec,
-        const std::vector<utils::Point>                                  &atomCoordinates);
-      
+        const std::string             xcType,
+        RDM1<ValueType, memorySpace> &rdm1,
+        std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
+                        linAlgOpContext,
+        const size_type cellBlockSize,
+        std::shared_ptr<const atoms::AtomSphericalDataContainer>
+                                         atomSphericalDataContainerPSP,
+        const std::vector<std::string> & atomSymbolVec,
+        const std::vector<utils::Point> &atomCoordinates);
+
       ~ExchangeCorrelationFE();
 
       void
@@ -92,7 +95,7 @@ namespace dftefe
 
       void
       evalEnergy(RDM1<ValueType, memorySpace> &rdm1,
-                 const utils::mpi::MPIComm    &comm);
+                 const utils::mpi::MPIComm &   comm);
 
       RealType
       getEnergy() const override;

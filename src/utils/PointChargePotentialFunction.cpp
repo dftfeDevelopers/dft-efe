@@ -30,9 +30,8 @@ namespace dftefe
     PointChargePotentialFunction::PointChargePotentialFunction(
       const utils::Point &atomCoordinates,
       const double        atomCharges)
-      : PointChargePotentialFunction(
-          std::vector<utils::Point>{atomCoordinates},
-          std::vector<double>{atomCharges})
+      : PointChargePotentialFunction(std::vector<utils::Point>{atomCoordinates},
+                                     std::vector<double>{atomCharges})
     {}
 
     double

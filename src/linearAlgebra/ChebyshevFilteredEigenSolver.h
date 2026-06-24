@@ -164,7 +164,8 @@ namespace dftefe
       std::shared_ptr<MultiVector<ValueType, memorySpace>> d_chfsiScratch1,
         d_chfsiScratch2, d_chfsiResidualScratch1, d_chfsiResidualScratch2;
       std::shared_ptr<MultiVector<ValueType, memorySpace>> d_chfsiScratch1Small,
-        d_chfsiScratch2Small, d_chfsiResidualScratch1Small, d_chfsiResidualScratch2Small;
+        d_chfsiScratch2Small, d_chfsiResidualScratch1Small,
+        d_chfsiResidualScratch2Small;
 
       std::shared_ptr<
         RayleighRitzEigenSolver<ValueTypeOperator, ValueType, memorySpace>>
@@ -175,8 +176,8 @@ namespace dftefe
         d_ortho;
 
       utils::Profiler<memorySpace> d_p, d_pTotal;
-      const bool      d_isResidualChebyFilter;
-      size_type       d_batchSizeSmall;
+      const bool                   d_isResidualChebyFilter;
+      size_type                    d_batchSizeSmall;
 
       std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
                             d_mpiPatternP2P;

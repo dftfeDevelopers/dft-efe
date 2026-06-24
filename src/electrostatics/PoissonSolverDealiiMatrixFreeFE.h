@@ -52,7 +52,8 @@ namespace dftefe
 {
   namespace electrostatics
   {
-    static constexpr utils::MemorySpace memorySpaceHost = utils::MemorySpace::HOST;  
+    static constexpr utils::MemorySpace memorySpaceHost =
+      utils::MemorySpace::HOST;
     /**
      *@brief A derived class of linearAlgebra::LinearSolverFunction
      * to encapsulate the Poisson partial differential equation
@@ -110,12 +111,13 @@ namespace dftefe
           feBasisDataStorageStiffnessMatrix,
         const std::map<
           std::string,
-          std::shared_ptr<
-            const basis::FEBasisDataStorage<ValueTypeOperator, memorySpaceHost>>>
+          std::shared_ptr<const basis::FEBasisDataStorage<ValueTypeOperator,
+                                                          memorySpaceHost>>>
           &feBasisDataStorageRhs,
         const std::map<
           std::string,
-          const quadrature::QuadratureValuesContainer<ValueType, memorySpaceHost> &>
+          const quadrature::QuadratureValuesContainer<ValueType,
+                                                      memorySpaceHost> &>
           &                                     inpRhs,
         const linearAlgebra::PreconditionerType pcType,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
@@ -149,7 +151,8 @@ namespace dftefe
                                                     dim>> feBasisManagerField,
         const std::map<
           std::string,
-          const quadrature::QuadratureValuesContainer<ValueType, memorySpaceHost> &>
+          const quadrature::QuadratureValuesContainer<ValueType,
+                                                      memorySpaceHost> &>
           &inpRhs);
 
       void
@@ -167,7 +170,8 @@ namespace dftefe
       solve(const double absTolerance, const size_type maxNumberIterations);
 
       void
-      getSolution(linearAlgebra::MultiVector<ValueType, memorySpaceHost> &solution);
+      getSolution(
+        linearAlgebra::MultiVector<ValueType, memorySpaceHost> &solution);
 
       const utils::mpi::MPIComm &
       getMPIComm() const;
@@ -202,46 +206,51 @@ namespace dftefe
       computeDiagonalA();
 
       void
-      AX(const dealii::MatrixFree<dim, double> &      matrixFreeData,
-         distributedCPUVec<double> &                  dst,
-         const distributedCPUVec<double> &            src,
+      AX(const dealii::MatrixFree<dim, double> &matrixFreeData,
+         distributedCPUVec<double> &            dst,
+         const distributedCPUVec<double> &      src,
          const std::pair<size_type, size_type> &cell_range) const;
 
       void
-      CGsolve(const double       absTolerance,
+      CGsolve(const double    absTolerance,
               const size_type maxNumberIterations,
-              bool               distributeFlag);
+              bool            distributeFlag);
 
-      const linearAlgebra::Vector<ValueTypeOperator, utils::MemorySpace::DEVICE> &
-      getRhsDevice() const;
+      const linearAlgebra::Vector<ValueTypeOperator, utils::MemorySpace::DEVICE>
+        &
+        getRhsDevice() const;
 
-      const linearAlgebra::Vector<ValueTypeOperator, utils::MemorySpace::DEVICE> &
-      getInitialGuessDevice() const;
+      const linearAlgebra::Vector<ValueTypeOperator, utils::MemorySpace::DEVICE>
+        &
+        getInitialGuessDevice() const;
 
       // Device-specific methods: only called when memorySpace == DEVICE.
       // Requires DFTEFE_WITH_DEVICE for the GPU matrix-free AX kernel.
       void
-      CGsolveDevice(const double       absTolerance,
+      CGsolveDevice(const double    absTolerance,
                     const size_type maxNumberIterations,
-                    bool               distributeFlag);
+                    bool            distributeFlag);
 
       void
-      computeAXDevice(
-        linearAlgebra::Vector<ValueTypeOperator, utils::MemorySpace::DEVICE> &Ax,
-        linearAlgebra::Vector<ValueTypeOperator, utils::MemorySpace::DEVICE> &x);
+      computeAXDevice(linearAlgebra::Vector<ValueTypeOperator,
+                                            utils::MemorySpace::DEVICE> &Ax,
+                      linearAlgebra::Vector<ValueTypeOperator,
+                                            utils::MemorySpace::DEVICE> &x);
 
       size_type d_numComponents;
-      std::shared_ptr<
-        const basis::
-          FEBasisManager<ValueTypeOperand, ValueTypeOperator, memorySpaceHost, dim>>
+      std::shared_ptr<const basis::FEBasisManager<ValueTypeOperand,
+                                                  ValueTypeOperator,
+                                                  memorySpaceHost,
+                                                  dim>>
                                         d_feBasisManagerField;
       linearAlgebra::PreconditionerType d_pcType;
-      utils::Profiler<memorySpace>                   d_p;
+      utils::Profiler<memorySpace>      d_p;
 
 
-      std::shared_ptr<
-        basis::
-          FEBasisManager<ValueTypeOperand, ValueTypeOperator, memorySpaceHost, dim>>
+      std::shared_ptr<basis::FEBasisManager<ValueTypeOperand,
+                                            ValueTypeOperator,
+                                            memorySpaceHost,
+                                            dim>>
         d_feBasisManagerHomo;
 
       distributedCPUVec<ValueTypeOperator> d_x, d_rhs, d_initial, d_diagonalA;
@@ -253,7 +262,7 @@ namespace dftefe
       const dealii::AffineConstraints<ValueTypeOperand> *d_constraintsInfo;
       size_type                        d_num1DQuadPointsStiffnessMatrix;
       std::map<std::string, size_type> d_num1DQuadPointsRhs;
-      size_type                           d_feOrder;
+      size_type                        d_feOrder;
       size_type                        d_dofHandlerIndex;
 
       std::map<
@@ -264,7 +273,7 @@ namespace dftefe
 
       std::vector<distributedCPUVec<ValueType>> d_nonTensorSructuredQuadeRhs;
 
-      size_type d_matrixFreeQuadCompStiffnessMatrix;
+      size_type                           d_matrixFreeQuadCompStiffnessMatrix;
       std::map<dealii::CellId, size_type> d_cellIdToCellIndexMap;
 
       std::vector<dealii::Quadrature<dim>> d_dealiiQuadratureRuleVec;
@@ -292,48 +301,54 @@ namespace dftefe
         d_rhsDevice;
       std::unique_ptr<linearAlgebra::Vector<ValueTypeOperator, memorySpace>>
         d_initialDevice;
-    /// define some temporary vectors for cgsolver device
-    linearAlgebra::Vector<ValueTypeOperator, memorySpace> d_qvec, d_rvec, d_dvec;
+      /// define some temporary vectors for cgsolver device
+      linearAlgebra::Vector<ValueTypeOperator, memorySpace> d_qvec, d_rvec,
+        d_dvec;
 
 #ifdef DFTEFE_WITH_DEVICE
       size_type d_xLocalDof;
-      double    *d_devSumPtr;
+      double *  d_devSumPtr;
       dftefe::utils::MemoryStorage<double, dftefe::utils::MemorySpace::DEVICE>
         d_devSum;
 
-      std::shared_ptr<const utils::mpi::MPIPatternP2P<dftefe::utils::MemorySpace::DEVICE>>
-                                               d_mpiPatternP2PDevice;
+      std::shared_ptr<
+        const utils::mpi::MPIPatternP2P<dftefe::utils::MemorySpace::DEVICE>>
+        d_mpiPatternP2PDevice;
       // Device-side matrix-free Laplace operator (from dftfe).
-      std::unique_ptr<dftefe::MatrixFreeWrapperClass<ValueTypeOperator,
-                                                    dftefe::operatorList::Laplace,
-                                                    dftefe::utils::MemorySpace::DEVICE,
-                                                    false>>
+      std::unique_ptr<
+        dftefe::MatrixFreeWrapperClass<ValueTypeOperator,
+                                       dftefe::operatorList::Laplace,
+                                       dftefe::utils::MemorySpace::DEVICE,
+                                       false>>
         d_matrixFreeWrapperDevice;
 
-    /**
-     * @brief Combines precondition and dot product
-     *
-     */
-    double
-    applyPreconditionAndComputeDotProduct(const double *jacobi);
+      /**
+       * @brief Combines precondition and dot product
+       *
+       */
+      double
+      applyPreconditionAndComputeDotProduct(const double *jacobi);
 
-    /**
-     * @brief Combines precondition, sadd and dot product
-     *
-     */
-    double
-    applyPreconditionComputeDotProductAndSadd(const double *jacobi);
+      /**
+       * @brief Combines precondition, sadd and dot product
+       *
+       */
+      double
+      applyPreconditionComputeDotProductAndSadd(const double *jacobi);
 
-    /**
-     * @brief Combines scaling and norm
-     *
-     */
-    double
-    scaleXRandComputeNorm(double *x, const double &alpha);
+      /**
+       * @brief Combines scaling and norm
+       *
+       */
+      double
+      scaleXRandComputeNorm(double *x, const double &alpha);
 
-  void
-  dotDevice(const size_type size, double *x, double *y, double &alpha,
-           linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext);
+      void
+      dotDevice(const size_type                              size,
+                double *                                     x,
+                double *                                     y,
+                double &                                     alpha,
+                linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext);
 #endif // DFTEFE_WITH_DEVICE
 
     }; // end of class PoissonSolverDealiiMatrixFreeFE

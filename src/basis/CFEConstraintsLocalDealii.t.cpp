@@ -605,9 +605,13 @@ namespace dftefe
     //           size_type          dim>
     // void
     // CFEConstraintsLocalDealii<ValueTypeBasisCoeff, memorySpace, dim>::
-    //   getHomogeneousDirichletBCMatrixFree(const dealii::DoFHandler<dim, dim> &dealiiDofHandler,
-    //                                       dealii::MatrixFree<dim, ValueTypeBasisCoeff> &dealiiMatrixFree,
-    //                                        dealii::AffineConstraints<ValueTypeBasisCoeff>  &constraintMatrix) const
+    //   getHomogeneousDirichletBCMatrixFree(const dealii::DoFHandler<dim, dim>
+    //   &dealiiDofHandler,
+    //                                       dealii::MatrixFree<dim,
+    //                                       ValueTypeBasisCoeff>
+    //                                       &dealiiMatrixFree,
+    //                                        dealii::AffineConstraints<ValueTypeBasisCoeff>
+    //                                        &constraintMatrix) const
     // {
     //   dealii::AffineConstraints<ValueTypeBasisCoeff>
     //     onlyHangingNodeConstraints;
@@ -642,7 +646,8 @@ namespace dftefe
     //   std::vector<bool> dofs_touched(dealiiDofHandler.n_dofs(), false);
     // dealii::DoFHandler<3>::active_cell_iterator cell =
     //                                               dealiiDofHandler.begin_active(),
-    //                                             endc = dealiiDofHandler.end();      
+    //                                             endc =
+    //                                             dealiiDofHandler.end();
     //   for (; cell != endc; ++cell)
     //   if (cell->is_locally_owned() || cell->is_ghost())
     //     {

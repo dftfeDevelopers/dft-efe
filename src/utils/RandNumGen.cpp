@@ -34,7 +34,10 @@ namespace dftefe
     //
     // Random Number Generator for short datatype
     //
-    RandNumGen<short>::RandNumGen(short min, short max, bool isReproducible, unsigned int seed)
+    RandNumGen<short>::RandNumGen(short        min,
+                                  short        max,
+                                  bool         isReproducible,
+                                  unsigned int seed)
       : d_dis(min, max)
     {
       if (isReproducible)
@@ -80,7 +83,10 @@ namespace dftefe
     //
     // Random Number Generator for int datatype
     //
-    RandNumGen<int>::RandNumGen(int min, int max, bool isReproducible, unsigned int seed)
+    RandNumGen<int>::RandNumGen(int          min,
+                                int          max,
+                                bool         isReproducible,
+                                unsigned int seed)
       : d_dis(min, max)
     {
       if (isReproducible)
@@ -125,7 +131,10 @@ namespace dftefe
     //
     // Random Number Generator for long datatype
     //
-    RandNumGen<long>::RandNumGen(long min, long max, bool isReproducible, unsigned int seed)
+    RandNumGen<long>::RandNumGen(long         min,
+                                 long         max,
+                                 bool         isReproducible,
+                                 unsigned int seed)
       : d_dis(min, max)
     {
       if (isReproducible)
@@ -196,8 +205,8 @@ namespace dftefe
     //
     RandNumGen<unsigned long long>::RandNumGen(unsigned long long min,
                                                unsigned long long max,
-                                               bool               isReproducible,
-                                               unsigned int       seed)
+                                               bool         isReproducible,
+                                               unsigned int seed)
       : d_dis(min, max)
     {
       if (isReproducible)
@@ -218,7 +227,10 @@ namespace dftefe
     //
     // Random Number Generator for float datatype
     //
-    RandNumGen<float>::RandNumGen(float min, float max, bool isReproducible, unsigned int seed)
+    RandNumGen<float>::RandNumGen(float        min,
+                                  float        max,
+                                  bool         isReproducible,
+                                  unsigned int seed)
       : d_dis(min, max)
     {
       if (isReproducible)
@@ -239,7 +251,10 @@ namespace dftefe
     //
     // Random Number Generator for double datatype
     //
-    RandNumGen<double>::RandNumGen(double min, double max, bool isReproducible, unsigned int seed)
+    RandNumGen<double>::RandNumGen(double       min,
+                                   double       max,
+                                   bool         isReproducible,
+                                   unsigned int seed)
       : d_dis(min, max)
     {
       if (isReproducible)
@@ -286,8 +301,8 @@ namespace dftefe
     //
     RandNumGen<std::complex<float>>::RandNumGen(std::complex<float> min,
                                                 std::complex<float> max,
-                                                bool                isReproducible,
-                                                unsigned int        seed)
+                                                bool         isReproducible,
+                                                unsigned int seed)
     {
       std::vector<float> vals   = {min.real(),
                                  min.imag(),
@@ -316,8 +331,8 @@ namespace dftefe
     //
     RandNumGen<std::complex<double>>::RandNumGen(std::complex<double> min,
                                                  std::complex<double> max,
-                                                 bool                 isReproducible,
-                                                 unsigned int         seed)
+                                                 bool         isReproducible,
+                                                 unsigned int seed)
     {
       std::vector<double> vals = {min.real(),
                                   min.imag(),

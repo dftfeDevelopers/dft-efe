@@ -135,7 +135,7 @@ namespace dftefe
       ones.resize(numComponents, (ValueType)1.0);
       std::vector<ValueType> nOnes(0);
       nOnes.resize(numComponents, (ValueType)-1.0);
-      std::vector<ValueType> alpha(numComponents, (ValueType)0), 
+      std::vector<ValueType> alpha(numComponents, (ValueType)0),
         nAlpha(numComponents, (ValueType)0), beta(numComponents, (ValueType)0);
 
       //
@@ -159,13 +159,13 @@ namespace dftefe
       // for (unsigned int h = 0 ; h < z.locallyOwnedSize() ; h++)
       // {
       //   for (unsigned int i = 0 ; i < z.getNumberComponents() ; i++)
-      //     std::cout << "z[" <<iter << "," << h <<"] : "<< *(hostData.data()+ h*z.getNumberComponents() + i)<< ",";
+      //     std::cout << "z[" <<iter << "," << h <<"] : "<< *(hostData.data()+
+      //     h*z.getNumberComponents() + i)<< ",";
       //   std::cout << std::endl;
       // }
 
-      for (iter =1 ; iter <= d_maxIter; ++iter)
+      for (iter = 1; iter <= d_maxIter; ++iter)
         {
-
           std::vector<double> rNorm(0);
           rNorm = r.l2Norms();
 
@@ -198,18 +198,18 @@ namespace dftefe
                   //   memoryTransfer.copy(1,
                   //                       xConverged.data() +
                   //                         numComponents * iSize + i,
-                  //                       x.data() + iSize * numComponents + i);
+                  //                       x.data() + iSize * numComponents +
+                  //                       i);
 
-                  blasLapack::stridedBlockCopy(
-                                x.locallyOwnedSize(),
-                                1,
-                                numComponents, // srcLeadingDim
-                                i, // srcBlockStartId
-                                numComponents, // dstLeadingDim
-                                i, // dstBlockStartId
-                                x.data(),
-                                xConverged.data(),
-                                *x.getLinAlgOpContext());                                        
+                  blasLapack::stridedBlockCopy(x.locallyOwnedSize(),
+                                               1,
+                                               numComponents, // srcLeadingDim
+                                               i,             // srcBlockStartId
+                                               numComponents, // dstLeadingDim
+                                               i,             // dstBlockStartId
+                                               x.data(),
+                                               xConverged.data(),
+                                               *x.getLinAlgOpContext());
                 }
 
               if (rNorm[i] > d_divergenceTol && divergeFlag == false)
@@ -260,7 +260,7 @@ namespace dftefe
           // ValueType alpha = zDotr / pDotw;
           for (size_type i = 0; i < numComponents; i++)
             {
-              alpha[i] = (zDotr[i] / pDotw[i]);
+              alpha[i]  = (zDotr[i] / pDotw[i]);
               nAlpha[i] = (-zDotr[i] / pDotw[i]);
             }
 
@@ -283,12 +283,12 @@ namespace dftefe
 
           // ValueType beta = zDotrNew / zDotr;
           for (size_type i = 0; i < numComponents; i++)
-          {
-            beta[i] = (zDotrNew[i] / zDotr[i]);
-          }                     
+            {
+              beta[i] = (zDotrNew[i] / zDotr[i]);
+            }
           // p = z + beta*p
           add(ones, z, beta, p, p);
-          
+
           // register end of the iteration
           // d_profiler.registerIterEnd(msg);
         }
@@ -339,8 +339,8 @@ namespace dftefe
     //   const MultiVector<ValueType, memorySpace> &b =
     //     linearSolverFunction.getRhs();
 
-    //   const utils::mpi::MPIComm &comm = b.getMPIPatternP2P()->mpiCommunicator();
-    //   int                        rank;
+    //   const utils::mpi::MPIComm &comm =
+    //   b.getMPIPatternP2P()->mpiCommunicator(); int rank;
     //   utils::mpi::MPICommRank(comm, &rank);
 
     //   std::vector<double> bNorm(0);
@@ -394,9 +394,11 @@ namespace dftefe
     //   ones.resize(numComponents, (ValueType)1.0);
     //   std::vector<ValueType> nOnes(0);
     //   nOnes.resize(numComponents, (ValueType)-1.0);
-    //         // std::cout << std::endl; 
-    //         //           utils::MemoryStorage<ValueType, utils::MemorySpace::HOST> 
-    //         //                  hostData(p.locallyOwnedSize() * p.getNumberComponents(), 0.0);
+    //         // std::cout << std::endl;
+    //         //           utils::MemoryStorage<ValueType,
+    //         utils::MemorySpace::HOST>
+    //         //                  hostData(p.locallyOwnedSize() *
+    //         p.getNumberComponents(), 0.0);
 
     //   for (; iter <= d_maxIter; ++iter)
     //     {
@@ -415,7 +417,7 @@ namespace dftefe
     //           //         for(int i = 0 ; i< hostData.size() ; i++ )
     //           //         {
     //           //           sumx += *(hostData.data() + i);
-    //           //         }     
+    //           //         }
     //           //         utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
     //           //           utils::mpi::MPIInPlace,
     //           //           &sumx,
@@ -423,14 +425,14 @@ namespace dftefe
     //           //           utils::mpi::Types<ValueType>::getMPIDatatype(),
     //           //           utils::mpi::MPISum,
     //           //           z.getMPIPatternP2P()->mpiCommunicator());
-    //           //         std::cout << "sumx: "<< sumx << std::endl;  
+    //           //         std::cout << "sumx: "<< sumx << std::endl;
     //           // std::cout << std::endl;
     //           //         hostData.template copyFrom<memorySpace>(w.data());
     //           //         ValueType sumw = 0;
     //           //         for(int i = 0 ; i< hostData.size() ; i++ )
     //           //         {
     //           //           sumw += *(hostData.data() + i);
-    //           //         }     
+    //           //         }
     //           //         utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
     //           //           utils::mpi::MPIInPlace,
     //           //           &sumw,
@@ -438,7 +440,7 @@ namespace dftefe
     //           //           utils::mpi::Types<ValueType>::getMPIDatatype(),
     //           //           utils::mpi::MPISum,
     //           //           z.getMPIPatternP2P()->mpiCommunicator());
-    //           //         std::cout << "sumw: "<< sumw << std::endl;  
+    //           //         std::cout << "sumw: "<< sumw << std::endl;
 
     //           add(ones, b, nOnes, w, r);
 
@@ -454,8 +456,10 @@ namespace dftefe
 
     //           // for (unsigned int h = 0 ; h < z.locallyOwnedSize() ; h++)
     //           // {
-    //           //   for (unsigned int i = 0 ; i < z.getNumberComponents() ; i++)
-    //           //     std::cout << "z[" <<iter << "," << h <<"] : "<< *(hostData.data()+ h*z.getNumberComponents() + i)<< ",";
+    //           //   for (unsigned int i = 0 ; i < z.getNumberComponents() ;
+    //           i++)
+    //           //     std::cout << "z[" <<iter << "," << h <<"] : "<<
+    //           *(hostData.data()+ h*z.getNumberComponents() + i)<< ",";
     //           //   std::cout << std::endl;
     //           // }
     //         }
@@ -469,7 +473,7 @@ namespace dftefe
     //           //         for(int i = 0 ; i< hostData.size() ; i++ )
     //           //         {
     //           //           sump += *(hostData.data() + i);
-    //           //         }     
+    //           //         }
     //           //         utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
     //           //           utils::mpi::MPIInPlace,
     //           //           &sump,
@@ -477,14 +481,14 @@ namespace dftefe
     //           //           utils::mpi::Types<ValueType>::getMPIDatatype(),
     //           //           utils::mpi::MPISum,
     //           //           z.getMPIPatternP2P()->mpiCommunicator());
-    //           //         std::cout << "sump: "<< sump << std::endl;  
+    //           //         std::cout << "sump: "<< sump << std::endl;
     //           // std::cout << std::endl;
     //           //         hostData.template copyFrom<memorySpace>(w.data());
     //           //         ValueType sumw = 0;
     //           //         for(int i = 0 ; i< hostData.size() ; i++ )
     //           //         {
     //           //           sumw += *(hostData.data() + i);
-    //           //         }     
+    //           //         }
     //           //         utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
     //           //           utils::mpi::MPIInPlace,
     //           //           &sumw,
@@ -492,7 +496,7 @@ namespace dftefe
     //           //           utils::mpi::Types<ValueType>::getMPIDatatype(),
     //           //           utils::mpi::MPISum,
     //           //           z.getMPIPatternP2P()->mpiCommunicator());
-    //           //         std::cout << "sumw: "<< sumw << std::endl;  
+    //           //         std::cout << "sumw: "<< sumw << std::endl;
     //           // z^Hr (dot product of z-conjugate and r)
     //           std::vector<ValueType> zDotr(0);
     //           dot(z,
@@ -500,13 +504,13 @@ namespace dftefe
     //               zDotr,
     //               blasLapack::ScalarOp::Conj,
     //               blasLapack::ScalarOp::Identity);
-    //         // std::cout << std::endl; 
+    //         // std::cout << std::endl;
     //         //           hostData.template copyFrom<memorySpace>(z.data());
     //         //           ValueType sumz = 0;
     //         //           for(int i = 0 ; i< hostData.size() ; i++ )
     //         //           {
     //         //             sumz += *(hostData.data() + i);
-    //         //           }     
+    //         //           }
     //         //           utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
     //         //             utils::mpi::MPIInPlace,
     //         //             &sumz,
@@ -514,15 +518,15 @@ namespace dftefe
     //         //             utils::mpi::Types<ValueType>::getMPIDatatype(),
     //         //             utils::mpi::MPISum,
     //         //             z.getMPIPatternP2P()->mpiCommunicator());
-    //         //           std::cout << "sumz: "<< sumz << std::endl;   
+    //         //           std::cout << "sumz: "<< sumz << std::endl;
 
-    //         // std::cout << std::endl; 
+    //         // std::cout << std::endl;
     //         //           hostData.template copyFrom<memorySpace>(r.data());
     //         //           ValueType sumr = 0;
     //         //           for(int i = 0 ; i< hostData.size() ; i++ )
     //         //           {
     //         //             sumr += *(hostData.data() + i);
-    //         //           }     
+    //         //           }
     //         //           utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
     //         //             utils::mpi::MPIInPlace,
     //         //             &sumr,
@@ -530,7 +534,7 @@ namespace dftefe
     //         //             utils::mpi::Types<ValueType>::getMPIDatatype(),
     //         //             utils::mpi::MPISum,
     //         //             z.getMPIPatternP2P()->mpiCommunicator());
-    //         //           std::cout << "sumr: "<< sumr << std::endl;  
+    //         //           std::cout << "sumr: "<< sumr << std::endl;
 
     //           // p^Hw (dot product of p-conjugate and w)
     //           std::vector<ValueType> pDotw(0);
@@ -546,7 +550,8 @@ namespace dftefe
     //             {
     //               alpha.push_back(zDotr[i] / pDotw[i]);
     //               nAlpha.push_back(-zDotr[i] / pDotw[i]);
-    //               //std::cout << "alpha: "<<alpha[i] <<  " zDotr[i]: "<<zDotr[i] << " pDotw[i]: "<<pDotw[i]<< std::endl;
+    //               //std::cout << "alpha: "<<alpha[i] <<  " zDotr[i]:
+    //               "<<zDotr[i] << " pDotw[i]: "<<pDotw[i]<< std::endl;
     //             }
 
     //           // x = x + alpha*p
@@ -571,7 +576,8 @@ namespace dftefe
     //           for (size_type i = 0; i < numComponents; i++)
     //           {
     //             beta.push_back(zDotrNew[i] / zDotr[i]);
-    //               //std::cout << "beta: "<<beta[i] << " zDotrNew[i]: "<<zDotrNew[i]<< " zDotr[i]: "<<zDotr[i]<<std::endl;
+    //               //std::cout << "beta: "<<beta[i] << " zDotrNew[i]:
+    //               "<<zDotrNew[i]<< " zDotr[i]: "<<zDotr[i]<<std::endl;
     //           }
     //         //    std::cout << std::endl;
     //         //           hostData.template copyFrom<memorySpace>(p.data());
@@ -579,7 +585,7 @@ namespace dftefe
     //         //           for(int i = 0 ; i< hostData.size() ; i++ )
     //         //           {
     //         //             sump += *(hostData.data() + i);
-    //         //           }     
+    //         //           }
     //         //           utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
     //         //             utils::mpi::MPIInPlace,
     //         //             &sump,
@@ -587,15 +593,15 @@ namespace dftefe
     //         //             utils::mpi::Types<ValueType>::getMPIDatatype(),
     //         //             utils::mpi::MPISum,
     //         //             z.getMPIPatternP2P()->mpiCommunicator());
-    //         //           std::cout << "sump prev: "<< sump << std::endl;  
+    //         //           std::cout << "sump prev: "<< sump << std::endl;
 
-    //         // std::cout << std::endl; 
+    //         // std::cout << std::endl;
     //         //           hostData.template copyFrom<memorySpace>(z.data());
     //         //           sumz = 0;
     //         //           for(int i = 0 ; i< hostData.size() ; i++ )
     //         //           {
     //         //             sumz += *(hostData.data() + i);
-    //         //           }     
+    //         //           }
     //         //           utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
     //         //             utils::mpi::MPIInPlace,
     //         //             &sumz,
@@ -603,7 +609,7 @@ namespace dftefe
     //         //             utils::mpi::Types<ValueType>::getMPIDatatype(),
     //         //             utils::mpi::MPISum,
     //         //             z.getMPIPatternP2P()->mpiCommunicator());
-    //                   // std::cout << "sumz prev: "<< sumz << std::endl;                        
+    //                   // std::cout << "sumz prev: "<< sumz << std::endl;
     //           // p = z + beta*p
     //           add(ones, z, beta, p, p);
     //           //  std::cout << std::endl;
@@ -612,7 +618,7 @@ namespace dftefe
     //           //         for(int i = 0 ; i< hostData.size() ; i++ )
     //           //         {
     //           //           sump += *(hostData.data() + i);
-    //           //         }     
+    //           //         }
     //           //         utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
     //           //           utils::mpi::MPIInPlace,
     //           //           &sump,
@@ -620,7 +626,7 @@ namespace dftefe
     //           //           utils::mpi::Types<ValueType>::getMPIDatatype(),
     //           //           utils::mpi::MPISum,
     //           //           z.getMPIPatternP2P()->mpiCommunicator());
-    //           //         std::cout << "sump later: "<< sump << std::endl; 
+    //           //         std::cout << "sump later: "<< sump << std::endl;
 
     //           // if constexpr (memorySpace == utils::MemorySpace::DEVICE)
     //           //   dftefe::utils::deviceSynchronize();
@@ -658,7 +664,8 @@ namespace dftefe
     //                 memoryTransfer.copy(1,
     //                                     xConverged.data() +
     //                                       numComponents * iSize + i,
-    //                                     x.data() + iSize * numComponents + i);
+    //                                     x.data() + iSize * numComponents +
+    //                                     i);
     //             }
 
     //           if (rNorm[i] > d_divergenceTol && divergeFlag == false)
@@ -702,7 +709,8 @@ namespace dftefe
 
     //   if (retunValue.isSuccess)
     //     {
-    //       msg = "CGLinear solve converged in maximum " + std::to_string(iter) +
+    //       msg = "CGLinear solve converged in maximum " + std::to_string(iter)
+    //       +
     //             " iterations";
     //     }
     //   else

@@ -287,8 +287,7 @@ namespace dftefe
                     *basisOverlapTmpIter = 0.0;
                     if (iNode < dofsPerCellCFE && jNode < dofsPerCellCFE)
                       {
-                        for (size_type qPoint = 0;
-                             qPoint < nQuadPointInCellCFE;
+                        for (size_type qPoint = 0; qPoint < nQuadPointInCellCFE;
                              qPoint++)
                           {
                             *basisOverlapTmpIter +=
@@ -303,8 +302,7 @@ namespace dftefe
                       }
                     else
                       {
-                        for (size_type qPoint = 0;
-                             qPoint < nQuadPointInCellEFE;
+                        for (size_type qPoint = 0; qPoint < nQuadPointInCellEFE;
                              qPoint++)
                           {
                             *basisOverlapTmpIter +=

@@ -119,10 +119,12 @@ namespace dftefe
           feBDTotalChargeStiffnessMatrix,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeElectrostaticsBasis,
-                                          memorySpaceHost>> feBDNuclearChargeRhs,
+                                          memorySpaceHost>>
+          feBDNuclearChargeRhs,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeElectrostaticsBasis,
-                                          memorySpaceHost>> feBDElectronicChargeRhs,
+                                          memorySpaceHost>>
+          feBDElectronicChargeRhs,
         /* Field data storages eigen solve*/
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeWaveFunctionBasis,
@@ -199,17 +201,20 @@ namespace dftefe
           feBDTotalChargeStiffnessMatrix,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeElectrostaticsBasis,
-                                          memorySpaceHost>> feBDNuclearChargeRhs,
+                                          memorySpaceHost>>
+          feBDNuclearChargeRhs,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeElectrostaticsBasis,
-                                          memorySpaceHost>> feBDElectronicChargeRhs,
+                                          memorySpaceHost>>
+          feBDElectronicChargeRhs,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeElectrostaticsBasis,
                                           memorySpaceHost>>
           feBDNuclChargeStiffnessMatrixNumSol,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeElectrostaticsBasis,
-                                          memorySpaceHost>> feBDNuclChargeRhsNumSol,
+                                          memorySpaceHost>>
+          feBDNuclChargeRhsNumSol,
         /* Field data storages eigen solve*/
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeWaveFunctionBasis,
@@ -288,10 +293,12 @@ namespace dftefe
           feBDTotalChargeStiffnessMatrix,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeElectrostaticsBasis,
-                                          memorySpaceHost>> feBDNuclearChargeRhs,
+                                          memorySpaceHost>>
+          feBDNuclearChargeRhs,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeElectrostaticsBasis,
-                                          memorySpaceHost>> feBDElectronicChargeRhs,
+                                          memorySpaceHost>>
+          feBDElectronicChargeRhs,
         /* Field data storages eigen solve*/
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeWaveFunctionBasis,
@@ -370,10 +377,12 @@ namespace dftefe
           feBDTotalChargeStiffnessMatrix,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeElectrostaticsBasis,
-                                          memorySpaceHost>> feBDNuclearChargeRhs,
+                                          memorySpaceHost>>
+          feBDNuclearChargeRhs,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeElectrostaticsBasis,
-                                          memorySpaceHost>> feBDElectronicChargeRhs,
+                                          memorySpaceHost>>
+          feBDElectronicChargeRhs,
         /* Field data storages eigen solve*/
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeWaveFunctionBasis,
@@ -457,10 +466,12 @@ namespace dftefe
           feBDTotalChargeStiffnessMatrix,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeElectrostaticsBasis,
-                                          memorySpaceHost>> feBDNuclearChargeRhs,
+                                          memorySpaceHost>>
+          feBDNuclearChargeRhs,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeElectrostaticsBasis,
-                                          memorySpaceHost>> feBDElectronicChargeRhs,
+                                          memorySpaceHost>>
+          feBDElectronicChargeRhs,
         /* Field data storages eigen solve*/
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeWaveFunctionBasis,
@@ -524,11 +535,13 @@ namespace dftefe
       std::shared_ptr<RDM1Spectral<
         linearAlgebra::blasLapack::scalar_type<ValueTypeWaveFunctionBasis,
                                                ValueTypeWaveFunctionCoeff>,
-        memorySpace>> d_rdm1Spectral;
+        memorySpace>>
+        d_rdm1Spectral;
       std::shared_ptr<RDM1Mixing<
         linearAlgebra::blasLapack::scalar_type<ValueTypeWaveFunctionBasis,
                                                ValueTypeWaveFunctionCoeff>,
-        memorySpace>> d_rdm1Mix;
+        memorySpace>>
+        d_rdm1Mix;
       std::shared_ptr<KohnShamOperatorContextFE<ValueTypeElectrostaticsCoeff,
                                                 ValueTypeElectrostaticsBasis,
                                                 ValueTypeWaveFunctionCoeff,
@@ -557,16 +570,16 @@ namespace dftefe
                                                   ValueTypeWaveFunctionBasis,
                                                   memorySpace,
                                                   dim>>
-                                d_feBMWaveFn;
-      std::vector<RealType>     d_kohnShamEnergies;
-      utils::ConditionalOStream d_rootCout;
-      bool                      d_evaluateEnergyEverySCF;
+                                       d_feBMWaveFn;
+      std::vector<RealType>            d_kohnShamEnergies;
+      utils::ConditionalOStream        d_rootCout;
+      bool                             d_evaluateEnergyEverySCF;
       size_type                        d_numMaxSCFIter;
       const OpContext *                d_MContext, *d_MInvContext;
       const utils::mpi::MPIComm &      d_mpiCommDomain;
       MixingScheme<RealType, RealType> d_mixingScheme;
       std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
-        d_linAlgOpContext;
+                      d_linAlgOpContext;
       const size_type d_numElectrons;
 
       std::shared_ptr<
@@ -574,10 +587,10 @@ namespace dftefe
                                         memorySpace>>
         d_feBDEXCHamiltonian;
 
-      RealType        d_groundStateEnergy;
-      bool            d_isSolved;
+      RealType                     d_groundStateEnergy;
+      bool                         d_isSolved;
       utils::Profiler<memorySpace> d_p, d_pTotal;
-      bool            d_isPSPCalculation;
+      bool                         d_isPSPCalculation;
 
       std::shared_ptr<ElectrostaticExcFE<ValueTypeElectrostaticsCoeff,
                                          ValueTypeElectrostaticsBasis,
@@ -596,7 +609,7 @@ namespace dftefe
 
       std::shared_ptr<linearAlgebra::ElpaScalapackManager> d_elpaScala;
       std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpaceHost>>
-      d_linAlgOpContextHost;    
+                  d_linAlgOpContextHost;
       double      d_smearingTemperature, d_freeEnergy;
       std::string d_xcType;
 

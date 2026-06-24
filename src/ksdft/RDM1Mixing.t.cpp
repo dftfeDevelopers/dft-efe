@@ -34,13 +34,13 @@ namespace dftefe
   {
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     RDM1Mixing<ValueType, memorySpace>::RDM1Mixing(
-      MixingScheme<RealType, RealType> &                                   mixingScheme,
-      const size_type                                                      mixingHistory,
-      const std::vector<RealType> &                                        jxwDataHost,
-      const double                                                         mixingParameter,
-      const bool                                                           isAdaptiveMixingParameter,
+      MixingScheme<RealType, RealType> &mixingScheme,
+      const size_type                   mixingHistory,
+      const std::vector<RealType> &     jxwDataHost,
+      const double                      mixingParameter,
+      const bool                        isAdaptiveMixingParameter,
       std::shared_ptr<linearAlgebra::LinAlgOpContext<utils::MemorySpace::HOST>>
-        linAlgOpContextHost,
+                      linAlgOpContextHost,
       const MPI_Comm &mpiCommDomain)
       : d_mixingScheme(mixingScheme)
       , d_mixingHistory(mixingHistory)
@@ -50,8 +50,11 @@ namespace dftefe
       utils::MemoryStorage<RealType, utils::MemorySpace::HOST> jxwStorage(
         jxwDataHost.size());
       jxwStorage.copyFrom(jxwDataHost);
-      d_mixingScheme.addMixingVariable(
-        mixingVariable::rho, jxwStorage, true, mixingParameter, isAdaptiveMixingParameter);
+      d_mixingScheme.addMixingVariable(mixingVariable::rho,
+                                       jxwStorage,
+                                       true,
+                                       mixingParameter,
+                                       isAdaptiveMixingParameter);
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
@@ -107,8 +110,8 @@ namespace dftefe
       else
         {
           // rho: residual = densOut - in; update history; mix.
-          utils::MemoryStorage<double, utils::MemorySpace::HOST>
-            rhoResidual(nq, 0.0);
+          utils::MemoryStorage<double, utils::MemorySpace::HOST> rhoResidual(
+            nq, 0.0);
           {
             const double *outPtr = densOut[0].data();
             const double *inPtr  = d_densityInAttrVals[0].data();
@@ -116,19 +119,18 @@ namespace dftefe
             for (size_type i = 0; i < nq; ++i)
               resPtr[i] = outPtr[i] - inPtr[i];
           }
-          d_mixingScheme
-            .template addVariableToInHist<utils::MemorySpace::HOST>(
-              mixingVariable::rho, d_densityInAttrVals[0].data(), nq);
+          d_mixingScheme.template addVariableToInHist<utils::MemorySpace::HOST>(
+            mixingVariable::rho, d_densityInAttrVals[0].data(), nq);
           d_mixingScheme
             .template addVariableToResidualHist<utils::MemorySpace::HOST>(
               mixingVariable::rho, rhoResidual.data(), nq);
 
-          // gradRho: same pattern, dependent variable (same coefficients as rho).
+          // gradRho: same pattern, dependent variable (same coefficients as
+          // rho).
           if (d_mixingScheme.hasVariable(mixingVariable::gradRho))
             {
-              AttrStorage &gradDensOut =
-                densOutAttr.at(DensityDescrAttr::Grad);
-              const size_type nGrad = gradDensOut[0].nEntries();
+              AttrStorage &gradDensOut = densOutAttr.at(DensityDescrAttr::Grad);
+              const size_type nGrad    = gradDensOut[0].nEntries();
               utils::MemoryStorage<double, utils::MemorySpace::HOST>
                 gradResidual(nGrad, 0.0);
               {
@@ -151,16 +153,15 @@ namespace dftefe
           d_mixingScheme.popOldHistory(d_mixingHistory);
 
           // Coefficients determined by rho residual only.
-          d_mixingScheme.computeAndersonMixingCoeff(
-            {mixingVariable::rho}, *d_linAlgOpContextHost);
+          d_mixingScheme.computeAndersonMixingCoeff({mixingVariable::rho},
+                                                    *d_linAlgOpContextHost);
 
           d_mixingScheme.template mixVariable<utils::MemorySpace::HOST>(
             mixingVariable::rho, d_densityInAttrVals[0].data(), nq);
           if (d_mixingScheme.hasVariable(mixingVariable::gradRho))
             {
-              AttrStorage &gradDensOut =
-                densOutAttr.at(DensityDescrAttr::Grad);
-              const size_type nGrad = gradDensOut[0].nEntries();
+              AttrStorage &gradDensOut = densOutAttr.at(DensityDescrAttr::Grad);
+              const size_type nGrad    = gradDensOut[0].nEntries();
               d_mixingScheme.template mixVariable<utils::MemorySpace::HOST>(
                 mixingVariable::gradRho,
                 d_gradDensityInAttrVals[0].data(),
@@ -173,15 +174,16 @@ namespace dftefe
     void
     RDM1Mixing<ValueType, memorySpace>::getDescriptors(
       const std::set<DensityDescrAttr> &densityAttrs,
-      const std::set<WfcDescrAttr> &    /*wfcAttrs*/,
+      const std::set<WfcDescrAttr> & /*wfcAttrs*/,
       std::unordered_map<DensityDescrAttr, AttrStorage> &densityAttrVals,
-      std::unordered_map<WfcDescrAttr, AttrStorage> &   /*wfcAttrVals*/)
+      std::unordered_map<WfcDescrAttr, AttrStorage> & /*wfcAttrVals*/)
     {
       for (const auto &attr : densityAttrs)
         {
           if (attr == DensityDescrAttr::Val)
             densityAttrVals[attr] = d_densityInAttrVals;
-          else if (attr == DensityDescrAttr::Grad && d_mixingScheme.hasVariable(mixingVariable::gradRho))
+          else if (attr == DensityDescrAttr::Grad &&
+                   d_mixingScheme.hasVariable(mixingVariable::gradRho))
             densityAttrVals[attr] = d_gradDensityInAttrVals;
         }
     }
@@ -190,7 +192,7 @@ namespace dftefe
     void
     RDM1Mixing<ValueType, memorySpace>::setDescriptors(
       const std::unordered_map<DensityDescrAttr, AttrStorage> &densityAttrVals,
-      const std::unordered_map<WfcDescrAttr, AttrStorage> &    /*wfcAttrVals*/)
+      const std::unordered_map<WfcDescrAttr, AttrStorage> & /*wfcAttrVals*/)
     {
       auto it = densityAttrVals.find(DensityDescrAttr::Val);
       if (it != densityAttrVals.end())
@@ -216,7 +218,8 @@ namespace dftefe
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     void
-    RDM1Mixing<ValueType, memorySpace>::setEvalDescrFlag(const bool /*evalFlag*/)
+    RDM1Mixing<ValueType, memorySpace>::setEvalDescrFlag(
+      const bool /*evalFlag*/)
     {}
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>

@@ -35,20 +35,19 @@ namespace dftefe
       const std::vector<utils::Point> &atomCoordinates,
       const std::vector<double> &      atomCharges,
       const double &                   smearedChargeRadius)
-      : SmearChargeDensityFunction(
-          atomCoordinates,
-          atomCharges,
-          std::vector<double>(atomCoordinates.size(), smearedChargeRadius))
+      : SmearChargeDensityFunction(atomCoordinates,
+                                   atomCharges,
+                                   std::vector<double>(atomCoordinates.size(),
+                                                       smearedChargeRadius))
     {}
 
     SmearChargeDensityFunction::SmearChargeDensityFunction(
       const utils::Point &atomCoordinates,
       const double        atomCharges,
       const double        smearedChargeRadius)
-      : SmearChargeDensityFunction(
-          std::vector<utils::Point>{atomCoordinates},
-          std::vector<double>{atomCharges},
-          std::vector<double>{smearedChargeRadius})
+      : SmearChargeDensityFunction(std::vector<utils::Point>{atomCoordinates},
+                                   std::vector<double>{atomCharges},
+                                   std::vector<double>{smearedChargeRadius})
     {}
 
     double

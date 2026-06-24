@@ -32,13 +32,14 @@ namespace dftefe
     template <utils::MemorySpace memorySpace>
     void
     EnrichmentDataEvalKernels<memorySpace>::getEnrichmentValues(
-      const size_type                                            numEnrichmentFunc,
-      const std::vector<size_type> &                            pointsPerEnrichId,
-      const std::vector<std::shared_ptr<atoms::SphericalData>> &sphericalDataVec,
-      const double *                                            points,
-      const double *                                            origin,
-      double *                                                  values,
-      linearAlgebra::LinAlgOpContext<memorySpace> &             linAlgOpContext)
+      const size_type               numEnrichmentFunc,
+      const std::vector<size_type> &pointsPerEnrichId,
+      const std::vector<std::shared_ptr<atoms::SphericalData>>
+        &                                          sphericalDataVec,
+      const double *                               points,
+      const double *                               origin,
+      double *                                     values,
+      linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext)
     {
       size_type cumulativeValuesOffset = 0;
       size_type cumulativeCoordsOffset = 0;
@@ -56,13 +57,14 @@ namespace dftefe
     template <utils::MemorySpace memorySpace>
     void
     EnrichmentDataEvalKernels<memorySpace>::getEnrichmentGradients(
-      const size_type                                            numEnrichmentFunc,
-      const std::vector<size_type> &                            pointsPerEnrichId,
-      const std::vector<std::shared_ptr<atoms::SphericalData>> &sphericalDataVec,
-      const double *                                            points,
-      const double *                                            origin,
-      double *                                                  values,
-      linearAlgebra::LinAlgOpContext<memorySpace> &             linAlgOpContext)
+      const size_type               numEnrichmentFunc,
+      const std::vector<size_type> &pointsPerEnrichId,
+      const std::vector<std::shared_ptr<atoms::SphericalData>>
+        &                                          sphericalDataVec,
+      const double *                               points,
+      const double *                               origin,
+      double *                                     values,
+      linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext)
     {
       size_type cumulativeValuesOffset = 0;
       size_type cumulativeCoordsOffset = 0;
@@ -71,7 +73,8 @@ namespace dftefe
           sphericalDataVec[i]->getGradientValue(pointsPerEnrichId[i],
                                                 points + cumulativeCoordsOffset,
                                                 origin + i * 3,
-                                                values + cumulativeValuesOffset);
+                                                values +
+                                                  cumulativeValuesOffset);
           cumulativeValuesOffset += pointsPerEnrichId[i] * 3;
           cumulativeCoordsOffset += pointsPerEnrichId[i] * 3;
         }
@@ -80,14 +83,15 @@ namespace dftefe
     template <utils::MemorySpace memorySpace>
     void
     EnrichmentDataEvalKernels<memorySpace>::getEnrichmentValuesInCellRange(
-      const double *                                             quadPtsInAllCells,
-      const double *                                             originPtsInAllCells,
-      std::pair<size_type, size_type>                            cellRange,
-      const std::vector<size_type>                               numEnrichIdsInAllCells,
-      const std::vector<size_type>                               numQuadPtsInAllCells,
-      const atoms::SphericalDataNumerical::Func<memorySpace> *   sphericalDataFuncInAllCells,
-      double *                                                   output,
-      linearAlgebra::LinAlgOpContext<memorySpace> &              linAlgOpContext)
+      const double *                  quadPtsInAllCells,
+      const double *                  originPtsInAllCells,
+      std::pair<size_type, size_type> cellRange,
+      const std::vector<size_type>    numEnrichIdsInAllCells,
+      const std::vector<size_type>    numQuadPtsInAllCells,
+      const atoms::SphericalDataNumerical::Func<memorySpace>
+        *                                          sphericalDataFuncInAllCells,
+      double *                                     output,
+      linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext)
     {
       const size_type dim = 3;
 
@@ -96,7 +100,7 @@ namespace dftefe
       for (size_type iCell = 0; iCell < cellRange.first; iCell++)
         {
           cumulativeEnrich += numEnrichIdsInAllCells[iCell];
-          cumulativeQuad   += numQuadPtsInAllCells[iCell];
+          cumulativeQuad += numQuadPtsInAllCells[iCell];
         }
 
       size_type cumulativeOutput = 0;
@@ -105,33 +109,36 @@ namespace dftefe
           const size_type numEnrichInCell = numEnrichIdsInAllCells[iCell];
           const size_type numQuadInCell   = numQuadPtsInAllCells[iCell];
 
-          for (size_type iThread = 0; iThread < numEnrichInCell * numQuadInCell; iThread++)
+          for (size_type iThread = 0; iThread < numEnrichInCell * numQuadInCell;
+               iThread++)
             {
               const size_type enrichId = iThread % numEnrichInCell;
               const size_type quadId   = iThread / numEnrichInCell;
               output[cumulativeOutput + iThread] =
-                sphericalDataFuncInAllCells[cumulativeEnrich + enrichId].getValue(
-                  quadPtsInAllCells + (cumulativeQuad + quadId) * dim,
-                  originPtsInAllCells + (cumulativeEnrich + enrichId) * dim);
+                sphericalDataFuncInAllCells[cumulativeEnrich + enrichId]
+                  .getValue(quadPtsInAllCells + (cumulativeQuad + quadId) * dim,
+                            originPtsInAllCells +
+                              (cumulativeEnrich + enrichId) * dim);
             }
 
-          cumulativeEnrich  += numEnrichInCell;
-          cumulativeQuad    += numQuadInCell;
-          cumulativeOutput  += numEnrichInCell * numQuadInCell;
+          cumulativeEnrich += numEnrichInCell;
+          cumulativeQuad += numQuadInCell;
+          cumulativeOutput += numEnrichInCell * numQuadInCell;
         }
     }
 
     template <utils::MemorySpace memorySpace>
     void
     EnrichmentDataEvalKernels<memorySpace>::getEnrichmentGradientsInCellRange(
-      const double *                                             quadPtsInAllCells,
-      const double *                                             originPtsInAllCells,
-      std::pair<size_type, size_type>                            cellRange,
-      const std::vector<size_type>                               numEnrichIdsInAllCells,
-      const std::vector<size_type>                               numQuadPtsInAllCells,
-      const atoms::SphericalDataNumerical::Func<memorySpace> *   sphericalDataFuncInAllCells,
-      double *                                                   output,
-      linearAlgebra::LinAlgOpContext<memorySpace> &              linAlgOpContext)
+      const double *                  quadPtsInAllCells,
+      const double *                  originPtsInAllCells,
+      std::pair<size_type, size_type> cellRange,
+      const std::vector<size_type>    numEnrichIdsInAllCells,
+      const std::vector<size_type>    numQuadPtsInAllCells,
+      const atoms::SphericalDataNumerical::Func<memorySpace>
+        *                                          sphericalDataFuncInAllCells,
+      double *                                     output,
+      linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext)
     {
       const size_type dim = 3;
 
@@ -140,7 +147,7 @@ namespace dftefe
       for (size_type iCell = 0; iCell < cellRange.first; iCell++)
         {
           cumulativeEnrich += numEnrichIdsInAllCells[iCell];
-          cumulativeQuad   += numQuadPtsInAllCells[iCell];
+          cumulativeQuad += numQuadPtsInAllCells[iCell];
         }
 
       size_type cumulativeOutput = 0;
@@ -149,24 +156,30 @@ namespace dftefe
           const size_type numEnrichInCell = numEnrichIdsInAllCells[iCell];
           const size_type numQuadInCell   = numQuadPtsInAllCells[iCell];
 
-          for (size_type iThread = 0; iThread < numEnrichInCell * numQuadInCell; iThread++)
+          for (size_type iThread = 0; iThread < numEnrichInCell * numQuadInCell;
+               iThread++)
             {
               // layout: quadId (slow) x dim x enrichId (fast)
               const size_type enrichId = iThread % numEnrichInCell;
               const size_type quadId   = iThread / numEnrichInCell;
-              double grad[3];
-              sphericalDataFuncInAllCells[cumulativeEnrich + enrichId].getGradientValue(
-                quadPtsInAllCells + (cumulativeQuad + quadId) * dim,
-                originPtsInAllCells + (cumulativeEnrich + enrichId) * dim,
-                grad);
-              output[cumulativeOutput + quadId * dim * numEnrichInCell + 0 * numEnrichInCell + enrichId] = grad[0];
-              output[cumulativeOutput + quadId * dim * numEnrichInCell + 1 * numEnrichInCell + enrichId] = grad[1];
-              output[cumulativeOutput + quadId * dim * numEnrichInCell + 2 * numEnrichInCell + enrichId] = grad[2];
+              double          grad[3];
+              sphericalDataFuncInAllCells[cumulativeEnrich + enrichId]
+                .getGradientValue(quadPtsInAllCells +
+                                    (cumulativeQuad + quadId) * dim,
+                                  originPtsInAllCells +
+                                    (cumulativeEnrich + enrichId) * dim,
+                                  grad);
+              output[cumulativeOutput + quadId * dim * numEnrichInCell +
+                     0 * numEnrichInCell + enrichId] = grad[0];
+              output[cumulativeOutput + quadId * dim * numEnrichInCell +
+                     1 * numEnrichInCell + enrichId] = grad[1];
+              output[cumulativeOutput + quadId * dim * numEnrichInCell +
+                     2 * numEnrichInCell + enrichId] = grad[2];
             }
 
-          cumulativeEnrich  += numEnrichInCell;
-          cumulativeQuad    += numQuadInCell;
-          cumulativeOutput  += numEnrichInCell * numQuadInCell * dim;
+          cumulativeEnrich += numEnrichInCell;
+          cumulativeQuad += numQuadInCell;
+          cumulativeOutput += numEnrichInCell * numQuadInCell * dim;
         }
     }
 

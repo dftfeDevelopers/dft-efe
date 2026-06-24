@@ -30,114 +30,135 @@ namespace dftefe
 {
   namespace ksdft
   {
-    template <typename ValueType, typename RealType, utils::MemorySpace memorySpace,
-              size_type dim>
+    template <typename ValueType,
+              typename RealType,
+              utils::MemorySpace memorySpace,
+              size_type          dim>
     void
-    DensityCalculatorKernels<ValueType, RealType, memorySpace, dim>::computeRhoInBatch(
-        const size_type batchSize,
+    DensityCalculatorKernels<ValueType, RealType, memorySpace, dim>::
+      computeRhoInBatch(
+        const size_type                       batchSize,
         const std::pair<size_type, size_type> cellRange,
-        const RealType* occupationInBatch,
-        ValueType *psiBatchQuad,
-        RealType *modPsiSqBatchQuad,
+        const RealType *                      occupationInBatch,
+        ValueType *                           psiBatchQuad,
+        RealType *                            modPsiSqBatchQuad,
         std::shared_ptr<const quadrature::QuadratureRuleContainer>
-          quadRuleContainer,
-        RealType *rhoBatch,
+                                                     quadRuleContainer,
+        RealType *                                   rhoBatch,
         linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext)
     {
-        size_type cumulativeQuadInCell = 0, cumulativeQuadPsiInCell = 0;
-        for (size_type iCell = cellRange.first; iCell < cellRange.second; iCell++)
-          {
-            const size_type numQuadInCell =
-              quadRuleContainer->nCellQuadraturePoints(iCell);
-            for (size_type iQuad = 0; iQuad < numQuadInCell; iQuad++)
-              {
-                RealType b = 0;
-                for (size_type i = 0; i < batchSize; i++)
-                  {
-                    const ValueType psi =
-                      psiBatchQuad[cumulativeQuadPsiInCell +
-                                   batchSize * iQuad + i];
-                    const RealType absSqPsi = utils::absSq(psi);
-                    modPsiSqBatchQuad[cumulativeQuadPsiInCell +
-                                      batchSize * iQuad + i] = absSqPsi;
-                    b += 2.0 * absSqPsi * occupationInBatch[i];
-                  }
-                rhoBatch[cumulativeQuadInCell + iQuad] = b;
-              }
-            cumulativeQuadPsiInCell += numQuadInCell * batchSize;
-            cumulativeQuadInCell += numQuadInCell;
-          }
+      size_type cumulativeQuadInCell = 0, cumulativeQuadPsiInCell = 0;
+      for (size_type iCell = cellRange.first; iCell < cellRange.second; iCell++)
+        {
+          const size_type numQuadInCell =
+            quadRuleContainer->nCellQuadraturePoints(iCell);
+          for (size_type iQuad = 0; iQuad < numQuadInCell; iQuad++)
+            {
+              RealType b = 0;
+              for (size_type i = 0; i < batchSize; i++)
+                {
+                  const ValueType psi = psiBatchQuad[cumulativeQuadPsiInCell +
+                                                     batchSize * iQuad + i];
+                  const RealType  absSqPsi                 = utils::absSq(psi);
+                  modPsiSqBatchQuad[cumulativeQuadPsiInCell +
+                                    batchSize * iQuad + i] = absSqPsi;
+                  b += 2.0 * absSqPsi * occupationInBatch[i];
+                }
+              rhoBatch[cumulativeQuadInCell + iQuad] = b;
+            }
+          cumulativeQuadPsiInCell += numQuadInCell * batchSize;
+          cumulativeQuadInCell += numQuadInCell;
+        }
     }
 
-    template <typename ValueType, typename RealType, utils::MemorySpace memorySpace,
-              size_type dim>
+    template <typename ValueType,
+              typename RealType,
+              utils::MemorySpace memorySpace,
+              size_type          dim>
     void
-    DensityCalculatorKernels<ValueType, RealType, memorySpace, dim>::computeGradRhoInBatch(
-        const size_type batchSize,
+    DensityCalculatorKernels<ValueType, RealType, memorySpace, dim>::
+      computeGradRhoInBatch(
+        const size_type                       batchSize,
         const std::pair<size_type, size_type> cellRange,
-        const RealType *occupationInBatch,
-        const ValueType *psiBatchQuad,
-        const ValueType *gradPsiBatchQuad,
-        RealType *psiGradPsiBatch,
+        const RealType *                      occupationInBatch,
+        const ValueType *                     psiBatchQuad,
+        const ValueType *                     gradPsiBatchQuad,
+        RealType *                            psiGradPsiBatch,
         std::shared_ptr<const quadrature::QuadratureRuleContainer>
-          quadRuleContainer,
-        RealType *gradRhoBatch,
+                                                     quadRuleContainer,
+        RealType *                                   gradRhoBatch,
         linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext)
     {
-        size_type cumulativeQuadInCell    = 0;
-        size_type cumulativeQuadPsiInCell = 0;
-        size_type cumulativeGradPsiInCell = 0;
-        for (size_type iCell = cellRange.first; iCell < cellRange.second; iCell++)
-          {
-            const size_type numQuadInCell =
-              quadRuleContainer->nCellQuadraturePoints(iCell);
-            for (size_type iQuad = 0; iQuad < numQuadInCell; iQuad++)
-              {
-                for (size_type iDim = 0; iDim < dim; iDim++)
-                  {
-                    RealType b = 0;
-                    for (size_type i = 0; i < batchSize; i++)
-                      {
-                        const ValueType psi =
-                          psiBatchQuad[cumulativeQuadPsiInCell +
-                                       batchSize * iQuad + i];
-                        const ValueType gradPsi =
-                          gradPsiBatchQuad[cumulativeGradPsiInCell +
-                                           i + batchSize * (iQuad * dim + iDim)];
-                        b += 4.0 * occupationInBatch[i] *
-                             utils::realPart(utils::conjugate(psi) * gradPsi);
-                      }
-                    gradRhoBatch[cumulativeQuadInCell + iQuad * dim + iDim] = b;
-                  }
-              }
-            cumulativeQuadPsiInCell += numQuadInCell * batchSize;
-            cumulativeGradPsiInCell += numQuadInCell * batchSize * dim;
-            cumulativeQuadInCell += numQuadInCell;
-          }
+      size_type cumulativeQuadInCell    = 0;
+      size_type cumulativeQuadPsiInCell = 0;
+      size_type cumulativeGradPsiInCell = 0;
+      for (size_type iCell = cellRange.first; iCell < cellRange.second; iCell++)
+        {
+          const size_type numQuadInCell =
+            quadRuleContainer->nCellQuadraturePoints(iCell);
+          for (size_type iQuad = 0; iQuad < numQuadInCell; iQuad++)
+            {
+              for (size_type iDim = 0; iDim < dim; iDim++)
+                {
+                  RealType b = 0;
+                  for (size_type i = 0; i < batchSize; i++)
+                    {
+                      const ValueType psi =
+                        psiBatchQuad[cumulativeQuadPsiInCell +
+                                     batchSize * iQuad + i];
+                      const ValueType gradPsi =
+                        gradPsiBatchQuad[cumulativeGradPsiInCell + i +
+                                         batchSize * (iQuad * dim + iDim)];
+                      b += 4.0 * occupationInBatch[i] *
+                           utils::realPart(utils::conjugate(psi) * gradPsi);
+                    }
+                  gradRhoBatch[cumulativeQuadInCell + iQuad * dim + iDim] = b;
+                }
+            }
+          cumulativeQuadPsiInCell += numQuadInCell * batchSize;
+          cumulativeGradPsiInCell += numQuadInCell * batchSize * dim;
+          cumulativeQuadInCell += numQuadInCell;
+        }
     }
 
-    template class DensityCalculatorKernels<double, double,
-                                            dftefe::utils::MemorySpace::HOST, 3>;
-    template class DensityCalculatorKernels<float, double,
-                                            dftefe::utils::MemorySpace::HOST, 3>;
-    template class DensityCalculatorKernels<std::complex<double>, double,
-                                            dftefe::utils::MemorySpace::HOST, 3>;
-    template class DensityCalculatorKernels<std::complex<float>, double,
-                                            dftefe::utils::MemorySpace::HOST, 3>;
+    template class DensityCalculatorKernels<double,
+                                            double,
+                                            dftefe::utils::MemorySpace::HOST,
+                                            3>;
+    template class DensityCalculatorKernels<float,
+                                            double,
+                                            dftefe::utils::MemorySpace::HOST,
+                                            3>;
+    template class DensityCalculatorKernels<std::complex<double>,
+                                            double,
+                                            dftefe::utils::MemorySpace::HOST,
+                                            3>;
+    template class DensityCalculatorKernels<std::complex<float>,
+                                            double,
+                                            dftefe::utils::MemorySpace::HOST,
+                                            3>;
 
 #ifdef DFTEFE_WITH_DEVICE
     template class DensityCalculatorKernels<
-      double, double,
-      dftefe::utils::MemorySpace::HOST_PINNED, 3>;
+      double,
+      double,
+      dftefe::utils::MemorySpace::HOST_PINNED,
+      3>;
     template class DensityCalculatorKernels<
-      float, double,
-      dftefe::utils::MemorySpace::HOST_PINNED, 3>;
+      float,
+      double,
+      dftefe::utils::MemorySpace::HOST_PINNED,
+      3>;
     template class DensityCalculatorKernels<
-      std::complex<double>, double,
-      dftefe::utils::MemorySpace::HOST_PINNED, 3>;
+      std::complex<double>,
+      double,
+      dftefe::utils::MemorySpace::HOST_PINNED,
+      3>;
     template class DensityCalculatorKernels<
-      std::complex<float>, double,
-      dftefe::utils::MemorySpace::HOST_PINNED, 3>;
+      std::complex<float>,
+      double,
+      dftefe::utils::MemorySpace::HOST_PINNED,
+      3>;
 #endif
 
   } // end of namespace ksdft

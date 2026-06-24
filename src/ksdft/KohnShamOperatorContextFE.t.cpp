@@ -924,11 +924,11 @@ namespace dftefe
         utils::MemoryStorage<
           linearAlgebra::blasLapack::scalar_type<ValueTypeElectrostaticsCoeff,
                                                  ValueTypeWaveFunctionCoeff>,
-          memorySpace> &                             xCellValues,
+          memorySpace> &xCellValues,
         utils::MemoryStorage<
           linearAlgebra::blasLapack::scalar_type<ValueTypeElectrostaticsCoeff,
                                                  ValueTypeWaveFunctionCoeff>,
-          memorySpace> &                             yCellValues,          
+          memorySpace> &                             yCellValues,
         const size_type                              numVecs,
         const size_type                              numLocallyOwnedCells,
         const std::vector<size_type> &               numCellDofs,
@@ -960,7 +960,8 @@ namespace dftefe
         //                                            ValueTypeOperand>>::zero);
 
         // utils::MemoryStorage<linearAlgebra::blasLapack::
-        //                        scalar_type<ValueTypeOperator, ValueTypeOperand>,
+        //                        scalar_type<ValueTypeOperator,
+        //                        ValueTypeOperand>,
         //                      memorySpace>
         //   yCellValues(
         //     cellBlockSize * numVecs * maxDofInCell,
@@ -1172,8 +1173,12 @@ namespace dftefe
       , d_linAlgOpContext(linAlgOpContext)
       , d_useOptimizedImplement(useOptimizedImplement)
       , d_electroONCVHamiltonian(nullptr)
-      , d_XCellValues(std::make_shared<utils::MemoryStorage<ValueTypeOperand, memorySpace>>(0))
-      , d_YCellValues(std::make_shared<utils::MemoryStorage<ValueTypeOperand, memorySpace>>(0))
+      , d_XCellValues(
+          std::make_shared<utils::MemoryStorage<ValueTypeOperand, memorySpace>>(
+            0))
+      , d_YCellValues(
+          std::make_shared<utils::MemoryStorage<ValueTypeOperand, memorySpace>>(
+            0))
       , d_hamiltonianInAllCells(0)
     {
       reinit(feBasisManager, hamiltonianComponentsVec);
@@ -1216,10 +1221,11 @@ namespace dftefe
 
       d_feBasisManager = &feBasisManager;
 
-      if(d_hamiltonianInAllCells.size() != cellWiseDataSize)
-      {
-        d_hamiltonianInAllCells.resize(cellWiseDataSize, (ValueTypeOperator)0);
-      }
+      if (d_hamiltonianInAllCells.size() != cellWiseDataSize)
+        {
+          d_hamiltonianInAllCells.resize(cellWiseDataSize,
+                                         (ValueTypeOperator)0);
+        }
       else
         d_hamiltonianInAllCells.setValue((ValueTypeOperator)0);
 
@@ -1256,18 +1262,21 @@ namespace dftefe
           size_type maxDofInCell =
             *std::max_element(numCellDofs.begin(), numCellDofs.end());
 
-          if(d_XCellValues->size() != d_maxWaveFnBatch * numLocallyOwnedCells * maxDofInCell)
-          {
-            d_XCellValues = std::make_shared<utils::MemoryStorage<ValueTypeOperand, memorySpace>>(
-              d_maxWaveFnBatch * numLocallyOwnedCells * maxDofInCell);
-            d_YCellValues = std::make_shared<utils::MemoryStorage<ValueTypeOperand, memorySpace>>(
-              d_maxWaveFnBatch * d_maxCellBlock * maxDofInCell);
-          }
+          if (d_XCellValues->size() !=
+              d_maxWaveFnBatch * numLocallyOwnedCells * maxDofInCell)
+            {
+              d_XCellValues = std::make_shared<
+                utils::MemoryStorage<ValueTypeOperand, memorySpace>>(
+                d_maxWaveFnBatch * numLocallyOwnedCells * maxDofInCell);
+              d_YCellValues = std::make_shared<
+                utils::MemoryStorage<ValueTypeOperand, memorySpace>>(
+                d_maxWaveFnBatch * d_maxCellBlock * maxDofInCell);
+            }
           else
-          {
-            d_XCellValues->setValue((ValueTypeOperand)0);
-            d_YCellValues->setValue((ValueTypeOperand)0);
-          }
+            {
+              d_XCellValues->setValue((ValueTypeOperand)0);
+              d_YCellValues->setValue((ValueTypeOperand)0);
+            }
         }
     }
 

@@ -36,7 +36,10 @@ namespace dftefe
     class RandNumGen
     {
     public:
-      RandNumGen(T min, T max, bool isReproducible = true, unsigned int seed = 0);
+      RandNumGen(T            min,
+                 T            max,
+                 bool         isReproducible = true,
+                 unsigned int seed           = 0);
       ~RandNumGen() = default;
       T
       generate();
@@ -46,7 +49,10 @@ namespace dftefe
     class RandNumGen<short>
     {
     public:
-      RandNumGen(short min, short max, bool isReproducible = true, unsigned int seed = 0);
+      RandNumGen(short        min,
+                 short        max,
+                 bool         isReproducible = true,
+                 unsigned int seed           = 0);
       ~RandNumGen() = default;
       short
       generate();
@@ -60,7 +66,10 @@ namespace dftefe
     class RandNumGen<unsigned short>
     {
     public:
-      RandNumGen(unsigned short min, unsigned short max, bool isReproducible = true, unsigned int seed = 0);
+      RandNumGen(unsigned short min,
+                 unsigned short max,
+                 bool           isReproducible = true,
+                 unsigned int   seed           = 0);
       ~RandNumGen() = default;
       unsigned short
       generate();
@@ -74,7 +83,10 @@ namespace dftefe
     class RandNumGen<int>
     {
     public:
-      RandNumGen(int min, int max, bool isReproducible = true, unsigned int seed = 0);
+      RandNumGen(int          min,
+                 int          max,
+                 bool         isReproducible = true,
+                 unsigned int seed           = 0);
       ~RandNumGen() = default;
       int
       generate();
@@ -88,7 +100,10 @@ namespace dftefe
     class RandNumGen<unsigned int>
     {
     public:
-      RandNumGen(unsigned int min, unsigned int max, bool isReproducible = true, unsigned int seed = 0);
+      RandNumGen(unsigned int min,
+                 unsigned int max,
+                 bool         isReproducible = true,
+                 unsigned int seed           = 0);
       ~RandNumGen() = default;
       unsigned int
       generate();
@@ -102,7 +117,10 @@ namespace dftefe
     class RandNumGen<long>
     {
     public:
-      RandNumGen(long min, long max, bool isReproducible = true, unsigned int seed = 0);
+      RandNumGen(long         min,
+                 long         max,
+                 bool         isReproducible = true,
+                 unsigned int seed           = 0);
       ~RandNumGen() = default;
       long
       generate();
@@ -116,7 +134,10 @@ namespace dftefe
     class RandNumGen<unsigned long>
     {
     public:
-      RandNumGen(unsigned long min, unsigned long max, bool isReproducible = true, unsigned int seed = 0);
+      RandNumGen(unsigned long min,
+                 unsigned long max,
+                 bool          isReproducible = true,
+                 unsigned int  seed           = 0);
       ~RandNumGen() = default;
       unsigned long
       generate();
@@ -130,7 +151,10 @@ namespace dftefe
     class RandNumGen<long long>
     {
     public:
-      RandNumGen(long long min, long long max, bool isReproducible = true, unsigned int seed = 0);
+      RandNumGen(long long    min,
+                 long long    max,
+                 bool         isReproducible = true,
+                 unsigned int seed           = 0);
       ~RandNumGen() = default;
       long long
       generate();
@@ -144,7 +168,10 @@ namespace dftefe
     class RandNumGen<unsigned long long>
     {
     public:
-      RandNumGen(unsigned long long min, unsigned long long max, bool isReproducible = true, unsigned int seed = 0);
+      RandNumGen(unsigned long long min,
+                 unsigned long long max,
+                 bool               isReproducible = true,
+                 unsigned int       seed           = 0);
       ~RandNumGen() = default;
       unsigned long long
       generate();
@@ -158,7 +185,10 @@ namespace dftefe
     class RandNumGen<float>
     {
     public:
-      RandNumGen(float min, float max, bool isReproducible = true, unsigned int seed = 0);
+      RandNumGen(float        min,
+                 float        max,
+                 bool         isReproducible = true,
+                 unsigned int seed           = 0);
       ~RandNumGen() = default;
       float
       generate();
@@ -172,7 +202,10 @@ namespace dftefe
     class RandNumGen<double>
     {
     public:
-      RandNumGen(double min, double max, bool isReproducible = true, unsigned int seed = 0);
+      RandNumGen(double       min,
+                 double       max,
+                 bool         isReproducible = true,
+                 unsigned int seed           = 0);
       ~RandNumGen() = default;
       double
       generate();
@@ -186,7 +219,10 @@ namespace dftefe
     class RandNumGen<long double>
     {
     public:
-      RandNumGen(long double min, long double max, bool isReproducible = true, unsigned int seed = 0);
+      RandNumGen(long double  min,
+                 long double  max,
+                 bool         isReproducible = true,
+                 unsigned int seed           = 0);
       ~RandNumGen() = default;
       long double
       generate();
@@ -200,7 +236,10 @@ namespace dftefe
     class RandNumGen<std::complex<float>>
     {
     public:
-      RandNumGen(std::complex<float> min, std::complex<float> max, bool isReproducible = true, unsigned int seed = 0);
+      RandNumGen(std::complex<float> min,
+                 std::complex<float> max,
+                 bool                isReproducible = true,
+                 unsigned int        seed           = 0);
       ~RandNumGen() = default;
       std::complex<float>
       generate();
@@ -214,7 +253,10 @@ namespace dftefe
     class RandNumGen<std::complex<double>>
     {
     public:
-      RandNumGen(std::complex<double> min, std::complex<double> max, bool isReproducible = true, unsigned int seed = 0);
+      RandNumGen(std::complex<double> min,
+                 std::complex<double> max,
+                 bool                 isReproducible = true,
+                 unsigned int         seed           = 0);
       ~RandNumGen() = default;
       std::complex<double>
       generate();
@@ -228,7 +270,10 @@ namespace dftefe
     class RandNumGen<std::complex<long double>>
     {
     public:
-      RandNumGen(std::complex<long double> min, std::complex<long double> max, bool isReproducible = true, unsigned int seed = 0);
+      RandNumGen(std::complex<long double> min,
+                 std::complex<long double> max,
+                 bool                      isReproducible = true,
+                 unsigned int              seed           = 0);
       ~RandNumGen() = default;
       std::complex<long double>
       generate();

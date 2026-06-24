@@ -51,8 +51,8 @@ namespace dftefe
     public:
       struct Section
       {
-        Timer        timer;
-        double       totalWallTime;
+        Timer     timer;
+        double    totalWallTime;
         size_type nCalls;
       };
 
@@ -130,11 +130,11 @@ namespace dftefe
       double gpuTotal = static_cast<double>(totalGPU);
       auto   gpuMinMaxAvg =
         mpi::MPIAllreduceMinMaxAvg<double, utils::MemorySpace::HOST>(gpuUsed,
-                                                                      mpiComm);
+                                                                     mpiComm);
       cout << std::endl
            << message << ", CPU: " << maxHostBytes / 1073741824.0 << " out of "
-           << totalVirtualMem / 1073741824.0 << " GB, GPU: "
-           << gpuMinMaxAvg.max / 1073741824.0 << " out of "
+           << totalVirtualMem / 1073741824.0
+           << " GB, GPU: " << gpuMinMaxAvg.max / 1073741824.0 << " out of "
            << gpuTotal / 1073741824.0 << " GB" << std::endl
            << std::endl;
 #else

@@ -140,12 +140,12 @@ namespace dftefe
 
 #ifdef DFTEFE_WITH_DEVICE
       void
-      getValueDevice(const size_type       numPoints,
-                     const double *        points,
-                     const double *        origin,
-                     double *              out,
-                     utils::deviceStream_t streamId =
-                       utils::defaultStream) override
+      getValueDevice(
+        const size_type       numPoints,
+        const double *        points,
+        const double *        origin,
+        double *              out,
+        utils::deviceStream_t streamId = utils::defaultStream) override
       {
         utils::throwException(false,
                               "getValueDevice not implemented for "
@@ -153,12 +153,12 @@ namespace dftefe
       }
 
       void
-      getGradientValueDevice(const size_type       numPoints,
-                             const double *        points,
-                             const double *        origin,
-                             double *              out,
-                             utils::deviceStream_t streamId =
-                               utils::defaultStream) override
+      getGradientValueDevice(
+        const size_type       numPoints,
+        const double *        points,
+        const double *        origin,
+        double *              out,
+        utils::deviceStream_t streamId = utils::defaultStream) override
       {
         utils::throwException(false,
                               "getGradientValueDevice not implemented for "
@@ -166,12 +166,12 @@ namespace dftefe
       }
 
       void
-      getHessianValueDevice(const size_type       numPoints,
-                            const double *        points,
-                            const double *        origin,
-                            double *              out,
-                            utils::deviceStream_t streamId =
-                              utils::defaultStream) override
+      getHessianValueDevice(
+        const size_type       numPoints,
+        const double *        points,
+        const double *        origin,
+        double *              out,
+        utils::deviceStream_t streamId = utils::defaultStream) override
       {
         utils::throwException(false,
                               "getHessianValueDevice not implemented for "

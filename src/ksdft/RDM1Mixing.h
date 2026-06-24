@@ -80,15 +80,15 @@ namespace dftefe
        * @param linAlgOpContextHost  LinAlg context for HOST-side operations.
        * @param mpiCommDomain MPI communicator.
        */
-      RDM1Mixing(
-        MixingScheme<RealType, RealType> &                                   mixingScheme,
-        const size_type                                                      mixingHistory,
-        const std::vector<RealType> &                                        jxwDataHost,
-        const double                                                         mixingParameter,
-        const bool                                                           isAdaptiveMixingParameter,
-        std::shared_ptr<linearAlgebra::LinAlgOpContext<utils::MemorySpace::HOST>>
-          linAlgOpContextHost,
-        const MPI_Comm &mpiCommDomain);
+      RDM1Mixing(MixingScheme<RealType, RealType> &mixingScheme,
+                 const size_type                   mixingHistory,
+                 const std::vector<RealType> &     jxwDataHost,
+                 const double                      mixingParameter,
+                 const bool                        isAdaptiveMixingParameter,
+                 std::shared_ptr<
+                   linearAlgebra::LinAlgOpContext<utils::MemorySpace::HOST>>
+                                 linAlgOpContextHost,
+                 const MPI_Comm &mpiCommDomain);
 
       virtual ~RDM1Mixing() = default;
 
@@ -117,17 +117,16 @@ namespace dftefe
        */
       void
       getDescriptors(
-        const std::set<DensityDescrAttr> &densityAttrs,
-        const std::set<WfcDescrAttr> &    wfcAttrs,
+        const std::set<DensityDescrAttr> &                 densityAttrs,
+        const std::set<WfcDescrAttr> &                     wfcAttrs,
         std::unordered_map<DensityDescrAttr, AttrStorage> &densityAttrVals,
-        std::unordered_map<WfcDescrAttr, AttrStorage> &   wfcAttrVals)
-        override;
+        std::unordered_map<WfcDescrAttr, AttrStorage> &wfcAttrVals) override;
 
       void
-      setDescriptors(
-        const std::unordered_map<DensityDescrAttr, AttrStorage> &densityAttrVals,
-        const std::unordered_map<WfcDescrAttr, AttrStorage> &    wfcAttrVals)
-        override;
+      setDescriptors(const std::unordered_map<DensityDescrAttr, AttrStorage>
+                       &densityAttrVals,
+                     const std::unordered_map<WfcDescrAttr, AttrStorage>
+                       &wfcAttrVals) override;
 
       void
       getDensityObs(
@@ -135,21 +134,29 @@ namespace dftefe
         std::unordered_map<DensityObsAttr, std::vector<std::vector<double>>>
           &densityObsAttrVals) override;
 
-      void      setEvalDescrFlag(const bool evalFlag) override;
-      bool      isSpinPolarized() const override;
-      bool      isNonCollinear() const override;
-      bool      isSOC() const override;
-      size_type getnKSOrbs() const override;
-      std::vector<double> getkPointCoords() const override;
-      std::vector<double> getkPointWeights() const override;
-      std::unique_ptr<RDM1<ValueType, memorySpace>> clone() const override;
+      void
+      setEvalDescrFlag(const bool evalFlag) override;
+      bool
+      isSpinPolarized() const override;
+      bool
+      isNonCollinear() const override;
+      bool
+      isSOC() const override;
+      size_type
+      getnKSOrbs() const override;
+      std::vector<double>
+      getkPointCoords() const override;
+      std::vector<double>
+      getkPointWeights() const override;
+      std::unique_ptr<RDM1<ValueType, memorySpace>>
+      clone() const override;
 
     private:
       std::weak_ptr<RDM1<ValueType, memorySpace>> d_rdm1Ptr;
 
-      MixingScheme<RealType, RealType> &     d_mixingScheme;
-      size_type                              d_mixingHistory;
-      size_type                              d_numElectrons;
+      MixingScheme<RealType, RealType> &d_mixingScheme;
+      size_type                         d_mixingHistory;
+      size_type                         d_numElectrons;
       std::shared_ptr<linearAlgebra::LinAlgOpContext<utils::MemorySpace::HOST>>
                                              d_linAlgOpContextHost;
       std::reference_wrapper<const MPI_Comm> d_mpiCommDomain;

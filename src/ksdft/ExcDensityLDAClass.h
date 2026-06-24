@@ -37,29 +37,31 @@ namespace dftefe
 
       void
       checkInputOutputDataAttributesConsistency(
-        const std::vector<xcRemainderOutputDataAttributes> &outputDataAttributes)
-        const override;
+        const std::vector<xcRemainderOutputDataAttributes>
+          &outputDataAttributes) const override;
 
     private:
       void
       computeRhoTauDependentXCData(
-        const std::unordered_map<
-          dftefe::ksdft::DensityDescrAttr,
-          std::vector<dftefe::utils::MemoryStorage<
-            double,
-            dftefe::utils::MemorySpace::HOST>>> &densityAttrVals,
-        const std::unordered_map<
-          dftefe::ksdft::WfcDescrAttr,
-          std::vector<dftefe::utils::MemoryStorage<
-            double,
-            dftefe::utils::MemorySpace::HOST>>> &wfcAttrVals,
+        const std::unordered_map<dftefe::ksdft::DensityDescrAttr,
+                                 std::vector<dftefe::utils::MemoryStorage<
+                                   double,
+                                   dftefe::utils::MemorySpace::HOST>>>
+          &densityAttrVals,
+        const std::unordered_map<dftefe::ksdft::WfcDescrAttr,
+                                 std::vector<dftefe::utils::MemoryStorage<
+                                   double,
+                                   dftefe::utils::MemorySpace::HOST>>>
+          &wfcAttrVals,
         std::unordered_map<
           xcRemainderOutputDataAttributes,
-          dftefe::utils::MemoryStorage<double, dftefe::utils::MemorySpace::HOST>>
+          dftefe::utils::MemoryStorage<double,
+                                       dftefe::utils::MemorySpace::HOST>>
           &xDataOut,
         std::unordered_map<
           xcRemainderOutputDataAttributes,
-          dftefe::utils::MemoryStorage<double, dftefe::utils::MemorySpace::HOST>>
+          dftefe::utils::MemoryStorage<double,
+                                       dftefe::utils::MemorySpace::HOST>>
           &cDataout) const override;
 
       std::shared_ptr<xc_func_type> d_funcXPtr;

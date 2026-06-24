@@ -254,43 +254,43 @@ namespace dftefe
       const basis::CellMappingBase &
       getCellMapping() const;
 
-    template <utils::MemorySpace memorySpace>
-    inline const double*
-    getJxWPtr() const
-    {
-      if constexpr (memorySpace == utils::MemorySpace::HOST)
+      template <utils::MemorySpace memorySpace>
+      inline const double *
+      getJxWPtr() const
       {
-        return d_JxW.data();
+        if constexpr (memorySpace == utils::MemorySpace::HOST)
+          {
+            return d_JxW.data();
+          }
+        else
+          {
+#ifdef DFTEFE_WITH_DEVICE
+            return d_JxWDevice.data();
+#else
+            static_assert(memorySpace == utils::MemorySpace::HOST,
+                          "Device memory not available");
+#endif
+          }
       }
-      else
-      {
-    #ifdef DFTEFE_WITH_DEVICE
-        return d_JxWDevice.data();
-    #else
-        static_assert(memorySpace == utils::MemorySpace::HOST,
-                      "Device memory not available");
-    #endif
-      }
-    }
 
-    template <utils::MemorySpace memorySpace>
-    inline const double*
-    getRealPointsPtr() const
-    {
-      if constexpr (memorySpace == utils::MemorySpace::HOST)
+      template <utils::MemorySpace memorySpace>
+      inline const double *
+      getRealPointsPtr() const
       {
-        return d_realPointsHost.data();
+        if constexpr (memorySpace == utils::MemorySpace::HOST)
+          {
+            return d_realPointsHost.data();
+          }
+        else
+          {
+#ifdef DFTEFE_WITH_DEVICE
+            return d_realPointsDevice.data();
+#else
+            static_assert(memorySpace == utils::MemorySpace::HOST,
+                          "Device memory not available");
+#endif
+          }
       }
-      else
-      {
-    #ifdef DFTEFE_WITH_DEVICE
-        return d_realPointsDevice.data();
-    #else
-        static_assert(memorySpace == utils::MemorySpace::HOST,
-                      "Device memory not available");
-    #endif
-      }
-    }
 
     private:
       const QuadratureRuleAttributes &d_quadratureRuleAttributes;
@@ -300,7 +300,7 @@ namespace dftefe
       std::vector<dftefe::utils::Point>                  d_realPoints;
       std::vector<double>                                d_realPointsHost;
       std::vector<double>                                d_JxW;
-      dftefe::size_type                                       d_dim;
+      dftefe::size_type                                  d_dim;
       size_type                                          d_numQuadPoints;
       size_type                                          d_numCells;
       bool                                               d_storeJacobianInverse;
@@ -308,8 +308,9 @@ namespace dftefe
       const basis::CellMappingBase &                     d_cellMapping;
 
 #ifdef DFTEFE_WITH_DEVICE
-      utils::MemoryStorage<double, utils::MemorySpace::DEVICE>    d_realPointsDevice;
-      utils::MemoryStorage<double, utils::MemorySpace::DEVICE>    d_JxWDevice;
+      utils::MemoryStorage<double, utils::MemorySpace::DEVICE>
+        d_realPointsDevice;
+      utils::MemoryStorage<double, utils::MemorySpace::DEVICE> d_JxWDevice;
 #endif
     };
   } // end of namespace quadrature

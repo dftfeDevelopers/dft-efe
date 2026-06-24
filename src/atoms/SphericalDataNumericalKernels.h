@@ -65,15 +65,15 @@ namespace dftefe
     template <dftefe::utils::MemorySpace memorySpace>
     SphericalDataNumerical::Func<memorySpace>::Func(
       utils::Spline::Func<memorySpace> radialSpline,
-      int    l,
-      int    m,
-      int    mEff,
-      double constant,
-      double cutoff,
-      double smoothness,
-      double polarAngleTolerance,
-      double cutoffTolerance,
-      double radiusTolerance)
+      int                              l,
+      int                              m,
+      int                              mEff,
+      double                           constant,
+      double                           cutoff,
+      double                           smoothness,
+      double                           polarAngleTolerance,
+      double                           cutoffTolerance,
+      double                           radiusTolerance)
       : d_radialSpline(radialSpline)
       , d_l(l)
       , d_m(m)
@@ -104,16 +104,16 @@ namespace dftefe
                            point[2] - origin[2]};
 
       double r, theta, phi;
-      convertCartesianToSpherical(shifted, r, theta, phi, d_polarAngleTolerance);
+      convertCartesianToSpherical(
+        shifted, r, theta, phi, d_polarAngleTolerance);
 
       if (r > d_cutoff + d_cutoff / d_smoothness)
         return 0.0;
 
       const double radialValue = d_radialSpline.eval(r);
-      const double cutoffValue =
-        smoothCutoffValue(r, d_cutoff, d_smoothness);
-      const double plmVal = plm(d_l, d_mEff, cos(theta));
-      const double qm  = Qm(d_m, phi);
+      const double cutoffValue = smoothCutoffValue(r, d_cutoff, d_smoothness);
+      const double plmVal      = plm(d_l, d_mEff, cos(theta));
+      const double qm          = Qm(d_m, phi);
 
       return radialValue * cutoffValue * d_constant * plmVal * qm;
     }
@@ -136,7 +136,8 @@ namespace dftefe
                            point[2] - origin[2]};
 
       double r, theta, phi;
-      convertCartesianToSpherical(shifted, r, theta, phi, d_polarAngleTolerance);
+      convertCartesianToSpherical(
+        shifted, r, theta, phi, d_polarAngleTolerance);
 
       if (r > d_cutoff + d_cutoff / d_smoothness || r < d_radiusTolerance)
         {
@@ -169,17 +170,15 @@ namespace dftefe
         {
           const double d2PlmVal = d2plmDTheta2(d_l, d_mEff, cosTheta);
           const double dqm      = dQmDPhi(d_m, phi);
-          dYlmDPhiBysinTheta =
-            d_constant *
-            (sinTheta * d2PlmVal + cosTheta * dPlmVal +
-             sinTheta * (double)(d_l * (d_l + 1)) * plmVal) *
-            (1.0 / ((double)d_m * (double)d_m)) * dqm;
+          dYlmDPhiBysinTheta    = d_constant *
+                               (sinTheta * d2PlmVal + cosTheta * dPlmVal +
+                                sinTheta * (double)(d_l * (d_l + 1)) * plmVal) *
+                               (1.0 / ((double)d_m * (double)d_m)) * dqm;
         }
 
       double dValueDR =
         (radialDeriv * cutoffValue + cutoffDeriv * radialValue) * Ylm;
-      double dValueDThetaByr =
-        (radialValue / r) * cutoffValue * dYlmDTheta;
+      double dValueDThetaByr = (radialValue / r) * cutoffValue * dYlmDTheta;
       double dValueDPhiByrsinTheta =
         (radialValue / r) * cutoffValue * dYlmDPhiBysinTheta;
 

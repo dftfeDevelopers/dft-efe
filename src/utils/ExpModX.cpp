@@ -6,8 +6,7 @@ namespace dftefe
 {
   namespace utils
   {
-    ExpModX::ExpModX(const size_type component,
-                     const double       exponent /*= 1.0*/)
+    ExpModX::ExpModX(const size_type component, const double exponent /*= 1.0*/)
       : d_exponent(exponent)
       , d_component(component)
     {}

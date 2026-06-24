@@ -78,14 +78,14 @@ namespace dftefe
     ExcDensityLDAClass<memorySpace>::computeRhoTauDependentXCData(
       const std::unordered_map<
         dftefe::ksdft::DensityDescrAttr,
-        std::vector<dftefe::utils::MemoryStorage<
-          double,
-          dftefe::utils::MemorySpace::HOST>>> &densityAttrVals,
+        std::vector<dftefe::utils::
+                      MemoryStorage<double, dftefe::utils::MemorySpace::HOST>>>
+        &densityAttrVals,
       const std::unordered_map<
         dftefe::ksdft::WfcDescrAttr,
-        std::vector<dftefe::utils::MemoryStorage<
-          double,
-          dftefe::utils::MemorySpace::HOST>>> &wfcAttrVals,
+        std::vector<dftefe::utils::
+                      MemoryStorage<double, dftefe::utils::MemorySpace::HOST>>>
+        &wfcAttrVals,
       std::unordered_map<
         xcRemainderOutputDataAttributes,
         dftefe::utils::MemoryStorage<double, dftefe::utils::MemorySpace::HOST>>
@@ -168,9 +168,9 @@ namespace dftefe
         pdecDensitySpinDownValues.resize(nquad);
 
       internal::fillRhoVector(nquad,
-                                      densityValuesSpinUp,
-                                      densityValuesSpinDown,
-                                      densityValues);
+                              densityValuesSpinUp,
+                              densityValuesSpinDown,
+                              densityValues);
 
       exValues.setValue(0.0);
       ecValues.setValue(0.0);
@@ -190,10 +190,10 @@ namespace dftefe
 
       for (size_type i = 0; i < nquad; i++)
         {
-          exValues[i] = exValues[i] *
-                        (densityValues[2 * i + 0] + densityValues[2 * i + 1]);
-          ecValues[i] = ecValues[i] *
-                        (densityValues[2 * i + 0] + densityValues[2 * i + 1]);
+          exValues[i] =
+            exValues[i] * (densityValues[2 * i + 0] + densityValues[2 * i + 1]);
+          ecValues[i] =
+            ecValues[i] * (densityValues[2 * i + 0] + densityValues[2 * i + 1]);
           pdexDensitySpinUpValues[i]   = pdexDensityValues[2 * i + 0];
           pdexDensitySpinDownValues[i] = pdexDensityValues[2 * i + 1];
           pdecDensitySpinUpValues[i]   = pdecDensityValues[2 * i + 0];

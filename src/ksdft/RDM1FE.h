@@ -50,7 +50,7 @@ namespace dftefe
     template <typename ValueTypeBasisData,
               typename ValueTypeBasisCoeff,
               dftefe::utils::MemorySpace memorySpace,
-              size_type dim>
+              size_type                  dim>
     class RDM1FE
       : public RDM1Spectral<
           linearAlgebra::blasLapack::scalar_type<ValueTypeBasisData,
@@ -61,54 +61,52 @@ namespace dftefe
       using ValueType =
         linearAlgebra::blasLapack::scalar_type<ValueTypeBasisData,
                                                ValueTypeBasisCoeff>;
-      using AttrStorage =
-        typename RDM1<ValueType, memorySpace>::AttrStorage;
+      using AttrStorage = typename RDM1<ValueType, memorySpace>::AttrStorage;
 
     public:
       virtual ~RDM1FE() = default;
 
-      RDM1FE(
-        std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
-                                                feBasisDataStorage,
-        const basis::FEBasisManager<ValueTypeBasisCoeff,
-                                    ValueTypeBasisData,
-                                    memorySpace,
-                                    dim> &      feBMPsi,
-        std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
-                                                linAlgOpContext,
-        const MPI_Comm &                        mpiCommDomain,
-        const size_type                         cellBlockSize,
-        const size_type                         waveFuncBatchSize,
-        const SpinMode                          spinMode = SpinMode::Unpolarized,
-        const bool                              isSOC = false,
-        const std::vector<double> &             kPointCoords = std::vector<double>{},
-        const std::vector<double> &             kPointWeights = std::vector<double>{});
+      RDM1FE(std::shared_ptr<
+               const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+                                               feBasisDataStorage,
+             const basis::FEBasisManager<ValueTypeBasisCoeff,
+                                         ValueTypeBasisData,
+                                         memorySpace,
+                                         dim> &feBMPsi,
+             std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
+                                        linAlgOpContext,
+             const MPI_Comm &           mpiCommDomain,
+             const size_type            cellBlockSize,
+             const size_type            waveFuncBatchSize,
+             const SpinMode             spinMode      = SpinMode::Unpolarized,
+             const bool                 isSOC         = false,
+             const std::vector<double> &kPointCoords  = std::vector<double>{},
+             const std::vector<double> &kPointWeights = std::vector<double>{});
 
       void
-      reinit(
-        std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
-                                                feBasisDataStorage,
-        const basis::FEBasisManager<ValueTypeBasisCoeff,
-                                    ValueTypeBasisData,
-                                    memorySpace,
-                                    dim> &      feBMPsi);
+      reinit(std::shared_ptr<
+               const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+                                               feBasisDataStorage,
+             const basis::FEBasisManager<ValueTypeBasisCoeff,
+                                         ValueTypeBasisData,
+                                         memorySpace,
+                                         dim> &feBMPsi);
 
       void
       setEvalDescrFlag(const bool evalFlag) override;
 
       void
       getDescriptors(
-        const std::set<DensityDescrAttr> &densityAttrs,
-        const std::set<WfcDescrAttr> &    wfcAttrs,
+        const std::set<DensityDescrAttr> &                 densityAttrs,
+        const std::set<WfcDescrAttr> &                     wfcAttrs,
         std::unordered_map<DensityDescrAttr, AttrStorage> &densityAttrVals,
-        std::unordered_map<WfcDescrAttr, AttrStorage> &   wfcAttrVals);
+        std::unordered_map<WfcDescrAttr, AttrStorage> &    wfcAttrVals);
 
       void
       setDescriptors(
-        const std::unordered_map<DensityDescrAttr, AttrStorage> &densityAttrVals,
-        const std::unordered_map<WfcDescrAttr, AttrStorage> &    wfcAttrVals);
+        const std::unordered_map<DensityDescrAttr, AttrStorage>
+          &                                                  densityAttrVals,
+        const std::unordered_map<WfcDescrAttr, AttrStorage> &wfcAttrVals);
 
       void
       getDensityObs(
@@ -137,7 +135,8 @@ namespace dftefe
       std::unique_ptr<RDM1<ValueType, memorySpace>>
       clone() const;
 
-      std::shared_ptr<const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+      std::shared_ptr<
+        const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
       getFEBasisDataStorage() const;
 
       const basis::FEBasisManager<ValueTypeBasisCoeff,
@@ -149,7 +148,7 @@ namespace dftefe
     private:
       std::shared_ptr<
         const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
-        d_feBasisDataStorage;
+                                        d_feBasisDataStorage;
       const basis::FEBasisManager<ValueTypeBasisCoeff,
                                   ValueTypeBasisData,
                                   memorySpace,
@@ -162,14 +161,14 @@ namespace dftefe
                                         dim>>
         d_densCalc;
 
-      std::vector<double>                    d_kPointCoords;
-      std::vector<double>                    d_kPointWeights;
-      bool                                   d_isSpinPolarized;
-      bool                                   d_isNonCollinear;
-      bool                                   d_isSOC;
-      std::reference_wrapper<const MPI_Comm> d_mpiCommDomain;
-      size_type                              d_cellBlockSize;
-      size_type                              d_waveFuncBatchSize;
+      std::vector<double>                               d_kPointCoords;
+      std::vector<double>                               d_kPointWeights;
+      bool                                              d_isSpinPolarized;
+      bool                                              d_isNonCollinear;
+      bool                                              d_isSOC;
+      std::reference_wrapper<const MPI_Comm>            d_mpiCommDomain;
+      size_type                                         d_cellBlockSize;
+      size_type                                         d_waveFuncBatchSize;
       std::unordered_map<DensityDescrAttr, AttrStorage> d_densityAttrVals;
       std::unordered_map<WfcDescrAttr, AttrStorage>     d_wfcAttrVals;
     }; // end of RDM1FE class

@@ -9,7 +9,7 @@
 #  include <utils/DeviceTypeConfigHalfPrec.h>
 #  include <linearAlgebra/BlasLapackKernels.h>
 #  include <linearAlgebra/BlasLapack.h>
-#  include<utils/Exceptions.h>
+#  include <utils/Exceptions.h>
 #  include <complex>
 namespace dftefe
 {
@@ -22,7 +22,9 @@ namespace dftefe
         void,
         setValueKernel,
         {
-          assert(false && "setValueKernel() is not implemented for utils::MemorySpace::DEVICE");
+          assert(
+            false &&
+            "setValueKernel() is not implemented for utils::MemorySpace::DEVICE");
         },
         ValueTypeBasisCoeff *     xVec,
         const size_type *         constraintLocalRowIds,
@@ -127,7 +129,9 @@ namespace dftefe
         void,
         distributeParentToChildKernel,
         {
-          assert(false && "distributeParentToChildKernel() is not implemented for utils::MemorySpace::DEVICE");
+          assert(
+            false &&
+            "distributeParentToChildKernel() is not implemented for utils::MemorySpace::DEVICE");
         },
         const size_type      contiguousBlockSize,
         ValueTypeBasisCoeff *xVec,
@@ -158,8 +162,7 @@ namespace dftefe
                 constraintRowSizesAccumulated[blockIndex];
               const size_type xVecStartingIdRow =
                 constrainedRowId * contiguousBlockSize + intraBlockIndex;
-              xVec[xVecStartingIdRow] =
-                inhomogenities[blockIndex];
+              xVec[xVecStartingIdRow] = inhomogenities[blockIndex];
               for (size_type i = 0; i < numberColumns; ++i)
                 {
                   const global_size_type xVecStartingIdColumn =
@@ -204,8 +207,7 @@ namespace dftefe
                 constraintRowSizesAccumulated[blockIndex];
               const size_type xVecStartingIdRow =
                 constrainedRowId * contiguousBlockSize + intraBlockIndex;
-              xVec[xVecStartingIdRow] =
-                inhomogenities[blockIndex];
+              xVec[xVecStartingIdRow] = inhomogenities[blockIndex];
               for (size_type i = 0; i < numberColumns; ++i)
                 {
                   const global_size_type xVecStartingIdColumn =
@@ -221,15 +223,18 @@ namespace dftefe
                 }
             }
         },
-        const size_type  contiguousBlockSize,
-        double *         xVec,
-        const size_type *constraintLocalRowIds, // rowConstraintsIdsLocal.data(),
-        const size_type  numConstraints, // rowConstraintsIdsLocal.size()
-        const size_type *constraintRowSizes, // rowConstraintsSizes.data()
-        const size_type *constraintRowSizesAccumulated, //  columnConstraintsAccumulated.data()
-        const size_type *constraintLocalColumnIds, // columnConstraintsIdsLocal.data(),
-        const double *   constraintColumnValues, // columnConstraintsValues.data(),
-        const double *   inhomogenities); // constraintsInhomogenities.data()
+        const size_type contiguousBlockSize,
+        double *        xVec,
+        const size_type
+          *             constraintLocalRowIds, // rowConstraintsIdsLocal.data(),
+        const size_type numConstraints,        // rowConstraintsIdsLocal.size()
+        const size_type *constraintRowSizes,   // rowConstraintsSizes.data()
+        const size_type *
+          constraintRowSizesAccumulated, //  columnConstraintsAccumulated.data()
+        const size_type
+          *constraintLocalColumnIds, // columnConstraintsIdsLocal.data(),
+        const double *constraintColumnValues, // columnConstraintsValues.data(),
+        const double *inhomogenities); // constraintsInhomogenities.data()
 
       template <>
       DFTEFE_CREATE_KERNEL(
@@ -340,7 +345,9 @@ namespace dftefe
         void,
         distributeChildToParentKernel,
         {
-          assert(false && "distributeChildToParentKernel() is not implemented for utils::MemorySpace::DEVICE");
+          assert(
+            false &&
+            "distributeChildToParentKernel() is not implemented for utils::MemorySpace::DEVICE");
         },
         const size_type      contiguousBlockSize,
         ValueTypeBasisCoeff *xVec,

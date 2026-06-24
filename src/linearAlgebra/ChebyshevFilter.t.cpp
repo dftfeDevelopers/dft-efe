@@ -47,10 +47,11 @@ namespace dftefe
       const double                                wantedSpectrumUpperBound,
       const double                                unWantedSpectrumUpperBound,
       MultiVector<blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>,
-                  memorySpace>
-        &filteredSubspace,
-      MultiVector<blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>, memorySpace> &scratch1,
-      MultiVector<blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>, memorySpace> &scratch2) // remove this and put X (in/out)
+                  memorySpace> &                  filteredSubspace,
+      MultiVector<blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>,
+                  memorySpace> &                  scratch1,
+      MultiVector<blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>,
+                  memorySpace> &scratch2) // remove this and put X (in/out)
     {
       /* taken from "Lin CC, Gavini V. TTDFT: A GPU accelerated Tucker
        *  tensor DFT code for large-scale Kohn-Sham DFT calculations. Computer
@@ -80,7 +81,7 @@ namespace dftefe
       // MultiVector<ValueType, memorySpace> scratch2(eigenSubspaceGuess,
       //                                              (ValueType)0);
 
-      // /* -------------- Time HX ---------------------- */                                          
+      // /* -------------- Time HX ---------------------- */
       // double total_grouped_ms = 0.0;
       // A.apply(eigenSubspaceGuess, scratch1, true, true);
       // for (int iter = 0; iter < 10; ++iter)
@@ -98,9 +99,9 @@ namespace dftefe
       //         std::chrono::duration<double, std::milli>(end - start).count();
       // }
 
-      // std::cout << "\ntime for HX: " << total_grouped_ms/10 << std::endl << std::flush;
-      // std::exit(1);
-      // /* -------------- Time HX ---------------------- */ 
+      // std::cout << "\ntime for HX: " << total_grouped_ms/10 << std::endl <<
+      // std::flush; std::exit(1);
+      // /* -------------- Time HX ---------------------- */
 
       // Compute B^-1AX
       A.apply(eigenSubspaceGuess, scratch1, true, false);
@@ -280,10 +281,14 @@ namespace dftefe
       const double                                unWantedSpectrumUpperBound,
       MultiVector<blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>,
                   memorySpace> &                  Y,
-      MultiVector<blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>, memorySpace> &scratch1,
-      MultiVector<blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>, memorySpace> &scratch2,
-      MultiVector<blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>, memorySpace> &Residual,
-      MultiVector<blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>, memorySpace> &ResidualNew)
+      MultiVector<blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>,
+                  memorySpace> &                  scratch1,
+      MultiVector<blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>,
+                  memorySpace> &                  scratch2,
+      MultiVector<blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>,
+                  memorySpace> &                  Residual,
+      MultiVector<blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>,
+                  memorySpace> &                  ResidualNew)
     {
       using ValueType =
         blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>;
@@ -336,8 +341,11 @@ namespace dftefe
           Y.data(),
           linAlgOpContext); // Y = AX - \lambda BX
 
-      blasLapack::copyValueType1ArrToValueType2Arr(
-        X.locallyOwnedSize() * X.numVectors(), Y.data(), ResidualNew.data(), linAlgOpContext);
+      blasLapack::copyValueType1ArrToValueType2Arr(X.locallyOwnedSize() *
+                                                     X.numVectors(),
+                                                   Y.data(),
+                                                   ResidualNew.data(),
+                                                   linAlgOpContext);
 
       Residual.setValue(0.0);
 

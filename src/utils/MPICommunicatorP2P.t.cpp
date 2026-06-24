@@ -326,15 +326,15 @@ namespace dftefe
           {
 #  ifdef DFTEFE_WITH_DEVICE
             if constexpr (memorySpace == MemorySpace::DEVICE)
-            {
-              if (d_commProtocol == communicationProtocol::mpiHost)
-                {
-                  MemoryTransfer<memorySpace, MemorySpace::HOST_PINNED>
-                    memoryTransfer;
-                  memoryTransfer.copy(d_ghostDataCopyHostPinned.size(),
-                                      d_ghostDataBuffer.data(),
-                                      d_ghostDataCopyHostPinned.data());
-                }
+              {
+                if (d_commProtocol == communicationProtocol::mpiHost)
+                  {
+                    MemoryTransfer<memorySpace, MemorySpace::HOST_PINNED>
+                      memoryTransfer;
+                    memoryTransfer.copy(d_ghostDataCopyHostPinned.size(),
+                                        d_ghostDataBuffer.data(),
+                                        d_ghostDataCopyHostPinned.data());
+                  }
               }
 #  endif // defined(DFTEFE_WITH_DEVICE)
 
@@ -473,18 +473,18 @@ namespace dftefe
 
 #  ifdef DFTEFE_WITH_DEVICE
             if constexpr (memorySpace == MemorySpace::DEVICE)
-            {
-              if (d_commProtocol == communicationProtocol::mpiHost)
-                {
-                  MemoryTransfer<MemorySpace::HOST_PINNED, memorySpace>
-                    memoryTransfer;
-                  memoryTransfer.copy(d_ghostDataCopyHostPinned.size(),
-                                      d_ghostDataCopyHostPinned.begin(),
-                                      d_ghostDataBuffer.begin());
+              {
+                if (d_commProtocol == communicationProtocol::mpiHost)
+                  {
+                    MemoryTransfer<MemorySpace::HOST_PINNED, memorySpace>
+                      memoryTransfer;
+                    memoryTransfer.copy(d_ghostDataCopyHostPinned.size(),
+                                        d_ghostDataCopyHostPinned.begin(),
+                                        d_ghostDataBuffer.begin());
 
-                  sendArrayStartPtr = d_ghostDataCopyHostPinned.begin();
-                }
-            }
+                    sendArrayStartPtr = d_ghostDataCopyHostPinned.begin();
+                  }
+              }
 #  endif // defined(DFTEFE_WITH_DEVICE)
 
             for (size_type i = 0;

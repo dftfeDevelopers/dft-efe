@@ -48,42 +48,42 @@ namespace dftefe
    */
   template <typename T,
             dftefe::operatorList operatorID,
-            std::uint32_t       nDofsPerDim,
-            std::uint32_t       nQuadPointsPerDim,
-            std::uint32_t       batchSize>
+            std::uint32_t        nDofsPerDim,
+            std::uint32_t        nQuadPointsPerDim,
+            std::uint32_t        batchSize>
   struct MatrixFreeDevice
   {
     static void
     init(T *constMemDataHost, std::size_t constMemDataSize);
 
     static void
-    computeLaplaceX(T           *dst,
-                    T           *src,
-                    T           *jacobianFactor,
+    computeLaplaceX(T *           dst,
+                    T *           src,
+                    T *           jacobianFactor,
                     dftefe::uInt *map,
-                    T           *shapeBuffer,
+                    T *           shapeBuffer,
                     dftefe::uInt  nCells,
                     dftefe::uInt  nBatch);
 
     static void
-    computeHelmholtzX(T           *dst,
-                      T           *src,
-                      T           *jacobianFactor,
+    computeHelmholtzX(T *           dst,
+                      T *           src,
+                      T *           jacobianFactor,
                       dftefe::uInt *map,
-                      T           *shapeBuffer,
-                      T            coeffHelmholtz,
+                      T *           shapeBuffer,
+                      T             coeffHelmholtz,
                       dftefe::uInt  nCells,
                       dftefe::uInt  nBatch);
 
     static void
-    constraintsDistribute(T                 *src,
+    constraintsDistribute(T *                 src,
                           const dftefe::uInt *constrainingNodeBuckets,
                           const dftefe::uInt *constrainingNodeOffset,
                           const dftefe::uInt *constrainedNodeBuckets,
                           const dftefe::uInt *constrainedNodeOffset,
-                          const T           *weightMatrixList,
+                          const T *           weightMatrixList,
                           const dftefe::uInt *weightMatrixOffset,
-                          const T           *inhomogenityList,
+                          const T *           inhomogenityList,
                           const dftefe::uInt *ghostMap,
                           const dftefe::uInt  inhomogenityListSize,
                           const dftefe::uInt  nBatch,
@@ -91,13 +91,13 @@ namespace dftefe
                           const dftefe::uInt  nGhostDofs);
 
     static void
-    constraintsDistributeTranspose(T                 *dst,
-                                   T                 *src,
+    constraintsDistributeTranspose(T *                 dst,
+                                   T *                 src,
                                    const dftefe::uInt *constrainingNodeBuckets,
                                    const dftefe::uInt *constrainingNodeOffset,
                                    const dftefe::uInt *constrainedNodeBuckets,
                                    const dftefe::uInt *constrainedNodeOffset,
-                                   const T           *weightMatrixList,
+                                   const T *           weightMatrixList,
                                    const dftefe::uInt *weightMatrixOffset,
                                    const dftefe::uInt *ghostMap,
                                    const dftefe::uInt  inhomogenityListSize,

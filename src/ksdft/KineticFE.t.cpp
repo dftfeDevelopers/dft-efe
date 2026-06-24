@@ -197,15 +197,15 @@ namespace dftefe
           if (numPsiInBatch < d_waveFuncBatchSize)
             {
               linearAlgebra::blasLapack::stridedBlockCopy(
-                            waveFunc.localSize(),
-                            numPsiInBatch,
-                            waveFunc.getNumberComponents(),
-                            psiStartId,
-                            numPsiInBatch,
-                            0,
-                            waveFunc.data(),
-                            d_psiBatchSmall->data(),
-                            *waveFunc.getLinAlgOpContext());                                         
+                waveFunc.localSize(),
+                numPsiInBatch,
+                waveFunc.getNumberComponents(),
+                psiStartId,
+                numPsiInBatch,
+                0,
+                waveFunc.data(),
+                d_psiBatchSmall->data(),
+                *waveFunc.getLinAlgOpContext());
 
 
               d_laplaceOp->apply(*d_psiBatchSmall, *d_YBatchSmall, true, true);
@@ -218,15 +218,15 @@ namespace dftefe
           else
             {
               linearAlgebra::blasLapack::stridedBlockCopy(
-                            waveFunc.localSize(),
-                            numPsiInBatch,
-                            waveFunc.getNumberComponents(),
-                            psiStartId,
-                            numPsiInBatch,
-                            0,
-                            waveFunc.data(),
-                            d_psiBatch->data(),
-                            *waveFunc.getLinAlgOpContext());                                        
+                waveFunc.localSize(),
+                numPsiInBatch,
+                waveFunc.getNumberComponents(),
+                psiStartId,
+                numPsiInBatch,
+                0,
+                waveFunc.data(),
+                d_psiBatch->data(),
+                *waveFunc.getLinAlgOpContext());
 
               d_laplaceOp->apply(*d_psiBatch, *d_YBatch, true, true);
               linearAlgebra::dot(*d_psiBatch,

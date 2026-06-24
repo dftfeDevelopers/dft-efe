@@ -607,7 +607,8 @@ namespace dftefe
                 X.getLinAlgOpContext(),
                 d_maxWaveFnBlock,
                 ValueTypeWaveFnCoeff());
-              if (X.getNumberComponents() > d_maxWaveFnBlock && X.getNumberComponents() % d_maxWaveFnBlock != 0)
+              if (X.getNumberComponents() > d_maxWaveFnBlock &&
+                  X.getNumberComponents() % d_maxWaveFnBlock != 0)
                 {
                   d_psiBatchSmall = std::make_shared<
                     linearAlgebra::MultiVector<ValueType, memorySpace>>(
@@ -649,15 +650,15 @@ namespace dftefe
               if (numPsiInBatch < d_maxWaveFnBlock)
                 {
                   linearAlgebra::blasLapack::stridedBlockCopy(
-                                X.localSize(),
-                                numPsiInBatch,
-                                X.getNumberComponents(),
-                                psiStartId,
-                                numPsiInBatch,
-                                0,
-                                X.data(),
-                                d_psiBatchSmall->data(),
-                                *X.getLinAlgOpContext());                      
+                    X.localSize(),
+                    numPsiInBatch,
+                    X.getNumberComponents(),
+                    psiStartId,
+                    numPsiInBatch,
+                    0,
+                    X.data(),
+                    d_psiBatchSmall->data(),
+                    *X.getLinAlgOpContext());
 
                   d_atomNonLocOpContext->apply(*d_psiBatchSmall,
                                                *d_YBatchSmall,
@@ -673,15 +674,15 @@ namespace dftefe
               else
                 {
                   linearAlgebra::blasLapack::stridedBlockCopy(
-                                X.localSize(),
-                                numPsiInBatch,
-                                X.getNumberComponents(),
-                                psiStartId,
-                                numPsiInBatch,
-                                0,
-                                X.data(),
-                                d_psiBatch->data(),
-                                *X.getLinAlgOpContext());                           
+                    X.localSize(),
+                    numPsiInBatch,
+                    X.getNumberComponents(),
+                    psiStartId,
+                    numPsiInBatch,
+                    0,
+                    X.data(),
+                    d_psiBatch->data(),
+                    *X.getLinAlgOpContext());
 
                   d_atomNonLocOpContext->apply(*d_psiBatch,
                                                *d_YBatch,
