@@ -425,9 +425,9 @@ namespace dftefe
       d_totProjInProc =
         std::accumulate(d_numProjsInCells.begin(), d_numProjsInCells.end(), 0);
 
-      cellIndex                                                    = 0;
-      size_type                                 cumulativeDofxProj = 0;
-      const quadrature::QuadratureRuleContainer quadratureRuleContainer =
+      cellIndex                                                     = 0;
+      size_type                                  cumulativeDofxProj = 0;
+      const quadrature::QuadratureRuleContainer &quadratureRuleContainer =
         *feBasisDataStorage.getQuadratureRuleContainer();
       locallyOwnedCellIter = feBasisDofHandler->beginLocallyOwnedCells();
       for (; locallyOwnedCellIter != feBasisDofHandler->endLocallyOwnedCells();

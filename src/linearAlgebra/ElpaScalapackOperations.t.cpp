@@ -241,8 +241,8 @@ namespace dftefe
         utils::MemoryStorage<ValueType, memorySpace> rotatedVectorsMatBlock(
           N * dofsBlockSize, ValueType(0));
 
-        utils::printCurrentMemoryUsage(mpiCommDomain,
-                                       "Inside Blocked susbpace rotation");
+        utils::printCurrentMemoryUsage<memorySpace>(
+          mpiCommDomain, "Inside Blocked susbpace rotation");
 
         for (size_type idof = 0; idof < maxNumLocalDofs; idof += dofsBlockSize)
           {

@@ -794,7 +794,7 @@ std::shared_ptr<linearAlgebra::OperatorContext<double,
                                         memorySpace,
                                         dim>> dftefeSolve = nullptr;
 
-  utils::printCurrentMemoryUsage(comm, "Before Kohn Sham DFT Class Init");
+  utils::printCurrentMemoryUsage<memorySpace>(comm, "Before Kohn Sham DFT Class Init");
 
   std::vector<std::string> fieldNamesElecDens{"density"};
   std::vector<std::string> metadataNamesElecDens{"symbol", "Z", "charge", "NR"};

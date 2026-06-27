@@ -122,20 +122,7 @@ namespace dftefe
                  d_numQuadPoints);
 
       const dftefe::size_type dim = triangulation->getDim();
-      d_realPointsHost.resize(d_realPoints.size() * dim);
-      for (dftefe::size_type i = 0; i < d_realPoints.size(); i++)
-        {
-          for (dftefe::size_type j = 0; j < dim; j++)
-            {
-              d_realPointsHost[i * dim + j] = d_realPoints[i][j];
-            }
-        }
-#ifdef DFTEFE_WITH_DEVICE
-      d_realPointsDevice.resize(d_realPoints.size() * dim);
-      d_realPointsDevice.copyFrom(d_realPointsHost);
-      d_JxWDevice.resize(d_JxW.size());
-      d_JxWDevice.copyFrom(d_JxW);
-#endif
+      d_realPointsHost            = utils::flatten(d_realPoints);
     }
 
     QuadratureRuleContainer::QuadratureRuleContainer(
@@ -188,20 +175,7 @@ namespace dftefe
                  d_numQuadPoints);
 
       const dftefe::size_type dim = triangulation->getDim();
-      d_realPointsHost.resize(d_realPoints.size() * dim);
-      for (dftefe::size_type i = 0; i < d_realPoints.size(); i++)
-        {
-          for (dftefe::size_type j = 0; j < dim; j++)
-            {
-              d_realPointsHost[i * dim + j] = d_realPoints[i][j];
-            }
-        }
-#ifdef DFTEFE_WITH_DEVICE
-      d_realPointsDevice.resize(d_realPoints.size() * dim);
-      d_realPointsDevice.copyFrom(d_realPointsHost);
-      d_JxWDevice.resize(d_JxW.size());
-      d_JxWDevice.copyFrom(d_JxW);
-#endif
+      d_realPointsHost            = utils::flatten(d_realPoints);
     }
 
 
@@ -333,20 +307,7 @@ namespace dftefe
         }
 
       const dftefe::size_type dim = triangulation->getDim();
-      d_realPointsHost.resize(d_realPoints.size() * dim);
-      for (dftefe::size_type i = 0; i < d_realPoints.size(); i++)
-        {
-          for (dftefe::size_type j = 0; j < dim; j++)
-            {
-              d_realPointsHost[i * dim + j] = d_realPoints[i][j];
-            }
-        }
-#ifdef DFTEFE_WITH_DEVICE
-      d_realPointsDevice.resize(d_realPoints.size() * dim);
-      d_realPointsDevice.copyFrom(d_realPointsHost);
-      d_JxWDevice.resize(d_JxW.size());
-      d_JxWDevice.copyFrom(d_JxW);
-#endif
+      d_realPointsHost            = utils::flatten(d_realPoints);
     }
 
     QuadratureRuleContainer::QuadratureRuleContainer(
@@ -674,20 +635,7 @@ namespace dftefe
       //       "\n";
 
       const dftefe::size_type dim = triangulation->getDim();
-      d_realPointsHost.resize(d_realPoints.size() * dim);
-      for (dftefe::size_type i = 0; i < d_realPoints.size(); i++)
-        {
-          for (dftefe::size_type j = 0; j < dim; j++)
-            {
-              d_realPointsHost[i * dim + j] = d_realPoints[i][j];
-            }
-        }
-#ifdef DFTEFE_WITH_DEVICE
-      d_realPointsDevice.resize(d_realPoints.size() * dim);
-      d_realPointsDevice.copyFrom(d_realPointsHost);
-      d_JxWDevice.resize(d_JxW.size());
-      d_JxWDevice.copyFrom(d_JxW);
-#endif
+      d_realPointsHost            = utils::flatten(d_realPoints);
     }
 
 

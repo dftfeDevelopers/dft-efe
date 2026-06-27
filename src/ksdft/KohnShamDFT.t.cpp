@@ -2473,7 +2473,8 @@ namespace dftefe
 
       d_p.registerEnd("Pre Init Checks");
 
-      utils::printCurrentMemoryUsage(d_mpiCommDomain, "After PreInit Checks");
+      utils::printCurrentMemoryUsage<memorySpace>(d_mpiCommDomain,
+                                                  "After PreInit Checks");
 
       d_p.registerStart("Hamiltonian Components Initilization Kinetic Op");
 
@@ -2489,7 +2490,8 @@ namespace dftefe
           KSDFTDefaults<memorySpace>::MAX_KINENG_WAVEFN_BATCH_SIZE :
           numWantedEigenvalues);
       d_p.registerEnd("Hamiltonian Components Initilization Kinetic Op");
-      utils::printCurrentMemoryUsage(d_mpiCommDomain, "After KinEngy Init");
+      utils::printCurrentMemoryUsage<memorySpace>(d_mpiCommDomain,
+                                                  "After KinEngy Init");
       d_p.registerStart(
         "Hamiltonian Components Initilization Electrostatic Op");
 
@@ -2644,7 +2646,8 @@ namespace dftefe
           waveFnBatch,
           fieldToTCIASplineMap);
       d_p.registerEnd("Hamiltonian Components Initilization Electrostatic Op");
-      utils::printCurrentMemoryUsage(d_mpiCommDomain, "After Elec Init");
+      utils::printCurrentMemoryUsage<memorySpace>(d_mpiCommDomain,
+                                                  "After Elec Init");
       d_p.registerStart("Hamiltonian Components Initilization Exc Op");
 
       d_rdm1Spectral->setDescriptors(
@@ -2689,7 +2692,8 @@ namespace dftefe
         d_hamitonianXC /* d_hamiltonianElectroExc*/};
 
       d_p.registerEnd("Hamiltonian Components Initilization Exc Op");
-      utils::printCurrentMemoryUsage(d_mpiCommDomain, "After Exc Init");
+      utils::printCurrentMemoryUsage<memorySpace>(d_mpiCommDomain,
+                                                  "After Exc Init");
       d_p.registerStart("Hamiltonian Operator Creation");
       // form the kohn sham operator
       d_hamitonianOperator =
@@ -2705,8 +2709,8 @@ namespace dftefe
           KSDFTDefaults<memorySpace>::CELL_BATCH_SIZE,
           waveFnBatch);
       d_p.registerEnd("Hamiltonian Operator Creation");
-      utils::printCurrentMemoryUsage(d_mpiCommDomain,
-                                     "After Hamiltonian Operator Init");
+      utils::printCurrentMemoryUsage<memorySpace>(
+        d_mpiCommDomain, "After Hamiltonian Operator Init");
       d_p.registerStart("KS EigenSolver Init");
       // call the eigensolver
 
@@ -2783,8 +2787,8 @@ namespace dftefe
                                   numWantedEigenvalues);
 
       d_p.registerEnd("KS EigenSolver Init");
-      utils::printCurrentMemoryUsage(d_mpiCommDomain,
-                                     "After KS EigenSolver Init");
+      utils::printCurrentMemoryUsage<memorySpace>(d_mpiCommDomain,
+                                                  "After KS EigenSolver Init");
 
       d_isPSPCalculation = true;
       d_p.print();
@@ -2877,7 +2881,8 @@ namespace dftefe
 
       while (((norm > d_SCFTol) && (scfIter < d_numMaxSCFIter)))
         {
-          utils::printCurrentMemoryUsage(d_mpiCommDomain, "SCF beginning");
+          utils::printCurrentMemoryUsage<memorySpace>(d_mpiCommDomain,
+                                                      "SCF beginning");
           d_p.reset();
           d_rootCout
             << "************************Begin Self-Consistent-Field Iteration: "

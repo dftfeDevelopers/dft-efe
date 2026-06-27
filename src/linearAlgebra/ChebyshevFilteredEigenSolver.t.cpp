@@ -475,8 +475,9 @@ namespace dftefe
               *chfsiScratch1,
               *chfsiScratch2); /*scratch2*/
 
-          utils::printCurrentMemoryUsage(d_mpiPatternP2P->mpiCommunicator(),
-                                         "During blocked chebyshev filtering");
+          utils::printCurrentMemoryUsage<memorySpace>(
+            d_mpiPatternP2P->mpiCommunicator(),
+            "During blocked chebyshev filtering");
 
           blasLapack::stridedBlockCopy(eigenVecLocalSize,
                                        numEigVecInBatch,

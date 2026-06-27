@@ -129,13 +129,18 @@ namespace dftefe
     Spline::Func<utils::MemorySpace::DEVICE>
     Spline::getFunc<utils::MemorySpace::DEVICE>() const
     {
-      return Func<utils::MemorySpace::DEVICE>(d_x_device.data(),
-                                              d_y_device.data(),
-                                              d_b_device.data(),
-                                              d_c_device.data(),
-                                              d_d_device.data(),
+      if (!d_deviceSynced)
+        {
+          syncToDevice();
+          d_deviceSynced = true;
+        }
+      return Func<utils::MemorySpace::DEVICE>(d_x_device->data(),
+                                              d_y_device->data(),
+                                              d_b_device->data(),
+                                              d_c_device->data(),
+                                              d_d_device->data(),
                                               static_cast<size_type>(
-                                                d_x_device.size()),
+                                                d_x_device->size()),
                                               d_c0,
                                               d_isSubdivPowerLawGrid,
                                               d_a,
@@ -154,6 +159,11 @@ namespace dftefe
       double *              y,
       utils::deviceStream_t streamId) const
     {
+      if (!d_deviceSynced)
+        {
+          syncToDevice();
+          d_deviceSynced = true;
+        }
       DFTEFE_LAUNCH_KERNEL(SplineEvalAllKernel,
                            n / dftefe::utils::DEVICE_BLOCK_SIZE + 1,
                            dftefe::utils::DEVICE_BLOCK_SIZE,
@@ -161,12 +171,12 @@ namespace dftefe
                            n,
                            x,
                            y,
-                           d_x_device.data(),
-                           d_y_device.data(),
-                           d_b_device.data(),
-                           d_c_device.data(),
-                           d_d_device.data(),
-                           static_cast<size_type>(d_x_device.size()),
+                           d_x_device->data(),
+                           d_y_device->data(),
+                           d_b_device->data(),
+                           d_c_device->data(),
+                           d_d_device->data(),
+                           static_cast<size_type>(d_x_device->size()),
                            d_c0,
                            d_isSubdivPowerLawGrid,
                            d_a,
@@ -186,6 +196,11 @@ namespace dftefe
       double *              y,
       utils::deviceStream_t streamId) const
     {
+      if (!d_deviceSynced)
+        {
+          syncToDevice();
+          d_deviceSynced = true;
+        }
       DFTEFE_LAUNCH_KERNEL(SplineDerivAllKernel,
                            n / dftefe::utils::DEVICE_BLOCK_SIZE + 1,
                            dftefe::utils::DEVICE_BLOCK_SIZE,
@@ -194,11 +209,11 @@ namespace dftefe
                            order,
                            x,
                            y,
-                           d_x_device.data(),
-                           d_b_device.data(),
-                           d_c_device.data(),
-                           d_d_device.data(),
-                           static_cast<size_type>(d_x_device.size()),
+                           d_x_device->data(),
+                           d_b_device->data(),
+                           d_c_device->data(),
+                           d_d_device->data(),
+                           static_cast<size_type>(d_x_device->size()),
                            d_c0,
                            d_isSubdivPowerLawGrid,
                            d_a,

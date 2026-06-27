@@ -71,6 +71,23 @@ namespace dftefe
                                              const double *t,
                                              double *      q) const
     {
+      if (d_atomCoordsFlatDevice == nullptr)
+        {
+          std::vector<double> atomCoordsFlat =
+            utils::flatten(d_atomCoordinates);
+          d_atomCoordsFlatDevice =
+            std::make_unique<MemoryStorage<double, MemorySpace::DEVICE>>(
+              atomCoordsFlat.size());
+          d_zDevice =
+            std::make_unique<MemoryStorage<double, MemorySpace::DEVICE>>(
+              d_z.size());
+          MemoryTransfer<MemorySpace::DEVICE, MemorySpace::HOST>::copy(
+            atomCoordsFlat.size(),
+            d_atomCoordsFlatDevice->data(),
+            atomCoordsFlat.data());
+          MemoryTransfer<MemorySpace::DEVICE, MemorySpace::HOST>::copy(
+            d_z.size(), d_zDevice->data(), d_z.data());
+        }
       deviceError_t err = deviceMemset(q, 0, numPoints * sizeof(double));
       DEVICE_API_CHECK(err);
       const size_type total     = numPoints * d_numAtoms;
@@ -84,8 +101,8 @@ namespace dftefe
                            d_numAtoms,
                            d_dim,
                            t,
-                           d_atomCoordsFlatDevice.data(),
-                           d_zDevice.data(),
+                           d_atomCoordsFlatDevice->data(),
+                           d_zDevice->data(),
                            q);
     }
 

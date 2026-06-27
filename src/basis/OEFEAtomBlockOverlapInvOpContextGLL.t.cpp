@@ -680,17 +680,16 @@ namespace dftefe
           coeffsInAllCellsHost.data());
 
         const double *cellJxWValuesClassicalBlockPtr =
-          classicalBlockBasisDataStorage.getQuadratureRuleContainer()
-            ->template getJxWPtr<memorySpace>();
+          classicalBlockBasisDataStorage.getJxWInAllCells().data();
+        ;
 
         const double *cellJxWValuesEnrichmentBlockClassicalPtr =
-          enrichmentBlockClassicalBasisDataStorage.getQuadratureRuleContainer()
-            ->template getJxWPtr<memorySpace>();
+          enrichmentBlockClassicalBasisDataStorage.getJxWInAllCells().data();
+        ;
 
         const double *cellJxWValuesEnrichmentBlockEnrichmentPtr =
-          enrichmentBlockEnrichmentBasisDataStorage
-            .getQuadratureRuleContainer()
-            ->template getJxWPtr<memorySpace>();
+          enrichmentBlockEnrichmentBasisDataStorage.getJxWInAllCells().data();
+        ;
 
         size_type numCumulativeDofsxDofsCellsInBlock           = 0;
         size_type cumulativeQuadEnrichBlockEnrichxenrichInCell = 0;

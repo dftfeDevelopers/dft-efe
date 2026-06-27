@@ -603,7 +603,7 @@ int main(int argc, char** argv)
   adaptiveMesh.createMesh(*triangulationBase); 
     p.registerEnd("Create Mesh");
 
-  utils::printCurrentMemoryUsage(comm, "Create Mesh");
+  utils::printCurrentMemoryUsage<memorySpace>(comm, "Create Mesh");
 
     p.registerStart("Quadrature Rule Creation");
     //quadrature::QuadratureRuleAttributes quadAttrAdaptive(quadrature::QuadratureFamily::ADAPTIVE,false);
@@ -695,7 +695,7 @@ int main(int argc, char** argv)
   rootCout << "Number of quadrature points in wave function adaptive quadrature: "<<nQuad<<"\n";
 
   p.registerEnd("Quadrature Rule Creation");
-    utils::printCurrentMemoryUsage(comm, "Quadrature Rule Creation");
+    utils::printCurrentMemoryUsage<memorySpace>(comm, "Quadrature Rule Creation");
   p.registerStart("Classical DoFHandler and datastorage creation");
 
   // Make orthogonalized EFE basis for all the fields
@@ -961,7 +961,7 @@ int main(int argc, char** argv)
   utils::mpi::MPIBarrier(comm);
   */
 
-  utils::printCurrentMemoryUsage(comm, "Ortho EFE basis manager creation");
+  utils::printCurrentMemoryUsage<memorySpace>(comm, "Ortho EFE basis manager creation");
 
   rootCout << "Total Number of dofs electrostatics: " << basisDofHandlerTotalPot->nGlobalNodes() << "\n";
   rootCout << "Total Number of dofs eigensolve: " << basisDofHandlerWaveFn->nGlobalNodes() << "\n";
@@ -996,7 +996,7 @@ int main(int argc, char** argv)
     feBDTotalChargeStiffnessMatrix->evaluateBasisData(quadAttrGaussElectro, basisAttrMap);
 
   p.registerEnd("Electrostatics basis grad datastorage eval");
-  utils::printCurrentMemoryUsage(comm, "Electrostatics basis grad datastorage eval");
+  utils::printCurrentMemoryUsage<memorySpace>(comm, "Electrostatics basis grad datastorage eval");
   p.registerStart("Electrostatics basis bsmear datastorage eval");
 
   basisAttrMap[basis::BasisStorageAttributes::StoreValues] = true;
@@ -1019,7 +1019,7 @@ int main(int argc, char** argv)
   feBDNucChargeRhs->evaluateBasisData(quadAttrGaussSubdivided, quadRuleContainerGaussSubdividedElec, basisAttrMap);
 
   p.registerEnd("Electrostatics basis bsmear datastorage eval");
-  utils::printCurrentMemoryUsage(comm, "Electrostatics basis bsmear datastorage eval");
+  utils::printCurrentMemoryUsage<memorySpace>(comm, "Electrostatics basis bsmear datastorage eval");
   p.registerStart("Electrostatics basis rho datastorage eval");
 
   std::shared_ptr<basis::FEBasisDataStorage<double, Host>> feBDElecChargeRhs = nullptr;
@@ -1035,7 +1035,7 @@ int main(int argc, char** argv)
   feBDElecChargeRhs->evaluateBasisData(quadAttrGaussSubdivided, quadRuleContainerAdaptiveOrbital, basisAttrMap);
 
   p.registerEnd("Electrostatics basis rho datastorage eval");
-  utils::printCurrentMemoryUsage(comm, "Electrostatics basis rho datastorage eval");
+  utils::printCurrentMemoryUsage<memorySpace>(comm, "Electrostatics basis rho datastorage eval");
   p.registerStart("Orbital basis datastorage eval");
 
   basisAttrMap[basis::BasisStorageAttributes::StoreValues] = true;
@@ -1066,7 +1066,7 @@ int main(int argc, char** argv)
 
   p.registerEnd("Orbital basis datastorage eval");
 
-  utils::printCurrentMemoryUsage(comm, "Orbital basis datastorage eval");
+  utils::printCurrentMemoryUsage<memorySpace>(comm, "Orbital basis datastorage eval");
   
   p.registerStart("Orbital Grad basis datastorage eval");
 
@@ -1088,7 +1088,7 @@ int main(int argc, char** argv)
     std::shared_ptr<const basis::FEBasisDataStorage<double, memorySpace>> feBDEXCHamiltonian = efeBasisDataAdaptiveOrbital;
 
     p.registerEnd("Orbital Grad basis datastorage eval");
-    utils::printCurrentMemoryUsage(comm, "Orbital Grad basis datastorage eval");
+    utils::printCurrentMemoryUsage<memorySpace>(comm, "Orbital Grad basis datastorage eval");
 
     p.registerStart("FE Basis Manager Init");
     std::shared_ptr<const utils::ScalarSpatialFunctionReal>
@@ -1129,7 +1129,7 @@ int main(int argc, char** argv)
                                                       linAlgOpContext,
                                                       true); 
 
-  utils::printCurrentMemoryUsage(comm, "Hamiltonian Basis overlap");
+  utils::printCurrentMemoryUsage<memorySpace>(comm, "Hamiltonian Basis overlap");
 
   //   quadrature::QuadratureRuleAttributes quadAttrGaussEigen(quadrature::QuadratureFamily::GAUSS,true,feOrderEigen + 1);
 
@@ -1169,7 +1169,7 @@ int main(int argc, char** argv)
                                                         true);  
 
     p.registerEnd("Hamiltonian Basis overlap eval");
-    utils::printCurrentMemoryUsage(comm, "Hamiltonian Basis overlap , overlap for inv");
+    utils::printCurrentMemoryUsage<memorySpace>(comm, "Hamiltonian Basis overlap , overlap for inv");
 
     p.registerStart("Hamiltonian Basis overlap inverse eval");
 
@@ -1188,7 +1188,7 @@ int main(int argc, char** argv)
                                                     linAlgOpContext);    
 
     p.registerEnd("Hamiltonian Basis overlap inverse eval");
-  utils::printCurrentMemoryUsage(comm, "Hamiltonian Basis overlap , overlap for inv and inv");
+  utils::printCurrentMemoryUsage<memorySpace>(comm, "Hamiltonian Basis overlap , overlap for inv and inv");
     p.print();
   p.registerStart("Kohn Sham DFT Class Init");
   ksdft::KohnShamDFT<double,
@@ -1198,7 +1198,7 @@ int main(int argc, char** argv)
                                         memorySpace,
                                         dim>* dftefeSolve = nullptr;
 
-  utils::printCurrentMemoryUsage(comm, "Before Kohn Sham DFT Class Init");
+  utils::printCurrentMemoryUsage<memorySpace>(comm, "Before Kohn Sham DFT Class Init");
                      
   std::shared_ptr<atoms::AtomSuperpositionFunction<memorySpace>> elecChargeDens = 
         std::make_shared<atoms::AtomSuperpositionFunction<memorySpace>>(
@@ -1316,7 +1316,7 @@ int main(int argc, char** argv)
     utils::throwException(false, "Option not there for KohnShamDFT class creation.");
   }
   p.registerEnd("Kohn Sham DFT Class Init"); 
-  utils::printCurrentMemoryUsage(comm, "After Kohn Sham DFT Class Init");
+  utils::printCurrentMemoryUsage<memorySpace>(comm, "After Kohn Sham DFT Class Init");
   p.print();
 
   pTot.registerEnd("Initilization");   

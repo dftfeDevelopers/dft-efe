@@ -35,6 +35,7 @@
 #include <sstream>
 #include <string>
 #include <utils/MemoryStorage.h>
+#include <memory>
 #include <utils/DeviceTypeConfig.h>
 #include <utils/DeviceKernelLauncherHelpers.h>
 
@@ -136,14 +137,22 @@ namespace dftefe
       computeAndSync(spline_type type);
 
 #ifdef DFTEFE_WITH_DEVICE
-      // Copy host vectors -> Device
+      // Copy host vectors -> Device (lazy: called on first device access)
       void
-      syncToDevice();
+      syncToDevice() const;
 
-      // ---- device-resident MemoryStorage (managed on host) ----
-      MemoryStorage<double, utils::MemorySpace::DEVICE> d_x_device, d_y_device;
-      MemoryStorage<double, utils::MemorySpace::DEVICE> d_b_device, d_c_device,
-        d_d_device;
+      // ---- device-resident MemoryStorage  ----
+      mutable std::unique_ptr<MemoryStorage<double, utils::MemorySpace::DEVICE>>
+        d_x_device;
+      mutable std::unique_ptr<MemoryStorage<double, utils::MemorySpace::DEVICE>>
+        d_y_device;
+      mutable std::unique_ptr<MemoryStorage<double, utils::MemorySpace::DEVICE>>
+        d_b_device;
+      mutable std::unique_ptr<MemoryStorage<double, utils::MemorySpace::DEVICE>>
+        d_c_device;
+      mutable std::unique_ptr<MemoryStorage<double, utils::MemorySpace::DEVICE>>
+                   d_d_device;
+      mutable bool d_deviceSynced;
 #endif
 
     public:

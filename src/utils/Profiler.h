@@ -96,6 +96,7 @@ namespace dftefe
     //
     // helper function
     //
+    template <dftefe::utils::MemorySpace memorySpace>
     static inline void
     printCurrentMemoryUsage(const utils::mpi::MPIComm &mpiComm,
                             const std::string          message)
@@ -120,29 +121,35 @@ namespace dftefe
           virtualMemUsed, mpiComm);
       const double maxHostBytes = minMaxAvg.max;
       // --- Device (GPU) memory ---
+      if constexpr (memorySpace == dftefe::utils::MemorySpace::DEVICE)
+        {
 #ifdef DFTEFE_WITH_DEVICE
-      std::size_t freeGPU = 0, totalGPU = 0;
-      {
-        deviceError_t err = deviceMemGetInfo(&freeGPU, &totalGPU);
-        DEVICE_API_CHECK(err);
-      }
-      double gpuUsed  = static_cast<double>(totalGPU - freeGPU);
-      double gpuTotal = static_cast<double>(totalGPU);
-      auto   gpuMinMaxAvg =
-        mpi::MPIAllreduceMinMaxAvg<double, utils::MemorySpace::HOST>(gpuUsed,
-                                                                     mpiComm);
-      cout << std::endl
-           << message << ", CPU: " << maxHostBytes / 1073741824.0 << " out of "
-           << totalVirtualMem / 1073741824.0
-           << " GB, GPU: " << gpuMinMaxAvg.max / 1073741824.0 << " out of "
-           << gpuTotal / 1073741824.0 << " GB" << std::endl
-           << std::endl;
-#else
-      cout << std::endl
-           << message << ", CPU: " << maxHostBytes / 1073741824.0 << " out of "
-           << totalVirtualMem / 1073741824.0 << " GB" << std::endl
-           << std::endl;
+          std::size_t freeGPU = 0, totalGPU = 0;
+          {
+            deviceError_t err = deviceMemGetInfo(&freeGPU, &totalGPU);
+            DEVICE_API_CHECK(err);
+          }
+          double gpuUsed  = static_cast<double>(totalGPU - freeGPU);
+          double gpuTotal = static_cast<double>(totalGPU);
+          auto   gpuMinMaxAvg =
+            mpi::MPIAllreduceMinMaxAvg<double, utils::MemorySpace::HOST>(
+              gpuUsed, mpiComm);
+          cout << std::endl
+               << message << ", CPU: " << maxHostBytes / 1073741824.0
+               << " out of " << totalVirtualMem / 1073741824.0
+               << " GB, GPU: " << gpuMinMaxAvg.max / 1073741824.0 << " out of "
+               << gpuTotal / 1073741824.0 << " GB" << std::endl
+               << std::endl;
 #endif
+        }
+      else
+        {
+          cout << std::endl
+               << message << ", CPU: " << maxHostBytes / 1073741824.0
+               << " out of " << totalVirtualMem / 1073741824.0 << " GB"
+               << std::endl
+               << std::endl;
+        }
 
       mpi::MPIBarrier(mpiComm);
     }

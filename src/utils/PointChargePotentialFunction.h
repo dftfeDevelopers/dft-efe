@@ -4,6 +4,7 @@
 #include "ScalarSpatialFunction.h"
 #include "MemorySpaceType.h"
 #include "MemoryStorage.h"
+#include <memory>
 #include "TypeConfig.h"
 #include <vector>
 
@@ -44,8 +45,10 @@ namespace dftefe
       size_type                 d_dim;
 
 #ifdef DFTEFE_WITH_DEVICE
-      MemoryStorage<double, MemorySpace::DEVICE> d_atomCoordsFlatDevice;
-      MemoryStorage<double, MemorySpace::DEVICE> d_zDevice;
+      mutable std::unique_ptr<MemoryStorage<double, MemorySpace::DEVICE>>
+        d_atomCoordsFlatDevice;
+      mutable std::unique_ptr<MemoryStorage<double, MemorySpace::DEVICE>>
+        d_zDevice;
 #endif
     };
 

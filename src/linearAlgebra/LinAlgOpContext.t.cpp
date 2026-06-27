@@ -76,22 +76,25 @@ namespace dftefe
 #endif
 
 #if defined(DFTEFE_WITH_DEVICE)
-      utils::deviceBlasStatus_t status;
-      d_opType = TensorOpDataType::FP32;
-      d_stream = utils::defaultStream;
-      status   = create(d_deviceBlasHandle);
-      status   = setBlasStream(d_deviceBlasHandle, d_stream);
-
-      d_streams.resize(d_numBlasStreams);
-      d_deviceBlasHandles.resize(d_numBlasStreams);
-
-      for (size_type i = 0; i < d_numBlasStreams; ++i)
+      if constexpr (memorySpace == utils::MemorySpace::DEVICE)
         {
-          utils::deviceError_t streamErr =
-            utils::deviceStreamCreate(d_streams[i]);
-          DEVICE_API_CHECK(streamErr);
-          status = create(d_deviceBlasHandles[i]);
-          status = setBlasStream(d_deviceBlasHandles[i], d_streams[i]);
+          utils::deviceBlasStatus_t status;
+          d_opType = TensorOpDataType::FP32;
+          d_stream = utils::defaultStream;
+          status   = create(d_deviceBlasHandle);
+          status   = setBlasStream(d_deviceBlasHandle, d_stream);
+
+          d_streams.resize(d_numBlasStreams);
+          d_deviceBlasHandles.resize(d_numBlasStreams);
+
+          for (size_type i = 0; i < d_numBlasStreams; ++i)
+            {
+              utils::deviceError_t streamErr =
+                utils::deviceStreamCreate(d_streams[i]);
+              DEVICE_API_CHECK(streamErr);
+              status = create(d_deviceBlasHandles[i]);
+              status = setBlasStream(d_deviceBlasHandles[i], d_streams[i]);
+            }
         }
 #endif
     }

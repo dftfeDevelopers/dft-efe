@@ -14,22 +14,7 @@ namespace dftefe
       , d_z(atomCharges)
       , d_numAtoms(atomCoordinates.size())
       , d_dim(atomCoordinates[0].size())
-    {
-#ifdef DFTEFE_WITH_DEVICE
-      std::vector<double> atomCoordsFlat = utils::flatten(atomCoordinates);
-      d_atomCoordsFlatDevice.resize(atomCoordsFlat.size());
-      d_rcDevice.resize(d_rc.size());
-      d_zDevice.resize(d_z.size());
-      MemoryTransfer<MemorySpace::DEVICE, MemorySpace::HOST>::copy(
-        atomCoordsFlat.size(),
-        d_atomCoordsFlatDevice.data(),
-        atomCoordsFlat.data());
-      MemoryTransfer<MemorySpace::DEVICE, MemorySpace::HOST>::copy(
-        d_rc.size(), d_rcDevice.data(), d_rc.data());
-      MemoryTransfer<MemorySpace::DEVICE, MemorySpace::HOST>::copy(
-        d_z.size(), d_zDevice.data(), d_z.data());
-#endif
-    }
+    {}
 
     SmearChargeDensityFunction::SmearChargeDensityFunction(
       const std::vector<utils::Point> &atomCoordinates,

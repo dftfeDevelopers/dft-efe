@@ -639,7 +639,7 @@ int main(int argc, char** argv)
   adaptiveMesh.createMesh(*triangulationBase); 
     p.registerEnd("Create Mesh");
 
-  utils::printCurrentMemoryUsage(comm, "Create Mesh");
+  utils::printCurrentMemoryUsage<memorySpace>(comm, "Create Mesh");
 
     p.registerStart("Quadrature Rule Creation");
 
@@ -800,7 +800,7 @@ int main(int argc, char** argv)
   rootCout << "Number of quadrature points in wave function adaptive quadrature: "<<nQuad<<"\n";
 
   p.registerEnd("Quadrature Rule Creation");
-    utils::printCurrentMemoryUsage(comm, "Quadrature Rule Creation");
+    utils::printCurrentMemoryUsage<memorySpace>(comm, "Quadrature Rule Creation");
   p.registerStart("Ortho EFE basis manager creation");
 
   // Make orthogonalized EFE basis for all the fields
@@ -929,7 +929,7 @@ int main(int argc, char** argv)
       enrichClassIntfceOrbital, comm);
 
   p.registerEnd("Ortho EFE basis manager creation");
-  utils::printCurrentMemoryUsage(comm, "Ortho EFE basis manager creation");
+  utils::printCurrentMemoryUsage<memorySpace>(comm, "Ortho EFE basis manager creation");
 
   rootCout << "Total Number of dofs electrostatics: " << basisDofHandlerTotalPot->nGlobalNodes() << "\n";
   rootCout << "Total Number of dofs eigensolve: " << basisDofHandlerWaveFn->nGlobalNodes() << "\n";
@@ -963,7 +963,7 @@ int main(int argc, char** argv)
     feBDTotalChargeStiffnessMatrix->evaluateBasisData(quadAttrGaussElectro, basisAttrMap);
 
   p.registerEnd("Electrostatics basis grad datastorage eval");
-  utils::printCurrentMemoryUsage(comm, "Electrostatics basis grad datastorage eval");
+  utils::printCurrentMemoryUsage<memorySpace>(comm, "Electrostatics basis grad datastorage eval");
   p.registerStart("Electrostatics basis bsmear datastorage eval");
 
     basisAttrMap[basis::BasisStorageAttributes::StoreValues] = true;
@@ -1001,7 +1001,7 @@ int main(int argc, char** argv)
   //   feBDNucChargeRhs->evaluateBasisData(quadAttrGaussSubdivided, quadRuleContainerGaussSubdividedBSmear, basisAttrMap);
   // }
   p.registerEnd("Electrostatics basis bsmear datastorage eval");
-  utils::printCurrentMemoryUsage(comm, "Electrostatics basis bsmear datastorage eval");
+  utils::printCurrentMemoryUsage<memorySpace>(comm, "Electrostatics basis bsmear datastorage eval");
   p.registerStart("Electrostatics basis rho datastorage eval");
 
   std::shared_ptr<basis::FEBasisDataStorage<double, Host>> feBDElecChargeRhs = nullptr;
@@ -1018,7 +1018,7 @@ int main(int argc, char** argv)
   feBDElecChargeRhs->evaluateBasisData(quadAttrAdaptive, quadRuleContainerAdaptiveOrbital, basisAttrMap);
 
   p.registerEnd("Electrostatics basis rho datastorage eval");
-  utils::printCurrentMemoryUsage(comm, "Electrostatics basis rho datastorage eval");
+  utils::printCurrentMemoryUsage<memorySpace>(comm, "Electrostatics basis rho datastorage eval");
   p.registerStart("Orbital basis datastorage eval");
 
   basisAttrMap[basis::BasisStorageAttributes::StoreValues] = true;
@@ -1086,7 +1086,7 @@ int main(int argc, char** argv)
                                                       linAlgOpContext,
                                                       true); 
 
-  utils::printCurrentMemoryUsage(comm, "Hamiltonian Basis overlap");
+  utils::printCurrentMemoryUsage<memorySpace>(comm, "Hamiltonian Basis overlap");
 
   //   quadrature::QuadratureRuleAttributes quadAttrGaussEigen(quadrature::QuadratureFamily::GAUSS,true,feOrderEigen + 1);
 
@@ -1126,7 +1126,7 @@ int main(int argc, char** argv)
                                                         true);  
 
     p.registerEnd("Hamiltonian Basis overlap eval");
-    utils::printCurrentMemoryUsage(comm, "Hamiltonian Basis overlap , overlap for inv");
+    utils::printCurrentMemoryUsage<memorySpace>(comm, "Hamiltonian Basis overlap , overlap for inv");
 
     p.registerStart("Hamiltonian Basis overlap inverse eval");
 
@@ -1145,7 +1145,7 @@ int main(int argc, char** argv)
                                                     linAlgOpContext);    
 
   p.registerEnd("Hamiltonian Basis overlap inverse eval");
-  utils::printCurrentMemoryUsage(comm, "Hamiltonian Basis overlap and inv");
+  utils::printCurrentMemoryUsage<memorySpace>(comm, "Hamiltonian Basis overlap and inv");
 
   const utils::ScalarSpatialFunctionReal *externalPotentialFunction = new 
     utils::PointChargePotentialFunction(atomCoordinatesVec, atomChargesVec);
@@ -1158,7 +1158,7 @@ int main(int argc, char** argv)
                     memorySpace,
                     dim>* dftefeSolve = nullptr;
 
-  utils::printCurrentMemoryUsage(comm, "Before Kohn Sham DFT Class Init");
+  utils::printCurrentMemoryUsage<memorySpace>(comm, "Before Kohn Sham DFT Class Init");
                                       
   if(isNumericalNuclearSolve && !isDeltaRhoPoissonSolve)
   {
@@ -1306,7 +1306,7 @@ int main(int argc, char** argv)
     utils::throwException(false, "Option not there for KohnShamDFT class creation.");
   }
   p.registerEnd("Kohn Sham DFT Class Init"); 
-  utils::printCurrentMemoryUsage(comm, "After Kohn Sham DFT Class Init");
+  utils::printCurrentMemoryUsage<memorySpace>(comm, "After Kohn Sham DFT Class Init");
   p.print();
 
   pTot.registerEnd("Initilization");   

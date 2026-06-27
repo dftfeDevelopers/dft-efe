@@ -256,25 +256,6 @@ namespace dftefe
 
       template <utils::MemorySpace memorySpace>
       inline const double *
-      getJxWPtr() const
-      {
-        if constexpr (memorySpace == utils::MemorySpace::HOST)
-          {
-            return d_JxW.data();
-          }
-        else
-          {
-#ifdef DFTEFE_WITH_DEVICE
-            return d_JxWDevice.data();
-#else
-            static_assert(memorySpace == utils::MemorySpace::HOST,
-                          "Device memory not available");
-#endif
-          }
-      }
-
-      template <utils::MemorySpace memorySpace>
-      inline const double *
       getRealPointsPtr() const
       {
         if constexpr (memorySpace == utils::MemorySpace::HOST)
@@ -284,7 +265,14 @@ namespace dftefe
         else
           {
 #ifdef DFTEFE_WITH_DEVICE
-            return d_realPointsDevice.data();
+            if (d_realPointsDevice == nullptr)
+              {
+                d_realPointsDevice = std::make_unique<
+                  utils::MemoryStorage<double, utils::MemorySpace::DEVICE>>(
+                  d_realPointsHost.size());
+                d_realPointsDevice->copyFrom(d_realPointsHost);
+              }
+            return d_realPointsDevice->data();
 #else
             static_assert(memorySpace == utils::MemorySpace::HOST,
                           "Device memory not available");
@@ -308,9 +296,9 @@ namespace dftefe
       const basis::CellMappingBase &                     d_cellMapping;
 
 #ifdef DFTEFE_WITH_DEVICE
-      utils::MemoryStorage<double, utils::MemorySpace::DEVICE>
+      mutable std::unique_ptr<
+        utils::MemoryStorage<double, utils::MemorySpace::DEVICE>>
         d_realPointsDevice;
-      utils::MemoryStorage<double, utils::MemorySpace::DEVICE> d_JxWDevice;
 #endif
     };
   } // end of namespace quadrature

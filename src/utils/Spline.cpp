@@ -116,6 +116,9 @@ namespace dftefe
       , d_right_value(0.0)
       , d_made_monotonic(false)
       , d_isSubdivPowerLawGrid(false)
+#ifdef DFTEFE_WITH_DEVICE
+      , d_deviceSynced(false)
+#endif
     {
       ;
     }
@@ -135,6 +138,9 @@ namespace dftefe
       , d_right_value(right_value)
       , d_made_monotonic(false) // false correct here: make_monotonic() sets it
       , d_isSubdivPowerLawGrid(isSubdivPowerLawGrid)
+#ifdef DFTEFE_WITH_DEVICE
+      , d_deviceSynced(false)
+#endif
     {
       this->set_points(X, Y, d_type);
       if (d_made_monotonic)
@@ -193,24 +199,29 @@ namespace dftefe
     //-------------------------------------------------------------------------
 #ifdef DFTEFE_WITH_DEVICE
     void
-    Spline::syncToDevice()
+    Spline::syncToDevice() const
     {
       size_type n = d_x.size();
-      d_x_device.resize(n);
-      d_y_device.resize(n);
-      d_b_device.resize(n);
-      d_c_device.resize(n);
-      d_d_device.resize(n);
+      d_x_device =
+        std::make_unique<MemoryStorage<double, MemorySpace::DEVICE>>(n);
+      d_y_device =
+        std::make_unique<MemoryStorage<double, MemorySpace::DEVICE>>(n);
+      d_b_device =
+        std::make_unique<MemoryStorage<double, MemorySpace::DEVICE>>(n);
+      d_c_device =
+        std::make_unique<MemoryStorage<double, MemorySpace::DEVICE>>(n);
+      d_d_device =
+        std::make_unique<MemoryStorage<double, MemorySpace::DEVICE>>(n);
       MemoryTransfer<MemorySpace::DEVICE, MemorySpace::HOST>::copy(
-        n, d_x_device.data(), d_x.data());
+        n, d_x_device->data(), d_x.data());
       MemoryTransfer<MemorySpace::DEVICE, MemorySpace::HOST>::copy(
-        n, d_y_device.data(), d_y.data());
+        n, d_y_device->data(), d_y.data());
       MemoryTransfer<MemorySpace::DEVICE, MemorySpace::HOST>::copy(
-        n, d_b_device.data(), d_b.data());
+        n, d_b_device->data(), d_b.data());
       MemoryTransfer<MemorySpace::DEVICE, MemorySpace::HOST>::copy(
-        n, d_c_device.data(), d_c.data());
+        n, d_c_device->data(), d_c.data());
       MemoryTransfer<MemorySpace::DEVICE, MemorySpace::HOST>::copy(
-        n, d_d_device.data(), d_d.data());
+        n, d_d_device->data(), d_d.data());
     }
 #endif
 
@@ -395,7 +406,7 @@ namespace dftefe
       // for left extrapolation coefficients
       d_c0 = (d_left == first_deriv) ? 0.0 : d_c[0];
 #ifdef DFTEFE_WITH_DEVICE
-      syncToDevice();
+      d_deviceSynced = false;
 #endif
     }
 
@@ -472,7 +483,7 @@ namespace dftefe
           set_coeffs_from_b();
           d_made_monotonic = true;
 #ifdef DFTEFE_WITH_DEVICE
-          syncToDevice();
+          d_deviceSynced = false;
 #endif
         }
 

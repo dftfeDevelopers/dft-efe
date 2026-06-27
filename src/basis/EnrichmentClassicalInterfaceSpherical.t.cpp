@@ -302,7 +302,7 @@ namespace dftefe
 
       utils::MemoryStorage<double, memorySpace> scratch(
         maxScratchSize > 0 ? maxScratchSize : 1);
-      utils::printCurrentMemoryUsage(
+      utils::printCurrentMemoryUsage<memorySpace>(
         mpiComm, "ECI : After orthogonalization scratch alloc");
 
       rootCout << "Using enrichBatchSize = " << d_enrichBatchSize << "\n";
@@ -315,15 +315,15 @@ namespace dftefe
           linAlgOpContext,
           d_enrichBatchSize,
           ValueTypeBasisData());
-      utils::printCurrentMemoryUsage(mpiComm,
-                                     "ECI : After basisInterfaceCoeff alloc");
+      utils::printCurrentMemoryUsage<memorySpace>(
+        mpiComm, "ECI : After basisInterfaceCoeff alloc");
 
       quadrature::QuadratureValuesContainer<ValueTypeBasisData, memorySpace>
         quadValuesEnrichmentFunction(
           cfeBasisDataStorageRhs->getQuadratureRuleContainer(),
           d_enrichBatchSize,
           (ValueTypeBasisData)0.0);
-      utils::printCurrentMemoryUsage(
+      utils::printCurrentMemoryUsage<memorySpace>(
         mpiComm, "ECI : After quadValuesEnrichmentFunction alloc");
 
       profiler.registerEnd("Pratition and Ortho Init");
