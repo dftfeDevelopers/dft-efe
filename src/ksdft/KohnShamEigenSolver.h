@@ -36,6 +36,7 @@
 #include <memory>
 #include <utils/ConditionalOStream.h>
 #include <utils/Profiler.h>
+#include <linearAlgebra/MultivectorScratch.h>
 
 namespace dftefe
 {
@@ -94,8 +95,11 @@ namespace dftefe
         const double    eigenSolveResidualTolerance,
         const size_type maxChebyshevFilterPass,
         const size_type numWantedEigenvalues,
-        linearAlgebra::Vector<ValueTypeOperand, memorySpace> &lanczosGuess,
-        const linearAlgebra::ElpaScalapackManager &           elpaScala,
+        std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
+          mpiPatternP2P,
+        std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
+                                                   linAlgOpContext,
+        const linearAlgebra::ElpaScalapackManager &elpaScala,
         bool             isResidualChebyshevFilter = true,
         const size_type  waveFunctionBatchSize     = 0,
         const OpContext &MLanczos =
@@ -109,7 +113,8 @@ namespace dftefe
         const bool                           isGHEP = true,
         linearAlgebra::OrthogonalizationType orthoType =
           linearAlgebra::OrthogonalizationType::CHOLESKY_GRAMSCHMIDT,
-        bool storeIntermediateSubspaces = false);
+        bool storeIntermediateSubspaces  = false,
+        bool useSameScratchInEigenSolver = true);
 
       /**
        *@brief Default Destructor
@@ -118,16 +123,18 @@ namespace dftefe
       ~KohnShamEigenSolver() = default;
 
       void
-      reinitBasis(
-        linearAlgebra::Vector<ValueTypeOperand, memorySpace> &lanczosGuess,
-        const OpContext &                                     MLanczos =
-          linearAlgebra::IdentityOperatorContext<ValueTypeOperator,
-                                                 ValueTypeOperand,
-                                                 memorySpace>(),
-        const OpContext &MInvLanczos =
-          linearAlgebra::IdentityOperatorContext<ValueTypeOperator,
-                                                 ValueTypeOperand,
-                                                 memorySpace>());
+      reinitBasis(std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
+                    mpiPatternP2P,
+                  std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
+                                   linAlgOpContext,
+                  const OpContext &MLanczos =
+                    linearAlgebra::IdentityOperatorContext<ValueTypeOperator,
+                                                           ValueTypeOperand,
+                                                           memorySpace>(),
+                  const OpContext &MInvLanczos =
+                    linearAlgebra::IdentityOperatorContext<ValueTypeOperator,
+                                                           ValueTypeOperand,
+                                                           memorySpace>());
 
       void
       reinitBounds(double wantedSpectrumLowerBound,
@@ -193,20 +200,23 @@ namespace dftefe
       size_type       d_waveFunctionBatchSize;
       linearAlgebra::MultiVector<ValueTypeOperand, memorySpace>
         *d_waveFunctionSubspaceGuess;
-      linearAlgebra::Vector<ValueTypeOperand, memorySpace> *d_lanczosGuess;
-      const OpContext *                                     d_MLanczos;
-      const OpContext *                                     d_MInvLanczos;
-      std::vector<RealType>                                 d_fracOccupancy;
-      std::vector<RealType>                                 d_eigSolveResNorm;
-      RealType                                              d_fermiEnergy;
-      bool                                                  d_isSolved;
-      const size_type                                       d_numElectrons;
-      utils::ConditionalOStream                             d_rootCout;
-      double d_wantedSpectrumLowerBound;
-      double d_wantedSpectrumUpperBound;
-      bool   d_isBoundKnown;
-      double d_chebyPolyScalingFactor;
-      bool   d_setChebyPolDegExternally;
+      std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
+        d_mpiPatternP2P;
+      std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
+                                d_linAlgOpContext;
+      const OpContext *         d_MLanczos;
+      const OpContext *         d_MInvLanczos;
+      std::vector<RealType>     d_fracOccupancy;
+      std::vector<RealType>     d_eigSolveResNorm;
+      RealType                  d_fermiEnergy;
+      bool                      d_isSolved;
+      const size_type           d_numElectrons;
+      utils::ConditionalOStream d_rootCout;
+      double                    d_wantedSpectrumLowerBound;
+      double                    d_wantedSpectrumUpperBound;
+      bool                      d_isBoundKnown;
+      double                    d_chebyPolyScalingFactor;
+      bool                      d_setChebyPolDegExternally;
 
       std::shared_ptr<
         linearAlgebra::ChebyshevFilteredEigenSolver<ValueTypeOperator,
@@ -217,7 +227,7 @@ namespace dftefe
       linearAlgebra::MultiVector<ValueType, memorySpace>
         *d_filteredSubspaceOrtho;
       linearAlgebra::MultiVector<ValueType, memorySpace> *d_filteredSubspace;
-      utils::Profiler                                     d_p, d_pTotal;
+      utils::Profiler<memorySpace>                        d_p, d_pTotal;
       bool       d_isResidualChebyFilter;
       const bool d_storeIntermediateSubspaces;
 
@@ -231,6 +241,10 @@ namespace dftefe
       linearAlgebra::OrthogonalizationType       d_orthoType;
       const linearAlgebra::ElpaScalapackManager *d_elpaScala;
       bool                                       d_isGHEP;
+      bool                                       d_useSameScratch;
+
+      std::shared_ptr<linearAlgebra::MultivectorScratch<ValueType, memorySpace>>
+        d_scratch;
 
     }; // end of class KohnShamEigenSolver
   }    // namespace ksdft

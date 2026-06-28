@@ -30,6 +30,7 @@
 #include <string>
 #include <utils/MathConstants.h>
 #include <atoms/AtomTCIASpline.h>
+#include <utils/MemorySpaceType.h>
 #include <linearAlgebra/LinearAlgebraTypes.h>
 
 namespace dftefe
@@ -141,6 +142,7 @@ namespace dftefe
       static const double DENSITY_ZERO_TOL;
     }; // end of class Constants
 
+    template <utils::MemorySpace memorySpace>
     class KSDFTDefaults
     {
     public:
@@ -149,6 +151,7 @@ namespace dftefe
       //
       static const size_type MAX_WAVEFN_BATCH_SIZE;
       static const size_type MAX_KINENG_WAVEFN_BATCH_SIZE;
+      // 1 for HOST, 50 for DEVICE
       static const size_type CELL_BATCH_SIZE;
       static const size_type CELL_BATCH_SIZE_GRAD_EVAL;
       static const size_type MAX_DENSCOMP_WAVEFN_BATCH_SIZE;
@@ -171,6 +174,16 @@ namespace dftefe
       static const atoms::TCIADataParams TCIA_PARAMS;
     }; // end of class AtomTCIADataDefaults
 
+    class MaxSizeDefaults
+    {
+    public:
+      static const size_type SIZE_TYPE_MAX;
+    }; // end of class MaxSizeDefaults
+
   } // end of namespace ksdft
+
+  static constexpr utils::MemorySpace memorySpaceHost =
+    utils::MemorySpace::HOST;
+
 } // end of namespace dftefe
 #endif // dftefeDFTDefaults_h

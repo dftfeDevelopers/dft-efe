@@ -6,8 +6,7 @@ namespace dftefe
 {
   namespace utils
   {
-    ExpModX::ExpModX(const unsigned int component,
-                     const double       exponent /*= 1.0*/)
+    ExpModX::ExpModX(const size_type component, const double exponent /*= 1.0*/)
       : d_exponent(exponent)
       , d_component(component)
     {}
@@ -23,7 +22,7 @@ namespace dftefe
     {
       const size_type     N = points.size();
       std::vector<double> returnValue(N, 0.0);
-      for (unsigned int i = 0; i < N; ++i)
+      for (size_type i = 0; i < N; ++i)
         returnValue[i] =
           std::exp(d_exponent * std::abs(points[i][d_component]));
 

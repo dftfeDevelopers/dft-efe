@@ -100,7 +100,7 @@ namespace dftefe
 
             else
               {
-                for (unsigned int i = 0; i < nRanges; ++i)
+                for (size_type i = 0; i < nRanges; ++i)
                   {
                     const size_type rangeSize =
                       ranges[i].second - ranges[i].first;
@@ -164,7 +164,7 @@ namespace dftefe
 
             if (ignoreEmptyRanges == false)
               {
-                for (unsigned int i = 0; i < nRanges; ++i)
+                for (size_type i = 0; i < nRanges; ++i)
                   {
                     idAndRanges.push_back(std::make_pair(i, ranges[i]));
                   }
@@ -172,7 +172,7 @@ namespace dftefe
 
             else
               {
-                for (unsigned int i = 0; i < nRanges; ++i)
+                for (size_type i = 0; i < nRanges; ++i)
                   {
                     const size_type rangeSize =
                       ranges[i].second - ranges[i].first;
@@ -206,7 +206,7 @@ namespace dftefe
             const size_type nNonEmptyRanges = idAndRanges.size();
             rangesSorted.resize(nNonEmptyRanges);
             indexPermutation.resize(nNonEmptyRanges);
-            for (unsigned int i = 0; i < nNonEmptyRanges; ++i)
+            for (size_type i = 0; i < nNonEmptyRanges; ++i)
               {
                 indexPermutation[i] = idAndRanges[i].first;
                 rangesSorted[i]     = idAndRanges[i].second;
@@ -241,7 +241,7 @@ namespace dftefe
               &ranges)
           {
             const size_type N = ranges.size();
-            for (unsigned int i = 1; i < N; ++i)
+            for (size_type i = 1; i < N; ++i)
               {
                 if (ranges[i - 1].second != ranges[i].first)
                   return false;
@@ -259,7 +259,7 @@ namespace dftefe
           {
             const size_type N           = v.size();
             bool            returnValue = true;
-            for (unsigned int i = 1; i < N; ++i)
+            for (size_type i = 1; i < N; ++i)
               {
                 if ((v[i] - 1) != v[i - 1])
                   return false;
@@ -400,11 +400,11 @@ namespace dftefe
               nRanges,
               std::vector<std::pair<global_size_type, global_size_type>>(
                 nprocs));
-            for (unsigned int iRange = 0; iRange < nRanges; ++iRange)
+            for (size_type iRange = 0; iRange < nRanges; ++iRange)
               {
                 std::vector<int> recvCounts(nprocs, 2);
                 std::vector<int> displs(nprocs, 0);
-                for (unsigned int i = 0; i < nprocs; ++i)
+                for (size_type i = 0; i < nprocs; ++i)
                   displs[i] = 2 * i;
 
                 std::vector<global_size_type> ownedRanges = {
@@ -414,14 +414,15 @@ namespace dftefe
                 std::vector<global_size_type> ownedRangesAcrossProcs(2 *
                                                                      nprocs);
 
-                MPIAllgatherv<MemorySpace::HOST>(&ownedRanges[0],
-                                                 2,
-                                                 MPIUnsignedLong,
-                                                 &ownedRangesAcrossProcs[0],
-                                                 &recvCounts[0],
-                                                 &displs[0],
-                                                 MPIUnsignedLong,
-                                                 mpiComm);
+                MPIAllgatherv<MemorySpace::HOST>(
+                  &ownedRanges[0],
+                  2,
+                  Types<global_size_type>::getMPIDatatype(),
+                  &ownedRangesAcrossProcs[0],
+                  &recvCounts[0],
+                  &displs[0],
+                  Types<global_size_type>::getMPIDatatype(),
+                  mpiComm);
 
                 for (size_type iProc = 0; iProc < nprocs; ++iProc)
                   {
@@ -494,7 +495,7 @@ namespace dftefe
 
             const size_type numGhosts = ghostIndices.size();
             ghostIndicesRangeId.resize(numGhosts);
-            for (unsigned int iGhost = 0; iGhost < numGhosts; ++iGhost)
+            for (size_type iGhost = 0; iGhost < numGhosts; ++iGhost)
               {
                 bool      found   = false;
                 size_type rangeId = 0;
@@ -557,7 +558,7 @@ namespace dftefe
                               iRangesSorted,
                               iRangesProcIdPermutation);
 
-                for (unsigned int iGhost = 0; iGhost < numGhosts; ++iGhost)
+                for (size_type iGhost = 0; iGhost < numGhosts; ++iGhost)
                   {
                     if (iRange == ghostIndicesRangeId[iGhost])
                       {
@@ -609,7 +610,7 @@ namespace dftefe
           {
             size_type                  numRanges = ranges.size() / 2;
             std::vector<RangeMetaData> rangeMetaDataVec(0);
-            for (unsigned int i = 0; i < numRanges; ++i)
+            for (size_type i = 0; i < numRanges; ++i)
               {
                 RangeMetaData left;
                 left.Id           = ranges[2 * i];
@@ -635,7 +636,7 @@ namespace dftefe
             int                    currentOpen = -1;
             bool                   added       = false;
             std::vector<size_type> returnValue(0);
-            for (unsigned int i = 0; i < rangeMetaDataVec.size(); ++i)
+            for (size_type i = 0; i < rangeMetaDataVec.size(); ++i)
               {
                 size_type rangeId = rangeMetaDataVec[i].rangeId;
                 if (rangeMetaDataVec[i].isRangeStart)
@@ -952,7 +953,7 @@ namespace dftefe
 
         d_numLocallyOwnedIndices = 0;
         d_locallyOwnedRangesCumulativePairs.resize(d_nGlobalRanges);
-        for (unsigned int i = 0; i < d_nGlobalRanges; ++i)
+        for (size_type i = 0; i < d_nGlobalRanges; ++i)
           {
             const size_type start = d_numLocallyOwnedIndices;
 
@@ -992,7 +993,7 @@ namespace dftefe
         d_numGhostIndices = d_ghostIndices.size();
 
         d_nGlobalIndices = 0;
-        for (unsigned int i = 0; i < d_globalRanges.size(); ++i)
+        for (size_type i = 0; i < d_globalRanges.size(); ++i)
           {
             d_nGlobalIndices +=
               d_globalRanges[i].second - d_globalRanges[i].first;
@@ -1021,7 +1022,7 @@ namespace dftefe
 
         std::vector<size_type> flattenedLocalGhostIndicesTmp(0);
         auto                   it = ghostProcIdToLocalGhostIndices.begin();
-        unsigned int           iGhostProc = 0;
+        size_type              iGhostProc = 0;
         size_type              offset     = 0;
         for (; it != ghostProcIdToLocalGhostIndices.end(); ++it)
           {
@@ -1069,7 +1070,7 @@ namespace dftefe
                               &flattenedLocalGhostIndicesTmp[0]);
 
 
-        // for (unsigned int iProc = 0; iProc < d_nprocs; iProc++)
+        // for (size_type iProc = 0; iProc < d_nprocs; iProc++)
         //   {
         //     if (iProc == d_myRank)
         //       {
@@ -1122,7 +1123,7 @@ namespace dftefe
         std::vector<MPIRequest> recvRequests(d_numTargetProcs);
         std::vector<MPIStatus>  recvStatuses(d_numTargetProcs);
         const int tag = static_cast<int>(MPITags::MPI_P2P_PATTERN_TAG);
-        for (unsigned int iGhostProc = 0; iGhostProc < d_numGhostProcs;
+        for (size_type iGhostProc = 0; iGhostProc < d_numGhostProcs;
              ++iGhostProc)
           {
             // const size_type numGhostIndicesInProc =
@@ -1132,7 +1133,7 @@ namespace dftefe
               &d_numGhostIndicesInGhostProcs[iGhostProc]
               /*&numGhostIndicesInProc*/,
               1,
-              MPIUnsigned,
+              Types<size_type>::getMPIDatatype(),
               ghostProcId,
               tag,
               d_mpiComm,
@@ -1143,13 +1144,13 @@ namespace dftefe
             throwException(err == MPISuccess, errMsg);
           }
 
-        for (unsigned int iTarget = 0; iTarget < d_numTargetProcs; ++iTarget)
+        for (size_type iTarget = 0; iTarget < d_numTargetProcs; ++iTarget)
           {
             const int targetProcId = d_targetProcIds[iTarget];
             err                    = MPIIrecv<MemorySpace::HOST>(
               &d_numOwnedIndicesForTargetProcs[iTarget],
               1,
-              MPIUnsigned,
+              Types<size_type>::getMPIDatatype(),
               targetProcId,
               tag,
               d_mpiComm,
@@ -1194,18 +1195,17 @@ namespace dftefe
         std::vector<size_type> localIndicesForGhostProc(d_numGhostIndices, 0);
 
         size_type startIndex = 0;
-        for (unsigned int iGhostProc = 0; iGhostProc < d_numGhostProcs;
+        for (size_type iGhostProc = 0; iGhostProc < d_numGhostProcs;
              ++iGhostProc)
           {
-            const int numGhostIndicesInProc =
+            const size_type numGhostIndicesInProc =
               d_numGhostIndicesInGhostProcs[iGhostProc];
             const int ghostProcId = d_ghostProcIds[iGhostProc];
 
             // We need to send what is the local index in the ghost processor
             // (i.e., the processor that owns the current processor's ghost
             // index)
-            for (unsigned int iIndex = 0; iIndex < numGhostIndicesInProc;
-                 ++iIndex)
+            for (size_type iIndex = 0; iIndex < numGhostIndicesInProc; ++iIndex)
               {
                 const size_type ghostLocalIndex =
                   flattenedLocalGhostIndicesTmp[startIndex + iIndex];
@@ -1237,7 +1237,7 @@ namespace dftefe
             err =
               MPIIsend<MemorySpace::HOST>(&localIndicesForGhostProc[startIndex],
                                           numGhostIndicesInProc,
-                                          MPIUnsigned,
+                                          Types<size_type>::getMPIDatatype(),
                                           ghostProcId,
                                           tag,
                                           d_mpiComm,
@@ -1250,15 +1250,15 @@ namespace dftefe
           }
 
         startIndex = 0;
-        for (unsigned int iTarget = 0; iTarget < d_numTargetProcs; ++iTarget)
+        for (size_type iTarget = 0; iTarget < d_numTargetProcs; ++iTarget)
           {
-            const int targetProcId = d_targetProcIds[iTarget];
-            const int numOwnedIndicesForTarget =
+            const int       targetProcId = d_targetProcIds[iTarget];
+            const size_type numOwnedIndicesForTarget =
               d_numOwnedIndicesForTargetProcs[iTarget];
             err = MPIIrecv<MemorySpace::HOST>(
               &flattenedLocalTargetIndicesTmp[startIndex],
               numOwnedIndicesForTarget,
-              MPIUnsigned,
+              Types<size_type>::getMPIDatatype(),
               targetProcId,
               tag,
               d_mpiComm,
@@ -1311,7 +1311,7 @@ namespace dftefe
                               d_flattenedLocalTargetIndices.begin(),
                               &flattenedLocalTargetIndicesTmp[0]);
 
-        // for (unsigned int iProc = 0; iProc < d_nprocs; iProc++)
+        // for (size_type iProc = 0; iProc < d_nprocs; iProc++)
         //   {
         //     if (iProc == d_myRank)
         //       {
@@ -1449,7 +1449,7 @@ namespace dftefe
 
         d_numLocallyOwnedIndices = 0;
         d_locallyOwnedRangesCumulativePairs.resize(d_nGlobalRanges);
-        for (unsigned int i = 0; i < d_nGlobalRanges; ++i)
+        for (size_type i = 0; i < d_nGlobalRanges; ++i)
           {
             const size_type start = d_numLocallyOwnedIndices;
 
@@ -1471,7 +1471,7 @@ namespace dftefe
 
         d_numGhostIndices = 0;
         d_nGlobalIndices  = 0;
-        for (unsigned int i = 0; i < d_globalRanges.size(); ++i)
+        for (size_type i = 0; i < d_globalRanges.size(); ++i)
           {
             d_nGlobalIndices +=
               d_globalRanges[i].second - d_globalRanges[i].first;
@@ -1592,7 +1592,7 @@ namespace dftefe
 
         d_numLocallyOwnedIndices = 0;
         d_locallyOwnedRangesCumulativePairs.resize(d_nGlobalRanges);
-        for (unsigned int i = 0; i < d_nGlobalRanges; ++i)
+        for (size_type i = 0; i < d_nGlobalRanges; ++i)
           {
             const size_type start = d_numLocallyOwnedIndices;
 
@@ -1614,7 +1614,7 @@ namespace dftefe
 
         d_numGhostIndices = 0;
         d_nGlobalIndices  = 0;
-        for (unsigned int i = 0; i < d_globalRanges.size(); ++i)
+        for (size_type i = 0; i < d_globalRanges.size(); ++i)
           {
             d_nGlobalIndices +=
               d_globalRanges[i].second - d_globalRanges[i].first;

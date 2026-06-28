@@ -43,6 +43,10 @@ namespace dftefe
     {
     public:
       /**
+       * Declare the type for container size.
+       */
+      using size_type_scalapack = unsigned int;
+      /**
        * Constructor for a rectangular matrix with @p n_rows and @p n_cols
        * and distributed using the grid @p process_grid.
        *
@@ -51,11 +55,11 @@ namespace dftefe
        * In general, it is recommended to use powers of $2$, e.g. $16,32,64,
        * \dots$.
        */
-      ScaLAPACKMatrix(const size_type                           n_rows,
-                      const size_type                           n_columns,
+      ScaLAPACKMatrix(const size_type_scalapack                 n_rows,
+                      const size_type_scalapack                 n_columns,
                       const std::shared_ptr<const ProcessGrid> &process_grid,
-                      const size_type               row_block_size    = 32,
-                      const size_type               column_block_size = 32,
+                      const size_type_scalapack     row_block_size    = 32,
+                      const size_type_scalapack     column_block_size = 32,
                       const LAPACKSupport::Property property =
                         LAPACKSupport::Property::general);
 
@@ -68,9 +72,9 @@ namespace dftefe
        * In general, it is recommended to use powers of $2$, e.g. $16,32,64,
        * \dots$.
        */
-      ScaLAPACKMatrix(const size_type                           size,
+      ScaLAPACKMatrix(const size_type_scalapack                 size,
                       const std::shared_ptr<const ProcessGrid> &process_grid,
-                      const size_type                           block_size = 32,
+                      const size_type_scalapack                 block_size = 32,
                       const LAPACKSupport::Property             property =
                         LAPACKSupport::Property::hermitian);
 
@@ -89,11 +93,11 @@ namespace dftefe
        * \dots$.
        */
       void
-      reinit(const size_type                           n_rows,
-             const size_type                           n_columns,
+      reinit(const size_type_scalapack                 n_rows,
+             const size_type_scalapack                 n_columns,
              const std::shared_ptr<const ProcessGrid> &process_grid,
-             const size_type                           row_block_size    = 32,
-             const size_type                           column_block_size = 32,
+             const size_type_scalapack                 row_block_size    = 32,
+             const size_type_scalapack                 column_block_size = 32,
              const LAPACKSupport::Property             property =
                LAPACKSupport::Property::general);
 
@@ -106,9 +110,9 @@ namespace dftefe
        * \dots$.
        */
       void
-      reinit(const size_type                           size,
+      reinit(const size_type_scalapack                 size,
              const std::shared_ptr<const ProcessGrid> &process_grid,
-             const size_type                           block_size = 32,
+             const size_type_scalapack                 block_size = 32,
              const LAPACKSupport::Property             property =
                LAPACKSupport::Property::hermitian);
 
@@ -459,13 +463,13 @@ namespace dftefe
       /**
        * Number of rows of the $M \times N$ matrix.
        */
-      size_type
+      size_type_scalapack
       m() const;
 
       /**
        * Number of columns of the $M \times N$ matrix.
        */
-      size_type
+      size_type_scalapack
       n() const;
 
       /**

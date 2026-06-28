@@ -36,6 +36,7 @@
 #include <utils/Point.h>
 #include <atoms/Defaults.h>
 #include <atoms/SphericalHarmonicFunctions.h>
+#include <utils/Exceptions.h>
 
 namespace dftefe
 {
@@ -112,6 +113,72 @@ namespace dftefe
 
       double
       getSmoothness() const override;
+
+      void
+      getValue(const size_type numPoints,
+               const double *  points,
+               const double *  origin,
+               double *        out) override
+      {
+        utils::throwException(
+          false, "getValue not implemented for SphericalDataMixed.");
+      }
+
+      void
+      getGradientValue(const size_type numPoints,
+                       const double *  points,
+                       const double *  origin,
+                       double *        out) override
+      {
+        utils::throwException(
+          false, "getGradientValue not implemented for SphericalDataMixed.");
+      }
+
+      void
+      getHessianValue(const size_type numPoints,
+                      const double *  points,
+                      const double *  origin,
+                      double *        out) override
+      {
+        utils::throwException(
+          false, "getHessianValue not implemented for SphericalDataMixed.");
+      }
+
+#ifdef DFTEFE_WITH_DEVICE
+      void
+      getValueDevice(
+        const size_type       numPoints,
+        const double *        points,
+        const double *        origin,
+        double *              out,
+        utils::deviceStream_t streamId = utils::defaultStream) override;
+
+      void
+      getGradientValueDevice(
+        const size_type       numPoints,
+        const double *        points,
+        const double *        origin,
+        double *              out,
+        utils::deviceStream_t streamId = utils::defaultStream) override
+      {
+        utils::throwException(false,
+                              "getGradientValueDevice not implemented for "
+                              "SphericalDataMixed.");
+      }
+
+      void
+      getHessianValueDevice(
+        const size_type       numPoints,
+        const double *        points,
+        const double *        origin,
+        double *              out,
+        utils::deviceStream_t streamId = utils::defaultStream) override
+      {
+        utils::throwException(false,
+                              "getHessianValueDevice not implemented for "
+                              "SphericalDataMixed.");
+      }
+#endif
 
     private:
       std::vector<int>                     d_qNumbers;

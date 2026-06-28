@@ -57,6 +57,29 @@ namespace dftefe
              const size_type                           ldc,
              LinAlgOpContext<memorySpace> &            context);
 
+        template <typename ValueType1,
+                  typename ValueType2,
+                  dftefe::utils::MemorySpace memorySpace>
+        void
+        gemmStridedVarBatched(const size_type                           numMats,
+                              const char *                              transA,
+                              const char *                              transB,
+                              const size_type *                         stridea,
+                              const size_type *                         strideb,
+                              const size_type *                         stridec,
+                              const size_type *                         m,
+                              const size_type *                         n,
+                              const size_type *                         k,
+                              const scalar_type<ValueType1, ValueType2> alpha,
+                              const ValueType1 *                        dA,
+                              const size_type *                         ldda,
+                              const ValueType2 *                        dB,
+                              const size_type *                         lddb,
+                              const scalar_type<ValueType1, ValueType2> beta,
+                              scalar_type<ValueType1, ValueType2> *     dC,
+                              const size_type *                         lddc,
+                              LinAlgOpContext<memorySpace> &context);
+
         template <typename ValueType, typename utils::MemorySpace memorySpace>
         real_type<ValueType>
         asum(const size_type               n,
@@ -83,54 +106,16 @@ namespace dftefe
              const size_type                           incy,
              LinAlgOpContext<memorySpace> &            context);
 
-#if defined(DFTEFE_WITH_DEVICE)
-
-        enum class tensorOpDataType
-        {
-          fp32,
-          tf32,
-          bf16,
-          fp16
-        };
-
-        template <typename ValueType1, typename ValueType2>
-        static void
-        copyValueType1ArrToValueType2ArrDeviceCall(
-          const size_type       size,
-          const ValueType1 *    valueType1Arr,
-          ValueType2 *          valueType2Arr,
-          utils::deviceStream_t streamId = utils::defaultStream);
-
-        utils::deviceBlasHandle_t &
-        getDeviceBlasHandle();
-
-        void
-        setTensorOpDataType(tensorOpDataType opType)
-        {
-          d_opType = opType;
-        }
-
-        static utils::deviceBlasStatus_t
-        setStream(utils::deviceStream_t streamId);
-
-        inline static utils::deviceBlasHandle_t d_deviceBlasHandle;
-        inline static utils::deviceStream_t     d_streamId;
-
-#  ifdef DFTEFE_WITH_DEVICE_AMD
-        void
-        initialize();
-#  endif
-
-        /// storage for deviceblas handle
-        tensorOpDataType d_opType;
-
-        utils::deviceBlasStatus_t
-        create();
-
-        utils::deviceBlasStatus_t
-        destroy();
-
-#endif
+        template <typename ValueType1,
+                  typename ValueType2,
+                  typename utils::MemorySpace memorySpace>
+        scalar_type<ValueType1, ValueType2>
+        dot(const size_type               n,
+            const ValueType1 *            x,
+            const size_type               incx,
+            const ValueType2 *            y,
+            const size_type               incy,
+            LinAlgOpContext<memorySpace> &context);
 
       } // namespace blasWrapper
     }   // namespace blasLapack

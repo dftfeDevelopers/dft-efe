@@ -630,7 +630,8 @@ namespace dftefe
          * position of the ghost index in d_ghostIndices.
          * This is done to use size_type which is unsigned int instead of
          * global_size_type which is long unsigned it. This helps in reducing
-         * the volume of data transfered during MPI calls.
+         * the volume of data transfered during MPI calls. (Deprecated now using
+         * uint64_t)
          */
         SizeTypeVector d_flattenedLocalGhostIndices;
 

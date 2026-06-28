@@ -1,3 +1,4 @@
+
 /******************************************************************************
  * Copyright (c) 2021.                                                        *
  * The Regents of the University of Michigan and DFT-EFE developers.          *
@@ -20,24 +21,42 @@
  ******************************************************************************/
 
 /*
- * @author Sambit Das.
+ * @author Bikash Kanungo
  */
 
-#ifdef DFTEFE_WITH_DEVICE_CUDA
-#  ifndef dftefeDeviceTypeConfig_h
-#    define dftefeDeviceTypeConfig_h
-
-#    include <cuda_runtime.h>
+#ifndef dftefe_KSAttributes_h
+#define dftefe_KSAttributes_h
 
 namespace dftefe
 {
-  namespace utils
+  namespace ksdft
   {
-    typedef cudaStream_t deviceStreamType;
+    enum class DensityDescrAttr
+    {
+      Val,
+      Grad,
+      Hessian,
+      Laplacian,
+    };
 
-  } // namespace utils
+    enum class WfcDescrAttr
+    {
+      Tau,
+    };
 
+    enum class DensityObsAttr
+    {
+      Monopole,
+      Dipole,
+      Quadrupole,
+    };
+
+    enum class SpinMode
+    {
+      Unpolarized,
+      Collinear,
+      NonCollinear,
+    };
+  } // namespace ksdft
 } // namespace dftefe
-
-#  endif
-#endif // DFTEFE_WITH_DEVICE_CUDA
+#endif // dftefe_KSAttributes_h

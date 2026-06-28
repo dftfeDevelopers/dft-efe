@@ -97,18 +97,44 @@ template parameter instead. Available typedefs LogicError - std::logic_error
                 // set DFTEFE_ENABLE_ASSERT even when in release mode (with
                 // NDEBUG)
 #  include <assert.h> // .h to support old libraries w/o <cassert> - effect is the same
+#  include <iostream>
 #  define DFTEFE_Assert(expr) assert(expr)
-#  define DFTEFE_AssertWithMsg(expr, msg) assert((expr) && (msg))
+#  define DFTEFE_AssertWithMsg(expr, msg)    \
+    do                                       \
+      {                                      \
+        if (!(expr))                         \
+          {                                  \
+            std::cerr << (msg) << std::endl; \
+            assert(false);                   \
+          }                                  \
+      }                                      \
+    while (0)
 
 #else
 #  include <assert.h> // .h to support old libraries w/o <cassert> - effect is the same
+#  include <iostream>
 #  define DFTEFE_Assert(expr) assert(expr)
-#  define DFTEFE_AssertWithMsg(expr, msg) assert((expr) && (msg))
+#  define DFTEFE_AssertWithMsg(expr, msg)    \
+    do                                       \
+      {                                      \
+        if (!(expr))                         \
+          {                                  \
+            std::cerr << (msg) << std::endl; \
+            assert(false);                   \
+          }                                  \
+      }                                      \
+    while (0)
 
 #endif
 
-#ifdef DFTEFE_WITH_DEVICE_CUDA
-#  include <utils/DeviceExceptions.cuh>
+#if defined(DFTEFE_WITH_DEVICE)
+#  ifdef DFTEFE_WITH_DEVICE_LANG_CUDA
+#    include <utils/DeviceExceptions.cu.h>
+#  elif DFTEFE_WITH_DEVICE_LANG_HIP
+#    include <utils/DeviceExceptions.hip.h>
+#  elif DFTEFE_WITH_DEVICE_LANG_SYCL
+#    include <utils/DeviceExceptions.sycl.h>
+#  endif
 #endif
 
 namespace dftefe

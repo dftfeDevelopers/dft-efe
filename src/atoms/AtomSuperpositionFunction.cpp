@@ -20,19 +20,18 @@
  ******************************************************************************/
 
 /*
- * @author Ian C. Lin., Sambit Das
+ * @author Avirup Sircar
  */
 
-#ifndef dftefeDeviceKernelLauncherCUDA_h
-#define dftefeDeviceKernelLauncherCUDA_h
-
+#include <atoms/AtomSuperpositionFunction.h>
 
 namespace dftefe
 {
-  namespace utils
+  namespace atoms
   {
-    static const unsigned int BLOCK_SIZE = 256;
-  }
+    template class AtomSuperpositionFunction<utils::MemorySpace::HOST>;
+#ifdef DFTEFE_WITH_DEVICE
+    template class AtomSuperpositionFunction<utils::MemorySpace::DEVICE>;
+#endif
+  } // namespace atoms
 } // namespace dftefe
-
-#endif // dftefeDeviceKernelLauncherCUDA_h

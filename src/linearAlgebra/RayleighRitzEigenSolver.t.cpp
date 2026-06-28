@@ -43,7 +43,8 @@ namespace dftefe
         std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
                                                       mpiPatternP2P,
         std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext,
-        const bool                                    useScalpack)
+        const bool                                    useScalpack,
+        std::shared_ptr<MultivectorScratch<ValueType, memorySpace>> scratch)
       : d_eigenVecBatchSize(eigenVectorBatchSize)
       , d_batchSizeSmall(0)
       , d_XinBatchSmall(nullptr)
@@ -51,12 +52,27 @@ namespace dftefe
       , d_elpaScala(&elpaScala)
       , d_useELPA(d_elpaScala->useElpa())
       , d_useScalapack(useScalpack)
+      , d_scratch(scratch)
     {
-      d_XinBatch = std::make_shared<MultiVector<ValueType, memorySpace>>(
-        mpiPatternP2P, linAlgOpContext, eigenVectorBatchSize, ValueType());
+      const bool useScratch =
+        scratch != nullptr && scratch->hasXinBatch() &&
+        scratch->hasXoutBatch() &&
+        scratch->getXinBatchSize() == eigenVectorBatchSize &&
+        scratch->getXoutBatchSize() == eigenVectorBatchSize;
 
-      d_XoutBatch = std::make_shared<MultiVector<ValueType, memorySpace>>(
-        mpiPatternP2P, linAlgOpContext, eigenVectorBatchSize, ValueType());
+      if (useScratch)
+        {
+          d_XinBatch  = scratch->getXinBatch();
+          d_XoutBatch = scratch->getXoutBatch();
+        }
+      else
+        {
+          d_XinBatch = std::make_shared<MultiVector<ValueType, memorySpace>>(
+            mpiPatternP2P, linAlgOpContext, eigenVectorBatchSize, ValueType());
+
+          d_XoutBatch = std::make_shared<MultiVector<ValueType, memorySpace>>(
+            mpiPatternP2P, linAlgOpContext, eigenVectorBatchSize, ValueType());
+        }
     }
 
     template <typename ValueTypeOperator,
@@ -77,9 +93,10 @@ namespace dftefe
 
       if (d_useScalapack)
         {
-          bool            solveSuccess = true;
-          utils::Profiler p(X.getMPIPatternP2P()->mpiCommunicator(),
-                            "Rayleigh-Ritz EigenSolver");
+          bool                         solveSuccess = true;
+          utils::Profiler<memorySpace> p(
+            X.getMPIPatternP2P()->mpiCommunicator(),
+            "Rayleigh-Ritz EigenSolver");
 
           // Compute projected hamiltonian = X_O^H A X_O
 
@@ -235,55 +252,64 @@ namespace dftefe
           LapackError                                  lapackReturn;
           utils::MemoryStorage<ValueType, memorySpace> XprojectedA(
             numVec * numVec, utils::Types<ValueType>::zero);
-          utils::MemoryStorage<ValueType, memorySpace> eigenVectorsXSubspace(
-            numVec * numVec, utils::Types<ValueType>::zero);
-          utils::MemoryStorage<RealType, memorySpace> eigenValuesMemSpace(
-            numVec);
+          utils::MemoryStorage<ValueType, utils::MemorySpace::HOST>
+            XprojectedAHost(numVec * numVec, utils::Types<ValueType>::zero);
+          utils::MemoryStorage<ValueType, utils::MemorySpace::HOST>
+            eigenVectorsXSubspace(numVec * numVec,
+                                  utils::Types<ValueType>::zero);
+          eigenValues.resize(numVec);
 
           computeXTransOpX(X, XprojectedA, A);
 
           // Solve the standard eigenvalue problem
 
-          lapackReturn = blasLapack::heevd<ValueType, memorySpace>(
+          utils::MemoryTransfer<utils::MemorySpace::HOST, memorySpace>::copy(
+            XprojectedA.size(),
+            eigenVectorsXSubspace.data(),
+            XprojectedA.data());
+
+          lapackReturn = blasLapack::heevd<ValueType, utils::MemorySpace::HOST>(
             computeEigenVectors ? 'V' : 'N',
             'L',
             numVec,
-            XprojectedA.data(),
+            eigenVectorsXSubspace.data(),
             numVec,
-            eigenValuesMemSpace.data(),
-            *X.getLinAlgOpContext());
-
-          eigenValuesMemSpace.template copyTo<utils::MemorySpace::HOST>(
-            eigenValues.data(), numVec, 0, 0);
+            eigenValues.data(),
+            *LinAlgOpContextDefaults::LINALG_OP_CONTXT_HOST);
 
           if (computeEigenVectors)
-            eigenVectorsXSubspace = XprojectedA;
+            {
+              int mpierr = utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
+                utils::mpi::MPIInPlace,
+                eigenVectorsXSubspace.data(),
+                eigenVectorsXSubspace.size(),
+                utils::mpi::Types<ValueType>::getMPIDatatype(),
+                utils::mpi::MPISum,
+                X.getMPIPatternP2P()->mpiCommunicator());
 
-          int mpierr = utils::mpi::MPIAllreduce<memorySpace>(
-            utils::mpi::MPIInPlace,
-            eigenVectorsXSubspace.data(),
-            eigenVectorsXSubspace.size(),
-            utils::mpi::Types<ValueType>::getMPIDatatype(),
-            utils::mpi::MPISum,
-            X.getMPIPatternP2P()->mpiCommunicator());
+              utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::
+                copy(XprojectedA.size(),
+                     XprojectedA.data(),
+                     eigenVectorsXSubspace.data());
 
-          blasLapack::gemm<ValueType, ValueType, memorySpace>(
-            'T',
-            'N',
-            numVec,
-            vecSize,
-            numVec,
-            (ValueType)1,
-            eigenVectorsXSubspace.data(),
-            numVec,
-            X.data(),
-            numVec,
-            (ValueType)0,
-            eigenVectors.data(),
-            numVec,
-            *X.getLinAlgOpContext());
+              blasLapack::gemm<ValueType, ValueType, memorySpace>(
+                'T',
+                'N',
+                numVec,
+                vecSize,
+                numVec,
+                (ValueType)1,
+                XprojectedA.data(),
+                numVec,
+                X.data(),
+                numVec,
+                (ValueType)0,
+                eigenVectors.data(),
+                numVec,
+                *X.getLinAlgOpContext());
 
-          X = eigenVectors;
+              X = eigenVectors;
+            }
 
           if (lapackReturn.err == LapackErrorCode::FAILED_STANDARD_EIGENPROBLEM)
             {
@@ -320,9 +346,10 @@ namespace dftefe
 
       if (d_useScalapack)
         {
-          bool            solveSuccess = true;
-          utils::Profiler p(X.getMPIPatternP2P()->mpiCommunicator(),
-                            "Rayleigh-Ritz EigenSolver");
+          bool                         solveSuccess = true;
+          utils::Profiler<memorySpace> p(
+            X.getMPIPatternP2P()->mpiCommunicator(),
+            "Rayleigh-Ritz EigenSolver");
 
           // Compute projected hamiltonian = X_O^H A X_O
 
@@ -594,8 +621,11 @@ namespace dftefe
 
           utils::MemoryStorage<ValueType, memorySpace> SBlock(
             numVec * d_eigenVecBatchSize, ValueType(0));
-          // utils::MemoryStorage<ValueType, utils::MemorySpace::HOST>
-          // SBlockHost(numVec * d_eigenVecBatchSize);
+          utils::MemoryStorage<ValueType, utils::MemorySpace::HOST> SBlockHost(
+            numVec * d_eigenVecBatchSize);
+
+          if (d_scratch)
+            d_scratch->acquire();
 
           for (size_type eigVecStartId = 0; eigVecStartId < numVec;
                eigVecStartId += d_eigenVecBatchSize)
@@ -633,19 +663,37 @@ namespace dftefe
                 {
                   d_batchSizeSmall = numEigVecInBatch;
 
-                  d_XinBatchSmall =
-                    std::make_shared<MultiVector<ValueType, memorySpace>>(
-                      X.getMPIPatternP2P(),
-                      X.getLinAlgOpContext(),
-                      numEigVecInBatch,
-                      ValueType());
+                  const bool useSmallScratch =
+                    d_scratch != nullptr && d_scratch->hasXinBatchSmall() &&
+                    d_scratch->hasXoutBatchSmall() &&
+                    d_scratch->getXinBatchSmallSize() == numEigVecInBatch;
 
-                  d_XoutBatchSmall =
-                    std::make_shared<MultiVector<ValueType, memorySpace>>(
-                      X.getMPIPatternP2P(),
-                      X.getLinAlgOpContext(),
-                      numEigVecInBatch,
-                      ValueType());
+                  if (useSmallScratch)
+                    {
+                      d_XinBatchSmall  = d_scratch->getXinBatchSmall();
+                      d_XoutBatchSmall = d_scratch->getXoutBatchSmall();
+                    }
+                  else
+                    {
+                      d_XinBatchSmall =
+                        std::make_shared<MultiVector<ValueType, memorySpace>>(
+                          X.getMPIPatternP2P(),
+                          X.getLinAlgOpContext(),
+                          numEigVecInBatch,
+                          ValueType());
+
+                      d_XoutBatchSmall =
+                        std::make_shared<MultiVector<ValueType, memorySpace>>(
+                          X.getMPIPatternP2P(),
+                          X.getLinAlgOpContext(),
+                          numEigVecInBatch,
+                          ValueType());
+                      if (d_scratch != nullptr)
+                        {
+                          d_scratch->setXinBatchSmall(d_XinBatchSmall);
+                          d_scratch->setXoutBatchSmall(d_XoutBatchSmall);
+                        }
+                    }
 
                   for (size_type iSize = 0; iSize < vecLocalSize; iSize++)
                     memoryTransfer.copy(numEigVecInBatch,
@@ -683,13 +731,14 @@ namespace dftefe
                 numVec - eigVecStartId,
                 linAlgOpContext);
 
-              // utils::MemoryTransfer<utils::MemorySpace::HOST,
-              // memorySpace>::copy(
-              //   SBlock.size(), SBlockHost.data(), SBlock.data());
+              utils::MemoryTransfer<utils::MemorySpace::HOST,
+                                    memorySpace>::copy(SBlock.size(),
+                                                       SBlockHost.data(),
+                                                       SBlock.data());
 
-              int mpierr = utils::mpi::MPIAllreduce<memorySpace>(
+              int mpierr = utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
                 utils::mpi::MPIInPlace,
-                SBlock /*Host*/.data(),
+                SBlockHost.data(),
                 (numVec - eigVecStartId) * numEigVecInBatch,
                 utils::mpi::Types<ValueType>::getMPIDatatype(),
                 utils::mpi::MPISum,
@@ -699,6 +748,9 @@ namespace dftefe
                 utils::mpi::MPIErrIsSuccessAndMsg(mpierr);
               DFTEFE_AssertWithMsg(mpiIsSuccessAndMsg.first,
                                    "MPI Error:" + mpiIsSuccessAndMsg.second);
+
+              utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::
+                copy(SBlock.size(), SBlock.data(), SBlockHost.data());
 
               // Copying only the lower triangular part to projected matrix
               for (size_type iSize = 0; iSize < numEigVecInBatch; iSize++)
@@ -715,6 +767,9 @@ namespace dftefe
                                     subspaceBatchIn->data() +
                                       numEigVecInBatch * iSize);
             }
+
+          if (d_scratch)
+            d_scratch->release();
         }
       else
         {
@@ -723,6 +778,8 @@ namespace dftefe
 
           utils::MemoryStorage<ValueType, memorySpace> XprojectedA(
             numVec * numVec, utils::Types<ValueType>::zero);
+          utils::MemoryStorage<ValueType, utils::MemorySpace::HOST>
+            XprojectedAHost(numVec * numVec, utils::Types<ValueType>::zero);
           MultiVector<ValueType, memorySpace> scratch(X, (ValueType)0);
 
           Op.apply(X, scratch, true, false);
@@ -748,7 +805,10 @@ namespace dftefe
 
           // MPI_AllReduce to get the XprojectedA from all procs
 
-          int mpierr = utils::mpi::MPIAllreduce<memorySpace>(
+          utils::MemoryTransfer<utils::MemorySpace::HOST, memorySpace>::copy(
+            XprojectedA.size(), XprojectedAHost.data(), XprojectedA.data());
+
+          int mpierr = utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
             utils::mpi::MPIInPlace,
             XprojectedA.data(),
             XprojectedA.size(),
@@ -760,6 +820,9 @@ namespace dftefe
             utils::mpi::MPIErrIsSuccessAndMsg(mpierr);
           DFTEFE_AssertWithMsg(mpiIsSuccessAndMsg.first,
                                "MPI Error:" + mpiIsSuccessAndMsg.second);
+
+          utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
+            XprojectedAHost.size(), XprojectedA.data(), XprojectedAHost.data());
         }
     }
     // // ------------- DEBUG ------------------- // //
@@ -802,6 +865,9 @@ namespace dftefe
       utils::MemoryStorage<ValueType, utils::MemorySpace::HOST> SBlockHost(
         numVec * d_eigenVecBatchSize, ValueType(0));
 
+      if (d_scratch)
+        d_scratch->acquire();
+
       for (size_type eigVecStartId = 0; eigVecStartId < numVec;
            eigVecStartId += d_eigenVecBatchSize)
         {
@@ -811,22 +877,37 @@ namespace dftefe
 
           if (numEigVecInBatch % d_eigenVecBatchSize == 0)
             {
-              for (size_type iSize = 0; iSize < vecLocalSize; iSize++)
-                memoryTransfer.copy(numEigVecInBatch,
-                                    d_XinBatch->data() +
-                                      numEigVecInBatch * iSize,
-                                    X.data() + iSize * numVec + eigVecStartId);
+              // for (size_type iSize = 0; iSize < vecLocalSize; iSize++)
+              //   memoryTransfer.copy(numEigVecInBatch,
+              //                       d_XinBatch->data() +
+              //                         numEigVecInBatch * iSize,
+              //                       X.data() + iSize * numVec +
+              //                       eigVecStartId);
+
+              blasLapack::stridedBlockCopy(vecLocalSize,
+                                           numEigVecInBatch,
+                                           numVec,
+                                           eigVecStartId,
+                                           numEigVecInBatch,
+                                           0,
+                                           X.data(),
+                                           d_XinBatch->data(),
+                                           *X.getLinAlgOpContext());
 
               subspaceBatchIn  = d_XinBatch;
               subspaceBatchOut = d_XoutBatch;
             }
           else if (numEigVecInBatch % d_eigenVecBatchSize == d_batchSizeSmall)
             {
-              for (size_type iSize = 0; iSize < vecLocalSize; iSize++)
-                memoryTransfer.copy(numEigVecInBatch,
-                                    d_XinBatchSmall->data() +
-                                      numEigVecInBatch * iSize,
-                                    X.data() + iSize * numVec + eigVecStartId);
+              blasLapack::stridedBlockCopy(vecLocalSize,
+                                           numEigVecInBatch,
+                                           numVec,
+                                           eigVecStartId,
+                                           numEigVecInBatch,
+                                           0,
+                                           X.data(),
+                                           d_XinBatchSmall->data(),
+                                           *X.getLinAlgOpContext());
 
               subspaceBatchIn  = d_XinBatchSmall;
               subspaceBatchOut = d_XoutBatchSmall;
@@ -835,25 +916,47 @@ namespace dftefe
             {
               d_batchSizeSmall = numEigVecInBatch;
 
-              d_XinBatchSmall =
-                std::make_shared<MultiVector<ValueType, memorySpace>>(
-                  X.getMPIPatternP2P(),
-                  X.getLinAlgOpContext(),
-                  numEigVecInBatch,
-                  ValueType());
+              const bool useSmallScratch =
+                d_scratch != nullptr && d_scratch->hasXinBatchSmall() &&
+                d_scratch->hasXoutBatchSmall() &&
+                d_scratch->getXinBatchSmallSize() == numEigVecInBatch;
 
-              d_XoutBatchSmall =
-                std::make_shared<MultiVector<ValueType, memorySpace>>(
-                  X.getMPIPatternP2P(),
-                  X.getLinAlgOpContext(),
-                  numEigVecInBatch,
-                  ValueType());
+              if (useSmallScratch)
+                {
+                  d_XinBatchSmall  = d_scratch->getXinBatchSmall();
+                  d_XoutBatchSmall = d_scratch->getXoutBatchSmall();
+                }
+              else
+                {
+                  d_XinBatchSmall =
+                    std::make_shared<MultiVector<ValueType, memorySpace>>(
+                      X.getMPIPatternP2P(),
+                      X.getLinAlgOpContext(),
+                      numEigVecInBatch,
+                      ValueType());
 
-              for (size_type iSize = 0; iSize < vecLocalSize; iSize++)
-                memoryTransfer.copy(numEigVecInBatch,
-                                    d_XinBatchSmall->data() +
-                                      numEigVecInBatch * iSize,
-                                    X.data() + iSize * numVec + eigVecStartId);
+                  d_XoutBatchSmall =
+                    std::make_shared<MultiVector<ValueType, memorySpace>>(
+                      X.getMPIPatternP2P(),
+                      X.getLinAlgOpContext(),
+                      numEigVecInBatch,
+                      ValueType());
+                  if (d_scratch != nullptr)
+                    {
+                      d_scratch->setXinBatchSmall(d_XinBatchSmall);
+                      d_scratch->setXoutBatchSmall(d_XoutBatchSmall);
+                    }
+                }
+
+              blasLapack::stridedBlockCopy(vecLocalSize,
+                                           numEigVecInBatch,
+                                           numVec,
+                                           eigVecStartId,
+                                           numEigVecInBatch,
+                                           0,
+                                           X.data(),
+                                           d_XinBatchSmall->data(),
+                                           *X.getLinAlgOpContext());
 
               subspaceBatchIn  = d_XinBatchSmall;
               subspaceBatchOut = d_XoutBatchSmall;
@@ -923,12 +1026,25 @@ namespace dftefe
                     }
                 }
 
-          for (size_type iSize = 0; iSize < vecLocalSize; iSize++)
-            memoryTransfer.copy(numEigVecInBatch,
-                                X.data() + iSize * numVec + eigVecStartId,
-                                subspaceBatchIn->data() +
-                                  numEigVecInBatch * iSize);
+          // for (size_type iSize = 0; iSize < vecLocalSize; iSize++)
+          //   memoryTransfer.copy(numEigVecInBatch,
+          //                       X.data() + iSize * numVec + eigVecStartId,
+          //                       subspaceBatchIn->data() +
+          //                         numEigVecInBatch * iSize);
+
+          blasLapack::stridedBlockCopy(vecLocalSize,
+                                       numEigVecInBatch,
+                                       numEigVecInBatch,
+                                       0,
+                                       numVec,
+                                       eigVecStartId,
+                                       subspaceBatchIn->data(),
+                                       X.data(),
+                                       *X.getLinAlgOpContext());
         }
+
+      if (d_scratch)
+        d_scratch->release();
     }
 
   } // end of namespace linearAlgebra

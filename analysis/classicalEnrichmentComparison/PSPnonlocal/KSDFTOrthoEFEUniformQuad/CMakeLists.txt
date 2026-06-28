@@ -6,6 +6,35 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(MAIN_PROJECT_DIR $ENV{DFTEFE_PATH})
 message(${MAIN_PROJECT_DIR})
 
+IF (ENABLE_GPU)
+    IF ("${GPU_LANG}" STREQUAL "cuda")
+      enable_language(CUDA)
+    ELSEIF ("${GPU_LANG}" STREQUAL "hip")
+      enable_language(HIP)
+    ELSEIF ("${GPU_LANG}" STREQUAL "sycl")
+    ELSE ()
+      MESSAGE(FATAL_ERROR "\n"
+    "*** Could not find valid GPU_LANG=cuda/hip/sycl ***\n\n"
+    )
+    ENDIF()
+#
+#Set GPU compilation flag
+#
+  add_compile_definitions(DFTEFE_WITH_DEVICE)
+
+  IF ("${GPU_VENDOR}" STREQUAL "nvidia")
+    add_compile_definitions(DFTEFE_WITH_DEVICE_NVIDIA)
+    add_compile_definitions(DFTEFE_WITH_DEVICE_LANG_CUDA)
+  ELSEIF ("${GPU_VENDOR}" STREQUAL "amd")
+    add_compile_definitions(DFTEFE_WITH_DEVICE_AMD)
+    add_compile_definitions(DFTEFE_WITH_DEVICE_LANG_HIP)
+  ELSEIF ("${GPU_VENDOR}" STREQUAL "intel")
+    add_compile_definitions(DFTEFE_WITH_DEVICE_INTEL)
+    add_compile_definitions(DFTEFE_WITH_DEVICE_MKL)
+    add_compile_definitions(DFTEFE_WITH_DEVICE_LANG_SYCL)
+  ENDIF()
+ENDIF()
+
 list(APPEND CMAKE_MODULE_PATH ${MAIN_PROJECT_DIR}/cmake)
 
 include_directories(${MAIN_PROJECT_DIR}/src)
@@ -19,6 +48,12 @@ add_subdirectory(${MAIN_PROJECT_DIR}/src/ksdft ${MAIN_PROJECT_DIR}/test/ksdft/li
 
 if(ENABLE_MPI)
 	add_compile_definitions(DFTEFE_WITH_MPI)
+	if (ENABLE_MPI_DEVICE_AWARE)
+		add_compile_definitions(DFTEFE_WITH_DEVICE_AWARE_MPI)
+	endif()
 	add_executable(TestKohnShamDft ${MAIN_PROJECT_DIR}/analysis/classicalEnrichmentComparison/PSPnonlocal/KSDFTOrthoEFEUniformQuad/TestKohnShamDft.cpp)
 	target_link_libraries(TestKohnShamDft PUBLIC dft-efe-basis dft-efe-electrostatics dft-efe-ksdft dft-efe-utils dft-efe-quadrature dft-efe-linalg dft-efe-atoms)
+	IF (ENABLE_GPU AND "${GPU_VENDOR}" STREQUAL "amd")
+		target_link_libraries(TestKohnShamDft PUBLIC rocblas)
+	ENDIF()
 endif()

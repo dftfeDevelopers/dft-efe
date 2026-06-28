@@ -58,15 +58,19 @@ namespace dftefe
         const double    eigenSolveResidualTolerance,
         const size_type maxChebyshevFilterPass,
         const size_type numWantedEigenvalues,
-        linearAlgebra::Vector<ValueTypeOperand, memorySpace> &lanczosGuess,
-        const linearAlgebra::ElpaScalapackManager &           elpaScala,
-        bool                                 isResidualChebyshevFilter,
-        const size_type                      waveFunctionBatchSize,
-        const OpContext &                    MLanczos,
-        const OpContext &                    MInvLanczos,
-        const bool                           isGHEP,
-        linearAlgebra::OrthogonalizationType orthoType,
-        bool                                 storeIntermediateSubspaces)
+        std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
+          mpiPatternP2P,
+        std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
+                                                   linAlgOpContext,
+        const linearAlgebra::ElpaScalapackManager &elpaScala,
+        bool                                       isResidualChebyshevFilter,
+        const size_type                            waveFunctionBatchSize,
+        const OpContext &                          MLanczos,
+        const OpContext &                          MInvLanczos,
+        const bool                                 isGHEP,
+        linearAlgebra::OrthogonalizationType       orthoType,
+        bool                                       storeIntermediateSubspaces,
+        bool                                       useSameScratchInEigenSolver)
       : d_numWantedEigenvalues(numWantedEigenvalues)
       , d_eigenSolveResidualTolerance(eigenSolveResidualTolerance)
       , d_maxChebyshevFilterPass(maxChebyshevFilterPass)
@@ -79,8 +83,7 @@ namespace dftefe
       , d_numElectrons(numElectrons)
       , d_rootCout(std::cout)
       , d_batchSizeSmall(0)
-      , d_p(lanczosGuess.getMPIPatternP2P()->mpiCommunicator(),
-            "Kohn Sham EigenSolver")
+      , d_p(mpiPatternP2P->mpiCommunicator(), "Kohn Sham EigenSolver")
       , d_chebyPolyScalingFactor(1.0)
       , d_isResidualChebyFilter(isResidualChebyshevFilter)
       , d_setChebyPolDegExternally(false)
@@ -90,10 +93,12 @@ namespace dftefe
       , d_orthoType(orthoType)
       , d_elpaScala(&elpaScala)
       , d_isGHEP(isGHEP)
-      , d_pTotal(lanczosGuess.getMPIPatternP2P()->mpiCommunicator(),
+      , d_useSameScratch(useSameScratchInEigenSolver)
+      , d_scratch(nullptr)
+      , d_pTotal(mpiPatternP2P->mpiCommunicator(),
                  "Kohn Sham EigenSolver Solve Time")
     {
-      reinitBasis(lanczosGuess, MLanczos, MInvLanczos);
+      reinitBasis(mpiPatternP2P, linAlgOpContext, MLanczos, MInvLanczos);
     }
 
     template <typename ValueTypeOperator,
@@ -101,39 +106,40 @@ namespace dftefe
               utils::MemorySpace memorySpace>
     void
     KohnShamEigenSolver<ValueTypeOperator, ValueTypeOperand, memorySpace>::
-      reinitBasis(
-        linearAlgebra::Vector<ValueTypeOperand, memorySpace> &lanczosGuess,
-        const OpContext &                                     MLanczos,
-        const OpContext &                                     MInvLanczos)
+      reinitBasis(std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
+                    mpiPatternP2P,
+                  std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
+                                   linAlgOpContext,
+                  const OpContext &MLanczos,
+                  const OpContext &MInvLanczos)
     {
-      d_isSolved     = false;
-      d_isBoundKnown = false;
-      d_lanczosGuess = &lanczosGuess;
-      d_MLanczos     = &MLanczos;
-      d_MInvLanczos  = &MInvLanczos;
+      d_isSolved        = false;
+      d_isBoundKnown    = false;
+      d_mpiPatternP2P   = mpiPatternP2P;
+      d_linAlgOpContext = linAlgOpContext;
+      d_MLanczos        = &MLanczos;
+      d_MInvLanczos     = &MInvLanczos;
       int rank;
-      utils::mpi::MPICommRank(
-        lanczosGuess.getMPIPatternP2P()->mpiCommunicator(), &rank);
+      utils::mpi::MPICommRank(mpiPatternP2P->mpiCommunicator(), &rank);
       d_rootCout.setCondition(rank == 0);
 
       d_waveFnBatch =
         std::make_shared<linearAlgebra::MultiVector<ValueType, memorySpace>>(
-          lanczosGuess.getMPIPatternP2P(),
-          lanczosGuess.getLinAlgOpContext(),
-          d_waveFunctionBatchSize,
-          ValueType());
+          mpiPatternP2P, linAlgOpContext, d_waveFunctionBatchSize, ValueType());
       d_HXBatch =
         std::make_shared<linearAlgebra::MultiVector<ValueType, memorySpace>>(
-          lanczosGuess.getMPIPatternP2P(),
-          lanczosGuess.getLinAlgOpContext(),
-          d_waveFunctionBatchSize,
-          ValueType());
+          mpiPatternP2P, linAlgOpContext, d_waveFunctionBatchSize, ValueType());
+
+      if (d_useSameScratch)
+        d_scratch = std::make_shared<
+          linearAlgebra::MultivectorScratch<ValueType, memorySpace>>(
+          d_waveFnBatch, d_HXBatch);
+      else
+        d_scratch = nullptr;
+
       d_MXBatch =
         std::make_shared<linearAlgebra::MultiVector<ValueType, memorySpace>>(
-          lanczosGuess.getMPIPatternP2P(),
-          lanczosGuess.getLinAlgOpContext(),
-          d_waveFunctionBatchSize,
-          ValueType());
+          mpiPatternP2P, linAlgOpContext, d_waveFunctionBatchSize, ValueType());
 
       d_kohnShamEnergiesMemspace =
         utils::MemoryStorage<ValueType, memorySpace>(d_numWantedEigenvalues,
@@ -151,14 +157,15 @@ namespace dftefe
         0,
         0,
         ksdft::LinearEigenSolverDefaults::ILL_COND_TOL,
-        lanczosGuess.getMPIPatternP2P(),
-        lanczosGuess.getLinAlgOpContext(),
+        mpiPatternP2P,
+        linAlgOpContext,
         *d_elpaScala,
         d_isResidualChebyFilter,
         d_waveFunctionBatchSize,
         d_isGHEP,
         d_orthoType,
-        d_storeIntermediateSubspaces);
+        d_storeIntermediateSubspaces,
+        d_scratch);
     }
 
     template <typename ValueTypeOperator,
@@ -245,7 +252,8 @@ namespace dftefe
                 1,
                 tol,
                 ksdft::LinearEigenSolverDefaults::LANCZOS_BETA_TOL,
-                *d_lanczosGuess,
+                d_mpiPatternP2P,
+                d_linAlgOpContext,
                 false);
 
       linearAlgebra::MultiVector<ValueType, memorySpace> eigenVectorsLanczos;
@@ -311,7 +319,7 @@ namespace dftefe
                      << d_chebyshevPolynomialDegree << "\n";
 
           d_p.registerStart("Reinit CHFSI");
-          d_pTotal.registerStart("Lanczos Solve");
+          d_pTotal.registerStart("Reinit CHFSI");
           d_chfsi->reinit(d_wantedSpectrumLowerBound,
                           d_wantedSpectrumUpperBound,
                           eigenValuesLanczos[1] + residual,
@@ -319,7 +327,7 @@ namespace dftefe
                           ksdft::LinearEigenSolverDefaults::ILL_COND_TOL,
                           kohnShamWaveFunctions.getMPIPatternP2P(),
                           kohnShamWaveFunctions.getLinAlgOpContext());
-          d_pTotal.registerStart("Lanczos Solve");
+          d_pTotal.registerStart("Reinit CHFSI");
           d_p.registerEnd("Reinit CHFSI");
 
           for (; iPass < d_maxChebyshevFilterPass; iPass++)
@@ -611,6 +619,9 @@ namespace dftefe
       size_type           eigenVecLocalSize = kohnShamWaveFunctions.localSize();
       utils::MemoryTransfer<memorySpace, memorySpace> memoryTransfer;
 
+      if (d_scratch)
+        d_scratch->acquire();
+
       for (size_type waveFnStartId = 0; waveFnStartId < numEigenVectors;
            waveFnStartId += d_waveFunctionBatchSize)
         {
@@ -620,12 +631,16 @@ namespace dftefe
 
           if (numEigVecInBatch % d_waveFunctionBatchSize == 0)
             {
-              for (size_type iSize = 0; iSize < eigenVecLocalSize; iSize++)
-                memoryTransfer.copy(numEigVecInBatch,
-                                    d_waveFnBatch->data() +
-                                      numEigVecInBatch * iSize,
-                                    kohnShamWaveFunctions.data() +
-                                      iSize * numEigenVectors + waveFnStartId);
+              linearAlgebra::blasLapack::stridedBlockCopy(
+                eigenVecLocalSize,
+                numEigVecInBatch,
+                numEigenVectors,
+                waveFnStartId,
+                numEigVecInBatch,
+                0,
+                kohnShamWaveFunctions.data(),
+                d_waveFnBatch->data(),
+                *kohnShamWaveFunctions.getLinAlgOpContext());
 
               XBatch  = d_waveFnBatch;
               HXBatch = d_HXBatch;
@@ -634,12 +649,16 @@ namespace dftefe
           else if (numEigVecInBatch % d_waveFunctionBatchSize ==
                    d_batchSizeSmall)
             {
-              for (size_type iSize = 0; iSize < eigenVecLocalSize; iSize++)
-                memoryTransfer.copy(numEigVecInBatch,
-                                    d_waveFnBatchSmall->data() +
-                                      numEigVecInBatch * iSize,
-                                    kohnShamWaveFunctions.data() +
-                                      iSize * numEigenVectors + waveFnStartId);
+              linearAlgebra::blasLapack::stridedBlockCopy(
+                eigenVecLocalSize,
+                numEigVecInBatch,
+                numEigenVectors,
+                waveFnStartId,
+                numEigVecInBatch,
+                0,
+                kohnShamWaveFunctions.data(),
+                d_waveFnBatchSmall->data(),
+                *kohnShamWaveFunctions.getLinAlgOpContext());
 
               XBatch  = d_waveFnBatchSmall;
               HXBatch = d_HXBatchSmall;
@@ -649,19 +668,38 @@ namespace dftefe
             {
               d_batchSizeSmall = numEigVecInBatch;
 
-              d_waveFnBatchSmall = std::make_shared<
-                linearAlgebra::MultiVector<ValueType, memorySpace>>(
-                kohnShamWaveFunctions.getMPIPatternP2P(),
-                kohnShamWaveFunctions.getLinAlgOpContext(),
-                numEigVecInBatch,
-                ValueType());
+              const bool useSmallScratch =
+                d_scratch != nullptr && d_scratch->hasXinBatchSmall() &&
+                d_scratch->hasXoutBatchSmall() &&
+                d_scratch->getXinBatchSmallSize() == numEigVecInBatch;
 
-              d_HXBatchSmall = std::make_shared<
-                linearAlgebra::MultiVector<ValueType, memorySpace>>(
-                kohnShamWaveFunctions.getMPIPatternP2P(),
-                kohnShamWaveFunctions.getLinAlgOpContext(),
-                numEigVecInBatch,
-                ValueType());
+              if (useSmallScratch)
+                {
+                  d_waveFnBatchSmall = d_scratch->getXinBatchSmall();
+                  d_HXBatchSmall     = d_scratch->getXoutBatchSmall();
+                }
+              else
+                {
+                  d_waveFnBatchSmall = std::make_shared<
+                    linearAlgebra::MultiVector<ValueType, memorySpace>>(
+                    kohnShamWaveFunctions.getMPIPatternP2P(),
+                    kohnShamWaveFunctions.getLinAlgOpContext(),
+                    numEigVecInBatch,
+                    ValueType());
+
+                  d_HXBatchSmall = std::make_shared<
+                    linearAlgebra::MultiVector<ValueType, memorySpace>>(
+                    kohnShamWaveFunctions.getMPIPatternP2P(),
+                    kohnShamWaveFunctions.getLinAlgOpContext(),
+                    numEigVecInBatch,
+                    ValueType());
+                  if (d_scratch != nullptr)
+                    {
+                      d_scratch->setXinBatchSmall(d_waveFnBatchSmall);
+                      d_scratch->setXoutBatchSmall(d_HXBatchSmall);
+                    }
+                }
+
               d_MXBatchSmall = std::make_shared<
                 linearAlgebra::MultiVector<ValueType, memorySpace>>(
                 kohnShamWaveFunctions.getMPIPatternP2P(),
@@ -669,12 +707,16 @@ namespace dftefe
                 numEigVecInBatch,
                 ValueType());
 
-              for (size_type iSize = 0; iSize < eigenVecLocalSize; iSize++)
-                memoryTransfer.copy(numEigVecInBatch,
-                                    d_waveFnBatchSmall->data() +
-                                      numEigVecInBatch * iSize,
-                                    kohnShamWaveFunctions.data() +
-                                      iSize * numEigenVectors + waveFnStartId);
+              linearAlgebra::blasLapack::stridedBlockCopy(
+                eigenVecLocalSize,
+                numEigVecInBatch,
+                numEigenVectors,
+                waveFnStartId,
+                numEigVecInBatch,
+                0,
+                kohnShamWaveFunctions.data(),
+                d_waveFnBatchSmall->data(),
+                *kohnShamWaveFunctions.getLinAlgOpContext());
 
               XBatch  = d_waveFnBatchSmall;
               HXBatch = d_HXBatchSmall;
@@ -704,6 +746,9 @@ namespace dftefe
                     normVec.end(),
                     residualVec.begin() + waveFnStartId);
         }
+
+      if (d_scratch)
+        d_scratch->release();
 
       return residualVec;
     }

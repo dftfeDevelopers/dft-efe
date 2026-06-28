@@ -31,7 +31,7 @@
 #include <utils/ScalarSpatialFunction.h>
 #include <utils/ScalarZeroFunctionReal.h>
 #include <basis/BasisDofHandler.h>
-#include "DealiiConversions.h"
+//#include "DealiiConversions.h"
 #include <utils/TypeConfig.h>
 #include <utils/MemoryStorage.h>
 #include <utils/MPIPatternP2P.h>

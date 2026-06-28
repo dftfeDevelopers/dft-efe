@@ -49,24 +49,24 @@ namespace dftefe
         const std::shared_ptr<atoms::AtomSphericalDataContainer>
                       atomSphericalDataContainerPSP,
         const double &smearedChargeRadius,
-        const quadrature::QuadratureValuesContainer<RealType, memorySpace>
+        const quadrature::QuadratureValuesContainer<RealType, memorySpaceHost>
           &                                               electronChargeDensity,
         std::shared_ptr<const basis::FEBasisManager<ValueTypeBasisCoeff,
                                                     ValueTypeBasisData,
-                                                    memorySpace,
+                                                    memorySpaceHost,
                                                     dim>> feBMTotalCharge,
         std::shared_ptr<const basis::FEBasisManager<ValueTypeWaveFnCoeff,
                                                     ValueTypeWaveFnBasis,
                                                     memorySpace,
                                                     dim>> feBMWaveFn,
         std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpaceHost>>
           feBDTotalChargeStiffnessMatrix,
         std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpaceHost>>
           feBDNuclearChargeRhs,
         std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpaceHost>>
           feBDElectronicChargeRhs,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeWaveFnBasis, memorySpace>>
@@ -124,13 +124,15 @@ namespace dftefe
         }
 
       d_atomVLocFunction =
-        std::make_shared<const atoms::AtomSevereFunction<dim>>(
+        std::make_shared<const atoms::AtomSevereFunction<memorySpace>>(
           d_atomSphericalDataContainerPSP,
           atomSymbolVec,
           atomCoordinates,
           "vlocal",
           0,
-          1);
+          1,
+          1,
+          d_linAlgOpContext.get());
 
       d_electrostaticLocal =
         std::make_shared<ElectrostaticLocalFE<ValueTypeBasisData,
@@ -172,21 +174,13 @@ namespace dftefe
         const std::shared_ptr<atoms::AtomSphericalDataContainer>
                       atomSphericalDataContainerPSP,
         const double &smearedChargeRadius,
-        // const quadrature::QuadratureValuesContainer<RealType, memorySpace>
-        //   &atomicElectronChargeDensity,
-        // const quadrature::QuadratureValuesContainer<ValueTypeBasisCoeff,
-        //                                             memorySpace>
-        //   &atomicTotalElecPotNuclearQuad,
-        // const quadrature::QuadratureValuesContainer<ValueTypeBasisCoeff,
-        //                                             memorySpace>
-        //   &atomicTotalElecPotElectronicQuad,
-        const utils::ScalarSpatialFunctionReal
+        const atoms::AtomSuperpositionFunction<memorySpace>
           &atomicTotalElectroPotentialFunction,
-        const utils::ScalarSpatialFunctionReal
+        const atoms::AtomSuperpositionFunction<memorySpace>
           &atomicElectronicChargeDensityFunction,
         std::shared_ptr<const basis::FEBasisManager<ValueTypeBasisCoeff,
                                                     ValueTypeBasisData,
-                                                    memorySpace,
+                                                    memorySpaceHost,
                                                     dim>>
           feBMTotalCharge, // will be same as bc of totalCharge -
                            // atomicTotalCharge
@@ -195,13 +189,13 @@ namespace dftefe
                                                     memorySpace,
                                                     dim>> feBMWaveFn,
         std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpaceHost>>
           feBDTotalChargeStiffnessMatrix,
         std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpaceHost>>
           feBDNuclearChargeRhs,
         std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpaceHost>>
           feBDElectronicChargeRhs,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeWaveFnBasis, memorySpace>>
@@ -262,13 +256,15 @@ namespace dftefe
         }
 
       d_atomVLocFunction =
-        std::make_shared<const atoms::AtomSevereFunction<dim>>(
+        std::make_shared<const atoms::AtomSevereFunction<memorySpace>>(
           d_atomSphericalDataContainerPSP,
           atomSymbolVec,
           atomCoordinates,
           "vlocal",
           0,
-          1);
+          1,
+          1,
+          d_linAlgOpContext.get());
 
       ////-------DEBUG V_Local print---------------------
       // for(int i = 0 ; i < 2000 ; i++)
@@ -321,20 +317,20 @@ namespace dftefe
         const std::vector<utils::Point> &                 atomCoordinates,
         std::shared_ptr<const basis::FEBasisManager<ValueTypeBasisCoeff,
                                                     ValueTypeBasisData,
-                                                    memorySpace,
+                                                    memorySpaceHost,
                                                     dim>> feBMTotalCharge,
         std::shared_ptr<const basis::FEBasisManager<ValueTypeWaveFnCoeff,
                                                     ValueTypeWaveFnBasis,
                                                     memorySpace,
                                                     dim>> feBMWaveFn,
         std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpaceHost>>
           feBDTotalChargeStiffnessMatrix,
         std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpaceHost>>
           feBDNuclearChargeRhs,
         std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpaceHost>>
           feBDElectronicChargeRhs,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeWaveFnBasis, memorySpace>>
@@ -363,13 +359,15 @@ namespace dftefe
         }
 
       d_atomVLocFunction =
-        std::make_shared<const atoms::AtomSevereFunction<dim>>(
+        std::make_shared<const atoms::AtomSevereFunction<memorySpace>>(
           d_atomSphericalDataContainerPSP,
           d_atomSymbolVec,
           atomCoordinates,
           "vlocal",
           0,
-          1);
+          1,
+          1,
+          d_linAlgOpContext.get());
 
       d_electrostaticLocal->reinitBasis(atomCoordinates,
                                         feBMTotalCharge,
@@ -396,34 +394,26 @@ namespace dftefe
                               dim>::
       reinitBasis(
         const std::vector<utils::Point> &atomCoordinates,
-        // const quadrature::QuadratureValuesContainer<RealType, memorySpace>
-        //   &atomicElectronChargeDensity,
-        // const quadrature::QuadratureValuesContainer<ValueTypeBasisCoeff,
-        //                                             memorySpace>
-        //   &atomicTotalElecPotNuclearQuad,
-        // const quadrature::QuadratureValuesContainer<ValueTypeBasisCoeff,
-        //                                             memorySpace>
-        //   &atomicTotalElecPotElectronicQuad,
-        const utils::ScalarSpatialFunctionReal
+        const atoms::AtomSuperpositionFunction<memorySpace>
           &atomicTotalElectroPotentialFunction,
-        const utils::ScalarSpatialFunctionReal
+        const atoms::AtomSuperpositionFunction<memorySpace>
           &atomicElectronicChargeDensityFunction,
         std::shared_ptr<const basis::FEBasisManager<ValueTypeBasisCoeff,
                                                     ValueTypeBasisData,
-                                                    memorySpace,
+                                                    memorySpaceHost,
                                                     dim>> feBMTotalCharge,
         std::shared_ptr<const basis::FEBasisManager<ValueTypeWaveFnCoeff,
                                                     ValueTypeWaveFnBasis,
                                                     memorySpace,
                                                     dim>> feBMWaveFn,
         std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpaceHost>>
           feBDTotalChargeStiffnessMatrix,
         std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpaceHost>>
           feBDNuclearChargeRhs,
         std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpaceHost>>
           feBDElectronicChargeRhs,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeWaveFnBasis, memorySpace>>
@@ -452,13 +442,15 @@ namespace dftefe
         }
 
       d_atomVLocFunction =
-        std::make_shared<const atoms::AtomSevereFunction<dim>>(
+        std::make_shared<const atoms::AtomSevereFunction<memorySpace>>(
           d_atomSphericalDataContainerPSP,
           d_atomSymbolVec,
           atomCoordinates,
           "vlocal",
           0,
-          1);
+          1,
+          1,
+          d_linAlgOpContext.get());
 
       d_electrostaticLocal->reinitBasis(atomCoordinates,
                                         // atomicElectronChargeDensity,
@@ -488,7 +480,7 @@ namespace dftefe
                               memorySpace,
                               dim>::
       reinitField(
-        const quadrature::QuadratureValuesContainer<RealType, memorySpace>
+        const quadrature::QuadratureValuesContainer<RealType, memorySpaceHost>
           &electronChargeDensity)
     {
       d_electrostaticLocal->reinitField(electronChargeDensity);
@@ -615,7 +607,8 @@ namespace dftefe
                 X.getLinAlgOpContext(),
                 d_maxWaveFnBlock,
                 ValueTypeWaveFnCoeff());
-              if (X.getNumberComponents() > d_maxWaveFnBlock)
+              if (X.getNumberComponents() > d_maxWaveFnBlock &&
+                  X.getNumberComponents() % d_maxWaveFnBlock != 0)
                 {
                   d_psiBatchSmall = std::make_shared<
                     linearAlgebra::MultiVector<ValueType, memorySpace>>(
@@ -656,11 +649,16 @@ namespace dftefe
 
               if (numPsiInBatch < d_maxWaveFnBlock)
                 {
-                  for (size_type iSize = 0; iSize < X.localSize(); iSize++)
-                    memoryTransfer.copy(
-                      numPsiInBatch,
-                      d_psiBatchSmall->data() + numPsiInBatch * iSize,
-                      X.data() + iSize * X.getNumberComponents() + psiStartId);
+                  linearAlgebra::blasLapack::stridedBlockCopy(
+                    X.localSize(),
+                    numPsiInBatch,
+                    X.getNumberComponents(),
+                    psiStartId,
+                    numPsiInBatch,
+                    0,
+                    X.data(),
+                    d_psiBatchSmall->data(),
+                    *X.getLinAlgOpContext());
 
                   d_atomNonLocOpContext->apply(*d_psiBatchSmall,
                                                *d_YBatchSmall,
@@ -675,11 +673,16 @@ namespace dftefe
                 }
               else
                 {
-                  for (size_type iSize = 0; iSize < X.localSize(); iSize++)
-                    memoryTransfer.copy(
-                      numPsiInBatch,
-                      d_psiBatch->data() + numPsiInBatch * iSize,
-                      X.data() + iSize * X.getNumberComponents() + psiStartId);
+                  linearAlgebra::blasLapack::stridedBlockCopy(
+                    X.localSize(),
+                    numPsiInBatch,
+                    X.getNumberComponents(),
+                    psiStartId,
+                    numPsiInBatch,
+                    0,
+                    X.data(),
+                    d_psiBatch->data(),
+                    *X.getLinAlgOpContext());
 
                   d_atomNonLocOpContext->apply(*d_psiBatch,
                                                *d_YBatch,
@@ -693,7 +696,7 @@ namespace dftefe
                     linearAlgebra::blasLapack::ScalarOp::Identity);
                 }
 
-              for (int i = 0; i < dotProds.size(); i++)
+              for (size_type i = 0; i < dotProds.size(); i++)
                 nonLocEnergy += dotProds[i] * 2 * occupationInBatch[i];
             }
         }

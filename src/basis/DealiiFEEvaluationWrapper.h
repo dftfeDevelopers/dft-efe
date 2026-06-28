@@ -29,6 +29,7 @@
 #include <boost/preprocessor.hpp>
 #include <cmath>
 #include <memory>
+#include <utils/TypeConfig.h>
 
 #include <deal.II/matrix_free/matrix_free.h>
 #include <deal.II/matrix_free/fe_evaluation.h>
@@ -50,14 +51,14 @@ namespace dftefe
       /**
        * @brief Returns the total number of quadrature points in all 3 directions
        */
-      virtual unsigned int
+      virtual size_type
       totalNumberofQuadraturePoints() = 0;
 
       /**
        * @brief reinits the dealii::FEEvaluation object for the macrocellIndex
        */
       virtual void
-      reinit(const unsigned int macrocell) = 0;
+      reinit(const size_type macrocell) = 0;
 
       /**
        * @brief Calls dealii::FEEvaluation::read_dof_values
@@ -116,23 +117,23 @@ namespace dftefe
       integrateValue() = 0;
 
       virtual void
-      submitValueAtQuadpoint(const unsigned int                     iQuadPoint,
+      submitValueAtQuadpoint(const size_type                        iQuadPoint,
                              const dealii::VectorizedArray<double> &value) = 0;
 
       virtual void
-      alphaTimesQuadValuesPlusYFromSubCell(const unsigned int subCellIndex,
-                                           const double       alpha,
-                                           double *           outputVector) = 0;
+      alphaTimesQuadValuesPlusYFromSubCell(const size_type subCellIndex,
+                                           const double    alpha,
+                                           double *        outputVector) = 0;
 
       virtual void
-      getQuadGradientsForSubCell(const unsigned int subCellIndex,
-                                 const double       alpha,
-                                 double *           outputVector) = 0;
+      getQuadGradientsForSubCell(const size_type subCellIndex,
+                                 const double    alpha,
+                                 double *        outputVector) = 0;
 
       virtual void
-      getQuadHessianForSubCell(const unsigned int subCellIndex,
-                               const double       alpha,
-                               double *           outputVector) = 0;
+      getQuadHessianForSubCell(const size_type subCellIndex,
+                               const double    alpha,
+                               double *        outputVector) = 0;
 
 
       virtual void
@@ -146,7 +147,7 @@ namespace dftefe
       integrate(dealii::EvaluationFlags::EvaluationFlags evaluateFlags) = 0;
 
       virtual dealii::Point<3, dealii::VectorizedArray<double>>
-      getQuadraturePoint(const unsigned int iQuadPoint) = 0;
+      getQuadraturePoint(const size_type iQuadPoint) = 0;
 
       virtual void
       getValues(
@@ -156,16 +157,14 @@ namespace dftefe
       distributeLocalToGlobal(distributedCPUVec<double> &tempvec) = 0;
     };
 
-    template <int          FEOrder,
-              unsigned int num_1d_quadPoints,
-              unsigned int n_components>
+    template <int FEOrder, size_type num_1d_quadPoints, size_type n_components>
     class FEEvaluationWrapperDerived : public FEEvaluationWrapperBase
     {
     public:
       FEEvaluationWrapperDerived(
         const dealii::MatrixFree<3, double> &matrixFreeData,
-        const unsigned int                   matrixFreeVectorComponent,
-        const unsigned int                   matrixFreeQuadratureComponent);
+        const size_type                      matrixFreeVectorComponent,
+        const size_type                      matrixFreeQuadratureComponent);
 
       ~FEEvaluationWrapperDerived();
 
@@ -174,11 +173,11 @@ namespace dftefe
         d_dealiiFEEvaluation;
 
 
-      unsigned int
+      size_type
       totalNumberofQuadraturePoints() override;
 
       void
-      reinit(const unsigned int macrocell) override;
+      reinit(const size_type macrocell) override;
 
       void
       readDoFValues(const distributedCPUVec<double> &tempvec) override;
@@ -228,26 +227,26 @@ namespace dftefe
 
       void
       submitValueAtQuadpoint(
-        const unsigned int                     iQuadPoint,
+        const size_type                        iQuadPoint,
         const dealii::VectorizedArray<double> &value) override;
 
       dealii::Point<3, dealii::VectorizedArray<double>>
-      getQuadraturePoint(const unsigned int iQuadPoint) override;
+      getQuadraturePoint(const size_type iQuadPoint) override;
 
       void
-      alphaTimesQuadValuesPlusYFromSubCell(const unsigned int subCellIndex,
-                                           const double       alpha,
+      alphaTimesQuadValuesPlusYFromSubCell(const size_type subCellIndex,
+                                           const double    alpha,
                                            double *outputVector) override;
 
       void
-      getQuadGradientsForSubCell(const unsigned int subCellIndex,
-                                 const double       alpha,
-                                 double *           outputVector) override;
+      getQuadGradientsForSubCell(const size_type subCellIndex,
+                                 const double    alpha,
+                                 double *        outputVector) override;
 
       void
-      getQuadHessianForSubCell(const unsigned int subCellIndex,
-                               const double       alpha,
-                               double *           outputVector) override;
+      getQuadHessianForSubCell(const size_type subCellIndex,
+                               const double    alpha,
+                               double *        outputVector) override;
 
       void
       submitInterpolatedValuesSubmitInterpolatedGradients(
@@ -270,7 +269,7 @@ namespace dftefe
 
 
 
-    template <unsigned int numberOfComponents>
+    template <size_type numberOfComponents>
     class DealiiFEEvaluationWrapper
     {
     public:
@@ -285,11 +284,11 @@ namespace dftefe
        * quadrature location in the MatrixFree object.
        */
       DealiiFEEvaluationWrapper(
-        unsigned int                         fe_degree,
-        unsigned int                         num_1d_quad,
+        size_type                            fe_degree,
+        size_type                            num_1d_quad,
         const dealii::MatrixFree<3, double> &matrixFreeData,
-        const unsigned int                   matrixFreeVectorComponent,
-        const unsigned int                   matrixFreeQuadratureComponent);
+        const size_type                      matrixFreeVectorComponent,
+        const size_type                      matrixFreeQuadratureComponent);
 
       ~DealiiFEEvaluationWrapper();
 
@@ -297,10 +296,10 @@ namespace dftefe
       getFEEvaluationWrapperBase() const;
 
     private:
-      unsigned int d_feDegree;
-      unsigned int d_num1dQuad;
-      unsigned int d_matrixFreeVectorComponent;
-      unsigned int d_matrixFreeQuadratureComponent;
+      size_type d_feDegree;
+      size_type d_num1dQuad;
+      size_type d_matrixFreeVectorComponent;
+      size_type d_matrixFreeQuadratureComponent;
 
       std::unique_ptr<FEEvaluationWrapperBase> d_feEvaluationBase;
       const dealii::MatrixFree<3, double> *    d_matrix_free_data;

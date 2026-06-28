@@ -52,6 +52,7 @@ int
 main(int argc, char **argv)
 {
   const dftefe::utils::MemorySpace Host = dftefe::utils::MemorySpace::HOST;
+  const dftefe::utils::MemorySpace Device = dftefe::utils::MemorySpace::DEVICE;
   using namespace dftefe::linearAlgebra::blasLapack;
   using namespace std::complex_literals;
 
@@ -68,38 +69,39 @@ main(int argc, char **argv)
 
   std::vector<std::complex<double>> C(Cm * Cn, 0.0);
 
+  dftefe::utils::MemoryStorage<std::complex<double>, Device> dA(colMajA.size(), 0);
+  dftefe::utils::MemoryStorage<std::complex<double>, Device> dB(colMajB.size(), 0);
+  dftefe::utils::MemoryStorage<std::complex<double>, Device> dC(C.size(), 0);
+
+  dftefe::utils::MemoryTransfer<Device, Host>::copy(colMajA.size(), dA.data(), colMajA.data());
+  dftefe::utils::MemoryTransfer<Device, Host>::copy(colMajB.size(), dB.data(), colMajB.data());
+
   int lda = Am, ldb = Bm, ldc = Cm;
 
   std::complex<double> alpha = 1.0+0.0i, beta = 0.0+0.0i;
 
-  // BlasQueue<Host> queue;
-  int blasQueue = 0;
-  int lapackQueue = 0;
-  std::shared_ptr<BlasQueue
-    <Host>> blasQueuePtr = std::make_shared
-      <BlasQueue
-        <Host>>(blasQueue);
-  std::shared_ptr<LapackQueue
-    <Host>> lapackQueuePtr = std::make_shared
-      <LapackQueue
-        <Host>>(lapackQueue);
-  dftefe::linearAlgebra::LinAlgOpContext<Host> laoc(blasQueuePtr, lapackQueuePtr);
+  // BlasQueue<Device> queue(device, 0);
 
-  gemm<std::complex<double>, std::complex<double>, Host>(Layout::ColMajor,
-       Op::NoTrans,
-       Op::NoTrans,
+  dftefe::linearAlgebra::LinAlgOpContext<Device> laoc;
+
+
+  gemm<std::complex<double>, std::complex<double>, Device>(
+       'N',
+       'N',
        Am,
        Cn,
        An,
        alpha,
-       colMajA.data(),
+       dA.data(),
        lda,
-       colMajB.data(),
+       dB.data(),
        ldb,
        beta,
-       C.data(),
+       dC.data(),
        ldc,
        laoc);
+
+  dftefe::utils::MemoryTransfer<Host, Device>::copy(C.size(), C.data(), dC.data());
 
   for(dftefe::size_type i = 0; i < C.size(); ++i)
     {
@@ -119,25 +121,30 @@ main(int argc, char **argv)
 
   std::vector<std::complex<double>> rowMajRef = {74.92997043000+60.41177740000i, -13.73630099000+35.46105722000i, -14.58470454000-65.44681352000i, 68.68128451000-11.33054285000i, -7.75695628000+63.87618727000i, 31.57340509000+185.82008578000i, -25.11192585000-144.81250496000i, 153.51847755000-52.83320611000i, 183.04524314000+135.87391121000i, 95.52346107000-103.31332342000i, 61.57782105000+80.95033363000i, -15.89947478000+67.86778036000i, 73.24681851000+55.92558929000i, -58.17323841000+30.34237712000i, 89.62708261000-129.31182216000i, -36.99845809000-69.59977720000i, 63.72613459000-5.94065997000i, -144.84031490000+55.75960501000i, -102.60633765000-20.00364712000i, 48.04782842000-147.59750358000i, 41.56047283000-82.08987665000i, 59.83337972000-29.39511641000i, -27.25546966000+73.00649468000i, 48.11566773000+2.87984341000i, -96.71910555000+186.79008085000i, -235.04215973000-99.67046561000i, -32.82382050000-190.53171849000i, 112.66095147000+135.59545175000i, -209.67549601000+128.62316201000i, -38.33508665000-180.36641389000i};
 
+  dftefe::utils::MemoryTransfer<Device, Host>::copy(rowMajA.size(), dA.data(), rowMajA.data());
+  dftefe::utils::MemoryTransfer<Device, Host>::copy(rowMajB.size(), dB.data(), rowMajB.data());
+
   for (auto &i : C) i = 0.0 + 0.0i;
 
   lda = An, ldb = Bn, ldc = Cn;
 
-  gemm<std::complex<double>, std::complex<double>, Host>(Layout::RowMajor,
-       Op::NoTrans,
-       Op::NoTrans,
+  gemm<std::complex<double>, std::complex<double>, Device>(
+       'N',
+       'N',
        Am,
        Cn,
        An,
        alpha,
-       rowMajA.data(),
+       dA.data(),
        lda,
-       rowMajB.data(),
+       dB.data(),
        ldb,
        beta,
-       C.data(),
+       dC.data(),
        ldc,
        laoc);
+
+  dftefe::utils::MemoryTransfer<Host, Device>::copy(C.size(), C.data(), dC.data());
 
   for(dftefe::size_type i = 0; i < C.size(); ++i)
     {

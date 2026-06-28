@@ -213,6 +213,58 @@ namespace dftefe
                  &ldcTmp);
         }
 
+        template <typename ValueType1,
+                  typename ValueType2,
+                  dftefe::utils::MemorySpace memorySpace>
+        void
+        gemmStridedVarBatched(const size_type                           numMats,
+                              const char *                              transA,
+                              const char *                              transB,
+                              const size_type *                         stridea,
+                              const size_type *                         strideb,
+                              const size_type *                         stridec,
+                              const size_type *                         m,
+                              const size_type *                         n,
+                              const size_type *                         k,
+                              const scalar_type<ValueType1, ValueType2> alpha,
+                              const ValueType1 *                        dA,
+                              const size_type *                         ldda,
+                              const ValueType2 *                        dB,
+                              const size_type *                         lddb,
+                              const scalar_type<ValueType1, ValueType2> beta,
+                              scalar_type<ValueType1, ValueType2> *     dC,
+                              const size_type *                         lddc,
+                              LinAlgOpContext<memorySpace> &            context)
+        {
+          size_type cumulativeA = 0;
+          size_type cumulativeB = 0;
+          size_type cumulativeC = 0;
+          for (size_type ibatch = 0; ibatch < numMats; ++ibatch)
+            {
+              if (*(m + ibatch) > 0 && *(n + ibatch) > 0 && *(k + ibatch) > 0)
+                {
+                  blasWrapper::gemm<ValueType1, ValueType2, memorySpace>(
+                    *(transA + ibatch),
+                    *(transB + ibatch),
+                    *(m + ibatch),
+                    *(n + ibatch),
+                    *(k + ibatch),
+                    alpha,
+                    dA + cumulativeA,
+                    *(ldda + ibatch),
+                    dB + cumulativeB,
+                    *(lddb + ibatch),
+                    beta,
+                    dC + cumulativeC,
+                    *(lddc + ibatch),
+                    context);
+                }
+
+              cumulativeA += *(stridea + ibatch);
+              cumulativeB += *(strideb + ibatch);
+              cumulativeC += *(stridec + ibatch);
+            }
+        }
 
         template void
         gemm<float, float, utils::MemorySpace::HOST>(
@@ -284,6 +336,94 @@ namespace dftefe
           const std::complex<double>                 beta,
           std::complex<double> *                     C,
           const size_type                            ldc,
+          LinAlgOpContext<utils::MemorySpace::HOST> &context);
+
+        template void
+        gemmStridedVarBatched<float, float, utils::MemorySpace::HOST>(
+          const size_type                            numMats,
+          const char *                               transA,
+          const char *                               transB,
+          const size_type *                          stridea,
+          const size_type *                          strideb,
+          const size_type *                          stridec,
+          const size_type *                          m,
+          const size_type *                          n,
+          const size_type *                          k,
+          const scalar_type<float, float>            alpha,
+          const float *                              dA,
+          const size_type *                          ldda,
+          const float *                              dB,
+          const size_type *                          lddb,
+          const scalar_type<float, float>            beta,
+          scalar_type<float, float> *                dC,
+          const size_type *                          lddc,
+          LinAlgOpContext<utils::MemorySpace::HOST> &context);
+
+        template void
+        gemmStridedVarBatched<double, double, utils::MemorySpace::HOST>(
+          const size_type                            numMats,
+          const char *                               transA,
+          const char *                               transB,
+          const size_type *                          stridea,
+          const size_type *                          strideb,
+          const size_type *                          stridec,
+          const size_type *                          m,
+          const size_type *                          n,
+          const size_type *                          k,
+          const scalar_type<double, double>          alpha,
+          const double *                             dA,
+          const size_type *                          ldda,
+          const double *                             dB,
+          const size_type *                          lddb,
+          const scalar_type<double, double>          beta,
+          scalar_type<double, double> *              dC,
+          const size_type *                          lddc,
+          LinAlgOpContext<utils::MemorySpace::HOST> &context);
+
+        template void
+        gemmStridedVarBatched<std::complex<float>,
+                              std::complex<float>,
+                              utils::MemorySpace::HOST>(
+          const size_type                                             numMats,
+          const char *                                                transA,
+          const char *                                                transB,
+          const size_type *                                           stridea,
+          const size_type *                                           strideb,
+          const size_type *                                           stridec,
+          const size_type *                                           m,
+          const size_type *                                           n,
+          const size_type *                                           k,
+          const scalar_type<std::complex<float>, std::complex<float>> alpha,
+          const std::complex<float> *                                 dA,
+          const size_type *                                           ldda,
+          const std::complex<float> *                                 dB,
+          const size_type *                                           lddb,
+          const scalar_type<std::complex<float>, std::complex<float>> beta,
+          scalar_type<std::complex<float>, std::complex<float>> *     dC,
+          const size_type *                                           lddc,
+          LinAlgOpContext<utils::MemorySpace::HOST> &                 context);
+
+        template void
+        gemmStridedVarBatched<std::complex<double>,
+                              std::complex<double>,
+                              utils::MemorySpace::HOST>(
+          const size_type                                               numMats,
+          const char *                                                  transA,
+          const char *                                                  transB,
+          const size_type *                                             stridea,
+          const size_type *                                             strideb,
+          const size_type *                                             stridec,
+          const size_type *                                             m,
+          const size_type *                                             n,
+          const size_type *                                             k,
+          const scalar_type<std::complex<double>, std::complex<double>> alpha,
+          const std::complex<double> *                                  dA,
+          const size_type *                                             ldda,
+          const std::complex<double> *                                  dB,
+          const size_type *                                             lddb,
+          const scalar_type<std::complex<double>, std::complex<double>> beta,
+          scalar_type<std::complex<double>, std::complex<double>> *     dC,
+          const size_type *                                             lddc,
           LinAlgOpContext<utils::MemorySpace::HOST> &context);
 
         template <typename ValueType>
@@ -414,15 +554,17 @@ namespace dftefe
           return izamax_(&nTmp, x, &incxTmp);
         }
 
-        template <typename ValueType1, typename ValueType2>
+        template <typename ValueType1,
+                  typename ValueType2,
+                  utils::MemorySpace memorySpace>
         void
-        axpy(const size_type                            n,
-             const scalar_type<ValueType1, ValueType2>  alpha,
-             ValueType1 const *                         x,
-             const size_type                            incx,
-             ValueType2 *                               y,
-             const size_type                            incy,
-             LinAlgOpContext<utils::MemorySpace::HOST> &context)
+        axpy(const size_type                           n,
+             const scalar_type<ValueType1, ValueType2> alpha,
+             ValueType1 const *                        x,
+             const size_type                           incx,
+             ValueType2 *                              y,
+             const size_type                           incy,
+             LinAlgOpContext<memorySpace> &            context)
         {
           utils::throwException(
             "axpy not yet implemented in BlasWrapperAPIHost");
@@ -501,6 +643,88 @@ namespace dftefe
           return zaxpy_(&nTmp, &alpha, x, &incxTmp, y, &incyTmp);
         }
 
+        template <typename ValueType1,
+                  typename ValueType2,
+                  utils::MemorySpace memorySpace>
+        scalar_type<ValueType1, ValueType2>
+        dot(const size_type               n,
+            const ValueType1 *            x,
+            const size_type               incx,
+            const ValueType2 *            y,
+            const size_type               incy,
+            LinAlgOpContext<memorySpace> &context)
+        {
+          utils::throwException(
+            false, "The input valuetypes are not supported by gemm");
+          return (scalar_type<ValueType1, ValueType2>)0;
+        }
+
+        template <>
+        float
+        dot<float, float, utils::MemorySpace::HOST>(
+          const size_type                            n,
+          const float *                              x,
+          const size_type                            incx,
+          const float *                              y,
+          const size_type                            incy,
+          LinAlgOpContext<utils::MemorySpace::HOST> &context)
+        {
+          unsigned int nTmp    = n;
+          unsigned int incxTmp = incx;
+          unsigned int incyTmp = incy;
+          return sdot_(&nTmp, x, &incxTmp, y, &incyTmp);
+        }
+
+        template <>
+        double
+        dot<double, double, utils::MemorySpace::HOST>(
+          const size_type                            n,
+          const double *                             x,
+          const size_type                            incx,
+          const double *                             y,
+          const size_type                            incy,
+          LinAlgOpContext<utils::MemorySpace::HOST> &context)
+        {
+          unsigned int nTmp    = n;
+          unsigned int incxTmp = incx;
+          unsigned int incyTmp = incy;
+          return ddot_(&nTmp, x, &incxTmp, y, &incyTmp);
+        }
+
+        template <>
+        std::complex<float>
+        dot<std::complex<float>, std::complex<float>, utils::MemorySpace::HOST>(
+          const size_type                            n,
+          const std::complex<float> *                x,
+          const size_type                            incx,
+          const std::complex<float> *                y,
+          const size_type                            incy,
+          LinAlgOpContext<utils::MemorySpace::HOST> &context)
+        {
+          unsigned int nTmp    = n;
+          unsigned int incxTmp = incx;
+          unsigned int incyTmp = incy;
+          return cdotc_(&nTmp, x, &incxTmp, y, &incyTmp);
+        }
+
+        template <>
+        std::complex<double>
+        dot<std::complex<double>,
+            std::complex<double>,
+            utils::MemorySpace::HOST>(
+          const size_type                            n,
+          const std::complex<double> *               x,
+          const size_type                            incx,
+          const std::complex<double> *               y,
+          const size_type                            incy,
+          LinAlgOpContext<utils::MemorySpace::HOST> &context)
+        {
+          unsigned int nTmp    = n;
+          unsigned int incxTmp = incx;
+          unsigned int incyTmp = incy;
+          return zdotc_(&nTmp, x, &incxTmp, y, &incyTmp);
+        }
+
         template real_type<float>
         asum<float, utils::MemorySpace::HOST>(
           const size_type                            n,
@@ -527,6 +751,44 @@ namespace dftefe
           const size_type                            n,
           std::complex<double> const *               x,
           const size_type                            incx,
+          LinAlgOpContext<utils::MemorySpace::HOST> &context);
+
+        template float
+        dot<float, float, utils::MemorySpace::HOST>(
+          const size_type                            n,
+          const float *                              x,
+          const size_type                            incx,
+          const float *                              y,
+          const size_type                            incy,
+          LinAlgOpContext<utils::MemorySpace::HOST> &context);
+
+        template double
+        dot<double, double, utils::MemorySpace::HOST>(
+          const size_type                            n,
+          const double *                             x,
+          const size_type                            incx,
+          const double *                             y,
+          const size_type                            incy,
+          LinAlgOpContext<utils::MemorySpace::HOST> &context);
+
+        template std::complex<float>
+        dot<std::complex<float>, std::complex<float>, utils::MemorySpace::HOST>(
+          const size_type                            n,
+          const std::complex<float> *                x,
+          const size_type                            incx,
+          const std::complex<float> *                y,
+          const size_type                            incy,
+          LinAlgOpContext<utils::MemorySpace::HOST> &context);
+
+        template std::complex<double>
+        dot<std::complex<double>,
+            std::complex<double>,
+            utils::MemorySpace::HOST>(
+          const size_type                            n,
+          const std::complex<double> *               x,
+          const size_type                            incx,
+          const std::complex<double> *               y,
+          const size_type                            incy,
           LinAlgOpContext<utils::MemorySpace::HOST> &context);
 
         template size_type
@@ -602,6 +864,67 @@ namespace dftefe
           std::complex<double> *                                        y,
           const size_type                                               incy,
           LinAlgOpContext<utils::MemorySpace::HOST> &context);
+
+        template <typename ValueType1, typename ValueType2>
+        void
+        axpy(const size_type                                   n,
+             const scalar_type<ValueType1, ValueType2>         alpha,
+             ValueType1 const *                                x,
+             const size_type                                   incx,
+             ValueType2 *                                      y,
+             const size_type                                   incy,
+             LinAlgOpContext<utils::MemorySpace::HOST_PINNED> &context)
+        {
+          LinAlgOpContext<utils::MemorySpace::HOST> hostContext;
+          return axpy<ValueType1, ValueType2, utils::MemorySpace::HOST>(
+            n, alpha, x, incx, y, incy, hostContext);
+        }
+
+        template void
+        axpy<double, double, utils::MemorySpace::HOST_PINNED>(
+          size_type,
+          const scalar_type<double, double>,
+          const double *,
+          size_type,
+          double *,
+          size_type,
+          LinAlgOpContext<utils::MemorySpace::HOST_PINNED> &);
+
+        template void
+        axpy<float, float, utils::MemorySpace::HOST_PINNED>(
+          size_type,
+          const scalar_type<float, float>,
+          const float *,
+          size_type,
+          float *,
+          size_type,
+          LinAlgOpContext<utils::MemorySpace::HOST_PINNED> &);
+
+        template void
+        axpy<std::complex<double>,
+             std::complex<double>,
+             utils::MemorySpace::HOST_PINNED>(
+          size_type,
+          const scalar_type<std::complex<double>, std::complex<double>>,
+          const std::complex<double> *,
+          size_type,
+          std::complex<double> *,
+          size_type,
+          LinAlgOpContext<utils::MemorySpace::HOST_PINNED> &);
+
+        template void
+        axpy<std::complex<float>,
+             std::complex<float>,
+             utils::MemorySpace::HOST_PINNED>(
+          size_type,
+          const scalar_type<std::complex<float>, std::complex<float>>,
+          const std::complex<float> *,
+          size_type,
+          std::complex<float> *,
+          size_type,
+          LinAlgOpContext<utils::MemorySpace::HOST_PINNED> &);
+
+
       } // namespace blasWrapper
 
     } // namespace blasLapack

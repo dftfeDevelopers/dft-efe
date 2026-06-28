@@ -45,7 +45,18 @@ namespace dftefe
      */
     enum class mixingVariable
     {
-      rho
+      rho,
+      gradRho, // GGA — dependent (empty weights)
+      /*magZ,      // spin-polarized / non-collinear
+      gradMagZ,  // spin-polarized GGA / non-collinear GGA — dependent
+      magY,      // non-collinear only
+      gradMagY,  // non-collinear GGA — dependent
+      magX,      // non-collinear only
+      gradMagX,  // non-collinear GGA — dependent
+      tau,       // meta-GGA — primary, full JxW weights
+      tauMagZ,   // MGGA spin-polarized
+      tauMagY,   // MGGA non-collinear
+      tauMagX,   // MGGA non-collinear*/
     };
 
     /**
@@ -151,6 +162,8 @@ namespace dftefe
                   ValueTypeMixingVariable *outputVariable,
                   const size_type          lenVar);
 
+      bool
+      hasVariable(mixingVariable var) const;
 
     private:
       /**

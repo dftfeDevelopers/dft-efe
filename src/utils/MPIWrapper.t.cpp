@@ -367,21 +367,21 @@ namespace dftefe
       MPIAllreduceMinMaxAvg(const T &data, MPIComm comm)
       {
         MinMaxAvg<T> retVal;
-        utils::mpi::MPIAllreduce<memorySpace>(
+        utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
           &data,
           &retVal.min,
           1,
           utils::mpi::Types<T>::getMPIDatatype(),
           utils::mpi::MPIMin,
           comm);
-        utils::mpi::MPIAllreduce<memorySpace>(
+        utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
           &data,
           &retVal.max,
           1,
           utils::mpi::Types<T>::getMPIDatatype(),
           utils::mpi::MPIMax,
           comm);
-        utils::mpi::MPIAllreduce<memorySpace>(
+        utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
           &data,
           &retVal.avg,
           1,

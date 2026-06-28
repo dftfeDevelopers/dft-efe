@@ -36,18 +36,24 @@
 #include <string>
 #include <vector>
 #include <chrono>
+#include "sys/types.h"
+#include "sys/sysinfo.h"
+#ifdef DFTEFE_WITH_DEVICE
+#  include <utils/DeviceAPICalls.h>
+#endif
 namespace dftefe
 {
   namespace utils
   {
+    template <dftefe::utils::MemorySpace memorySpace>
     class Profiler
     {
     public:
       struct Section
       {
-        Timer        timer;
-        double       totalWallTime;
-        unsigned int nCalls;
+        Timer     timer;
+        double    totalWallTime;
+        size_type nCalls;
       };
 
       Profiler(const std::string &profileName = "");
@@ -71,13 +77,14 @@ namespace dftefe
       getSectionTimer(const std::string &sectionName) const;
       double
       getSectionTotalWallTime(const std::string &sectionName) const;
-      unsigned int
+      size_type
       getSectionCalls(const std::string &sectionName) const;
       void
       reset();
 
     private:
       std::map<std::string, Section> d_SectionsMap;
+      std::vector<std::string>       d_insertionOrder;
       std::list<std::string>         d_activeSections;
       ConditionalOStream             d_stream;
       const mpi::MPIComm             d_mpiComm;
@@ -89,10 +96,65 @@ namespace dftefe
     //
     // helper function
     //
-    void
+    template <dftefe::utils::MemorySpace memorySpace>
+    static inline void
     printCurrentMemoryUsage(const utils::mpi::MPIComm &mpiComm,
-                            const std::string          message);
+                            const std::string          message)
+    {
+      int rank;
+      mpi::MPICommRank(mpiComm, &rank);
+      ConditionalOStream cout((ConditionalOStream(std::cout)));
+      cout.setCondition(rank == 0);
+      mpi::MPIBarrier(mpiComm);
+
+      // --- Host memory ---
+      struct sysinfo memInfo;
+      sysinfo(&memInfo);
+      double totalVirtualMem = memInfo.totalram;
+      totalVirtualMem += memInfo.totalswap;
+      totalVirtualMem *= memInfo.mem_unit;
+      double virtualMemUsed = memInfo.totalram - memInfo.freeram;
+      virtualMemUsed += memInfo.totalswap - memInfo.freeswap;
+      virtualMemUsed *= memInfo.mem_unit;
+      auto minMaxAvg =
+        mpi::MPIAllreduceMinMaxAvg<double, utils::MemorySpace::HOST>(
+          virtualMemUsed, mpiComm);
+      const double maxHostBytes = minMaxAvg.max;
+      // --- Device (GPU) memory ---
+      if constexpr (memorySpace == dftefe::utils::MemorySpace::DEVICE)
+        {
+#ifdef DFTEFE_WITH_DEVICE
+          std::size_t freeGPU = 0, totalGPU = 0;
+          {
+            deviceError_t err = deviceMemGetInfo(&freeGPU, &totalGPU);
+            DEVICE_API_CHECK(err);
+          }
+          double gpuUsed  = static_cast<double>(totalGPU - freeGPU);
+          double gpuTotal = static_cast<double>(totalGPU);
+          auto   gpuMinMaxAvg =
+            mpi::MPIAllreduceMinMaxAvg<double, utils::MemorySpace::HOST>(
+              gpuUsed, mpiComm);
+          cout << std::endl
+               << message << ", CPU: " << maxHostBytes / 1073741824.0
+               << " out of " << totalVirtualMem / 1073741824.0
+               << " GB, GPU: " << gpuMinMaxAvg.max / 1073741824.0 << " out of "
+               << gpuTotal / 1073741824.0 << " GB" << std::endl
+               << std::endl;
+#endif
+        }
+      else
+        {
+          cout << std::endl
+               << message << ", CPU: " << maxHostBytes / 1073741824.0
+               << " out of " << totalVirtualMem / 1073741824.0 << " GB"
+               << std::endl
+               << std::endl;
+        }
+
+      mpi::MPIBarrier(mpiComm);
+    }
 
   } // end of namespace utils
 } // end of namespace dftefe
+#include "Profiler.t.cpp"
 #endif // dftefeProfiler_h

@@ -46,10 +46,22 @@ main(int argc, char **argv)
          world_size);
 
 #ifdef DFTEFE_WITH_DEVICE
+  std::cout << "\nwith GPU support, " << std::flush;
+#  ifdef DFTEFE_WITH_DEVICE_LANG_CUDA
+  std::cout << "using CUDA, " << std::flush;
+#  elif DFTEFE_WITH_DEVICE_LANG_HIP
+  std::cout << "using HIP, " << std::flush;
+#  endif
+#endif
+#ifdef DFTEFE_WITH_DEVICE_AWARE_MPI
+  std::cout << "with device-aware MPI support, \n" << std::flush;
+#endif
+
+#ifdef DFTEFE_WITH_DEVICE
   const bool useDevice = false;
   if (useDevice)
     {
-      dftefe::utils::DeviceUtils::initialize(world_rank);
+      dftefe::utils::DeviceUtils::setupDevice(world_rank);
     }
   printf("This is gpu code");
 #endif

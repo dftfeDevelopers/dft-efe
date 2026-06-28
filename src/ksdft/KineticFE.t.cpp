@@ -196,13 +196,17 @@ namespace dftefe
 
           if (numPsiInBatch < d_waveFuncBatchSize)
             {
-              for (size_type iSize = 0; iSize < waveFunc.localSize(); iSize++)
-                memoryTransfer.copy(numPsiInBatch,
-                                    d_psiBatchSmall->data() +
-                                      numPsiInBatch * iSize,
-                                    waveFunc.data() +
-                                      iSize * waveFunc.getNumberComponents() +
-                                      psiStartId);
+              linearAlgebra::blasLapack::stridedBlockCopy(
+                waveFunc.localSize(),
+                numPsiInBatch,
+                waveFunc.getNumberComponents(),
+                psiStartId,
+                numPsiInBatch,
+                0,
+                waveFunc.data(),
+                d_psiBatchSmall->data(),
+                *waveFunc.getLinAlgOpContext());
+
 
               d_laplaceOp->apply(*d_psiBatchSmall, *d_YBatchSmall, true, true);
               linearAlgebra::dot(*d_psiBatchSmall,
@@ -213,12 +217,16 @@ namespace dftefe
             }
           else
             {
-              for (size_type iSize = 0; iSize < waveFunc.localSize(); iSize++)
-                memoryTransfer.copy(numPsiInBatch,
-                                    d_psiBatch->data() + numPsiInBatch * iSize,
-                                    waveFunc.data() +
-                                      iSize * waveFunc.getNumberComponents() +
-                                      psiStartId);
+              linearAlgebra::blasLapack::stridedBlockCopy(
+                waveFunc.localSize(),
+                numPsiInBatch,
+                waveFunc.getNumberComponents(),
+                psiStartId,
+                numPsiInBatch,
+                0,
+                waveFunc.data(),
+                d_psiBatch->data(),
+                *waveFunc.getLinAlgOpContext());
 
               d_laplaceOp->apply(*d_psiBatch, *d_YBatch, true, true);
               linearAlgebra::dot(*d_psiBatch,
@@ -228,7 +236,7 @@ namespace dftefe
                                  linearAlgebra::blasLapack::ScalarOp::Identity);
             }
 
-          for (int i = 0; i < dotProds.size(); i++)
+          for (size_type i = 0; i < dotProds.size(); i++)
             d_energy += (RealType)(dotProds[i] * 2.0 * occupationInBatch[i]);
         }
 

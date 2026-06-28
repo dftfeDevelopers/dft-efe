@@ -32,6 +32,7 @@
 #include <utils/MemoryStorage.h>
 #include <utils/ScalarSpatialFunction.h>
 #include <unordered_map>
+#include <unordered_set>
 
 #include <linearAlgebra/Vector.h>
 namespace dftefe
@@ -172,6 +173,7 @@ namespace dftefe
       std::vector<std::pair<global_size_type, global_size_type>>
                                                       d_locallyOwnedRanges;
       std::vector<global_size_type>                   d_ghostIndices;
+      std::unordered_set<global_size_type>            d_ghostIndicesSet;
       std::unordered_map<global_size_type, size_type> d_globalToLocalMap;
     };
 

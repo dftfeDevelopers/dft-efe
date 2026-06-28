@@ -32,6 +32,7 @@
 #include <cmath>
 #include <atoms/SphericalDataNumerical.h>
 #include <boost/math/special_functions/spherical_harmonic.hpp>
+#include <utils/Exceptions.h>
 
 namespace dftefe
 {
@@ -51,7 +52,7 @@ namespace dftefe
         const double                         polarAngleTolerance,
         std::vector<double> &                value)
       {
-        for (int i = 0; i < point.size(); i++)
+        for (size_type i = 0; i < point.size(); i++)
           {
             // do the spline interpolation in the radial points
             double r, theta, phi;
@@ -72,7 +73,7 @@ namespace dftefe
 
         // std::vector<double> atomCenteredPoint(dim, 0.);
         // double              r, theta, phi;
-        // for (unsigned int i = 0; i < dim; i++)
+        // for (size_type i = 0; i < dim; i++)
         //   {
         //     atomCenteredPoint[i] = point[i] - origin[i];
         //   }
@@ -104,7 +105,7 @@ namespace dftefe
         const double                         radiusTolerance,
         std::vector<double> &                gradient)
       {
-        for (int i = 0; i < point.size(); i++)
+        for (size_type i = 0; i < point.size(); i++)
           {
             // do the spline interpolation in the radial points
             double r, theta, phi;
@@ -167,6 +168,12 @@ namespace dftefe
                 double dValueDPhiByrsinTheta = 0.;
                 dValueDPhiByrsinTheta =
                   (radialValue / r) * cutoffValue * dYlmDPhiBysinTheta;
+
+                if ((r < 1e-4 && l > 0))
+                  {
+                    dValueDThetaByr       = dValueDR * dYlmDTheta;
+                    dValueDPhiByrsinTheta = dValueDR * dYlmDPhiBysinTheta;
+                  }
 
                 gradient[3 * i + 0] =
                   dValueDR * (sin(theta) * cos(phi)) +
@@ -329,6 +336,25 @@ namespace dftefe
                                                        this->d_radialValues);
     }
 
+    template <>
+    SphericalDataNumerical::Func<utils::MemorySpace::HOST>
+    SphericalDataNumerical::getFunc<utils::MemorySpace::HOST>() const
+    {
+      const int l = d_qNumbers[1];
+      const int m = d_qNumbers[2];
+      return Func<utils::MemorySpace::HOST>(
+        d_spline->getFunc<utils::MemorySpace::HOST>(),
+        l,
+        m,
+        std::abs(m),
+        Clm(l, m) * Dm(m),
+        d_cutoff,
+        d_smoothness,
+        d_polarAngleTolerance,
+        d_cutoffTolerance,
+        d_radiusTolerance);
+    }
+
     std::vector<double>
     SphericalDataNumerical::getValue(const std::vector<utils::Point> &point,
                                      const utils::Point &             origin)
@@ -392,7 +418,7 @@ namespace dftefe
       DFTEFE_AssertWithMsg(d_qNumbers.size() == 3,
                            "All quantum numbers not given");
 
-      for (int i = 0; i < point.size(); i++)
+      for (size_type i = 0; i < point.size(); i++)
         {
           SphericalDataNumericalInternal::getHessianValueAutoDiff(
             point[i],
@@ -492,7 +518,7 @@ namespace dftefe
     SphericalDataNumerical::getRadialValue(const std::vector<double> &r)
     {
       std::vector<double> retVal(r.size(), 0.);
-      for (int i = 0; i < r.size(); i++)
+      for (size_type i = 0; i < r.size(); i++)
         {
           double radius = r[i];
           retVal[i]     = (radius <= d_cutoff + d_cutoff / d_smoothness) ?
@@ -513,7 +539,7 @@ namespace dftefe
       int                 m        = d_qNumbers[2];
       double              constant = Clm(l, m) * Dm(m);
       std::vector<double> retVal(r.size(), 0.);
-      for (int i = 0; i < r.size(); i++)
+      for (size_type i = 0; i < r.size(); i++)
         {
           retVal[i] =
             (r[i] <= d_cutoff + d_cutoff / d_smoothness) ?
@@ -528,7 +554,7 @@ namespace dftefe
     SphericalDataNumerical::getRadialDerivative(const std::vector<double> &r)
     {
       std::vector<double> retVal(r.size(), 0.);
-      for (int i = 0; i < r.size(); i++)
+      for (size_type i = 0; i < r.size(); i++)
         {
           double radius = r[i];
           if (radius <= d_cutoff + d_cutoff / d_smoothness)
@@ -564,7 +590,7 @@ namespace dftefe
       int                              l        = d_qNumbers[1];
       int                              m        = d_qNumbers[2];
       double                           constant = Clm(l, m) * Dm(m);
-      for (int i = 0; i < r.size(); i++)
+      for (size_type i = 0; i < r.size(); i++)
         {
           if (r[i] <= d_cutoff + d_cutoff / d_smoothness)
             {
@@ -583,13 +609,13 @@ namespace dftefe
               double dYlmDPhiBysinTheta = 0.;
               if (m != 0)
                 {
-                  dYlmDPhiBysinTheta =
-                    constant *
-                    (sin(theta) * d_sphericalHarmonicFunc.d2PlmDTheta2(
-                                    l, std::abs(m), theta) +
-                     cos(theta) * dPlmDTheta_theta +
-                     sin(theta) * l * (l + 1) * plm_theta) *
-                    (1. / (m * m)) * dQmDPhi(m, phi);
+                  const double d2PlmDTheta2_theta =
+                    d_sphericalHarmonicFunc.d2PlmDTheta2(l, std::abs(m), theta);
+                  dYlmDPhiBysinTheta = constant *
+                                       (sin(theta) * d2PlmDTheta2_theta +
+                                        cos(theta) * dPlmDTheta_theta +
+                                        sin(theta) * l * (l + 1) * plm_theta) *
+                                       (1. / (m * m)) * dQmDPhi(m, phi);
                 }
 
               // if (!(r[i] < d_radiusTolerance && l > 0))
@@ -611,6 +637,48 @@ namespace dftefe
             }
         }
       return retVal;
+    }
+
+    void
+    SphericalDataNumerical::getValue(const size_type numPoints,
+                                     const double *  points,
+                                     const double *  origin,
+                                     double *        out)
+    {
+      utils::Point originPt(std::vector<double>(origin, origin + d_dim));
+      for (size_type i = 0; i < numPoints; i++)
+        {
+          utils::Point pt(
+            std::vector<double>(points + i * d_dim, points + (i + 1) * d_dim));
+          out[i] = getValue(pt, originPt);
+        }
+    }
+
+    void
+    SphericalDataNumerical::getGradientValue(const size_type numPoints,
+                                             const double *  points,
+                                             const double *  origin,
+                                             double *        out)
+    {
+      utils::Point originPt(std::vector<double>(origin, origin + d_dim));
+      for (size_type i = 0; i < numPoints; i++)
+        {
+          utils::Point pt(
+            std::vector<double>(points + i * d_dim, points + (i + 1) * d_dim));
+          auto grad = getGradientValue(pt, originPt);
+          for (size_type j = 0; j < d_dim; j++)
+            out[i * d_dim + j] = grad[j];
+        }
+    }
+
+    void
+    SphericalDataNumerical::getHessianValue(const size_type numPoints,
+                                            const double *  points,
+                                            const double *  origin,
+                                            double *        out)
+    {
+      utils::throwException(
+        false, "getHessianValue not implemented for SphericalDataNumerical.");
     }
 
     std::vector<int>

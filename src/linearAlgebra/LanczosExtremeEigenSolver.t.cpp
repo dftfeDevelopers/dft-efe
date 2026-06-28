@@ -36,51 +36,6 @@ namespace dftefe
 {
   namespace linearAlgebra
   {
-    namespace LanczosExtremeEigenSolverInternal
-    {
-      template <typename T>
-      class generate
-      {
-      public:
-        inline static T
-        randomNumber()
-        {
-          T retVal;
-          retVal = static_cast<T>(std::rand()) / RAND_MAX;
-          return retVal;
-        }
-      };
-
-      template <>
-      class generate<std::complex<double>>
-      {
-      public:
-        inline static std::complex<double>
-        randomNumber()
-        {
-          std::complex<double> retVal;
-          retVal.real(static_cast<double>(std::rand()) / RAND_MAX);
-          retVal.imag(static_cast<double>(std::rand()) / RAND_MAX);
-          return retVal;
-        }
-      };
-
-      template <>
-      class generate<std::complex<float>>
-      {
-      public:
-        inline static std::complex<float>
-        randomNumber()
-        {
-          std::complex<float> retVal;
-          retVal.real(static_cast<float>(std::rand()) / RAND_MAX);
-          retVal.imag(static_cast<float>(std::rand()) / RAND_MAX);
-          return retVal;
-        }
-      };
-
-    } // namespace LanczosExtremeEigenSolverInternal
-
     template <typename ValueTypeOperator,
               typename ValueTypeOperand,
               utils::MemorySpace memorySpace>
@@ -174,34 +129,11 @@ namespace dftefe
                                                            mpiPatternP2P,
              std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext)
     {
-      // Get the rank of the process
-      int rank;
-      utils::mpi::MPICommRank(mpiPatternP2P->mpiCommunicator(), &rank);
-      std::srand(std::time(nullptr) * (rank + 1));
-
-      Vector<ValueTypeOperand, memorySpace> initialGuess(mpiPatternP2P,
-                                                         linAlgOpContext);
-
-      d_initialGuess = initialGuess;
-
-      std::vector<ValueTypeOperand> initialGuessSTL(
-        d_initialGuess.locallyOwnedSize());
-
-      utils::MemoryTransfer<utils::MemorySpace::HOST, memorySpace>::copy(
-        d_initialGuess.locallyOwnedSize(),
-        initialGuessSTL.data(),
-        d_initialGuess.data());
-
-      LanczosExtremeEigenSolverInternal::generate<ValueTypeOperand>
-        generateNumber;
-      // todo - implement random class in utils and modify this
-      for (size_type i = 0; i < d_initialGuess.locallyOwnedSize(); i++)
-        {
-          *(initialGuessSTL.data() + i) = generateNumber.randomNumber();
-        }
-
-      utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
-        initialGuessSTL.size(), d_initialGuess.data(), initialGuessSTL.data());
+      d_initialGuess =
+        Vector<ValueTypeOperand, memorySpace>(mpiPatternP2P,
+                                              linAlgOpContext,
+                                              (ValueTypeOperand)0,
+                                              (ValueTypeOperand)1);
 
       d_maxKrylovSubspaceSize = maxKrylovSubspaceSize;
       DFTEFE_Assert(numLowerExtermeEigenValues + numUpperExtermeEigenValues <=
@@ -264,8 +196,8 @@ namespace dftefe
         krylovSubspOrthoVecMemStorage(0);
 
       // memory for the eigenVectors
-      utils::MemoryStorage<ValueType, memorySpace> eigenVectorsKrylovSubspace(
-        0);
+      utils::MemoryStorage<ValueType, utils::MemorySpace::HOST>
+        eigenVectorsKrylovSubspace(0);
       utils::MemoryStorage<ValueType, memorySpace>
         wantedEigenVectorsKrylovSubspace(0);
 
@@ -395,12 +327,12 @@ namespace dftefe
 
               if (d_isAdaptiveSolve || iter == d_maxKrylovSubspaceSize)
                 {
-                  utils::MemoryStorage<RealType, memorySpace> eigenValuesIter(
-                    alphaVec.size());
+                  utils::MemoryStorage<RealType, utils::MemorySpace::HOST>
+                    eigenValuesIter(alphaVec.size());
                   eigenValuesIter.template copyFrom<utils::MemorySpace::HOST>(
                     alphaVec.data());
-                  utils::MemoryStorage<RealType, memorySpace> betaVecTemp(
-                    betaVec.size() - 1);
+                  utils::MemoryStorage<RealType, utils::MemorySpace::HOST>
+                    betaVecTemp(betaVec.size() - 1);
                   betaVecTemp.template copyFrom<utils::MemorySpace::HOST>(
                     betaVec.data(), betaVec.size() - 1, 0, 0);
 
@@ -410,14 +342,14 @@ namespace dftefe
                         krylovSubspaceSize * krylovSubspaceSize,
                         utils::Types<ValueType>::zero);
                       LapackError lapackReturn =
-                        blasLapack::steqr<ValueType, memorySpace>(
+                        blasLapack::steqr<ValueType, utils::MemorySpace::HOST>(
                           'V',
                           krylovSubspaceSize,
                           eigenValuesIter.data(),
                           betaVecTemp.data(),
                           eigenVectorsKrylovSubspace.data(),
                           krylovSubspaceSize,
-                          *d_initialGuess.getLinAlgOpContext());
+                          *LinAlgOpContextDefaults::LINALG_OP_CONTXT_HOST);
 
                       if (lapackReturn.err ==
                           LapackErrorCode::FAILED_REAL_TRIDIAGONAL_EIGENPROBLEM)
@@ -432,14 +364,14 @@ namespace dftefe
                   else
                     {
                       LapackError lapackReturn =
-                        blasLapack::steqr<ValueType, memorySpace>(
+                        blasLapack::steqr<ValueType, utils::MemorySpace::HOST>(
                           'N',
                           krylovSubspaceSize,
                           eigenValuesIter.data(),
                           betaVecTemp.data(),
                           eigenVectorsKrylovSubspace.data(),
                           krylovSubspaceSize,
-                          *d_initialGuess.getLinAlgOpContext());
+                          *LinAlgOpContextDefaults::LINALG_OP_CONTXT_HOST);
 
                       if (lapackReturn.err ==
                           LapackErrorCode::FAILED_REAL_TRIDIAGONAL_EIGENPROBLEM)
@@ -532,11 +464,11 @@ namespace dftefe
           // std::cout << "krylovSubspOrthoVec: \n";
           for (size_type vecId = 0; vecId < krylovSubspaceSize; vecId++)
             {
-              utils::MemoryTransfer<memorySpace, memorySpace>::copy(
-                q.locallyOwnedSize(),
-                krylovSubspOrthoVecMemStorage.data() +
-                  vecId * q.locallyOwnedSize(),
-                krylovSubspOrthoVec[vecId].data());
+              utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::
+                copy(q.locallyOwnedSize(),
+                     krylovSubspOrthoVecMemStorage.data() +
+                       vecId * q.locallyOwnedSize(),
+                     krylovSubspOrthoVec[vecId].data());
 
               // for(size_type j = 0 ; j <
               // krylovSubspOrthoVec[vecId].locallyOwnedSize() ; j++)
@@ -559,12 +491,12 @@ namespace dftefe
           //   std::cout << "]\n";
           // }
 
-          utils::MemoryTransfer<memorySpace, memorySpace>::copy(
+          utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
             d_numLowerExtermeEigenValues * krylovSubspaceSize,
             wantedEigenVectorsKrylovSubspace.data(),
             eigenVectorsKrylovSubspace.data());
 
-          utils::MemoryTransfer<memorySpace, memorySpace>::copy(
+          utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
             d_numUpperExtermeEigenValues * krylovSubspaceSize,
             wantedEigenVectorsKrylovSubspace.data() +
               d_numLowerExtermeEigenValues * krylovSubspaceSize,

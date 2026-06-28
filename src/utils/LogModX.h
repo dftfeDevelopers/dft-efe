@@ -10,16 +10,15 @@ namespace dftefe
     class LogModX : public ScalarSpatialFunctionReal
     {
     public:
-      LogModX(const unsigned int component,
-              const double       base = mathConstants::e);
+      LogModX(const size_type component, const double base = mathConstants::e);
       double
       operator()(const utils::Point &point) const override;
       std::vector<double>
       operator()(const std::vector<utils::Point> &points) const override;
 
     private:
-      unsigned int d_component;
-      double       d_logBase;
+      size_type d_component;
+      double    d_logBase;
     };
 
   } // namespace utils

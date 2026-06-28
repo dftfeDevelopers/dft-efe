@@ -13,6 +13,7 @@
 #include <utils/MPITypes.h>
 #include <utils/MPIWrapper.h>
 #include <quadrature/Defaults.h>
+#include <utils/MemoryStorage.h>
 namespace dftefe
 {
   namespace quadrature
@@ -82,7 +83,7 @@ namespace dftefe
         const std::vector<double> &integralThresholds,
         const double               smallestCellVolume =
           QuadratureRuleAdaptiveDefaults::SMALLEST_CELL_VOLUME,
-        const unsigned int maxRecursion =
+        const dftefe::size_type maxRecursion =
           QuadratureRuleAdaptiveDefaults::MAX_RECURSION);
 
       /**
@@ -161,7 +162,7 @@ namespace dftefe
        * @returns  a vector of dftefe::utils::Point
        */
       std::vector<dftefe::utils::Point>
-      getCellRealPoints(const unsigned int cellId) const;
+      getCellRealPoints(const dftefe::size_type cellId) const;
 
       /**
        * @brief Function that returns a vector containing the real coordinates of the
@@ -171,7 +172,7 @@ namespace dftefe
        * @returns  a vector of dftefe::utils::Point
        */
       const std::vector<dftefe::utils::Point> &
-      getCellParametricPoints(const unsigned int cellId) const;
+      getCellParametricPoints(const dftefe::size_type cellId) const;
 
       /**
        * @brief Function that returns a vector containing the weight of the
@@ -181,7 +182,7 @@ namespace dftefe
        * @returns  a vector of weights double
        */
       const std::vector<double> &
-      getCellQuadratureWeights(const unsigned int cellId) const;
+      getCellQuadratureWeights(const dftefe::size_type cellId) const;
 
       /**
        * @brief Function that returns a vector containing the Jacobian times quadrature weight
@@ -200,7 +201,7 @@ namespace dftefe
        * @returns  a vector (double) of Jacobian times weight
        */
       std::vector<double>
-      getCellJxW(const unsigned int cellId) const;
+      getCellJxW(const dftefe::size_type cellId) const;
 
       /**
        * @brief Function that returns the handle to quadrature rule corresponding to the
@@ -210,7 +211,7 @@ namespace dftefe
        * @returns  Const reference to QuadratureRule
        */
       const QuadratureRule &
-      getQuadratureRule(const unsigned int cellId) const;
+      getQuadratureRule(const dftefe::size_type cellId) const;
 
       /**
        * @brief  A function to return the total number of quadrature points in all the cells
@@ -228,7 +229,7 @@ namespace dftefe
        * @returns  number of quadrature points
        */
       size_type
-      nCellQuadraturePoints(const unsigned int cellId) const;
+      nCellQuadraturePoints(const dftefe::size_type cellId) const;
 
       /**
        * @brief A function to return the starting index of the quadrature point of each cell
@@ -253,19 +254,52 @@ namespace dftefe
       const basis::CellMappingBase &
       getCellMapping() const;
 
+      template <utils::MemorySpace memorySpace>
+      inline const double *
+      getRealPointsPtr() const
+      {
+        if constexpr (memorySpace == utils::MemorySpace::HOST)
+          {
+            return d_realPointsHost.data();
+          }
+        else
+          {
+#ifdef DFTEFE_WITH_DEVICE
+            if (d_realPointsDevice == nullptr)
+              {
+                d_realPointsDevice = std::make_unique<
+                  utils::MemoryStorage<double, utils::MemorySpace::DEVICE>>(
+                  d_realPointsHost.size());
+                d_realPointsDevice->copyFrom(d_realPointsHost);
+              }
+            return d_realPointsDevice->data();
+#else
+            static_assert(memorySpace == utils::MemorySpace::HOST,
+                          "Device memory not available");
+#endif
+          }
+      }
+
     private:
       const QuadratureRuleAttributes &d_quadratureRuleAttributes;
       std::vector<std::shared_ptr<const QuadratureRule>> d_quadratureRuleVec;
       std::vector<size_type>                             d_numCellQuadPoints;
       std::vector<size_type>                             d_cellQuadStartIds;
       std::vector<dftefe::utils::Point>                  d_realPoints;
+      std::vector<double>                                d_realPointsHost;
       std::vector<double>                                d_JxW;
-      unsigned int                                       d_dim;
+      dftefe::size_type                                  d_dim;
       size_type                                          d_numQuadPoints;
       size_type                                          d_numCells;
       bool                                               d_storeJacobianInverse;
       std::shared_ptr<const basis::TriangulationBase>    d_triangulation;
       const basis::CellMappingBase &                     d_cellMapping;
+
+#ifdef DFTEFE_WITH_DEVICE
+      mutable std::unique_ptr<
+        utils::MemoryStorage<double, utils::MemorySpace::DEVICE>>
+        d_realPointsDevice;
+#endif
     };
   } // end of namespace quadrature
 

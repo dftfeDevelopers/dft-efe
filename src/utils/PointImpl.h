@@ -109,6 +109,20 @@ namespace dftefe
       end() const;
 
       /**
+       * @brief Return the raw pointer to the Vector
+       * @return pointer to data
+       */
+      T *
+      data() noexcept;
+
+      /**
+       * @brief Return the raw pointer to the Vector without modifying the values
+       * @return pointer to const data
+       */
+      const T *
+      data() const noexcept;
+
+      /**
        * @brief Operator overload for assignment q=p
        * @param[in] p the rhs PointImpl from which to copy
        *
@@ -251,6 +265,14 @@ namespace dftefe
     template <typename T>
     std::ostream &
     operator<<(std::ostream &outputStream, const PointImpl<T> &p);
+
+    /**
+     * @brief Flatten a vector of points into a contiguous coordinate array.
+     * Output layout: [x0,y0,z0, x1,y1,z1, ...] of size pts.size()*dim.
+     */
+    template <typename T>
+    std::vector<T>
+    flatten(const std::vector<PointImpl<T>> &pts);
 
   } // end of namespace utils
 } // end of namespace dftefe

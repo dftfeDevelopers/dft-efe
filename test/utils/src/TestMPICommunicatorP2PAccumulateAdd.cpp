@@ -40,11 +40,12 @@
 #include <cstdlib>
 #include <ctime>
 
+const dftefe::utils::MemorySpace memorySpace = dftefe::utils::MemorySpace::DEVICE;
 using size_type = dftefe::size_type;
 using global_size_type = dftefe::global_size_type;
 
-using MemoryStorageDoubleHost    = dftefe::utils::MemoryStorage<double, dftefe::utils::MemorySpace::HOST>;
-using MemoryStorageComplexDoubleHost    = dftefe::utils::MemoryStorage<std::complex<double>, dftefe::utils::MemorySpace::HOST>;
+using MemoryStorageDoubleDevice    = dftefe::utils::MemoryStorage<double, memorySpace>;
+using MemoryStorageComplexDoubleDevice    = dftefe::utils::MemoryStorage<std::complex<double>, memorySpace>;
 
 global_size_type getAGhostIndex(const global_size_type numGlobalIndices,
     const global_size_type ownedIndexStart,
@@ -59,7 +60,17 @@ global_size_type getAGhostIndex(const global_size_type numGlobalIndices,
 
 int main()
 {
-
+#  ifdef DFTEFE_WITH_DEVICE
+      std::cout << "\nwith GPU support, " << std::flush;
+#    ifdef DFTEFE_WITH_DEVICE_LANG_CUDA
+      std::cout << "using CUDA, "<< std::flush;
+#    elif DFTEFE_WITH_DEVICE_LANG_HIP
+      std::cout << "using HIP, "<< std::flush;
+#    endif
+#    endif
+#    ifdef DFTEFE_WITH_DEVICE_AWARE_MPI
+      std::cout << "with device-aware MPI support, \n"<< std::flush;
+#    endif
 #ifdef DFTEFE_WITH_MPI
   
   // initialize the MPI environment
@@ -149,8 +160,8 @@ int main()
     }
   }
 
-  std::shared_ptr<const dftefe::utils::mpi::MPIPatternP2P<dftefe::utils::MemorySpace::HOST>>
-    mpiPatternP2PPtr= std::make_shared<dftefe::utils::mpi::MPIPatternP2P<dftefe::utils::MemorySpace::HOST>>(locallyOwnedRange,
+  std::shared_ptr<const dftefe::utils::mpi::MPIPatternP2P<memorySpace>>
+    mpiPatternP2PPtr= std::make_shared<dftefe::utils::mpi::MPIPatternP2P<memorySpace>>(locallyOwnedRange,
 	ghostIndices,
 	dftefe::utils::mpi::MPICommWorld);
 
@@ -162,18 +173,30 @@ int main()
   for(size_type i = ownedSize; i <  ownedPlusGhostSize; ++i)
     dVecStd1[i] = mpiPatternP2PPtr->localToGlobal(i);
   
-  MemoryStorageDoubleHost memStorage1(ownedPlusGhostSize);
+  MemoryStorageDoubleDevice memStorage1(ownedPlusGhostSize);
   memStorage1.copyFrom<dftefe::utils::MemorySpace::HOST>(dVecStd1.data());
 
-  dftefe::utils::mpi::MPICommunicatorP2P<double,dftefe::utils::MemorySpace::HOST> mpiCommunicatorP2P1(mpiPatternP2PPtr,1);
+  dftefe::utils::mpi::MPICommunicatorP2P<double,memorySpace> mpiCommunicatorP2P1(mpiPatternP2PPtr,1);
 
   mpiCommunicatorP2P1.accumulateAddLocallyOwned(memStorage1); 
 
   memStorage1.copyTo<dftefe::utils::MemorySpace::HOST>(dVecStd1.data()); 
 
-  for(size_type i = 0; i < (mpiPatternP2PPtr->getOwnedLocalIndicesForTargetProcs()).size(); ++i)
+  auto &ownedLocalIndicesDevice = mpiPatternP2PPtr->getOwnedLocalIndicesForTargetProcs();
+
+  // Allocate host storage
+  dftefe::utils::MemoryStorage<size_type, dftefe::utils::MemorySpace::HOST> ownedLocalIndicesHost(
+      ownedLocalIndicesDevice.size());
+
+  // Copy device → host
+  ownedLocalIndicesHost.copyFrom<memorySpace>(ownedLocalIndicesDevice.data());
+
+  for(size_type i = 0; i < ownedLocalIndicesHost.size(); ++i)
   {
-    dexpectedValuesStd1[mpiPatternP2PPtr->getOwnedLocalIndicesForTargetProcs().data()[i]]+=mpiPatternP2PPtr->localToGlobal(mpiPatternP2PPtr->getOwnedLocalIndicesForTargetProcs().data()[i]);
+    size_type idx = ownedLocalIndicesHost.data()[i];
+
+    dexpectedValuesStd1[idx] += 
+        mpiPatternP2PPtr->localToGlobal(idx);
   }
 
   for(size_type i = 0; i < ownedSize; ++i)
@@ -192,18 +215,21 @@ int main()
   for(size_type i = ownedSize; i <  ownedPlusGhostSize; ++i)
     dVecStd2[i] = std::complex<double>(mpiPatternP2PPtr->localToGlobal(i),-mpiPatternP2PPtr->localToGlobal(i));
   
-  MemoryStorageComplexDoubleHost memStorage2(ownedPlusGhostSize);
+  MemoryStorageComplexDoubleDevice memStorage2(ownedPlusGhostSize);
   memStorage2.copyFrom<dftefe::utils::MemorySpace::HOST>(dVecStd2.data());
 
-  dftefe::utils::mpi::MPICommunicatorP2P<std::complex<double>,dftefe::utils::MemorySpace::HOST> mpiCommunicatorP2P2(mpiPatternP2PPtr,1);
+  dftefe::utils::mpi::MPICommunicatorP2P<std::complex<double>,memorySpace> mpiCommunicatorP2P2(mpiPatternP2PPtr,1);
 
   mpiCommunicatorP2P2.accumulateAddLocallyOwned(memStorage2); 
 
   memStorage2.copyTo<dftefe::utils::MemorySpace::HOST>(dVecStd2.data()); 
 
-  for(size_type i = 0; i < (mpiPatternP2PPtr->getOwnedLocalIndicesForTargetProcs()).size(); ++i)
+  for(size_type i = 0; i < ownedLocalIndicesHost.size(); ++i)
   {
-    dexpectedValuesStd2[mpiPatternP2PPtr->getOwnedLocalIndicesForTargetProcs().data()[i]]+=std::complex<double>(mpiPatternP2PPtr->localToGlobal(mpiPatternP2PPtr->getOwnedLocalIndicesForTargetProcs().data()[i]),-mpiPatternP2PPtr->localToGlobal((mpiPatternP2PPtr->getOwnedLocalIndicesForTargetProcs().data()[i])));
+    size_type idx = ownedLocalIndicesHost.data()[i];
+
+    dexpectedValuesStd2[idx] += std::complex<double>(mpiPatternP2PPtr->localToGlobal(idx),-mpiPatternP2PPtr->localToGlobal(idx));
+
   }
 
   for(size_type i = 0; i < ownedSize; ++i)
@@ -228,18 +254,22 @@ int main()
   for(size_type i = ownedSizeMultivector; i <  ownedPlusGhostSizeMultivector; ++i)
     dVecStd3[i] = mpiPatternP2PPtr->localToGlobal(i/blockSize)*blockSize+i%blockSize;
   
-  MemoryStorageDoubleHost memStorage3(ownedPlusGhostSizeMultivector);
+  MemoryStorageDoubleDevice memStorage3(ownedPlusGhostSizeMultivector);
   memStorage3.copyFrom<dftefe::utils::MemorySpace::HOST>(dVecStd3.data());
 
-  dftefe::utils::mpi::MPICommunicatorP2P<double,dftefe::utils::MemorySpace::HOST> mpiCommunicatorP2P3(mpiPatternP2PPtr,blockSize);
+  dftefe::utils::mpi::MPICommunicatorP2P<double,memorySpace> mpiCommunicatorP2P3(mpiPatternP2PPtr,blockSize);
 
   mpiCommunicatorP2P3.accumulateAddLocallyOwned(memStorage3); 
 
   memStorage3.copyTo<dftefe::utils::MemorySpace::HOST>(dVecStd3.data()); 
 
-  for(size_type i = 0; i < (mpiPatternP2PPtr->getOwnedLocalIndicesForTargetProcs()).size(); ++i)
+  for(size_type i = 0; i < ownedLocalIndicesHost.size(); ++i)
+  {
+    size_type idx = ownedLocalIndicesHost.data()[i];
     for (size_type j = 0; j < blockSize; ++j)
-       dexpectedValuesStd3[mpiPatternP2PPtr->getOwnedLocalIndicesForTargetProcs().data()[i]*blockSize+j]+=mpiPatternP2PPtr->localToGlobal(mpiPatternP2PPtr->getOwnedLocalIndicesForTargetProcs().data()[i])*blockSize+j;
+      dexpectedValuesStd3[idx*blockSize + j] += 
+        mpiPatternP2PPtr->localToGlobal(idx)*blockSize + j;
+  }
 
   for(size_type i = 0; i < ownedSizeMultivector; ++i)
   {

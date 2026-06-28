@@ -5,11 +5,21 @@ set(CMAKE_CXX_STANDARD 17)
 set(MAIN_PROJECT_DIR ${DFTEFE_PATH})
 message(${MAIN_PROJECT_DIR})
 
-if (ENABLE_CUDA)
-    enable_language(CUDA)
-    add_compile_definitions(DFTEFE_WITH_DEVICE)
-    add_compile_definitions(DFTEFE_WITH_DEVICE_CUDA)
-endif ()
+IF (ENABLE_GPU)
+add_compile_definitions(DFTEFE_WITH_DEVICE)
+
+IF ("${GPU_VENDOR}" STREQUAL "nvidia")
+    add_compile_definitions(DFTEFE_WITH_DEVICE_NVIDIA)
+    add_compile_definitions(DFTEFE_WITH_DEVICE_LANG_CUDA)
+ELSEIF ("${GPU_VENDOR}" STREQUAL "amd")
+    add_compile_definitions(DFTEFE_WITH_DEVICE_AMD)
+    add_compile_definitions(DFTEFE_WITH_DEVICE_LANG_HIP)
+ELSEIF ("${GPU_VENDOR}" STREQUAL "intel")
+    add_compile_definitions(DFTEFE_WITH_DEVICE_INTEL)
+    add_compile_definitions(DFTEFE_WITH_DEVICE_MKL)
+    add_compile_definitions(DFTEFE_WITH_DEVICE_LANG_SYCL)
+ENDIF()
+ENDIF()
 
 if(ENABLE_MPI)
 	add_compile_definitions(DFTEFE_WITH_MPI)
@@ -20,6 +30,7 @@ endif()
 
 list(APPEND CMAKE_MODULE_PATH ${MAIN_PROJECT_DIR}/cmake)
 
+add_subdirectory(${MAIN_PROJECT_DIR}/src/utils ${MAIN_PROJECT_DIR}/test/ksdft/lib/buildUtils)
 add_subdirectory(${MAIN_PROJECT_DIR}/src/linearAlgebra ${MAIN_PROJECT_DIR}/test/linearAlgebra/lib/buildLinearAlgebra)
 include_directories(${MAIN_PROJECT_DIR}/src)
 
@@ -76,9 +87,9 @@ add_executable(TestNewtonRaphsonSolverDouble TestNewtonRaphsonSolverDouble.cpp)
 target_link_libraries(TestNewtonRaphsonSolverDouble PUBLIC dft-efe-linalg)
 set_target_properties(TestNewtonRaphsonSolverDouble PROPERTIES OUTPUT_NAME "TestNewtonRaphsonSolverDouble" SUFFIX ".x")
 
-# find_package(MKL REQUIRED)
-# include_directories(${MKL_INCLUDE_DIRS})
-# link_directories(${MKL_LIBRARIES})
+find_package(MKL REQUIRED)
+include_directories(${MKL_INCLUDE_DIRS})
+link_directories(${MKL_LIBRARIES})
 
 if (ENABLE_MPI)
 
@@ -123,7 +134,7 @@ target_link_libraries(TestCGLinearSolverSerialHostComplexDouble PUBLIC dft-efe-l
 set_target_properties(TestCGLinearSolverSerialHostComplexDouble PROPERTIES OUTPUT_NAME "" SUFFIX ".x")
 endif()
 
-if (ENABLE_CUDA)
+if (ENABLE_GPU)
     add_executable(TestSerialVectorDoubleAddDevice TestSerialVectorDoubleAddDevice.cpp)
     target_link_libraries(TestSerialVectorDoubleAddDevice PUBLIC dft-efe-linalg)
     set_target_properties(TestSerialVectorDoubleAddDevice PROPERTIES OUTPUT_NAME "TestSerialVectorDoubleAddDevice" SUFFIX ".x")

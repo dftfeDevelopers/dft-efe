@@ -26,8 +26,10 @@
 #include "DeviceAPICalls.h"
 #include <algorithm>
 #include <bitset>
+#include <utils/Exceptions.h>
 #include <climits>
 #include <cstring>
+#include <climits>
 
 
 namespace dftefe
@@ -39,14 +41,23 @@ namespace dftefe
     MemoryManager<ValueType, MemorySpace::HOST>::allocate(size_type   size,
                                                           ValueType **ptr)
     {
-      *ptr = new ValueType[size];
+      if (size > std::numeric_limits<size_type>::max())
+        {
+          utils::throwException(
+            false, "Size to be allocated more than the dftefe::size_type.");
+        }
+      if (size > 0)
+        *ptr = new ValueType[size];
+      else
+        *ptr = nullptr;
     }
 
     template <typename ValueType>
     void
     MemoryManager<ValueType, MemorySpace::HOST>::deallocate(ValueType *ptr)
     {
-      delete[] ptr;
+      if (ptr != nullptr)
+        delete[] ptr;
     }
 
     template <typename ValueType>
@@ -55,7 +66,8 @@ namespace dftefe
                                                      ValueType *ptr,
                                                      ValueType  val)
     {
-      std::fill(ptr, ptr + size, val);
+      if (size != 0)
+        std::fill(ptr, ptr + size, val);
     }
 
     template <typename ValueType>
@@ -63,7 +75,8 @@ namespace dftefe
     MemoryManager<ValueType, MemorySpace::HOST>::setZero(size_type  size,
                                                          ValueType *ptr)
     {
-      std::memset(ptr, (ValueType)0, size * sizeof(ValueType));
+      if (size != 0)
+        std::memset(ptr, (ValueType)0, size * sizeof(ValueType));
     }
 
 #ifdef DFTEFE_WITH_DEVICE
@@ -73,7 +86,19 @@ namespace dftefe
       size_type   size,
       ValueType **ptr)
     {
-      hostPinnedMalloc((void **)ptr, size * sizeof(ValueType));
+      if (size > std::numeric_limits<size_type>::max())
+        {
+          utils::throwException(
+            false, "Size to be allocated more than the dftefe::size_type.");
+        }
+      if (size > 0)
+        {
+          deviceError_t err =
+            hostPinnedMalloc((void **)ptr, size * sizeof(ValueType));
+          DEVICE_API_CHECK(err);
+        }
+      else
+        *ptr = nullptr;
     }
 
     template <typename ValueType>
@@ -82,7 +107,10 @@ namespace dftefe
       ValueType *ptr)
     {
       if (ptr != nullptr)
-        hostPinnedFree(ptr);
+        {
+          deviceError_t err = hostPinnedFree(ptr);
+          DEVICE_API_CHECK(err);
+        }
     }
 
     template <typename ValueType>
@@ -91,7 +119,8 @@ namespace dftefe
                                                             ValueType *ptr,
                                                             ValueType  val)
     {
-      std::fill(ptr, ptr + size, val);
+      if (size > 0)
+        std::fill(ptr, ptr + size, val);
     }
 
     template <typename ValueType>
@@ -99,7 +128,8 @@ namespace dftefe
     MemoryManager<ValueType, MemorySpace::HOST_PINNED>::setZero(size_type  size,
                                                                 ValueType *ptr)
     {
-      std::memset(ptr, (ValueType)0, size * sizeof(ValueType));
+      if (size > 0)
+        std::memset(ptr, (ValueType)0, size * sizeof(ValueType));
     }
 
     template <typename ValueType>
@@ -107,14 +137,30 @@ namespace dftefe
     MemoryManager<ValueType, MemorySpace::DEVICE>::allocate(size_type   size,
                                                             ValueType **ptr)
     {
-      deviceMalloc((void **)ptr, size * sizeof(ValueType));
+      if (size > std::numeric_limits<size_type>::max())
+        {
+          utils::throwException(
+            false, "Size to be allocated more than the dftefe::size_type.");
+        }
+      if (size > 0)
+        {
+          deviceError_t err =
+            deviceMalloc((void **)ptr, size * sizeof(ValueType));
+          DEVICE_API_CHECK(err);
+        }
+      else
+        *ptr = nullptr;
     }
 
     template <typename ValueType>
     void
     MemoryManager<ValueType, MemorySpace::DEVICE>::deallocate(ValueType *ptr)
     {
-      deviceFree(ptr);
+      if (ptr != nullptr)
+        {
+          deviceError_t err = deviceFree(ptr);
+          DEVICE_API_CHECK(err);
+        }
     }
 
     template <typename ValueType>
@@ -123,7 +169,8 @@ namespace dftefe
                                                        ValueType *ptr,
                                                        ValueType  val)
     {
-      deviceSetValue(ptr, val, size);
+      if (size > 0)
+        deviceSetValue(ptr, val, size);
     }
 
     template <typename ValueType>
@@ -131,7 +178,8 @@ namespace dftefe
     MemoryManager<ValueType, MemorySpace::DEVICE>::setZero(size_type  size,
                                                            ValueType *ptr)
     {
-      deviceSetValue(ptr, (ValueType)0, size);
+      if (size > 0)
+        deviceSetValue(ptr, (ValueType)0, size);
     }
 
 #endif // DFTEFE_WITH_DEVICE

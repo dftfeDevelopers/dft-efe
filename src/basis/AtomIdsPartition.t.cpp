@@ -44,7 +44,7 @@ namespace dftefe
       // processor ;  atom ids start from 0 do mpiallreduce from the collected
       // atomids to assign repeating atomids in processors to the highest
       // processor rank.
-      template <unsigned int dim>
+      template <size_type dim>
       void
       getOverlappingAtomIdsInBox(
         std::vector<size_type> &         atomIds,
@@ -61,7 +61,7 @@ namespace dftefe
         for (auto it : atomCoordinates)
           {
             flag = true;
-            for (unsigned int i = 0; i < dim; i++)
+            for (size_type i = 0; i < dim; i++)
               {
                 double a = minbound[i];
                 double b = maxbound[i];
@@ -83,7 +83,7 @@ namespace dftefe
       // vertices, these vectors are theselves stored as a vector eg.
       // {{10,19,100},{50,150},...} where each integer is an atom id.
 
-      template <unsigned int dim>
+      template <size_type dim>
       void
       getOverlappingAtomIdsInCells(
         std::vector<std::vector<size_type>> &         overlappingAtomIdsInCells,
@@ -106,7 +106,7 @@ namespace dftefe
           {
             maxCellBound.resize(dim, 0);
             minCellBound.resize(dim, 0);
-            for (unsigned int k = 0; k < dim; k++)
+            for (size_type k = 0; k < dim; k++)
               {
                 auto cellVertices = cellIter->begin();
                 // double maxtmp = *(cellVertices->begin()+k),mintmp =
@@ -130,7 +130,7 @@ namespace dftefe
                 auto it = atomCoordinates.begin();
                 it      = it + i;
                 flag    = true;
-                for (unsigned int k = 0; k < dim; k++)
+                for (size_type k = 0; k < dim; k++)
                   {
                     // assert for the cell and processor bounds
                     DFTEFE_AssertWithMsg(
@@ -177,7 +177,7 @@ namespace dftefe
       // Function to populate the vector of atom ids in a processor. This gives
       // the number of atomids actually in a processor in a SORTED order.
 
-      template <unsigned int dim>
+      template <size_type dim>
       void
       getLocalAtomIds(
         std::vector<size_type> &                      atomIdsInProcessor,
@@ -213,8 +213,8 @@ namespace dftefe
         size_type              nAtoms = atomCoordinates.size();
         std::vector<size_type> processorIdTmp;
         std::vector<size_type> processorIds;
-        processorIdTmp.resize(nAtoms, UINT_MAX);
-        processorIds.resize(nAtoms, UINT_MAX);
+        processorIdTmp.resize(nAtoms, basis::MaxSizeDefaults::SIZE_TYPE_MAX);
+        processorIds.resize(nAtoms, basis::MaxSizeDefaults::SIZE_TYPE_MAX);
         for (auto Id : atomIdsInProcessor)
           {
             processorIdTmp[Id] = rank;
@@ -224,7 +224,7 @@ namespace dftefe
           processorIdTmp.data(),
           processorIds.data(),
           processorIdTmp.size(),
-          utils::mpi::MPIUnsigned,
+          utils::mpi::Types<size_type>::getMPIDatatype(),
           utils::mpi::MPIMin,
           comm);
         mpiIsSuccessAndMsg = utils::mpi::MPIErrIsSuccessAndMsg(err);
@@ -240,7 +240,7 @@ namespace dftefe
 
       // Function to renumber the atom ids and populate the old and new atomids
       // vector.
-      template <unsigned int dim>
+      template <size_type dim>
       void
       getNAtomIdsInProcessor(
         std::vector<size_type> &   atomIdsInProcessor,
@@ -271,7 +271,7 @@ namespace dftefe
           nAtomIdsInProcessorTmp.data(),
           nAtomIdsInProcessor.data(),
           nAtomIdsInProcessorTmp.size(),
-          utils::mpi::MPIUnsigned,
+          utils::mpi::Types<size_type>::getMPIDatatype(),
           utils::mpi::MPIMax,
           comm);
         mpiIsSuccessAndMsg = utils::mpi::MPIErrIsSuccessAndMsg(err);
@@ -291,7 +291,7 @@ namespace dftefe
 
       // Function to renumber the atom ids and populate the old and new atomids
       // vector.
-      template <unsigned int dim>
+      template <size_type dim>
       void
       renumberAtomIds(std::vector<size_type> &oldAtomIds,
                       std::vector<size_type> &newAtomIds,
@@ -307,7 +307,8 @@ namespace dftefe
          * of vector to 0,1 in proc 0. Then do natom0+0 .. .do mpi_max at last
          * and return the current proc vector.*/
         // get the set of local atom ids
-        // store a vector of size (nAtomIds, UINT_MAX)
+        // store a vector of size (nAtomIds,
+        // basis::MaxSizeDefaults::SIZE_TYPE_MAX)
 
         int                          rank;
         int                          err = utils::mpi::MPICommRank(comm, &rank);
@@ -318,9 +319,9 @@ namespace dftefe
 
         std::vector<size_type> newAtomIdsTmp;
         size_type              nAtomIds = atomCoordinates.size();
-        newAtomIdsTmp.resize(nAtomIds, UINT_MAX);
-        oldAtomIds.resize(nAtomIds, UINT_MAX);
-        newAtomIds.resize(nAtomIds, UINT_MAX);
+        newAtomIdsTmp.resize(nAtomIds, basis::MaxSizeDefaults::SIZE_TYPE_MAX);
+        oldAtomIds.resize(nAtomIds, basis::MaxSizeDefaults::SIZE_TYPE_MAX);
+        newAtomIds.resize(nAtomIds, basis::MaxSizeDefaults::SIZE_TYPE_MAX);
         size_type newIds = 0;
         for (auto i : atomIdsInProcessor)
           {
@@ -337,7 +338,7 @@ namespace dftefe
           newAtomIdsTmp.data(),
           newAtomIds.data(),
           newAtomIdsTmp.size(),
-          utils::mpi::MPIUnsigned,
+          utils::mpi::Types<size_type>::getMPIDatatype(),
           utils::mpi::MPIMin,
           comm);
         mpiIsSuccessAndMsg = utils::mpi::MPIErrIsSuccessAndMsg(err);
@@ -355,7 +356,7 @@ namespace dftefe
       }
     } // namespace AtomIdsPartitionInternal
 
-    template <unsigned int dim>
+    template <size_type dim>
     AtomIdsPartition<dim>::AtomIdsPartition(
       const std::vector<utils::Point> &             atomCoordinates,
       const std::vector<double> &                   minbound,
@@ -405,42 +406,42 @@ namespace dftefe
         nProcs);
     }
 
-    template <unsigned int dim>
+    template <size_type dim>
     std::vector<size_type>
     AtomIdsPartition<dim>::nAtomIdsInProcessor() const
     {
       return d_nAtomIdsInProcessor;
     }
 
-    template <unsigned int dim>
+    template <size_type dim>
     std::vector<size_type>
     AtomIdsPartition<dim>::nAtomIdsInProcessorCumulative() const
     {
       return d_nAtomIdsInProcessorCumulative;
     }
 
-    template <unsigned int dim>
+    template <size_type dim>
     std::vector<size_type>
     AtomIdsPartition<dim>::oldAtomIds() const
     {
       return d_oldAtomIds;
     }
 
-    template <unsigned int dim>
+    template <size_type dim>
     std::vector<size_type>
     AtomIdsPartition<dim>::newAtomIds() const
     {
       return d_newAtomIds;
     }
 
-    template <unsigned int dim>
+    template <size_type dim>
     std::vector<size_type>
     AtomIdsPartition<dim>::locallyOwnedAtomIds() const
     {
       return d_atomIdsInProcessor;
     }
 
-    template <unsigned int dim>
+    template <size_type dim>
     size_type
     AtomIdsPartition<dim>::nTotalAtomIds() const
     {

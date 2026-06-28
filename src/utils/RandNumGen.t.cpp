@@ -31,7 +31,10 @@ namespace dftefe
   namespace utils
   {
     template <typename T>
-    RandNumGen<T>::RandNumGen(T min, T max)
+    RandNumGen<T>::RandNumGen(T            min,
+                              T            max,
+                              bool         isReproducible,
+                              unsigned int seed)
     {
       std::string msg =
         "Invalid template parameter used in "

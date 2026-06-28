@@ -57,8 +57,8 @@ namespace dftefe
 
         // access cell-wise discrete Laplace operator
 
-        std::vector<size_type> locallyOwnedCellsNumDoFsSTL(numLocallyOwnedCells,
-                                                           0);
+        utils::MemoryStorage<size_type, utils::MemorySpace::HOST>
+          locallyOwnedCellsNumDoFsSTL(numLocallyOwnedCells, 0);
         std::copy(numCellDofs.begin(),
                   numCellDofs.begin() + numLocallyOwnedCells,
                   locallyOwnedCellsNumDoFsSTL.begin());
@@ -67,11 +67,17 @@ namespace dftefe
           numLocallyOwnedCells);
         locallyOwnedCellsNumDoFs.copyFrom(locallyOwnedCellsNumDoFsSTL);
 
+        const size_type numCumulativeDofsCells =
+          std::accumulate(locallyOwnedCellsNumDoFsSTL.begin(),
+                          locallyOwnedCellsNumDoFsSTL.end(),
+                          0);
+
         basis::FECellWiseDataOperations<ValueTypeOperator, memorySpace>::
           addCellWiseBasisDataToDiagonalData(
             cfeOverlapOperatorContext->getBasisOverlapInAllCells().data(),
             itCellLocalIdsBegin,
             locallyOwnedCellsNumDoFs,
+            numCumulativeDofsCells,
             diagonal.data());
 
         // function to do a static condensation to send the constraint nodes to
@@ -194,12 +200,12 @@ namespace dftefe
       // enrichment functions) , inp will be in adaptive grid
       cfeBasisOperations.integrateWithBasisValues(inp, *d_feBasisManager, d_b);
 
-      // for (unsigned int i = 0 ; i < d_b.locallyOwnedSize() ; i++)
+      // for (size_type i = 0 ; i < d_b.locallyOwnedSize() ; i++)
       //   {
       //     std::cout << i  << " " << *(rhsNHDB.data()+i) << " \t ";
       //   }
 
-      // for(int i = 0 ; i < inp.getNumberComponents() ; i++)
+      // for(size_type i = 0 ; i < inp.getNumberComponents() ; i++)
       // std::cout << "rhs-norm: " << rhsNHDB.l2Norms()[i] << " d_b-norm: " <<
       // d_b.l2Norms()[i] << " b-norm: " << b.l2Norms()[i] << "\t";
       // std::cout << "\n";
@@ -266,14 +272,15 @@ namespace dftefe
     {
       size_type numComponents = solution.getNumberComponents();
 
-      for (size_type i = 0; i < solution.locallyOwnedSize(); i++)
-        {
-          for (size_type j = 0; j < numComponents; j++)
-            {
-              solution.data()[i * numComponents + j] =
-                d_x.data()[i * numComponents + j];
-            }
-        }
+      solution = d_x;
+      // for (size_type i = 0; i < solution.locallyOwnedSize(); i++)
+      //   {
+      //     for (size_type j = 0; j < numComponents; j++)
+      //       {
+      //         solution.data()[i * numComponents + j] =
+      //           d_x.data()[i * numComponents + j];
+      //       }
+      //   }
 
       solution.updateGhostValues();
 

@@ -34,6 +34,10 @@
 #include <algorithm>
 #include <sstream>
 #include <string>
+#include <utils/MemoryStorage.h>
+#include <memory>
+#include <utils/DeviceTypeConfig.h>
+#include <utils/DeviceKernelLauncherHelpers.h>
 
 
 // header file and we don't want to export symbols to the obj files
@@ -45,6 +49,55 @@ namespace dftefe
     class Spline
     {
     public:
+      template <dftefe::utils::MemorySpace memorySpace>
+      class Func
+      {
+      public:
+        Func()
+          : d_knotX(nullptr)
+          , d_knotY(nullptr)
+          , d_coefB(nullptr)
+          , d_coefC(nullptr)
+          , d_coefD(nullptr)
+          , d_nKnots(0)
+          , d_c0(0.0)
+          , d_isSubdivGrid(false)
+          , d_a(0.0)
+          , d_r(0.0)
+          , d_numSubDiv(0)
+        {}
+
+        Func(const double *    knotX,
+             const double *    knotY,
+             const double *    coefB,
+             const double *    coefC,
+             const double *    coefD,
+             size_type         nKnots,
+             double            c0,
+             bool              isSubdivGrid,
+             double            a,
+             double            r,
+             dftefe::size_type numSubDiv);
+
+        DFTEFE_HOST_DEVICE_FUNC double
+        eval(double xi) const;
+        DFTEFE_HOST_DEVICE_FUNC double
+        deriv(int order, double xi) const;
+
+      private:
+        const double *    d_knotX;
+        const double *    d_knotY;
+        const double *    d_coefB;
+        const double *    d_coefC;
+        const double *    d_coefD;
+        size_type         d_nKnots;
+        double            d_c0;
+        bool              d_isSubdivGrid;
+        double            d_a;
+        double            d_r;
+        dftefe::size_type d_numSubDiv;
+      };
+
       // spline types
       enum spline_type
       {
@@ -73,11 +126,34 @@ namespace dftefe
       bool                d_made_monotonic;
       bool                d_isSubdivPowerLawGrid;
       double              d_a, d_r;
-      unsigned int        d_numSubDiv;
+      dftefe::size_type   d_numSubDiv;
       void
       set_coeffs_from_b(); // calculate c_i, d_i from b_i
       size_t
       find_closest(double x) const; // closest idx so that d_x[idx]<=x
+
+      // Compute spline coefficients from d_x_host/d_y_host, then syncToDevice.
+      void
+      computeAndSync(spline_type type);
+
+#ifdef DFTEFE_WITH_DEVICE
+      // Copy host vectors -> Device (lazy: called on first device access)
+      void
+      syncToDevice() const;
+
+      // ---- device-resident MemoryStorage  ----
+      mutable std::unique_ptr<MemoryStorage<double, utils::MemorySpace::DEVICE>>
+        d_x_device;
+      mutable std::unique_ptr<MemoryStorage<double, utils::MemorySpace::DEVICE>>
+        d_y_device;
+      mutable std::unique_ptr<MemoryStorage<double, utils::MemorySpace::DEVICE>>
+        d_b_device;
+      mutable std::unique_ptr<MemoryStorage<double, utils::MemorySpace::DEVICE>>
+        d_c_device;
+      mutable std::unique_ptr<MemoryStorage<double, utils::MemorySpace::DEVICE>>
+                   d_d_device;
+      mutable bool d_deviceSynced;
+#endif
 
     public:
       // default constructor: set boundary condition to be zero curvature
@@ -152,6 +228,25 @@ namespace dftefe
       // spline info string, i.e. spline type, boundary conditions etc.
       std::string
       info() const;
+
+      template <dftefe::utils::MemorySpace memorySpace>
+      Func<memorySpace>
+      getFunc() const;
+
+      template <dftefe::utils::MemorySpace memorySpace>
+      void
+      evalAll(size_type             numPoints,
+              const double *        x,
+              double *              y,
+              utils::deviceStream_t streamId = utils::defaultStream) const;
+
+      template <dftefe::utils::MemorySpace memorySpace>
+      void
+      derivAll(size_type             numPoints,
+               int                   order,
+               const double *        x,
+               double *              y,
+               utils::deviceStream_t streamId = utils::defaultStream) const;
     };
 
     namespace splineInternal
@@ -202,5 +297,7 @@ namespace dftefe
     } // namespace splineInternal
   }   // namespace utils
 } // namespace dftefe
+
+#include <utils/SplineKernels.h>
 
 #endif // dftefeSpline_h

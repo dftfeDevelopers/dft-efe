@@ -28,38 +28,98 @@
 
 #include <utils/MemorySpaceType.h>
 #include <memory>
+#include <utils/DeviceUtils.h>
+#include <utils/DeviceTypeConfig.h>
+#include <utils/DeviceKernelLauncherHelpers.h>
+#include <utils/DeviceAPICalls.h>
+#include <utils/DeviceDataTypeOverloads.h>
+#include <utils/DeviceTypeConfigHalfPrec.h>
 #include <linearAlgebra/BlasLapackTypedef.h>
 namespace dftefe
 {
   namespace linearAlgebra
   {
+    enum class TensorOpDataType
+    {
+      FP32,
+      TF32,
+      BF16,
+      FP16
+    };
+
     template <utils::MemorySpace memorySpace>
     class LinAlgOpContext
     {
     public:
-      LinAlgOpContext(
-        std::shared_ptr<blasLapack::BlasQueue<memorySpace>>   blasQueue,
-        std::shared_ptr<blasLapack::LapackQueue<memorySpace>> lapackQueue);
+      LinAlgOpContext(size_type numBlasStreams = 0);
 
       ~LinAlgOpContext() = default;
 
       void
-      setBlasQueue(
-        std::shared_ptr<blasLapack::BlasQueue<memorySpace>> blasQueue);
+      setTensorOpDataType(TensorOpDataType opType)
+      {
+        d_opType = opType;
+      }
 
-      void
-      setLapackQueue(
-        std::shared_ptr<blasLapack::LapackQueue<memorySpace>> lapackQueue);
+      TensorOpDataType
+      getTensorOpDataType()
+      {
+        return d_opType;
+      }
 
-      blasLapack::BlasQueue<memorySpace> &
-      getBlasQueue() const;
+      static utils::deviceBlasStatus_t
+      setBlasStream(utils::deviceStream_t &streamId);
 
-      blasLapack::LapackQueue<memorySpace> &
-      getLapackQueue() const;
+      static utils::deviceStream_t &
+      getBlasStream()
+      {
+        return d_stream;
+      }
+
+      static utils::deviceBlasHandle_t &
+      getDeviceBlasHandle()
+      {
+        return d_deviceBlasHandle;
+      }
+
+      size_type
+      numBlasStreams() const
+      {
+        return d_numBlasStreams;
+      }
+
+      static utils::deviceStream_t *
+      getBlasStreamsVec()
+      {
+        return d_streams.data();
+      }
+
+      static utils::deviceBlasHandle_t *
+      getDeviceBlasHandlesVec()
+      {
+        return d_deviceBlasHandles.data();
+      }
 
     private:
-      std::shared_ptr<blasLapack::BlasQueue<memorySpace>>   d_blasQueue;
-      std::shared_ptr<blasLapack::LapackQueue<memorySpace>> d_lapackQueue;
+      size_type                                            d_numBlasStreams;
+      inline static std::vector<utils::deviceBlasHandle_t> d_deviceBlasHandles;
+      inline static std::vector<utils::deviceStream_t>     d_streams;
+
+      inline static utils::deviceBlasHandle_t d_deviceBlasHandle;
+      inline static utils::deviceStream_t     d_stream;
+
+      /// storage for deviceblas handle
+      TensorOpDataType d_opType;
+
+      static utils::deviceBlasStatus_t
+      setBlasStream(utils::deviceBlasHandle_t &handleId,
+                    utils::deviceStream_t &    streamId);
+
+      utils::deviceBlasStatus_t
+      create(utils::deviceBlasHandle_t &handleId);
+
+      utils::deviceBlasStatus_t
+      destroy(utils::deviceBlasHandle_t &handleId);
 
     }; // end of LinAlgOpContext
   }    // end of namespace linearAlgebra

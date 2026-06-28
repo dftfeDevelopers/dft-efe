@@ -27,7 +27,7 @@ namespace dftefe
       finalizeTriangulationConstruction() = 0;
       virtual void
       createUniformParallelepiped(
-        const std::vector<unsigned int> &subdivisions,
+        const std::vector<size_type> &   subdivisions,
         const std::vector<utils::Point> &domainVectors,
         const std::vector<bool> &        isPeriodicFlags) = 0;
       virtual void
@@ -36,20 +36,20 @@ namespace dftefe
       virtual void
       shiftTriangulation(const utils::Point &origin) = 0;
       virtual void
-      refineGlobal(const unsigned int times = 1) = 0;
+      refineGlobal(const size_type times = 1) = 0;
       virtual void
-      coarsenGlobal(const unsigned int times = 1) = 0;
+      coarsenGlobal(const size_type times = 1) = 0;
       virtual void
       clearUserFlags() = 0;
       virtual void
       executeCoarseningAndRefinement() = 0;
-      virtual unsigned int
+      virtual size_type
       nLocallyOwnedCells() const = 0;
       virtual double
       maxElementLength() const = 0;
       virtual double
       minElementLength() const = 0;
-      virtual unsigned int
+      virtual size_type
       nLocalCells() const = 0;
       virtual size_type
       nGlobalCells() const = 0;
@@ -65,7 +65,7 @@ namespace dftefe
       beginLocal() const = 0;
       virtual const_TriangulationCellIterator
       endLocal() const = 0;
-      virtual unsigned int
+      virtual size_type
       getDim() const = 0;
       virtual std::vector<bool>
       getPeriodicFlags() const = 0;

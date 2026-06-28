@@ -27,6 +27,7 @@
 #define dftefeBasisDefaults_h
 
 #include <utils/TypeConfig.h>
+#include <utils/MemorySpaceType.h>
 #include <string>
 #include <linearAlgebra/LinearAlgebraTypes.h>
 
@@ -34,6 +35,7 @@ namespace dftefe
 {
   namespace basis
   {
+    template <utils::MemorySpace memorySpace>
     class L2ProjectionDefaults
     {
     public:
@@ -43,7 +45,7 @@ namespace dftefe
       static const linearAlgebra::PreconditionerType PC_TYPE;
 
       //
-      // The number of batched gemms done
+      // The number of batched gemms done: 1 for HOST, 50 for DEVICE
       //
       static const size_type CELL_BATCH_SIZE;
 
@@ -88,9 +90,27 @@ namespace dftefe
       // algorithm.
       //
       static const size_type ENRICHMENT_BATCH_SIZE;
+      static const double    ENRICHMENT_ORTHO_COEFF_TOL;
 
     }; // end of class ECIDefaults
 
-  } // end of namespace basis
+    template <utils::MemorySpace memorySpace>
+    class BasisDataStorageDefaults
+    {
+    public:
+      //
+      // The number of batched gemms done: 1 for HOST, 50 for DEVICE
+      //
+      static const size_type CELL_BATCH_SIZE;
+
+    }; // end of class BasisDataStorageDefaults
+
+    class MaxSizeDefaults
+    {
+    public:
+      static const size_type        SIZE_TYPE_MAX;
+      static const global_size_type GLOBAL_SIZE_TYPE_MAX;
+    }; // end of class MaxSizeDefaults
+  }    // end of namespace basis
 } // end of namespace dftefe
 #endif // dftefebasisDefaults_h

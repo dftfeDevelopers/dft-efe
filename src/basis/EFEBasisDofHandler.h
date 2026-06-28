@@ -153,7 +153,7 @@ namespace dftefe
       getBasisCenters(
         std::map<global_size_type, utils::Point> &dofCoords) const = 0;
 
-      virtual unsigned int
+      virtual size_type
       getDim() const = 0;
 
       // Enrichment specific functions.
@@ -202,6 +202,9 @@ namespace dftefe
                                                     memorySpace,
                                                     dim>>
       getEnrichmentClassicalInterface() const = 0;
+
+      // virtual utils::MemoryStorage<ValueTypeBasisData, memorySpace>
+      // getClassicalComponentCoeffsInAllCellsOEFE() const override;
 
       virtual bool
       isOrthogonalized() const = 0;

@@ -9,34 +9,34 @@ namespace dftefe
 {
   namespace basis
   {
-    template <unsigned int dim>
+    template <size_type dim>
     void
     convertToDealiiPoint(const utils::Point &        point,
                          dealii::Point<dim, double> &outputDealiiPoint);
 
-    template <unsigned int dim>
+    template <size_type dim>
     void
     convertToDealiiPoint(const std::vector<utils::Point> &vecPoint,
                          std::vector<dealii::Point<dim>> &vecOutputDealiiPoint);
 
-    template <unsigned int dim>
+    template <size_type dim>
     void
     convertToDealiiPoint(const std::vector<double> & v,
                          dealii::Point<dim, double> &outputDealiiPoint);
 
 
-    template <unsigned int dim>
+    template <size_type dim>
     void
     convertToDftefePoint(const dealii::Point<dim, double> &dealiiPoint,
                          utils::Point &                    outputDftefePoint);
 
-    template <unsigned int dim>
+    template <size_type dim>
     void
     convertToDftefePoint(
       const std::vector<dealii::Point<dim, double>> &dealiiPoints,
       std::vector<utils::Point> &                    points);
 
-    template <unsigned int dim>
+    template <size_type dim>
     void
     convertToDftefePoint(
       const std::map<global_size_type, dealii::Point<dim, double>>

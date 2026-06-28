@@ -289,10 +289,10 @@ namespace dftefe
       MinMaxAvg<T>
       MPIAllreduceMinMaxAvg(const T &data, MPIComm comm);
 
-      unsigned int
+      int
       numMPIProcesses(const MPIComm comm);
 
-      unsigned int
+      int
       thisMPIProcess(const MPIComm comm);
 
     } // end of namespace mpi

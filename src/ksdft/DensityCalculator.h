@@ -29,6 +29,7 @@
 #include <linearAlgebra/MultiVector.h>
 #include <basis/FEBasisDataStorage.h>
 #include <basis/FEBasisOperations.h>
+#include "Defaults.h"
 
 namespace dftefe
 {
@@ -84,8 +85,11 @@ namespace dftefe
       computeRho(
         const std::vector<RealType> &occupation,
         const linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
-          &                                                           waveFunc,
-        quadrature::QuadratureValuesContainer<RealType, memorySpace> &rho);
+          &waveFunc,
+        quadrature::QuadratureValuesContainer<RealType, memorySpaceHost> &rho,
+        quadrature::QuadratureValuesContainer<RealType, memorySpaceHost>
+          &        gradRho,
+        const bool computeGrad = false);
 
     private:
       std::shared_ptr<const quadrature::QuadratureRuleContainer>
@@ -104,20 +108,30 @@ namespace dftefe
       std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
         d_linAlgOpContext;
 
-      quadrature::QuadratureValuesContainer<ValueType, memorySpace>
-        *d_psiBatchQuad;
+      dftefe::utils::MemoryStorage<ValueType, memorySpace> *d_psiBatchQuad;
+      // quadrature::QuadratureValuesContainer<ValueType, memorySpace>
+      //   *d_psiBatchQuad;
 
-      quadrature::QuadratureValuesContainer<RealType, memorySpace> *d_rhoBatch;
+      dftefe::utils::MemoryStorage<RealType, memorySpace> d_modPsiSqBatchQuad;
+      dftefe::utils::MemoryStorage<RealType, memorySpace> d_occupationInBatch;
+
+      dftefe::utils::MemoryStorage<RealType, memorySpace> *d_rhoBatch;
+
+      quadrature::QuadratureValuesContainer<RealType, memorySpace>
+        *d_rhoMemspace;
+
+      dftefe::utils::MemoryStorage<ValueType, memorySpace> *d_gradPsiBatchQuad;
+      dftefe::utils::MemoryStorage<RealType, memorySpace> * d_gradRhoBatch;
+      dftefe::utils::MemoryStorage<RealType, memorySpace>   d_psiGradPsiBatch;
+      quadrature::QuadratureValuesContainer<RealType, memorySpace>
+        *d_gradRhoMemspace;
 
       linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace> *d_psiBatch;
-
-      quadrature::QuadratureValuesContainer<ValueType, memorySpace>
-        *d_psiBatchSmallQuad;
-
       linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
         *d_psiBatchSmall;
 
       size_type d_batchSizeSmall;
+      size_type d_numLocallyOwnedCells;
 
     }; // end of class DensityCalculator
   }    // end of namespace ksdft

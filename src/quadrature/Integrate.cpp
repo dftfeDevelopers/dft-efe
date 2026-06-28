@@ -17,7 +17,7 @@ namespace dftefe
       const std::vector<double> &JxW = quadratureRuleContainer.getJxW();
       const std::vector<double> &functionValues = function(realPoints);
       integral                                  = 0.0;
-      for (unsigned int i = 0; i < numQuadraturePoints; ++i)
+      for (dftefe::size_type i = 0; i < numQuadraturePoints; ++i)
         integral += functionValues[i] * JxW[i];
     }
   } // end of namespace quadrature

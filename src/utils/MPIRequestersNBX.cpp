@@ -85,9 +85,9 @@ namespace dftefe
 
         d_sendRequests.resize(numTargets);
         d_sendBuffers.resize(numTargets);
-        for (unsigned int i = 0; i < numTargets; ++i)
+        for (size_type i = 0; i < numTargets; ++i)
           {
-            const unsigned int rank = d_targetIDs[i];
+            const size_type rank = d_targetIDs[i];
             throwException<DomainError>(
               rank < d_numProcessors,
               "Target rank " + std::to_string(rank) +

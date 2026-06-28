@@ -5,6 +5,36 @@ set(CMAKE_CXX_STANDARD 17)
 set(MAIN_PROJECT_DIR $ENV{DFTEFE_PATH})
 message(${MAIN_PROJECT_DIR})
 
+IF (ENABLE_GPU)
+    IF ("${GPU_LANG}" STREQUAL "cuda")
+      enable_language(CUDA)
+    ELSEIF ("${GPU_LANG}" STREQUAL "hip")
+      enable_language(HIP)
+    ELSEIF ("${GPU_LANG}" STREQUAL "sycl")
+    ELSE ()
+      MESSAGE(FATAL_ERROR "\n"
+    "*** Could not find valid GPU_LANG=cuda/hip/sycl ***\n\n"
+    )
+    ENDIF()
+#
+#Set GPU compilation flag
+#
+  add_compile_definitions(DFTEFE_WITH_DEVICE)
+
+  IF ("${GPU_VENDOR}" STREQUAL "nvidia")
+    add_compile_definitions(DFTEFE_WITH_DEVICE_NVIDIA)
+    add_compile_definitions(DFTEFE_WITH_DEVICE_LANG_CUDA)
+  ELSEIF ("${GPU_VENDOR}" STREQUAL "amd")
+    add_compile_definitions(DFTEFE_WITH_DEVICE_AMD)
+    add_compile_definitions(DFTEFE_WITH_DEVICE_LANG_HIP)
+  ELSEIF ("${GPU_VENDOR}" STREQUAL "intel")
+    add_compile_definitions(DFTEFE_WITH_DEVICE_INTEL)
+    add_compile_definitions(DFTEFE_WITH_DEVICE_MKL)
+    add_compile_definitions(DFTEFE_WITH_DEVICE_LANG_SYCL)
+  ENDIF()
+ENDIF()
+
+list(APPEND CMAKE_MODULE_PATH ${MAIN_PROJECT_DIR}/cmake)
 
 include_directories(${MAIN_PROJECT_DIR}/src)
 add_subdirectory(${MAIN_PROJECT_DIR}/src/utils ${MAIN_PROJECT_DIR}/test/electrostatics/lib/buildUtils)
@@ -16,7 +46,10 @@ add_subdirectory(${MAIN_PROJECT_DIR}/src/electrostatics ${MAIN_PROJECT_DIR}/test
 
 if(ENABLE_MPI)
 	add_compile_definitions(DFTEFE_WITH_MPI)
-	
+	find_package(MPI REQUIRED)
+	include_directories(${MPI_CXX_INCLUDE_PATH})
+	set(DFTEFE_MPI_LIBRARIES ${MPI_CXX_LIBRARIES})
+
 	add_executable(TestLaplaceOperator TestLaplaceOperator.cpp )
 	target_link_libraries(TestLaplaceOperator PUBLIC dft-efe-basis dft-efe-electrostatics dft-efe-utils dft-efe-quadrature dft-efe-linalg dft-efe-atoms)
 	set_target_properties(TestLaplaceOperator PROPERTIES OUTPUT_NAME "TestLaplaceOperator" SUFFIX ".x")

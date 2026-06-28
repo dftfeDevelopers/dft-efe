@@ -10,26 +10,26 @@ namespace dftefe
 {
   namespace basis
   {
-    template <unsigned int dim>
+    template <size_type dim>
     TriangulationDealiiSerial<dim>::TriangulationDealiiSerial()
       : isInitialized(false)
       , isFinalized(false)
       , d_isPeriodicFlags(0)
     {}
 
-    template <unsigned int dim>
+    template <size_type dim>
     TriangulationDealiiSerial<dim>::~TriangulationDealiiSerial()
     {
       d_triangulationDealii.clear();
     }
 
-    template <unsigned int dim>
+    template <size_type dim>
     void
     TriangulationDealiiSerial<dim>::initializeTriangulationConstruction()
     {
       isInitialized = true;
       isFinalized   = false;
-      for (unsigned int iCell = 0; iCell < nLocallyOwnedCells(); iCell++)
+      for (size_type iCell = 0; iCell < nLocallyOwnedCells(); iCell++)
         {
           // delete
           d_triaVectorCell[iCell].reset();
@@ -39,16 +39,16 @@ namespace dftefe
       d_triangulationDealii.clear();
     }
 
-    template <unsigned int dim>
+    template <size_type dim>
     void
     TriangulationDealiiSerial<dim>::finalizeTriangulationConstruction()
     {
-      isInitialized      = false;
-      isFinalized        = true;
-      unsigned int iCell = 0;
+      isInitialized   = false;
+      isFinalized     = true;
+      size_type iCell = 0;
       d_triaVectorCell.resize(nLocallyOwnedCells());
 
-      for (unsigned int iLevel = 0;
+      for (size_type iLevel = 0;
            iLevel < d_triangulationDealii.n_global_levels();
            iLevel++)
         {
@@ -68,10 +68,10 @@ namespace dftefe
         "he may grant your wish to rectify this error.");
     }
 
-    template <unsigned int dim>
+    template <size_type dim>
     void
     TriangulationDealiiSerial<dim>::createUniformParallelepiped(
-      const std::vector<unsigned int> &subdivisions,
+      const std::vector<size_type> &   subdivisions,
       const std::vector<utils::Point> &domainVectors,
       const std::vector<bool> &        isPeriodicFlags)
     {
@@ -83,7 +83,7 @@ namespace dftefe
         "Mismatch of dimension for dealii and the domain vectors");
       dealii::Point<dim, double> dealiiPoints[dim];
 
-      for (unsigned int i = 0; i < dim; ++i)
+      for (size_type i = 0; i < dim; ++i)
         {
           convertToDealiiPoint<dim>(domainVectors[i], dealiiPoints[i]);
         }
@@ -102,7 +102,7 @@ namespace dftefe
       d_domainVectors = domainVectors;
     }
 
-    template <unsigned int dim>
+    template <size_type dim>
     void
     TriangulationDealiiSerial<dim>::createSingleCellTriangulation(
       const std::vector<utils::Point> &vertices)
@@ -112,9 +112,9 @@ namespace dftefe
                             "initializeTriangulationConstruction");
       DFTEFE_AssertWithMsg(dim == vertices[0].size(),
                            "Mismatch of dimension for dealii and the vertices");
-      const unsigned int                      numPoints = vertices.size();
+      const size_type                         numPoints = vertices.size();
       std::vector<dealii::Point<dim, double>> dealiiVertices(numPoints);
-      for (unsigned int i = 0; i < numPoints; ++i)
+      for (size_type i = 0; i < numPoints; ++i)
         {
           convertToDealiiPoint<dim>(vertices[i], dealiiVertices[i]);
         }
@@ -124,7 +124,7 @@ namespace dftefe
     }
 
 
-    template <unsigned int dim>
+    template <size_type dim>
     void
     TriangulationDealiiSerial<dim>::shiftTriangulation(
       const utils::Point &origin)
@@ -140,7 +140,7 @@ namespace dftefe
       dealii::GridTools::shift(dealiiOrigin, d_triangulationDealii);
     }
 
-    template <unsigned int dim>
+    template <size_type dim>
     void
     TriangulationDealiiSerial<dim>::markPeriodicFaces(
       const std::vector<bool> &        isPeriodicFlags,
@@ -163,7 +163,7 @@ namespace dftefe
                            "Cannot mark periodic faces after refinement."
                            "This has to be done at the coarsest level");
 
-      for (unsigned int i = 0; i < dim; ++i)
+      for (size_type i = 0; i < dim; ++i)
         {
           if (isPeriodicFlags[i] == true)
             {
@@ -175,10 +175,10 @@ namespace dftefe
         }
     }
 
-    template <unsigned int dim>
+    template <size_type dim>
     void
     TriangulationDealiiSerial<dim>::refineGlobal(
-      const unsigned int times /* = 1 */)
+      const size_type times /* = 1 */)
     {
       utils::throwException<utils::LogicError>(
         isInitialized && !isFinalized,
@@ -187,10 +187,10 @@ namespace dftefe
       d_triangulationDealii.refine_global(times);
     }
 
-    template <unsigned int dim>
+    template <size_type dim>
     void
     TriangulationDealiiSerial<dim>::coarsenGlobal(
-      const unsigned int times /* = 1 */)
+      const size_type times /* = 1 */)
     {
       utils::throwException<utils::LogicError>(
         isInitialized && !isFinalized,
@@ -199,7 +199,7 @@ namespace dftefe
       d_triangulationDealii.coarsen_global(times);
     }
 
-    template <unsigned int dim>
+    template <size_type dim>
     void
     TriangulationDealiiSerial<dim>::clearUserFlags()
     {
@@ -210,7 +210,7 @@ namespace dftefe
       d_triangulationDealii.clear_user_flags();
     }
 
-    template <unsigned int dim>
+    template <size_type dim>
     void
     TriangulationDealiiSerial<dim>::executeCoarseningAndRefinement()
     {
@@ -222,28 +222,28 @@ namespace dftefe
       d_triangulationDealii.execute_coarsening_and_refinement();
     }
 
-    template <unsigned int dim>
+    template <size_type dim>
     size_type
     TriangulationDealiiSerial<dim>::nLocallyOwnedCells() const
     {
       return d_triangulationDealii.n_active_cells();
     }
 
-    template <unsigned int dim>
+    template <size_type dim>
     size_type
     TriangulationDealiiSerial<dim>::nGlobalCells() const
     {
       return d_triangulationDealii.n_global_active_cells();
     }
 
-    template <unsigned int dim>
+    template <size_type dim>
     size_type
     TriangulationDealiiSerial<dim>::nLocalCells() const
     {
       return d_triangulationDealii.n_cells();
     }
 
-    template <unsigned int dim>
+    template <size_type dim>
     std::vector<size_type>
     TriangulationDealiiSerial<dim>::getBoundaryIds() const
     {
@@ -259,7 +259,7 @@ namespace dftefe
       return std::vector<size_type>(0);
     }
 
-    template <unsigned int dim>
+    template <size_type dim>
     double
     TriangulationDealiiSerial<dim>::maxElementLength() const
     {
@@ -275,7 +275,7 @@ namespace dftefe
       return maxElemLength;
     }
 
-    template <unsigned int dim>
+    template <size_type dim>
     double
     TriangulationDealiiSerial<dim>::minElementLength() const
     {
@@ -291,56 +291,56 @@ namespace dftefe
       return minElemLength;
     }
 
-    template <unsigned int dim>
+    template <size_type dim>
     TriangulationBase::TriangulationCellIterator
     TriangulationDealiiSerial<dim>::beginLocal()
     {
       return d_triaVectorCell.begin();
     }
 
-    template <unsigned int dim>
+    template <size_type dim>
     TriangulationBase::TriangulationCellIterator
     TriangulationDealiiSerial<dim>::endLocal()
     {
       return d_triaVectorCell.end();
     }
 
-    template <unsigned int dim>
+    template <size_type dim>
     TriangulationBase::const_TriangulationCellIterator
     TriangulationDealiiSerial<dim>::beginLocal() const
     {
       return d_triaVectorCell.begin();
     }
 
-    template <unsigned int dim>
+    template <size_type dim>
     TriangulationBase::const_TriangulationCellIterator
     TriangulationDealiiSerial<dim>::endLocal() const
     {
       return d_triaVectorCell.end();
     }
 
-    template <unsigned int dim>
-    unsigned int
+    template <size_type dim>
+    size_type
     TriangulationDealiiSerial<dim>::getDim() const
     {
       return dim;
     }
 
-    template <unsigned int dim>
+    template <size_type dim>
     std::vector<bool>
     TriangulationDealiiSerial<dim>::getPeriodicFlags() const
     {
       return d_isPeriodicFlags;
     }
 
-    template <unsigned int dim>
+    template <size_type dim>
     void
     TriangulationDealiiSerial<dim>::saveRefineFlags(std::vector<bool> &v) const
     {
       d_triangulationDealii.save_refine_flags(v);
     }
 
-    template <unsigned int dim>
+    template <size_type dim>
     void
     TriangulationDealiiSerial<dim>::writeToVtkFile(std::ostream &out) const
     {
@@ -348,14 +348,14 @@ namespace dftefe
       grid_out.write_vtk(d_triangulationDealii, out);
     }
 
-    template <unsigned int dim>
+    template <size_type dim>
     std::vector<utils::Point>
     TriangulationDealiiSerial<dim>::getDomainVectors() const
     {
       return d_domainVectors;
     }
 
-    template <unsigned int dim>
+    template <size_type dim>
     const dealii::Triangulation<dim> &
     TriangulationDealiiSerial<dim>::returnDealiiTria() const
     {

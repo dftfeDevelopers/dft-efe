@@ -21,7 +21,7 @@ namespace dftefe
     {
       const size_type     N = points.size();
       std::vector<double> returnValue(N, 0.0);
-      for (unsigned int i = 0; i < N; ++i)
+      for (size_type i = 0; i < N; ++i)
         returnValue[i] = 0.0;
 
       return returnValue;

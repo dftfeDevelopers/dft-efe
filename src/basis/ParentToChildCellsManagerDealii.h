@@ -11,7 +11,7 @@ namespace dftefe
 {
   namespace basis
   {
-    template <unsigned int dim>
+    template <size_type dim>
     class ParentToChildCellsManagerDealii : public ParentToChildCellsManagerBase
     {
     public:

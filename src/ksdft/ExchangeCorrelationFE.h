@@ -33,7 +33,10 @@
 #include <basis/FEBasisDofHandler.h>
 #include <basis/FEBasisOperations.h>
 #include <ksdft/Defaults.h>
-#include <xc.h>
+#include <ksdft/RDM1.h>
+#include <ksdft/ExcManager.h>
+#include <atoms/AtomSuperpositionFunction.h>
+#include <utils/Point.h>
 
 namespace dftefe
 {
@@ -59,37 +62,40 @@ namespace dftefe
       using Storage = utils::MemoryStorage<ValueType, memorySpace>;
 
     public:
-      /**
-       * @brief Constructor
-       */
+      // No NLCC.
       ExchangeCorrelationFE(
-        const quadrature::QuadratureValuesContainer<RealType, memorySpace>
-          &electronChargeDensity,
-        std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
-          feBasisDataStorage,
+        const std::string             xcType,
+        RDM1<ValueType, memorySpace> &rdm1,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
                         linAlgOpContext,
         const size_type cellBlockSize);
 
+      // With NLCC. Core correction is added internally before every libxc call.
+      ExchangeCorrelationFE(
+        const std::string             xcType,
+        RDM1<ValueType, memorySpace> &rdm1,
+        std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
+                        linAlgOpContext,
+        const size_type cellBlockSize,
+        std::shared_ptr<const atoms::AtomSphericalDataContainer>
+                                         atomSphericalDataContainerPSP,
+        const std::vector<std::string> & atomSymbolVec,
+        const std::vector<utils::Point> &atomCoordinates);
+
       ~ExchangeCorrelationFE();
 
       void
-      reinitBasis(
-        std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
-          feBasisDataStorage);
+      reinitBasis(RDM1<ValueType, memorySpace> &rdm1);
 
       void
-      reinitField(
-        const quadrature::QuadratureValuesContainer<RealType, memorySpace>
-          &electronChargeDensity);
+      reinitField(RDM1<ValueType, memorySpace> &rdm1);
 
       void
       getLocal(Storage &cellWiseStorage) const override;
 
       void
-      evalEnergy(const utils::mpi::MPIComm &comm);
+      evalEnergy(RDM1<ValueType, memorySpace> &rdm1,
+                 const utils::mpi::MPIComm &   comm);
 
       RealType
       getEnergy() const override;
@@ -119,12 +125,19 @@ namespace dftefe
       std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
       getLinAlgOpContext() const;
 
+      ExcFamilyType
+      getExcFamilyType() const;
+
     private:
       std::shared_ptr<
         quadrature::QuadratureValuesContainer<RealType, memorySpace>>
-        d_xcPotentialQuad;
-      const quadrature::QuadratureValuesContainer<RealType, memorySpace>
-        *d_electronChargeDensity;
+        d_xcPotentialQuadMemspace;
+      // GGA only: returns the dim-component field
+      // f_d = 2*(dEx/dσ_αα+dEc/dσ_αα)*∇ρ↑_d + (dEx/dσ_αβ+dEc/dσ_αβ)*∇ρ↓_d
+      // used by getLocal to assemble ∫ f·∇(φ_iφ_j) dV
+      std::shared_ptr<
+        quadrature::QuadratureValuesContainer<RealType, memorySpace>>
+        d_derExcWithSigmaTimesGradRhoQuadMemspace;
       std::shared_ptr<
         const basis::FEBasisDofHandler<ValueTypeBasisCoeff, memorySpace, dim>>
         d_feBasisDofHandler;
@@ -141,10 +154,16 @@ namespace dftefe
       std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
         d_linAlgOpContext;
 
-      xc_func_type *d_funcX;
-      xc_func_type *d_funcC;
+      ExcManager<memorySpace> d_excManager;
+      mutable Storage         d_sigmaGradRhoCellStorage;
 
-      utils::MemoryStorage<RealType, utils::MemorySpace::HOST> *d_rho;
+      std::shared_ptr<
+        quadrature::QuadratureValuesContainer<RealType, memorySpaceHost>>
+        d_coreCorrectionUPF;
+      // GGA + NLCC: dim-component gradient ∇ρ_core at each quad point.
+      std::shared_ptr<
+        quadrature::QuadratureValuesContainer<RealType, memorySpaceHost>>
+        d_coreCorrectionGradUPF;
 
     }; // end of class ExchangeCorrelationFE
   }    // end of namespace ksdft

@@ -33,7 +33,7 @@ namespace dftefe
      * @brief Setting all the QuadratureRuleAdaptiveDefaults
      */
     const double QuadratureRuleAdaptiveDefaults::SMALLEST_CELL_VOLUME = 1e-12;
-    const unsigned int QuadratureRuleAdaptiveDefaults::MAX_RECURSION  = 1000;
+    const size_type QuadratureRuleAdaptiveDefaults::MAX_RECURSION     = 1000;
     const double
       QuadratureRuleAdaptiveDefaults::INTEGRAL_THRESHOLDS_NORMALIZATION = 1e-16;
     /**

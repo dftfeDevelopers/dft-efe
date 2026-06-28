@@ -4,6 +4,35 @@ if(NOT DEFINED CMAKE_CXX_STANDARD)
     set(CMAKE_CXX_STANDARD_REQUIRED ON)
 endif()
 
+IF (ENABLE_GPU)
+    IF ("${GPU_LANG}" STREQUAL "cuda")
+      enable_language(CUDA)
+    ELSEIF ("${GPU_LANG}" STREQUAL "hip")
+      enable_language(HIP)
+    ELSEIF ("${GPU_LANG}" STREQUAL "sycl")
+    ELSE ()
+      MESSAGE(FATAL_ERROR "\n"
+    "*** Could not find valid GPU_LANG=cuda/hip/sycl ***\n\n"
+    )
+    ENDIF()
+#
+#Set GPU compilation flag
+#
+  add_compile_definitions(DFTEFE_WITH_DEVICE)
+
+  IF ("${GPU_VENDOR}" STREQUAL "nvidia")
+    add_compile_definitions(DFTEFE_WITH_DEVICE_NVIDIA)
+    add_compile_definitions(DFTEFE_WITH_DEVICE_LANG_CUDA)
+  ELSEIF ("${GPU_VENDOR}" STREQUAL "amd")
+    add_compile_definitions(DFTEFE_WITH_DEVICE_AMD)
+    add_compile_definitions(DFTEFE_WITH_DEVICE_LANG_HIP)
+  ELSEIF ("${GPU_VENDOR}" STREQUAL "intel")
+    add_compile_definitions(DFTEFE_WITH_DEVICE_INTEL)
+    add_compile_definitions(DFTEFE_WITH_DEVICE_MKL)
+    add_compile_definitions(DFTEFE_WITH_DEVICE_LANG_SYCL)
+  ENDIF()
+ENDIF()
+
 # Add source files here
 set(DFT-EFE-KSDFT-SOURCES
 	Defaults.cpp
@@ -14,10 +43,48 @@ set(DFT-EFE-KSDFT-SOURCES
   ElectrostaticExcFE.cpp
 	KohnShamEigenSolver.cpp
 	ExchangeCorrelationFE.cpp
+	ExcManager.cpp
+  ExcDensityGGAClass.cpp
+  ExcDensityLDAClass.cpp
+  ExcTauMGGAClass.cpp
 	DensityCalculator.cpp
   MixingScheme.cpp
   KohnShamDFT.cpp
-  ElectrostaticONCVNonLocFE.cpp)
+  ElectrostaticONCVNonLocFE.cpp
+  DensityCalculatorKernels.cpp)
+
+  IF (ENABLE_GPU)
+  IF ("${GPU_LANG}" STREQUAL "cuda")
+  SET(DFT-EFE-KSDFT-DEVICE-SOURCES
+      DensityCalculatorKernelsDevice.cpp
+      )
+  ELSEIF ("${GPU_LANG}" STREQUAL "hip")
+  SET(DFT-EFE-KSDFT-DEVICE-SOURCES
+      DensityCalculatorKernelsDevice.cpp
+      )
+  ELSEIF ("${GPU_LANG}" STREQUAL "sycl")
+  SET(DFT-EFE-KSDFT-DEVICE-SOURCES
+      DensityCalculatorKernelsDevice.cpp
+      )
+  ENDIF()
+  ENDIF()
+
+  IF (ENABLE_GPU)
+      IF ("${GPU_LANG}" STREQUAL "cuda")
+      set_source_files_properties(${DFT-EFE-KSDFT-DEVICE-SOURCES} PROPERTIES LANGUAGE CUDA)
+      ELSEIF ("${GPU_LANG}" STREQUAL "hip")
+      set_source_files_properties(${DFT-EFE-KSDFT-DEVICE-SOURCES} PROPERTIES LANGUAGE HIP)
+      IF ("${GPU_VENDOR}" STREQUAL "amd")
+          ADD_DEFINITIONS(-D__HIP_PLATFORM_AMD__)
+      ELSEIF ("${GPU_VENDOR}" STREQUAL "nvidia")
+          ADD_DEFINITIONS(-D__HIP_PLATFORM_NVIDIA__)
+      ENDIF()
+      ELSEIF ("${GPU_LANG}" STREQUAL "sycl")
+      set_source_files_properties(${DFT-EFE-KSDFT-DEVICE-SOURCES} PROPERTIES COMPILE_FLAGS ${CMAKE_SYCL_FLAGS})
+      ENDIF()
+
+  LIST(APPEND DFT-EFE-KSDFT-SOURCES ${DFT-EFE-KSDFT-DEVICE-SOURCES})
+  ENDIF()
 
 add_library(dft-efe-ksdft SHARED ${DFT-EFE-KSDFT-SOURCES})
 

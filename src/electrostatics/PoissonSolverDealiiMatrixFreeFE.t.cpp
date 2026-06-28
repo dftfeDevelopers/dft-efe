@@ -35,10 +35,10 @@ namespace dftefe
       void
       getDealiiQuadRule(
         std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeOperator, memorySpace>>
+          const basis::FEBasisDataStorage<ValueTypeOperator, memorySpaceHost>>
                                  feBasisDataStorage,
         dealii::Quadrature<dim> &quadRuleDealii,
-        unsigned int &           num1DQuadPoints)
+        size_type &              num1DQuadPoints)
       {
         const quadrature::QuadratureRuleAttributes quadAttr =
           feBasisDataStorage->getQuadratureRuleContainer()
@@ -52,21 +52,21 @@ namespace dftefe
             quadratureFamily == quadrature::QuadratureFamily::GAUSS_SUBDIVIDED,
           "The quadrature rule has to be uniform quadrature like GAUSS , GLL or GAUSS_SUBDIVIDED for Dealii Matrix Free.");
 
-        num1DQuadPoints = (unsigned int)(std::cbrt(
-          feBasisDataStorage->getQuadratureRuleContainer()
-            ->nCellQuadraturePoints(0)));
+        num1DQuadPoints =
+          (size_type)(std::cbrt(feBasisDataStorage->getQuadratureRuleContainer()
+                                  ->nCellQuadraturePoints(0)));
 
         if (auto cfeBDSDealii = std::dynamic_pointer_cast<
               const basis::CFEBDSOnTheFlyComputeDealii<ValueTypeOperand,
                                                        ValueTypeOperator,
-                                                       memorySpace,
+                                                       memorySpaceHost,
                                                        dim>>(
               feBasisDataStorage))
           quadRuleDealii = cfeBDSDealii->getDealiiQuadratureRule();
         else if (auto cfeBDSDealii = std::dynamic_pointer_cast<
                    const basis::CFEBasisDataStorageDealii<ValueTypeOperand,
                                                           ValueTypeOperator,
-                                                          memorySpace,
+                                                          memorySpaceHost,
                                                           dim>>(
                    feBasisDataStorage))
           quadRuleDealii = cfeBDSDealii->getDealiiQuadratureRule();
@@ -94,19 +94,20 @@ namespace dftefe
       PoissonSolverDealiiMatrixFreeFE(
         std::shared_ptr<const basis::FEBasisManager<ValueTypeOperand,
                                                     ValueTypeOperator,
-                                                    memorySpace,
+                                                    memorySpaceHost,
                                                     dim>> feBasisManagerField,
         std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeOperator, memorySpace>>
+          const basis::FEBasisDataStorage<ValueTypeOperator, memorySpaceHost>>
           feBasisDataStorageStiffnessMatrix,
         const std::map<
           std::string,
-          std::shared_ptr<
-            const basis::FEBasisDataStorage<ValueTypeOperator, memorySpace>>>
+          std::shared_ptr<const basis::FEBasisDataStorage<ValueTypeOperator,
+                                                          memorySpaceHost>>>
           &feBasisDataStorageRhs,
         const std::map<
           std::string,
-          const quadrature::QuadratureValuesContainer<ValueType, memorySpace> &>
+          const quadrature::QuadratureValuesContainer<ValueType,
+                                                      memorySpaceHost> &>
           &                                     inpRhs,
         const linearAlgebra::PreconditionerType pcType,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
@@ -123,14 +124,18 @@ namespace dftefe
       , d_dofHandlerIndex(0)
       , d_matrixFreeQuadCompStiffnessMatrix(0)
       , d_dealiiQuadratureRuleVec(1, dealii::Quadrature<dim>())
-      , d_scratchMultiVec(feBasisManagerField->getMPIPatternP2P(),
-                          linAlgOpContext,
-                          d_numComponents,
-                          ValueType())
+      , d_scratchMultiVecHost(
+          feBasisManagerField->getMPIPatternP2P(),
+          linearAlgebra::LinAlgOpContextDefaults::LINALG_OP_CONTXT_HOST,
+          d_numComponents,
+          ValueType())
     {
       int rank;
       utils::mpi::MPICommRank(this->getMPIComm(), &rank);
       pcout.setCondition(rank == 0);
+
+      // Store linAlgOpContext for later device vector creation and device BLAS.
+      d_linAlgOpContext = linAlgOpContext;
 
       utils::throwException(
         d_numComponents == 1,
@@ -159,11 +164,11 @@ namespace dftefe
       // Check wether the dofhandler and constrints come from classical basis or
       // not
       std::shared_ptr<const basis::CFEBasisDofHandlerDealii<ValueTypeOperator,
-                                                            memorySpace,
+                                                            memorySpaceHost,
                                                             dim>>
         cfeBasisDofHandlerDealii = std::dynamic_pointer_cast<
           const basis::
-            CFEBasisDofHandlerDealii<ValueTypeOperator, memorySpace, dim>>(
+            CFEBasisDofHandlerDealii<ValueTypeOperator, memorySpaceHost, dim>>(
           feBasisDataStorageStiffnessMatrix->getBasisDofHandler());
       utils::throwException(
         cfeBasisDofHandlerDealii.get() != nullptr,
@@ -177,15 +182,15 @@ namespace dftefe
       d_feBasisManagerHomo =
         std::make_shared<basis::FEBasisManager<ValueTypeOperand,
                                                ValueTypeOperator,
-                                               memorySpace,
+                                               memorySpaceHost,
                                                dim>>(cfeBasisDofHandlerDealii,
                                                      zeroFunction);
 
       const basis::CFEConstraintsLocalDealii<ValueTypeOperator,
-                                             memorySpace,
+                                             memorySpaceHost,
                                              dim> &cfeConstraintsLocalDealii =
         dynamic_cast<const basis::CFEConstraintsLocalDealii<ValueTypeOperator,
-                                                            memorySpace,
+                                                            memorySpaceHost,
                                                             dim> &>(
           d_feBasisManagerHomo->getConstraints());
       utils::throwException(
@@ -205,8 +210,8 @@ namespace dftefe
         dim>(feBasisDataStorageStiffnessMatrix,
              d_dealiiQuadratureRuleVec[0],
              d_num1DQuadPointsStiffnessMatrix);
-      unsigned int count = 1;
-      auto         iter1 = feBasisDataStorageRhs.begin();
+      size_type count = 1;
+      auto      iter1 = feBasisDataStorageRhs.begin();
       d_num1DQuadPointsRhs.clear();
       d_nonTensorSructuredQuadeRhs.clear();
       while (iter1 != feBasisDataStorageRhs.end())
@@ -262,7 +267,7 @@ namespace dftefe
       auto endcPtr =
         d_dealiiMatrixFree->get_dof_handler(d_dofHandlerIndex).end();
 
-      unsigned int iCell = 0;
+      size_type iCell = 0;
       for (; cellPtr != endcPtr; ++cellPtr)
         if (cellPtr->is_locally_owned())
           {
@@ -295,6 +300,76 @@ namespace dftefe
         {
           i.reinit(d_x);
         }
+      // ---------------------------------------------------------------
+      // Device-specific initialisation (only when memorySpace == DEVICE)
+      // ---------------------------------------------------------------
+      if constexpr (memorySpace == utils::MemorySpace::DEVICE)
+        {
+#ifndef DFTEFE_WITH_DEVICE
+          utils::throwException(
+            false,
+            "PoissonSolverDealiiMatrixFreeFE: memorySpace == DEVICE requires "
+            "compilation with DFTEFE_WITH_DEVICE.");
+#else
+
+          auto partitioner = d_x.get_partitioner();
+          const std::pair<dealii::types::global_dof_index,
+                          dealii::types::global_dof_index> &locallyOwnedRange =
+            partitioner->local_range();
+          std::vector<dealii::types::global_dof_index> ghostIndices =
+            (partitioner->ghost_indices()).get_index_vector();
+
+          d_mpiPatternP2PDevice =
+            std::make_shared<utils::mpi::MPIPatternP2P<memorySpace>>(
+              std::pair<uInt, uInt>(locallyOwnedRange.first,
+                                    locallyOwnedRange.second),
+              std::vector<uInt>(ghostIndices.begin(), ghostIndices.end()),
+              partitioner->get_mpi_communicator());
+
+          // Create device-resident vectors sharing the same MPI layout as d_x.
+          // auto mpiPattern = d_feBasisManagerHomo->getMPIPatternP2P();
+
+          // d_mpiPatternP2PDevice = std::make_shared<
+          //   const
+          //   utils::mpi::MPIPatternP2P<dftefe::utils::MemorySpace::DEVICE>>(
+          //     mpiPattern->getLocallyOwnedRange(0),
+          //     mpiPattern->getGhostIndices(),
+          //     getMPIComm());
+
+          d_diagonalADevice = std::make_unique<
+            linearAlgebra::Vector<ValueTypeOperator, memorySpace>>(
+            d_mpiPatternP2PDevice, d_linAlgOpContext, ValueTypeOperator(0));
+
+          d_rhsDevice = std::make_unique<
+            linearAlgebra::Vector<ValueTypeOperator, memorySpace>>(
+            d_mpiPatternP2PDevice, d_linAlgOpContext, ValueTypeOperator(0));
+
+          d_initialDevice = std::make_unique<
+            linearAlgebra::Vector<ValueTypeOperator, memorySpace>>(
+            d_mpiPatternP2PDevice, d_linAlgOpContext, ValueTypeOperator(0));
+
+          utils::throwException(
+            d_num1DQuadPointsStiffnessMatrix == d_feOrder + 1,
+            "The quadrature point for the stiffness matrix in Laplacian has to be 1 more than the feOrder for using dftefe::electrostatics::matrixFreeWrapperDevice class.");
+
+          // Device matrix-free Laplace operator.
+          // nDofsPerDim = feOrder + 1 (number of 1-D quadrature / dof points).
+          d_matrixFreeWrapperDevice = std::make_unique<
+            dftefe::MatrixFreeWrapperClass<ValueTypeOperator,
+                                           dftefe::operatorList::Laplace,
+                                           dftefe::utils::MemorySpace::DEVICE,
+                                           false>>(
+            static_cast<std::uint32_t>(d_feOrder + 1),
+            getMPIComm(),
+            d_dealiiMatrixFree.get(),
+            *d_dealiiAffineConstraintMatrix,
+            static_cast<std::uint32_t>(d_dofHandlerIndex),
+            static_cast<std::uint32_t>(d_matrixFreeQuadCompStiffnessMatrix),
+            static_cast<uInt>(1));
+
+          d_matrixFreeWrapperDevice->init();
+#endif // DFTEFE_WITH_DEVICE
+        }
 
       computeDiagonalA();
       reinit(feBasisManagerField, inpRhs);
@@ -311,18 +386,18 @@ namespace dftefe
       PoissonSolverDealiiMatrixFreeFE(
         std::shared_ptr<const basis::FEBasisManager<ValueTypeOperand,
                                                     ValueTypeOperator,
-                                                    memorySpace,
+                                                    memorySpaceHost,
                                                     dim>> feBasisManagerField,
         std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeOperator, memorySpace>>
+          const basis::FEBasisDataStorage<ValueTypeOperator, memorySpaceHost>>
           feBasisDataStorageStiffnessMatrix,
         std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeOperator, memorySpace>>
+          const basis::FEBasisDataStorage<ValueTypeOperator, memorySpaceHost>>
           feBasisDataStorageRhs,
         const quadrature::QuadratureValuesContainer<
           linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
                                                  ValueTypeOperand>,
-          memorySpace> &                        inpRhs,
+          memorySpaceHost> &                    inpRhs,
         const linearAlgebra::PreconditionerType pcType,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
           linAlgOpContext)
@@ -331,14 +406,14 @@ namespace dftefe
           feBasisDataStorageStiffnessMatrix,
           std::map<
             std::string,
-            std::shared_ptr<
-              const basis::FEBasisDataStorage<ValueTypeOperator, memorySpace>>>(
+            std::shared_ptr<const basis::FEBasisDataStorage<ValueTypeOperator,
+                                                            memorySpaceHost>>>(
             {{"Field", feBasisDataStorageRhs}}),
           std::map<std::string,
                    const quadrature::QuadratureValuesContainer<
                      linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
                                                             ValueTypeOperand>,
-                     memorySpace> &>({{"Field", inpRhs}}),
+                     memorySpaceHost> &>({{"Field", inpRhs}}),
           pcType,
           linAlgOpContext)
     {}
@@ -355,13 +430,13 @@ namespace dftefe
       reinit(
         std::shared_ptr<const basis::FEBasisManager<ValueTypeOperand,
                                                     ValueTypeOperator,
-                                                    memorySpace,
+                                                    memorySpaceHost,
                                                     dim>> feBasisManagerField,
         const std::map<std::string,
                        const quadrature::QuadratureValuesContainer<
                          linearAlgebra::blasLapack::
                            scalar_type<ValueTypeOperator, ValueTypeOperand>,
-                         memorySpace> &> &                inpRhs)
+                         memorySpaceHost> &> &            inpRhs)
     {
       auto iter = d_feBasisDataStorageRhs.begin();
       while (iter != d_feBasisDataStorageRhs.end())
@@ -400,10 +475,10 @@ namespace dftefe
         }
 
       const basis::CFEConstraintsLocalDealii<ValueTypeOperator,
-                                             memorySpace,
+                                             memorySpaceHost,
                                              dim> &cfeConstraintsLocalDealii =
         dynamic_cast<const basis::CFEConstraintsLocalDealii<ValueTypeOperator,
-                                                            memorySpace,
+                                                            memorySpaceHost,
                                                             dim> &>(
           d_feBasisManagerField->getConstraints());
       utils::throwException(
@@ -422,6 +497,15 @@ namespace dftefe
       time = utils::mpi::MPIWtime();
 
       pcout << "Time for compute rhs: " << time - start_time << std::endl;
+
+      // Upload RHS to device (d_rhsDevice already sized in constructor).
+      if constexpr (memorySpace == utils::MemorySpace::DEVICE)
+        {
+          utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
+            d_rhsDevice->locallyOwnedSize(),
+            d_rhsDevice->data(),
+            d_rhs.begin());
+        }
     }
 
     template <typename ValueTypeOperator,
@@ -436,18 +520,18 @@ namespace dftefe
       reinit(
         std::shared_ptr<const basis::FEBasisManager<ValueTypeOperand,
                                                     ValueTypeOperator,
-                                                    memorySpace,
+                                                    memorySpaceHost,
                                                     dim>> feBasisManagerField,
         const quadrature::QuadratureValuesContainer<
           linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
                                                  ValueTypeOperand>,
-          memorySpace> &inpRhs)
+          memorySpaceHost> &inpRhs)
     {
       std::map<std::string,
                const quadrature::QuadratureValuesContainer<
                  linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
                                                         ValueTypeOperand>,
-                 memorySpace> &>
+                 memorySpaceHost> &>
         inpRhsMap = {{"Field", inpRhs}};
 
       reinit(feBasisManagerField, inpRhsMap);
@@ -479,7 +563,7 @@ namespace dftefe
       getSolution(linearAlgebra::MultiVector<
                   linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
                                                          ValueTypeOperand>,
-                  memorySpace> &solution)
+                  memorySpaceHost> &solution)
     {
       solution.setValue(0.0);
 
@@ -496,6 +580,14 @@ namespace dftefe
       // this is done for a particular case for poisson solve each
       // scf guess but have to be modified with a reinit parameter
       d_initial = d_x;
+
+      if constexpr (memorySpace == utils::MemorySpace::DEVICE)
+        {
+          utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
+            d_initialDevice->locallyOwnedSize(),
+            d_initialDevice->data(),
+            d_initial.begin());
+        }
     }
 
     template <typename ValueTypeOperator,
@@ -530,12 +622,38 @@ namespace dftefe
               typename ValueTypeOperand,
               utils::MemorySpace memorySpace,
               size_type          dim>
+    const linearAlgebra::Vector<ValueTypeOperator, utils::MemorySpace::DEVICE> &
+    PoissonSolverDealiiMatrixFreeFE<ValueTypeOperator,
+                                    ValueTypeOperand,
+                                    memorySpace,
+                                    dim>::getRhsDevice() const
+    {
+      return *d_rhsDevice;
+    }
+
+    template <typename ValueTypeOperator,
+              typename ValueTypeOperand,
+              utils::MemorySpace memorySpace,
+              size_type          dim>
+    const linearAlgebra::Vector<ValueTypeOperator, utils::MemorySpace::DEVICE> &
+    PoissonSolverDealiiMatrixFreeFE<ValueTypeOperator,
+                                    ValueTypeOperand,
+                                    memorySpace,
+                                    dim>::getInitialGuessDevice() const
+    {
+      return *d_initialDevice;
+    }
+
+    template <typename ValueTypeOperator,
+              typename ValueTypeOperand,
+              utils::MemorySpace memorySpace,
+              size_type          dim>
     void
     PoissonSolverDealiiMatrixFreeFE<ValueTypeOperator,
                                     ValueTypeOperand,
                                     memorySpace,
                                     dim>::solve(const double absTolerance,
-                                                const unsigned int
+                                                const size_type
                                                   maxNumberIterations)
     {
       this->CGsolve(absTolerance, maxNumberIterations, true);
@@ -552,10 +670,10 @@ namespace dftefe
       ValueTypeOperator,
       ValueTypeOperand,
       memorySpace,
-      dim>::AX(const dealii::MatrixFree<dim, double> &      matrixFreeData,
-               distributedCPUVec<double> &                  dst,
-               const distributedCPUVec<double> &            src,
-               const std::pair<unsigned int, unsigned int> &cell_range) const
+      dim>::AX(const dealii::MatrixFree<dim, double> &matrixFreeData,
+               distributedCPUVec<double> &            dst,
+               const distributedCPUVec<double> &      src,
+               const std::pair<size_type, size_type> &cell_range) const
     {
       dealii::VectorizedArray<double> quarter =
         dealii::make_vectorized_array(1.0 /* / (4.0 * M_PI)*/);
@@ -575,14 +693,13 @@ namespace dftefe
       basis::FEEvaluationWrapperBase &fe_eval =
         fe_eval_wrap.getFEEvaluationWrapperBase();
 
-      for (unsigned int cell = cell_range.first; cell < cell_range.second;
-           ++cell)
+      for (size_type cell = cell_range.first; cell < cell_range.second; ++cell)
         {
           fe_eval.reinit(cell);
           // fe_eval.gather_evaluate(src,dealii::EvaluationFlags::gradients);
           fe_eval.readDoFValues(src);
           fe_eval.evaluate(dealii::EvaluationFlags::gradients);
-          //  for (unsigned int q = 0; q < fe_eval.n_q_points; ++q)
+          //  for (size_type q = 0; q < fe_eval.n_q_points; ++q)
           //    {
           //      fe_eval.submit_gradient(fe_eval.get_gradient(q) * quarter, q);
           //    }
@@ -616,8 +733,8 @@ namespace dftefe
                                       quadrature,
                                       dealii::update_gradients |
                                         dealii::update_JxW_values);
-      const unsigned int     dofs_per_cell = dofHandler.get_fe().dofs_per_cell;
-      const unsigned int     num_quad_points = quadrature.size();
+      const size_type        dofs_per_cell = dofHandler.get_fe().dofs_per_cell;
+      const size_type        num_quad_points = quadrature.size();
       dealii::Vector<double> elementalDiagonalA(dofs_per_cell);
       std::vector<dealii::types::global_dof_index> local_dof_indices(
         dofs_per_cell);
@@ -634,9 +751,8 @@ namespace dftefe
             cell->get_dof_indices(local_dof_indices);
 
             elementalDiagonalA = 0.0;
-            for (unsigned int i = 0; i < dofs_per_cell; ++i)
-              for (unsigned int q_point = 0; q_point < num_quad_points;
-                   ++q_point)
+            for (size_type i = 0; i < dofs_per_cell; ++i)
+              for (size_type q_point = 0; q_point < num_quad_points; ++q_point)
                 elementalDiagonalA(i) += /*(1.0 / (4.0 * M_PI)) **/
                   (fe_values.shape_grad(i, q_point) *
                    fe_values.shape_grad(i, q_point)) *
@@ -655,6 +771,15 @@ namespace dftefe
             d_diagonalA(i) = 1.0 / d_diagonalA(i);
 
       d_diagonalA.compress(dealii::VectorOperation::insert);
+
+      // Upload Jacobi diagonal to device.
+      if constexpr (memorySpace == utils::MemorySpace::DEVICE)
+        {
+          utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
+            d_diagonalADevice->locallyOwnedSize(),
+            d_diagonalADevice->data(),
+            d_diagonalA.begin());
+        }
     }
 
     // Matrix-Free Jacobi preconditioner application
@@ -674,7 +799,7 @@ namespace dftefe
       // dst = src;
       // dst.scale(d_diagonalA);
 
-      for (unsigned int i = 0; i < dst.locally_owned_size(); i++)
+      for (size_type i = 0; i < dst.locally_owned_size(); i++)
         dst.local_element(i) =
           d_diagonalA.local_element(i) * src.local_element(i);
     }
@@ -716,7 +841,7 @@ namespace dftefe
                    const quadrature::QuadratureValuesContainer<
                      linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
                                                             ValueTypeOperand>,
-                     memorySpace> &> &inpRhs)
+                     memorySpaceHost> &> &inpRhs)
     {
       typename dealii::DoFHandler<dim>::active_cell_iterator subCellPtr;
       rhs.reinit(d_x);
@@ -731,7 +856,7 @@ namespace dftefe
       const dealii::DoFHandler<dim> &dofHandler =
         d_dealiiMatrixFree->get_dof_handler(d_dofHandlerIndex);
 
-      const unsigned int dofs_per_cell = dofHandler.get_fe().dofs_per_cell;
+      const size_type dofs_per_cell = dofHandler.get_fe().dofs_per_cell;
       typename dealii::DoFHandler<dim>::active_cell_iterator
         cell = dofHandler.begin_active(),
         endc = dofHandler.end();
@@ -771,14 +896,14 @@ namespace dftefe
         {
           dealii::VectorizedArray<double> quarter =
             dealii::make_vectorized_array(-1.0 /* / (4.0 * M_PI)*/);
-          for (unsigned int macrocell = 0;
+          for (size_type macrocell = 0;
                macrocell < d_dealiiMatrixFree->n_cell_batches();
                ++macrocell)
             {
               fe_eval.reinit(macrocell);
               fe_eval.readDoFValuesPlain(tempvec);
               fe_eval.evaluate(dealii::EvaluationFlags::gradients);
-              //  for (unsigned int q = 0; q < fe_eval.n_q_points; ++q)
+              //  for (size_type q = 0; q < fe_eval.n_q_points; ++q)
               //    {
               //      fe_eval.submit_gradient(-quarter *
               //      fe_eval.get_gradient(q), q);
@@ -789,9 +914,9 @@ namespace dftefe
             }
         }
 
-      unsigned int matrixFreeQuadratureComponentRhs = 1;
-      unsigned int nonTensorStructQuadInRhsCount    = 0;
-      auto         iter = d_feBasisDataStorageRhs.begin();
+      size_type matrixFreeQuadratureComponentRhs = 1;
+      size_type nonTensorStructQuadInRhsCount    = 0;
+      auto      iter = d_feBasisDataStorageRhs.begin();
       while (iter != d_feBasisDataStorageRhs.end())
         {
           const quadrature::QuadratureRuleAttributes quadAttr =
@@ -808,21 +933,22 @@ namespace dftefe
               // Set up basis Operations for RHS
               basis::FEBasisOperations<ValueTypeOperand,
                                        ValueTypeOperator,
-                                       memorySpace,
+                                       memorySpaceHost,
                                        dim>
                 feBasisOperations(iter->second, 1, d_numComponents);
 
               feBasisOperations.integrateWithBasisValues(
                 inpRhs.find(iter->first)->second,
                 *d_feBasisManagerHomo,
-                d_scratchMultiVec);
+                d_scratchMultiVecHost);
 
-              for (size_type i = 0; i < d_scratchMultiVec.locallyOwnedSize();
+              for (size_type i = 0;
+                   i < d_scratchMultiVecHost.locallyOwnedSize();
                    i++)
                 {
                   *(d_nonTensorSructuredQuadeRhs[nonTensorStructQuadInRhsCount]
                       .begin() +
-                    i) = d_scratchMultiVec.data()[i];
+                    i) = d_scratchMultiVecHost.data()[i];
                 }
               nonTensorStructQuadInRhsCount += 1;
             }
@@ -849,7 +975,7 @@ namespace dftefe
               dealii::AlignedVector<dealii::VectorizedArray<double>> rhoQuads(
                 fe_eval_density.totalNumberofQuadraturePoints(),
                 dealii::make_vectorized_array(0.0));
-              for (unsigned int macrocell = 0;
+              for (size_type macrocell = 0;
                    macrocell < d_dealiiMatrixFree->n_cell_batches();
                    ++macrocell)
                 {
@@ -858,30 +984,29 @@ namespace dftefe
                   std::fill(rhoQuads.begin(),
                             rhoQuads.end(),
                             dealii::make_vectorized_array(0.0));
-                  const unsigned int numSubCells =
+                  const size_type numSubCells =
                     d_dealiiMatrixFree->n_active_entries_per_cell_batch(
                       macrocell);
-                  for (unsigned int iSubCell = 0; iSubCell < numSubCells;
+                  for (size_type iSubCell = 0; iSubCell < numSubCells;
                        ++iSubCell)
                     {
                       subCellPtr = d_dealiiMatrixFree->get_cell_iterator(
                         macrocell, iSubCell, d_dofHandlerIndex);
                       dealii::CellId subCellId = subCellPtr->id();
-                      unsigned int   cellIndex =
-                        d_cellIdToCellIndexMap[subCellId];
+                      size_type cellIndex = d_cellIdToCellIndexMap[subCellId];
                       const double *tempVec =
                         inpRhs.find(iter->first)->second.data() +
                         cellIndex *
                           fe_eval_density.totalNumberofQuadraturePoints();
 
-                      for (unsigned int q = 0;
+                      for (size_type q = 0;
                            q < fe_eval_density.totalNumberofQuadraturePoints();
                            ++q)
                         rhoQuads[q][iSubCell] = tempVec[q];
                     }
 
 
-                  // for (unsigned int q = 0; q < fe_eval_density.n_q_points;
+                  // for (size_type q = 0; q < fe_eval_density.n_q_points;
                   // ++q)
                   //   {
                   //     fe_eval_density.submit_value(rhoQuads[q], q);
@@ -937,10 +1062,17 @@ namespace dftefe
                                     ValueTypeOperand,
                                     memorySpace,
                                     dim>::CGsolve(const double absTolerance,
-                                                  const unsigned int
+                                                  const size_type
                                                        maxNumberIterations,
                                                   bool distributeFlag)
     {
+      // Dispatch to the GPU path when the memory space is DEVICE.
+      if constexpr (memorySpace == utils::MemorySpace::DEVICE)
+        {
+          CGsolveDevice(absTolerance, maxNumberIterations, distributeFlag);
+          return;
+        }
+
       // get RHS
       basis::FEEvaluationWrapperBase::distributedCPUVec<double> rhs, gvec, dvec,
         hvec;
@@ -989,7 +1121,7 @@ namespace dftefe
           else
             {
               // gvec.equ(-1., rhs);
-              for (unsigned int i = 0; i < gvec.locally_owned_size(); i++)
+              for (size_type i = 0; i < gvec.locally_owned_size(); i++)
                 gvec.local_element(i) = -rhs.local_element(i);
             }
 
@@ -1007,7 +1139,6 @@ namespace dftefe
                     << "\n\n";
               return;
             }
-
           while ((!conv) && (it < maxNumberIterations))
             {
               it++;
@@ -1020,6 +1151,7 @@ namespace dftefe
                                        "Division by zero\n");
                   gh   = gvec * hvec;
                   beta = gh / beta;
+
                   dvec.sadd(beta, -1., hvec);
                 }
               else
@@ -1031,10 +1163,11 @@ namespace dftefe
 
               this->vmult(hvec, dvec);
               alpha = dvec * hvec;
+
               DFTEFE_AssertWithMsg(std::abs(alpha) != 0., "Division by zero\n");
               alpha = gh / alpha;
 
-              for (unsigned int i = 0; i < x.locally_owned_size(); i++)
+              for (size_type i = 0; i < x.locally_owned_size(); i++)
                 x.local_element(i) += alpha * dvec.local_element(i);
               // x.add(alpha, dvec);
 
@@ -1081,5 +1214,430 @@ namespace dftefe
             << std::endl;
     }
 
-  } // end of namespace electrostatics
+    // =========================================================================
+    // computeAXDevice
+    //
+    // Computes Ax = K * x on the GPU using dftfe's MatrixFreeWrapperClass.
+    // The homogeneous constraints are handled by the wrapper: it distributes
+    // constraints before the AX kernel and accumulates contributions back.
+    // Ghost values of x must be communicated before entry (handled internally
+    // via x.updateGhostValues()).
+    // =========================================================================
+    template <typename ValueTypeOperator,
+              typename ValueTypeOperand,
+              utils::MemorySpace memorySpace,
+              size_type          dim>
+    void
+    PoissonSolverDealiiMatrixFreeFE<ValueTypeOperator,
+                                    ValueTypeOperand,
+                                    memorySpace,
+                                    dim>::
+      computeAXDevice(
+        linearAlgebra::Vector<ValueTypeOperator, utils::MemorySpace::DEVICE>
+          &Ax,
+        linearAlgebra::Vector<ValueTypeOperator, utils::MemorySpace::DEVICE> &x)
+    {
+      if constexpr (memorySpace != utils::MemorySpace::DEVICE)
+        {
+          utils::throwException(
+            false, "computeAXDevice called for non-DEVICE memory space.");
+          return;
+        }
+
+#ifndef DFTEFE_WITH_DEVICE
+      utils::throwException(
+        false, "computeAXDevice requires compilation with DFTEFE_WITH_DEVICE.");
+#else
+      // pcout << "Enter AX; x l2Norm: " << x.l2Norm()<< "\n"<<std::flush;
+
+      // Zero the output vector (locally owned + ghost).
+      Ax.setValue(ValueTypeOperator(0));
+
+      // Update ghost values on device via MPI (uses dft-efe MPIPatternP2P).
+      x.updateGhostValues();
+
+      // pcout << "Update Ghost AX; x l2Norm: " << x.l2Norm()<<
+      // "\n"<<std::flush;
+
+      // Apply homogeneous constraints on device (sets constrained dofs to 0,
+      // distributes slave→master using the constraint matrix supplied to the
+      // MatrixFreeWrapperClass constructor).
+      d_matrixFreeWrapperDevice->constraintsDistribute(x.data());
+
+      // pcout << "After ConstraintP2C and update AX; x l2Norm: " <<
+      // x.l2Norm()<< "\n"<<std::flush; pcout << "After ConstraintP2C and update
+      // AX; Ax l2Norm: " << Ax.l2Norm()<< "\n"<<std::flush;
+
+      // Execute the matrix-free Laplace AX kernel on device.
+      // NOTE: MatrixFree::init() bakes coeff = 1/(4*pi) into d_jacobianFactor
+      // for the Laplace operator (DFT-FE convention), but the host AX() uses
+      // quarter = 1.0.  Scale Ax by 4*pi to match the host convention.
+      d_matrixFreeWrapperDevice->computeAX(Ax.data(), x.data());
+
+      // Scale the full local storage (owned + ghost) by 4*pi so that ghost
+      // contributions passed to accumulateAddLocallyOwned() are also corrected.
+      linearAlgebra::blasLapack::ascale(Ax.locallyOwnedSize() + Ax.ghostSize(),
+                                        ValueTypeOperator(4.0 * M_PI),
+                                        Ax.begin(),
+                                        Ax.begin(),
+                                        *d_linAlgOpContext);
+
+      // pcout << "After Compute AX; x l2Norm: " << x.l2Norm()<<
+      // "\n"<<std::flush; pcout << "After Compute AX; Ax l2Norm: " <<
+      // Ax.l2Norm()<< "\n"<<std::flush;
+
+      // Transpose-distribute: scatter master contributions to slave dofs and
+      // accumulate elemental results from ghost dofs back to locally-owned
+      // dofs.
+      d_matrixFreeWrapperDevice->constraintsDistributeTranspose(Ax.data(),
+                                                                x.data());
+
+      // pcout << "ConstraintC2P AX; x l2Norm: " << x.l2Norm()<<
+      // "\n"<<std::flush; pcout << "ConstraintC2P AX; Ax l2Norm: " <<
+      // Ax.l2Norm()<< "\n"<<std::flush;
+
+      // MPI reduction: add ghost contributions to locally-owned dofs.
+      Ax.accumulateAddLocallyOwned();
+
+      // pcout << "Leave AX; x l2Norm: " << x.l2Norm()<< "\n"<<std::flush;
+      //  pcout << "Leave AX; Ax l2Norm: " << Ax.l2Norm()<< "\n"<<std::flush;
+
+#endif // DFTEFE_WITH_DEVICE
+    }
+
+
+    // =========================================================================
+    // CGsolveDevice
+    //
+    // Preconditioned conjugate gradient solver running entirely on the GPU.
+    // All CG vector operations use dft-efe's blasLapack / linearAlgebra APIs
+    // with memorySpace == DEVICE.  The matrix-free AX is performed via
+    // computeAXDevice().
+    //
+    //  * The RHS and Jacobi diagonal are already on device (uploaded by reinit
+    //    and computeDiagonalA respectively).
+    //  * We start from x = initial on device.  Because the RHS already contains
+    //  the
+    //    static-condensation correction (-K_fc * u_bc), the CG solution gives
+    //    the free-dof values directly.
+    //  * Full inhomogeneous constraints are
+    //    applied on the CPU after copying the solution back.
+    //  * Ghost communication is handled by MultiVector::updateGhostValues() /
+    //    accumulateAddLocallyOwned() (dft-efe) and by the MatrixFreeWrapper
+    //    constraint routines (dftfe).
+    // =========================================================================
+    template <typename ValueTypeOperator,
+              typename ValueTypeOperand,
+              utils::MemorySpace memorySpace,
+              size_type          dim>
+    void
+    PoissonSolverDealiiMatrixFreeFE<
+      ValueTypeOperator,
+      ValueTypeOperand,
+      memorySpace,
+      dim>::CGsolveDevice(const double    absTolerance,
+                          const size_type maxNumberIterations,
+                          bool            distributeFlag)
+    {
+      if constexpr (memorySpace != utils::MemorySpace::DEVICE)
+        {
+          utils::throwException(
+            false, "CGsolveDevice called for non-DEVICE memory space.");
+          return;
+        }
+
+#ifndef DFTEFE_WITH_DEVICE
+      utils::throwException(
+        false, "CGsolveDevice requires compilation with DFTEFE_WITH_DEVICE.");
+#else
+
+      utils::mpi::MPIBarrier(getMPIComm());
+      double time = utils::mpi::MPIWtime();
+
+      // Allocate device CG work vectors from the same MPI layout as d_x.
+      linearAlgebra::Vector<ValueTypeOperator, memorySpace> x;
+      x = getInitialGuessDevice();
+
+      linearAlgebra::Vector<ValueTypeOperator, memorySpace> rhsDevice;
+      rhsDevice = getRhsDevice();
+
+      MPI_Barrier(getMPIComm());
+      time = MPI_Wtime();
+
+      linearAlgebra::Vector<ValueTypeOperator, memorySpace> &d_Jacobi =
+        *d_diagonalADevice;
+
+      d_xLocalDof = x.locallyOwnedSize() * x.numVectors();
+
+      d_devSum.resize(1);
+      d_devSumPtr = d_devSum.data();
+
+      double res = 0.0, initial_res = 0.0;
+      bool conv = false;
+      size_type it = 0;
+
+      try
+        {
+          x.updateGhostValues();
+
+          /// reinit temporary vectors for cgsolver device
+          d_qvec = x;
+          d_rvec = x;
+          d_dvec = x;
+
+          d_qvec.setValue(0.);
+          d_rvec.setValue(0.);
+          d_dvec.setValue(0.);
+
+          double alpha = 0.0;
+          double beta = 0.0;
+          double delta = 0.0;
+
+          // r = Ax
+          computeAXDevice(d_rvec, x);
+
+          // r = Ax - rhs
+          double mOne = -1.0;
+          linearAlgebra::blasLapack::axpy(d_xLocalDof,
+                                          mOne,
+                                          rhsDevice.begin(),
+                                          1,
+                                          d_rvec.begin(),
+                                          1,
+                                          *d_linAlgOpContext);
+
+          // res = r.r
+          res = d_rvec.l2Norm();
+          initial_res = res;
+          if (res < absTolerance)
+            conv = true;
+          if (conv)
+            return;
+
+          while ((!conv) && (it < maxNumberIterations))
+            {
+              it++;
+
+              if (it > 1)
+                {
+                  beta = delta;
+                  DFTEFE_AssertWithMsg(std::abs(beta) != 0.,
+                                       "Division by zero\n");
+
+                  // d = M^(-1) * r
+                  // delta = d.r
+                  delta =
+                    applyPreconditionAndComputeDotProduct(d_Jacobi.begin());
+
+                  beta = delta / beta;
+
+                  // q = beta * q - d
+                  saddDevice(d_qvec.begin(), d_dvec.begin(), beta, d_xLocalDof);
+                }
+              else
+                {
+                  // delta = r.(M^(-1) * r)
+                  // q = -M^(-1) * r
+                  delta =
+                    applyPreconditionComputeDotProductAndSadd(d_Jacobi.begin());
+                }
+
+              // d = Aq
+              computeAXDevice(d_dvec, d_qvec);
+
+              // alpha = q.d
+              dotDevice(d_xLocalDof,
+                        d_qvec.begin(),
+                        d_dvec.begin(),
+                        alpha,
+                        *d_linAlgOpContext);
+
+              DFTEFE_AssertWithMsg(std::abs(alpha) != 0., "Division by zero\n");
+              alpha = delta / alpha;
+
+              // res = r.r
+              // r += alpha * d
+              // x += alpha * q
+              res = scaleXRandComputeNorm(x.begin(), alpha);
+
+              if (res < absTolerance)
+                conv = true;
+            }
+
+          if (!conv)
+            {
+              DFTEFE_AssertWithMsg(false,
+                                   "DFT-FE Error: Solver did not converge\n");
+            }
+
+          // ------------------------------------------------------------------
+          // Copy device solution back to CPU, apply full inhomogeneous
+          // constraints, then store via setSolution.
+          // ------------------------------------------------------------------
+          utils::MemoryTransfer<utils::MemorySpace::HOST, memorySpace>::copy(
+            d_xLocalDof, d_x.begin(), x.data());
+
+          d_x.update_ghost_values();
+
+          if (distributeFlag)
+            d_constraintsInfo->distribute(d_x);
+
+          setSolution(d_x);
+        }
+
+      catch (...)
+        {
+          DFTEFE_AssertWithMsg(
+            false,
+            "DFT-EFE Error: Poisson solver did not converge as per set tolerances."
+            "consider increasing MAXIMUM ITERATIONS in Poisson problem parameters."
+            "In rare cases for all-electron problems this can also occur due to a known parallel constraints"
+            "issue in dealii library.");
+          pcout
+            << "\nWarning: solver did not converge as per set tolerances. consider increasing maxLinearSolverIterations or decreasing relLinearSolverTolerance.\n";
+          pcout << "Current abs. residual in Device: " << res << std::endl;
+        }
+
+      pcout << std::endl;
+      pcout << "initial abs. residual in Device: " << initial_res
+            << " , current abs. residual in Device: " << res
+            << " , nsteps: " << it
+            << " , abs. tolerance criterion in Device:  " << absTolerance
+            << "\n\n";
+
+      MPI_Barrier(getMPIComm());
+      time = MPI_Wtime() - time;
+
+      pcout << "Time for Device Poisson/Helmholtz problem CG iterations: "
+            << time << std::endl;
+#endif // DFTEFE_WITH_DEVICE
+    }
+
+#ifdef DFTEFE_WITH_DEVICE
+    template <typename ValueTypeOperator,
+              typename ValueTypeOperand,
+              utils::MemorySpace memorySpace,
+              size_type          dim>
+    double
+    PoissonSolverDealiiMatrixFreeFE<
+      ValueTypeOperator,
+      ValueTypeOperand,
+      memorySpace,
+      dim>::applyPreconditionAndComputeDotProduct(const double *d_jacobi)
+    {
+      double local_sum = 0.0, sum = 0.0;
+      {
+        dftefe::utils::deviceError_t err =
+          dftefe::utils::deviceMemset(d_devSumPtr, 0, sizeof(double));
+        DEVICE_API_CHECK(err);
+      }
+
+      applyPreconditionAndComputeDotProductDevice(
+        d_dvec.begin(), d_devSumPtr, d_rvec.begin(), d_jacobi, d_xLocalDof);
+
+      dftefe::utils::MemoryTransfer<
+        dftefe::utils::MemorySpace::HOST,
+        dftefe::utils::MemorySpace::DEVICE>::copy(1,
+                                                  &local_sum,
+                                                  d_devSum.begin());
+
+      MPI_Allreduce(&local_sum, &sum, 1, MPI_DOUBLE, MPI_SUM, getMPIComm());
+
+      return sum;
+    }
+
+
+    template <typename ValueTypeOperator,
+              typename ValueTypeOperand,
+              utils::MemorySpace memorySpace,
+              size_type          dim>
+    double
+    PoissonSolverDealiiMatrixFreeFE<
+      ValueTypeOperator,
+      ValueTypeOperand,
+      memorySpace,
+      dim>::applyPreconditionComputeDotProductAndSadd(const double *d_jacobi)
+    {
+      double local_sum = 0.0, sum = 0.0;
+      {
+        dftefe::utils::deviceError_t err =
+          dftefe::utils::deviceMemset(d_devSumPtr, 0, sizeof(double));
+        DEVICE_API_CHECK(err);
+      }
+
+      applyPreconditionComputeDotProductAndSaddDevice(
+        d_qvec.begin(), d_devSumPtr, d_rvec.begin(), d_jacobi, d_xLocalDof);
+
+      dftefe::utils::MemoryTransfer<
+        dftefe::utils::MemorySpace::HOST,
+        dftefe::utils::MemorySpace::DEVICE>::copy(1,
+                                                  &local_sum,
+                                                  d_devSum.begin());
+
+      MPI_Allreduce(&local_sum, &sum, 1, MPI_DOUBLE, MPI_SUM, getMPIComm());
+
+      return sum;
+    }
+
+
+    template <typename ValueTypeOperator,
+              typename ValueTypeOperand,
+              utils::MemorySpace memorySpace,
+              size_type          dim>
+    double
+    PoissonSolverDealiiMatrixFreeFE<ValueTypeOperator,
+                                    ValueTypeOperand,
+                                    memorySpace,
+                                    dim>::scaleXRandComputeNorm(double *x,
+                                                                const double
+                                                                  &alpha)
+    {
+      double local_sum = 0.0, sum = 0.0;
+      {
+        dftefe::utils::deviceError_t err =
+          dftefe::utils::deviceMemset(d_devSumPtr, 0, sizeof(double));
+        DEVICE_API_CHECK(err);
+      }
+
+      scaleXRandComputeNormDevice(x,
+                                  d_rvec.begin(),
+                                  d_devSumPtr,
+                                  d_qvec.begin(),
+                                  d_dvec.begin(),
+                                  alpha,
+                                  d_xLocalDof);
+
+      dftefe::utils::MemoryTransfer<
+        dftefe::utils::MemorySpace::HOST,
+        dftefe::utils::MemorySpace::DEVICE>::copy(1,
+                                                  &local_sum,
+                                                  d_devSum.begin());
+
+      MPI_Allreduce(&local_sum, &sum, 1, MPI_DOUBLE, MPI_SUM, getMPIComm());
+
+      return std::sqrt(sum);
+    }
+
+
+    template <typename ValueTypeOperator,
+              typename ValueTypeOperand,
+              utils::MemorySpace memorySpace,
+              size_type          dim>
+    void
+    PoissonSolverDealiiMatrixFreeFE<ValueTypeOperator,
+                                    ValueTypeOperand,
+                                    memorySpace,
+                                    dim>::
+      dotDevice(const size_type                              size,
+                double *                                     x,
+                double *                                     y,
+                double &                                     alpha,
+                linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext)
+    {
+      double result =
+        linearAlgebra::blasLapack::dot(size, x, 1, y, 1, linAlgOpContext);
+      MPI_Allreduce(&result, &alpha, 1, MPI_DOUBLE, MPI_SUM, getMPIComm());
+    }
+#endif // DFTEFE_WITH_DEVICE
+  }    // end of namespace electrostatics
 } // end of namespace dftefe

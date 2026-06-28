@@ -15,7 +15,7 @@ namespace dftefe
       // Returns power of integer raised to a positive integer
       // C++ standard library deals only with floats and doubles
       size_type
-      intPowPositiveInt(int base, unsigned int exp)
+      intPowPositiveInt(int base, dftefe::size_type exp)
       {
         size_type result = 1;
         for (;;)
@@ -41,8 +41,8 @@ namespace dftefe
         std::vector<utils::Point> &         adaptiveQuadPoints,
         std::vector<double> &               adaptiveQuadWeights)
       {
-        const size_type    numberBaseQuadPoints = baseQuadratureRule.nPoints();
-        const unsigned int dim                  = baseQuadratureRule.getDim();
+        const size_type numberBaseQuadPoints = baseQuadratureRule.nPoints();
+        const dftefe::size_type          dim = baseQuadratureRule.getDim();
         const std::vector<utils::Point> &baseQuadratureRuleParametricPoints =
           baseQuadratureRule.getPoints();
         const std::vector<double> &baseQuadratureRuleWeights =
@@ -85,7 +85,8 @@ namespace dftefe
                            globalCellJacobian);
 
         std::vector<double> weightsGlobalCell(numberBaseQuadPoints, 0.0);
-        for (unsigned int iPoint = 0; iPoint < numberBaseQuadPoints; ++iPoint)
+        for (dftefe::size_type iPoint = 0; iPoint < numberBaseQuadPoints;
+             ++iPoint)
           {
             weightsGlobalCell[iPoint] =
               currentCellJxW[iPoint] / globalCellJacobian[iPoint];
@@ -112,7 +113,7 @@ namespace dftefe
         bool            returnValue     = true;
         const size_type numberFunctions = parentCellIntegralValues.size();
         const size_type numberChildren  = childCellsIntegralValues.size();
-        for (unsigned int iFunction = 0; iFunction < numberFunctions;
+        for (dftefe::size_type iFunction = 0; iFunction < numberFunctions;
              ++iFunction)
           {
             const double parentIntegral = parentCellIntegralValues[iFunction];
@@ -122,7 +123,8 @@ namespace dftefe
                                             INTEGRAL_THRESHOLDS_NORMALIZATION))
               {
                 double sumChildIntegrals = 0.0;
-                for (unsigned int iChild = 0; iChild < numberChildren; ++iChild)
+                for (dftefe::size_type iChild = 0; iChild < numberChildren;
+                     ++iChild)
                   {
                     sumChildIntegrals +=
                       childCellsIntegralValues[iChild][iFunction];
@@ -151,8 +153,8 @@ namespace dftefe
         const std::vector<double> &         absoluteTolerances,
         const std::vector<double> &         relativeTolerances,
         const double                        smallestCellVolume,
-        const unsigned int                  recursionLevel,
-        const unsigned int                  maxRecursion,
+        const dftefe::size_type             recursionLevel,
+        const dftefe::size_type             maxRecursion,
         std::vector<std::shared_ptr<const utils::ScalarSpatialFunctionReal>>
                                               functions,
         const basis::TriangulationCellBase &  globalCell,
@@ -166,9 +168,9 @@ namespace dftefe
         std::map<std::string, double> &       timer)
 
       {
-        const size_type    numberBaseQuadPoints = baseQuadratureRule.nPoints();
-        const size_type    numberFunctions      = functions.size();
-        const unsigned int dim                  = baseQuadratureRule.getDim();
+        const size_type numberBaseQuadPoints = baseQuadratureRule.nPoints();
+        const size_type numberFunctions      = functions.size();
+        const dftefe::size_type          dim = baseQuadratureRule.getDim();
         const std::vector<utils::Point> &baseQuadratureRuleParametricPoints =
           baseQuadratureRule.getPoints();
 
@@ -185,7 +187,7 @@ namespace dftefe
                                          adaptiveQuadPoints,
                                          adaptiveQuadWeights);
 
-            for (unsigned int iFunction = 0; iFunction < numberFunctions;
+            for (dftefe::size_type iFunction = 0; iFunction < numberFunctions;
                  ++iFunction)
               integrals[iFunction] += parentCellIntegralValues[iFunction];
           }
@@ -216,7 +218,8 @@ namespace dftefe
               "The number of child cells created by ParentToChildCellsManager"
               "should be 2^dim");
 
-            for (unsigned int iChild = 0; iChild < numberChildren; iChild++)
+            for (dftefe::size_type iChild = 0; iChild < numberChildren;
+                 iChild++)
               {
                 const basis::TriangulationCellBase &childCell =
                   *(childCells[iChild]);
@@ -252,7 +255,8 @@ namespace dftefe
                                                            0.0);
 
                 start = std::chrono::high_resolution_clock::now();
-                for (unsigned int iFunction = 0; iFunction < numberFunctions;
+                for (dftefe::size_type iFunction = 0;
+                     iFunction < numberFunctions;
                      ++iFunction)
                   {
                     std::shared_ptr<const utils::ScalarSpatialFunctionReal>
@@ -289,16 +293,19 @@ namespace dftefe
                                              adaptiveQuadPoints,
                                              adaptiveQuadWeights);
 
-                for (unsigned int iFunction = 0; iFunction < numberFunctions;
+                for (dftefe::size_type iFunction = 0;
+                     iFunction < numberFunctions;
                      ++iFunction)
                   integrals[iFunction] += parentCellIntegralValues[iFunction];
               }
 
             else
               {
-                for (unsigned int iChild = 0; iChild < numberChildren; ++iChild)
+                for (dftefe::size_type iChild = 0; iChild < numberChildren;
+                     ++iChild)
                   {
-                    const unsigned int recursionLevelNext = recursionLevel + 1;
+                    const dftefe::size_type recursionLevelNext =
+                      recursionLevel + 1;
                     recursiveIntegrate(*(childCells[iChild]),
                                        childCellsIntegralValues[iChild],
                                        parentCellIntegralThresholds,
@@ -341,7 +348,7 @@ namespace dftefe
       const std::vector<double> &    integralThresholds,
       std::map<std::string, double> &timer,
       const double                   smallestCellVolume /*= 1e-12*/,
-      const unsigned int             maxRecursion /*= 100*/)
+      const dftefe::size_type        maxRecursion /*= 100*/)
     {
       d_dim                = baseQuadratureRule.getDim();
       d_isTensorStructured = false;
@@ -376,7 +383,8 @@ namespace dftefe
         std::accumulate(cellJxW.begin(), cellJxW.end(), 0.0);
 
       std::vector<double> classicalIntegralValues(numberFunctions, 0.0);
-      for (unsigned int iFunction = 0; iFunction < numberFunctions; ++iFunction)
+      for (dftefe::size_type iFunction = 0; iFunction < numberFunctions;
+           ++iFunction)
         {
           std::shared_ptr<const utils::ScalarSpatialFunctionReal> function =
             functions[iFunction];
@@ -385,7 +393,7 @@ namespace dftefe
             functionValues.begin(), functionValues.end(), cellJxW.begin(), 0.0);
         }
 
-      int                 recursionLevel = 0;
+      size_type           recursionLevel = 0;
       std::vector<double> adaptiveIntegralValues(numberFunctions, 0.0);
       recursiveIntegrate(cell,
                          classicalIntegralValues,

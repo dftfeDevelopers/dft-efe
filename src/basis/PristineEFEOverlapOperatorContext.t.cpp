@@ -50,6 +50,9 @@ namespace dftefe
         std::vector<size_type> &cellStartIdsBasisOverlap,
         std::vector<size_type> &dofsInCellVec)
       {
+        utils::throwException(
+          memorySpace == utils::MemorySpace::DEVICE,
+          "Make chnages in computeBasisOverlapMatrix for Device in PristineEFEOverlap.");
         std::shared_ptr<const EFEBasisDofHandler<ValueTypeOperand,
                                                  ValueTypeOperator,
                                                  memorySpace,
@@ -117,12 +120,12 @@ namespace dftefe
             const ValueTypeOperator *cumulativeDofQuadPoints =
               basisDataInAllCells.data() + cumulativeDofQuadPointsOffset;
 
-            for (unsigned int iNode = 0; iNode < dofsPerCell; iNode++)
+            for (size_type iNode = 0; iNode < dofsPerCell; iNode++)
               {
-                for (unsigned int jNode = 0; jNode < dofsPerCell; jNode++)
+                for (size_type jNode = 0; jNode < dofsPerCell; jNode++)
                   {
                     *basisOverlapTmpIter = 0.0;
-                    for (unsigned int qPoint = 0; qPoint < nQuadPointInCell;
+                    for (size_type qPoint = 0; qPoint < nQuadPointInCell;
                          qPoint++)
                       {
                         *basisOverlapTmpIter +=
@@ -166,6 +169,9 @@ namespace dftefe
         std::vector<size_type> &cellStartIdsBasisOverlap,
         std::vector<size_type> &dofsInCellVec)
       {
+        utils::throwException(
+          memorySpace == utils::MemorySpace::DEVICE,
+          "Make chnages in computeBasisOverlapMatrix for Device in PristineEFEOverlap.");
         std::shared_ptr<
           const FEBasisDofHandler<ValueTypeOperand, memorySpace, dim>>
           cfeBDH = std::dynamic_pointer_cast<
@@ -274,15 +280,14 @@ namespace dftefe
             const ValueTypeOperator *cumulativeEFEDofQuadPoints =
               basisDataInAllCellsEFE.data() + cumulativeEFEDofQuadPointsOffset;
 
-            for (unsigned int iNode = 0; iNode < dofsPerCell; iNode++)
+            for (size_type iNode = 0; iNode < dofsPerCell; iNode++)
               {
-                for (unsigned int jNode = 0; jNode < dofsPerCell; jNode++)
+                for (size_type jNode = 0; jNode < dofsPerCell; jNode++)
                   {
                     *basisOverlapTmpIter = 0.0;
                     if (iNode < dofsPerCellCFE && jNode < dofsPerCellCFE)
                       {
-                        for (unsigned int qPoint = 0;
-                             qPoint < nQuadPointInCellCFE;
+                        for (size_type qPoint = 0; qPoint < nQuadPointInCellCFE;
                              qPoint++)
                           {
                             *basisOverlapTmpIter +=
@@ -297,8 +302,7 @@ namespace dftefe
                       }
                     else
                       {
-                        for (unsigned int qPoint = 0;
-                             qPoint < nQuadPointInCellEFE;
+                        for (size_type qPoint = 0; qPoint < nQuadPointInCellEFE;
                              qPoint++)
                           {
                             *basisOverlapTmpIter +=
@@ -327,55 +331,6 @@ namespace dftefe
 
         utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
           basisOverlapTmp.size(), basisOverlap->data(), basisOverlapTmp.data());
-      }
-
-      template <utils::MemorySpace memorySpace>
-      void
-      storeSizes(utils::MemoryStorage<size_type, memorySpace> &mSizes,
-                 utils::MemoryStorage<size_type, memorySpace> &nSizes,
-                 utils::MemoryStorage<size_type, memorySpace> &kSizes,
-                 utils::MemoryStorage<size_type, memorySpace> &ldaSizes,
-                 utils::MemoryStorage<size_type, memorySpace> &ldbSizes,
-                 utils::MemoryStorage<size_type, memorySpace> &ldcSizes,
-                 utils::MemoryStorage<size_type, memorySpace> &strideA,
-                 utils::MemoryStorage<size_type, memorySpace> &strideB,
-                 utils::MemoryStorage<size_type, memorySpace> &strideC,
-                 const std::vector<size_type> &cellsInBlockNumDoFs,
-                 const size_type               numVecs)
-      {
-        const size_type        numCellsInBlock = cellsInBlockNumDoFs.size();
-        std::vector<size_type> mSizesSTL(numCellsInBlock, 0);
-        std::vector<size_type> nSizesSTL(numCellsInBlock, 0);
-        std::vector<size_type> kSizesSTL(numCellsInBlock, 0);
-        std::vector<size_type> ldaSizesSTL(numCellsInBlock, 0);
-        std::vector<size_type> ldbSizesSTL(numCellsInBlock, 0);
-        std::vector<size_type> ldcSizesSTL(numCellsInBlock, 0);
-        std::vector<size_type> strideASTL(numCellsInBlock, 0);
-        std::vector<size_type> strideBSTL(numCellsInBlock, 0);
-        std::vector<size_type> strideCSTL(numCellsInBlock, 0);
-
-        for (size_type iCell = 0; iCell < numCellsInBlock; ++iCell)
-          {
-            mSizesSTL[iCell]   = numVecs;
-            nSizesSTL[iCell]   = cellsInBlockNumDoFs[iCell];
-            kSizesSTL[iCell]   = cellsInBlockNumDoFs[iCell];
-            ldaSizesSTL[iCell] = mSizesSTL[iCell];
-            ldbSizesSTL[iCell] = kSizesSTL[iCell];
-            ldcSizesSTL[iCell] = mSizesSTL[iCell];
-            strideASTL[iCell]  = mSizesSTL[iCell] * kSizesSTL[iCell];
-            strideBSTL[iCell]  = kSizesSTL[iCell] * nSizesSTL[iCell];
-            strideCSTL[iCell]  = mSizesSTL[iCell] * nSizesSTL[iCell];
-          }
-
-        mSizes.copyFrom(mSizesSTL);
-        nSizes.copyFrom(nSizesSTL);
-        kSizes.copyFrom(kSizesSTL);
-        ldaSizes.copyFrom(ldaSizesSTL);
-        ldbSizes.copyFrom(ldbSizesSTL);
-        ldcSizes.copyFrom(ldcSizesSTL);
-        strideA.copyFrom(strideASTL);
-        strideB.copyFrom(strideBSTL);
-        strideC.copyFrom(strideCSTL);
       }
 
       template <typename ValueTypeOperator,
@@ -430,9 +385,9 @@ namespace dftefe
                               cellsInBlockNumDoFsSTL.end(),
                               0);
 
-            utils::MemoryStorage<size_type, memorySpace> cellsInBlockNumDoFs(
-              numCellsInBlock);
-            cellsInBlockNumDoFs.copyFrom(cellsInBlockNumDoFsSTL);
+            // utils::MemoryStorage<size_type, memorySpace> cellsInBlockNumDoFs(
+            //   numCellsInBlock);
+            // cellsInBlockNumDoFs.copyFrom(cellsInBlockNumDoFsSTL);
 
             // allocate memory for cell-wise data for x
             utils::MemoryStorage<ValueTypeOperand, memorySpace> xCellValues(
@@ -447,43 +402,35 @@ namespace dftefe
                                       numVecs,
                                       cellLocalIdsStartPtrX +
                                         cellLocalIdsOffset,
-                                      cellsInBlockNumDoFs,
+                                      // cellsInBlockNumDoFs,
+                                      cellsInBlockNumCumulativeDoFs,
                                       xCellValues);
 
             std::vector<char> transA(numCellsInBlock, 'N');
             std::vector<char> transB(numCellsInBlock, 'N');
 
-            utils::MemoryStorage<size_type, memorySpace> mSizes(
-              numCellsInBlock);
-            utils::MemoryStorage<size_type, memorySpace> nSizes(
-              numCellsInBlock);
-            utils::MemoryStorage<size_type, memorySpace> kSizes(
-              numCellsInBlock);
-            utils::MemoryStorage<size_type, memorySpace> ldaSizes(
-              numCellsInBlock);
-            utils::MemoryStorage<size_type, memorySpace> ldbSizes(
-              numCellsInBlock);
-            utils::MemoryStorage<size_type, memorySpace> ldcSizes(
-              numCellsInBlock);
-            utils::MemoryStorage<size_type, memorySpace> strideA(
-              numCellsInBlock);
-            utils::MemoryStorage<size_type, memorySpace> strideB(
-              numCellsInBlock);
-            utils::MemoryStorage<size_type, memorySpace> strideC(
-              numCellsInBlock);
+            std::vector<size_type> mSizes(numCellsInBlock, 0);
+            std::vector<size_type> nSizes(numCellsInBlock, 0);
+            std::vector<size_type> kSizes(numCellsInBlock, 0);
+            std::vector<size_type> ldaSizes(numCellsInBlock, 0);
+            std::vector<size_type> ldbSizes(numCellsInBlock, 0);
+            std::vector<size_type> ldcSizes(numCellsInBlock, 0);
+            std::vector<size_type> strideA(numCellsInBlock, 0);
+            std::vector<size_type> strideB(numCellsInBlock, 0);
+            std::vector<size_type> strideC(numCellsInBlock, 0);
 
-            PristineEFEOverlapOperatorContextInternal::storeSizes(
-              mSizes,
-              nSizes,
-              kSizes,
-              ldaSizes,
-              ldbSizes,
-              ldcSizes,
-              strideA,
-              strideB,
-              strideC,
-              cellsInBlockNumDoFsSTL,
-              numVecs);
+            for (size_type iCell = 0; iCell < numCellsInBlock; ++iCell)
+              {
+                mSizes[iCell]   = numVecs;
+                nSizes[iCell]   = cellsInBlockNumDoFsSTL[iCell];
+                kSizes[iCell]   = cellsInBlockNumDoFsSTL[iCell];
+                ldaSizes[iCell] = mSizes[iCell];
+                ldbSizes[iCell] = kSizes[iCell];
+                ldcSizes[iCell] = mSizes[iCell];
+                strideA[iCell]  = mSizes[iCell] * kSizes[iCell];
+                strideB[iCell]  = kSizes[iCell] * nSizes[iCell];
+                strideC[iCell]  = mSizes[iCell] * nSizes[iCell];
+              }
 
             // allocate memory for cell-wise data for y
             utils::MemoryStorage<
@@ -532,12 +479,14 @@ namespace dftefe
             basis::FECellWiseDataOperations<
               linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
                                                      ValueTypeOperand>,
-              memorySpace>::addCellWiseDataToFieldData(yCellValues,
-                                                       numVecs,
-                                                       cellLocalIdsStartPtrY +
-                                                         cellLocalIdsOffset,
-                                                       cellsInBlockNumDoFs,
-                                                       y);
+              memorySpace>::
+              addCellWiseDataToFieldData(yCellValues,
+                                         numVecs,
+                                         cellLocalIdsStartPtrY +
+                                           cellLocalIdsOffset,
+                                         // cellsInBlockNumDoFs,
+                                         cellsInBlockNumCumulativeDoFs,
+                                         y);
 
             for (size_type iCell = 0; iCell < numCellsInBlock; ++iCell)
               {

@@ -22,9 +22,10 @@ namespace dftefe
     {
       d_locallyOwnedRanges.resize(0);
       d_ghostIndices.resize(0);
+      d_ghostIndicesSet.clear();
       d_globalToLocalMap.clear();
       d_dealiiAffineConstraintMatrix.clear();
-      d_dealiiAffineConstraintMatrix.reinit(/*locally_owned_dofs,*/
+      d_dealiiAffineConstraintMatrix.reinit(locally_owned_dofs,
                                             locally_relevant_dofs);
     }
 
@@ -45,6 +46,7 @@ namespace dftefe
       : d_dealiiAffineConstraintMatrix(dealiiAffineConstraintMatrix)
       , d_locallyOwnedRanges(locallyOwnedRanges)
       , d_ghostIndices(ghostIndices)
+      , d_ghostIndicesSet(ghostIndices.begin(), ghostIndices.end())
       , d_globalToLocalMap(globalToLocalMapLocalDofs)
       , d_isCleared(false)
       , d_isClosed(true)
@@ -76,6 +78,7 @@ namespace dftefe
       d_isCleared          = false;
       d_locallyOwnedRanges = cfeConstraintsLocalDealiiIn.d_locallyOwnedRanges;
       d_ghostIndices       = cfeConstraintsLocalDealiiIn.d_ghostIndices;
+      d_ghostIndicesSet    = cfeConstraintsLocalDealiiIn.d_ghostIndicesSet;
       d_globalToLocalMap   = cfeConstraintsLocalDealiiIn.d_globalToLocalMap;
       copyConstraintsDataFromDealiiToDealii(cfeConstraintsLocalDealiiIn);
     }
@@ -218,7 +221,7 @@ namespace dftefe
                 constraintsDataIn.getConstraintEntries(lineDof);
 
               bool isConstraintRhsExpandingOutOfIndexSet = false;
-              for (unsigned int j = 0; j < rowData->size(); ++j)
+              for (size_type j = 0; j < rowData->size(); ++j)
                 {
                   if (!(isGhostEntry((*rowData)[j].first) ||
                         inLocallyOwnedRanges((*rowData)[j].first)))
@@ -257,7 +260,7 @@ namespace dftefe
                 constraintsDataIn.getConstraintEntries(lineDof);
 
               bool isConstraintRhsExpandingOutOfIndexSet = false;
-              for (unsigned int j = 0; j < rowData->size(); ++j)
+              for (size_type j = 0; j < rowData->size(); ++j)
                 {
                   if (!(isGhostEntry((*rowData)[j].first) ||
                         inLocallyOwnedRanges((*rowData)[j].first)))
@@ -321,7 +324,7 @@ namespace dftefe
                 this->getConstraintEntries(lineDof);
 
               bool isConstraintRhsExpandingOutOfIndexSet = false;
-              for (unsigned int j = 0; j < rowData->size(); ++j)
+              for (size_type j = 0; j < rowData->size(); ++j)
                 {
                   if (!(isGhostEntry((*rowData)[j].first) ||
                         inLocallyOwnedRanges((*rowData)[j].first)))
@@ -341,7 +344,7 @@ namespace dftefe
               rowConstraintsIdsGlobalTmp.push_back(lineDof);
               constraintsInhomogenitiesTmp.push_back(getInhomogeneity(lineDof));
               rowConstraintsSizesTmp.push_back(rowData->size());
-              for (unsigned int j = 0; j < rowData->size(); ++j)
+              for (size_type j = 0; j < rowData->size(); ++j)
                 {
                   columnConstraintsIdsGlobalTmp.push_back((*rowData)[j].first);
                   columnConstraintsIdsLocalTmp.push_back(
@@ -370,7 +373,7 @@ namespace dftefe
                 this->getConstraintEntries(lineDof);
 
               bool isConstraintRhsExpandingOutOfIndexSet = false;
-              for (unsigned int j = 0; j < rowData->size(); ++j)
+              for (size_type j = 0; j < rowData->size(); ++j)
                 {
                   if (!(isGhostEntry((*rowData)[j].first) ||
                         inLocallyOwnedRanges((*rowData)[j].first)))
@@ -388,7 +391,7 @@ namespace dftefe
               rowConstraintsIdsGlobalTmp.push_back(lineDof);
               constraintsInhomogenitiesTmp.push_back(getInhomogeneity(lineDof));
               rowConstraintsSizesTmp.push_back(rowData->size());
-              for (unsigned int j = 0; j < rowData->size(); ++j)
+              for (size_type j = 0; j < rowData->size(); ++j)
                 {
                   columnConstraintsIdsGlobalTmp.push_back((*rowData)[j].first);
                   columnConstraintsIdsLocalTmp.push_back(
@@ -562,36 +565,26 @@ namespace dftefe
     template <typename ValueTypeBasisCoeff,
               utils::MemorySpace memorySpace,
               size_type          dim>
-    bool
+    inline bool
     CFEConstraintsLocalDealii<ValueTypeBasisCoeff, memorySpace, dim>::
       isGhostEntry(const global_size_type globalId) const
     {
-      bool returnValue = false;
-      auto it =
-        std::find(d_ghostIndices.begin(), d_ghostIndices.end(), globalId);
-
-      if (it != d_ghostIndices.end())
-        returnValue = true;
-      return returnValue;
+      return d_ghostIndicesSet.count(globalId) > 0;
     }
 
     template <typename ValueTypeBasisCoeff,
               utils::MemorySpace memorySpace,
               size_type          dim>
-    bool
+    inline bool
     CFEConstraintsLocalDealii<ValueTypeBasisCoeff, memorySpace, dim>::
       inLocallyOwnedRanges(const global_size_type globalId) const
     {
-      bool returnValue = false;
-      for (auto i : d_locallyOwnedRanges)
+      for (const auto &i : d_locallyOwnedRanges)
         {
           if (globalId >= i.first && globalId < i.second)
-            {
-              returnValue = true;
-              break;
-            }
+            return true;
         }
-      return returnValue;
+      return false;
     }
 
     template <typename ValueTypeBasisCoeff,
@@ -607,5 +600,97 @@ namespace dftefe
       return d_globalToLocalMap.find(globalId)->second;
     }
 
+    // template <typename ValueTypeBasisCoeff,
+    //           utils::MemorySpace memorySpace,
+    //           size_type          dim>
+    // void
+    // CFEConstraintsLocalDealii<ValueTypeBasisCoeff, memorySpace, dim>::
+    //   getHomogeneousDirichletBCMatrixFree(const dealii::DoFHandler<dim, dim>
+    //   &dealiiDofHandler,
+    //                                       dealii::MatrixFree<dim,
+    //                                       ValueTypeBasisCoeff>
+    //                                       &dealiiMatrixFree,
+    //                                        dealii::AffineConstraints<ValueTypeBasisCoeff>
+    //                                        &constraintMatrix) const
+    // {
+    //   dealii::AffineConstraints<ValueTypeBasisCoeff>
+    //     onlyHangingNodeConstraints;
+    //   onlyHangingNodeConstraints.clear();
+    //   constraintMatrix.clear();
+    //   dealii::IndexSet locally_relevant_dofs;
+    //   locally_relevant_dofs.clear();
+    //   dealii::DoFTools::extract_locally_relevant_dofs(dealiiDofHandler,
+    //                                                   locally_relevant_dofs);
+    //   onlyHangingNodeConstraints.reinit(
+    //     dealiiDofHandler.locally_owned_dofs(), locally_relevant_dofs);
+    //   dealii::DoFTools::make_hanging_node_constraints(
+    //     dealiiDofHandler, onlyHangingNodeConstraints);
+    //   onlyHangingNodeConstraints.close();
+
+    //   constraintMatrix.reinit(
+    //     dealiiDofHandler.locally_owned_dofs(), locally_relevant_dofs);
+    //   dealii::DoFTools::make_hanging_node_constraints(
+    //     dealiiDofHandler, constraintMatrix);
+
+    //   const uInt vertices_per_cell =
+    //       dealii::GeometryInfo<dim>::vertices_per_cell;
+    //   const uInt dofs_per_cell  = dealiiDofHandler.get_fe().dofs_per_cell;
+    //   const uInt faces_per_cell = dealii::GeometryInfo<dim>::faces_per_cell;
+    //   const uInt dofs_per_face  = dealiiDofHandler.get_fe().dofs_per_face;
+
+    //   std::vector<dealii::types::global_dof_index> cellGlobalDofIndices(
+    //     dofs_per_cell);
+    //   std::vector<dealii::types::global_dof_index> iFaceGlobalDofIndices(
+    //     dofs_per_face);
+
+    //   std::vector<bool> dofs_touched(dealiiDofHandler.n_dofs(), false);
+    // dealii::DoFHandler<3>::active_cell_iterator cell =
+    //                                               dealiiDofHandler.begin_active(),
+    //                                             endc =
+    //                                             dealiiDofHandler.end();
+    //   for (; cell != endc; ++cell)
+    //   if (cell->is_locally_owned() || cell->is_ghost())
+    //     {
+    //       cell->get_dof_indices(cellGlobalDofIndices);
+    //       for (uInt iFace = 0; iFace < faces_per_cell; ++iFace)
+    //         {
+    //           const uInt boundaryId = cell->face(iFace)->boundary_id();
+    //           if (boundaryId == 0)
+    //             {
+    //               cell->face(iFace)->get_dof_indices(iFaceGlobalDofIndices);
+    //               for (uInt iFaceDof = 0; iFaceDof < dofs_per_face;
+    //                   ++iFaceDof)
+    //                 {
+    //                   const dealii::types::global_dof_index nodeId =
+    //                     iFaceGlobalDofIndices[iFaceDof];
+    //                   if (dofs_touched[nodeId])
+    //                     continue;
+    //                   dofs_touched[nodeId] = true;
+    //                   if (!onlyHangingNodeConstraints.is_constrained(nodeId))
+    //                     {
+    //                       constraintMatrix.add_line(nodeId);
+    //                       constraintMatrix.set_inhomogeneity(nodeId, 0);
+    //                     } // non-hanging node check
+    //                 }     // Face dof loop
+    //             }         // non-periodic boundary id
+    //         }             // Face loop
+    //     }                 // cell locally owned
+    //     constraintMatrix.close();
+
+    //   typename dealii::MatrixFree<dim>::AdditionalData dealiiAdditionalData;
+    //   dealiiAdditionalData.tasks_parallel_scheme =
+    //     dealii::MatrixFree<dim>::AdditionalData::partition_partition;
+    //   dealii::UpdateFlags dealiiUpdateFlags  = dealii::update_values | dealii::update_gradients |
+    //     dealii::update_JxW_values | dealii::update_quadrature_points;
+    //   dealiiAdditionalData.mapping_update_flags = dealiiUpdateFlags;
+    //   dealii::Quadrature<dim> dealiiQuadratureType(dealii::QGauss<dim>(1));
+    //   dealiiMatrixFree.clear();
+    //   dealii::MappingQ1<dim> mappingDealii;
+    //   dealiiMatrixFree.reinit(dealii::MappingQ1<dim, dim>(),
+    //                           dealiiDofHandler,
+    //                           constraintMatrix,
+    //                           dealiiQuadratureType,
+    //                           dealiiAdditionalData);
+    // }
   } // namespace basis
 } // namespace dftefe

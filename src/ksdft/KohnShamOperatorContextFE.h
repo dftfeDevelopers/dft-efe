@@ -143,7 +143,9 @@ namespace dftefe
 
       const bool d_useOptimizedImplement;
 
-      mutable utils::MemoryStorage<ValueTypeOperand, memorySpace> d_XCellValues;
+      mutable std::shared_ptr<
+        utils::MemoryStorage<ValueTypeOperand, memorySpace>>
+        d_XCellValues, d_YCellValues;
 
       mutable std::shared_ptr<
         const ElectrostaticONCVNonLocFE<ValueTypeElectrostaticsBasis,

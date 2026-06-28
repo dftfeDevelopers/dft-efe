@@ -23,4 +23,15 @@
  * @author Avirup Sircar
  */
 
-#include "AtomSevereFunction.h"
+#include <atoms/AtomSevereFunction.h>
+
+namespace dftefe
+{
+  namespace atoms
+  {
+    template class AtomSevereFunction<utils::MemorySpace::HOST>;
+#ifdef DFTEFE_WITH_DEVICE
+    template class AtomSevereFunction<utils::MemorySpace::DEVICE>;
+#endif
+  } // namespace atoms
+} // namespace dftefe

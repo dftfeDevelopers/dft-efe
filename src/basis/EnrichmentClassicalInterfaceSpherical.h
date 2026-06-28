@@ -124,7 +124,9 @@ namespace dftefe
                                    linAlgOpContext,
         const utils::mpi::MPIComm &comm,
         const size_type            enrichmentBatchSize =
-          ECIDefaults::ENRICHMENT_BATCH_SIZE);
+          ECIDefaults::ENRICHMENT_BATCH_SIZE,
+        const size_type cellBlockSize =
+          BasisDataStorageDefaults<memorySpace>::CELL_BATCH_SIZE);
 
       /**
        * @brief This Constructor for augmenting the EFE basis with classical FE basis.
@@ -148,7 +150,7 @@ namespace dftefe
       /**
        * @brief Destructor for the class
        */
-      ~EnrichmentClassicalInterfaceSpherical() = default;
+      ~EnrichmentClassicalInterfaceSpherical();
 
       /**
        * @brief Function to return AtomSphericalDataContainerObject
@@ -168,16 +170,11 @@ namespace dftefe
       std::shared_ptr<const BasisManager<ValueTypeBasisData, memorySpace>>
       getCFEBasisManager() const;
 
-      std::shared_ptr<const BasisDofHandler>
-      getCFEBasisDofHandler() const;
+      std::vector<ValueTypeBasisData>
+      getClassicalComponentCoeffsInCellOEFE(const size_type cellIndex) const;
 
-      const std::unordered_map<global_size_type,
-                               utils::OptimizedIndexSet<size_type>> &
-      getClassicalComponentLocalIdsMap() const;
-
-      const std::unordered_map<global_size_type,
-                               std::vector<ValueTypeBasisData>> &
-      getClassicalComponentCoeffMap() const;
+      std::vector<ValueTypeBasisData>
+      getClassicalComponentCoeffsInAllCellsOEFE() const;
 
       std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
       getLinAlgOpContext() const;
@@ -231,8 +228,45 @@ namespace dftefe
         const size_type                          cellId,
         const std::vector<dftefe::utils::Point> &points) const;
 
+      void
+      getEnrichmentDataInAllCellsAtQuadPts(
+        bool                                       storeValues,
+        bool                                       storeGradients,
+        const quadrature::QuadratureRuleContainer &quadRuleContainer,
+        double *basisEnrichQuadStorageStartPtr,
+        double *basisGradientEnrichQuadStorageStartPtr,
+        linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext,
+        const size_type                              enrichBlock = 500) const;
+
+      void
+      getEnrichmentValuesInCellRangeAtQuadPts(
+        const quadrature::QuadratureRuleContainer &  quadRuleContainer,
+        double *                                     basisEnrichQuadStoragePtr,
+        linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext,
+        const std::pair<size_type, size_type>        cellRange) const;
+
+      void
+      getEnrichmentGradientsInCellRangeAtQuadPts(
+        const quadrature::QuadratureRuleContainer &quadRuleContainer,
+        double *basisGradientEnrichQuadStoragePtr,
+        linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext,
+        const std::pair<size_type, size_type>        cellRange) const;
 
     private:
+      const std::unordered_map<global_size_type,
+                               utils::OptimizedIndexSet<size_type>> &
+      getClassicalComponentLocalIdsMap() const;
+
+      const std::unordered_map<global_size_type,
+                               std::vector<ValueTypeBasisData>> &
+      getClassicalComponentCoeffMap() const;
+
+      std::shared_ptr<const BasisDofHandler>
+      getCFEBasisDofHandler() const;
+
+      void
+      getOverlappingEnrichmentInCellsAdditionalData();
+
       std::shared_ptr<EnrichmentIdsPartition<dim>> d_enrichmentIdsPartition;
       std::shared_ptr<const AtomIdsPartition<dim>> d_atomIdsPartition;
       std::shared_ptr<const atoms::AtomSphericalDataContainer>
@@ -267,6 +301,12 @@ namespace dftefe
       const utils::mpi::MPIComm d_comm;
 
       size_type d_enrichBatchSize;
+      size_type d_cellBlockSize;
+
+      utils::MemoryStorage<double, memorySpace> d_originMemSpace;
+      std::vector<size_type>                    d_numEnrichInAllCells;
+      atoms::SphericalDataNumerical::Func<memorySpace>
+        *d_sphericalDataNumericalFuncPtrVec;
 
     }; // end of class
   }    // end of namespace basis

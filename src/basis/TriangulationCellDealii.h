@@ -18,7 +18,7 @@ namespace dftefe
     /**
      * @brief An interface to deal.ii geometric cell
      **/
-    template <unsigned int dim>
+    template <size_type dim>
     class TriangulationCellDealii : public TriangulationCellBase
     {
       /*
@@ -45,15 +45,15 @@ namespace dftefe
       isPointInside(const utils::Point &point) const override;
 
       bool
-      isAtBoundary(const unsigned int i) const override;
+      isAtBoundary(const size_type i) const override;
 
       bool
       isAtBoundary() const override;
 
       bool
-      hasPeriodicNeighbor(const unsigned int i) const override;
+      hasPeriodicNeighbor(const size_type i) const override;
 
-      unsigned int
+      size_type
       getDim() const override;
 
       double

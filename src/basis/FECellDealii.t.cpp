@@ -32,7 +32,7 @@ namespace dftefe
 {
   namespace basis
   {
-    template <unsigned int dim>
+    template <size_type dim>
     FECellDealii<dim>::FECellDealii(
       typename dealii::DoFHandler<dim>::active_cell_iterator dealiiFECellIter)
     {
@@ -40,16 +40,15 @@ namespace dftefe
       d_dealiiFECellIter = dealiiFECellIter;
     }
 
-    template <unsigned int dim>
+    template <size_type dim>
     void
     FECellDealii<dim>::getVertices(std::vector<utils::Point> &points) const
     {
-      const unsigned int nVertices =
-        dealii::GeometryInfo<dim>::vertices_per_cell;
+      const size_type nVertices = dealii::GeometryInfo<dim>::vertices_per_cell;
       points.resize(nVertices, utils::Point(dim));
       std::vector<dealii::Point<dim, double>> pointsDealii;
       pointsDealii.resize(nVertices);
-      for (unsigned int iVertex = 0; iVertex < nVertices; iVertex++)
+      for (size_type iVertex = 0; iVertex < nVertices; iVertex++)
         {
           pointsDealii[iVertex] = d_dealiiFECellIter->vertex(iVertex);
           convertToDftefePoint<dim>(d_dealiiFECellIter->vertex(iVertex),
@@ -57,14 +56,14 @@ namespace dftefe
         }
     }
 
-    template <unsigned int dim>
+    template <size_type dim>
     void
     FECellDealii<dim>::getVertex(size_type i, utils::Point &point) const
     {
       convertToDftefePoint<dim>(d_dealiiFECellIter->vertex(i), point);
     }
 
-    template <unsigned int dim>
+    template <size_type dim>
     std::vector<std::shared_ptr<dftefe::utils::Point>>
     FECellDealii<dim>::getNodalPoints() const
     {
@@ -75,7 +74,7 @@ namespace dftefe
       return returnPoint;
     }
 
-    template <unsigned int dim>
+    template <size_type dim>
     size_type
     FECellDealii<dim>::getId() const
     {
@@ -84,7 +83,7 @@ namespace dftefe
       return 0;
     }
 
-    template <unsigned int dim>
+    template <size_type dim>
     bool
     FECellDealii<dim>::isPointInside(const utils::Point &point) const
     {
@@ -93,34 +92,34 @@ namespace dftefe
       return d_dealiiFECellIter->point_inside(dealiiPoint);
     }
 
-    template <unsigned int dim>
+    template <size_type dim>
     bool
-    FECellDealii<dim>::isAtBoundary(const unsigned int i) const
+    FECellDealii<dim>::isAtBoundary(const size_type i) const
     {
       return d_dealiiFECellIter->at_boundary(i);
     }
 
-    template <unsigned int dim>
+    template <size_type dim>
     bool
-    FECellDealii<dim>::hasPeriodicNeighbor(const unsigned int i) const
+    FECellDealii<dim>::hasPeriodicNeighbor(const size_type i) const
     {
       return d_dealiiFECellIter->has_periodic_neighbor(i);
     }
 
-    template <unsigned int dim>
+    template <size_type dim>
     bool
     FECellDealii<dim>::isAtBoundary() const
     {
       return d_dealiiFECellIter->at_boundary();
     }
-    template <unsigned int dim>
+    template <size_type dim>
     double
     FECellDealii<dim>::diameter() const
     {
       return d_dealiiFECellIter->diameter();
     }
 
-    template <unsigned int dim>
+    template <size_type dim>
     void
     FECellDealii<dim>::center(dftefe::utils::Point &centerPoint) const
     {
@@ -130,28 +129,28 @@ namespace dftefe
     }
 
 
-    template <unsigned int dim>
+    template <size_type dim>
     void
     FECellDealii<dim>::setRefineFlag()
     {
       d_dealiiFECellIter->set_refine_flag();
     }
 
-    template <unsigned int dim>
+    template <size_type dim>
     void
     FECellDealii<dim>::clearRefineFlag()
     {
       d_dealiiFECellIter->clear_refine_flag();
     }
 
-    template <unsigned int dim>
+    template <size_type dim>
     double
     FECellDealii<dim>::minimumVertexDistance() const
     {
       return d_dealiiFECellIter->minimum_vertex_distance();
     }
 
-    template <unsigned int dim>
+    template <size_type dim>
     double
     FECellDealii<dim>::distanceToUnitCell(
       dftefe::utils::Point &parametricPoint) const
@@ -161,42 +160,42 @@ namespace dftefe
       return dealii::GeometryInfo<dim>::distance_to_unit_cell(dealiiPoint);
     }
 
-    template <unsigned int dim>
+    template <size_type dim>
     void
     FECellDealii<dim>::setCoarsenFlag()
     {
       d_dealiiFECellIter->set_coarsen_flag();
     }
 
-    template <unsigned int dim>
+    template <size_type dim>
     void
     FECellDealii<dim>::clearCoarsenFlag()
     {
       d_dealiiFECellIter->clear_coarsen_flag();
     }
 
-    template <unsigned int dim>
+    template <size_type dim>
     bool
     FECellDealii<dim>::isActive() const
     {
       return d_dealiiFECellIter->is_active();
     }
 
-    template <unsigned int dim>
+    template <size_type dim>
     bool
     FECellDealii<dim>::isLocallyOwned() const
     {
       return d_dealiiFECellIter->is_locally_owned();
     }
 
-    template <unsigned int dim>
+    template <size_type dim>
     bool
     FECellDealii<dim>::isGhost() const
     {
       return d_dealiiFECellIter->is_ghost();
     }
 
-    template <unsigned int dim>
+    template <size_type dim>
     bool
     FECellDealii<dim>::isArtificial() const
     {
@@ -210,7 +209,7 @@ namespace dftefe
       return dim;
     }
 
-    template <unsigned int dim>
+    template <size_type dim>
     void
     FECellDealii<dim>::getParametricPoint(const utils::Point &   realPoint,
                                           const CellMappingBase &cellMapping,
@@ -223,7 +222,7 @@ namespace dftefe
                                      isPointInside);
     }
 
-    template <unsigned int dim>
+    template <size_type dim>
     void
     FECellDealii<dim>::getRealPoint(const utils::Point &   parametricPoint,
                                     const CellMappingBase &cellMapping,
@@ -233,7 +232,7 @@ namespace dftefe
       cellMapping.getRealPoint(parametricPoint, *this, realPoint);
     }
 
-    template <unsigned int dim>
+    template <size_type dim>
     void
     FECellDealii<dim>::cellNodeIdtoGlobalNodeId(
       std::vector<global_size_type> &vecId) const
@@ -241,14 +240,14 @@ namespace dftefe
       d_dealiiFECellIter->get_dof_indices(vecId);
     }
 
-    template <unsigned int dim>
+    template <size_type dim>
     size_type
     FECellDealii<dim>::getFaceBoundaryId(size_type faceId) const
     {
       return d_dealiiFECellIter->face(faceId)->boundary_id();
     }
 
-    template <unsigned int dim>
+    template <size_type dim>
     void
     FECellDealii<dim>::getFaceDoFGlobalIndices(
       size_type                      faceId,
@@ -257,14 +256,14 @@ namespace dftefe
       d_dealiiFECellIter->face(faceId)->get_dof_indices(vecNodeId);
     }
 
-    template <unsigned int dim>
+    template <size_type dim>
     size_type
     FECellDealii<dim>::getFEOrder() const
     {
       return (d_dealiiFECellIter->get_fe().degree);
     }
 
-    template <unsigned int dim>
+    template <size_type dim>
     typename dealii::DoFHandler<dim>::active_cell_iterator &
     FECellDealii<dim>::getDealiiFECellIter()
     {

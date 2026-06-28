@@ -34,13 +34,19 @@ namespace dftefe
     //
     // Random Number Generator for short datatype
     //
-    RandNumGen<short>::RandNumGen(short min, short max)
+    RandNumGen<short>::RandNumGen(short        min,
+                                  short        max,
+                                  bool         isReproducible,
+                                  unsigned int seed)
       : d_dis(min, max)
     {
-      std::random_device
-        rd; // Will be used to obtain a seed for the random number engine
-      d_gen =
-        std::mt19937(rd()); // Standard mersenne_twister_engine seeded with rd()
+      if (isReproducible)
+        d_gen = std::mt19937(seed);
+      else
+        {
+          std::random_device rd;
+          d_gen = std::mt19937(rd());
+        }
     }
 
     short
@@ -54,13 +60,18 @@ namespace dftefe
     // Random Number Generator for unsigned short datatype
     //
     RandNumGen<unsigned short>::RandNumGen(unsigned short min,
-                                           unsigned short max)
+                                           unsigned short max,
+                                           bool           isReproducible,
+                                           unsigned int   seed)
       : d_dis(min, max)
     {
-      std::random_device
-        rd; // Will be used to obtain a seed for the random number engine
-      d_gen =
-        std::mt19937(rd()); // Standard mersenne_twister_engine seeded with rd()
+      if (isReproducible)
+        d_gen = std::mt19937(seed);
+      else
+        {
+          std::random_device rd;
+          d_gen = std::mt19937(rd());
+        }
     }
 
     unsigned short
@@ -72,13 +83,19 @@ namespace dftefe
     //
     // Random Number Generator for int datatype
     //
-    RandNumGen<int>::RandNumGen(int min, int max)
+    RandNumGen<int>::RandNumGen(int          min,
+                                int          max,
+                                bool         isReproducible,
+                                unsigned int seed)
       : d_dis(min, max)
     {
-      std::random_device
-        rd; // Will be used to obtain a seed for the random number engine
-      d_gen =
-        std::mt19937(rd()); // Standard mersenne_twister_engine seeded with rd()
+      if (isReproducible)
+        d_gen = std::mt19937(seed);
+      else
+        {
+          std::random_device rd;
+          d_gen = std::mt19937(rd());
+        }
     }
 
     int
@@ -90,13 +107,19 @@ namespace dftefe
     //
     // Random Number Generator for unsigned int datatype
     //
-    RandNumGen<unsigned int>::RandNumGen(unsigned int min, unsigned int max)
+    RandNumGen<unsigned int>::RandNumGen(unsigned int min,
+                                         unsigned int max,
+                                         bool         isReproducible,
+                                         unsigned int seed)
       : d_dis(min, max)
     {
-      std::random_device
-        rd; // Will be used to obtain a seed for the random number engine
-      d_gen =
-        std::mt19937(rd()); // Standard mersenne_twister_engine seeded with rd()
+      if (isReproducible)
+        d_gen = std::mt19937(seed);
+      else
+        {
+          std::random_device rd;
+          d_gen = std::mt19937(rd());
+        }
     }
 
     unsigned int
@@ -106,15 +129,21 @@ namespace dftefe
     }
 
     //
-    // Random Number Generator for unsigned long datatype
+    // Random Number Generator for long datatype
     //
-    RandNumGen<long>::RandNumGen(long min, long max)
+    RandNumGen<long>::RandNumGen(long         min,
+                                 long         max,
+                                 bool         isReproducible,
+                                 unsigned int seed)
       : d_dis(min, max)
     {
-      std::random_device
-        rd; // Will be used to obtain a seed for the random number engine
-      d_gen =
-        std::mt19937(rd()); // Standard mersenne_twister_engine seeded with rd()
+      if (isReproducible)
+        d_gen = std::mt19937(seed);
+      else
+        {
+          std::random_device rd;
+          d_gen = std::mt19937(rd());
+        }
     }
 
     long
@@ -126,13 +155,19 @@ namespace dftefe
     //
     // Random Number Generator for unsigned long datatype
     //
-    RandNumGen<unsigned long>::RandNumGen(unsigned long min, unsigned long max)
+    RandNumGen<unsigned long>::RandNumGen(unsigned long min,
+                                          unsigned long max,
+                                          bool          isReproducible,
+                                          unsigned int  seed)
       : d_dis(min, max)
     {
-      std::random_device
-        rd; // Will be used to obtain a seed for the random number engine
-      d_gen =
-        std::mt19937(rd()); // Standard mersenne_twister_engine seeded with rd()
+      if (isReproducible)
+        d_gen = std::mt19937(seed);
+      else
+        {
+          std::random_device rd;
+          d_gen = std::mt19937(rd());
+        }
     }
 
     unsigned long
@@ -144,13 +179,19 @@ namespace dftefe
     //
     // Random Number Generator for long long datatype
     //
-    RandNumGen<long long>::RandNumGen(long long min, long long max)
+    RandNumGen<long long>::RandNumGen(long long    min,
+                                      long long    max,
+                                      bool         isReproducible,
+                                      unsigned int seed)
       : d_dis(min, max)
     {
-      std::random_device
-        rd; // Will be used to obtain a seed for the random number engine
-      d_gen =
-        std::mt19937(rd()); // Standard mersenne_twister_engine seeded with rd()
+      if (isReproducible)
+        d_gen = std::mt19937(seed);
+      else
+        {
+          std::random_device rd;
+          d_gen = std::mt19937(rd());
+        }
     }
 
     long long
@@ -163,13 +204,18 @@ namespace dftefe
     // Random Number Generator for unsigned long long datatype
     //
     RandNumGen<unsigned long long>::RandNumGen(unsigned long long min,
-                                               unsigned long long max)
+                                               unsigned long long max,
+                                               bool         isReproducible,
+                                               unsigned int seed)
       : d_dis(min, max)
     {
-      std::random_device
-        rd; // Will be used to obtain a seed for the random number engine
-      d_gen =
-        std::mt19937(rd()); // Standard mersenne_twister_engine seeded with rd()
+      if (isReproducible)
+        d_gen = std::mt19937(seed);
+      else
+        {
+          std::random_device rd;
+          d_gen = std::mt19937(rd());
+        }
     }
 
     unsigned long long
@@ -181,13 +227,19 @@ namespace dftefe
     //
     // Random Number Generator for float datatype
     //
-    RandNumGen<float>::RandNumGen(float min, float max)
+    RandNumGen<float>::RandNumGen(float        min,
+                                  float        max,
+                                  bool         isReproducible,
+                                  unsigned int seed)
       : d_dis(min, max)
     {
-      std::random_device
-        rd; // Will be used to obtain a seed for the random number engine
-      d_gen =
-        std::mt19937(rd()); // Standard mersenne_twister_engine seeded with rd()
+      if (isReproducible)
+        d_gen = std::mt19937(seed);
+      else
+        {
+          std::random_device rd;
+          d_gen = std::mt19937(rd());
+        }
     }
 
     float
@@ -199,13 +251,19 @@ namespace dftefe
     //
     // Random Number Generator for double datatype
     //
-    RandNumGen<double>::RandNumGen(double min, double max)
+    RandNumGen<double>::RandNumGen(double       min,
+                                   double       max,
+                                   bool         isReproducible,
+                                   unsigned int seed)
       : d_dis(min, max)
     {
-      std::random_device
-        rd; // Will be used to obtain a seed for the random number engine
-      d_gen =
-        std::mt19937(rd()); // Standard mersenne_twister_engine seeded with rd()
+      if (isReproducible)
+        d_gen = std::mt19937(seed);
+      else
+        {
+          std::random_device rd;
+          d_gen = std::mt19937(rd());
+        }
     }
 
     double
@@ -217,13 +275,19 @@ namespace dftefe
     //
     // Random Number Generator for long double datatype
     //
-    RandNumGen<long double>::RandNumGen(long double min, long double max)
+    RandNumGen<long double>::RandNumGen(long double  min,
+                                        long double  max,
+                                        bool         isReproducible,
+                                        unsigned int seed)
       : d_dis(min, max)
     {
-      std::random_device
-        rd; // Will be used to obtain a seed for the random number engine
-      d_gen =
-        std::mt19937(rd()); // Standard mersenne_twister_engine seeded with rd()
+      if (isReproducible)
+        d_gen = std::mt19937(seed);
+      else
+        {
+          std::random_device rd;
+          d_gen = std::mt19937(rd());
+        }
     }
 
     long double
@@ -236,18 +300,24 @@ namespace dftefe
     // Random Number Generator for std::complex<float> datatype
     //
     RandNumGen<std::complex<float>>::RandNumGen(std::complex<float> min,
-                                                std::complex<float> max)
+                                                std::complex<float> max,
+                                                bool         isReproducible,
+                                                unsigned int seed)
     {
       std::vector<float> vals   = {min.real(),
                                  min.imag(),
                                  max.real(),
                                  max.imag()};
       float              minAll = *(std::min_element(vals.begin(), vals.end()));
-      float              mazAll = *(std::max_element(vals.begin(), vals.end()));
-      std::random_device
-        rd; // Will be used to obtain a seed for the random number engine
-      d_gen =
-        std::mt19937(rd()); // Standard mersenne_twister_engine seeded with rd()
+      float              maxAll = *(std::max_element(vals.begin(), vals.end()));
+      d_dis = std::uniform_real_distribution<float>(minAll, maxAll);
+      if (isReproducible)
+        d_gen = std::mt19937(seed);
+      else
+        {
+          std::random_device rd;
+          d_gen = std::mt19937(rd());
+        }
     }
 
     std::complex<float>
@@ -260,18 +330,24 @@ namespace dftefe
     // Random Number Generator for std::complex<double> datatype
     //
     RandNumGen<std::complex<double>>::RandNumGen(std::complex<double> min,
-                                                 std::complex<double> max)
+                                                 std::complex<double> max,
+                                                 bool         isReproducible,
+                                                 unsigned int seed)
     {
       std::vector<double> vals = {min.real(),
                                   min.imag(),
                                   max.real(),
                                   max.imag()};
       double minAll            = *(std::min_element(vals.begin(), vals.end()));
-      double mazAll            = *(std::max_element(vals.begin(), vals.end()));
-      std::random_device
-        rd; // Will be used to obtain a seed for the random number engine
-      d_gen =
-        std::mt19937(rd()); // Standard mersenne_twister_engine seeded with rd()
+      double maxAll            = *(std::max_element(vals.begin(), vals.end()));
+      d_dis = std::uniform_real_distribution<double>(minAll, maxAll);
+      if (isReproducible)
+        d_gen = std::mt19937(seed);
+      else
+        {
+          std::random_device rd;
+          d_gen = std::mt19937(rd());
+        }
     }
 
     std::complex<double>
@@ -285,18 +361,24 @@ namespace dftefe
     //
     RandNumGen<std::complex<long double>>::RandNumGen(
       std::complex<long double> min,
-      std::complex<long double> max)
+      std::complex<long double> max,
+      bool                      isReproducible,
+      unsigned int              seed)
     {
       std::vector<long double> vals = {min.real(),
                                        min.imag(),
                                        max.real(),
                                        max.imag()};
       long double minAll = *(std::min_element(vals.begin(), vals.end()));
-      long double mazAll = *(std::max_element(vals.begin(), vals.end()));
-      std::random_device
-        rd; // Will be used to obtain a seed for the random number engine
-      d_gen =
-        std::mt19937(rd()); // Standard mersenne_twister_engine seeded with rd()
+      long double maxAll = *(std::max_element(vals.begin(), vals.end()));
+      d_dis = std::uniform_real_distribution<long double>(minAll, maxAll);
+      if (isReproducible)
+        d_gen = std::mt19937(seed);
+      else
+        {
+          std::random_device rd;
+          d_gen = std::mt19937(rd());
+        }
     }
 
     std::complex<long double>

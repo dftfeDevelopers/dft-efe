@@ -66,8 +66,8 @@ namespace dftefe
       template <typename ValueType,
                 typename dftefe::utils::MemorySpace memorySpace>
       std::vector<double>
-      amaxsMultiVector(size_type                     vecSize,
-                       size_type                     numVec,
+      amaxsMultiVector(const size_type               vecSize,
+                       const size_type               numVec,
                        ValueType const *             multiVecData,
                        LinAlgOpContext<memorySpace> &context);
 
@@ -268,43 +268,6 @@ namespace dftefe
                        scalar_type<ValueType1, ValueType2> *Z,
                        LinAlgOpContext<memorySpace> &       context);
 
-
-      /**
-       * @brief Template for performing
-       * In column major storage format:
-       * \f$ {\bf Z}={\bf A} \odot {\bf B} = a_1 \otimes b_1
-       * \quad a_2 \otimes b_2 \cdots \a_K \otimes b_K \f$, where \f${\bf A}\f$
-       * is  \f$K \times I\f$ matrix, \f${\bf B}\f$ is \f$K \times J\f$, and \f$
-       * {\bf Z} \f$ is \f$ K\times (IJ) \f$ matrix. \f$ a_1 \cdots \a_K \f$
-       * are the rows of \f${\bf A}\f$
-       * In row major storage format:
-       * \f$ {\bf Z}^T={\bf A}^T \odot {\bf B}^T = a_1 \otimes b_1
-       * \quad a_2 \otimes b_2 \cdots \a_K \otimes b_K \f$, where \f${\bf A}\f$
-       * is  \f$I \times K\f$ matrix, \f${\bf B}\f$ is \f$J \times K\f$, and \f$
-       * {\bf Z} \f$ is \f$ (IJ)\times K \f$ matrix. \f$ a_1 \cdots \a_K \f$
-       * are the columns of \f${\bf A}\f$
-       * @param[in] layout Layout::ColMajor or Layout::RowMajor
-       * @param[in] size size I
-       * @param[in] size size J
-       * @param[in] size size K
-       * @param[in] X array
-       * @param[in] Y array
-       * @param[out] Z array
-       */
-      template <typename ValueType1,
-                typename ValueType2,
-                typename dftefe::utils::MemorySpace memorySpace>
-      void
-      transposedKhatriRaoProduct(const Layout                         layout,
-                                 size_type                            sizeI,
-                                 size_type                            sizeJ,
-                                 size_type                            sizeK,
-                                 const ValueType1 *                   A,
-                                 const ValueType2 *                   B,
-                                 scalar_type<ValueType1, ValueType2> *Z,
-                                 LinAlgOpContext<memorySpace> &       context);
-
-
       /**
        * @brief Template for performing \f$ z = \alpha x + \beta y \f$
        * @param[in] size size of the array
@@ -362,6 +325,83 @@ namespace dftefe
           size_type                     incy,
           LinAlgOpContext<memorySpace> &context);
 
+      /**
+       * @brief Template for computing dot products numVec vectors in a multi Vector
+       * @param[in] vecSize size of each vector
+       * @param[in] numVec number of vectors in the multi Vector
+       * @param[in] srcLeadingDim leading dim of source , src numvecs
+       * @param[in] srcBlockStartId local id of source to start
+       * @param[in] dstLeadingDim leading dim of dst , dst numvecs
+       * @param[in] dstBlockStartId local id of dst to start
+       * @param[in] copyFromVec multi vector to copy from
+       * @param[out] copyToVec multi vector to copy to
+       *
+       */
+      template <typename ValueType1,
+                typename ValueType2,
+                typename dftefe::utils::MemorySpace memorySpace>
+      void
+      stridedBlockCopy(const size_type               vecSize,
+                       const size_type               numVec,
+                       const size_type               srcLeadingDim,
+                       const size_type               srcBlockStartId,
+                       const size_type               dstLeadingDim,
+                       const size_type               dstBlockStartId,
+                       const ValueType1 *            copyFromVec,
+                       ValueType2 *                  copyToVec,
+                       LinAlgOpContext<memorySpace> &context);
+
+      template <typename ValueType1,
+                typename ValueType2,
+                typename dftefe::utils::MemorySpace memorySpace>
+      void
+      copyValueType1ArrToValueType2Arr(const size_type   size,
+                                       const ValueType1 *valueType1Arr,
+                                       ValueType2 *      valueType2Arr,
+                                       LinAlgOpContext<memorySpace> &context);
+
+      /**
+       * @brief Template for performing a variable-batch strided block copy across
+       * multiple batches, each with its own vector size, number of vectors,
+       * source/destination strides, leading dimensions, and block start
+       * offsets.
+       * @param[in] numBatch number of batches
+       * @param[in] strideSrc array of per-batch strides (in elements) between
+       * consecutive source blocks
+       * @param[in] strideDst array of per-batch strides (in elements) between
+       * consecutive destination blocks
+       * @param[in] vecSizeArr array of per-batch vector sizes
+       * @param[in] numVecArr array of per-batch number of vectors
+       * @param[in] srcLeadingDimArr array of per-batch source leading
+       * dimensions
+       * @param[in] srcBlockStartIdArr array of per-batch source block start
+       * indices
+       * @param[in] dstLeadingDimArr array of per-batch destination leading
+       * dimensions
+       * @param[in] dstBlockStartIdArr array of per-batch destination block
+       * start indices
+       * @param[in] copyFromVec contiguous source multi-vector data (row-major,
+       * vector index fastest)
+       * @param[out] copyToVec contiguous destination multi-vector data
+       * (row-major, vector index fastest)
+       *
+       */
+      template <typename ValueType1,
+                typename ValueType2,
+                typename dftefe::utils::MemorySpace memorySpace>
+      void
+      varBatchedStridedBlockCopy(const size_type   numBatch,
+                                 const size_type * strideSrc,
+                                 const size_type * strideDst,
+                                 const size_type * vecSizeArr,
+                                 const size_type * numVecArr,
+                                 const size_type * srcLeadingDimArr,
+                                 const size_type * srcBlockStartIdArr,
+                                 const size_type * dstLeadingDimArr,
+                                 const size_type * dstBlockStartIdArr,
+                                 const ValueType1 *copyFromVec,
+                                 ValueType2 *      copyToVec,
+                                 LinAlgOpContext<memorySpace> &context);
 
       /**
        * @brief Template for computing dot products numVec vectors in a multi Vector

@@ -33,7 +33,7 @@ namespace dftefe
         std::map<std::string, double> &timer,
         const double                   smallestCellVolume =
           QuadratureRuleAdaptiveDefaults::SMALLEST_CELL_VOLUME,
-        const unsigned int maxRecursion =
+        const dftefe::size_type maxRecursion =
           QuadratureRuleAdaptiveDefaults::MAX_RECURSION);
 
     private:

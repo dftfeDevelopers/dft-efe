@@ -2,11 +2,13 @@
 #define dftefeTypeConfig_h
 
 #include <complex>
+#include <cstdint>
 
 namespace dftefe
 {
-  using size_type        = unsigned int;
-  using global_size_type = unsigned long int;
+  using size_type        = std::uint64_t; // unsigned int;
+  using global_size_type = std::uint64_t; // unsigned long int;
+  using uInt             = std::uint64_t; // only in matrix free. check later.
 
   /* define RealType of a ValueType */
 

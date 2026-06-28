@@ -4,6 +4,32 @@ if (NOT TARGET dft-efe-linalg)
         set(CMAKE_CXX_STANDARD_REQUIRED ON)
     endif ()
 
+    IF (ENABLE_GPU)
+    IF ("${GPU_LANG}" STREQUAL "cuda")
+      enable_language(CUDA)
+    ELSEIF ("${GPU_LANG}" STREQUAL "hip")
+      enable_language(HIP)
+    ELSEIF ("${GPU_LANG}" STREQUAL "sycl")
+    ELSE ()
+      MESSAGE(FATAL_ERROR "\n"
+    "*** Could not find valid GPU_LANG=cuda/hip/sycl ***\n\n"
+    )
+    ENDIF()
+    add_compile_definitions(DFTEFE_WITH_DEVICE)
+
+    IF ("${GPU_VENDOR}" STREQUAL "nvidia")
+        add_compile_definitions(DFTEFE_WITH_DEVICE_NVIDIA)
+        add_compile_definitions(DFTEFE_WITH_DEVICE_LANG_CUDA)
+    ELSEIF ("${GPU_VENDOR}" STREQUAL "amd")
+        add_compile_definitions(DFTEFE_WITH_DEVICE_AMD)
+        add_compile_definitions(DFTEFE_WITH_DEVICE_LANG_HIP)
+    ELSEIF ("${GPU_VENDOR}" STREQUAL "intel")
+        add_compile_definitions(DFTEFE_WITH_DEVICE_INTEL)
+        add_compile_definitions(DFTEFE_WITH_DEVICE_MKL)
+        add_compile_definitions(DFTEFE_WITH_DEVICE_LANG_SYCL)
+    ENDIF()
+    ENDIF()
+
     # Add source files here
     set(DFT-EFE-LINALG-SOURCES
 	    Defaults.cpp
@@ -13,7 +39,6 @@ if (NOT TARGET dft-efe-linalg)
         LapackAPIWrapperHost.cpp
         BlasLapack.cpp
         BlasLapackKernels.cpp
-        BlasLapackKernels.cu
         LinAlgOpContext.cpp
         VectorAttributes.cpp
 	    Vector.cpp
@@ -34,6 +59,42 @@ if (NOT TARGET dft-efe-linalg)
         ElpaScalapackOperations.cpp
         ElpaScalapackManager.cpp)
 
+    IF (ENABLE_GPU)
+    IF ("${GPU_LANG}" STREQUAL "cuda")
+    SET(DFT-EFE-LINALG-DEVICE-SOURCES
+        BlasAPIWrapperDevice.cpp
+        BlasLapackKernelsDevice.cpp
+        )
+    ELSEIF ("${GPU_LANG}" STREQUAL "hip")
+    SET(DFT-EFE-LINALG-DEVICE-SOURCES
+        BlasAPIWrapperDevice.cpp
+        BlasLapackKernelsDevice.cpp
+        )
+    ELSEIF ("${GPU_LANG}" STREQUAL "sycl")
+    SET(DFT-EFE-LINALG-DEVICE-SOURCES
+        BlasAPIWrapperDevice.cpp
+        BlasLapackKernelsDevice.cpp
+        )
+    ENDIF()
+    ENDIF()
+
+    IF (ENABLE_GPU)
+        IF ("${GPU_LANG}" STREQUAL "cuda")
+        set_source_files_properties(${DFT-EFE-LINALG-DEVICE-SOURCES} PROPERTIES LANGUAGE CUDA)
+        ELSEIF ("${GPU_LANG}" STREQUAL "hip")
+        set_source_files_properties(${DFT-EFE-LINALG-DEVICE-SOURCES} PROPERTIES LANGUAGE HIP)
+        IF ("${GPU_VENDOR}" STREQUAL "amd")
+            ADD_DEFINITIONS(-D__HIP_PLATFORM_AMD__)
+        ELSEIF ("${GPU_VENDOR}" STREQUAL "nvidia")
+            ADD_DEFINITIONS(-D__HIP_PLATFORM_NVIDIA__)
+        ENDIF()
+        ELSEIF ("${GPU_LANG}" STREQUAL "sycl")
+        set_source_files_properties(${DFT-EFE-LINALG-DEVICE-SOURCES} PROPERTIES COMPILE_FLAGS ${CMAKE_SYCL_FLAGS})
+        ENDIF()
+
+    LIST(APPEND DFT-EFE-LINALG-SOURCES ${DFT-EFE-LINALG-DEVICE-SOURCES})
+    ENDIF()
+
     add_library(dft-efe-linalg SHARED ${DFT-EFE-LINALG-SOURCES})
 
     include_directories(../)
@@ -48,17 +109,16 @@ if (NOT TARGET dft-efe-linalg)
         endif ()
     endif ()
 
-
-    if (ENABLE_CUDA)
-        enable_language(CUDA)
-        add_compile_definitions(DFTEFE_WITH_DEVICE)
-        add_compile_definitions(DFTEFE_WITH_DEVICE_CUDA)
-        set_target_properties(dft-efe-linalg PROPERTIES
-                CUDA_STANDARD 14
-                CUDA_STANDARD_REQUIRED ON)
-        find_package(CUDAToolkit REQUIRED)
-        target_link_libraries(dft-efe-linalg PUBLIC CUDA::cublas)
-    endif ()
+    # if (ENABLE_CUDA)
+    #     enable_language(CUDA)
+    #     add_compile_definitions(DFTEFE_WITH_DEVICE)
+    #     add_compile_definitions(DFTEFE_WITH_DEVICE_CUDA)
+    #     set_target_properties(dft-efe-linalg PROPERTIES
+    #             CUDA_STANDARD 14
+    #             CUDA_STANDARD_REQUIRED ON)
+    #     find_package(CUDAToolkit REQUIRED)
+    #     target_link_libraries(dft-efe-linalg PUBLIC CUDA::cublas)
+    # endif ()
 
     if (NOT TARGET dft-efe-utils)
         add_subdirectory(../utils ${CMAKE_CURRENT_BINARY_DIR}/buildUtils)

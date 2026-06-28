@@ -49,7 +49,7 @@ namespace dftefe
 
 
         return KernelsOneValueType<ValueType, memorySpace>::amaxsMultiVector(
-          vecSize, numVec, multiVecData);
+          vecSize, numVec, multiVecData, context);
       }
 
       template <typename ValueType1,
@@ -82,7 +82,7 @@ namespace dftefe
                   LinAlgOpContext<memorySpace> &       context)
       {
         KernelsTwoValueTypes<ValueType1, ValueType2, memorySpace>::reciprocalX(
-          n, alpha, x, y);
+          n, alpha, x, y, context);
       }
 
       template <typename ValueType1,
@@ -95,10 +95,8 @@ namespace dftefe
              scalar_type<ValueType1, ValueType2> *z,
              LinAlgOpContext<memorySpace> &       context)
       {
-        KernelsTwoValueTypes<ValueType1, ValueType2, memorySpace>::ascale(n,
-                                                                          alpha,
-                                                                          x,
-                                                                          z);
+        KernelsTwoValueTypes<ValueType1, ValueType2, memorySpace>::ascale(
+          n, alpha, x, z, context);
       }
 
       template <typename ValueType1,
@@ -112,27 +110,8 @@ namespace dftefe
                       LinAlgOpContext<memorySpace> &       context)
       {
         KernelsTwoValueTypes<ValueType1, ValueType2, memorySpace>::
-          hadamardProduct(n, x, y, z);
+          hadamardProduct(n, x, y, z, context);
       }
-
-      // template <typename ValueType1,
-      //           typename ValueType2,
-      //           dftefe::utils::MemorySpace memorySpace>
-      // void
-      //   blockedHadamardProduct(const size_type                      vecSize,
-      //                   const size_type                      numComponents,
-      //                   const ValueType1 *                   blockedInput,
-      //                   const ValueType2 * singleVectorInput,
-      //                   scalar_type<ValueType1, ValueType2> *blockedOutput,
-      //                   LinAlgOpContext<memorySpace> &       context)
-      // {
-      //   KernelsTwoValueTypes<ValueType1, ValueType2, memorySpace>::
-      //   blockedHadamardProduct(vecSize,
-      //                   numComponents,
-      //                   blockedInput,
-      //                   singleVectorInput,
-      //                   blockedOutput);
-      // }
 
       template <typename ValueType1,
                 typename ValueType2,
@@ -147,7 +126,7 @@ namespace dftefe
                       LinAlgOpContext<memorySpace> &       context)
       {
         KernelsTwoValueTypes<ValueType1, ValueType2, memorySpace>::
-          hadamardProduct(n, x, y, opx, opy, z);
+          hadamardProduct(n, x, y, opx, opy, z, context);
       }
 
       template <typename ValueType1,
@@ -200,7 +179,7 @@ namespace dftefe
                        LinAlgOpContext<memorySpace> &       context)
       {
         KernelsTwoValueTypes<ValueType1, ValueType2, memorySpace>::
-          khatriRaoProduct(layout, sizeI, sizeJ, sizeK, A, B, Z);
+          khatriRaoProduct(layout, sizeI, sizeJ, sizeK, A, B, Z, context);
       }
 
       template <typename ValueType1,
@@ -217,7 +196,8 @@ namespace dftefe
                                  LinAlgOpContext<memorySpace> &       context)
       {
         KernelsTwoValueTypes<ValueType1, ValueType2, memorySpace>::
-          transposedKhatriRaoProduct(layout, sizeI, sizeJ, sizeK, A, B, Z);
+          transposedKhatriRaoProduct(
+            layout, sizeI, sizeJ, sizeK, A, B, Z, context);
       }
 
 
@@ -234,7 +214,7 @@ namespace dftefe
             LinAlgOpContext<memorySpace> &            context)
       {
         KernelsTwoValueTypes<ValueType1, ValueType2, memorySpace>::axpby(
-          n, alpha, x, beta, y, z);
+          n, alpha, x, beta, y, z, context);
       }
 
       template <typename ValueType1,
@@ -253,7 +233,7 @@ namespace dftefe
                    LinAlgOpContext<memorySpace> &             context)
       {
         KernelsTwoValueTypes<ValueType1, ValueType2, memorySpace>::axpbyBlocked(
-          n, blockSize, alpha1, alpha, x, beta1, beta, y, z);
+          n, blockSize, alpha1, alpha, x, beta1, beta, y, z, context);
       }
 
 
@@ -268,10 +248,10 @@ namespace dftefe
           const size_type               incy,
           LinAlgOpContext<memorySpace> &context)
       {
-        utils::throwException(false, "blasLapack::dot() is not implemented");
-        // scalar_type<ValueType1, ValueType2> output;
-        // output = blasWrapper::dot<ValueType1, ValueType2, memorySpace>(n, x,
-        // incx, y, incy, context); return output;
+        scalar_type<ValueType1, ValueType2> output;
+        output = blasWrapper::dot<ValueType1, ValueType2, memorySpace>(
+          n, x, incx, y, incy, context);
+        return output;
       }
 
       template <typename ValueType1,
@@ -324,6 +304,85 @@ namespace dftefe
           vecSize, numVec, multiVecData, context);
       }
 
+      template <typename ValueType1,
+                typename ValueType2,
+                typename dftefe::utils::MemorySpace memorySpace>
+      void
+      stridedBlockCopy(const size_type               vecSize,
+                       const size_type               numVec,
+                       const size_type               srcLeadingDim,
+                       const size_type               srcBlockStartId,
+                       const size_type               dstLeadingDim,
+                       const size_type               dstBlockStartId,
+                       const ValueType1 *            copyFromVec,
+                       ValueType2 *                  copyToVec,
+                       LinAlgOpContext<memorySpace> &context)
+      {
+        if (srcLeadingDim < numVec)
+          utils::throwException(false, "srcLeadingDim smaller than block size");
+
+        if (dstLeadingDim < numVec)
+          utils::throwException(false, "dstLeadingDim smaller than block size");
+
+        return CopyKernelTwoValueTypes<ValueType1, ValueType2, memorySpace>::
+          stridedBlockCopy(vecSize,
+                           numVec,
+                           srcLeadingDim,
+                           srcBlockStartId,
+                           dstLeadingDim,
+                           dstBlockStartId,
+                           copyFromVec,
+                           copyToVec,
+                           context);
+      }
+
+      template <typename ValueType1,
+                typename ValueType2,
+                typename dftefe::utils::MemorySpace memorySpace>
+      void
+      varBatchedStridedBlockCopy(const size_type   numBatch,
+                                 const size_type * strideSrc,
+                                 const size_type * strideDst,
+                                 const size_type * vecSizeArr,
+                                 const size_type * numVecArr,
+                                 const size_type * srcLeadingDimArr,
+                                 const size_type * srcBlockStartIdArr,
+                                 const size_type * dstLeadingDimArr,
+                                 const size_type * dstBlockStartIdArr,
+                                 const ValueType1 *copyFromVec,
+                                 ValueType2 *      copyToVec,
+                                 LinAlgOpContext<memorySpace> &context)
+      {
+        return CopyKernelTwoValueTypes<ValueType1, ValueType2, memorySpace>::
+          varBatchedStridedBlockCopy(numBatch,
+                                     strideSrc,
+                                     strideDst,
+                                     vecSizeArr,
+                                     numVecArr,
+                                     srcLeadingDimArr,
+                                     srcBlockStartIdArr,
+                                     dstLeadingDimArr,
+                                     dstBlockStartIdArr,
+                                     copyFromVec,
+                                     copyToVec,
+                                     context);
+      }
+
+      template <typename ValueType1,
+                typename ValueType2,
+                typename dftefe::utils::MemorySpace memorySpace>
+      void
+      copyValueType1ArrToValueType2Arr(const size_type   size,
+                                       const ValueType1 *valueType1Arr,
+                                       ValueType2 *      valueType2Arr,
+                                       LinAlgOpContext<memorySpace> &context)
+      {
+        return CopyKernelTwoValueTypes<ValueType1, ValueType2, memorySpace>::
+          copyValueType1ArrToValueType2Arr(size,
+                                           valueType1Arr,
+                                           valueType2Arr,
+                                           context);
+      }
 
       template <typename ValueType1,
                 typename ValueType2,
@@ -360,29 +419,6 @@ namespace dftefe
                                                                context);
       }
 
-      template <typename ValueType1, typename ValueType2>
-      void
-      gemm(const char &                                         transA,
-           const char &                                         transB,
-           const size_type                                      m,
-           const size_type                                      n,
-           const size_type                                      k,
-           const scalar_type<ValueType1, ValueType2>            alpha,
-           ValueType1 const *                                   dA,
-           const size_type                                      ldda,
-           ValueType2 const *                                   dB,
-           const size_type                                      lddb,
-           const scalar_type<ValueType1, ValueType2>            beta,
-           scalar_type<ValueType1, ValueType2> *                dC,
-           const size_type                                      lddc,
-           LinAlgOpContext<dftefe::utils::MemorySpace::DEVICE> &context)
-      {
-        utils::throwException(
-          false,
-          "blasLapack::gemm() is not implemented for dftefe::utils::MemorySpace::DEVICE .... ");
-      }
-
-
 
       template <typename ValueType1,
                 typename ValueType2,
@@ -407,59 +443,25 @@ namespace dftefe
                             const size_type *                         lddc,
                             LinAlgOpContext<memorySpace> &            context)
       {
-        size_type cumulativeA = 0;
-        size_type cumulativeB = 0;
-        size_type cumulativeC = 0;
-        for (size_type ibatch = 0; ibatch < numMats; ++ibatch)
-          {
-            if (*(m + ibatch) > 0 && *(n + ibatch) > 0 && *(k + ibatch) > 0)
-              blasWrapper::gemm<ValueType1, ValueType2, memorySpace>(
-                *(transA + ibatch),
-                *(transB + ibatch),
-                *(m + ibatch),
-                *(n + ibatch),
-                *(k + ibatch),
-                alpha,
-                dA + cumulativeA,
-                *(ldda + ibatch),
-                dB + cumulativeB,
-                *(lddb + ibatch),
-                beta,
-                dC + cumulativeC,
-                *(lddc + ibatch),
-                context);
-
-            cumulativeA += *(stridea + ibatch);
-            cumulativeB += *(strideb + ibatch);
-            cumulativeC += *(stridec + ibatch);
-          }
-      }
-
-      template <typename ValueType1, typename ValueType2>
-      void
-      gemmStridedVarBatched(
-        const size_type                                      numMats,
-        const char *                                         transA,
-        const char *                                         transB,
-        const size_type *                                    stridea,
-        const size_type *                                    strideb,
-        const size_type *                                    stridec,
-        const size_type *                                    m,
-        const size_type *                                    n,
-        const size_type *                                    k,
-        const scalar_type<ValueType1, ValueType2>            alpha,
-        const ValueType1 *                                   dA,
-        const size_type *                                    ldda,
-        const ValueType2 *                                   dB,
-        const size_type *                                    lddb,
-        const scalar_type<ValueType1, ValueType2>            beta,
-        scalar_type<ValueType1, ValueType2> *                dC,
-        const size_type *                                    lddc,
-        LinAlgOpContext<dftefe::utils::MemorySpace::DEVICE> &context)
-      {
-        utils::throwException(
-          false,
-          "blasLapack::gemmStridedVarBatched() is not implemented for dftefe::utils::MemorySpace::DEVICE .... ");
+        blasWrapper::gemmStridedVarBatched<ValueType1, ValueType2, memorySpace>(
+          numMats,
+          transA,
+          transB,
+          stridea,
+          strideb,
+          stridec,
+          m,
+          n,
+          k,
+          alpha,
+          dA,
+          ldda,
+          dB,
+          lddb,
+          beta,
+          dC,
+          lddc,
+          context);
       }
 
       // ------------ lapack calls -------

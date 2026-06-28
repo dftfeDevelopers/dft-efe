@@ -37,6 +37,7 @@
 #include <linearAlgebra/ChebyshevFilter.h>
 #include <memory>
 #include <utils/Profiler.h>
+#include <linearAlgebra/MultivectorScratch.h>
 
 namespace dftefe
 {
@@ -102,7 +103,9 @@ namespace dftefe
         bool                  isGHEP                    = true,
         OrthogonalizationType orthoType =
           OrthogonalizationType::CHOLESKY_GRAMSCHMIDT,
-        bool storeIntermediateSubspaces = false);
+        bool storeIntermediateSubspaces = false,
+        std::shared_ptr<MultivectorScratch<ValueType, memorySpace>> scratch =
+          nullptr);
 
       /**
        *@brief Destructor
@@ -158,6 +161,12 @@ namespace dftefe
       std::shared_ptr<MultiVector<ValueType, memorySpace>> d_XinBatchSmall,
         d_XinBatch, d_XoutBatchSmall, d_XoutBatch;
 
+      std::shared_ptr<MultiVector<ValueType, memorySpace>> d_chfsiScratch1,
+        d_chfsiScratch2, d_chfsiResidualScratch1, d_chfsiResidualScratch2;
+      std::shared_ptr<MultiVector<ValueType, memorySpace>> d_chfsiScratch1Small,
+        d_chfsiScratch2Small, d_chfsiResidualScratch1Small,
+        d_chfsiResidualScratch2Small;
+
       std::shared_ptr<
         RayleighRitzEigenSolver<ValueTypeOperator, ValueType, memorySpace>>
         d_rr;
@@ -166,9 +175,9 @@ namespace dftefe
         OrthonormalizationFunctions<ValueTypeOperator, ValueType, memorySpace>>
         d_ortho;
 
-      utils::Profiler d_p, d_pTotal;
-      const bool      d_isResidualChebyFilter;
-      size_type       d_batchSizeSmall;
+      utils::Profiler<memorySpace> d_p, d_pTotal;
+      const bool                   d_isResidualChebyFilter;
+      size_type                    d_batchSizeSmall;
 
       std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
                             d_mpiPatternP2P;
@@ -178,6 +187,8 @@ namespace dftefe
       const ElpaScalapackManager *d_elpaScala;
 
       const bool d_isGHEP;
+
+      std::shared_ptr<MultivectorScratch<ValueType, memorySpace>> d_scratch;
 
     }; // end of class ChebyshevFilteredEigenSolver
   }    // end of namespace linearAlgebra

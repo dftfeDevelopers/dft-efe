@@ -154,26 +154,26 @@ namespace dftefe
       MemoryStorage &
       operator=(MemoryStorage &&rhs) noexcept;
 
-      //      // This part does not work for GPU version, will work on this
-      //      until
-      //      // having cleaner solution.
-      //      /**
-      //       * @brief Operator to get a reference to a element of the Vector
-      //       * @param[in] i is the index to the element of the Vector
-      //       * @returns reference to the element of the Vector
-      //       * @throws exception if i >= size of the Vector
-      //       */
-      //      reference
-      //      operator[](size_type i);
-      //
-      //      /**
-      //       * @brief Operator to get a const reference to a element of the Vector
-      //       * @param[in] i is the index to the element of the Vector
-      //       * @returns const reference to the element of the Vector
-      //       * @throws exception if i >= size of the Vector
-      //       */
-      //      const_reference
-      //      operator[](size_type i) const;
+      // This part does not work for GPU version, will work on this
+      // until
+      // having cleaner solution.
+      /**
+       * @brief Operator to get a reference to a element of the Vector
+       * @param[in] i is the index to the element of the Vector
+       * @returns reference to the element of the Vector
+       * @throws exception if i >= size of the Vector
+       */
+      reference
+      operator[](size_type i);
+
+      /**
+       * @brief Operator to get a const reference to a element of the Vector
+       * @param[in] i is the index to the element of the Vector
+       * @returns const reference to the element of the Vector
+       * @throws exception if i >= size of the Vector
+       */
+      const_reference
+      operator[](size_type i) const;
 
       /**
        * @brief Deallocates and then resizes Vector with new size

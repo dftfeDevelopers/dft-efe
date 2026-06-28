@@ -150,7 +150,9 @@ namespace dftefe
         const size_type                           subspaceRotDofsBlockSize,
         const size_type                           wfcBlockSize,
         const bool                                rotationMatTranspose = false,
-        const bool isRotationMatLowerTria                              = false);
+        const bool isRotationMatLowerTria                              = false,
+        const bool allowFullCPUMemSubspaceRot =
+          (memorySpace == utils::MemorySpace::DEVICE ? true : false));
 
     } // namespace elpaScalaOpInternal
   }   // namespace linearAlgebra

@@ -6,8 +6,8 @@ namespace dftefe
 {
   namespace utils
   {
-    LogModX::LogModX(const unsigned int component,
-                     const double       base /*= e (Euler's constant)*/)
+    LogModX::LogModX(const size_type component,
+                     const double    base /*= e (Euler's constant)*/)
       : d_logBase(std::log(base))
       , d_component(component)
     {}
@@ -23,7 +23,7 @@ namespace dftefe
     {
       const size_type     N = points.size();
       std::vector<double> returnValue(N, 0.0);
-      for (unsigned int i = 0; i < N; ++i)
+      for (size_type i = 0; i < N; ++i)
         returnValue[i] = std::log(std::abs(points[i][d_component])) / d_logBase;
 
       return returnValue;

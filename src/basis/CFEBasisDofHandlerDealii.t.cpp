@@ -82,10 +82,13 @@ namespace dftefe
           *(dealiiMatrixFree.get_vector_partitioner());
         const dealii::IndexSet &ghostIndexSet =
           dealiiPartitioner.ghost_indices();
-        const size_type numGhostIndicesClassical = ghostIndexSet.n_elements();
-        std::vector<global_size_type> ghostIndicesClassical(0);
-        ghostIndicesClassical.resize(numGhostIndicesClassical, 0);
-        ghostIndexSet.fill_index_vector(ghostIndicesClassical);
+        // const size_type numGhostIndicesClassical =
+        // ghostIndexSet.n_elements(); std::vector<global_size_type>
+        // ghostIndicesClassical(0);
+        // ghostIndicesClassical.resize(numGhostIndicesClassical, 0);
+        // ghostIndexSet.fill_index_vector(ghostIndicesClassical);
+        std::vector<global_size_type> ghostIndicesClassical =
+          ghostIndexSet.get_index_vector();
         ghostIndices.clear();
         ghostIndices.insert(ghostIndices.begin(),
                             ghostIndicesClassical.begin(),
@@ -216,12 +219,15 @@ namespace dftefe
         dealiiAffineConstraintMatrix;
 
       dealiiAffineConstraintMatrix.clear();
-      dealii::IndexSet locally_relevant_dofs;
-      locally_relevant_dofs.clear();
-      dealii::DoFTools::extract_locally_relevant_dofs(*(this->getDoFHandler()),
-                                                      locally_relevant_dofs);
+      // dealii::IndexSet locally_relevant_dofs;
+      // locally_relevant_dofs.clear();
+      // dealii::DoFTools::extract_locally_relevant_dofs(*(this->getDoFHandler()),
+      //                                                 locally_relevant_dofs);
+      dealii::IndexSet locally_relevant_dofs =
+        dealii::DoFTools::extract_locally_relevant_dofs(
+          *(this->getDoFHandler()));
       dealiiAffineConstraintMatrix.reinit(
-        /*this->getDoFHandler()->locally_owned_dofs(),*/ locally_relevant_dofs);
+        this->getDoFHandler()->locally_owned_dofs(), locally_relevant_dofs);
       dealii::DoFTools::make_hanging_node_constraints(
         *(this->getDoFHandler()), dealiiAffineConstraintMatrix);
 
@@ -283,7 +289,7 @@ namespace dftefe
       //
       // Sometimes dealii can have no locallyowned dofs in a processor and
       // the classical dofid can give garbage value. It will return the maximum
-      // value of unsigend int as the dof id as dftefe has unsigned int as
+      // value of unsigend int as the dof id as dftefe has size_type as
       // classical ids. To get through this, one has to accumulate the previous
       // processors nlocallyOwnedDofs and set the start and end as the same
       // in classical locallyowned dofs. getAllOwnedClassicalRanges() finds
@@ -358,13 +364,13 @@ namespace dftefe
       // locally_relevant dofs domain which is superset of locally_owned dofs
       // set.
 
-      const unsigned int vertices_per_cell =
+      const size_type vertices_per_cell =
         dealii::GeometryInfo<dim>::vertices_per_cell;
-      const unsigned int dofs_per_cell =
+      const size_type dofs_per_cell =
         this->getDoFHandler()->get_fe().dofs_per_cell;
-      const unsigned int faces_per_cell =
+      const size_type faces_per_cell =
         dealii::GeometryInfo<dim>::faces_per_cell;
-      const unsigned int dofs_per_face =
+      const size_type dofs_per_face =
         this->getDoFHandler()->get_fe().dofs_per_face;
 
       std::vector<global_size_type> cellGlobalDofIndices(dofs_per_cell);
@@ -376,7 +382,7 @@ namespace dftefe
       for (; cellIter != endIter; ++cellIter)
         {
           (*cellIter)->cellNodeIdtoGlobalNodeId(cellGlobalDofIndices);
-          for (unsigned int iFace = 0; iFace < faces_per_cell; ++iFace)
+          for (size_type iFace = 0; iFace < faces_per_cell; ++iFace)
             {
               (*cellIter)->getFaceDoFGlobalIndices(iFace,
                                                    iFaceGlobalDofIndices);
@@ -384,7 +390,7 @@ namespace dftefe
                 (*cellIter)->getFaceBoundaryId(iFace);
               if (boundaryId == 0)
                 {
-                  for (unsigned int iFaceDof = 0; iFaceDof < dofs_per_face;
+                  for (size_type iFaceDof = 0; iFaceDof < dofs_per_face;
                        ++iFaceDof)
                     {
                       const dealii::types::global_dof_index nodeId =
@@ -495,12 +501,11 @@ namespace dftefe
         dealiiAffineConstraintMatrix;
 
       dealiiAffineConstraintMatrix.clear();
-      dealii::IndexSet locally_relevant_dofs;
-      locally_relevant_dofs.clear();
-      dealii::DoFTools::extract_locally_relevant_dofs(*(this->getDoFHandler()),
-                                                      locally_relevant_dofs);
+      dealii::IndexSet locally_relevant_dofs =
+        dealii::DoFTools::extract_locally_relevant_dofs(
+          *(this->getDoFHandler()));
       dealiiAffineConstraintMatrix.reinit(
-        /*this->getDoFHandler()->locally_owned_dofs(),*/ locally_relevant_dofs);
+        this->getDoFHandler()->locally_owned_dofs(), locally_relevant_dofs);
       dealii::DoFTools::make_hanging_node_constraints(
         *(this->getDoFHandler()), dealiiAffineConstraintMatrix);
 
@@ -562,7 +567,7 @@ namespace dftefe
       //
       // Sometimes dealii can have no locallyowned dofs in a processor and
       // the classical dofid can give garbage value. It will return the maximum
-      // value of unsigend int as the dof id as dftefe has unsigned int as
+      // value of unsigend int as the dof id as dftefe has size_type as
       // classical ids. To get through this, one has to accumulate the previous
       // processors nlocallyOwnedDofs and set the start and end as the same
       // in classical locallyowned dofs. getAllOwnedClassicalRanges() finds
@@ -646,13 +651,13 @@ namespace dftefe
       // locally_relevant dofs domain which is superset of locally_owned dofs
       // set.
 
-      const unsigned int vertices_per_cell =
+      const size_type vertices_per_cell =
         dealii::GeometryInfo<dim>::vertices_per_cell;
-      const unsigned int dofs_per_cell =
+      const size_type dofs_per_cell =
         this->getDoFHandler()->get_fe().dofs_per_cell;
-      const unsigned int faces_per_cell =
+      const size_type faces_per_cell =
         dealii::GeometryInfo<dim>::faces_per_cell;
-      const unsigned int dofs_per_face =
+      const size_type dofs_per_face =
         this->getDoFHandler()->get_fe().dofs_per_face;
 
       std::vector<global_size_type> cellGlobalDofIndices(dofs_per_cell);
@@ -664,7 +669,7 @@ namespace dftefe
       for (; cellIter != endIter; ++cellIter)
         {
           (*cellIter)->cellNodeIdtoGlobalNodeId(cellGlobalDofIndices);
-          for (unsigned int iFace = 0; iFace < faces_per_cell; ++iFace)
+          for (size_type iFace = 0; iFace < faces_per_cell; ++iFace)
             {
               (*cellIter)->getFaceDoFGlobalIndices(iFace,
                                                    iFaceGlobalDofIndices);
@@ -672,7 +677,7 @@ namespace dftefe
                 (*cellIter)->getFaceBoundaryId(iFace);
               if (boundaryId == 0)
                 {
-                  for (unsigned int iFaceDof = 0; iFaceDof < dofs_per_face;
+                  for (size_type iFaceDof = 0; iFaceDof < dofs_per_face;
                        ++iFaceDof)
                     {
                       const dealii::types::global_dof_index nodeId =
@@ -843,7 +848,7 @@ namespace dftefe
 
       std::vector<int> recvCounts(nprocs, 2);
       std::vector<int> displs(nprocs, 0);
-      for (unsigned int i = 0; i < nprocs; ++i)
+      for (size_type i = 0; i < nprocs; ++i)
         displs[i] = 2 * i;
 
       allOwnedRanges.resize(nprocs);
@@ -856,11 +861,11 @@ namespace dftefe
       utils::mpi::MPIAllgatherv<utils::MemorySpace::HOST>(
         &ownedRanges[0],
         2,
-        utils::mpi::MPIUnsignedLong,
+        utils::mpi::Types<global_size_type>::getMPIDatatype(),
         &ownedRangesAcrossProcs[0],
         &recvCounts[0],
         &displs[0],
-        utils::mpi::MPIUnsignedLong,
+        utils::mpi::Types<global_size_type>::getMPIDatatype(),
         mpiComm);
 
       for (size_type iProc = 0; iProc < nprocs; ++iProc)
@@ -1043,7 +1048,7 @@ namespace dftefe
     template <typename ValueTypeBasisCoeff,
               utils::MemorySpace memorySpace,
               size_type          dim>
-    unsigned int
+    size_type
     CFEBasisDofHandlerDealii<ValueTypeBasisCoeff, memorySpace, dim>::getDim()
       const
     {
@@ -1155,10 +1160,9 @@ namespace dftefe
     CFEBasisDofHandlerDealii<ValueTypeBasisCoeff, memorySpace, dim>::
       createConstraintsStart() const
     {
-      dealii::IndexSet locally_relevant_dofs;
-      locally_relevant_dofs.clear();
-      dealii::DoFTools::extract_locally_relevant_dofs(*(this->getDoFHandler()),
-                                                      locally_relevant_dofs);
+      dealii::IndexSet locally_relevant_dofs =
+        dealii::DoFTools::extract_locally_relevant_dofs(
+          *(this->getDoFHandler()));
 
       std::shared_ptr<ConstraintsLocal<ValueTypeBasisCoeff, memorySpace>>
         constraintsLocal = std::make_shared<

@@ -27,12 +27,12 @@ namespace dftefe
         std::vector<double> &                              JxW,
         size_type &                                        numQuadPoints)
       {
-        const unsigned int dim      = triangulation->getDim();
-        const size_type    numCells = triangulation->nLocallyOwnedCells();
+        const dftefe::size_type dim      = triangulation->getDim();
+        const size_type         numCells = triangulation->nLocallyOwnedCells();
         numCellQuadPoints.resize(numCells, 0);
         cellQuadStartIds.resize(numCells, 0);
         numQuadPoints = 0;
-        for (unsigned int iCell = 0; iCell < numCells; ++iCell)
+        for (dftefe::size_type iCell = 0; iCell < numCells; ++iCell)
           {
             const size_type numQuadPointsInCell =
               quadratureRuleVec[iCell]->nPoints();
@@ -45,7 +45,7 @@ namespace dftefe
         JxW.resize(numQuadPoints, 0.0);
         basis::TriangulationBase::const_TriangulationCellIterator cellIter =
           triangulation->beginLocal();
-        unsigned int iCell = 0;
+        dftefe::size_type iCell = 0;
         for (; cellIter != triangulation->endLocal(); ++cellIter)
           {
             const size_type numQuadPointsInCell = numCellQuadPoints[iCell];
@@ -120,6 +120,9 @@ namespace dftefe
                  d_realPoints,
                  d_JxW,
                  d_numQuadPoints);
+
+      const dftefe::size_type dim = triangulation->getDim();
+      d_realPointsHost            = utils::flatten(d_realPoints);
     }
 
     QuadratureRuleContainer::QuadratureRuleContainer(
@@ -155,7 +158,7 @@ namespace dftefe
           " QuadratureRule is only valid for QuadratureRuleAttributes "
           "built with QuadratureFamily GAUSS_VARIABLE or GLL_VARIABLE");
 
-      for (unsigned int iCell = 0; iCell < d_numCells; ++iCell)
+      for (dftefe::size_type iCell = 0; iCell < d_numCells; ++iCell)
         {
           utils::throwException<utils::LengthError>(
             d_dim == d_quadratureRuleVec[iCell]->getDim(),
@@ -170,6 +173,9 @@ namespace dftefe
                  d_realPoints,
                  d_JxW,
                  d_numQuadPoints);
+
+      const dftefe::size_type dim = triangulation->getDim();
+      d_realPointsHost            = utils::flatten(d_realPoints);
     }
 
 
@@ -185,7 +191,7 @@ namespace dftefe
       const std::vector<double> &relativeTolerances,
       const std::vector<double> &integralThresholds,
       const double               smallestCellVolume /*= 1e-12*/,
-      const unsigned int         maxRecursion /*= 100*/)
+      const dftefe::size_type    maxRecursion /*= 100*/)
       : d_quadratureRuleAttributes(quadratureRuleAttributes)
       , d_dim(triangulation->getDim())
       , d_triangulation(triangulation)
@@ -211,7 +217,7 @@ namespace dftefe
       d_numCellQuadPoints.resize(d_numCells, 0);
       d_cellQuadStartIds.resize(d_numCells, 0);
       d_numQuadPoints                                                 = 0;
-      unsigned int                                              iCell = 0;
+      dftefe::size_type                                         iCell = 0;
       basis::TriangulationBase::const_TriangulationCellIterator cellIter =
         triangulation->beginLocal();
 
@@ -290,7 +296,7 @@ namespace dftefe
                     d_JxW.begin() + cellQuadStartId);
           // double cellVolume  = 0.0;
           // std::cout << "\niCell JxW: " << iCell << std::endl;
-          // for(unsigned int i = 0; i < numCellQuadPoints; ++i)
+          // for(dftefe::size_type i = 0; i < numCellQuadPoints; ++i)
           //{
           //  std::cout << cellJxW[i] << std::endl;
           //  cellVolume += cellJxW[i];
@@ -299,6 +305,9 @@ namespace dftefe
           // std::cout << "iCell volume: " << cellVolume << std::endl;
           iCell++;
         }
+
+      const dftefe::size_type dim = triangulation->getDim();
+      d_realPointsHost            = utils::flatten(d_realPoints);
     }
 
     QuadratureRuleContainer::QuadratureRuleContainer(
@@ -362,7 +371,7 @@ namespace dftefe
           std::vector<double>    referenceQuadDensityInCellsVec(0);
           std::vector<size_type> cellIndex(numCells, 0);
 
-          for (unsigned int iCell = 0; iCell < numCells; ++iCell)
+          for (dftefe::size_type iCell = 0; iCell < numCells; ++iCell)
             {
               std::vector<double> cellJxW =
                 quadratureRuleContainerReference.getCellJxW(iCell);
@@ -389,7 +398,7 @@ namespace dftefe
       else
         {
           cellIdsWithMaxRefQuadPoints.resize(numCells, 0);
-          for (unsigned int iCell = 0; iCell < numCells; ++iCell)
+          for (dftefe::size_type iCell = 0; iCell < numCells; ++iCell)
             cellIdsWithMaxRefQuadPoints[iCell] = iCell;
         }
       auto stop = std::chrono::high_resolution_clock::now();
@@ -620,10 +629,13 @@ namespace dftefe
         std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
       timer["Gauss Iter initialization 2"] += duration.count();
       // for(auto i : timer)
-      //   for( int j = 0 ; j < nProcs ; j++)
+      //   for( dftefe::size_type j = 0 ; j < nProcs ; j++)
       //     if(rank == j)
       //       std::cout << i.first << "\t" << i.second/1e6 << std::flush <<
       //       "\n";
+
+      const dftefe::size_type dim = triangulation->getDim();
+      d_realPointsHost            = utils::flatten(d_realPoints);
     }
 
 
@@ -646,7 +658,8 @@ namespace dftefe
     }
 
     std::vector<dftefe::utils::Point>
-    QuadratureRuleContainer::getCellRealPoints(const unsigned int cellId) const
+    QuadratureRuleContainer::getCellRealPoints(
+      const dftefe::size_type cellId) const
     {
       const size_type numCellQuadPoints = d_numCellQuadPoints[cellId];
       const size_type cellQuadStartId   = d_cellQuadStartIds[cellId];
@@ -664,14 +677,14 @@ namespace dftefe
 
     const std::vector<dftefe::utils::Point> &
     QuadratureRuleContainer::getCellParametricPoints(
-      const unsigned int cellId) const
+      const dftefe::size_type cellId) const
     {
       return d_quadratureRuleVec[cellId]->getPoints();
     }
 
     const std::vector<double> &
     QuadratureRuleContainer::getCellQuadratureWeights(
-      const unsigned int cellId) const
+      const dftefe::size_type cellId) const
     {
       return d_quadratureRuleVec[cellId]->getWeights();
     }
@@ -683,7 +696,7 @@ namespace dftefe
     }
 
     std::vector<double>
-    QuadratureRuleContainer::getCellJxW(const unsigned int cellId) const
+    QuadratureRuleContainer::getCellJxW(const dftefe::size_type cellId) const
     {
       const size_type numCellQuadPoints = d_numCellQuadPoints[cellId];
       const size_type cellQuadStartId   = d_cellQuadStartIds[cellId];
@@ -697,7 +710,8 @@ namespace dftefe
     }
 
     const QuadratureRule &
-    QuadratureRuleContainer::getQuadratureRule(const unsigned int cellId) const
+    QuadratureRuleContainer::getQuadratureRule(
+      const dftefe::size_type cellId) const
     {
       return *d_quadratureRuleVec[cellId];
     }
@@ -710,7 +724,7 @@ namespace dftefe
 
     size_type
     QuadratureRuleContainer::nCellQuadraturePoints(
-      const unsigned int cellId) const
+      const dftefe::size_type cellId) const
     {
       return d_numCellQuadPoints[cellId];
     }

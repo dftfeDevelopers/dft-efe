@@ -26,45 +26,55 @@
 #ifndef dftefeAtomSevereFunction_h
 #define dftefeAtomSevereFunction_h
 
+#include <atoms/AtomSuperpositionFunction.h>
 #include <utils/ScalarSpatialFunction.h>
-#include <utils/TypeConfig.h>
-#include <utils/Point.h>
-#include <memory>
-#include <basis/AtomIdsPartition.h>
-#include <atoms/AtomSphericalDataContainer.h>
-#include <basis/EnrichmentIdsPartition.h>
+
 namespace dftefe
 {
   namespace atoms
   {
-    template <unsigned int dim>
-    class AtomSevereFunction : public utils::ScalarSpatialFunctionReal
+    template <utils::MemorySpace memorySpace>
+    class AtomSevereFunction : public AtomSuperpositionFunction<memorySpace>,
+                               public utils::ScalarSpatialFunctionReal
     {
     public:
-      AtomSevereFunction(std::shared_ptr<const AtomSphericalDataContainer>
-                           atomSphericalDataContainer,
-                         const std::vector<std::string> & atomSymbol,
-                         const std::vector<utils::Point> &atomCoordinates,
-                         const std::string                fieldName,
-                         const size_type                  derivativeType,
-                         const size_type                  sphericalValPower =
-                           2 /* for Adaptive Quad */); // give arguments here
+      AtomSevereFunction(
+        std::shared_ptr<const AtomSphericalDataContainer>
+                                                     atomSphericalDataContainer,
+        const std::vector<std::string> &             atomSymbol,
+        const std::vector<utils::Point> &            atomCoordinates,
+        const std::string                            fieldName,
+        const size_type                              derivativeType,
+        const size_type                              sphericalValPower = 2,
+        const double                                 constant          = 1.0,
+        linearAlgebra::LinAlgOpContext<memorySpace> *linAlgOpContext = nullptr);
+
       double
       operator()(const utils::Point &point) const override;
+
       std::vector<double>
       operator()(const std::vector<utils::Point> &points) const override;
 
+    protected:
+      void
+      evalHost(size_type numPoints, const double *t, double *q) const override;
+
+#ifdef DFTEFE_WITH_DEVICE
+      void
+      evalDevice(size_type     numPoints,
+                 const double *t,
+                 double *      q) const override;
+#endif
+
     private:
-      const std::shared_ptr<const atoms::AtomSphericalDataContainer>
-                                     d_atomSphericalDataContainer;
-      const std::vector<std::string> d_atomSymbolVec;
-      std::vector<utils::Point>      d_atomCoordinatesVec;
-      const std::string              d_fieldName;
-      const size_type                d_derivativeType;
-      const size_type                d_sphericalValPower;
+      AtomSuperpositionFuncType d_atomSupType;
+      size_type                 d_dim;
+      double                    d_constant;
     };
 
   } // namespace atoms
 } // namespace dftefe
+
 #include <atoms/AtomSevereFunction.t.cpp>
+
 #endif // dftefeAtomSevereFunction_h

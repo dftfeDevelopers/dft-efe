@@ -4,25 +4,33 @@
 #    define dftefeDeviceAPICalls_H
 
 #    include "TypeConfig.h"
+#    include <utils/DeviceTypeConfig.h>
+#    include <iostream>
 
 namespace dftefe
 {
   namespace utils
   {
-    void
-    deviceGetDeviceCount(int *count);
+    deviceError_t
+    deviceReset();
 
-    void
-    deviceGetDevice(int *deviceId);
+    deviceError_t
+    deviceMemGetInfo(std::size_t *free, std::size_t *total);
 
-    void
-    deviceSetDevice(int deviceId);
+    deviceError_t
+    getDeviceCount(int *count);
 
-    void
-    deviceMalloc(void **devPtr, size_type size);
+    deviceError_t
+    getDevice(int *deviceId);
 
-    void
-    deviceMemset(void *devPtr, size_type count);
+    deviceError_t
+    setDevice(int deviceId);
+
+    deviceError_t
+    deviceMalloc(void **devPtr, std::size_t size);
+
+    deviceError_t
+    deviceMemset(void *devPtr, int value, std::size_t count);
 
     /**
      * @brief
@@ -32,37 +40,140 @@ namespace dftefe
      */
     template <typename ValueType>
     void
-    deviceSetValue(ValueType *devPtr, ValueType value, size_type size);
+    deviceSetValue(ValueType *devPtr, ValueType value, std::size_t size);
 
-    void
+    deviceError_t
     deviceFree(void *devPtr);
 
-    void
-    hostPinnedMalloc(void **hostPtr, size_type size);
+    deviceError_t
+    hostPinnedMalloc(void **hostPtr, std::size_t size);
 
-    void
+    deviceError_t
     hostPinnedFree(void *hostPtr);
 
     /**
      * @brief Copy array from device to host
      * @param count The memory size in bytes of the array
      */
-    void
-    deviceMemcpyD2H(void *dst, const void *src, size_type count);
+    deviceError_t
+    deviceMemcpyD2H(void *dst, const void *src, std::size_t count);
 
     /**
      * @brief Copy array from device to device
      * @param count The memory size in bytes of the array
      */
-    void
-    deviceMemcpyD2D(void *dst, const void *src, size_type count);
+    deviceError_t
+    deviceMemcpyD2D(void *dst, const void *src, std::size_t count);
 
     /**
      * @brief Copy array from host to device
      * @param count The memory size in bytes of the array
      */
+    deviceError_t
+    deviceMemcpyH2D(void *dst, const void *src, std::size_t count);
+
+    /**
+     * @brief Copy 2D array from device to host
+     * @param count The memory size in bytes of the array
+     */
+    deviceError_t
+    deviceMemcpyD2H_2D(void *      dst,
+                       std::size_t dpitch,
+                       const void *src,
+                       std::size_t spitch,
+                       std::size_t width,
+                       std::size_t height);
+
+    /**
+     * @brief Copy 2D array from device to device
+     * @param count The memory size in bytes of the array
+     */
+    deviceError_t
+    deviceMemcpyD2D_2D(void *      dst,
+                       std::size_t dpitch,
+                       const void *src,
+                       std::size_t spitch,
+                       std::size_t width,
+                       std::size_t height);
+
+    /**
+     * @brief Copy 2D array from host to device
+     * @param count The memory size in bytes of the array
+     */
+    deviceError_t
+    deviceMemcpyH2D_2D(void *      dst,
+                       std::size_t dpitch,
+                       const void *src,
+                       std::size_t spitch,
+                       std::size_t width,
+                       std::size_t height);
+
+    /**
+     * @brief HOST-DEVICE synchronization
+     */
+    deviceError_t
+    deviceSynchronize();
+
+    /**
+     * @brief Copy array from device to host
+     * @param count The memory size in bytes of the array
+     */
+    deviceError_t
+    deviceMemcpyAsyncD2H(void *         dst,
+                         const void *   src,
+                         std::size_t    count,
+                         deviceStream_t stream = dftefe::utils::defaultStream);
+
+    /**
+     * @brief Copy array from device to device
+     * @param count The memory size in bytes of the array
+     */
+    deviceError_t
+    deviceMemcpyAsyncD2D(void *         dst,
+                         const void *   src,
+                         std::size_t    count,
+                         deviceStream_t stream = dftefe::utils::defaultStream);
+
+    /**
+     * @brief Copy array from host to device
+     * @param count The memory size in bytes of the array
+     */
+    deviceError_t
+    deviceMemcpyAsyncH2D(void *         dst,
+                         const void *   src,
+                         std::size_t    count,
+                         deviceStream_t stream = dftefe::utils::defaultStream);
+
+
+    deviceError_t
+    deviceStreamCreate(deviceStream_t &pStream, const bool nonBlocking = false);
+
+    deviceError_t
+    deviceStreamDestroy(deviceStream_t &stream);
+
+    deviceError_t
+    deviceStreamSynchronize(deviceStream_t &stream);
+
+    deviceError_t
+    deviceEventCreate(deviceEvent_t &pEvent);
+
+    deviceError_t
+    deviceEventDestroy(deviceEvent_t &event);
+
+    deviceError_t
+    deviceEventRecord(deviceEvent_t &event,
+                      deviceStream_t stream = dftefe::utils::defaultStream);
+
+    deviceError_t
+    deviceEventSynchronize(deviceEvent_t &event);
+
+    deviceError_t
+    deviceStreamWaitEvent(deviceStream_t &stream,
+                          deviceEvent_t & event,
+                          unsigned int    flags = 0);
+
     void
-    deviceMemcpyH2D(void *dst, const void *src, size_type count);
+    printPointerLocation(const void *ptr);
   } // namespace utils
 } // namespace dftefe
 

@@ -20,15 +20,55 @@
  ******************************************************************************/
 
 /*
- * @author Ian C. Lin., Sambit Das
+ * @author Bikash Kanungo
  */
-#ifdef DFTEFE_WITH_DEVICE
-#  ifndef dftefeDeviceKernelLauncher_h
-#    define dftefeDeviceKernelLauncher_h
 
-#    ifdef DFTEFE_WITH_DEVICE_CUDA
-#      include "DeviceKernelLauncherCUDA.cuh"
-#    endif
+namespace dftefe
+{
+  namespace ksdft
+  {
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    RDM1Spectral<ValueType, memorySpace>::RDM1Spectral()
+      : d_nKSOrbs(0)
+      , d_ksSetFlag(false)
+      , d_evalFlag(false)
+    {}
 
-#  endif // dftefeDeviceKernelLauncher_h
-#endif   // DFTEFE_WITH_DEVICE
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    void
+    RDM1Spectral<ValueType, memorySpace>::setSpectral(
+      std::unique_ptr<linearAlgebra::MultiVector<ValueType, memorySpace>>
+                                              ksOrbitals,
+      const std::vector<std::vector<double>> &occupancies,
+      const size_type                         nKSOrbs)
+    {
+      d_ksOrbs      = std::move(ksOrbitals);
+      d_occupancies = occupancies;
+      d_nKSOrbs     = nKSOrbs;
+      d_evalFlag    = true;
+      d_ksSetFlag   = true;
+    }
+
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    void
+    RDM1Spectral<ValueType, memorySpace>::getSpectral(
+      std::unique_ptr<linearAlgebra::MultiVector<ValueType, memorySpace>>
+        &                               ksOrbitals,
+      std::vector<std::vector<double>> &occupancies,
+      size_type &                       nKSOrbs)
+    {
+      ksOrbitals  = std::move(d_ksOrbs);
+      occupancies = d_occupancies;
+      nKSOrbs     = d_nKSOrbs;
+      d_ksSetFlag = false;
+    }
+
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    bool
+    RDM1Spectral<ValueType, memorySpace>::getKSSetFlag() const
+    {
+      return d_ksSetFlag;
+    }
+
+  } // namespace ksdft
+} // namespace dftefe

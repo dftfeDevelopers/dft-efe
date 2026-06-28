@@ -29,7 +29,7 @@
 #include <utils/TypeConfig.h>
 #include <utils/MemorySpaceType.h>
 #include <utils/MemoryStorage.h>
-#include <basis/Field.h>
+#include <basis/BasisManager.h>
 #include <basis/BasisDataStorage.h>
 namespace dftefe
 {
@@ -47,8 +47,9 @@ namespace dftefe
         const ValueType *data,
         const size_type  numComponents,
         const size_type *cellLocalIdsStartPtr,
-        const typename BasisManager<ValueType, memorySpace>::SizeTypeVector
-          &                                                   numCellDofs,
+        // const typename BasisManager<ValueType, memorySpace>::SizeTypeVector
+        //   &                                                   numCellDofs,
+        const size_type                                       totalCellDofs,
         dftefe::utils::MemoryStorage<ValueType, memorySpace> &cellWiseStorage);
 
       static void
@@ -56,9 +57,10 @@ namespace dftefe
         const ValueType *data,
         const size_type  numComponents,
         const size_type *cellLocalIdsStartPtr,
-        const typename BasisManager<ValueType, memorySpace>::SizeTypeVector
-          &        numCellDofs,
-        ValueType *itCellWiseStorageBegin);
+        // const typename BasisManager<ValueType, memorySpace>::SizeTypeVector
+        //   &        numCellDofs,
+        const size_type totalCellDofs,
+        ValueType *     itCellWiseStorageBegin);
 
       // TODO: Add numStrideCellWiseStorageDofs (max of numCellDofs over all
       // cells) This also takes the case where numCellDofs = 0
@@ -68,24 +70,27 @@ namespace dftefe
           &              cellWiseStorage,
         const size_type  numComponents,
         const size_type *cellLocalIdsStartPtr,
-        const typename BasisManager<ValueType, memorySpace>::SizeTypeVector
-          &        numCellDofs,
-        ValueType *data);
+        // const typename BasisManager<ValueType, memorySpace>::SizeTypeVector
+        //   &        numCellDofs,
+        const size_type totalCellDofs,
+        ValueType *     data);
 
       static void
       addCellWiseDataToFieldData(
         const ValueType *itCellWiseStorageBegin,
         const size_type  numComponents,
         const size_type *cellLocalIdsStartPtr,
-        const typename BasisManager<ValueType, memorySpace>::SizeTypeVector
-          &        numCellDofs,
-        ValueType *data);
+        // const typename BasisManager<ValueType, memorySpace>::SizeTypeVector
+        //   &        numCellDofs,
+        const size_type totalCellDofs,
+        ValueType *     data);
 
       static void
       addCellWiseBasisDataToDiagonalData(
         const ValueType *cellWiseBasisData,
         const size_type *cellLocalIdsStartPtr,
         const utils::MemoryStorage<size_type, memorySpace> &numCellDofs,
+        const size_type                                     totalCellDofs,
         ValueType *                                         data);
 
       static void
@@ -102,21 +107,39 @@ namespace dftefe
 
 #ifdef DFTEFE_WITH_DEVICE
     template <typename ValueType>
-    class FECellWiseDataOperations
+    class FECellWiseDataOperations<ValueType,
+                                   dftefe::utils::MemorySpace::DEVICE>
     {
     public:
+      // TODO: Add numStrideCellWiseStorageDofs (max of numCellDofs over all
+      // cells) This also takes the case where numCellDofs = 0 Appropriately
+      // change src and dst ptrs
       static void
       copyFieldToCellWiseData(
         const ValueType *data,
         const size_type  numComponents,
         const size_type *cellLocalIdsStartPtr,
-        const BasisManager<ValueType,
-                           dftefe::utils::MemorySpace::DEVICE>::SizeTypeVector
-          &numCellDofs,
+        const size_type  totalCellDofs,
         dftefe::utils::MemoryStorage<ValueType,
                                      dftefe::utils::MemorySpace::DEVICE>
           &cellWiseStorage);
 
+      static void
+      copyFieldToCellWiseData(const ValueType *data,
+                              const size_type  numComponents,
+                              const size_type *cellLocalIdsStartPtr,
+                              const size_type  totalCellDofs,
+                              ValueType *      itCellWiseStorageBegin);
+
+      static void
+      addCellWiseDataToFieldData(const ValueType *itCellWiseStorageBegin,
+                                 const size_type  numComponents,
+                                 const size_type *cellLocalIdsStartPtr,
+                                 const size_type  totalCellDofs,
+                                 ValueType *      data);
+
+      // TODO: Add numStrideCellWiseStorageDofs (max of numCellDofs over all
+      // cells) This also takes the case where numCellDofs = 0
       static void
       addCellWiseDataToFieldData(
         const dftefe::utils::MemoryStorage<ValueType,
@@ -124,29 +147,32 @@ namespace dftefe
           &              cellWiseStorage,
         const size_type  numComponents,
         const size_type *cellLocalIdsStartPtr,
-        const BasisManager<ValueType,
-                           dftefe::utils::MemorySpace::DEVICE>::SizeTypeVector
-          &        numCellDofs,
-        ValueType *data);
+        const size_type  totalCellDofs,
+        ValueType *      data);
 
       static void
       addCellWiseBasisDataToDiagonalData(
         const ValueType *cellWiseBasisData,
         const size_type *cellLocalIdsStartPtr,
-        const utils::MemoryStorage<size_type, memorySpace> &numCellDofs,
-        ValueType *                                         data);
+        const utils::MemoryStorage<size_type,
+                                   dftefe::utils::MemorySpace::DEVICE>
+          &             numCellDofs,
+        const size_type totalCellDofs,
+        ValueType *     data);
 
       static void
-      reshapeCellWiseData(const ValueType *cellWiseData,
-                          const size_type  numVec,
-                          const size_type  vecSize,
-                          const size_type  numCells,
-                          ValueType *      data);
+      reshapeCellWiseData(
+        const dftefe::utils::MemoryStorage<ValueType,
+                                           utils::MemorySpace::DEVICE>
+          &             cellWiseStorage,
+        const size_type numComponents,
+        const utils::MemoryStorage<size_type, utils::MemorySpace::DEVICE>
+          &        numCellVecs,
+        ValueType *data);
 
 
     }; // end of class FECellWiseDataOperations
 #endif
   } // end of namespace basis
 } // end of namespace dftefe
-#include <basis/FECellWiseDataOperations.t.cpp>
 #endif // dftefeFECellWiseDataOperations_h

@@ -68,7 +68,8 @@ namespace dftefe
       EFEBasisDataStorageDealii(
         std::shared_ptr<const BasisDofHandler>      efeBDH,
         const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
-        const BasisStorageAttributesBoolMap basisStorageAttributesBoolMap);
+        const BasisStorageAttributesBoolMap basisStorageAttributesBoolMap,
+        linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext);
 
       ~EFEBasisDataStorageDealii() = default;
 
@@ -108,7 +109,7 @@ namespace dftefe
         const std::vector<double> &         relativeTolerances,
         const std::vector<double> &         integralThresholds,
         const double                        smallestCellVolume,
-        const unsigned int                  maxRecursion,
+        const size_type                     maxRecursion,
         const BasisStorageAttributesBoolMap basisStorageAttributesBoolMap)
         override;
 
@@ -222,6 +223,7 @@ namespace dftefe
       std::vector<size_type>        d_cellStartIdsBasisGradientQuadStorage;
       std::vector<size_type>        d_cellStartIdsBasisHessianQuadStorage;
       std::vector<size_type>        d_cellStartIdsGradNiGradNj;
+      linearAlgebra::LinAlgOpContext<memorySpace> &d_linAlgOpContext;
     };
   } // end of namespace basis
 } // end of namespace dftefe
