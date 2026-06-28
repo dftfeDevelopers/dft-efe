@@ -1,0 +1,22 @@
+<map id="dftefe::ksdft::ElectrostaticLocalFE::reinitBasis" name="dftefe::ksdft::ElectrostaticLocalFE::reinitBasis">
+<area shape="rect" id="node1" title=" " alt="" coords="5,369,173,409"/>
+<area shape="rect" id="node2" href="$namespacedftefe_1_1linearAlgebra_1_1blasLapack.html#a2f5260a507016e7faf82fa34ca96374e" title=" " alt="" coords="260,5,396,45"/>
+<area shape="rect" id="node3" href="$classdftefe_1_1utils_1_1MemoryStorage.html#a51b8cb789b4fb7a976d6d914acac5482" title="Return iterator pointing to the beginning of point data." alt="" coords="237,69,419,109"/>
+<area shape="rect" id="node4" href="$namespacedftefe_1_1atoms.html#ae8f6bc6d3cbd7c355eb88cd8a200384c" title=" " alt="" coords="265,134,391,159"/>
+<area shape="rect" id="node6" href="$namespacedftefe_1_1atoms.html#a99121cbfcff880402eeb4b43b1c21871" title=" " alt="" coords="227,184,429,224"/>
+<area shape="rect" id="node7" href="$classdftefe_1_1utils_1_1MemoryTransfer.html#a7f0d9eed66c1e39ad68c80643f4b6ac0" title="Copy array from the memory space of source to the memory space of destination." alt="" coords="235,248,421,288"/>
+<area shape="rect" id="node8" href="$classdftefe_1_1utils_1_1MemoryStorage.html#a0b7d69ed206a226bdb79c0ba12e42111" title="Return the raw pointer to the Vector." alt="" coords="237,312,419,352"/>
+<area shape="rect" id="node9" href="$namespacedftefe_1_1atoms.html#ab0b97e34a0e648afa5dff8c410654794" title=" " alt="" coords="267,377,389,402"/>
+<area shape="rect" id="node10" href="$classdftefe_1_1atoms_1_1AtomSuperpositionFunction.html#a3e4c45421950299d6391d5f4e8c5c98f" title=" " alt="" coords="221,427,435,467"/>
+<area shape="rect" id="node12" href="$namespacedftefe_1_1atoms.html#ae8d3bc656184deb85c92e80d0d5c9237" title=" " alt="" coords="266,491,390,517"/>
+<area shape="rect" id="node13" href="$classdftefe_1_1utils_1_1MemoryStorage.html#a27a99259f56c8c34eac291943b080675" title="Deallocates and then resizes Vector with new size and initial value arguments." alt="" coords="237,541,419,581"/>
+<area shape="rect" id="node17" href="$namespacedftefe_1_1quadrature.html#a4055047cd59f3629fccc4f6f96771664" title="Perform ." alt="" coords="267,629,389,669"/>
+<area shape="rect" id="node19" href="$classdftefe_1_1utils_1_1MemoryStorage.html#ab6dc2f530a90b36a9308fcdf17104362" title="Returns the dimension of the Vector." alt="" coords="237,693,419,733"/>
+<area shape="rect" id="node20" href="$namespacedftefe_1_1utils.html#a6984a4700c624f90d483553661c499b6" title=" " alt="" coords="239,758,417,783"/>
+<area shape="rect" id="node5" href="$namespacedftefe_1_1atoms.html#a67a8b5592cba668aec92678937c8e9f4" title=" " alt="" coords="526,134,653,159"/>
+<area shape="rect" id="node11" href="$classdftefe_1_1atoms_1_1AtomSuperpositionFunction.html#abf55f2d023d7bbeaf536abe13f0e90f6" title=" " alt="" coords="483,413,696,453"/>
+<area shape="rect" id="node14" href="$classdftefe_1_1utils_1_1MemoryManager.html#a5b70ed03cd2d2b274182f8c7c2b4738b" title=" " alt="" coords="496,477,683,517"/>
+<area shape="rect" id="node15" href="$classdftefe_1_1utils_1_1MemoryManager.html#aca93dde952680d547c2e2534382a29da" title=" " alt="" coords="496,541,683,581"/>
+<area shape="rect" id="node16" href="$classdftefe_1_1utils_1_1MemoryManager.html#a8bcc70cc31721152c6e120e8010fe288" title=" " alt="" coords="484,606,695,631"/>
+<area shape="rect" id="node18" href="$classdftefe_1_1quadrature_1_1QuadratureValuesContainer.html#ac0f80485fa38eff33ee059b6c36a005f" title=" " alt="" coords="496,679,683,734"/>
+</map>

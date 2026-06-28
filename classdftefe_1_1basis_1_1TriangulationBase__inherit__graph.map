@@ -1,0 +1,5 @@
+<map id="dftefe::basis::TriangulationBase" name="dftefe::basis::TriangulationBase">
+<area shape="rect" id="node1" title="An abstract class for the triangulation class. The derived class specialises this class to dealii and..." alt="" coords="5,45,208,70"/>
+<area shape="rect" id="node2" href="$classdftefe_1_1basis_1_1TriangulationDealiiParallel.html" title=" " alt="" coords="256,5,428,45"/>
+<area shape="rect" id="node3" href="$classdftefe_1_1basis_1_1TriangulationDealiiSerial.html" title=" " alt="" coords="256,69,428,109"/>
+</map>

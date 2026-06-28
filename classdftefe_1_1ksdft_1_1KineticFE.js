@@ -1,0 +1,28 @@
+var classdftefe_1_1ksdft_1_1KineticFE =
+[
+    [ "RealType", "classdftefe_1_1ksdft_1_1KineticFE.html#ad2bafe112ce3328d40fa2ac112f92d6c", null ],
+    [ "Storage", "classdftefe_1_1ksdft_1_1KineticFE.html#ab42dc3d1e64f616359b76500ab4338f2", null ],
+    [ "ValueType", "classdftefe_1_1ksdft_1_1KineticFE.html#a319dfcef2831ba2944c6fcb12ebf6fef", null ],
+    [ "KineticFE", "classdftefe_1_1ksdft_1_1KineticFE.html#a6d837356fab673284b0f49851a9e6790", null ],
+    [ "~KineticFE", "classdftefe_1_1ksdft_1_1KineticFE.html#ada2859971b06668f4ee1164ce901a4d6", null ],
+    [ "applyNonLocal", "classdftefe_1_1ksdft_1_1KineticFE.html#a21c815db95aa19018c926d9bd85d9cda", null ],
+    [ "evalEnergy", "classdftefe_1_1ksdft_1_1KineticFE.html#abea276c692cbfbd32c5087b9775e52d8", null ],
+    [ "getEnergy", "classdftefe_1_1ksdft_1_1KineticFE.html#a9ceaa9db446a1edc9f2059de8e77eba8", null ],
+    [ "getLocal", "classdftefe_1_1ksdft_1_1KineticFE.html#a283be6de365e6067b56005105a2594f4", null ],
+    [ "hasLocalComponent", "classdftefe_1_1ksdft_1_1KineticFE.html#ad66f885f3debf584bcc5f55df8a397c3", null ],
+    [ "hasNonLocalComponent", "classdftefe_1_1ksdft_1_1KineticFE.html#a0de41487cac2bc76b5256a439f573ea5", null ],
+    [ "reinit", "classdftefe_1_1ksdft_1_1KineticFE.html#a571743aef3f8443b876d4bcd13ddda85", null ],
+    [ "d_cellWiseStorageKineticEnergy", "classdftefe_1_1ksdft_1_1KineticFE.html#a88ef0ad48596a4e1d2a204a9af5fec36", null ],
+    [ "d_energy", "classdftefe_1_1ksdft_1_1KineticFE.html#a95199eb15dc9bafd9ab62b23f550a3ec", null ],
+    [ "d_feBasisDataStorage", "classdftefe_1_1ksdft_1_1KineticFE.html#ad0cbaa104ee4a8f6bafffb97500a6edc", null ],
+    [ "d_feBasisOp", "classdftefe_1_1ksdft_1_1KineticFE.html#ace5b56625ea8815da554ae7043625176", null ],
+    [ "d_laplaceOp", "classdftefe_1_1ksdft_1_1KineticFE.html#a919ec0cd5fbdb4a297fdd674938f75bc", null ],
+    [ "d_linAlgOpContext", "classdftefe_1_1ksdft_1_1KineticFE.html#a786826af62121074ce5a42869ca65825", null ],
+    [ "d_maxCellBlock", "classdftefe_1_1ksdft_1_1KineticFE.html#aa02eff6f75d51497ea2bd1aa897c2f3f", null ],
+    [ "d_mpiPatternP2P", "classdftefe_1_1ksdft_1_1KineticFE.html#ac959292fbfecb4d182d97956ff65e29e", null ],
+    [ "d_psiBatch", "classdftefe_1_1ksdft_1_1KineticFE.html#aad88ce74ba83735ed8b0b3b61f7c03ef", null ],
+    [ "d_psiBatchSmall", "classdftefe_1_1ksdft_1_1KineticFE.html#a541940151bb9306892d79f223868798e", null ],
+    [ "d_waveFuncBatchSize", "classdftefe_1_1ksdft_1_1KineticFE.html#a9117d782550a883543a52fecc1b707c5", null ],
+    [ "d_YBatch", "classdftefe_1_1ksdft_1_1KineticFE.html#a5aa64233cc242c36a808833be1963c4c", null ],
+    [ "d_YBatchSmall", "classdftefe_1_1ksdft_1_1KineticFE.html#aa7907b75273b8d90cd8ca4014ff114dd", null ]
+];

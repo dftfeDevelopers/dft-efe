@@ -1,0 +1,10 @@
+<map id="dftefe::basis::CFEBDSOnTheFlyComputeDealiiInternal::storeValuesHRefinedSameQuadEveryCell" name="dftefe::basis::CFEBDSOnTheFlyComputeDealiiInternal::storeValuesHRefinedSameQuadEveryCell">
+<area shape="rect" id="node1" title=" " alt="" coords="5,227,275,282"/>
+<area shape="rect" id="node2" href="$classdftefe_1_1utils_1_1MemoryTransfer.html#a7f0d9eed66c1e39ad68c80643f4b6ac0" title="Copy array from the memory space of source to the memory space of destination." alt="" coords="330,5,515,45"/>
+<area shape="rect" id="node3" href="$classdftefe_1_1quadrature_1_1QuadratureRuleAttributes.html#ac288b5cd682450eaf23bb836fbbdfc56" title=" " alt="" coords="335,70,510,125"/>
+<area shape="rect" id="node4" href="$classdftefe_1_1quadrature_1_1QuadratureRuleAttributes.html#af7382ec374a9f5fab9163364333a92ed" title=" " alt="" coords="335,149,510,203"/>
+<area shape="rect" id="node5" href="$classdftefe_1_1quadrature_1_1QuadratureRuleAttributes.html#a1fd4f7ee0cc7fc4855c5c3b52e9cb00d" title=" " alt="" coords="326,227,519,282"/>
+<area shape="rect" id="node6" href="$classdftefe_1_1quadrature_1_1QuadratureRuleGaussIterated.html#ab15134ea8d22ec285ea02583d4e272b6" title=" " alt="" coords="323,306,523,361"/>
+<area shape="rect" id="node7" href="$classdftefe_1_1quadrature_1_1QuadratureRuleGaussIterated.html#a646ffc075a5d462e55f6287e6bbf81cb" title=" " alt="" coords="323,385,523,439"/>
+<area shape="rect" id="node8" href="$namespacedftefe_1_1utils.html#a6984a4700c624f90d483553661c499b6" title=" " alt="" coords="333,463,512,489"/>
+</map>

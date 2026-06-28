@@ -1,0 +1,7 @@
+<map id="dftefe::ksdft::KineticFE::reinit" name="dftefe::ksdft::KineticFE::reinit">
+<area shape="rect" id="node1" title=" " alt="" coords="5,45,157,85"/>
+<area shape="rect" id="node2" href="$namespacedftefe_1_1linearAlgebra_1_1blasLapack.html#af58774813fa90108d8daef1b7ea9dbf8" title=" " alt="" coords="241,13,380,53"/>
+<area shape="rect" id="node4" href="$classdftefe_1_1basis_1_1FEBasisOperations.html#afbac3a75a75db2c6dd19bf973a71ec20" title=" " alt="" coords="205,77,416,117"/>
+<area shape="rect" id="node3" href="$classdftefe_1_1linearAlgebra_1_1blasLapack_1_1KernelsTwoValueTypes.html#a54784310b939278714d3b87ee4b02fb5" title="Template for performing &#160;alpha &#160;z = \alpha x$." alt="" coords="464,5,667,60"/>
+<area shape="rect" id="node5" href="$namespacedftefe_1_1utils.html#a6984a4700c624f90d483553661c499b6" title=" " alt="" coords="476,84,655,109"/>
+</map>

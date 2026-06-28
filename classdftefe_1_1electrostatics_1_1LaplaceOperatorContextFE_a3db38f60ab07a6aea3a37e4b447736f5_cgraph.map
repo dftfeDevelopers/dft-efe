@@ -1,0 +1,12 @@
+<map id="dftefe::electrostatics::LaplaceOperatorContextFE::apply" name="dftefe::electrostatics::LaplaceOperatorContextFE::apply">
+<area shape="rect" id="node1" title=" " alt="" coords="5,149,189,204"/>
+<area shape="rect" id="node2" href="$classdftefe_1_1linearAlgebra_1_1MultiVector.html#aaf5d3a3258392b00d211f5d02e66c927" title="Return iterator pointing to the beginning of MultiVector data." alt="" coords="288,13,424,53"/>
+<area shape="rect" id="node3" href="$namespacedftefe_1_1electrostatics_1_1LaplaceOperatorContextFEInternal.html#aa67f94f03296f4b354dbc0dc165f1657" title=" " alt="" coords="243,77,469,132"/>
+<area shape="rect" id="node8" href="$classdftefe_1_1linearAlgebra_1_1MultiVector.html#ae6856e6ef3bcfec194d5177862e17bdb" title=" " alt="" coords="248,157,464,197"/>
+<area shape="rect" id="node9" href="$classdftefe_1_1linearAlgebra_1_1MultiVector.html#aa238557ebf746787c4dba34d5a694b2f" title="Returns the nunber of vectors in this multi&#45;vector." alt="" coords="237,221,475,261"/>
+<area shape="rect" id="node10" href="$classdftefe_1_1linearAlgebra_1_1MultiVector.html#a067883a44286ea9b52ed32bd5c8b2c32" title=" " alt="" coords="249,285,463,325"/>
+<area shape="rect" id="node4" href="$classdftefe_1_1basis_1_1FECellWiseDataOperations.html#ad8381206f0b069b1377bce0153e9f360" title=" " alt="" coords="523,5,733,60"/>
+<area shape="rect" id="node6" href="$classdftefe_1_1utils_1_1MemoryStorage.html#a0b7d69ed206a226bdb79c0ba12e42111" title="Return the raw pointer to the Vector." alt="" coords="537,85,719,125"/>
+<area shape="rect" id="node7" href="$namespacedftefe_1_1linearAlgebra_1_1blasLapack.html#a47ab882cbdc8b4af09bac5c728722d45" title=" " alt="" coords="529,149,727,204"/>
+<area shape="rect" id="node5" href="$classdftefe_1_1utils_1_1MemoryStorage.html#a51b8cb789b4fb7a976d6d914acac5482" title="Return iterator pointing to the beginning of point data." alt="" coords="781,13,964,53"/>
+</map>

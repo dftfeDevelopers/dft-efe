@@ -1,0 +1,6 @@
+<map id="dftefe::basis::EnrichmentClassicalInterfaceSpherical::getEnrichmentIdsPartition" name="dftefe::basis::EnrichmentClassicalInterfaceSpherical::getEnrichmentIdsPartition">
+<area shape="rect" id="node1" title="Function to return EnrichmentIDsObject." alt="" coords="268,84,448,139"/>
+<area shape="rect" id="node2" href="$namespacedftefe_1_1basis_1_1OrthoEFEOverlapOperatorContextInternal.html#a4a90abc5605bc1141585ff060fda3bb6" title=" " alt="" coords="13,5,212,60"/>
+<area shape="rect" id="node3" href="$namespacedftefe_1_1basis_1_1OEFEAtomBlockOverlapInvOpContextGLLInternal.html#a078119e8fd021f40e54d6f3a9a16bd62" title=" " alt="" coords="5,84,220,139"/>
+<area shape="rect" id="node4" href="$namespacedftefe_1_1basis_1_1OrthoEFEOverlapInverseOpContextGLLInternal.html#a4e1cd645aa932ab0812870b4e81b3eb4" title=" " alt="" coords="13,163,212,217"/>
+</map>

@@ -1,0 +1,5 @@
+<map id="dftefe::quadrature::QuadratureRuleContainer::getCellJxW" name="dftefe::quadrature::QuadratureRuleContainer::getCellJxW">
+<area shape="rect" id="node1" title="Function that returns a vector containing the Jacobian times weight of the quad points in cell corres..." alt="" coords="284,45,457,100"/>
+<area shape="rect" id="node2" href="$classdftefe_1_1basis_1_1AtomCenterNonLocalOpContextFE.html#ad7c27a220ad0c56b06f8a5266750e425" title="Constructor Class does : \sum_atoms \sum_lpm CVC^T X = Y where V = coupling matrix C_lpm,..." alt="" coords="5,5,236,60"/>
+<area shape="rect" id="node3" href="$classdftefe_1_1quadrature_1_1QuadratureRuleContainer.html#abe1c7b1dacd4cd250dafbcc30796beb9" title="Constructor for creating a subdivided quadrature rule in each cell based user&#45;defined functions and a..." alt="" coords="34,84,207,139"/>
+</map>

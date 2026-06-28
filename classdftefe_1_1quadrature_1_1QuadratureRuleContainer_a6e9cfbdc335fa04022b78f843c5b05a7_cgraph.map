@@ -1,0 +1,6 @@
+<map id="dftefe::quadrature::QuadratureRuleContainer::QuadratureRuleContainer" name="dftefe::quadrature::QuadratureRuleContainer::QuadratureRuleContainer">
+<area shape="rect" id="node1" title="Constructor for assigning each cell with a common quadrature rule." alt="" coords="5,55,179,109"/>
+<area shape="rect" id="node2" href="$namespacedftefe_1_1utils.html#ae4bafdad8bea05824796b021c0e56a5c" title="Flatten a vector of points into a contiguous coordinate array. Output layout: [x0,..." alt="" coords="253,5,379,31"/>
+<area shape="rect" id="node3" href="$classdftefe_1_1quadrature_1_1QuadratureRuleAttributes.html#af7382ec374a9f5fab9163364333a92ed" title=" " alt="" coords="229,55,403,109"/>
+<area shape="rect" id="node4" href="$namespacedftefe_1_1utils.html#a6984a4700c624f90d483553661c499b6" title=" " alt="" coords="227,133,405,159"/>
+</map>

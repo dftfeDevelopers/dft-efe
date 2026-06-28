@@ -1,0 +1,4 @@
+<map id="dftefe::utils::DiscontiguousDataOperations::copyToDiscontiguousMemory" name="dftefe::utils::DiscontiguousDataOperations::copyToDiscontiguousMemory">
+<area shape="rect" id="node1" title="Function to copy a source array x to a destination array y, where the source is accessed contiguously..." alt="" coords="217,5,460,60"/>
+<area shape="rect" id="node2" href="$classdftefe_1_1utils_1_1mpi_1_1MPICommunicatorP2P.html#a8e0fa7b93c68d8851627ea67f55def69" title=" " alt="" coords="5,5,169,60"/>
+</map>

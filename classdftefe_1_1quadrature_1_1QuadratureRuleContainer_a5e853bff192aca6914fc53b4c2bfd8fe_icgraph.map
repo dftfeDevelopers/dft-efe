@@ -1,0 +1,4 @@
+<map id="dftefe::quadrature::QuadratureRuleContainer::getCellRealPoints" name="dftefe::quadrature::QuadratureRuleContainer::getCellRealPoints">
+<area shape="rect" id="node1" title="Function that returns a vector containing the real coordinates of the quad points in cell correspondi..." alt="" coords="284,5,457,60"/>
+<area shape="rect" id="node2" href="$classdftefe_1_1basis_1_1AtomCenterNonLocalOpContextFE.html#ad7c27a220ad0c56b06f8a5266750e425" title="Constructor Class does : \sum_atoms \sum_lpm CVC^T X = Y where V = coupling matrix C_lpm,..." alt="" coords="5,5,236,60"/>
+</map>

@@ -1,0 +1,9 @@
+<map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
+<area shape="rect" id="node1" href="$classdftefe_1_1basis_1_1BasisDataStorage.html" title="An abstract class to store and access data for a given basis, such as the basis function values on a ..." alt="" coords="5,84,208,139"/>
+<area shape="rect" id="node2" href="$classdftefe_1_1basis_1_1FEBasisDataStorage.html" title="An abstract class to store and access data for a given basis, such as the basis function values on a ..." alt="" coords="256,84,459,139"/>
+<area shape="rect" id="node3" href="$classdftefe_1_1basis_1_1CFEBDSOnTheFlyComputeDealii.html" title="An abstract class to store and access data for a given basis, such as the basis function values on a ..." alt="" coords="507,5,816,60"/>
+<area shape="rect" id="node4" href="$classdftefe_1_1basis_1_1CFEBasisDataStorageDealii.html" title="An abstract class to store and access data for a given basis, such as the basis function values on a ..." alt="" coords="524,84,799,139"/>
+<area shape="rect" id="node5" href="$classdftefe_1_1basis_1_1EFEBasisDataStorage.html" title="An abstract class to store and access data for a given basis, such as the basis function values on a ..." alt="" coords="560,163,763,217"/>
+<area shape="rect" id="node6" href="$classdftefe_1_1basis_1_1EFEBDSOnTheFlyComputeDealii.html" title="An abstract class to store and access data for a given basis, such as the basis function values on a ..." alt="" coords="864,123,1173,177"/>
+<area shape="rect" id="node7" href="$classdftefe_1_1basis_1_1EFEBasisDataStorageDealii.html" title="An abstract class to store and access data for enriched fe basis, such as the basis function values o..." alt="" coords="881,201,1156,256"/>
+</map>

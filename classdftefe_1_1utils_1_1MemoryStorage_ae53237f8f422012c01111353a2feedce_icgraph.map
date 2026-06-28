@@ -1,0 +1,18 @@
+<map id="dftefe::utils::MemoryStorage::copyFrom" name="dftefe::utils::MemoryStorage::copyFrom">
+<area shape="rect" id="node1" title="Copies data from a MemoryStorage object in a different memory space. This provides a seamless interfa..." alt="" coords="587,445,769,485"/>
+<area shape="rect" id="node2" href="$classdftefe_1_1basis_1_1AtomCenterNonLocalOpContextFE.html#ad7c27a220ad0c56b06f8a5266750e425" title="Constructor Class does : \sum_atoms \sum_lpm CVC^T X = Y where V = coupling matrix C_lpm,..." alt="" coords="302,5,533,60"/>
+<area shape="rect" id="node3" href="$classdftefe_1_1atoms_1_1AtomSuperpositionFunction.html#afb32720733f9d9bd30bd1e007c938cd4" title=" " alt="" coords="298,85,537,125"/>
+<area shape="rect" id="node4" href="$classdftefe_1_1basis_1_1CFEOverlapInverseOpContextGLL.html#aa8437e5784e96b364a184b3805813213" title=" " alt="" coords="13,404,241,459"/>
+<area shape="rect" id="node5" href="$classdftefe_1_1basis_1_1CFEOverlapOperatorContext.html#afacd3f53936471456f3334151fbe6afa" title=" " alt="" coords="296,228,539,283"/>
+<area shape="rect" id="node6" href="$namespacedftefe_1_1basis_1_1OrthoEFEOverlapOperatorContextInternal.html#ae1ec3b8ed7ad7102971db8615b79d1ef" title=" " alt="" coords="318,149,517,204"/>
+<area shape="rect" id="node8" href="$namespacedftefe_1_1basis_1_1OEFEAtomBlockOverlapInvOpContextGLLInternal.html#a078119e8fd021f40e54d6f3a9a16bd62" title=" " alt="" coords="310,359,525,413"/>
+<area shape="rect" id="node9" href="$namespacedftefe_1_1basis_1_1OrthoEFEOverlapInverseOpContextGLLInternal.html#a4e1cd645aa932ab0812870b4e81b3eb4" title=" " alt="" coords="318,437,517,492"/>
+<area shape="rect" id="node10" href="$namespacedftefe_1_1basis_1_1CFEOverlapInverseOpContextGLLInternal.html#a4ed2ff16477264120e916d6ceaff9d57" title=" " alt="" coords="320,516,515,571"/>
+<area shape="rect" id="node11" href="$namespacedftefe_1_1basis_1_1CFEOverlapOperatorContextInternal.html#a11dd09df323caf7b6bc541b969271eb0" title=" " alt="" coords="322,595,513,649"/>
+<area shape="rect" id="node13" href="$namespacedftefe_1_1electrostatics_1_1PoissonLinearSolverFunctionFEInternal.html#ab8ae4b8a95b87bd649b328bc96767ff2" title=" " alt="" coords="318,673,517,728"/>
+<area shape="rect" id="node14" href="$namespacedftefe_1_1basis_1_1L2ProjectionLinearSolverFunctionInternal.html#aa2ebd70cdc9925c23e04ec3f7e283a2f" title=" " alt="" coords="323,752,511,807"/>
+<area shape="rect" id="node15" href="$classdftefe_1_1quadrature_1_1QuadratureRuleContainer.html#ab66d3b5b5b2cf6a47486bc75c3cbf63f" title=" " alt="" coords="331,831,504,885"/>
+<area shape="rect" id="node16" href="$classdftefe_1_1ksdft_1_1RDM1Mixing.html#a6cf68af9191dcb112649f5c8ee1f2136" title="Constructor." alt="" coords="333,910,502,950"/>
+<area shape="rect" id="node7" href="$classdftefe_1_1basis_1_1OrthoEFEOverlapOperatorContext.html#a9b2035250e2ffc9b1333a0c3b3aa012b" title="Constructor where the classical dofs have a different quadrature rule than that of the enrichment dof..." alt="" coords="15,149,238,204"/>
+<area shape="rect" id="node12" href="$classdftefe_1_1basis_1_1CFEOverlapOperatorContext.html#a9a32b16b766a0442bead8f19040ddf68" title="Constructor." alt="" coords="5,595,248,649"/>
+</map>

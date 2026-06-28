@@ -1,0 +1,7 @@
+<map id="dftefe::basis::PristineEFEOverlapOperatorContextInternal::computeAxCellWiseLocal" name="dftefe::basis::PristineEFEOverlapOperatorContextInternal::computeAxCellWiseLocal">
+<area shape="rect" id="node1" title=" " alt="" coords="5,77,257,132"/>
+<area shape="rect" id="node2" href="$classdftefe_1_1basis_1_1FECellWiseDataOperations.html#ad8381206f0b069b1377bce0153e9f360" title=" " alt="" coords="305,5,516,60"/>
+<area shape="rect" id="node4" href="$classdftefe_1_1utils_1_1MemoryStorage.html#a0b7d69ed206a226bdb79c0ba12e42111" title="Return the raw pointer to the Vector." alt="" coords="319,85,502,125"/>
+<area shape="rect" id="node5" href="$namespacedftefe_1_1linearAlgebra_1_1blasLapack.html#a47ab882cbdc8b4af09bac5c728722d45" title=" " alt="" coords="311,149,510,204"/>
+<area shape="rect" id="node3" href="$classdftefe_1_1utils_1_1MemoryStorage.html#a51b8cb789b4fb7a976d6d914acac5482" title="Return iterator pointing to the beginning of point data." alt="" coords="564,13,747,53"/>
+</map>

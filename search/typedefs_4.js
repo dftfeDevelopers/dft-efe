@@ -1,0 +1,20 @@
+var searchData=
+[
+  ['datatype_0',['DataType',['../classdftefe_1_1MatrixFree.html#abdc694493640e684c71167357f5b804e',1,'dftefe::MatrixFree']]],
+  ['dealiifecelliterator_1',['DealiiFECellIterator',['../classdftefe_1_1basis_1_1FECellDealii.html#afe0b9cf17d46d810345a78802dde4811',1,'dftefe::basis::FECellDealii']]],
+  ['dealiitriangulationcelliterator_2',['DealiiTriangulationCellIterator',['../classdftefe_1_1basis_1_1TriangulationCellDealii.html#ae9ec566ef1fd2e1f24cad4253503c621',1,'dftefe::basis::TriangulationCellDealii']]],
+  ['deviceblascomputetype_5ft_3',['deviceBlasComputeType_t',['../namespacedftefe_1_1utils.html#a67db385cf70787a83141bbb9f56d63d5',1,'dftefe::utils']]],
+  ['deviceblashandle_5ft_4',['deviceBlasHandle_t',['../namespacedftefe_1_1utils.html#a29010f36bfed873109ac37059ef62bbb',1,'dftefe::utils']]],
+  ['deviceblasoperation_5ft_5',['deviceBlasOperation_t',['../namespacedftefe_1_1utils.html#aade293a99fe2830c4c0574dbf2609ea9',1,'dftefe::utils']]],
+  ['deviceblasstatus_5ft_6',['deviceBlasStatus_t',['../namespacedftefe_1_1utils.html#a6ce1d039f9961672712618ad9f22c08d',1,'dftefe::utils']]],
+  ['devicedatatype_5ft_7',['deviceDataType_t',['../namespacedftefe_1_1utils.html#ac96eb6338fa17f265a9571cf62bd7243',1,'dftefe::utils']]],
+  ['devicedoublecomplex_8',['deviceDoubleComplex',['../namespacedftefe_1_1utils.html#a89639a9ca323541d16f280dac15b9626',1,'dftefe::utils']]],
+  ['deviceerror_5ft_9',['deviceError_t',['../namespacedftefe_1_1utils.html#a05cb0501f7c38070098259436d208e1a',1,'dftefe::utils']]],
+  ['deviceevent_5ft_10',['deviceEvent_t',['../namespacedftefe_1_1utils.html#accb188e621a7d1cd24b1c3b1bd03d7be',1,'dftefe::utils']]],
+  ['devicefloatcomplex_11',['deviceFloatComplex',['../namespacedftefe_1_1utils.html#a031bd75c3d58c4aed8c579886b75f518',1,'dftefe::utils']]],
+  ['devicestream_5ft_12',['deviceStream_t',['../namespacedftefe_1_1utils.html#a40a3741d0af6f1daddee192505defcb7',1,'dftefe::utils']]],
+  ['difference_5ftype_13',['difference_type',['../classdftefe_1_1utils_1_1PointImpl.html#afd44cebbd38d075c160ca58821c9d02e',1,'dftefe::utils::PointImpl']]],
+  ['distributedcpuvec_14',['distributedCPUVec',['../classdftefe_1_1electrostatics_1_1PoissonSolverDealiiMatrixFreeFE.html#ae0c236a394a5cecafc4cf42195f2054a',1,'dftefe::electrostatics::PoissonSolverDealiiMatrixFreeFE::distributedCPUVec()'],['../classdftefe_1_1basis_1_1FEEvaluationWrapperBase.html#a4cd367336bdbc14b296824732f03202b',1,'dftefe::basis::FEEvaluationWrapperBase::distributedCPUVec()']]],
+  ['domainerror_15',['DomainError',['../namespacedftefe_1_1utils.html#a34ed6f11e1b8e72af753d6bf3326308d',1,'dftefe::utils']]],
+  ['durationtype_16',['durationType',['../structdftefe_1_1utils_1_1Timer_1_1ClockMeasurements.html#a6943357ecdbfa86e379397ef2f045e68',1,'dftefe::utils::Timer::ClockMeasurements']]]
+];

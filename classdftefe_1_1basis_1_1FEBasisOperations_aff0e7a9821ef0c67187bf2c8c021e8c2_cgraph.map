@@ -1,0 +1,11 @@
+<map id="dftefe::basis::FEBasisOperations::BasisWeakFormKernelWithField" name="dftefe::basis::FEBasisOperations::BasisWeakFormKernelWithField">
+<area shape="rect" id="node1" title=" " alt="" coords="5,111,220,151"/>
+<area shape="rect" id="node2" href="$namespacedftefe_1_1linearAlgebra_1_1blasLapack.html#a47ab882cbdc8b4af09bac5c728722d45" title=" " alt="" coords="268,5,467,60"/>
+<area shape="rect" id="node3" href="$namespacedftefe_1_1linearAlgebra_1_1blasLapack.html#a2dbdf6ba043739168fe1b8dc13ca9f91" title="Template for performing &#160;alpha &#160;z_i = x_i * y_i$." alt="" coords="765,78,968,118"/>
+<area shape="rect" id="node5" href="$namespacedftefe_1_1linearAlgebra_1_1blasLapack.html#ab74b8ac2f1c9a9db24fd6eb84ac5bca6" title=" " alt="" coords="271,136,464,191"/>
+<area shape="rect" id="node9" href="$namespacedftefe_1_1utils.html#a6984a4700c624f90d483553661c499b6" title=" " alt="" coords="278,215,457,240"/>
+<area shape="rect" id="node4" href="$classdftefe_1_1linearAlgebra_1_1blasLapack_1_1KernelsTwoValueTypes.html#a81da8da4115cdba5c60d85ca03a5afde" title="Template for performing &#160;z_i = x_i * y_i$." alt="" coords="1016,67,1219,121"/>
+<area shape="rect" id="node6" href="$classdftefe_1_1linearAlgebra_1_1blasLapack_1_1KernelsTwoValueTypes.html#a34fe340f74dda953439950800f7e326d" title="Template for performing hadamard product of two columns of batches of matrix A and B having num col A..." alt="" coords="515,136,717,191"/>
+<area shape="rect" id="node7" href="$namespacedftefe_1_1linearAlgebra_1_1blasLapack.html#af58774813fa90108d8daef1b7ea9dbf8" title=" " alt="" coords="797,150,936,190"/>
+<area shape="rect" id="node8" href="$classdftefe_1_1linearAlgebra_1_1blasLapack_1_1KernelsTwoValueTypes.html#a54784310b939278714d3b87ee4b02fb5" title="Template for performing &#160;alpha &#160;z = \alpha x$." alt="" coords="1016,145,1219,200"/>
+</map>

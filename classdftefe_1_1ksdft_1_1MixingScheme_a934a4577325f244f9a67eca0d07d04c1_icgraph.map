@@ -1,0 +1,5 @@
+<map id="dftefe::ksdft::MixingScheme::addMixingVariable" name="dftefe::ksdft::MixingScheme::addMixingVariable">
+<area shape="rect" id="node1" title="This function is used to add the mixing variables and its corresponding JxW values For dependent vari..." alt="" coords="239,37,420,77"/>
+<area shape="rect" id="node2" href="$classdftefe_1_1ksdft_1_1KohnShamDFT.html#a15ac5194e812e5a1e0300758349d30fd" title=" " alt="" coords="5,5,191,45"/>
+<area shape="rect" id="node3" href="$classdftefe_1_1ksdft_1_1RDM1Mixing.html#a6cf68af9191dcb112649f5c8ee1f2136" title="Constructor." alt="" coords="13,69,183,109"/>
+</map>

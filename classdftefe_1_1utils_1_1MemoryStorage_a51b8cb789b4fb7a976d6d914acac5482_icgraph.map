@@ -1,0 +1,52 @@
+<map id="dftefe::utils::MemoryStorage::begin" name="dftefe::utils::MemoryStorage::begin">
+<area shape="rect" id="node1" title="Return iterator pointing to the beginning of point data." alt="" coords="940,1062,1123,1102"/>
+<area shape="rect" id="node2" href="$classdftefe_1_1basis_1_1FECellWiseDataOperations.html#a83451914f5da13a79384c521021f541e" title=" " alt="" coords="649,5,866,60"/>
+<area shape="rect" id="node5" href="$classdftefe_1_1basis_1_1OrthoEFEOverlapInverseOpContextGLL.html#a623d7eddf250f7b027e4c7e2967400cb" title=" " alt="" coords="658,85,857,125"/>
+<area shape="rect" id="node6" href="$classdftefe_1_1basis_1_1OrthoEFEOverlapOperatorContext.html#a8f18379728c0217f62847973c015bf64" title="Apply AX = B where A is the discretized matrix, X is the operand and B is the result." alt="" coords="18,478,217,518"/>
+<area shape="rect" id="node7" href="$classdftefe_1_1basis_1_1ConstraintsInternal.html#ab688fea691f3c9c24953fcf1e5c3bc65" title=" " alt="" coords="662,256,853,311"/>
+<area shape="rect" id="node10" href="$classdftefe_1_1basis_1_1ConstraintsInternal.html#abf8f16dd410ec3874f0ddfbbb9167ecc" title=" " alt="" coords="662,384,853,439"/>
+<area shape="rect" id="node13" href="$classdftefe_1_1basis_1_1ConstraintsInternal.html#a92a65b6628a678e04399e5a4f6548309" title=" " alt="" coords="626,519,889,559"/>
+<area shape="rect" id="node16" href="$classdftefe_1_1basis_1_1ConstraintsInternal.html#a3d020ba079e25484ff51819592bca8a0" title=" " alt="" coords="645,663,869,717"/>
+<area shape="rect" id="node19" href="$classdftefe_1_1basis_1_1FECellWiseDataOperations.html#ad8381206f0b069b1377bce0153e9f360" title=" " alt="" coords="652,807,863,861"/>
+<area shape="rect" id="node34" href="$classdftefe_1_1utils_1_1MemoryStorage.html#ae53237f8f422012c01111353a2feedce" title="Copies data from a MemoryStorage object in a different memory space. This provides a seamless interfa..." alt="" coords="655,886,860,926"/>
+<area shape="rect" id="node35" href="$classdftefe_1_1utils_1_1MemoryStorage.html#a8c9c62e62c2fa3ce1c5ac0fee315972c" title="Copies the data to a MemoryStorage object in a different memory space. This provides a seamless inter..." alt="" coords="666,950,849,990"/>
+<area shape="rect" id="node36" href="$namespacedftefe_1_1basis_1_1L2ProjectionLinearSolverFunctionInternal.html#aa2ebd70cdc9925c23e04ec3f7e283a2f" title=" " alt="" coords="663,1015,851,1069"/>
+<area shape="rect" id="node37" href="$classdftefe_1_1utils_1_1mpi_1_1MPIPatternP2P.html#a070689bd0e50a542e251f6411c2edab4" title=" " alt="" coords="652,1093,863,1148"/>
+<area shape="rect" id="node38" href="$classdftefe_1_1utils_1_1mpi_1_1MPIPatternP2P.html#a9a8a535d76a785d678b13d57ee9f36a1" title=" " alt="" coords="649,1172,865,1227"/>
+<area shape="rect" id="node39" href="$namespacedftefe_1_1utils.html#aff89d6a6fc1424a77af307861a9bdc8c" title="Create a MemoryStorage object from an input C++ STL vector." alt="" coords="666,1251,849,1291"/>
+<area shape="rect" id="node40" href="$classdftefe_1_1ksdft_1_1ElectrostaticLocalFE.html#a23ea0a6cd65afafc7f0c17bda804bf9e" title=" " alt="" coords="673,1315,841,1355"/>
+<area shape="rect" id="node41" href="$classdftefe_1_1basis_1_1FECellWiseDataOperations.html#aa9898a87a454a6da5e8281bd66d6c0e3" title=" " alt="" coords="636,1379,879,1419"/>
+<area shape="rect" id="node42" href="$namespacedftefe_1_1basis_1_1EFEBasisDataStorageDealiiInternal.html#a349309c0bd76b0e5ce3c43949950b586" title=" " alt="" coords="652,1444,863,1499"/>
+<area shape="rect" id="node43" href="$namespacedftefe_1_1basis_1_1EFEBasisDataStorageDealiiInternal.html#a158e963da3bfafca8a07399b6f912bf5" title=" " alt="" coords="633,1523,881,1577"/>
+<area shape="rect" id="node44" href="$namespacedftefe_1_1basis_1_1EFEBasisDataStorageDealiiInternal.html#ae31802da4310b998888ef4321caf6c67" title=" " alt="" coords="649,1601,866,1656"/>
+<area shape="rect" id="node46" href="$namespacedftefe_1_1basis_1_1EFEBDSOnTheFlyComputeDealiiInternal.html#a108d535e9f882105a90aba02603defad" title=" " alt="" coords="623,1680,892,1735"/>
+<area shape="rect" id="node47" href="$namespacedftefe_1_1basis_1_1EFEBasisDataStorageDealiiInternal.html#a690ad41f1fd7e294ea3a5015bb07a77a" title=" " alt="" coords="649,1759,866,1813"/>
+<area shape="rect" id="node49" href="$namespacedftefe_1_1basis_1_1EFEBDSOnTheFlyComputeDealiiInternal.html#a8f9643377265f8094d988e940dcf551b" title=" " alt="" coords="634,1838,881,1907"/>
+<area shape="rect" id="node50" href="$namespacedftefe_1_1linearAlgebra_1_1elpaScalaOpInternal.html#a94837e8884a14f42f5e8bd9131dec95d" title="Computes X^{T}=Q*X^{T} inplace. X^{T} is the subspaceVectorsArray stored in the column major format (..." alt="" coords="685,1932,830,1987"/>
+<area shape="rect" id="node3" href="$classdftefe_1_1basis_1_1FEBasisOperations.html#a83c6603b02ae978c1ee0bb0410da1117" title=" " alt="" coords="321,13,531,53"/>
+<area shape="rect" id="node4" href="$classdftefe_1_1basis_1_1L2ProjectionLinearSolverFunction.html#aabbe5c5b8b6d8ce16b950d45b6b41bff" title="This constructor creates an instance of a base LinearSolverFunction called PoissonLinearSolverFE." alt="" coords="5,5,229,60"/>
+<area shape="rect" id="node8" href="$classdftefe_1_1basis_1_1CFEConstraintsLocalDealii.html#aad016a8f5c6b4582b3f25857c3cdff69" title=" " alt="" coords="313,199,539,239"/>
+<area shape="rect" id="node9" href="$classdftefe_1_1basis_1_1EFEConstraintsLocalDealii.html#a42280579ecbb347d6e654759acf13f29" title=" " alt="" coords="313,263,539,303"/>
+<area shape="rect" id="node11" href="$classdftefe_1_1basis_1_1CFEConstraintsLocalDealii.html#a6438877a58ab39c491db8467e5683557" title=" " alt="" coords="313,327,539,367"/>
+<area shape="rect" id="node12" href="$classdftefe_1_1basis_1_1EFEConstraintsLocalDealii.html#a676c8b32bb142e69a6172360fb4a9093" title=" " alt="" coords="313,391,539,431"/>
+<area shape="rect" id="node14" href="$classdftefe_1_1basis_1_1CFEConstraintsLocalDealii.html#adc40135f653f44c2ace45e87386ee041" title=" " alt="" coords="317,455,535,495"/>
+<area shape="rect" id="node15" href="$classdftefe_1_1basis_1_1EFEConstraintsLocalDealii.html#a9d99e1a01238b84e1a22add5071473cb" title=" " alt="" coords="317,519,535,559"/>
+<area shape="rect" id="node17" href="$classdftefe_1_1basis_1_1CFEConstraintsLocalDealii.html#a61380fefce1301fa3bc263a3930806ac" title=" " alt="" coords="317,584,535,639"/>
+<area shape="rect" id="node18" href="$classdftefe_1_1basis_1_1EFEConstraintsLocalDealii.html#a119842eeb365b60b364ec006baa429aa" title=" " alt="" coords="317,663,535,717"/>
+<area shape="rect" id="node20" href="$classdftefe_1_1basis_1_1AtomCenterNonLocalOpContextFE.html#a443c8ed3667073dbbe64d82e711694c1" title=" " alt="" coords="277,742,575,782"/>
+<area shape="rect" id="node21" href="$namespacedftefe_1_1basis_1_1CFEOverlapOperatorContextInternal.html#a87efd15a3d0fe3daaf3c78dc0e1272d6" title=" " alt="" coords="338,885,514,940"/>
+<area shape="rect" id="node23" href="$namespacedftefe_1_1basis_1_1OrthoEFEOverlapOperatorContextInternal.html#a57e7e88ca503cdea90a0ee89353d183b" title=" " alt="" coords="327,807,525,861"/>
+<area shape="rect" id="node24" href="$namespacedftefe_1_1basis_1_1PristineEFEOverlapOperatorContextInternal.html#a61d5c8948af5f63ecabdd258b6a86b16" title=" " alt="" coords="300,964,552,1019"/>
+<area shape="rect" id="node26" href="$namespacedftefe_1_1electrostatics_1_1LaplaceOperatorContextFEInternal.html#aa67f94f03296f4b354dbc0dc165f1657" title=" " alt="" coords="313,1043,539,1097"/>
+<area shape="rect" id="node28" href="$namespacedftefe_1_1ksdft_1_1KohnShamOperatorContextFEInternal.html#a7af61cf776f7f56107fbbda17f468114" title=" " alt="" coords="287,1122,565,1162"/>
+<area shape="rect" id="node30" href="$namespacedftefe_1_1ksdft_1_1KohnShamOperatorContextFEInternal.html#ac77b76f93f09d4bcedf140155c50c15e" title=" " alt="" coords="303,1187,549,1241"/>
+<area shape="rect" id="node31" href="$namespacedftefe_1_1basis_1_1AtomCenterNonLocalOpContextFEInternal.html#a05b00a2a6db3b63c57ce0f46b6efcf07" title=" " alt="" coords="327,1265,525,1320"/>
+<area shape="rect" id="node32" href="$classdftefe_1_1basis_1_1FEBasisOperations.html#ac860f88b0a099ee279e698a6f876de6d" title=" " alt="" coords="321,1345,531,1385"/>
+<area shape="rect" id="node33" href="$classdftefe_1_1basis_1_1FEBasisOperations.html#abd5c7e9cb159ab342880675170028d66" title=" " alt="" coords="321,1409,531,1449"/>
+<area shape="rect" id="node22" href="$classdftefe_1_1basis_1_1CFEOverlapOperatorContext.html#a868f5a8d9850c4a88b99a91f034b505b" title=" " alt="" coords="33,893,201,933"/>
+<area shape="rect" id="node25" href="$classdftefe_1_1basis_1_1PristineEFEOverlapOperatorContext.html#a8f0464047d4a0c282b7ca3b3264246ed" title="Apply AX = B where A is the discretized matrix, X is the operand and B is the result." alt="" coords="12,971,223,1011"/>
+<area shape="rect" id="node27" href="$classdftefe_1_1electrostatics_1_1LaplaceOperatorContextFE.html#a3db38f60ab07a6aea3a37e4b447736f5" title=" " alt="" coords="25,1043,209,1097"/>
+<area shape="rect" id="node29" href="$classdftefe_1_1ksdft_1_1KohnShamOperatorContextFE.html#aa17228af948ba388a4f2d4c8bf7953b8" title=" " alt="" coords="12,1158,223,1198"/>
+<area shape="rect" id="node45" href="$classdftefe_1_1basis_1_1EFEBasisDataStorageDealii.html#a2d48545c496bfde83c91323341b8d412" title=" " alt="" coords="319,1609,533,1649"/>
+<area shape="rect" id="node48" href="$classdftefe_1_1basis_1_1EFEBasisDataStorageDealii.html#a78328125bd68f060135431e907f51a4a" title=" " alt="" coords="319,1766,533,1806"/>
+</map>

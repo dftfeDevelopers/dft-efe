@@ -1,0 +1,8 @@
+<map id="dftefe::linearAlgebra::MultiVector::accumulateAddLocallyOwned" name="dftefe::linearAlgebra::MultiVector::accumulateAddLocallyOwned">
+<area shape="rect" id="node1" title=" " alt="" coords="596,113,787,168"/>
+<area shape="rect" id="node2" href="$classdftefe_1_1electrostatics_1_1PoissonSolverDealiiMatrixFreeFE.html#a9f321e62e5b3f1a05d4735560147c0d1" title=" " alt="" coords="310,5,515,60"/>
+<area shape="rect" id="node3" href="$classdftefe_1_1basis_1_1FEBasisOperations.html#a83c6603b02ae978c1ee0bb0410da1117" title=" " alt="" coords="307,85,518,125"/>
+<area shape="rect" id="node5" href="$classdftefe_1_1basis_1_1OEFEAtomBlockOverlapInvOpContextGLL.html#aa2bfaccb251079725142675d7e4437e2" title=" " alt="" coords="277,149,548,204"/>
+<area shape="rect" id="node6" href="$classdftefe_1_1basis_1_1OrthoEFEOverlapOperatorContext.html#a4a9a97b79dcac00ede202f3b569b458e" title="Constructor where the classical dofs have a different quadrature rule than that of the enrichment dof..." alt="" coords="301,228,524,283"/>
+<area shape="rect" id="node4" href="$classdftefe_1_1basis_1_1L2ProjectionLinearSolverFunction.html#aabbe5c5b8b6d8ce16b950d45b6b41bff" title="This constructor creates an instance of a base LinearSolverFunction called PoissonLinearSolverFE." alt="" coords="5,77,229,132"/>
+</map>

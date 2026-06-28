@@ -1,0 +1,4 @@
+<map id="dftefe::linearAlgebra::RayleighRitzEigenSolver&lt; ValueTypeOperator, ValueTypeOperand, memorySpace &gt;" name="dftefe::linearAlgebra::RayleighRitzEigenSolver&lt; ValueTypeOperator, ValueTypeOperand, memorySpace &gt;">
+<area shape="rect" id="node1" title="A derived class of OperatorContext to encapsulate the action of a discrete operator on vectors,..." alt="" coords="5,108,271,177"/>
+<area shape="rect" id="node2" href="$classdftefe_1_1linearAlgebra_1_1ElpaScalapackManager.html" title="Manager class for ELPA and ScaLAPACK." alt="" coords="56,5,220,45"/>
+</map>

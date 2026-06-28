@@ -1,0 +1,4 @@
+<map id="dftefe::ksdft::RDM1Mixing&lt; ValueType, memorySpace &gt;" name="dftefe::ksdft::RDM1Mixing&lt; ValueType, memorySpace &gt;">
+<area shape="rect" id="node1" title="RDM1 implementation that performs Anderson mixing of the electron density. Derives directly from RDM1..." alt="" coords="5,93,200,133"/>
+<area shape="rect" id="node2" href="$classdftefe_1_1ksdft_1_1RDM1.html" title="Abstract class for the one&#45;particle reduced density matrix." alt="" coords="5,5,200,45"/>
+</map>

@@ -1,0 +1,11 @@
+<map id="dftefe::basis::OrthoEFEOverlapOperatorContext&lt; ValueTypeOperator, ValueTypeOperand, memorySpace, dim &gt;" name="dftefe::basis::OrthoEFEOverlapOperatorContext&lt; ValueTypeOperator, ValueTypeOperand, memorySpace, dim &gt;">
+<area shape="rect" id="node1" title="A derived class of linearAlgebra::OperatorContext to encapsulate the action of a discrete operator on..." alt="" coords="1213,116,1477,171"/>
+<area shape="rect" id="node2" title=" " alt="" coords="725,5,961,60"/>
+<area shape="rect" id="node3" href="$classdftefe_1_1basis_1_1FEBasisManager.html" title=" " alt="" coords="711,84,976,139"/>
+<area shape="rect" id="node4" href="$classdftefe_1_1basis_1_1BasisManager.html" title="An abstract class to encapsulate the partitioning of a basis across multiple processors." alt="" coords="251,31,509,71"/>
+<area shape="rect" id="node5" href="$classdftefe_1_1basis_1_1BasisManager.html" title=" " alt="" coords="258,95,502,135"/>
+<area shape="rect" id="node6" href="$classdftefe_1_1basis_1_1EFEBasisDofHandler.html" title=" " alt="" coords="711,163,976,217"/>
+<area shape="rect" id="node7" href="$classdftefe_1_1basis_1_1FEBasisDofHandler.html" title=" " alt="" coords="277,163,483,217"/>
+<area shape="rect" id="node8" href="$classdftefe_1_1basis_1_1BasisDofHandler.html" title=" " alt="" coords="5,177,201,203"/>
+<area shape="rect" id="node9" href="$classdftefe_1_1utils_1_1MemoryStorage.html" title=" " alt="" coords="721,242,966,282"/>
+</map>

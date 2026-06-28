@@ -1,0 +1,28 @@
+var classdftefe_1_1ksdft_1_1DensityCalculator =
+[
+    [ "RealType", "classdftefe_1_1ksdft_1_1DensityCalculator.html#a45d7226ea3b13bd5eb15e4606bc11233", null ],
+    [ "ValueType", "classdftefe_1_1ksdft_1_1DensityCalculator.html#af88898e220dd9adc3bed0dca47751aef", null ],
+    [ "DensityCalculator", "classdftefe_1_1ksdft_1_1DensityCalculator.html#a6a14443fc320cd1bc2e7c0214e718aa0", null ],
+    [ "~DensityCalculator", "classdftefe_1_1ksdft_1_1DensityCalculator.html#a7ac2a5746733f2a1f001baaa85444816", null ],
+    [ "computeRho", "classdftefe_1_1ksdft_1_1DensityCalculator.html#a7c128ffc190e09b81a4a92f0aeebead5", null ],
+    [ "reinit", "classdftefe_1_1ksdft_1_1DensityCalculator.html#abcfe0ae950e9d920a50b913b4faf0ac1", null ],
+    [ "d_batchSizeSmall", "classdftefe_1_1ksdft_1_1DensityCalculator.html#a7b08277fd2f22ef19dad35aec268a293", null ],
+    [ "d_cellBlockSize", "classdftefe_1_1ksdft_1_1DensityCalculator.html#aa8053070c6a8a54daa2bc2547552d50b", null ],
+    [ "d_feBasisOp", "classdftefe_1_1ksdft_1_1DensityCalculator.html#aa3e7ef9eddbc0eef746840428d100e71", null ],
+    [ "d_feBMPsi", "classdftefe_1_1ksdft_1_1DensityCalculator.html#ab858ca96571bc28becdb3f98201ec495", null ],
+    [ "d_gradPsiBatchQuad", "classdftefe_1_1ksdft_1_1DensityCalculator.html#a59060cb1c8c94833c8e8fda59fd6439b", null ],
+    [ "d_gradRhoBatch", "classdftefe_1_1ksdft_1_1DensityCalculator.html#ac8d0409ea8391d31809b13dee90ebafd", null ],
+    [ "d_gradRhoMemspace", "classdftefe_1_1ksdft_1_1DensityCalculator.html#ab8ef91ad362d6ede827e780381893a3a", null ],
+    [ "d_linAlgOpContext", "classdftefe_1_1ksdft_1_1DensityCalculator.html#a4cc5e9bf67f5977500e923d7f12f89db", null ],
+    [ "d_modPsiSqBatchQuad", "classdftefe_1_1ksdft_1_1DensityCalculator.html#a35e9c84dccd7ab085572ab85ec8fd756", null ],
+    [ "d_numLocallyOwnedCells", "classdftefe_1_1ksdft_1_1DensityCalculator.html#aaac3f5a8355c7be427fe284d03e67b95", null ],
+    [ "d_occupationInBatch", "classdftefe_1_1ksdft_1_1DensityCalculator.html#a386da925213bba917138aa7f0598010d", null ],
+    [ "d_psiBatch", "classdftefe_1_1ksdft_1_1DensityCalculator.html#af9a0e820639f60241baeb6e0108b32a5", null ],
+    [ "d_psiBatchQuad", "classdftefe_1_1ksdft_1_1DensityCalculator.html#aed56ffe7cce860fe75fcfd22fb927290", null ],
+    [ "d_psiBatchSmall", "classdftefe_1_1ksdft_1_1DensityCalculator.html#a17ad6c4a6738985741e96287ece163fc", null ],
+    [ "d_psiGradPsiBatch", "classdftefe_1_1ksdft_1_1DensityCalculator.html#a6ce0e3645dbc72b96e8f9fec99c180f4", null ],
+    [ "d_quadRuleContainer", "classdftefe_1_1ksdft_1_1DensityCalculator.html#a5068f6483e53187a2ae68a405e564b0c", null ],
+    [ "d_rhoBatch", "classdftefe_1_1ksdft_1_1DensityCalculator.html#a2a12f1d45259be69892067fd3e18ddbf", null ],
+    [ "d_rhoMemspace", "classdftefe_1_1ksdft_1_1DensityCalculator.html#a1f43a1873422a748fa31c6dae7dccb81", null ],
+    [ "d_waveFuncBatchSize", "classdftefe_1_1ksdft_1_1DensityCalculator.html#a5f444a6bf43699611ba8ffdedca4b328", null ]
+];

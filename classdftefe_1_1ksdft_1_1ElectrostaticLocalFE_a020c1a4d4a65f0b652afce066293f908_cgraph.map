@@ -1,0 +1,7 @@
+<map id="dftefe::ksdft::ElectrostaticLocalFE::getLocal" name="dftefe::ksdft::ElectrostaticLocalFE::getLocal">
+<area shape="rect" id="node1" title=" " alt="" coords="5,106,173,146"/>
+<area shape="rect" id="node2" href="$namespacedftefe_1_1quadrature.html#a7fc259e3f52195575c91bb2164fa8bda" title="Perform ." alt="" coords="239,84,389,109"/>
+<area shape="rect" id="node5" href="$classdftefe_1_1utils_1_1MemoryTransfer.html#a7f0d9eed66c1e39ad68c80643f4b6ac0" title="Copy array from the memory space of source to the memory space of destination." alt="" coords="221,134,407,174"/>
+<area shape="rect" id="node3" href="$classdftefe_1_1quadrature_1_1QuadratureValuesContainer.html#ac0f80485fa38eff33ee059b6c36a005f" title=" " alt="" coords="455,29,641,84"/>
+<area shape="rect" id="node4" href="$classdftefe_1_1quadrature_1_1QuadratureValuesContainer.html#ad2504793324141b6cc7802b8c0967d35" title=" " alt="" coords="455,108,641,163"/>
+</map>

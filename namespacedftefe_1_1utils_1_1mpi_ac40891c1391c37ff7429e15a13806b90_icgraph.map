@@ -1,0 +1,6 @@
+<map id="dftefe::utils::mpi::numMPIProcesses" name="dftefe::utils::mpi::numMPIProcesses">
+<area shape="rect" id="node1" title=" " alt="" coords="480,64,619,104"/>
+<area shape="rect" id="node2" href="$namespacedftefe_1_1linearAlgebra_1_1elpaScalaOpInternal.html#ae7769bed93a358877ca69807153d8af4" title="Wrapper function to create a two dimensional processor grid for a rectangular matrix in ScaLAPACKMatr..." alt="" coords="223,5,429,75"/>
+<area shape="rect" id="node3" href="$namespacedftefe_1_1linearAlgebra_1_1elpaScalaOpInternal.html#a139affd9d7b42810542ca79fb249048c" title="Wrapper function to create a two dimensional processor grid for a square matrix in ScaLAPACKMatrix st..." alt="" coords="220,99,432,154"/>
+<area shape="rect" id="node4" href="$classdftefe_1_1linearAlgebra_1_1ElpaScalapackManager.html#a4d092250fea378cdedbb674c4008d9d9" title=" " alt="" coords="5,99,172,154"/>
+</map>

@@ -1,0 +1,23 @@
+<map id="dftefe::basis::EnrichmentClassicalInterfaceSpherical::EnrichmentClassicalInterfaceSpherical" name="dftefe::basis::EnrichmentClassicalInterfaceSpherical::EnrichmentClassicalInterfaceSpherical">
+<area shape="rect" id="node1" title="This Constructor for augmenting the orthogonalized EFE basis with classical FE basis...." alt="" coords="5,457,256,511"/>
+<area shape="rect" id="node2" href="$classdftefe_1_1quadrature_1_1QuadratureValuesContainer.html#ac0f80485fa38eff33ee059b6c36a005f" title=" " alt="" coords="363,30,549,85"/>
+<area shape="rect" id="node3" href="$namespacedftefe_1_1linearAlgebra.html#a766e66f0b452363ea0cee6a1f9f1a3a9" title="A class that implements the Conjugate&#45;Gradient (CG) based Krylov subspace algorithm to solve a linear..." alt="" coords="388,109,524,149"/>
+<area shape="rect" id="node4" href="$classdftefe_1_1utils_1_1MemoryTransfer.html#a7f0d9eed66c1e39ad68c80643f4b6ac0" title="Copy array from the memory space of source to the memory space of destination." alt="" coords="942,325,1127,365"/>
+<area shape="rect" id="node5" href="$classdftefe_1_1basis_1_1EnrichmentClassicalInterfaceSpherical.html#a8002c0015b22f944baa886c3e953f920" title=" " alt="" coords="339,173,573,243"/>
+<area shape="rect" id="node11" href="$classdftefe_1_1basis_1_1EnrichmentClassicalInterfaceSpherical.html#a26ea0143caad2d6a894dabaa81bb4028" title=" " alt="" coords="304,919,608,974"/>
+<area shape="rect" id="node12" href="$namespacedftefe_1_1utils.html#a6984a4700c624f90d483553661c499b6" title=" " alt="" coords="670,397,849,422"/>
+<area shape="rect" id="node13" href="$namespacedftefe_1_1utils_1_1mpi.html#a3b05e5595a7722e00fd818e897c76e1d" title=" " alt="" coords="396,432,516,472"/>
+<area shape="rect" id="node14" href="$namespacedftefe_1_1utils_1_1mpi.html#a711d95924eb30eaf8755518cfcb77be1" title=" " alt="" coords="399,496,513,536"/>
+<area shape="rect" id="node15" href="$classdftefe_1_1utils_1_1Profiler.html#afda087a6f655920025ef6b75d060d7e0" title=" " alt="" coords="391,560,521,600"/>
+<area shape="rect" id="node16" href="$classdftefe_1_1utils_1_1Profiler.html#a071c5095adbb938a0d49b3b331967602" title=" " alt="" coords="391,624,521,664"/>
+<area shape="rect" id="node17" href="$classdftefe_1_1utils_1_1Profiler.html#a3830e587e3f0989aa1020ea760b44e73" title=" " alt="" coords="391,688,521,728"/>
+<area shape="rect" id="node18" href="$classdftefe_1_1utils_1_1ConditionalOStream.html#a53f4faa0e39e019a0f329bd39cfa8cc2" title="Function to set the condition for printing to the output stream associated with this object." alt="" coords="379,752,533,792"/>
+<area shape="rect" id="node19" href="$classdftefe_1_1quadrature_1_1QuadratureValuesContainer.html#a0a923d979e0dc4579aade6765b7aa9b5" title=" " alt="" coords="363,841,549,895"/>
+<area shape="rect" id="node20" href="$namespacedftefe_1_1linearAlgebra_1_1blasLapack.html#a32eab833b677d3c485d07a7181c65315" title=" " alt="" coords="355,317,557,357"/>
+<area shape="rect" id="node6" href="$classdftefe_1_1basis_1_1EnrichmentDataEvalKernels.html#a5917217d9c806d270adaba746dded6da" title=" " alt="" coords="656,30,863,85"/>
+<area shape="rect" id="node9" href="$classdftefe_1_1quadrature_1_1QuadratureRuleContainer.html#ae1596eebce12f8276e1d448126f23240" title="A function to returns the number of quadrature points in cell corresponding to the the cell Id." alt="" coords="673,187,846,242"/>
+<area shape="rect" id="node10" href="$classdftefe_1_1quadrature_1_1QuadratureRuleContainer.html#a6f14f6de7f112dca104bf7e773373958" title="Returns the number of cells in the quadrature container." alt="" coords="673,109,846,163"/>
+<area shape="rect" id="node7" href="$classdftefe_1_1linearAlgebra_1_1LinAlgOpContext.html#a1d5be9e9b46728a667284c896fb00118" title=" " alt="" coords="911,69,1159,109"/>
+<area shape="rect" id="node8" href="$classdftefe_1_1linearAlgebra_1_1LinAlgOpContext.html#a93f63a24e0a678ced57588928cbd884b" title=" " alt="" coords="919,5,1151,45"/>
+<area shape="rect" id="node21" href="$classdftefe_1_1linearAlgebra_1_1blasLapack_1_1CopyKernelTwoValueTypes.html#abdfd504f8c22bae1220ede8d99f34089" title=" " alt="" coords="661,318,858,373"/>
+</map>

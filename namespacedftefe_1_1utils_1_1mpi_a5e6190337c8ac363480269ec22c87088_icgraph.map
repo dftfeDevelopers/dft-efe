@@ -1,0 +1,35 @@
+<map id="dftefe::utils::mpi::MPIErrIsSuccessAndMsg" name="dftefe::utils::mpi::MPIErrIsSuccessAndMsg">
+<area shape="rect" id="node1" title=" " alt="" coords="787,955,965,995"/>
+<area shape="rect" id="node2" href="$classdftefe_1_1ksdft_1_1MixingScheme.html#a934a4577325f244f9a67eca0d07d04c1" title="This function is used to add the mixing variables and its corresponding JxW values For dependent vari..." alt="" coords="519,37,700,77"/>
+<area shape="rect" id="node5" href="$classdftefe_1_1ksdft_1_1MixingScheme.html#aec98f46c0e34ff8ac5e821a41062923d" title="Adds to the residual history." alt="" coords="519,102,700,157"/>
+<area shape="rect" id="node6" href="$classdftefe_1_1basis_1_1OrthoEFEOverlapInverseOpContextGLL.html#a623d7eddf250f7b027e4c7e2967400cb" title=" " alt="" coords="510,181,709,221"/>
+<area shape="rect" id="node7" href="$classdftefe_1_1basis_1_1OrthoEFEOverlapOperatorContext.html#a8f18379728c0217f62847973c015bf64" title="Apply AX = B where A is the discretized matrix, X is the operand and B is the result." alt="" coords="510,245,709,285"/>
+<area shape="rect" id="node8" href="$classdftefe_1_1ksdft_1_1MixingScheme.html#a14991bdb10c6660e4d3df0d8a0f97435" title="Computes the adaptive mixing parameter." alt="" coords="499,310,720,365"/>
+<area shape="rect" id="node9" href="$classdftefe_1_1linearAlgebra_1_1OrthonormalizationFunctions.html#ae5b7e9dd23c9a8612b2b025b581f4a30" title=" " alt="" coords="513,389,706,443"/>
+<area shape="rect" id="node10" href="$classdftefe_1_1linearAlgebra_1_1RayleighRitzEigenSolver.html#a6a35a581793db77a6e23e79e1ee7febb" title=" " alt="" coords="525,467,693,522"/>
+<area shape="rect" id="node11" href="$classdftefe_1_1linearAlgebra_1_1ScaLAPACKMatrix.html#aa69f8a97456e4902e54040c4dfccb1fa" title=" " alt="" coords="514,547,705,587"/>
+<area shape="rect" id="node13" href="$namespacedftefe_1_1linearAlgebra_1_1OrthonormalizationFunctionsInternal.html#aae815cd933c3a9139cc222a4a69d0cb9" title=" " alt="" coords="484,611,735,680"/>
+<area shape="rect" id="node14" href="$namespacedftefe_1_1basis_1_1AtomIdsPartitionInternal.html#ad20fd4d8c68485b3050ce6b84240be4e" title=" " alt="" coords="512,704,707,744"/>
+<area shape="rect" id="node15" href="$namespacedftefe_1_1basis_1_1AtomIdsPartitionInternal.html#ab4ae800510e7eef605542bd5752dcfc4" title=" " alt="" coords="500,768,719,808"/>
+<area shape="rect" id="node16" href="$namespacedftefe_1_1basis_1_1EnrichmentIdsPartitionInternal.html#a0d4d1f1b5a29335979733b0090e64398" title=" " alt="" coords="503,833,716,887"/>
+<area shape="rect" id="node17" href="$classdftefe_1_1linearAlgebra_1_1OrthonormalizationFunctions.html#ad9151d4b00499163e318d104ee638dd8" title=" " alt="" coords="513,911,706,966"/>
+<area shape="rect" id="node18" href="$classdftefe_1_1linearAlgebra_1_1MultiVector.html#ab0611d71cc776ed6dcf6e55ab490c2ef" title="Constructor for a special case of distributed MultiVector where none none of the processors have any ..." alt="" coords="526,991,693,1031"/>
+<area shape="rect" id="node19" href="$classdftefe_1_1linearAlgebra_1_1MultiVector.html#a4fd1b5cd851ebfd43f68fecb1dbca391" title="Constructor for a distributed MultiVector based on an input MPIPatternP2P." alt="" coords="499,1055,719,1110"/>
+<area shape="rect" id="node20" href="$namespacedftefe_1_1utils_1_1mpi.html#ac40891c1391c37ff7429e15a13806b90" title=" " alt="" coords="540,1249,679,1289"/>
+<area shape="rect" id="node24" href="$classdftefe_1_1basis_1_1OrthoEFEOverlapInverseOpContextGLL.html#a41d13bfdd3ee7fcdddfaa539df5284dc" title=" " alt="" coords="480,1365,739,1419"/>
+<area shape="rect" id="node25" href="$classdftefe_1_1basis_1_1OrthoEFEOverlapOperatorContext.html#a5939179aaaad0c8ab9e485585dc7845b" title="Constructor where the classical dofs have a different quadrature rule than that of the enrichment dof..." alt="" coords="498,1443,721,1498"/>
+<area shape="rect" id="node26" href="$classdftefe_1_1linearAlgebra_1_1ProcessGrid.html#ac8e3684fb726201ea2cee609eea691cd" title=" " alt="" coords="237,1107,415,1147"/>
+<area shape="rect" id="node27" href="$classdftefe_1_1quadrature_1_1QuadratureRuleContainer.html#abe1c7b1dacd4cd250dafbcc30796beb9" title="Constructor for creating a subdivided quadrature rule in each cell based user&#45;defined functions and a..." alt="" coords="523,1522,696,1577"/>
+<area shape="rect" id="node28" href="$classdftefe_1_1linearAlgebra_1_1LinearAlgebraProfiler.html#ab9d8df202d1150da4a14cefbfb20ea1d" title=" " alt="" coords="535,1601,683,1655"/>
+<area shape="rect" id="node29" href="$namespacedftefe_1_1basis_1_1AtomIdsPartitionInternal.html#a8370fe5bf3e3ad403e2dda86c6df8d5b" title=" " alt="" coords="512,1680,707,1720"/>
+<area shape="rect" id="node30" href="$classdftefe_1_1linearAlgebra_1_1ProcessGrid.html#a322df1be0b38f4fad7f7f0811f5cb441" title=" " alt="" coords="533,1745,685,1799"/>
+<area shape="rect" id="node31" href="$namespacedftefe_1_1linearAlgebra_1_1elpaScalaOpInternal.html#ac912b70dcbc48706d4483fc584eb8266" title="Contains internal functions used in linearAlgebra." alt="" coords="225,1343,427,1398"/>
+<area shape="rect" id="node32" href="$namespacedftefe_1_1utils_1_1mpi.html#a424109a64bb1646ea1a9ee005309a574" title=" " alt="" coords="549,1185,670,1225"/>
+<area shape="rect" id="node33" href="$classdftefe_1_1linearAlgebra_1_1Vector.html#a75edd38ff51e10b3840664058d686788" title="Constructor for a special case of distributed Vector where none none of the processors have any ghost..." alt="" coords="541,1824,677,1864"/>
+<area shape="rect" id="node3" href="$classdftefe_1_1ksdft_1_1KohnShamDFT.html#a15ac5194e812e5a1e0300758349d30fd" title=" " alt="" coords="233,69,419,109"/>
+<area shape="rect" id="node4" href="$classdftefe_1_1ksdft_1_1RDM1Mixing.html#a6cf68af9191dcb112649f5c8ee1f2136" title="Constructor." alt="" coords="241,5,411,45"/>
+<area shape="rect" id="node12" href="$classdftefe_1_1linearAlgebra_1_1RayleighRitzEigenSolver.html#a5ef89e3aff712b50a48d8a5ed40fb593" title=" " alt="" coords="242,539,410,594"/>
+<area shape="rect" id="node21" href="$namespacedftefe_1_1linearAlgebra_1_1elpaScalaOpInternal.html#ae7769bed93a358877ca69807153d8af4" title="Wrapper function to create a two dimensional processor grid for a rectangular matrix in ScaLAPACKMatr..." alt="" coords="223,1171,429,1240"/>
+<area shape="rect" id="node22" href="$namespacedftefe_1_1linearAlgebra_1_1elpaScalaOpInternal.html#a139affd9d7b42810542ca79fb249048c" title="Wrapper function to create a two dimensional processor grid for a square matrix in ScaLAPACKMatrix st..." alt="" coords="220,1265,432,1319"/>
+<area shape="rect" id="node23" href="$classdftefe_1_1linearAlgebra_1_1ElpaScalapackManager.html#a4d092250fea378cdedbb674c4008d9d9" title=" " alt="" coords="5,1305,172,1359"/>
+</map>

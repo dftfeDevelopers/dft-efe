@@ -1,0 +1,4 @@
+<map id="dftefe::utils::flatten" name="dftefe::utils::flatten">
+<area shape="rect" id="node1" title="Flatten a vector of points into a contiguous coordinate array. Output layout: [x0,..." alt="" coords="227,20,353,45"/>
+<area shape="rect" id="node2" href="$classdftefe_1_1quadrature_1_1QuadratureRuleContainer.html#a6e9cfbdc335fa04022b78f843c5b05a7" title="Constructor for assigning each cell with a common quadrature rule." alt="" coords="5,5,179,60"/>
+</map>

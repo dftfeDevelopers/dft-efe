@@ -1,0 +1,7 @@
+<map id="dftefe::basis::EFEBasisDataStorage&lt; ValueTypeBasisData, memorySpace &gt;" name="dftefe::basis::EFEBasisDataStorage&lt; ValueTypeBasisData, memorySpace &gt;">
+<area shape="rect" id="node1" title="An abstract class to store and access data for a given basis, such as the basis function values on a ..." alt="" coords="507,45,709,100"/>
+<area shape="rect" id="node4" href="$classdftefe_1_1basis_1_1EFEBDSOnTheFlyComputeDealii.html" title="An abstract class to store and access data for a given basis, such as the basis function values on a ..." alt="" coords="757,5,1067,60"/>
+<area shape="rect" id="node5" href="$classdftefe_1_1basis_1_1EFEBasisDataStorageDealii.html" title="An abstract class to store and access data for enriched fe basis, such as the basis function values o..." alt="" coords="775,84,1049,139"/>
+<area shape="rect" id="node2" href="$classdftefe_1_1basis_1_1FEBasisDataStorage.html" title="An abstract class to store and access data for a given basis, such as the basis function values on a ..." alt="" coords="256,45,459,100"/>
+<area shape="rect" id="node3" href="$classdftefe_1_1basis_1_1BasisDataStorage.html" title="An abstract class to store and access data for a given basis, such as the basis function values on a ..." alt="" coords="5,45,208,100"/>
+</map>
