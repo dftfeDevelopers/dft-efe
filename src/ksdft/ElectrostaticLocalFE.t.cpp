@@ -177,7 +177,8 @@ namespace dftefe
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
                         linAlgOpContext,
         const size_type maxCellBlock,
-        bool            useDealiiMatrixFreePoissonSolve)
+        bool            useDealiiMatrixFreePoissonSolve,
+        SpinMode        spinMode)
       : d_atomCharges(atomCharges)
       , d_numAtoms(atomCoordinates.size())
       , d_smearedChargeRadius(smearedChargeRadius)
@@ -201,6 +202,11 @@ namespace dftefe
       , d_linAlgOpContextHost(
           linearAlgebra::LinAlgOpContextDefaults::LINALG_OP_CONTXT_HOST)
       , d_potentialHamQuadMemspace(nullptr)
+      , d_S((spinMode == SpinMode::Unpolarized) ? 1 : 2)
+      , d_layout((spinMode == SpinMode::NonCollinear)
+                   ? SpinStorageLayout::SpinFastest
+                   : SpinStorageLayout::DofFastest)
+      , d_basisOverlapSize(0)
     {
       int rank;
       utils::mpi::MPICommRank(
@@ -273,7 +279,8 @@ namespace dftefe
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
                         linAlgOpContext,
         const size_type maxCellBlock,
-        bool            useDealiiMatrixFreePoissonSolve)
+        bool            useDealiiMatrixFreePoissonSolve,
+        SpinMode        spinMode)
       : d_atomCharges(atomCharges)
       , d_numAtoms(atomCoordinates.size())
       , d_smearedChargeRadius(smearedChargeRadius)
@@ -295,6 +302,11 @@ namespace dftefe
       , d_isCalculateIntegralDeltaRho(false)
       , d_isTCIEnabled(false)
       , d_potentialHamQuadMemspace(nullptr)
+      , d_S((spinMode == SpinMode::Unpolarized) ? 1 : 2)
+      , d_layout((spinMode == SpinMode::NonCollinear)
+                   ? SpinStorageLayout::SpinFastest
+                   : SpinStorageLayout::DofFastest)
+      , d_basisOverlapSize(0)
     {
       int rank;
       utils::mpi::MPICommRank(
@@ -372,7 +384,8 @@ namespace dftefe
                                  std::shared_ptr<atoms::AtomTCIASpline>>
                    fieldToTCIASplineMap,
         const bool useDealiiMatrixFreePoissonSolve,
-        const bool calculateIntegralDeltaRho)
+        const bool calculateIntegralDeltaRho,
+        SpinMode   spinMode)
       : d_atomCoordinates(atomCoordinates)
       , d_atomCharges(atomCharges)
       , d_numAtoms(atomCoordinates.size())
@@ -398,6 +411,11 @@ namespace dftefe
       , d_isTCIEnabled(!d_fieldToTCIASplineMap.empty() ? true : false)
       , d_integralAtRho(0.)
       , d_potentialHamQuadMemspace(nullptr)
+      , d_S((spinMode == SpinMode::Unpolarized) ? 1 : 2)
+      , d_layout((spinMode == SpinMode::NonCollinear)
+                   ? SpinStorageLayout::SpinFastest
+                   : SpinStorageLayout::DofFastest)
+      , d_basisOverlapSize(0)
     {
       int rank;
       utils::mpi::MPICommRank(
@@ -591,6 +609,24 @@ namespace dftefe
                                                   dim>>(feBDHamiltonian,
                                                         d_maxCellBlock,
                                                         d_numComponents);
+
+      {
+        auto feBDH = std::dynamic_pointer_cast<
+          const basis::FEBasisDofHandler<ValueTypeBasisCoeff, memorySpace, dim>>(
+          feBDHamiltonian->getBasisDofHandler());
+        utils::throwException(
+          feBDH != nullptr,
+          "Could not cast BasisDofHandler to FEBasisDofHandler in "
+          "ElectrostaticLocalFE::reinitBasis");
+        const size_type nCells = feBDH->nLocallyOwnedCells();
+        d_numCellDofs.resize(nCells);
+        d_basisOverlapSize = 0;
+        for (size_type c = 0; c < nCells; ++c)
+          {
+            d_numCellDofs[c]    = feBDH->nCellDofs(c);
+            d_basisOverlapSize += d_numCellDofs[c] * d_numCellDofs[c];
+          }
+      }
 
       std::shared_ptr<const quadrature::QuadratureRuleContainer>
         quadRuleContainerElec =
@@ -902,6 +938,24 @@ namespace dftefe
                                                         d_maxCellBlock,
                                                         d_numComponents);
 
+      {
+        auto feBDH = std::dynamic_pointer_cast<
+          const basis::FEBasisDofHandler<ValueTypeBasisCoeff, memorySpace, dim>>(
+          feBDHamiltonian->getBasisDofHandler());
+        utils::throwException(
+          feBDH != nullptr,
+          "Could not cast BasisDofHandler to FEBasisDofHandler in "
+          "ElectrostaticLocalFE::reinitBasis");
+        const size_type nCells = feBDH->nLocallyOwnedCells();
+        d_numCellDofs.resize(nCells);
+        d_basisOverlapSize = 0;
+        for (size_type c = 0; c < nCells; ++c)
+          {
+            d_numCellDofs[c]    = feBDH->nCellDofs(c);
+            d_basisOverlapSize += d_numCellDofs[c] * d_numCellDofs[c];
+          }
+      }
+
       std::shared_ptr<const quadrature::QuadratureRuleContainer>
         quadRuleContainerElec =
           d_feBDElectronicChargeRhs->getQuadratureRuleContainer();
@@ -1179,6 +1233,24 @@ namespace dftefe
                                                   dim>>(feBDHamiltonian,
                                                         d_maxCellBlock,
                                                         d_numComponents);
+
+      {
+        auto feBDH = std::dynamic_pointer_cast<
+          const basis::FEBasisDofHandler<ValueTypeBasisCoeff, memorySpace, dim>>(
+          feBDHamiltonian->getBasisDofHandler());
+        utils::throwException(
+          feBDH != nullptr,
+          "Could not cast BasisDofHandler to FEBasisDofHandler in "
+          "ElectrostaticLocalFE::reinitBasis");
+        const size_type nCells = feBDH->nLocallyOwnedCells();
+        d_numCellDofs.resize(nCells);
+        d_basisOverlapSize = 0;
+        for (size_type c = 0; c < nCells; ++c)
+          {
+            d_numCellDofs[c]    = feBDH->nCellDofs(c);
+            d_basisOverlapSize += d_numCellDofs[c] * d_numCellDofs[c];
+          }
+      }
 
       std::shared_ptr<const quadrature::QuadratureRuleContainer>
         quadRuleContainerElec =
@@ -2064,11 +2136,32 @@ namespace dftefe
       d_feBasisOpHamiltonian->computeFEMatrices(
         basis::realspace::LinearLocalOp::IDENTITY,
         basis::realspace::VectorMathOp::MULT,
-        *d_potentialHamQuadMemspace,
+        std::vector{*d_potentialHamQuadMemspace},
         basis::realspace::VectorMathOp::MULT,
         basis::realspace::LinearLocalOp::IDENTITY,
-        cellWiseStorage,
+        d_elecCellWiseTemp,
         *d_linAlgOpContext);
+
+      using OperatorType = typename Storage::value_type;
+      cellWiseStorage.resize(d_S * d_S * d_basisOverlapSize, OperatorType(0));
+
+      HamiltonianSpinBlockCopyKernels<OperatorType, memorySpace>::copyIntoBlock(
+        d_elecCellWiseTemp,
+        cellWiseStorage,
+        d_S,
+        d_layout,
+        std::vector<std::pair<size_type, size_type>>{{0, 0}},
+        d_numCellDofs,
+        *d_linAlgOpContext);
+      if (d_S > 1)
+        HamiltonianSpinBlockCopyKernels<OperatorType, memorySpace>::
+          copyIntoBlock(d_elecCellWiseTemp,
+                        cellWiseStorage,
+                        d_S,
+                        d_layout,
+                        std::vector<std::pair<size_type, size_type>>{{1, 1}},
+                        d_numCellDofs,
+                        *d_linAlgOpContext);
     }
 
     template <typename ValueTypeBasisData,
@@ -2679,13 +2772,13 @@ namespace dftefe
               typename ValueTypeWaveFnBasisData,
               utils::MemorySpace memorySpace,
               size_type          dim>
-    const quadrature::QuadratureValuesContainer<
+    std::vector<quadrature::QuadratureValuesContainer<
       typename ElectrostaticFE<ValueTypeBasisData,
                                ValueTypeBasisCoeff,
                                ValueTypeWaveFnBasisData,
                                memorySpace,
                                dim>::ValueType,
-      memorySpace> &
+      memorySpace>>
     ElectrostaticLocalFE<ValueTypeBasisData,
                          ValueTypeBasisCoeff,
                          ValueTypeWaveFnBasisData,
@@ -2716,7 +2809,7 @@ namespace dftefe
                           d_potentialHamQuadMemspace->data(),
                           d_scratchPotHamQuad->data());
 
-      return *d_potentialHamQuadMemspace;
+      return {*d_potentialHamQuadMemspace};
     }
 
     template <typename ValueTypeBasisData,

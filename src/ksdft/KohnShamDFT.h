@@ -41,6 +41,8 @@
 #include <ksdft/RDM1Mixing.h>
 #include <utils/Profiler.h>
 #include <linearAlgebra/ScalapackTemplates.h>
+#include <linearAlgebra/MultiVectorProductSpace.h>
+#include <linearAlgebra/MultiVectorProductSpaceBlocked.h>
 
 namespace dftefe
 {
@@ -156,7 +158,9 @@ namespace dftefe
           linearAlgebra::IdentityOperatorContext<ValueTypeOperator,
                                                  ValueTypeOperand,
                                                  memorySpace>(),
-        bool isResidualChebyshevFilter = true);
+        bool                        isResidualChebyshevFilter = true,
+        const std::vector<double> & atomMagMomentsVec         = {},
+        SpinMode                    spinMode                   = SpinMode::Unpolarized);
 
 
       // used if numerical poisson solve vself canellation route taken
@@ -246,7 +250,9 @@ namespace dftefe
           linearAlgebra::IdentityOperatorContext<ValueTypeOperator,
                                                  ValueTypeOperand,
                                                  memorySpace>(),
-        bool isResidualChebyshevFilter = true);
+        bool                        isResidualChebyshevFilter = true,
+        const std::vector<double> & atomMagMomentsVec         = {},
+        SpinMode                    spinMode                   = SpinMode::Unpolarized);
 
       // used if delta rho approach is taken with phi total from 1D KS solve
       // with analytical vself energy cancellation
@@ -330,9 +336,11 @@ namespace dftefe
           linearAlgebra::IdentityOperatorContext<ValueTypeOperator,
                                                  ValueTypeOperand,
                                                  memorySpace>(),
-        bool isResidualChebyshevFilter = true,
+        bool                         isResidualChebyshevFilter = true,
         /* TCI related info */
-        const atoms::TCIADataParams &params = TCIADataDefaults::TCIA_PARAMS);
+        const atoms::TCIADataParams &params            = TCIADataDefaults::TCIA_PARAMS,
+        const std::vector<double> &  atomMagMomentsVec = {},
+        SpinMode                     spinMode           = SpinMode::Unpolarized);
 
       //// used if analytical vself canellation route taken with PSP
       KohnShamDFT(
@@ -418,7 +426,9 @@ namespace dftefe
           linearAlgebra::IdentityOperatorContext<ValueTypeOperator,
                                                  ValueTypeOperand,
                                                  memorySpace>(),
-        bool isResidualChebyshevFilter = true);
+        bool                        isResidualChebyshevFilter = true,
+        const std::vector<double> & atomMagMomentsVec         = {},
+        SpinMode                    spinMode                   = SpinMode::Unpolarized);
 
 
       // used if delta rho with PSP approach is taken with phi total from 1D KS
@@ -507,9 +517,11 @@ namespace dftefe
           linearAlgebra::IdentityOperatorContext<ValueTypeOperator,
                                                  ValueTypeOperand,
                                                  memorySpace>(),
-        bool isResidualChebyshevFilter = true,
+        bool isResidualChebyshevFilter = false,
         /* TCI related info */
-        const atoms::TCIADataParams &params = TCIADataDefaults::TCIA_PARAMS);
+        const atoms::TCIADataParams &params           = TCIADataDefaults::TCIA_PARAMS,
+        const std::vector<double> &  atomMagMomentsVec = {},
+        SpinMode                     spinMode           = SpinMode::Unpolarized);
 
       ~KohnShamDFT();
 
@@ -525,7 +537,47 @@ namespace dftefe
       void
       printTotalInScopeTimings();
 
+      const std::shared_ptr<KohnShamOperatorContextFE<ValueTypeElectrostaticsCoeff,
+                                                      ValueTypeElectrostaticsBasis,
+                                                      ValueTypeWaveFunctionCoeff,
+                                                      ValueTypeWaveFunctionBasis,
+                                                      memorySpace,
+                                                      dim>> &
+      getHamiltonianOperator() const
+      {
+        return d_hamitonianOperator;
+      }
+
+      const std::shared_ptr<KineticFE<ValueTypeWaveFunctionBasis,
+                                      ValueTypeWaveFunctionCoeff,
+                                      memorySpace,
+                                      dim>> &
+      getHamitonianKin() const
+      {
+        return d_hamitonianKin;
+      }
+
+      const std::shared_ptr<ElectrostaticFE<ValueTypeElectrostaticsBasis,
+                                            ValueTypeElectrostaticsCoeff,
+                                            ValueTypeWaveFunctionBasis,
+                                            memorySpace,
+                                            dim>> &
+      getHamitonianElec() const
+      {
+        return d_hamitonianElec;
+      }
+
+      const std::shared_ptr<ExchangeCorrelationFE<ValueTypeWaveFunctionBasis,
+                                                  ValueTypeWaveFunctionCoeff,
+                                                  memorySpace,
+                                                  dim>> &
+      getHamitonianXC() const
+      {
+        return d_hamitonianXC;
+      }
+
     private:
+      SpinMode              d_spinMode;
       const size_type       d_numWantedEigenvalues;
       const double          d_SCFTol;
       std::vector<RealType> d_jxwDataHost;

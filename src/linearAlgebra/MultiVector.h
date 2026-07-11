@@ -153,7 +153,7 @@ namespace dftefe
       /**
        * @brief Default Destructor
        */
-      ~MultiVector() = default;
+      virtual ~MultiVector() = default;
 
       /**
        * @brief Constructor for \b serial MultiVector with vector size, number of vectors and initial value arguments
@@ -345,7 +345,7 @@ namespace dftefe
        * @param[in] initVal Initial value of the MultiVector
        */
       MultiVector(const MultiVector &u,
-                  const ValueType    initVal = utils::Types<ValueType>::zero);
+                  const ValueType    initVal);
 
       /**
        * @brief Move constructor

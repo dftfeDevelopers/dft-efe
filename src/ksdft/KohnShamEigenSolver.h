@@ -37,6 +37,7 @@
 #include <utils/ConditionalOStream.h>
 #include <utils/Profiler.h>
 #include <linearAlgebra/MultivectorScratch.h>
+#include <ksdft/KSAttributes.h>
 
 namespace dftefe
 {
@@ -113,8 +114,9 @@ namespace dftefe
         const bool                           isGHEP = true,
         linearAlgebra::OrthogonalizationType orthoType =
           linearAlgebra::OrthogonalizationType::CHOLESKY_GRAMSCHMIDT,
-        bool storeIntermediateSubspaces  = false,
-        bool useSameScratchInEigenSolver = true);
+        bool     storeIntermediateSubspaces  = false,
+        bool     useSameScratchInEigenSolver = true,
+        SpinMode spinMode                    = SpinMode::Unpolarized);
 
       /**
        *@brief Default Destructor
@@ -190,6 +192,8 @@ namespace dftefe
           &              kohnShamWaveFunctions,
         const OpContext &M);
 
+      SpinMode        d_spinMode;
+      const size_type       d_S;
       double          d_smearingTemperature;
       double          d_fermiEnergyTolerance;
       double          d_fracOccupancyTolerance;

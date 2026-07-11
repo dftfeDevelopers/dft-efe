@@ -29,6 +29,7 @@
 #include <utils/MemorySpaceType.h>
 #include <linearAlgebra/MultiVector.h>
 #include <quadrature/QuadratureValuesContainer.h>
+#include <ksdft/KSAttributes.h>
 
 namespace dftefe
 {
@@ -51,7 +52,8 @@ namespace dftefe
         std::shared_ptr<const quadrature::QuadratureRuleContainer>
                                                      quadRuleContainer,
         RealType *                                   rhoBatch,
-        linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext);
+        linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext,
+        const SpinMode                               spinMode);
 
       static void
       computeGradRhoInBatch(
@@ -64,7 +66,8 @@ namespace dftefe
         std::shared_ptr<const quadrature::QuadratureRuleContainer>
                                                      quadRuleContainer,
         RealType *                                   gradRhoBatch,
-        linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext);
+        linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext,
+        const SpinMode                               spinMode);
     }; // end of class DensityCalculatorKernels
 
 
@@ -87,7 +90,8 @@ namespace dftefe
                   quadRuleContainer,
         RealType *rhoBatch,
         linearAlgebra::LinAlgOpContext<utils::MemorySpace::DEVICE>
-          &linAlgOpContext);
+          &      linAlgOpContext,
+        const SpinMode spinMode);
 
       static void
       computeGradRhoInBatch(
@@ -101,7 +105,8 @@ namespace dftefe
                   quadRuleContainer,
         RealType *gradRhoBatch,
         linearAlgebra::LinAlgOpContext<utils::MemorySpace::DEVICE>
-          &linAlgOpContext);
+          &      linAlgOpContext,
+        const SpinMode spinMode);
     }; // end of class DensityCalculatorKernels
 #endif
   } // namespace ksdft

@@ -27,6 +27,7 @@
 #include <utils/MPITypes.h>
 #include <utils/MPIWrapper.h>
 #include <cmath>
+#include <string>
 
 namespace dftefe
 {
@@ -39,6 +40,8 @@ namespace dftefe
       const std::vector<RealType> &     jxwDataHost,
       const double                      mixingParameter,
       const bool                        isAdaptiveMixingParameter,
+      const SpinMode                    spinMode,
+      const std::string &               xcType,
       std::shared_ptr<linearAlgebra::LinAlgOpContext<utils::MemorySpace::HOST>>
                       linAlgOpContextHost,
       const MPI_Comm &mpiCommDomain)
@@ -55,6 +58,60 @@ namespace dftefe
                                        true,
                                        mixingParameter,
                                        isAdaptiveMixingParameter);
+      if (spinMode != SpinMode::Unpolarized)
+        {
+          d_mixingScheme.addMixingVariable(mixingVariable::magZ,
+                                           jxwStorage,
+                                           true,
+                                           mixingParameter,
+                                           isAdaptiveMixingParameter);
+          if (spinMode == SpinMode::NonCollinear)
+            {
+              d_mixingScheme.addMixingVariable(mixingVariable::magY,
+                                               jxwStorage,
+                                               true,
+                                               mixingParameter,
+                                               isAdaptiveMixingParameter);
+              d_mixingScheme.addMixingVariable(mixingVariable::magX,
+                                               jxwStorage,
+                                               true,
+                                               mixingParameter,
+                                               isAdaptiveMixingParameter);
+            }
+        }
+      if (xcType.rfind("GGA", 0) == 0)
+        {
+          d_mixingScheme.addMixingVariable(
+            mixingVariable::gradRho,
+            utils::MemoryStorage<RealType, utils::MemorySpace::HOST>(),
+            false,
+            mixingParameter,
+            isAdaptiveMixingParameter);
+          if (spinMode != SpinMode::Unpolarized)
+            {
+              d_mixingScheme.addMixingVariable(
+                mixingVariable::gradMagZ,
+                utils::MemoryStorage<RealType, utils::MemorySpace::HOST>(),
+                false,
+                mixingParameter,
+                isAdaptiveMixingParameter);
+              if (spinMode == SpinMode::NonCollinear)
+                {
+                  d_mixingScheme.addMixingVariable(
+                    mixingVariable::gradMagY,
+                    utils::MemoryStorage<RealType, utils::MemorySpace::HOST>(),
+                    false,
+                    mixingParameter,
+                    isAdaptiveMixingParameter);
+                  d_mixingScheme.addMixingVariable(
+                    mixingVariable::gradMagX,
+                    utils::MemoryStorage<RealType, utils::MemorySpace::HOST>(),
+                    false,
+                    mixingParameter,
+                    isAdaptiveMixingParameter);
+                }
+            }
+        }
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
@@ -85,9 +142,20 @@ namespace dftefe
         rdm1 != nullptr,
         "RDM1Mixing::mix() called but stored RDM1 has expired or setRDM1() was not called.");
       dftefe::utils::throwException<dftefe::utils::InvalidArgument>(
-        !rdm1->isSpinPolarized() && !rdm1->isNonCollinear() && !rdm1->isSOC(),
-        "RDM1Mixing::mix() only supports SpinMode::Unpolarized. "
-        "Spin-polarized, non-collinear, and SOC mixing are not yet implemented.");
+        !rdm1->isSOC(),
+        "RDM1Mixing::mix() does not support SOC.");
+
+      const SpinMode  sm    = rdm1->spinMode();
+      const size_type ncomp = (sm == SpinMode::Unpolarized) ? 1 :
+                              (sm == SpinMode::Collinear)   ? 2 : 4;
+      const mixingVariable valVars[4]  = {mixingVariable::rho,
+                                          mixingVariable::magZ,
+                                          mixingVariable::magY,
+                                          mixingVariable::magX};
+      const mixingVariable gradVars[4] = {mixingVariable::gradRho,
+                                          mixingVariable::gradMagZ,
+                                          mixingVariable::gradMagY,
+                                          mixingVariable::gradMagX};
 
       // Get output density (and gradient for GGA) from the stored rdm1.
       std::unordered_map<DensityDescrAttr, AttrStorage> densOutAttr;
@@ -100,72 +168,70 @@ namespace dftefe
       AttrStorage &   densOut = densOutAttr.at(DensityDescrAttr::Val);
       const size_type nq      = densOut[0].nQuadraturePoints();
 
-      if (d_densityInAttrVals.empty())
+      // density components: residual = densOut - in; update history.
+      for (size_type ic = 0; ic < ncomp; ++ic)
         {
-          // First call: adopt densOut (and gradDensOut) directly.
-          d_densityInAttrVals = densOut;
-          if (d_mixingScheme.hasVariable(mixingVariable::gradRho))
-            d_gradDensityInAttrVals = densOutAttr.at(DensityDescrAttr::Grad);
-        }
-      else
-        {
-          // rho: residual = densOut - in; update history; mix.
-          utils::MemoryStorage<double, utils::MemorySpace::HOST> rhoResidual(
-            nq, 0.0);
+          utils::MemoryStorage<double, utils::MemorySpace::HOST> residual(nq,
+                                                                          0.0);
           {
-            const double *outPtr = densOut[0].data();
-            const double *inPtr  = d_densityInAttrVals[0].data();
-            double *      resPtr = rhoResidual.data();
+            const double *outPtr = densOut[ic].data();
+            const double *inPtr  = d_densityInAttrVals[ic].data();
+            double *      resPtr = residual.data();
             for (size_type i = 0; i < nq; ++i)
               resPtr[i] = outPtr[i] - inPtr[i];
           }
-          d_mixingScheme.template addVariableToInHist<utils::MemorySpace::HOST>(
-            mixingVariable::rho, d_densityInAttrVals[0].data(), nq);
+          d_mixingScheme
+            .template addVariableToInHist<utils::MemorySpace::HOST>(
+              valVars[ic], d_densityInAttrVals[ic].data(), nq);
           d_mixingScheme
             .template addVariableToResidualHist<utils::MemorySpace::HOST>(
-              mixingVariable::rho, rhoResidual.data(), nq);
+              valVars[ic], residual.data(), nq);
+        }
 
-          // gradRho: same pattern, dependent variable (same coefficients as
-          // rho).
-          if (d_mixingScheme.hasVariable(mixingVariable::gradRho))
+      // grad density components: dependent variables (empty weights).
+      if (d_mixingScheme.hasVariable(mixingVariable::gradRho))
+        {
+          AttrStorage &gradDensOut = densOutAttr.at(DensityDescrAttr::Grad);
+          for (size_type ic = 0; ic < ncomp; ++ic)
             {
-              AttrStorage &gradDensOut = densOutAttr.at(DensityDescrAttr::Grad);
-              const size_type nGrad    = gradDensOut[0].nEntries();
+              const size_type nGrad = gradDensOut[ic].nEntries();
               utils::MemoryStorage<double, utils::MemorySpace::HOST>
                 gradResidual(nGrad, 0.0);
               {
-                const double *outPtr = gradDensOut[0].data();
-                const double *inPtr  = d_gradDensityInAttrVals[0].data();
+                const double *outPtr = gradDensOut[ic].data();
+                const double *inPtr  = d_gradDensityInAttrVals[ic].data();
                 double *      resPtr = gradResidual.data();
                 for (size_type i = 0; i < nGrad; ++i)
                   resPtr[i] = outPtr[i] - inPtr[i];
               }
               d_mixingScheme
                 .template addVariableToInHist<utils::MemorySpace::HOST>(
-                  mixingVariable::gradRho,
-                  d_gradDensityInAttrVals[0].data(),
-                  nGrad);
+                  gradVars[ic], d_gradDensityInAttrVals[ic].data(), nGrad);
               d_mixingScheme
                 .template addVariableToResidualHist<utils::MemorySpace::HOST>(
-                  mixingVariable::gradRho, gradResidual.data(), nGrad);
+                  gradVars[ic], gradResidual.data(), nGrad);
             }
+        }
 
-          d_mixingScheme.popOldHistory(d_mixingHistory);
+      d_mixingScheme.popOldHistory(d_mixingHistory);
 
-          // Coefficients determined by rho residual only.
-          d_mixingScheme.computeAndersonMixingCoeff({mixingVariable::rho},
-                                                    *d_linAlgOpContextHost);
+      // Anderson coefficients from all primary density variables.
+      std::vector<mixingVariable> andersonVars(valVars, valVars + ncomp);
+      d_mixingScheme.computeAndersonMixingCoeff(andersonVars,
+                                                *d_linAlgOpContextHost);
 
-          d_mixingScheme.template mixVariable<utils::MemorySpace::HOST>(
-            mixingVariable::rho, d_densityInAttrVals[0].data(), nq);
-          if (d_mixingScheme.hasVariable(mixingVariable::gradRho))
+      for (size_type ic = 0; ic < ncomp; ++ic)
+        d_mixingScheme.template mixVariable<utils::MemorySpace::HOST>(
+          valVars[ic], d_densityInAttrVals[ic].data(), nq);
+
+      if (d_mixingScheme.hasVariable(mixingVariable::gradRho))
+        {
+          AttrStorage &gradDensOut = densOutAttr.at(DensityDescrAttr::Grad);
+          for (size_type ic = 0; ic < ncomp; ++ic)
             {
-              AttrStorage &gradDensOut = densOutAttr.at(DensityDescrAttr::Grad);
-              const size_type nGrad    = gradDensOut[0].nEntries();
+              const size_type nGrad = gradDensOut[ic].nEntries();
               d_mixingScheme.template mixVariable<utils::MemorySpace::HOST>(
-                mixingVariable::gradRho,
-                d_gradDensityInAttrVals[0].data(),
-                nGrad);
+                gradVars[ic], d_gradDensityInAttrVals[ic].data(), nGrad);
             }
         }
     }
@@ -223,25 +289,14 @@ namespace dftefe
     {}
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    bool
-    RDM1Mixing<ValueType, memorySpace>::isSpinPolarized() const
+    SpinMode
+    RDM1Mixing<ValueType, memorySpace>::spinMode() const
     {
       auto rdm1 = d_rdm1Ptr.lock();
       dftefe::utils::throwException<dftefe::utils::LogicError>(
         rdm1 != nullptr,
-        "RDM1Mixing::isSpinPolarized(): stored RDM1 has expired or setRDM1() was not called.");
-      return rdm1->isSpinPolarized();
-    }
-
-    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    bool
-    RDM1Mixing<ValueType, memorySpace>::isNonCollinear() const
-    {
-      auto rdm1 = d_rdm1Ptr.lock();
-      dftefe::utils::throwException<dftefe::utils::LogicError>(
-        rdm1 != nullptr,
-        "RDM1Mixing::isNonCollinear(): stored RDM1 has expired or setRDM1() was not called.");
-      return rdm1->isNonCollinear();
+        "RDM1Mixing::spinMode(): stored RDM1 has expired or setRDM1() was not called.");
+      return rdm1->spinMode();
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>

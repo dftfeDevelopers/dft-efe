@@ -88,11 +88,8 @@ namespace dftefe
         std::unordered_map<DensityObsAttr, std::vector<std::vector<double>>>
           &densityObsAttrVals) = 0;
 
-      virtual bool
-      isSpinPolarized() const = 0;
-
-      virtual bool
-      isNonCollinear() const = 0;
+      virtual SpinMode
+      spinMode() const = 0;
 
       virtual bool
       isSOC() const = 0;

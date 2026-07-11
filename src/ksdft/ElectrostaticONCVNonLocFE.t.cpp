@@ -26,6 +26,8 @@
 #include <ksdft/Defaults.h>
 #include <basis/FEBasisDofHandler.h>
 #include <utils/ConditionalOStream.h>
+#include <linearAlgebra/MultiVectorProductSpace.h>
+#include <linearAlgebra/MultiVectorOps.h>
 namespace dftefe
 {
   namespace ksdft
@@ -78,7 +80,8 @@ namespace dftefe
                         linAlgOpContext,
         const size_type maxCellBlock,
         const size_type maxWaveFnBlock,
-        const bool      useDealiiMatrixFreePoissonSolve)
+        const bool      useDealiiMatrixFreePoissonSolve,
+        SpinMode        spinMode)
       : d_linAlgOpContext(linAlgOpContext)
       , d_numComponents(1)
       , d_rootCout(std::cout)
@@ -88,6 +91,7 @@ namespace dftefe
       , d_maxWaveFnBlock(maxWaveFnBlock)
       , d_energy((RealType)0)
       , d_atomSphericalDataContainerPSP(atomSphericalDataContainerPSP)
+      , d_spinMode(spinMode)
     {
       int rank;
       utils::mpi::MPICommRank(d_mpiComm, &rank);
@@ -152,7 +156,8 @@ namespace dftefe
           *d_atomVLocFunction,
           linAlgOpContext,
           maxCellBlock,
-          useDealiiMatrixFreePoissonSolve);
+          useDealiiMatrixFreePoissonSolve,
+          spinMode);
     }
 
     template <typename ValueTypeBasisData,
@@ -210,7 +215,8 @@ namespace dftefe
         const std::unordered_map<std::string,
                                  std::shared_ptr<atoms::AtomTCIASpline>>
                    fieldToTCIASplineMap,
-        const bool useDealiiMatrixFreePoissonSolve)
+        const bool useDealiiMatrixFreePoissonSolve,
+        SpinMode   spinMode)
       : d_linAlgOpContext(linAlgOpContext)
       , d_numComponents(1)
       , d_rootCout(std::cout)
@@ -220,6 +226,7 @@ namespace dftefe
       , d_maxWaveFnBlock(maxWaveFnBlock)
       , d_energy((RealType)0)
       , d_atomSphericalDataContainerPSP(atomSphericalDataContainerPSP)
+      , d_spinMode(spinMode)
     {
       int rank;
       utils::mpi::MPICommRank(d_mpiComm, &rank);
@@ -297,7 +304,9 @@ namespace dftefe
           linAlgOpContext,
           maxCellBlock,
           fieldToTCIASplineMap,
-          useDealiiMatrixFreePoissonSolve);
+          useDealiiMatrixFreePoissonSolve,
+          false,
+          spinMode);
     }
 
     template <typename ValueTypeBasisData,
@@ -588,11 +597,22 @@ namespace dftefe
       d_energy = d_electrostaticLocal->getEnergy();
 
       RealType nonLocEnergy = (RealType)0;
+      const RealType spinFactor =
+        (d_spinMode == SpinMode::Unpolarized) ? (RealType)2 : (RealType)1;
       if (d_isNonLocPSP)
         {
-          if ((d_mpiPatternP2P == nullptr) ||
-              (d_mpiPatternP2P != nullptr &&
-               !d_mpiPatternP2P->isCompatible(*X.getMPIPatternP2P())))
+          const linearAlgebra::MultiVectorProductSpace<ValueTypeWaveFnCoeff,
+                                                       memorySpace> *Xps =
+            static_cast<const linearAlgebra::MultiVectorProductSpace<
+              ValueTypeWaveFnCoeff,
+              memorySpace> *>(&X);
+
+          const size_type numSpaces      = Xps->numSpaces();
+          const size_type numVecPerSpace = Xps->numVectorsPerSpace();
+          const size_type batchPerSpin   = d_maxWaveFnBlock / numSpaces;
+
+          if (d_mpiPatternP2P == nullptr ||
+              !d_mpiPatternP2P->isCompatible(*X.getMPIPatternP2P()))
             {
               d_mpiPatternP2P = X.getMPIPatternP2P();
               d_psiBatch      = std::make_shared<
@@ -607,57 +627,59 @@ namespace dftefe
                 X.getLinAlgOpContext(),
                 d_maxWaveFnBlock,
                 ValueTypeWaveFnCoeff());
-              if (X.getNumberComponents() > d_maxWaveFnBlock &&
-                  X.getNumberComponents() % d_maxWaveFnBlock != 0)
+            }
+
+          const size_type smallSpin  = numVecPerSpace % batchPerSpin;
+          const size_type smallTotal = numSpaces * smallSpin;
+          if (numVecPerSpace > batchPerSpin && smallSpin != 0)
+            {
+              if (d_psiBatchSmall == nullptr ||
+                  d_psiBatchSmall->getNumberComponents() != smallTotal)
                 {
                   d_psiBatchSmall = std::make_shared<
                     linearAlgebra::MultiVector<ValueType, memorySpace>>(
                     d_mpiPatternP2P,
                     X.getLinAlgOpContext(),
-                    X.getNumberComponents() % d_maxWaveFnBlock,
+                    smallTotal,
                     ValueTypeWaveFnCoeff());
                   d_YBatchSmall = std::make_shared<
                     linearAlgebra::MultiVector<ValueType, memorySpace>>(
                     d_mpiPatternP2P,
                     X.getLinAlgOpContext(),
-                    X.getNumberComponents() % d_maxWaveFnBlock,
+                    smallTotal,
                     ValueTypeWaveFnCoeff());
                 }
             }
 
-          utils::MemoryTransfer<memorySpace, memorySpace> memoryTransfer;
-
-          for (size_type psiStartId = 0; psiStartId < X.getNumberComponents();
-               psiStartId += d_maxWaveFnBlock)
+          for (size_type psiStartId = 0; psiStartId < numVecPerSpace;
+               psiStartId += batchPerSpin)
             {
-              const size_type psiEndId = std::min(psiStartId + d_maxWaveFnBlock,
-                                                  X.getNumberComponents());
-              const size_type numPsiInBatch = psiEndId - psiStartId;
+              const size_type numPsiInBatch =
+                std::min(psiStartId + batchPerSpin, numVecPerSpace) -
+                psiStartId;
+              const size_type numPsiInBatchTotal = numSpaces * numPsiInBatch;
 
-              std::vector<RealType> occupationInBatch(numPsiInBatch,
+              std::vector<RealType> occupationInBatch(numPsiInBatchTotal,
                                                       (RealType)0);
-              RealType              energyBatchSum = 0;
-
-              std::copy(occupation.begin() + psiStartId,
-                        occupation.begin() + psiEndId,
-                        occupationInBatch.begin());
+              for (size_type s = 0; s < numSpaces; ++s)
+                std::copy(
+                  occupation.begin() + s * numVecPerSpace + psiStartId,
+                  occupation.begin() + s * numVecPerSpace + psiStartId +
+                    numPsiInBatch,
+                  occupationInBatch.begin() + s * numPsiInBatch);
 
               std::vector<
                 linearAlgebra::blasLapack::scalar_type<ValueTypeWaveFnCoeff,
                                                        ValueTypeWaveFnCoeff>>
-                dotProds(numPsiInBatch);
+                dotProds(numPsiInBatchTotal);
 
-              if (numPsiInBatch < d_maxWaveFnBlock)
+              if (numPsiInBatch < batchPerSpin)
                 {
-                  linearAlgebra::blasLapack::stridedBlockCopy(
-                    X.localSize(),
-                    numPsiInBatch,
-                    X.getNumberComponents(),
+                  linearAlgebra::MultiVectorOps::copyToBatch(
+                    *Xps,
                     psiStartId,
                     numPsiInBatch,
-                    0,
-                    X.data(),
-                    d_psiBatchSmall->data(),
+                    *d_psiBatchSmall,
                     *X.getLinAlgOpContext());
 
                   d_atomNonLocOpContext->apply(*d_psiBatchSmall,
@@ -673,15 +695,11 @@ namespace dftefe
                 }
               else
                 {
-                  linearAlgebra::blasLapack::stridedBlockCopy(
-                    X.localSize(),
-                    numPsiInBatch,
-                    X.getNumberComponents(),
+                  linearAlgebra::MultiVectorOps::copyToBatch(
+                    *Xps,
                     psiStartId,
                     numPsiInBatch,
-                    0,
-                    X.data(),
-                    d_psiBatch->data(),
+                    *d_psiBatch,
                     *X.getLinAlgOpContext());
 
                   d_atomNonLocOpContext->apply(*d_psiBatch,
@@ -696,8 +714,9 @@ namespace dftefe
                     linearAlgebra::blasLapack::ScalarOp::Identity);
                 }
 
-              for (size_type i = 0; i < dotProds.size(); i++)
-                nonLocEnergy += dotProds[i] * 2 * occupationInBatch[i];
+              for (size_type i = 0; i < numPsiInBatchTotal; ++i)
+                nonLocEnergy +=
+                  dotProds[i] * spinFactor * occupationInBatch[i];
             }
         }
       d_rootCout << "\nNonLocal PSP Energy: " << nonLocEnergy << "\n\n";
@@ -731,13 +750,13 @@ namespace dftefe
               typename ValueTypeWaveFnCoeff,
               utils::MemorySpace memorySpace,
               size_type          dim>
-    const quadrature::QuadratureValuesContainer<
+    std::vector<quadrature::QuadratureValuesContainer<
       typename ElectrostaticFE<ValueTypeBasisData,
                                ValueTypeBasisCoeff,
                                ValueTypeWaveFnBasis,
                                memorySpace,
                                dim>::ValueType,
-      memorySpace> &
+      memorySpace>>
     ElectrostaticONCVNonLocFE<ValueTypeBasisData,
                               ValueTypeBasisCoeff,
                               ValueTypeWaveFnBasis,

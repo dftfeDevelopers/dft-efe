@@ -27,8 +27,10 @@
 #define dftefeDensityCalculator_h
 
 #include <linearAlgebra/MultiVector.h>
+#include <linearAlgebra/MultiVectorProductSpace.h>
 #include <basis/FEBasisDataStorage.h>
 #include <basis/FEBasisOperations.h>
+#include <ksdft/KSAttributes.h>
 #include "Defaults.h"
 
 namespace dftefe
@@ -86,10 +88,14 @@ namespace dftefe
         const std::vector<RealType> &occupation,
         const linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
           &waveFunc,
-        quadrature::QuadratureValuesContainer<RealType, memorySpaceHost> &rho,
-        quadrature::QuadratureValuesContainer<RealType, memorySpaceHost>
+        std::vector<
+          quadrature::QuadratureValuesContainer<RealType, memorySpaceHost> *>
+          &rho,
+        std::vector<
+          quadrature::QuadratureValuesContainer<RealType, memorySpaceHost> *>
           &        gradRho,
-        const bool computeGrad = false);
+        const bool computeGrad = false,
+        const SpinMode spinMode = SpinMode::Unpolarized);
 
     private:
       std::shared_ptr<const quadrature::QuadratureRuleContainer>
@@ -117,14 +123,14 @@ namespace dftefe
 
       dftefe::utils::MemoryStorage<RealType, memorySpace> *d_rhoBatch;
 
-      quadrature::QuadratureValuesContainer<RealType, memorySpace>
-        *d_rhoMemspace;
+      std::vector<quadrature::QuadratureValuesContainer<RealType, memorySpace>>
+        d_rhoMemspace;
 
       dftefe::utils::MemoryStorage<ValueType, memorySpace> *d_gradPsiBatchQuad;
       dftefe::utils::MemoryStorage<RealType, memorySpace> * d_gradRhoBatch;
       dftefe::utils::MemoryStorage<RealType, memorySpace>   d_psiGradPsiBatch;
-      quadrature::QuadratureValuesContainer<RealType, memorySpace>
-        *d_gradRhoMemspace;
+      std::vector<quadrature::QuadratureValuesContainer<RealType, memorySpace>>
+        d_gradRhoMemspace;
 
       linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace> *d_psiBatch;
       linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>

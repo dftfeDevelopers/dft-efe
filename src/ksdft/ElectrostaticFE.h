@@ -32,6 +32,7 @@
 #include <ksdft/Energy.h>
 #include <quadrature/QuadratureValuesContainer.h>
 #include <basis/FEBasisDataStorage.h>
+#include <vector>
 
 namespace dftefe
 {
@@ -81,8 +82,8 @@ namespace dftefe
       getLocal(Storage &cellWiseStorage) const = 0;
       virtual RealType
       getEnergy() const = 0;
-      virtual const quadrature::QuadratureValuesContainer<ValueType,
-                                                          memorySpace> &
+      virtual std::vector<quadrature::QuadratureValuesContainer<ValueType,
+                                                               memorySpace>>
       getFunctionalDerivative() const = 0;
       virtual void
       applyNonLocal(linearAlgebra::MultiVector<ValueType, memorySpace> &X,

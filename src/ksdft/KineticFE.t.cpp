@@ -24,6 +24,10 @@
  */
 
 #include <utils/DataTypeOverloads.h>
+#include <utils/Exceptions.h>
+#include <linearAlgebra/BlasLapackTypedef.h>
+#include <linearAlgebra/MultiVectorProductSpace.h>
+#include <linearAlgebra/MultiVectorOps.h>
 
 namespace dftefe
 {
@@ -41,11 +45,18 @@ namespace dftefe
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
                         linAlgOpContext,
         const size_type maxCellBlock,
-        const size_type waveFuncBatchSize)
+        const size_type waveFuncBatchSize,
+        SpinMode        spinMode)
       : d_maxCellBlock(maxCellBlock)
       , d_linAlgOpContext(linAlgOpContext)
       , d_waveFuncBatchSize(waveFuncBatchSize)
       , d_mpiPatternP2P(nullptr)
+      , d_spinMode(spinMode)
+      , d_S((spinMode == SpinMode::Unpolarized) ? 1 : 2)
+      , d_layout((spinMode == SpinMode::NonCollinear)
+                   ? SpinStorageLayout::SpinFastest
+                   : SpinStorageLayout::DofFastest)
+      , d_basisOverlapSize(0)
     {
       reinit(feBasisDataStorage);
     }
@@ -83,10 +94,20 @@ namespace dftefe
                                                   dim>>(feBasisDataStorage,
                                                         d_maxCellBlock);
 
-      // d_gradPsi =
-      //   new quadrature::QuadratureValuesContainer<ValueType, memorySpace>(
-      //     d_feBasisDataStorage->getQuadratureRuleContainer(),
-      //     d_waveFuncBatchSize * dim);
+      auto feBDH = std::dynamic_pointer_cast<
+        const basis::FEBasisDofHandler<ValueTypeBasisCoeff, memorySpace, dim>>(
+        feBasisDataStorage->getBasisDofHandler());
+      utils::throwException(
+        feBDH != nullptr,
+        "Could not cast BasisDofHandler to FEBasisDofHandler in KineticFE::reinit");
+      const size_type nCells = feBDH->nLocallyOwnedCells();
+      d_numCellDofs.resize(nCells);
+      d_basisOverlapSize = 0;
+      for (size_type c = 0; c < nCells; ++c)
+        {
+          d_numCellDofs[c]    = feBDH->nCellDofs(c);
+          d_basisOverlapSize += d_numCellDofs[c] * d_numCellDofs[c];
+        }
 
       d_feBasisOp->computeFEMatrices(basis::realspace::LinearLocalOp::GRAD,
                                      basis::realspace::VectorMathOp::DOT,
@@ -109,7 +130,28 @@ namespace dftefe
     KineticFE<ValueTypeBasisData, ValueTypeBasisCoeff, memorySpace, dim>::
       getLocal(Storage &cellWiseStorage) const
     {
-      cellWiseStorage = *d_cellWiseStorageKineticEnergy;
+      // Zero-init spin-blocked output: S² × basisOverlapSize
+      cellWiseStorage.resize(d_S * d_S * d_basisOverlapSize,
+                             (ValueTypeBasisData)0);
+
+      // Broadcast the scalar kinetic matrix to both diagonal spin blocks
+      HamiltonianSpinBlockCopyKernels<ValueTypeBasisData, memorySpace>::
+        copyIntoBlock(*d_cellWiseStorageKineticEnergy,
+                      cellWiseStorage,
+                      d_S,
+                      d_layout,
+                      std::vector<std::pair<size_type, size_type>>{{0, 0}},
+                      d_numCellDofs,
+                      *d_linAlgOpContext);
+      if (d_S > 1)
+        HamiltonianSpinBlockCopyKernels<ValueTypeBasisData, memorySpace>::
+          copyIntoBlock(*d_cellWiseStorageKineticEnergy,
+                        cellWiseStorage,
+                        d_S,
+                        d_layout,
+                        std::vector<std::pair<size_type, size_type>>{{1, 1}},
+                        d_numCellDofs,
+                        *d_linAlgOpContext);
     }
 
     template <typename ValueTypeBasisData,
@@ -132,9 +174,21 @@ namespace dftefe
 
       d_energy = (RealType)0;
 
-      if ((d_mpiPatternP2P == nullptr) ||
-          (d_mpiPatternP2P != nullptr &&
-           !d_mpiPatternP2P->isCompatible(*waveFunc.getMPIPatternP2P())))
+      const linearAlgebra::MultiVectorProductSpace<ValueTypeBasisCoeff,
+                                                   memorySpace> *Xps =
+        static_cast<const linearAlgebra::MultiVectorProductSpace<
+          ValueTypeBasisCoeff,
+          memorySpace> *>(&waveFunc);
+
+      const size_type numSpaces      = Xps->numSpaces();
+      const size_type numVecPerSpace = Xps->numVectorsPerSpace();
+      const size_type batchPerSpin   = d_waveFuncBatchSize / numSpaces;
+
+      const RealType spinFactor =
+        (d_spinMode == SpinMode::Unpolarized) ? (RealType)2 : (RealType)1;
+
+      if (d_mpiPatternP2P == nullptr ||
+          !d_mpiPatternP2P->isCompatible(*waveFunc.getMPIPatternP2P()))
         {
           d_mpiPatternP2P = waveFunc.getMPIPatternP2P();
           d_psiBatch      = std::make_shared<
@@ -149,21 +203,6 @@ namespace dftefe
             waveFunc.getLinAlgOpContext(),
             d_waveFuncBatchSize,
             ValueType());
-          if (waveFunc.getNumberComponents() > d_waveFuncBatchSize)
-            {
-              d_psiBatchSmall = std::make_shared<
-                linearAlgebra::MultiVector<ValueType, memorySpace>>(
-                d_mpiPatternP2P,
-                waveFunc.getLinAlgOpContext(),
-                waveFunc.getNumberComponents() % d_waveFuncBatchSize,
-                ValueType());
-              d_YBatchSmall = std::make_shared<
-                linearAlgebra::MultiVector<ValueType, memorySpace>>(
-                d_mpiPatternP2P,
-                waveFunc.getLinAlgOpContext(),
-                waveFunc.getNumberComponents() % d_waveFuncBatchSize,
-                ValueType());
-            }
           d_laplaceOp = std::make_shared<
             electrostatics::LaplaceOperatorContextFE<ValueTypeBasisData,
                                                      ValueTypeBasisCoeff,
@@ -176,37 +215,53 @@ namespace dftefe
             d_waveFuncBatchSize);
         }
 
-      utils::MemoryTransfer<memorySpace, memorySpace> memoryTransfer;
-
-      for (size_type psiStartId = 0;
-           psiStartId < waveFunc.getNumberComponents();
-           psiStartId += d_waveFuncBatchSize)
+      const size_type smallSpin  = numVecPerSpace % batchPerSpin;
+      const size_type smallTotal = numSpaces * smallSpin;
+      if (numVecPerSpace > batchPerSpin && smallSpin != 0)
         {
-          const size_type psiEndId = std::min(psiStartId + d_waveFuncBatchSize,
-                                              waveFunc.getNumberComponents());
-          const size_type numPsiInBatch = psiEndId - psiStartId;
-
-          std::vector<RealType> occupationInBatch(numPsiInBatch, (RealType)0);
-
-          std::copy(occupation.begin() + psiStartId,
-                    occupation.begin() + psiEndId,
-                    occupationInBatch.begin());
-
-          std::vector<RealType> dotProds(numPsiInBatch);
-
-          if (numPsiInBatch < d_waveFuncBatchSize)
+          if (d_psiBatchSmall == nullptr ||
+              d_psiBatchSmall->getNumberComponents() != smallTotal)
             {
-              linearAlgebra::blasLapack::stridedBlockCopy(
-                waveFunc.localSize(),
-                numPsiInBatch,
-                waveFunc.getNumberComponents(),
+              d_psiBatchSmall = std::make_shared<
+                linearAlgebra::MultiVector<ValueType, memorySpace>>(
+                d_mpiPatternP2P,
+                waveFunc.getLinAlgOpContext(),
+                smallTotal,
+                ValueType());
+              d_YBatchSmall = std::make_shared<
+                linearAlgebra::MultiVector<ValueType, memorySpace>>(
+                d_mpiPatternP2P,
+                waveFunc.getLinAlgOpContext(),
+                smallTotal,
+                ValueType());
+            }
+        }
+
+      for (size_type psiStartId = 0; psiStartId < numVecPerSpace;
+           psiStartId += batchPerSpin)
+        {
+          const size_type numPsiInBatch =
+            std::min(psiStartId + batchPerSpin, numVecPerSpace) - psiStartId;
+          const size_type numPsiInBatchTotal = numSpaces * numPsiInBatch;
+
+          std::vector<RealType> occupationInBatch(numPsiInBatchTotal,
+                                                  (RealType)0);
+          for (size_type s = 0; s < numSpaces; ++s)
+            std::copy(occupation.begin() + s * numVecPerSpace + psiStartId,
+                      occupation.begin() + s * numVecPerSpace + psiStartId +
+                        numPsiInBatch,
+                      occupationInBatch.begin() + s * numPsiInBatch);
+
+          std::vector<RealType> dotProds(numPsiInBatchTotal);
+
+          if (numPsiInBatch < batchPerSpin)
+            {
+              linearAlgebra::MultiVectorOps::copyToBatch(
+                *Xps,
                 psiStartId,
                 numPsiInBatch,
-                0,
-                waveFunc.data(),
-                d_psiBatchSmall->data(),
+                *d_psiBatchSmall,
                 *waveFunc.getLinAlgOpContext());
-
 
               d_laplaceOp->apply(*d_psiBatchSmall, *d_YBatchSmall, true, true);
               linearAlgebra::dot(*d_psiBatchSmall,
@@ -217,15 +272,11 @@ namespace dftefe
             }
           else
             {
-              linearAlgebra::blasLapack::stridedBlockCopy(
-                waveFunc.localSize(),
-                numPsiInBatch,
-                waveFunc.getNumberComponents(),
+              linearAlgebra::MultiVectorOps::copyToBatch(
+                *Xps,
                 psiStartId,
                 numPsiInBatch,
-                0,
-                waveFunc.data(),
-                d_psiBatch->data(),
+                *d_psiBatch,
                 *waveFunc.getLinAlgOpContext());
 
               d_laplaceOp->apply(*d_psiBatch, *d_YBatch, true, true);
@@ -236,8 +287,8 @@ namespace dftefe
                                  linearAlgebra::blasLapack::ScalarOp::Identity);
             }
 
-          for (size_type i = 0; i < dotProds.size(); i++)
-            d_energy += (RealType)(dotProds[i] * 2.0 * occupationInBatch[i]);
+          for (size_type i = 0; i < numPsiInBatchTotal; ++i)
+            d_energy += (RealType)(dotProds[i] * spinFactor * occupationInBatch[i]);
         }
 
       // for (size_type psiStartId = 0;

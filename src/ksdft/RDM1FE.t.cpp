@@ -58,17 +58,15 @@ namespace dftefe
       , d_linAlgOpContext(linAlgOpContext)
       , d_kPointCoords(kPointCoords)
       , d_kPointWeights(kPointWeights)
-      , d_isSpinPolarized(spinMode != SpinMode::Unpolarized)
-      , d_isNonCollinear(spinMode == SpinMode::NonCollinear ? true : false)
+      , d_spinMode(spinMode)
       , d_isSOC(isSOC)
       , d_mpiCommDomain(mpiCommDomain)
       , d_cellBlockSize(cellBlockSize)
       , d_waveFuncBatchSize(waveFuncBatchSize)
     {
       dftefe::utils::throwException<dftefe::utils::InvalidArgument>(
-        spinMode == SpinMode::Unpolarized && !isSOC,
-        "RDM1FE only supports SpinMode::Unpolarized without SOC. "
-        "Spin-polarized, non-collinear, and SOC density computation are not yet implemented.");
+        !isSOC,
+        "RDM1FE does not yet support SOC density computation.");
 
       d_densCalc = std::make_shared<DensityCalculator<ValueTypeBasisData,
                                                       ValueTypeBasisCoeff,
@@ -103,22 +101,11 @@ namespace dftefe
               typename ValueTypeBasisCoeff,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
-    bool
-    RDM1FE<ValueTypeBasisData, ValueTypeBasisCoeff, memorySpace, dim>::
-      isSpinPolarized() const
+    SpinMode
+    RDM1FE<ValueTypeBasisData, ValueTypeBasisCoeff, memorySpace, dim>::spinMode()
+      const
     {
-      return d_isSpinPolarized;
-    }
-
-    template <typename ValueTypeBasisData,
-              typename ValueTypeBasisCoeff,
-              dftefe::utils::MemorySpace memorySpace,
-              size_type                  dim>
-    bool
-    RDM1FE<ValueTypeBasisData, ValueTypeBasisCoeff, memorySpace, dim>::
-      isNonCollinear() const
-    {
-      return d_isNonCollinear;
+      return d_spinMode;
     }
 
     template <typename ValueTypeBasisData,
@@ -216,19 +203,15 @@ namespace dftefe
             "Re-evaluation of descriptors in RDM1FE::getDescriptors() requires the "
             "KS orbitals to be set via RDM1Spectral::setSpectral(), but d_ksSetFlag is false.");
 
-          utils::throwException(
-            !d_isSpinPolarized,
-            "Spin-polarized density not yet implemented in RDM1FE::getDescriptors.");
-
           DFTEFE_AssertWithMsg(
             wfcAttrs.find(WfcDescrAttr::Tau) == wfcAttrs.end(),
             "Tau computation not yet implemented in dftefe "
             "RDM1FE::getDescriptors - required for mGGA functionals.");
 
           size_type ncomp = 1;
-          if (d_isSpinPolarized)
+          if (d_spinMode == SpinMode::Collinear)
             ncomp = 2;
-          else if (d_isNonCollinear)
+          else if (d_spinMode == SpinMode::NonCollinear)
             ncomp = 4;
 
           // Use the first k-point/spin occupancy for density computation.
@@ -243,7 +226,7 @@ namespace dftefe
               d_feBasisDataStorage->getQuadratureRuleContainer();
 
           auto &densVal = d_densityAttrVals[DensityDescrAttr::Val];
-          if (densVal.empty() ||
+          if (densVal.size() != ncomp ||
               densVal[0].getQuadratureRuleContainer() != quadRuleContainer)
             {
               densVal = AttrStorage(
@@ -257,7 +240,7 @@ namespace dftefe
           const bool needGrad    = densityAttrs.count(DensityDescrAttr::Grad);
           if (needGrad)
             {
-              if (gradDensVal.empty() ||
+              if (gradDensVal.size() != ncomp ||
                   gradDensVal[0].getQuadratureRuleContainer() !=
                     quadRuleContainer)
                 gradDensVal = AttrStorage(
@@ -272,8 +255,21 @@ namespace dftefe
                 gradDensVal.resize(1);
             }
 
+          std::vector<
+            quadrature::QuadratureValuesContainer<double,
+                                                  utils::MemorySpace::HOST> *>
+            rhoVec(ncomp);
+          for (size_type ic = 0; ic < ncomp; ++ic)
+            rhoVec[ic] = &densVal[ic];
+          const size_type gradNcomp = needGrad ? ncomp : 1;
+          std::vector<
+            quadrature::QuadratureValuesContainer<double,
+                                                  utils::MemorySpace::HOST> *>
+            gradRhoVec(gradNcomp);
+          for (size_type ic = 0; ic < gradNcomp; ++ic)
+            gradRhoVec[ic] = &gradDensVal[ic];
           d_densCalc->computeRho(
-            occ, *this->d_ksOrbs, densVal[0], gradDensVal[0], needGrad);
+            occ, *this->d_ksOrbs, rhoVec, gradRhoVec, needGrad, d_spinMode);
 
           this->d_evalFlag = false;
         }
@@ -325,9 +321,6 @@ namespace dftefe
     RDM1FE<ValueTypeBasisData, ValueTypeBasisCoeff, memorySpace, dim>::clone()
       const
     {
-      const SpinMode spinMode = d_isNonCollinear  ? SpinMode::NonCollinear :
-                                d_isSpinPolarized ? SpinMode::Collinear :
-                                                    SpinMode::Unpolarized;
       return std::make_unique<
         RDM1FE<ValueTypeBasisData, ValueTypeBasisCoeff, memorySpace, dim>>(
         d_feBasisDataStorage,
@@ -336,7 +329,7 @@ namespace dftefe
         d_mpiCommDomain.get(),
         d_cellBlockSize,
         d_waveFuncBatchSize,
-        spinMode,
+        d_spinMode,
         d_isSOC,
         d_kPointCoords,
         d_kPointWeights);
@@ -354,9 +347,9 @@ namespace dftefe
           &densityObsAttrVals)
     {
       size_type ncomp = 1;
-      if (d_isSpinPolarized)
+      if (d_spinMode == SpinMode::Collinear)
         ncomp = 2;
-      else if (d_isNonCollinear)
+      else if (d_spinMode == SpinMode::NonCollinear)
         ncomp = 4;
 
       // Ensure density has been computed.
@@ -379,7 +372,7 @@ namespace dftefe
               d_feBasisDataStorage->getQuadratureRuleContainer();
 
           auto &densVal = d_densityAttrVals[DensityDescrAttr::Val];
-          if (densVal.empty() ||
+          if (densVal.size() != ncomp ||
               densVal[0].getQuadratureRuleContainer() != quadRuleContainer)
             densVal = AttrStorage(
               ncomp,
@@ -391,8 +384,15 @@ namespace dftefe
           if (gradDensVal.empty())
             gradDensVal.resize(1);
 
+          std::vector<
+            quadrature::QuadratureValuesContainer<double,
+                                                  utils::MemorySpace::HOST> *>
+            rhoVec2(ncomp), gradRhoVec2(1);
+          for (size_type ic = 0; ic < ncomp; ++ic)
+            rhoVec2[ic] = &densVal[ic];
+          gradRhoVec2[0] = &gradDensVal[0];
           d_densCalc->computeRho(
-            occ, *this->d_ksOrbs, densVal[0], gradDensVal[0], false);
+            occ, *this->d_ksOrbs, rhoVec2, gradRhoVec2, false, d_spinMode);
         }
 
       // Determine the maximum moment order requested.

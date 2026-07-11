@@ -726,6 +726,8 @@ namespace dftefe
         const size_type *                            cellLocalIdsStartPtrX,
         const size_type *                            cellLocalIdsStartPtrY,
         const size_type                              cellBlockSize,
+        const SpinMode                               spinMode,
+        const size_type                              S,
         linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext)
       {
         //
@@ -802,41 +804,99 @@ namespace dftefe
                                       cellsInBlockNumCumulativeDoFs,
                                       xCellValues);
 
-            std::vector<char> transA(numCellsInBlock, 'N');
-            std::vector<char> transB(numCellsInBlock, 'N');
+            const size_type numOrbitals = numVecs / S;
+            const size_type batchCount =
+              (spinMode == SpinMode::Collinear) ? S * numCellsInBlock
+                                                : numCellsInBlock;
 
-            std::vector<size_type> mSizes(numCellsInBlock, 0);
-            std::vector<size_type> nSizes(numCellsInBlock, 0);
-            std::vector<size_type> kSizes(numCellsInBlock, 0);
-            std::vector<size_type> ldaSizes(numCellsInBlock, 0);
-            std::vector<size_type> ldbSizes(numCellsInBlock, 0);
-            std::vector<size_type> ldcSizes(numCellsInBlock, 0);
-            std::vector<size_type> strideA(numCellsInBlock, 0);
-            std::vector<size_type> strideB(numCellsInBlock, 0);
-            std::vector<size_type> strideC(numCellsInBlock, 0);
+            std::vector<char>      transA(batchCount, 'N');
+            std::vector<char>      transB(batchCount, 'N');
+            std::vector<size_type> mSizes(batchCount, 0);
+            std::vector<size_type> nSizes(batchCount, 0);
+            std::vector<size_type> kSizes(batchCount, 0);
+            std::vector<size_type> ldaSizes(batchCount, 0);
+            std::vector<size_type> ldbSizes(batchCount, 0);
+            std::vector<size_type> ldcSizes(batchCount, 0);
+            std::vector<size_type> strideA(batchCount, 0);
+            std::vector<size_type> strideB(batchCount, 0);
+            std::vector<size_type> strideC(batchCount, 0);
 
-            for (size_type iCell = 0; iCell < numCellsInBlock; ++iCell)
+            if (spinMode == SpinMode::Collinear)
               {
-                mSizes[iCell]   = numVecs;
-                nSizes[iCell]   = cellsInBlockNumDoFsSTL[iCell];
-                kSizes[iCell]   = cellsInBlockNumDoFsSTL[iCell];
-                ldaSizes[iCell] = mSizes[iCell];
-                ldbSizes[iCell] = kSizes[iCell];
-                ldcSizes[iCell] = mSizes[iCell];
-                strideA[iCell]  = mSizes[iCell] * kSizes[iCell];
-                strideB[iCell]  = kSizes[iCell] * nSizes[iCell];
-                strideC[iCell]  = mSizes[iCell] * nSizes[iCell];
+                // Collinear: S*numCellsInBlock batches, b = iCell*S + s.
+                // Each batch b computes Y^s_cell = X^s_cell * H^{ss}_cell.
+                // A = xCell, layout [dof][spin][orb], flat = dof*S*numOrbitals + s*numOrbitals + n.
+                // B = H_cell, DofFastest col-major (S*d)x(S*d); diagonal block
+                //   s starts at offset s*d*(S*d+1) within the cell's H matrix.
+                // C = yCellValues, same layout as A.
+                // lda = ldc = numVecs = S*numOrbitals (strides across [spin][orb] at
+                //   each dof); ldb = S*numCellLocalDofs (full col stride of H matrix).
+                // m = numOrbitals, n = numCellLocalDofs (dofs), k = numCellLocalDofs (inner dim).
+                for (size_type iCell = 0; iCell < numCellsInBlock; ++iCell)
+                  {
+                    const size_type numCellLocalDofs = cellsInBlockNumDoFsSTL[iCell];
+                    for (size_type s = 0; s < S; ++s)
+                      {
+                        const size_type b = iCell * S + s;
+                        mSizes[b]         = numOrbitals;
+                        nSizes[b]         = numCellLocalDofs;
+                        kSizes[b]         = numCellLocalDofs;
+                        ldaSizes[b]       = numVecs;
+                        ldbSizes[b]       = S * numCellLocalDofs;
+                        ldcSizes[b]       = numVecs;
+                        if (s < S - 1)
+                          {
+                            // Within-cell advance: batch (cell,s) -> (cell,s+1).
+                            //
+                            // A: ptr(s) = xCell+s*numOrbitals, ptr(s+1) = xCell+(s+1)*numOrbitals
+                            //   => strideA = numOrbitals
+                            strideA[b] = numOrbitals;
+                            // B: diagonal block s+1 starts at (s+1)*d*(S*d+1),
+                            //   block s at s*d*(S*d+1)
+                            //   => strideB = d*(S*d+1)
+                            strideB[b] = numCellLocalDofs * (S * numCellLocalDofs + 1);
+                            // C has same layout as A.
+                            strideC[b] = numOrbitals;
+                          }
+                        else
+                          {
+                            // Cross-cell advance: batch (cell k, s=S-1)
+                            //   -> (cell k+1, s=0).
+                            //
+                            // A: cell k occupies numCellLocalDofs*S*numOrbitals entries total.
+                            //   ptr(k,S-1) = xCell_k + (S-1)*numOrbitals
+                            //   ptr(k+1,0) = xCell_k + numCellLocalDofs*S*numOrbitals
+                            //   => strideA = numCellLocalDofs*S*numOrbitals - (S-1)*numOrbitals
+                            //             = numOrbitals*(S*numCellLocalDofs - S + 1)
+                            strideA[b] = numOrbitals * (S * numCellLocalDofs - S + 1);
+                            // B: cell k's H has (S*numCellLocalDofs)^2 entries.
+                            //   ptr(k,S-1) = H_k + (S-1)*numCellLocalDofs*(S*numCellLocalDofs+1)
+                            //   ptr(k+1,0) = H_k + (S*numCellLocalDofs)^2
+                            //   => strideB = (S*numCellLocalDofs)^2 - (S-1)*numCellLocalDofs*(S*numCellLocalDofs+1)
+                            //             = S*numCellLocalDofs^2 - (S-1)*numCellLocalDofs
+                            strideB[b] = S * numCellLocalDofs * numCellLocalDofs - (S - 1) * numCellLocalDofs;
+                            // C has same layout as A.
+                            strideC[b] = numOrbitals * (S * numCellLocalDofs - S + 1);
+                          }
+                      }
+                  }
               }
-
-            // allocate memory for cell-wise data for y
-            // utils::MemoryStorage<
-            //   linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
-            //                                          ValueTypeOperand>,
-            //   memorySpace>
-            //   yCellValues(cellsInBlockNumCumulativeDoFs * numVecs,
-            //               utils::Types<linearAlgebra::blasLapack::scalar_type<
-            //                 ValueTypeOperator,
-            //                 ValueTypeOperand>>::zero);
+            else
+              {
+                for (size_type iCell = 0; iCell < numCellsInBlock; ++iCell)
+                  {
+                    const size_type numCellLocalDofs = cellsInBlockNumDoFsSTL[iCell];
+                    mSizes[iCell]       = numOrbitals;
+                    nSizes[iCell]       = S * numCellLocalDofs;
+                    kSizes[iCell]       = S * numCellLocalDofs;
+                    ldaSizes[iCell]     = numOrbitals;
+                    ldbSizes[iCell]     = S * numCellLocalDofs;
+                    ldcSizes[iCell]     = numOrbitals;
+                    strideA[iCell]      = numOrbitals * S * numCellLocalDofs;
+                    strideB[iCell]      = S * numCellLocalDofs * S * numCellLocalDofs;
+                    strideC[iCell]      = numOrbitals * S * numCellLocalDofs;
+                  }
+              }
 
             linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
                                                    ValueTypeOperand>
@@ -853,7 +913,7 @@ namespace dftefe
             linearAlgebra::blasLapack::gemmStridedVarBatched<ValueTypeOperator,
                                                              ValueTypeOperand,
                                                              memorySpace>(
-              numCellsInBlock,
+              batchCount,
               transA.data(),
               transB.data(),
               strideA.data(),
@@ -886,9 +946,9 @@ namespace dftefe
 
             for (size_type iCell = 0; iCell < numCellsInBlock; ++iCell)
               {
-                BStartOffset +=
-                  cellsInBlockNumDoFsSTL[iCell] * cellsInBlockNumDoFsSTL[iCell];
-                cellLocalIdsOffset += cellsInBlockNumDoFsSTL[iCell];
+                const size_type numCellLocalDofs = cellsInBlockNumDoFsSTL[iCell];
+                BStartOffset += (S * numCellLocalDofs) * (S * numCellLocalDofs);
+                cellLocalIdsOffset += numCellLocalDofs;
               }
           }
       }
@@ -935,6 +995,8 @@ namespace dftefe
         const size_type *                            cellLocalIdsStartPtrX,
         const size_type *                            cellLocalIdsStartPtrY,
         const size_type                              cellBlockSize,
+        const SpinMode                               spinMode,
+        const size_type                              S,
         linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext)
       {
         using ValueTypeOperator =
@@ -1056,30 +1118,98 @@ namespace dftefe
             //   numCellsInBlock);
             // cellsInBlockNumDoFs.copyFrom(cellsInBlockNumDoFsSTL);
 
-            std::vector<char> transA(numCellsInBlock, 'N');
-            std::vector<char> transB(numCellsInBlock, 'N');
+            const size_type numOrbitals = numVecs / S;
+            const size_type batchCount =
+              (spinMode == SpinMode::Collinear) ? S * numCellsInBlock
+                                                : numCellsInBlock;
 
-            std::vector<size_type> mSizes(numCellsInBlock, 0);
-            std::vector<size_type> nSizes(numCellsInBlock, 0);
-            std::vector<size_type> kSizes(numCellsInBlock, 0);
-            std::vector<size_type> ldaSizes(numCellsInBlock, 0);
-            std::vector<size_type> ldbSizes(numCellsInBlock, 0);
-            std::vector<size_type> ldcSizes(numCellsInBlock, 0);
-            std::vector<size_type> strideA(numCellsInBlock, 0);
-            std::vector<size_type> strideB(numCellsInBlock, 0);
-            std::vector<size_type> strideC(numCellsInBlock, 0);
+            std::vector<char>      transA(batchCount, 'N');
+            std::vector<char>      transB(batchCount, 'N');
+            std::vector<size_type> mSizes(batchCount, 0);
+            std::vector<size_type> nSizes(batchCount, 0);
+            std::vector<size_type> kSizes(batchCount, 0);
+            std::vector<size_type> ldaSizes(batchCount, 0);
+            std::vector<size_type> ldbSizes(batchCount, 0);
+            std::vector<size_type> ldcSizes(batchCount, 0);
+            std::vector<size_type> strideA(batchCount, 0);
+            std::vector<size_type> strideB(batchCount, 0);
+            std::vector<size_type> strideC(batchCount, 0);
 
-            for (size_type iCell = 0; iCell < numCellsInBlock; ++iCell)
+            if (spinMode == SpinMode::Collinear)
               {
-                mSizes[iCell]   = numVecs;
-                nSizes[iCell]   = cellsInBlockNumDoFsSTL[iCell];
-                kSizes[iCell]   = cellsInBlockNumDoFsSTL[iCell];
-                ldaSizes[iCell] = mSizes[iCell];
-                ldbSizes[iCell] = kSizes[iCell];
-                ldcSizes[iCell] = mSizes[iCell];
-                strideA[iCell]  = mSizes[iCell] * kSizes[iCell];
-                strideB[iCell]  = kSizes[iCell] * nSizes[iCell];
-                strideC[iCell]  = mSizes[iCell] * nSizes[iCell];
+                // Collinear: S*numCellsInBlock batches, b = iCell*S + s.
+                // Each batch b computes Y^s_cell = X^s_cell * H^{ss}_cell.
+                // A = xCell, layout [dof][spin][orb], flat = dof*S*numOrbitals + s*numOrbitals + n.
+                // B = H_cell, DofFastest col-major (S*d)x(S*d); diagonal block
+                //   s starts at offset s*d*(S*d+1) within the cell's H matrix.
+                // C = yCellValues, same layout as A.
+                // lda = ldc = numVecs = S*numOrbitals (strides across [spin][orb] at
+                //   each dof); ldb = S*numCellLocalDofs (full col stride of H matrix).
+                // m = numOrbitals, n = numCellLocalDofs (dofs), k = numCellLocalDofs (inner dim).
+                for (size_type iCell = 0; iCell < numCellsInBlock; ++iCell)
+                  {
+                    const size_type numCellLocalDofs = cellsInBlockNumDoFsSTL[iCell];
+                    for (size_type s = 0; s < S; ++s)
+                      {
+                        const size_type b = iCell * S + s;
+                        mSizes[b]         = numOrbitals;
+                        nSizes[b]         = numCellLocalDofs;
+                        kSizes[b]         = numCellLocalDofs;
+                        ldaSizes[b]       = numVecs;
+                        ldbSizes[b]       = S * numCellLocalDofs;
+                        ldcSizes[b]       = numVecs;
+                        if (s < S - 1)
+                          {
+                            // Within-cell advance: batch (cell,s) -> (cell,s+1).
+                            //
+                            // A: ptr(s) = xCell+s*numOrbitals, ptr(s+1) = xCell+(s+1)*numOrbitals
+                            //   => strideA = numOrbitals
+                            strideA[b] = numOrbitals;
+                            // B: diagonal block s+1 starts at (s+1)*d*(S*d+1),
+                            //   block s at s*d*(S*d+1)
+                            //   => strideB = d*(S*d+1)
+                            strideB[b] = numCellLocalDofs * (S * numCellLocalDofs + 1);
+                            // C has same layout as A.
+                            strideC[b] = numOrbitals;
+                          }
+                        else
+                          {
+                            // Cross-cell advance: batch (cell k, s=S-1)
+                            //   -> (cell k+1, s=0).
+                            //
+                            // A: cell k occupies numCellLocalDofs*S*numOrbitals entries total.
+                            //   ptr(k,S-1) = xCell_k + (S-1)*numOrbitals
+                            //   ptr(k+1,0) = xCell_k + numCellLocalDofs*S*numOrbitals
+                            //   => strideA = numCellLocalDofs*S*numOrbitals - (S-1)*numOrbitals
+                            //             = numOrbitals*(S*numCellLocalDofs - S + 1)
+                            strideA[b] = numOrbitals * (S * numCellLocalDofs - S + 1);
+                            // B: cell k's H has (S*numCellLocalDofs)^2 entries.
+                            //   ptr(k,S-1) = H_k + (S-1)*numCellLocalDofs*(S*numCellLocalDofs+1)
+                            //   ptr(k+1,0) = H_k + (S*numCellLocalDofs)^2
+                            //   => strideB = (S*numCellLocalDofs)^2 - (S-1)*numCellLocalDofs*(S*numCellLocalDofs+1)
+                            //             = S*numCellLocalDofs^2 - (S-1)*numCellLocalDofs
+                            strideB[b] = S * numCellLocalDofs * numCellLocalDofs - (S - 1) * numCellLocalDofs;
+                            // C has same layout as A.
+                            strideC[b] = numOrbitals * (S * numCellLocalDofs - S + 1);
+                          }
+                      }
+                  }
+              }
+            else
+              {
+                for (size_type iCell = 0; iCell < numCellsInBlock; ++iCell)
+                  {
+                    const size_type numCellLocalDofs = cellsInBlockNumDoFsSTL[iCell];
+                    mSizes[iCell]       = numOrbitals;
+                    nSizes[iCell]       = S * numCellLocalDofs;
+                    kSizes[iCell]       = S * numCellLocalDofs;
+                    ldaSizes[iCell]     = numOrbitals;
+                    ldbSizes[iCell]     = S * numCellLocalDofs;
+                    ldcSizes[iCell]     = numOrbitals;
+                    strideA[iCell]      = numOrbitals * S * numCellLocalDofs;
+                    strideB[iCell]      = S * numCellLocalDofs * S * numCellLocalDofs;
+                    strideC[iCell]      = numOrbitals * S * numCellLocalDofs;
+                  }
               }
 
             linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
@@ -1097,7 +1227,7 @@ namespace dftefe
             linearAlgebra::blasLapack::gemmStridedVarBatched<ValueTypeOperator,
                                                              ValueTypeOperand,
                                                              memorySpace>(
-              numCellsInBlock,
+              batchCount,
               transA.data(),
               transB.data(),
               strideA.data(),
@@ -1135,9 +1265,9 @@ namespace dftefe
 
             for (size_type iCell = 0; iCell < numCellsInBlock; ++iCell)
               {
-                BStartOffset +=
-                  cellsInBlockNumDoFsSTL[iCell] * cellsInBlockNumDoFsSTL[iCell];
-                cellLocalIdsOffset += cellsInBlockNumDoFsSTL[iCell];
+                const size_type numCellLocalDofs = cellsInBlockNumDoFsSTL[iCell];
+                BStartOffset += (S * numCellLocalDofs) * (S * numCellLocalDofs);
+                cellLocalIdsOffset += numCellLocalDofs;
               }
           }
       }
@@ -1167,11 +1297,14 @@ namespace dftefe
                         linAlgOpContext,
         const size_type maxCellBlock,
         const size_type maxWaveFnBatch,
-        const bool      useOptimizedImplement)
+        const bool      useOptimizedImplement,
+        const SpinMode  spinMode)
       : d_maxCellBlock(maxCellBlock)
       , d_maxWaveFnBatch(maxWaveFnBatch)
       , d_linAlgOpContext(linAlgOpContext)
       , d_useOptimizedImplement(useOptimizedImplement)
+      , d_spinMode(spinMode)
+      , d_S(spinMode == SpinMode::Unpolarized ? 1 : 2)
       , d_electroONCVHamiltonian(nullptr)
       , d_XCellValues(
           std::make_shared<utils::MemoryStorage<ValueTypeOperand, memorySpace>>(
@@ -1216,7 +1349,7 @@ namespace dftefe
       for (size_type iCell = 0; iCell < numLocallyOwnedCells; iCell++)
         {
           size_type x = feBasisManager.nLocallyOwnedCellDofs(iCell);
-          cellWiseDataSize += x * x;
+          cellWiseDataSize += (d_S * x) * (d_S * x);
         }
 
       d_feBasisManager = &feBasisManager;
@@ -1230,7 +1363,6 @@ namespace dftefe
         d_hamiltonianInAllCells.setValue((ValueTypeOperator)0);
 
       HamiltonianComponentsOperations<ValueTypeOperator, memorySpace> op;
-
       for (size_type i = 0; i < hamiltonianComponentsVec.size(); ++i)
         {
           op.addLocalComponent(d_hamiltonianInAllCells,
@@ -1263,14 +1395,14 @@ namespace dftefe
             *std::max_element(numCellDofs.begin(), numCellDofs.end());
 
           if (d_XCellValues->size() !=
-              d_maxWaveFnBatch * numLocallyOwnedCells * maxDofInCell)
+              d_S * d_maxWaveFnBatch * numLocallyOwnedCells * maxDofInCell)
             {
               d_XCellValues = std::make_shared<
                 utils::MemoryStorage<ValueTypeOperand, memorySpace>>(
-                d_maxWaveFnBatch * numLocallyOwnedCells * maxDofInCell);
+                d_S * d_maxWaveFnBatch * numLocallyOwnedCells * maxDofInCell);
               d_YCellValues = std::make_shared<
                 utils::MemoryStorage<ValueTypeOperand, memorySpace>>(
-                d_maxWaveFnBatch * d_maxCellBlock * maxDofInCell);
+                d_S * d_maxWaveFnBatch * d_maxCellBlock * maxDofInCell);
             }
           else
             {
@@ -1356,6 +1488,8 @@ namespace dftefe
           itCellLocalIdsBeginX,
           itCellLocalIdsBeginY,
           cellBlockSize,
+          d_spinMode,
+          d_S,
           *(X.getLinAlgOpContext()));
       else
         KohnShamOperatorContextFEInternal::computeAxCellWiseOptimized(
@@ -1371,6 +1505,8 @@ namespace dftefe
           itCellLocalIdsBeginX,
           itCellLocalIdsBeginY,
           cellBlockSize,
+          d_spinMode,
+          d_S,
           *(X.getLinAlgOpContext()));
 
 

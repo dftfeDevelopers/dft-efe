@@ -41,6 +41,8 @@
 #include <atoms/AtomTCIASpline.h>
 #include <atoms/AtomSuperpositionFunction.h>
 #include "Defaults.h"
+#include <ksdft/KSAttributes.h>
+#include <ksdft/HamiltonianSpinBlockCopyKernels.h>
 
 namespace dftefe
 {
@@ -106,7 +108,8 @@ namespace dftefe
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
                         linAlgOpContext,
         const size_type maxCellBlock,
-        bool            useDealiiMatrixFreePoissonSolve = true);
+        bool            useDealiiMatrixFreePoissonSolve = true,
+        SpinMode        spinMode = SpinMode::Unpolarized);
 
       // used if numerical poisson solve vself canellation route taken
       ElectrostaticLocalFE(
@@ -141,7 +144,8 @@ namespace dftefe
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
                         linAlgOpContext,
         const size_type maxCellBlock,
-        bool            useDealiiMatrixFreePoissonSolve = true);
+        bool            useDealiiMatrixFreePoissonSolve = true,
+        SpinMode        spinMode = SpinMode::Unpolarized);
 
       // used if delta rho approach is taken with phi total from 1D KS solve
       // with analytical vself energy cancellation
@@ -180,7 +184,8 @@ namespace dftefe
                                  std::shared_ptr<atoms::AtomTCIASpline>>
                    fieldToTCIASplineMap            = {},
         const bool useDealiiMatrixFreePoissonSolve = true,
-        const bool calculateIntegralDeltaRho       = false);
+        const bool calculateIntegralDeltaRho       = false,
+        SpinMode   spinMode                        = SpinMode::Unpolarized);
 
 
       ~ElectrostaticLocalFE();
@@ -276,7 +281,7 @@ namespace dftefe
       RealType
       getEnergy() const override;
 
-      const quadrature::QuadratureValuesContainer<ValueType, memorySpace> &
+      std::vector<quadrature::QuadratureValuesContainer<ValueType, memorySpace>>
       getFunctionalDerivative() const override;
 
       void
@@ -435,6 +440,12 @@ namespace dftefe
       bool   d_isTCIEnabled;
       double d_integralDiffVZZCorrVSmearxSumBZZCorrBSmear;
       double d_integralAtRho;
+
+      size_type              d_S;
+      SpinStorageLayout      d_layout;
+      std::vector<size_type> d_numCellDofs;
+      size_type              d_basisOverlapSize;
+      mutable Storage        d_elecCellWiseTemp;
 
     }; // end of class ElectrostaticLocalFE
   }    // end of namespace ksdft

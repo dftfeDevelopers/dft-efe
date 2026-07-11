@@ -25,6 +25,7 @@
 
 #include <utils/DataTypeOverloads.h>
 #include <linearAlgebra/BlasLapack.h>
+#include <linearAlgebra/MultiVectorOps.h>
 #include <ksdft/DensityCalculatorKernels.h>
 #include <ksdft/Defaults.h>
 namespace dftefe
@@ -56,10 +57,8 @@ namespace dftefe
       , d_waveFuncBatchSize(waveFuncBatchSize)
       , d_psiBatchQuad(nullptr)
       , d_rhoBatch(nullptr)
-      , d_rhoMemspace(nullptr)
       , d_gradPsiBatchQuad(nullptr)
       , d_gradRhoBatch(nullptr)
-      , d_gradRhoMemspace(nullptr)
       , d_psiBatch(nullptr)
       , d_psiBatchSmall(nullptr)
     {
@@ -85,11 +84,7 @@ namespace dftefe
           delete d_rhoBatch;
           d_rhoBatch = nullptr;
         }
-      if (d_rhoMemspace != nullptr)
-        {
-          delete d_rhoMemspace;
-          d_rhoMemspace = nullptr;
-        }
+      d_rhoMemspace.clear();
       if (d_gradPsiBatchQuad != nullptr)
         {
           delete d_gradPsiBatchQuad;
@@ -100,11 +95,7 @@ namespace dftefe
           delete d_gradRhoBatch;
           d_gradRhoBatch = nullptr;
         }
-      if (d_gradRhoMemspace != nullptr)
-        {
-          delete d_gradRhoMemspace;
-          d_gradRhoMemspace = nullptr;
-        }
+      d_gradRhoMemspace.clear();
       if (d_psiBatch != nullptr)
         {
           delete d_psiBatch;
@@ -154,12 +145,10 @@ namespace dftefe
       d_occupationInBatch = dftefe::utils::MemoryStorage<RealType, memorySpace>(
         d_waveFuncBatchSize);
 
-      d_rhoMemspace =
-        new quadrature::QuadratureValuesContainer<RealType, memorySpace>(
-          d_quadRuleContainer, 1);
+      d_rhoMemspace.clear();
 
       d_rhoBatch = new dftefe::utils::MemoryStorage<RealType, memorySpace>(
-        d_cellBlockSize * maxQuadInCell);
+        4 * d_cellBlockSize * maxQuadInCell);
 
       d_gradPsiBatchQuad =
         new dftefe::utils::MemoryStorage<ValueType, memorySpace>(
@@ -168,12 +157,10 @@ namespace dftefe
       d_psiGradPsiBatch = dftefe::utils::MemoryStorage<RealType, memorySpace>(
         d_waveFuncBatchSize * d_cellBlockSize * maxQuadInCell * dim);
 
-      d_gradRhoMemspace =
-        new quadrature::QuadratureValuesContainer<RealType, memorySpace>(
-          d_quadRuleContainer, dim);
+      d_gradRhoMemspace.clear();
 
       d_gradRhoBatch = new dftefe::utils::MemoryStorage<RealType, memorySpace>(
-        d_cellBlockSize * maxQuadInCell * dim);
+        4 * d_cellBlockSize * maxQuadInCell * dim);
 
       d_psiBatch =
         new linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>(
@@ -204,14 +191,42 @@ namespace dftefe
         const std::vector<RealType> &occupation,
         const linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
           &waveFunc,
-        quadrature::QuadratureValuesContainer<RealType, memorySpaceHost> &rho,
-        quadrature::QuadratureValuesContainer<RealType, memorySpaceHost>
+        std::vector<quadrature::QuadratureValuesContainer<RealType,
+                                                          memorySpaceHost> *>
+          &rho,
+        std::vector<quadrature::QuadratureValuesContainer<RealType,
+                                                          memorySpaceHost> *>
           &        gradRho,
-        const bool computeGrad)
+        const bool computeGrad,
+        const SpinMode spinMode)
     {
-      d_rhoMemspace->setValue((RealType)0);
+      const size_type numSpaces =
+        (spinMode == SpinMode::Unpolarized) ? 1 : 2;
+      const size_type ncomp =
+        (spinMode == SpinMode::Unpolarized) ? 1 :
+        (spinMode == SpinMode::Collinear)   ? 2 : 4;
+      const size_type batchN        = d_waveFuncBatchSize / numSpaces;
+      const size_type numVecPerSpace = waveFunc.getNumberComponents() / numSpaces;
+
+      // Lazy-allocate per-component device QVC containers if needed
+      if (d_rhoMemspace.size() != ncomp)
+        {
+          d_rhoMemspace.resize(ncomp);
+          for (size_type ic = 0; ic < ncomp; ++ic)
+            d_rhoMemspace[ic].reinit(d_quadRuleContainer, 1);
+        }
+      if (computeGrad && d_gradRhoMemspace.size() != ncomp)
+        {
+          d_gradRhoMemspace.resize(ncomp);
+          for (size_type ic = 0; ic < ncomp; ++ic)
+            d_gradRhoMemspace[ic].reinit(d_quadRuleContainer, dim);
+        }
+
+      for (size_type ic = 0; ic < ncomp; ++ic)
+        d_rhoMemspace[ic].setValue((RealType)0);
       if (computeGrad)
-        d_gradRhoMemspace->setValue((RealType)0);
+        for (size_type ic = 0; ic < ncomp; ++ic)
+          d_gradRhoMemspace[ic].setValue((RealType)0);
 
       utils::MemoryTransfer<memorySpace, memorySpaceHost> memoryTransferM2H;
       utils::MemoryTransfer<memorySpaceHost, memorySpace> memoryTransferH2M;
@@ -221,6 +236,11 @@ namespace dftefe
       memoryTransferH2M.copy(occupation.size(),
                              occMemspace.data(),
                              occupation.data());
+
+      const auto &wavePs =
+        static_cast<const linearAlgebra::MultiVectorProductSpace<
+          ValueTypeBasisCoeff,
+          memorySpace> &>(waveFunc);
 
       for (size_type cellStartId = 0; cellStartId < d_numLocallyOwnedCells;
            cellStartId += d_cellBlockSize)
@@ -234,55 +254,53 @@ namespace dftefe
           for (size_type iCell = cellStartId; iCell < cellEndId; iCell++)
             numQuadInBlock += d_quadRuleContainer->nCellQuadraturePoints(iCell);
 
-          for (size_type psiStartId = 0;
-               psiStartId < waveFunc.getNumberComponents();
-               psiStartId += d_waveFuncBatchSize)
+          for (size_type psiStartId = 0; psiStartId < numVecPerSpace;
+               psiStartId += batchN)
             {
-              const size_type psiEndId =
-                std::min(psiStartId + d_waveFuncBatchSize,
-                         waveFunc.getNumberComponents());
-              const size_type numPsiInBatch = psiEndId - psiStartId;
+              const size_type numPsiInBatch =
+                std::min(batchN, numVecPerSpace - psiStartId);
+              const size_type numPsiInBatchTotal = numSpaces * numPsiInBatch;
 
               linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
                 *psiBatchInterim = nullptr;
 
-              if (numPsiInBatch == d_waveFuncBatchSize)
+              if (numPsiInBatchTotal == d_waveFuncBatchSize)
                 {
                   psiBatchInterim = d_psiBatch;
                 }
-              else if (numPsiInBatch == d_batchSizeSmall)
+              else if (numPsiInBatchTotal == d_batchSizeSmall)
                 {
                   psiBatchInterim = d_psiBatchSmall;
                 }
               else
                 {
-                  d_batchSizeSmall = numPsiInBatch;
+                  d_batchSizeSmall = numPsiInBatchTotal;
+                  delete d_psiBatchSmall;
                   d_psiBatchSmall =
                     new linearAlgebra::MultiVector<ValueTypeBasisCoeff,
                                                    memorySpace>(
                       waveFunc.getMPIPatternP2P(),
                       d_linAlgOpContext,
-                      numPsiInBatch,
+                      numPsiInBatchTotal,
                       ValueTypeBasisCoeff());
                   psiBatchInterim = d_psiBatchSmall;
                 }
 
-              linearAlgebra::blasLapack::copyValueType1ArrToValueType2Arr(
-                numPsiInBatch,
-                occMemspace.data() + psiStartId,
-                d_occupationInBatch.data(),
-                *waveFunc.getLinAlgOpContext());
+              // Assemble occupation batch: spin-major layout in d_occupationInBatch
+              for (size_type s = 0; s < numSpaces; ++s)
+                linearAlgebra::blasLapack::copyValueType1ArrToValueType2Arr(
+                  numPsiInBatch,
+                  occMemspace.data() + s * numVecPerSpace + psiStartId,
+                  d_occupationInBatch.data() + s * numPsiInBatch,
+                  *waveFunc.getLinAlgOpContext());
 
-              linearAlgebra::blasLapack::stridedBlockCopy(
-                waveFunc.localSize(),
-                numPsiInBatch,
-                waveFunc.getNumberComponents(),
+              // Spin-aware gather into flat batch buffer
+              linearAlgebra::MultiVectorOps::copyToBatch(
+                wavePs,
                 psiStartId,
                 numPsiInBatch,
-                0,
-                waveFunc.data(),
-                psiBatchInterim->data(),
-                *waveFunc.getLinAlgOpContext());
+                *psiBatchInterim,
+                *d_linAlgOpContext);
 
               // Basis data for cellRange is cached across psi-batch iterations
               d_feBasisOp->interpolate(*psiBatchInterim,
@@ -291,23 +309,26 @@ namespace dftefe
                                        d_psiBatchQuad->data());
 
               DensityCalculatorKernels<ValueType, RealType, memorySpace, dim>::
-                computeRhoInBatch(numPsiInBatch,
+                computeRhoInBatch(numPsiInBatchTotal,
                                   cellRange,
                                   d_occupationInBatch.data(),
                                   d_psiBatchQuad->data(),
                                   d_modPsiSqBatchQuad.data(),
                                   d_quadRuleContainer,
                                   d_rhoBatch->data(),
-                                  *d_linAlgOpContext);
+                                  *d_linAlgOpContext,
+                                  spinMode);
 
-              linearAlgebra::blasLapack::axpy<RealType, RealType, memorySpace>(
-                numQuadInBlock,
-                (RealType)1.0,
-                d_rhoBatch->data(),
-                1,
-                d_rhoMemspace->begin(cellStartId),
-                1,
-                *d_linAlgOpContext);
+              for (size_type ic = 0; ic < ncomp; ++ic)
+                linearAlgebra::blasLapack::
+                  axpy<RealType, RealType, memorySpace>(
+                    numQuadInBlock,
+                    (RealType)1.0,
+                    d_rhoBatch->data() + ic * numQuadInBlock,
+                    1,
+                    d_rhoMemspace[ic].begin(cellStartId),
+                    1,
+                    *d_linAlgOpContext);
 
               if (computeGrad)
                 {
@@ -321,7 +342,7 @@ namespace dftefe
                     ValueType,
                     RealType,
                     memorySpace,
-                    dim>::computeGradRhoInBatch(numPsiInBatch,
+                    dim>::computeGradRhoInBatch(numPsiInBatchTotal,
                                                 cellRange,
                                                 d_occupationInBatch.data(),
                                                 d_psiBatchQuad->data(),
@@ -329,29 +350,33 @@ namespace dftefe
                                                 d_psiGradPsiBatch.data(),
                                                 d_quadRuleContainer,
                                                 d_gradRhoBatch->data(),
-                                                *d_linAlgOpContext);
+                                                *d_linAlgOpContext,
+                                                spinMode);
 
-                  linearAlgebra::blasLapack::
-                    axpy<RealType, RealType, memorySpace>(
-                      numQuadInBlock * dim,
-                      (RealType)1.0,
-                      d_gradRhoBatch->data(),
-                      1,
-                      d_gradRhoMemspace->begin(cellStartId),
-                      1,
-                      *d_linAlgOpContext);
+                  for (size_type ic = 0; ic < ncomp; ++ic)
+                    linearAlgebra::blasLapack::
+                      axpy<RealType, RealType, memorySpace>(
+                        numQuadInBlock * dim,
+                        (RealType)1.0,
+                        d_gradRhoBatch->data() + ic * numQuadInBlock * dim,
+                        1,
+                        d_gradRhoMemspace[ic].begin(cellStartId),
+                        1,
+                        *d_linAlgOpContext);
                 }
             }
         }
 
-      memoryTransferM2H.copy(d_rhoMemspace->nEntries(),
-                             rho.begin(),
-                             d_rhoMemspace->begin());
+      for (size_type ic = 0; ic < ncomp; ++ic)
+        memoryTransferM2H.copy(d_rhoMemspace[ic].nEntries(),
+                               rho[ic]->begin(),
+                               d_rhoMemspace[ic].begin());
 
       if (computeGrad)
-        memoryTransferM2H.copy(d_gradRhoMemspace->nEntries(),
-                               gradRho.begin(),
-                               d_gradRhoMemspace->begin());
+        for (size_type ic = 0; ic < ncomp; ++ic)
+          memoryTransferM2H.copy(d_gradRhoMemspace[ic].nEntries(),
+                                 gradRho[ic]->begin(),
+                                 d_gradRhoMemspace[ic].begin());
     }
   } // end of namespace ksdft
 } // end of namespace dftefe

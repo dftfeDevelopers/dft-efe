@@ -423,6 +423,14 @@ int main(int argc, char** argv)
 
   const atoms::TCIADataParams  tciaparams{tciaFolder , tciaOutFilePrefix};
 
+  std::string xcFunctional = readParameter<std::string>(parameterInputFileName, "xc", rootCout, false, false, std::string("GGA-PBE"));
+  std::string spinModeStr = readParameter<std::string>(parameterInputFileName, "spintype", rootCout, false, false, std::string("Unpolarized"));
+  ksdft::SpinMode spinMode = ksdft::SpinMode::Unpolarized;
+  if (spinModeStr == "Collinear")
+    spinMode = ksdft::SpinMode::Collinear;
+  else if (spinModeStr == "NonCollinear")
+    spinMode = ksdft::SpinMode::NonCollinear;
+
   dftefe::size_type num1DGaussSubdividedSizeNonLocOperator = 14;
   dftefe::size_type gaussSubdividedCopiesNonLocOperator = 1;
 
@@ -461,6 +469,7 @@ int main(int argc, char** argv)
   coordinates.resize(dim,0.);
   std::vector<std::string> atomSymbolVec(0);
   std::vector<double> atomChargesVec(0);
+  std::vector<double> atomMagMomentsVec(0);
   std::string symbol , basisFilePath, pspFilePath;
   std::map<std::string, double> atomSymbolToChargeMap;
   double valanceNumber;
@@ -514,8 +523,11 @@ int main(int argc, char** argv)
       ss >> symbol; 
       ss >> valanceNumber; 
       for(dftefe::size_type i=0 ; i<dim ; i++){
-          ss >> coordinates[i]; 
+          ss >> coordinates[i];
       }
+      double magMoment = 0.0;
+      ss >> magMoment;
+      atomMagMomentsVec.push_back(magMoment);
       atomCoordinatesVec.push_back(coordinates);
       atomSymbolVec.push_back(symbol);
       if(atomSymbolToPSPFileName.find(symbol) == atomSymbolToPSPFileName.end())
@@ -1249,12 +1261,15 @@ int main(int argc, char** argv)
                                           feBDEXCHamiltonian,      
                                           feBDAtomCenterNonLocalOperator,                                                                          
                                           atomSymbolToPSPFileName,
-                                          "GGA-PBE",
+                                          xcFunctional,
                                           linAlgOpContext,
                                           *MContextForInv,
                                           *MContext,
                                           /**MContextForInv,*/
-                                          *MInvContext);
+                                          *MInvContext,
+                                          true,
+                                          atomMagMomentsVec,
+                                          spinMode);
   }
   else if (!isNumericalNuclearSolve && isDeltaRhoPoissonSolve)
   {
@@ -1302,14 +1317,16 @@ int main(int argc, char** argv)
                                           feBDEXCHamiltonian,  
                                           feBDAtomCenterNonLocalOperator,                                                                              
                                           atomSymbolToPSPFileName,
-                                          "GGA-PBE",
+                                          xcFunctional,
                                           linAlgOpContext,
                                           *MContextForInv,
                                           /**MContextForInv,*/
                                           *MContext,
                                           *MInvContext,
                                           true,
-                                          tciaparams);
+                                          tciaparams,
+                                          atomMagMomentsVec,
+                                          spinMode);
   }
   else
   {

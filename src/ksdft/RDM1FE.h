@@ -114,11 +114,8 @@ namespace dftefe
         std::unordered_map<DensityObsAttr, std::vector<std::vector<double>>>
           &densityObsAttrVals);
 
-      bool
-      isSpinPolarized() const;
-
-      bool
-      isNonCollinear() const;
+      SpinMode
+      spinMode() const;
 
       bool
       isSOC() const;
@@ -163,8 +160,7 @@ namespace dftefe
 
       std::vector<double>                               d_kPointCoords;
       std::vector<double>                               d_kPointWeights;
-      bool                                              d_isSpinPolarized;
-      bool                                              d_isNonCollinear;
+      SpinMode                                          d_spinMode;
       bool                                              d_isSOC;
       std::reference_wrapper<const MPI_Comm>            d_mpiCommDomain;
       size_type                                         d_cellBlockSize;

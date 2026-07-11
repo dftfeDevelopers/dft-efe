@@ -203,6 +203,41 @@ namespace dftefe
              const ScaLAPACKMatrix<ValueType> &               Q,
              const ElpaScalapackManager &                     elpa);
 
+      // -----------------------------------------------------------------------
+      // copyToBatch / copyFromBatch
+      // -----------------------------------------------------------------------
+
+      // Gather numVecBatch orbitals starting at srcStart for every spin channel
+      // into a flat MultiVector batch (Xbatch columns: spin-0, then spin-1, ...).
+      // Xbatch must have numSpaces * numVecBatch components.
+      // Two-type template mirrors stridedBlockCopy<VT1,VT2>: X stores VT1,
+      // Xbatch stores VT2 (typically VT1==VT2; differs inside projectImpl).
+
+      template <typename ValueType1,
+                typename ValueType2,
+                utils::MemorySpace memorySpace>
+      static void
+      copyToBatch(
+        const MultiVectorProductSpace<ValueType1, memorySpace> &X,
+        size_type                                                srcStart,
+        size_type                                                numVecBatch,
+        MultiVector<ValueType2, memorySpace> &                  Xbatch,
+        LinAlgOpContext<memorySpace> &                          context);
+
+      // Inverse of copyToBatch: scatter the batch back into the product-space
+      // multivector at orbital positions [dstStart, dstStart+numVecBatch).
+
+      template <typename ValueType1,
+                typename ValueType2,
+                utils::MemorySpace memorySpace>
+      static void
+      copyFromBatch(
+        const MultiVector<ValueType1, memorySpace> &       Ybatch,
+        size_type                                          dstStart,
+        size_type                                          numVecBatch,
+        MultiVectorProductSpace<ValueType2, memorySpace> &Y,
+        LinAlgOpContext<memorySpace> &                     context);
+
     }; // class MultiVectorOps
 
   } // namespace linearAlgebra

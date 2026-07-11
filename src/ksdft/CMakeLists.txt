@@ -57,14 +57,17 @@ set(DFT-EFE-KSDFT-SOURCES
   IF ("${GPU_LANG}" STREQUAL "cuda")
   SET(DFT-EFE-KSDFT-DEVICE-SOURCES
       DensityCalculatorKernelsDevice.cpp
+      HamiltonianSpinBlockCopyKernelsDevice.cpp
       )
   ELSEIF ("${GPU_LANG}" STREQUAL "hip")
   SET(DFT-EFE-KSDFT-DEVICE-SOURCES
       DensityCalculatorKernelsDevice.cpp
+      HamiltonianSpinBlockCopyKernelsDevice.cpp
       )
   ELSEIF ("${GPU_LANG}" STREQUAL "sycl")
   SET(DFT-EFE-KSDFT-DEVICE-SOURCES
       DensityCalculatorKernelsDevice.cpp
+      HamiltonianSpinBlockCopyKernelsDevice.cpp
       )
   ENDIF()
   ENDIF()

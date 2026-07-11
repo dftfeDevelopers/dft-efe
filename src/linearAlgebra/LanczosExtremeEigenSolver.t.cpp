@@ -43,13 +43,13 @@ namespace dftefe
                               ValueTypeOperand,
                               memorySpace>::
       LanczosExtremeEigenSolver(
-        const size_type                              maxKrylovSubspaceSize,
-        const size_type                              numLowerExtermeEigenValues,
-        const size_type                              numUpperExtermeEigenValues,
-        std::vector<double> &                        tolerance,
-        double                                       lanczosBetaTolerance,
-        const Vector<ValueTypeOperand, memorySpace> &initialGuess,
-        bool                                         isAdaptiveSolve)
+        const size_type                                   maxKrylovSubspaceSize,
+        const size_type                                   numLowerExtermeEigenValues,
+        const size_type                                   numUpperExtermeEigenValues,
+        std::vector<double> &                             tolerance,
+        double                                            lanczosBetaTolerance,
+        const MultiVector<ValueTypeOperand, memorySpace> &initialGuess,
+        bool                                              isAdaptiveSolve)
       : d_isAdaptiveSolve(isAdaptiveSolve)
     {
       reinit(maxKrylovSubspaceSize,
@@ -75,7 +75,8 @@ namespace dftefe
         std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
                                                       mpiPatternP2P,
         std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext,
-        bool                                          isAdaptiveSolve)
+        bool      isAdaptiveSolve,
+        size_type numSpaces)
       : d_isAdaptiveSolve(isAdaptiveSolve)
     {
       reinit(maxKrylovSubspaceSize,
@@ -84,7 +85,8 @@ namespace dftefe
              tolerance,
              lanczosBetaTolerance,
              mpiPatternP2P,
-             linAlgOpContext);
+             linAlgOpContext,
+             numSpaces);
     }
 
     template <typename ValueTypeOperator,
@@ -99,7 +101,7 @@ namespace dftefe
              const size_type      numUpperExtermeEigenValues,
              std::vector<double> &tolerance,
              double               lanczosBetaTolerance,
-             const Vector<ValueTypeOperand, memorySpace> &initialGuess)
+             const MultiVector<ValueTypeOperand, memorySpace> &initialGuess)
     {
       d_maxKrylovSubspaceSize      = maxKrylovSubspaceSize;
       d_initialGuess               = initialGuess;
@@ -127,13 +129,15 @@ namespace dftefe
              double               lanczosBetaTolerance,
              std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
                                                            mpiPatternP2P,
-             std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext)
+             std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext,
+             size_type                                     numSpaces)
     {
       d_initialGuess =
-        Vector<ValueTypeOperand, memorySpace>(mpiPatternP2P,
-                                              linAlgOpContext,
-                                              (ValueTypeOperand)0,
-                                              (ValueTypeOperand)1);
+        MultiVector<ValueTypeOperand, memorySpace>(mpiPatternP2P,
+                                                   linAlgOpContext,
+                                                   numSpaces,
+                                                   (ValueTypeOperand)0,
+                                                   (ValueTypeOperand)1);
 
       d_maxKrylovSubspaceSize = maxKrylovSubspaceSize;
       DFTEFE_Assert(numLowerExtermeEigenValues + numUpperExtermeEigenValues <=
@@ -182,16 +186,21 @@ namespace dftefe
       std::vector<RealType> alphaVec, betaVec;
       alphaVec.reserve(d_maxKrylovSubspaceSize);
       betaVec.reserve(d_maxKrylovSubspaceSize);
-      std::vector<ValueType> alpha(1, (ValueType)0), beta(1, (ValueType)0);
+      // numVec > 1 for Collinear (S=2): treat [q↑,q↓] as a single vector in
+      // R^{S*N}. dot() fills one value per component; sum for the total inner
+      // product. ascale/axpy must cover all S*N scalars, not just N.
+      const size_type        numVec = d_initialGuess.numVectors();
+      std::vector<ValueType> alpha(numVec, (ValueType)0),
+        beta(numVec, (ValueType)0);
 
       ValueType ones = (ValueType)1.0, nBeta, nAlpha;
 
-      Vector<ValueType, memorySpace> temp(d_initialGuess, (ValueType)0.0);
-      Vector<ValueType, memorySpace> v(d_initialGuess, (ValueType)0.0);
-      Vector<ValueType, memorySpace> q(d_initialGuess, (ValueType)0.0);
-      Vector<ValueType, memorySpace> qPrev(d_initialGuess, (ValueType)0.0);
+      MultiVector<ValueType, memorySpace> temp(d_initialGuess, (ValueType)0.0);
+      MultiVector<ValueType, memorySpace> v(d_initialGuess, (ValueType)0.0);
+      MultiVector<ValueType, memorySpace> q(d_initialGuess, (ValueType)0.0);
+      MultiVector<ValueType, memorySpace> qPrev(d_initialGuess, (ValueType)0.0);
 
-      std::vector<Vector<ValueType, memorySpace>> krylovSubspOrthoVec(0);
+      std::vector<MultiVector<ValueType, memorySpace>> krylovSubspOrthoVec(0);
       utils::MemoryStorage<ValueType, memorySpace>
         krylovSubspOrthoVecMemStorage(0);
 
@@ -216,10 +225,15 @@ namespace dftefe
         blasLapack::ScalarOp::Conj,
         blasLapack::ScalarOp::Identity);
 
-      alpha[0] = std::sqrt(alpha[0]);
+      {
+        ValueType totalSq = (ValueType)0;
+        for (size_type k = 0; k < numVec; ++k)
+          totalSq += alpha[k];
+        alpha[0] = std::sqrt(totalSq);
+      }
 
       blasLapack::ascale<ValueType, ValueTypeOperand, memorySpace>(
-        d_initialGuess.locallyOwnedSize(),
+        d_initialGuess.locallyOwnedSize() * numVec,
         (ValueType)(1.0 / alpha[0]),
         d_initialGuess.data(),
         q.data(),
@@ -246,6 +260,13 @@ namespace dftefe
             blasLapack::ScalarOp::Conj,
             blasLapack::ScalarOp::Identity);
 
+          {
+            ValueType totalAlpha = (ValueType)0;
+            for (size_type k = 0; k < numVec; ++k)
+              totalAlpha += alpha[k];
+            alpha[0] = totalAlpha;
+          }
+
           alphaVec.push_back(utils::realPart<ValueType>(alpha[0]));
 
           // std::cout << "alphaVec: ";
@@ -270,7 +291,7 @@ namespace dftefe
           // add(ones, v, nAlpha, q, v);
           // add(ones, v, nBeta, qPrev, v);
 
-          linearAlgebra::blasLapack::axpy(v.localSize(),
+          linearAlgebra::blasLapack::axpy(v.localSize() * numVec,
                                           nAlpha,
                                           q.data(),
                                           1,
@@ -278,7 +299,7 @@ namespace dftefe
                                           1,
                                           *d_initialGuess.getLinAlgOpContext());
 
-          linearAlgebra::blasLapack::axpy(v.localSize(),
+          linearAlgebra::blasLapack::axpy(v.localSize() * numVec,
                                           nBeta,
                                           qPrev.data(),
                                           1,
@@ -297,7 +318,12 @@ namespace dftefe
             blasLapack::ScalarOp::Conj,
             blasLapack::ScalarOp::Identity);
 
-          beta[0] = std::sqrt(beta[0]);
+          {
+            ValueType totalBeta = (ValueType)0;
+            for (size_type k = 0; k < numVec; ++k)
+              totalBeta += beta[k];
+            beta[0] = std::sqrt(totalBeta);
+          }
 
           if (utils::realPart<ValueType>(beta[0]) < d_lanczosBetaTolerance &&
               d_isAdaptiveSolve)
@@ -315,7 +341,7 @@ namespace dftefe
 
           // get q_i+1 = v/\beta_i
           blasLapack::ascale<ValueType, ValueType, memorySpace>(
-            v.locallyOwnedSize(),
+            v.locallyOwnedSize() * numVec,
             (ValueType)(1.0 / beta[0]),
             v.data(),
             q.data(),

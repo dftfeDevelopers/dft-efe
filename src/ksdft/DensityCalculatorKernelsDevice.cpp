@@ -100,10 +100,7 @@ namespace dftefe
         const size_type                    quadPtsInCellsBlockSize,
         dftefe::utils::deviceFloatComplex *psiBatchQuad,
         RealType *                         modPsiSqBatchQuadIter);
-    } // namespace
 
-    namespace
-    {
       template <typename ValueType, typename RealType>
       DFTEFE_CREATE_KERNEL(
         void,
@@ -207,7 +204,8 @@ namespace dftefe
                   quadRuleContainer,
         RealType *rhoBatch,
         linearAlgebra::LinAlgOpContext<utils::MemorySpace::DEVICE>
-          &linAlgOpContext)
+          &      linAlgOpContext,
+        const SpinMode spinMode)
     {
       size_type quadPtsInCellsBlockSize = 0;
       for (size_type iCell = cellRange.first; iCell < cellRange.second; iCell++)
@@ -222,28 +220,60 @@ namespace dftefe
                            batchSize,
                            quadPtsInCellsBlockSize,
                            utils::makeDataTypeDeviceCompatible(psiBatchQuad),
-                           utils::makeDataTypeDeviceCompatible(
-                             modPsiSqBatchQuad));
+                           utils::makeDataTypeDeviceCompatible(modPsiSqBatchQuad));
 
-      const RealType alpha = 2.0; // 2 for spin up and down
-      const RealType beta  = 0.0;
+      if (spinMode == SpinMode::Unpolarized)
+        {
+          const RealType alpha = 2.0; // 2 for spin up and down
+          const RealType beta  = 0.0;
+          linearAlgebra::blasLapack::
+            gemm<RealType, RealType, utils::MemorySpace::DEVICE>(
+              'N', 'N', 1, quadPtsInCellsBlockSize, batchSize, alpha,
+              occupationInBatch, 1, modPsiSqBatchQuad, batchSize,
+              beta, rhoBatch, 1, linAlgOpContext);
+        }
+      else if (spinMode == SpinMode::Collinear)
+        {
+          const size_type batchN = batchSize / 2;
 
-      linearAlgebra::blasLapack::
-        gemm<RealType, RealType, utils::MemorySpace::DEVICE>(
-          'N',
-          'N',
-          1,
-          quadPtsInCellsBlockSize,
-          batchSize,
-          alpha,
-          occupationInBatch,
-          1,
-          modPsiSqBatchQuad,
-          batchSize,
-          beta,
-          rhoBatch,
-          1,
-          linAlgOpContext);
+          // ρ_total = spin-up + spin-down
+          linearAlgebra::blasLapack::
+            gemm<RealType, RealType, utils::MemorySpace::DEVICE>(
+              'N', 'N', 1, quadPtsInCellsBlockSize, batchN, (RealType)1.0,
+              occupationInBatch, 1,
+              modPsiSqBatchQuad, batchSize,
+              (RealType)0.0, rhoBatch + 0 * quadPtsInCellsBlockSize, 1,
+              linAlgOpContext);
+          linearAlgebra::blasLapack::
+            gemm<RealType, RealType, utils::MemorySpace::DEVICE>(
+              'N', 'N', 1, quadPtsInCellsBlockSize, batchN, (RealType)1.0,
+              occupationInBatch + batchN, 1,
+              modPsiSqBatchQuad + batchN, batchSize,
+              (RealType)1.0, rhoBatch + 0 * quadPtsInCellsBlockSize, 1,
+              linAlgOpContext);
+
+          // Mz = spin-up - spin-down
+          linearAlgebra::blasLapack::
+            gemm<RealType, RealType, utils::MemorySpace::DEVICE>(
+              'N', 'N', 1, quadPtsInCellsBlockSize, batchN, (RealType)1.0,
+              occupationInBatch, 1,
+              modPsiSqBatchQuad, batchSize,
+              (RealType)0.0, rhoBatch + 1 * quadPtsInCellsBlockSize, 1,
+              linAlgOpContext);
+          linearAlgebra::blasLapack::
+            gemm<RealType, RealType, utils::MemorySpace::DEVICE>(
+              'N', 'N', 1, quadPtsInCellsBlockSize, batchN, (RealType)-1.0,
+              occupationInBatch + batchN, 1,
+              modPsiSqBatchQuad + batchN, batchSize,
+              (RealType)1.0, rhoBatch + 1 * quadPtsInCellsBlockSize, 1,
+              linAlgOpContext);
+        }
+      else
+        {
+          DFTEFE_AssertWithMsg(
+            false,
+            "NonCollinear density computation on DEVICE is not yet implemented.");
+        }
     }
 
     template <typename ValueType, typename RealType, size_type dim>
@@ -263,7 +293,8 @@ namespace dftefe
                   quadRuleContainer,
         RealType *gradRhoBatch,
         linearAlgebra::LinAlgOpContext<utils::MemorySpace::DEVICE>
-          &linAlgOpContext)
+          &      linAlgOpContext,
+        const SpinMode spinMode)
     {
       size_type quadPtsInCellsBlockSize = 0;
       for (size_type iCell = cellRange.first; iCell < cellRange.second; iCell++)
@@ -285,26 +316,58 @@ namespace dftefe
         utils::makeDataTypeDeviceCompatible(gradPsiBatchQuad),
         utils::makeDataTypeDeviceCompatible(psiGradPsiBatch));
 
-      const RealType alpha =
-        4.0; // 2 for spin up and down, 2 for grad(|psi|^2) = 2Re(psi* grad psi)
-      const RealType beta = 0.0;
+      if (spinMode == SpinMode::Unpolarized)
+        {
+          const RealType alpha = 4.0; // 2 for spin up and down, 2 for grad(|psi|^2) = 2Re(psi* grad psi)
+          const RealType beta = 0.0;
+          linearAlgebra::blasLapack::
+            gemm<RealType, RealType, utils::MemorySpace::DEVICE>(
+              'N', 'N', 1, quadPtsInCellsBlockSize * dim, batchSize, alpha,
+              occupationInBatch, 1, psiGradPsiBatch, batchSize,
+              beta, gradRhoBatch, 1, linAlgOpContext);
+        }
+      else if (spinMode == SpinMode::Collinear)
+        {
+          const size_type batchN = batchSize / 2;
 
-      linearAlgebra::blasLapack::
-        gemm<RealType, RealType, utils::MemorySpace::DEVICE>(
-          'N',
-          'N',
-          1,
-          quadPtsInCellsBlockSize * dim,
-          batchSize,
-          alpha,
-          occupationInBatch,
-          1,
-          psiGradPsiBatch,
-          batchSize,
-          beta,
-          gradRhoBatch,
-          1,
-          linAlgOpContext);
+          // ∇ρ_total = 2*(occ_up * psiGradPsi_up + occ_dn * psiGradPsi_dn)
+          linearAlgebra::blasLapack::
+            gemm<RealType, RealType, utils::MemorySpace::DEVICE>(
+              'N', 'N', 1, quadPtsInCellsBlockSize * dim, batchN, (RealType)2.0,
+              occupationInBatch, 1,
+              psiGradPsiBatch, batchSize,
+              (RealType)0.0, gradRhoBatch + 0 * quadPtsInCellsBlockSize * dim, 1,
+              linAlgOpContext);
+          linearAlgebra::blasLapack::
+            gemm<RealType, RealType, utils::MemorySpace::DEVICE>(
+              'N', 'N', 1, quadPtsInCellsBlockSize * dim, batchN, (RealType)2.0,
+              occupationInBatch + batchN, 1,
+              psiGradPsiBatch + batchN, batchSize,
+              (RealType)1.0, gradRhoBatch + 0 * quadPtsInCellsBlockSize * dim, 1,
+              linAlgOpContext);
+
+          // ∇Mz = 2*(occ_up * psiGradPsi_up - occ_dn * psiGradPsi_dn)
+          linearAlgebra::blasLapack::
+            gemm<RealType, RealType, utils::MemorySpace::DEVICE>(
+              'N', 'N', 1, quadPtsInCellsBlockSize * dim, batchN, (RealType)2.0,
+              occupationInBatch, 1,
+              psiGradPsiBatch, batchSize,
+              (RealType)0.0, gradRhoBatch + 1 * quadPtsInCellsBlockSize * dim, 1,
+              linAlgOpContext);
+          linearAlgebra::blasLapack::
+            gemm<RealType, RealType, utils::MemorySpace::DEVICE>(
+              'N', 'N', 1, quadPtsInCellsBlockSize * dim, batchN, (RealType)-2.0,
+              occupationInBatch + batchN, 1,
+              psiGradPsiBatch + batchN, batchSize,
+              (RealType)1.0, gradRhoBatch + 1 * quadPtsInCellsBlockSize * dim, 1,
+              linAlgOpContext);
+        }
+      else
+        {
+          DFTEFE_AssertWithMsg(
+            false,
+            "NonCollinear grad-rho computation on DEVICE is not yet implemented.");
+        }
     }
 
     template class DensityCalculatorKernels<double,

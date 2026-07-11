@@ -16,6 +16,7 @@
 #include <utils/TypeConfig.h>
 #include <utils/MemorySpaceType.h>
 #include <utils/MemoryStorage.h>
+#include <utils/MemoryTransfer.h>
 #include <vector>
 #include <cmath>
 #include <memory>
@@ -412,6 +413,14 @@ int main(int argc, char** argv)
 
   const atoms::TCIADataParams  tciaparams{tciaFolder , tciaOutFilePrefix};
 
+  std::string xcFunctional = readParameter<std::string>(parameterInputFileName, "xc", rootCout, false, false, std::string("GGA-PBE"));
+  std::string spinModeStr = readParameter<std::string>(parameterInputFileName, "spintype", rootCout, false, false, std::string("Unpolarized"));
+  ksdft::SpinMode spinMode = ksdft::SpinMode::Unpolarized;
+  if (spinModeStr == "Collinear")
+    spinMode = ksdft::SpinMode::Collinear;
+  else if (spinModeStr == "NonCollinear")
+    spinMode = ksdft::SpinMode::NonCollinear;
+
   unsigned int num1DGaussSubdividedSizeNonLocOperator = 14;
   unsigned int gaussSubdividedCopiesNonLocOperator = 1;
 
@@ -433,6 +442,7 @@ int main(int argc, char** argv)
   coordinates.resize(dim,0.);
   std::vector<std::string> atomSymbolVec(0);
   std::vector<double> atomChargesVec(0);
+  std::vector<double> atomMagMomentsVec(0);
   std::string symbol , basisFilePath, pspFilePath;
   std::map<std::string, double> atomSymbolToChargeMap;
   double valanceNumber;
@@ -477,8 +487,11 @@ int main(int argc, char** argv)
       ss >> symbol; 
       ss >> valanceNumber; 
       for(unsigned int i=0 ; i<dim ; i++){
-          ss >> coordinates[i]; 
+          ss >> coordinates[i];
       }
+      double magMoment = 0.0;
+      ss >> magMoment;
+      atomMagMomentsVec.push_back(magMoment);
       atomCoordinatesVec.push_back(coordinates);
       atomSymbolVec.push_back(symbol);
       if(atomSymbolToPSPFileName.find(symbol) == atomSymbolToPSPFileName.end())
@@ -517,6 +530,37 @@ int main(int argc, char** argv)
     rootCout << " Setting the number of Kohn-Sham wave functions to be " << numWantedEigenvalues << std::endl;
   }
   
+  std::vector<std::string> fieldNames{"density", "vtotal"};
+  std::vector<std::string> metadataNames{"symbol", "Z", "charge", "NR"};
+  std::shared_ptr<atoms::AtomSphericalDataContainer> atomSphericalDataContainer =
+    std::make_shared<atoms::AtomSphericalDataContainer>(
+      atoms::AtomSphericalDataType::ENRICHMENT,
+      atomSymbolToBasisFileName,
+      fieldNames,
+      metadataNames,
+      std::map<std::string, std::string>({{"rcsmear", std::to_string(rc)}, {"PSP/AE", "PSP"}}));
+
+  for (auto i:atomSymbolToBasisFileName )
+  {
+    rootCout << "For atom symbol: "<<i.first<<std::endl;
+    rootCout << "Reading basis file: "<<i.second<<std::endl;
+    rootCout << "Cutoff and smoothness for "<<i.first<<std::endl;
+    for(auto j:fieldNames)
+    {
+      rootCout << " for "<<j<<" : "; 
+      for(auto &enrichmentObjId : 
+        atomSphericalDataContainer->getSphericalData(i.first, j))
+      {
+        rootCout << enrichmentObjId->getCutoff() << ","<<enrichmentObjId->getSmoothness()<<"\t";
+      }
+      rootCout << std::endl;
+    }
+    if(std::abs(std::stod(atomSphericalDataContainer->getMetadata(i.first, "Z"))) - std::abs(atomSymbolToChargeMap[i.first]) > 1e-12)
+    {
+      utils::throwException(false, "The input basis file Z does not match with that given in input.");       
+    }
+  }
+
   // Generate mesh
    std::shared_ptr<basis::CellMappingBase> cellMapping = std::make_shared<basis::LinearCellMappingDealii<dim>>();
 
@@ -568,7 +612,7 @@ int main(int argc, char** argv)
   // Set up the FE Basis Data Storage
   std::shared_ptr<basis::FEBasisDataStorage<double, Host>> feBDTotalChargeStiffnessMatrix =
     std::make_shared<basis::CFEBDSOnTheFlyComputeDealii<double, double, Host,dim>>
-    (basisDofHandlerTotalPot, quadAttrElec, basisAttrMap, ksdft::KSDFTDefaults::CELL_BATCH_SIZE_GRAD_EVAL, *linAlgOpContextHost);
+    (basisDofHandlerTotalPot, quadAttrElec, basisAttrMap, ksdft::KSDFTDefaults<Host>::CELL_BATCH_SIZE_GRAD_EVAL, *linAlgOpContextHost);
 
   // evaluate basis data
   feBDTotalChargeStiffnessMatrix->evaluateBasisData(quadAttrElec, basisAttrMap);
@@ -603,7 +647,7 @@ int main(int argc, char** argv)
   // Set up the FE Basis Data Storage
   std::shared_ptr<basis::FEBasisDataStorage<double, memorySpace>> feBasisDataGLLEigen =
     std::make_shared<basis::CFEBDSOnTheFlyComputeDealii<double, double, memorySpace,dim>>
-    (basisDofHandlerWaveFn, quadAttrGLLEigen, basisAttrMap, ksdft::KSDFTDefaults::CELL_BATCH_SIZE_GRAD_EVAL, *linAlgOpContext);
+    (basisDofHandlerWaveFn, quadAttrGLLEigen, basisAttrMap, ksdft::KSDFTDefaults<memorySpace>::CELL_BATCH_SIZE_GRAD_EVAL, *linAlgOpContext);
 
   // evaluate basis data
   feBasisDataGLLEigen->evaluateBasisData(quadAttrGLLEigen, basisAttrMap);
@@ -706,7 +750,7 @@ std::shared_ptr<linearAlgebra::OperatorContext<double,
     *cellMapping); 
 
   basisAttrMap[basis::BasisStorageAttributes::StoreValues] = true;
-  basisAttrMap[basis::BasisStorageAttributes::StoreGradient] = false;
+  basisAttrMap[basis::BasisStorageAttributes::StoreGradient] = true;
   basisAttrMap[basis::BasisStorageAttributes::StoreHessian] = false;
   basisAttrMap[basis::BasisStorageAttributes::StoreOverlap] = false;
   basisAttrMap[basis::BasisStorageAttributes::StoreGradNiGradNj] = false;
@@ -714,17 +758,17 @@ std::shared_ptr<linearAlgebra::OperatorContext<double,
 
   std::shared_ptr<basis::FEBasisDataStorage<double, memorySpace>> feBDElectrostaticsHamiltonian = 
     std::make_shared<basis::CFEBDSOnTheFlyComputeDealii<double, double, memorySpace,dim>>
-      (basisDofHandlerWaveFn, quadAttrGaussSubdivided, basisAttrMap, ksdft::KSDFTDefaults::CELL_BATCH_SIZE_GRAD_EVAL, *linAlgOpContext);
+      (basisDofHandlerWaveFn, quadAttrGaussSubdivided, basisAttrMap, ksdft::KSDFTDefaults<memorySpace>::CELL_BATCH_SIZE_GRAD_EVAL, *linAlgOpContext);
   feBDElectrostaticsHamiltonian->evaluateBasisData(quadAttrGaussSubdivided, quadRuleContainerGaussSubdividedEigen, basisAttrMap);
 
   std::shared_ptr<basis::FEBasisDataStorage<double, Host>> feBDElecChargeRhs = 
     std::make_shared<basis::CFEBDSOnTheFlyComputeDealii<double, double, Host,dim>>
-      (basisDofHandlerTotalPot, quadAttrGaussSubdivided, basisAttrMap, ksdft::KSDFTDefaults::CELL_BATCH_SIZE_GRAD_EVAL, *linAlgOpContextHost);
+      (basisDofHandlerTotalPot, quadAttrGaussSubdivided, basisAttrMap, ksdft::KSDFTDefaults<memorySpace>::CELL_BATCH_SIZE_GRAD_EVAL, *linAlgOpContextHost);
   feBDElecChargeRhs->evaluateBasisData(quadAttrGaussSubdivided, quadRuleContainerGaussSubdividedEigen, basisAttrMap);
                 
   std::shared_ptr<basis::FEBasisDataStorage<double, memorySpace>> feBDAtomCenterNonLocalOperator = 
     std::make_shared<basis::CFEBDSOnTheFlyComputeDealii<double, double, memorySpace,dim>>
-      (basisDofHandlerWaveFn, quadAttrGaussSubdivided, basisAttrMap, ksdft::KSDFTDefaults::CELL_BATCH_SIZE_GRAD_EVAL, *linAlgOpContext);
+      (basisDofHandlerWaveFn, quadAttrGaussSubdivided, basisAttrMap, ksdft::KSDFTDefaults<memorySpace>::CELL_BATCH_SIZE_GRAD_EVAL, *linAlgOpContext);
   feBDAtomCenterNonLocalOperator->evaluateBasisData(quadAttrGaussSubdivided, quadRuleContainerGaussSubdividedAtomNonLocOp, basisAttrMap);
                 
   std::shared_ptr<quadrature::QuadratureRule> gaussSubdivQuadRuleGrad =
@@ -747,7 +791,7 @@ std::shared_ptr<linearAlgebra::OperatorContext<double,
   // Set up the FE Basis Data Storage
   std::shared_ptr<basis::FEBasisDataStorage<double, memorySpace>> feBDHamStiffnessMatrix =
     std::make_shared<basis::CFEBDSOnTheFlyComputeDealii<double, double, memorySpace,dim>>
-    (basisDofHandlerWaveFn, quadAttrGaussSubdivided, basisAttrMap, ksdft::KSDFTDefaults::CELL_BATCH_SIZE_GRAD_EVAL, *linAlgOpContext);
+    (basisDofHandlerWaveFn, quadAttrGaussSubdivided, basisAttrMap, ksdft::KSDFTDefaults<memorySpace>::CELL_BATCH_SIZE_GRAD_EVAL, *linAlgOpContext);
 
   // evaluate basis data
   feBDHamStiffnessMatrix->evaluateBasisData(quadAttrGaussSubdivided, quadRuleContainerAdaptiveGrad, basisAttrMap);
@@ -766,7 +810,7 @@ std::shared_ptr<linearAlgebra::OperatorContext<double,
                                                       dim>>(
                                                       *basisManagerWaveFn,
                                                       *feBDElectrostaticsHamiltonian,
-                                                      ksdft::KSDFTDefaults::CELL_BATCH_SIZE,
+                                                      ksdft::KSDFTDefaults<memorySpace>::CELL_BATCH_SIZE,
                                                       numWantedEigenvalues,
                                                       linAlgOpContext);
 
@@ -779,7 +823,7 @@ std::shared_ptr<linearAlgebra::OperatorContext<double,
 
   std::shared_ptr<basis::FEBasisDataStorage<double, Host>> feBDNucChargeRhs =
     std::make_shared<basis::CFEBDSOnTheFlyComputeDealii<double, double, Host,dim>>
-      (basisDofHandlerTotalPot, quadAttrGaussSubdivided, basisAttrMap, ksdft::KSDFTDefaults::CELL_BATCH_SIZE_GRAD_EVAL, *linAlgOpContextHost);
+      (basisDofHandlerTotalPot, quadAttrGaussSubdivided, basisAttrMap, ksdft::KSDFTDefaults<Host>::CELL_BATCH_SIZE_GRAD_EVAL, *linAlgOpContextHost);
   feBDNucChargeRhs->evaluateBasisData(quadAttrGaussSubdivided, quadRuleContainerGaussSubdividedElec, basisAttrMap);
 
   p.registerEnd("Basis Creation and Basis Data Storages Evaluation");
@@ -796,18 +840,9 @@ std::shared_ptr<linearAlgebra::OperatorContext<double,
 
   utils::printCurrentMemoryUsage<memorySpace>(comm, "Before Kohn Sham DFT Class Init");
 
-  std::vector<std::string> fieldNamesElecDens{"density"};
-  std::vector<std::string> metadataNamesElecDens{"symbol", "Z", "charge", "NR"};
-  std::shared_ptr<atoms::AtomSphericalDataContainer> atomSphericalDataContainerElecDens =
-    std::make_shared<atoms::AtomSphericalDataContainer>(
-      atoms::AtomSphericalDataType::ENRICHMENT,
-      atomSymbolToBasisFileName,
-      fieldNamesElecDens,
-      metadataNamesElecDens,
-      std::map<std::string, std::string>({{"rcsmear", std::to_string(rc)}, {"PSP/AE", "PSP"}}));
   std::shared_ptr<atoms::AtomSuperpositionFunction<memorySpace>> elecChargeDens =
     std::make_shared<atoms::AtomSuperpositionFunction<memorySpace>>(
-      atomSphericalDataContainerElecDens,
+      atomSphericalDataContainer,
       atomSymbolVec,
       atomCoordinatesVec,
       "density",
@@ -854,28 +889,21 @@ std::shared_ptr<linearAlgebra::OperatorContext<double,
                                           feBDEXCHamiltonian,
                                           feBDAtomCenterNonLocalOperator,
                                           atomSymbolToPSPFileName,
-                                          "GGA-PBE",
+                                          xcFunctional,
                                           linAlgOpContext,
                                           *MContextForInv,
                                           /**MContextForInv,*/
                                           *MContext,
-                                          *MInvContext);
+                                          *MInvContext,
+                                          true,
+                                          atomMagMomentsVec,
+                                          spinMode);
   }
   else if (!isNumericalNuclearSolve && isDeltaRhoPoissonSolve)
   {
-    std::vector<std::string> fieldNamesDelta{"density", "vtotal"};
-    std::vector<std::string> metadataNamesDelta{"symbol", "Z", "charge", "NR"};
-    std::shared_ptr<atoms::AtomSphericalDataContainer> atomSphericalDataContainerDelta =
-      std::make_shared<atoms::AtomSphericalDataContainer>(
-        atoms::AtomSphericalDataType::ENRICHMENT,
-        atomSymbolToBasisFileName,
-        fieldNamesDelta,
-        metadataNamesDelta,
-        std::map<std::string, std::string>({{"rcsmear", std::to_string(rc)}, {"PSP/AE", "PSP"}}));
-
     std::shared_ptr<atoms::AtomSuperpositionFunction<memorySpace>> smfuncAtTotPot =
       std::make_shared<atoms::AtomSuperpositionFunction<memorySpace>>(
-        atomSphericalDataContainerDelta,
+        atomSphericalDataContainer,
         atomSymbolVec,
         atomCoordinatesVec,
         "vtotal",
@@ -917,14 +945,16 @@ std::shared_ptr<linearAlgebra::OperatorContext<double,
                                           feBDEXCHamiltonian,
                                           feBDAtomCenterNonLocalOperator,
                                           atomSymbolToPSPFileName,
-                                          "GGA-PBE",
+                                          xcFunctional,
                                           linAlgOpContext,
                                           *MContextForInv,
                                           /**MContextForInv,*/
                                           *MContext,
                                           *MInvContext,
                                           true,
-                                          tciaparams);
+                                          tciaparams,
+                                          atomMagMomentsVec,
+                                          spinMode);
   }
   else
   {
@@ -940,7 +970,7 @@ std::shared_ptr<linearAlgebra::OperatorContext<double,
 
   pTot.registerEnd("Kohn Sham DFT Solve");
   pTot.print();
-  
+
   //gracefully end MPI
 
   int mpiFinalFlag = 0;

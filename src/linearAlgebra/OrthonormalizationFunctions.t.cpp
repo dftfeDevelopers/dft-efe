@@ -26,6 +26,9 @@
 #include <linearAlgebra/BlasLapackTypedef.h>
 #include <linearAlgebra/BlasLapack.h>
 #include <utils/DataTypeOverloads.h>
+#include <linearAlgebra/MultiVectorProductSpace.h>
+#include <linearAlgebra/MultiVectorProductSpaceBlocked.h>
+#include <linearAlgebra/MultiVectorOps.h>
 
 namespace dftefe
 {
@@ -204,178 +207,445 @@ namespace dftefe
               std::shared_ptr<const ProcessGrid> processGrid =
                 d_elpaScala->getProcessGridDftefeScalaWrapper();
 
-              ScaLAPACKMatrix<ValueType> overlapMatPar(numVec,
-                                                       processGrid,
-                                                       rowsBlockSize);
-
-              if (processGrid->is_process_active())
-                std::fill(&overlapMatPar.local_el(0, 0),
-                          &overlapMatPar.local_el(0, 0) +
-                            overlapMatPar.local_m() * overlapMatPar.local_n(),
-                          ValueType(0.0));
-
-              p.registerStart("Compute X^T M X");
-
-              computeXTransOpX(X, processGrid, overlapMatPar, B);
-
-              p.registerEnd("Compute X^T M X");
-              p.registerStart("Cholesky factorization");
-
-              // // cholesky factorization of overlap matrix
-              // // Operation = S^T = L^C*L^T = (L^C)*(L^C)^H ; Out: L^C
-
-              LAPACKSupport::Property overlapMatPropertyPostCholesky;
-              if (d_useELPA)
+              if (auto *Xb = dynamic_cast<
+                    MultiVectorProductSpaceBlocked<ValueType, memorySpace> *>(
+                    &X))
                 {
-                  // For ELPA cholesky only the upper triangular part of the
-                  // hermitian matrix is required
-                  ScaLAPACKMatrix<ValueType> overlapMatParConjTrans(
-                    numVec, processGrid, rowsBlockSize);
+                  // === BLOCKED (collinear): S independent N×N Cholesky +
+                  // rotate ===
+                  const size_type N = Xb->numVectorsPerSpace();
+                  const size_type S = Xb->numSpaces();
 
-                  if (processGrid->is_process_active())
-                    std::fill(&overlapMatParConjTrans.local_el(0, 0),
+                  p.registerStart("Compute X^T M X");
+
+                  std::vector<ScaLAPACKMatrix<ValueType>> overlapMatParVec(
+                    S,
+                    ScaLAPACKMatrix<ValueType>(N, processGrid, rowsBlockSize));
+                  for (auto &overlapMat : overlapMatParVec)
+                    if (processGrid->is_process_active())
+                      std::fill(&overlapMat.local_el(0, 0),
+                                &overlapMat.local_el(0, 0) +
+                                  overlapMat.local_m() * overlapMat.local_n(),
+                                ValueType(0.0));
+
+                  MultiVectorOps::project(B,
+                                          *Xb,
+                                          overlapMatParVec,
+                                          *d_elpaScala,
+                                          d_XinBatch,
+                                          d_XoutBatch,
+                                          d_XinBatchSmall,
+                                          d_XoutBatchSmall);
+
+                  p.registerEnd("Compute X^T M X");
+                  p.registerStart("Cholesky factorization");
+
+                  std::vector<ScaLAPACKMatrix<ValueType>> LMatParVec(
+                    S,
+                    ScaLAPACKMatrix<ValueType>(
+                      N,
+                      processGrid,
+                      rowsBlockSize,
+                      LAPACKSupport::Property::lower_triangular));
+                  ScalapackError lapackReturn2;
+
+                  if (d_useELPA)
+                    {
+                      for (size_type s = 0; s < S; ++s)
+                        {
+                          ScaLAPACKMatrix<ValueType> overlapMatParConjTrans(
+                            N, processGrid, rowsBlockSize);
+                          if (processGrid->is_process_active())
+                            std::fill(
+                              &overlapMatParConjTrans.local_el(0, 0),
                               &overlapMatParConjTrans.local_el(0, 0) +
                                 overlapMatParConjTrans.local_m() *
                                   overlapMatParConjTrans.local_n(),
                               ValueType(0.0));
+                          overlapMatParConjTrans.copy_conjugate_transposed(
+                            overlapMatParVec[s]);
 
-                  overlapMatParConjTrans.copy_conjugate_transposed(
-                    overlapMatPar);
+                          if (processGrid->is_process_active())
+                            {
+                              int error;
+                              elpa_cholesky(
+                                d_elpaScala->getElpaHandle(),
+                                &overlapMatParConjTrans.local_el(0, 0),
+                                &error);
+                              if (error != ELPA_OK)
+                                cholSuccess = false;
+                            }
+                          overlapMatParVec[s].copy_conjugate_transposed(
+                            overlapMatParConjTrans);
 
-                  if (processGrid->is_process_active())
-                    {
-                      int error;
-                      elpa_cholesky(d_elpaScala->getElpaHandle(),
-                                    &overlapMatParConjTrans.local_el(0, 0),
-                                    &error);
+                          // extract lower triangular LMatPar
+                          if (processGrid->is_process_active())
+                            for (size_type i = 0;
+                                 i < LMatParVec[s].local_n();
+                                 ++i)
+                              {
+                                const size_type glob_i =
+                                  LMatParVec[s].global_column(i);
+                                for (size_type j = 0;
+                                     j < LMatParVec[s].local_m();
+                                     ++j)
+                                  {
+                                    const size_type glob_j =
+                                      LMatParVec[s].global_row(j);
+                                    if (glob_j < glob_i)
+                                      LMatParVec[s].local_el(j, i) =
+                                        ValueType(0);
+                                    else
+                                      LMatParVec[s].local_el(j, i) =
+                                        overlapMatParVec[s].local_el(j, i);
+                                  }
+                              }
 
-                      if (error != ELPA_OK)
-                        cholSuccess = false;
+                          // Check diagonal
+                          size_type flag = 0;
+                          if (processGrid->is_process_active())
+                            for (size_type i = 0;
+                                 i < LMatParVec[s].local_n();
+                                 ++i)
+                              {
+                                const size_type glob_i =
+                                  LMatParVec[s].global_column(i);
+                                for (size_type j = 0;
+                                     j < LMatParVec[s].local_m();
+                                     ++j)
+                                  {
+                                    const size_type glob_j =
+                                      LMatParVec[s].global_row(j);
+                                    if (glob_i == glob_j)
+                                      if (std::abs(
+                                            LMatParVec[s].local_el(j, i)) <
+                                          1e-14)
+                                        flag = 1;
+                                    if (flag == 1)
+                                      break;
+                                  }
+                                if (flag == 1)
+                                  break;
+                              }
+                          utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
+                            utils::mpi::MPIInPlace,
+                            &flag,
+                            1,
+                            utils::mpi::Types<size_type>::getMPIDatatype(),
+                            utils::mpi::MPIMax,
+                            X.getMPIPatternP2P()->mpiCommunicator());
+                          if (flag == 1)
+                            utils::throwException(
+                              false,
+                              "Chol GS cannot orthogonalize the given multivector, use Multipass Lowdin.");
+
+                          lapackReturn2 = LMatParVec[s].invert();
+                        }
                     }
-                  overlapMatPar.copy_conjugate_transposed(
-                    overlapMatParConjTrans);
-                  overlapMatPropertyPostCholesky =
-                    LAPACKSupport::Property::lower_triangular;
+                  else
+                    {
+                      for (size_type s = 0; s < S; ++s)
+                        {
+                          ScalapackError serr =
+                            overlapMatParVec[s].compute_cholesky_factorization();
+                          if (serr.err != ScalapackErrorCode::SUCCESS)
+                            cholSuccess = false;
+
+                          DFTEFE_AssertWithMsg(
+                            overlapMatParVec[s].get_property() ==
+                              LAPACKSupport::Property::lower_triangular,
+                            "DFT-EFE Error: overlap matrix property after cholesky factorization incorrect");
+
+                          if (processGrid->is_process_active())
+                            for (size_type i = 0;
+                                 i < LMatParVec[s].local_n();
+                                 ++i)
+                              {
+                                const size_type glob_i =
+                                  LMatParVec[s].global_column(i);
+                                for (size_type j = 0;
+                                     j < LMatParVec[s].local_m();
+                                     ++j)
+                                  {
+                                    const size_type glob_j =
+                                      LMatParVec[s].global_row(j);
+                                    if (glob_j < glob_i)
+                                      LMatParVec[s].local_el(j, i) =
+                                        ValueType(0);
+                                    else
+                                      LMatParVec[s].local_el(j, i) =
+                                        overlapMatParVec[s].local_el(j, i);
+                                  }
+                              }
+
+                          // Check diagonal
+                          size_type flag = 0;
+                          if (processGrid->is_process_active())
+                            for (size_type i = 0;
+                                 i < LMatParVec[s].local_n();
+                                 ++i)
+                              {
+                                const size_type glob_i =
+                                  LMatParVec[s].global_column(i);
+                                for (size_type j = 0;
+                                     j < LMatParVec[s].local_m();
+                                     ++j)
+                                  {
+                                    const size_type glob_j =
+                                      LMatParVec[s].global_row(j);
+                                    if (glob_i == glob_j)
+                                      if (std::abs(
+                                            LMatParVec[s].local_el(j, i)) <
+                                          1e-14)
+                                        flag = 1;
+                                    if (flag == 1)
+                                      break;
+                                  }
+                                if (flag == 1)
+                                  break;
+                              }
+                          utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
+                            utils::mpi::MPIInPlace,
+                            &flag,
+                            1,
+                            utils::mpi::Types<size_type>::getMPIDatatype(),
+                            utils::mpi::MPIMax,
+                            X.getMPIPatternP2P()->mpiCommunicator());
+                          if (flag == 1)
+                            utils::throwException(
+                              false,
+                              "Chol GS cannot orthogonalize the given multivector, use Multipass Lowdin.");
+
+                          lapackReturn2 = LMatParVec[s].invert();
+                        }
+                    }
+
+                  p.registerEnd("Cholesky factorization");
+                  p.registerStart("Cholesky orthogonalize");
+
+                  MultiVectorOps::rotate(*Xb, LMatParVec, *d_elpaScala);
+
+                  p.registerEnd("Cholesky orthogonalize");
+
+                  if (!cholSuccess)
+                    {
+                      err = OrthonormalizationErrorCode::ELPASCALAPACK_ERROR;
+                      retunValue =
+                        OrthonormalizationErrorMsg::isSuccessAndMsg(err);
+                    }
+                  else if (lapackReturn2.err ==
+                           ScalapackErrorCode::FAILED_MATRIX_INVERT)
+                    {
+                      err = OrthonormalizationErrorCode::ELPASCALAPACK_ERROR;
+                      retunValue =
+                        OrthonormalizationErrorMsg::isSuccessAndMsg(err);
+                      retunValue.msg += lapackReturn2.msg;
+                    }
+                  else
+                    {
+                      err        = OrthonormalizationErrorCode::SUCCESS;
+                      retunValue = OrthonormalizationErrorMsg::isSuccessAndMsg(
+                        err);
+                    }
+
+                  p.print();
+                  return retunValue;
                 }
               else
                 {
-                  ScalapackError serr =
-                    overlapMatPar.compute_cholesky_factorization();
+                  // === COUPLED (ProductSpace or plain MultiVector) ===
+                  ScaLAPACKMatrix<ValueType> overlapMatPar(numVec,
+                                                           processGrid,
+                                                           rowsBlockSize);
 
-                  if (serr.err != ScalapackErrorCode::SUCCESS)
-                    cholSuccess = false;
+                  if (processGrid->is_process_active())
+                    std::fill(&overlapMatPar.local_el(0, 0),
+                              &overlapMatPar.local_el(0, 0) +
+                                overlapMatPar.local_m() *
+                                  overlapMatPar.local_n(),
+                              ValueType(0.0));
 
-                  overlapMatPropertyPostCholesky = overlapMatPar.get_property();
-                }
+                  p.registerStart("Compute X^T M X");
 
-              DFTEFE_AssertWithMsg(
-                overlapMatPropertyPostCholesky ==
-                  LAPACKSupport::Property::lower_triangular,
-                "DFT-EFE Error: overlap matrix property after cholesky factorization incorrect");
+                  if (auto *Xp = dynamic_cast<
+                        MultiVectorProductSpace<ValueType, memorySpace> *>(&X))
+                    {
+                      MultiVectorOps::project(B,
+                                              *Xp,
+                                              overlapMatPar,
+                                              *d_elpaScala,
+                                              d_XinBatch,
+                                              d_XoutBatch,
+                                              d_XinBatchSmall,
+                                              d_XoutBatchSmall);
+                    }
+                  else
+                    {
+                      computeXTransOpX(X, processGrid, overlapMatPar, B);
+                    }
 
-              // extract LConj
-              ScaLAPACKMatrix<ValueType> LMatPar(
-                numVec,
-                processGrid,
-                rowsBlockSize,
-                LAPACKSupport::Property::lower_triangular);
+                  p.registerEnd("Compute X^T M X");
+                  p.registerStart("Cholesky factorization");
 
-              if (processGrid->is_process_active())
-                for (size_type i = 0; i < LMatPar.local_n(); ++i)
-                  {
-                    const size_type glob_i = LMatPar.global_column(i);
-                    for (size_type j = 0; j < LMatPar.local_m(); ++j)
+                  LAPACKSupport::Property overlapMatPropertyPostCholesky;
+                  if (d_useELPA)
+                    {
+                      ScaLAPACKMatrix<ValueType> overlapMatParConjTrans(
+                        numVec, processGrid, rowsBlockSize);
+                      if (processGrid->is_process_active())
+                        std::fill(&overlapMatParConjTrans.local_el(0, 0),
+                                  &overlapMatParConjTrans.local_el(0, 0) +
+                                    overlapMatParConjTrans.local_m() *
+                                      overlapMatParConjTrans.local_n(),
+                                  ValueType(0.0));
+
+                      overlapMatParConjTrans.copy_conjugate_transposed(
+                        overlapMatPar);
+                      if (processGrid->is_process_active())
+                        {
+                          int error;
+                          elpa_cholesky(d_elpaScala->getElpaHandle(),
+                                        &overlapMatParConjTrans.local_el(0, 0),
+                                        &error);
+                          if (error != ELPA_OK)
+                            cholSuccess = false;
+                        }
+                      overlapMatPar.copy_conjugate_transposed(
+                        overlapMatParConjTrans);
+                      overlapMatPropertyPostCholesky =
+                        LAPACKSupport::Property::lower_triangular;
+                    }
+                  else
+                    {
+                      ScalapackError serr =
+                        overlapMatPar.compute_cholesky_factorization();
+                      if (serr.err != ScalapackErrorCode::SUCCESS)
+                        cholSuccess = false;
+                      overlapMatPropertyPostCholesky =
+                        overlapMatPar.get_property();
+                    }
+
+                  DFTEFE_AssertWithMsg(
+                    overlapMatPropertyPostCholesky ==
+                      LAPACKSupport::Property::lower_triangular,
+                    "DFT-EFE Error: overlap matrix property after cholesky factorization incorrect");
+
+                  ScaLAPACKMatrix<ValueType> LMatPar(
+                    numVec,
+                    processGrid,
+                    rowsBlockSize,
+                    LAPACKSupport::Property::lower_triangular);
+
+                  if (processGrid->is_process_active())
+                    for (size_type i = 0; i < LMatPar.local_n(); ++i)
                       {
-                        const size_type glob_j = LMatPar.global_row(j);
-                        if (glob_j < glob_i)
-                          LMatPar.local_el(j, i) = ValueType(0);
-                        else
-                          LMatPar.local_el(j, i) = overlapMatPar.local_el(j, i);
+                        const size_type glob_i = LMatPar.global_column(i);
+                        for (size_type j = 0; j < LMatPar.local_m(); ++j)
+                          {
+                            const size_type glob_j = LMatPar.global_row(j);
+                            if (glob_j < glob_i)
+                              LMatPar.local_el(j, i) = ValueType(0);
+                            else
+                              LMatPar.local_el(j, i) =
+                                overlapMatPar.local_el(j, i);
+                          }
                       }
-                  }
 
-              // Check if any of the diagonal entries of LMat are close to zero.
-              size_type flag = 0;
-              if (processGrid->is_process_active())
-                for (size_type i = 0; i < LMatPar.local_n(); ++i)
-                  {
-                    const size_type glob_i = LMatPar.global_column(i);
-                    for (size_type j = 0; j < LMatPar.local_m(); ++j)
+                  // Check diagonal
+                  size_type flag = 0;
+                  if (processGrid->is_process_active())
+                    for (size_type i = 0; i < LMatPar.local_n(); ++i)
                       {
-                        const size_type glob_j = LMatPar.global_row(j);
-                        if (glob_i == glob_j)
-                          if (std::abs(LMatPar.local_el(j, i)) < 1e-14)
-                            flag = 1;
+                        const size_type glob_i = LMatPar.global_column(i);
+                        for (size_type j = 0; j < LMatPar.local_m(); ++j)
+                          {
+                            const size_type glob_j = LMatPar.global_row(j);
+                            if (glob_i == glob_j)
+                              if (std::abs(LMatPar.local_el(j, i)) < 1e-14)
+                                flag = 1;
+                            if (flag == 1)
+                              break;
+                          }
                         if (flag == 1)
                           break;
                       }
-                    if (flag == 1)
-                      break;
-                  }
+                  utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
+                    utils::mpi::MPIInPlace,
+                    &flag,
+                    1,
+                    utils::mpi::Types<size_type>::getMPIDatatype(),
+                    utils::mpi::MPIMax,
+                    X.getMPIPatternP2P()->mpiCommunicator());
+                  if (flag == 1)
+                    utils::throwException(
+                      false,
+                      "Chol GS cannot orthogonalize the given multivector, use Multipass Lowdin.");
 
-              utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
-                utils::mpi::MPIInPlace,
-                &flag,
-                1,
-                utils::mpi::Types<size_type>::getMPIDatatype(),
-                utils::mpi::MPIMax,
-                X.getMPIPatternP2P()->mpiCommunicator());
+                  ScalapackError lapackReturn2 = LMatPar.invert();
 
-              if (flag == 1)
-                {
-                  utils::throwException(
-                    false,
-                    "Chol GS cannot orthogonalize the given multivector, use Multipass Lowdin.");
+                  p.registerEnd("Cholesky factorization");
+                  p.registerStart("Cholesky orthogonalize");
+
+                  if (auto *Xp = dynamic_cast<
+                        MultiVectorProductSpace<ValueType, memorySpace> *>(&X))
+                    {
+                      MultiVectorOps::rotate(*Xp, LMatPar, *d_elpaScala);
+                    }
+                  else
+                    {
+                      elpaScalaOpInternal::subspaceRotation<ValueType,
+                                                            memorySpace>(
+                        X.data(),
+                        vecSize,
+                        numVec,
+                        processGrid,
+                        X.getMPIPatternP2P()->mpiCommunicator(),
+                        *X.getLinAlgOpContext(),
+                        LMatPar,
+                        RayleighRitzDefaults::SUBSPACE_ROT_DOF_BATCH,
+                        RayleighRitzDefaults::WAVE_FN_BATCH,
+                        false,
+                        true);
+                    }
+
+                  p.registerEnd("Cholesky orthogonalize");
+
+                  if (!cholSuccess)
+                    {
+                      err = OrthonormalizationErrorCode::ELPASCALAPACK_ERROR;
+                      retunValue =
+                        OrthonormalizationErrorMsg::isSuccessAndMsg(err);
+                    }
+                  else if (lapackReturn2.err ==
+                           ScalapackErrorCode::FAILED_MATRIX_INVERT)
+                    {
+                      err = OrthonormalizationErrorCode::ELPASCALAPACK_ERROR;
+                      retunValue =
+                        OrthonormalizationErrorMsg::isSuccessAndMsg(err);
+                      retunValue.msg += lapackReturn2.msg;
+                    }
+                  else
+                    {
+                      err        = OrthonormalizationErrorCode::SUCCESS;
+                      retunValue = OrthonormalizationErrorMsg::isSuccessAndMsg(
+                        err);
+                    }
+
+                  p.print();
+                  return retunValue;
                 }
-
-              // compute LConj^{-1}
-              ScalapackError lapackReturn2 = LMatPar.invert();
-
-              p.registerEnd("Cholesky factorization");
-              p.registerStart("Cholesky orthogonalize");
-
-              // compute orthogonalizedX
-              // XOrth^T = (LInv^C)*X^T
-              // Out data as XOrtho^T
-
-              elpaScalaOpInternal::subspaceRotation<ValueType, memorySpace>(
-                X.data(),
-                vecSize,
-                numVec,
-                processGrid,
-                X.getMPIPatternP2P()->mpiCommunicator(),
-                *X.getLinAlgOpContext(),
-                LMatPar,
-                RayleighRitzDefaults::SUBSPACE_ROT_DOF_BATCH,
-                RayleighRitzDefaults::WAVE_FN_BATCH,
-                false,
-                true);
-
-              p.registerEnd("Cholesky orthogonalize");
-
-              if (!cholSuccess)
-                {
-                  err        = OrthonormalizationErrorCode::ELPASCALAPACK_ERROR;
-                  retunValue = OrthonormalizationErrorMsg::isSuccessAndMsg(err);
-                }
-              else if (lapackReturn2.err ==
-                       ScalapackErrorCode::FAILED_MATRIX_INVERT)
-                {
-                  err        = OrthonormalizationErrorCode::ELPASCALAPACK_ERROR;
-                  retunValue = OrthonormalizationErrorMsg::isSuccessAndMsg(err);
-                  retunValue.msg += lapackReturn2.msg;
-                }
-              else
-                {
-                  err        = OrthonormalizationErrorCode::SUCCESS;
-                  retunValue = OrthonormalizationErrorMsg::isSuccessAndMsg(err);
-                }
-
-              p.print();
-              return retunValue;
             }
           else
             {
+              utils::throwException(
+                dynamic_cast<
+                    MultiVectorProductSpace<ValueType, memorySpace> *>(&X) ==
+                  nullptr &&
+                  dynamic_cast<MultiVectorProductSpaceBlocked<ValueType,
+                                                              memorySpace> *>(
+                    &X) == nullptr,
+                "Non-ScaLAPACK orthonormalization path does not support "
+                "product-space (S>1) wavefunctions.");
               MultiVector<ValueType, memorySpace> orthogonalizedX(X,
                                                                   (ValueType)0);
               // ------------ DEBUG --------------------------
@@ -517,254 +787,532 @@ namespace dftefe
           std::shared_ptr<const ProcessGrid> processGrid =
             d_elpaScala->getProcessGridDftefeScalaWrapper();
 
-          ScaLAPACKMatrix<ValueType> overlapMatPar(numVec,
-                                                   processGrid,
-                                                   rowsBlockSize);
-
-          if (processGrid->is_process_active())
-            std::fill(&overlapMatPar.local_el(0, 0),
-                      &overlapMatPar.local_el(0, 0) +
-                        overlapMatPar.local_m() * overlapMatPar.local_n(),
-                      ValueType(0.0));
-
-          ScaLAPACKMatrix<ValueType> overlapMatParConjTrans(numVec,
-                                                            processGrid,
-                                                            rowsBlockSize);
-
-          if (processGrid->is_process_active())
-            std::fill(&overlapMatParConjTrans.local_el(0, 0),
-                      &overlapMatParConjTrans.local_el(0, 0) +
-                        overlapMatParConjTrans.local_m() *
-                          overlapMatParConjTrans.local_n(),
-                      ValueType(0.0));
-
-          ScaLAPACKMatrix<ValueType> LMatPar(
-            numVec,
-            processGrid,
-            rowsBlockSize,
-            LAPACKSupport::Property::lower_triangular);
-
           bool           cholSuccess  = true;
           bool           solveSuccess = true;
           ScalapackError lapackReturn;
 
-          while (iPass <= maxPass)
+          // Detect whether X is a blocked product space
+          auto *Xb = dynamic_cast<
+            MultiVectorProductSpaceBlocked<ValueType, memorySpace> *>(&X);
+          auto *Xp =
+            dynamic_cast<MultiVectorProductSpace<ValueType, memorySpace> *>(
+              &X);
+
+          if (Xb != nullptr)
             {
-              /* Get S = X^T B X */
+              // ===  BLOCKED (collinear): S independent sub-problems ===
+              const size_type N = Xb->numVectorsPerSpace();
+              const size_type S = Xb->numSpaces();
 
-              // Input data is read is X^T
-              // Operation : S^T = ((B*X)^T)*(X^T)^H
+              std::vector<RealType> eigenValuesPerSpace(N);
 
-              p.registerStart("Compute X^T M X");
+              // Per-space Scalapack matrices (allocated once, reused each pass)
+              std::vector<ScaLAPACKMatrix<ValueType>> overlapMatParVec(
+                S,
+                ScaLAPACKMatrix<ValueType>(N, processGrid, rowsBlockSize));
+              std::vector<ScaLAPACKMatrix<ValueType>> overlapMatParConjTransVec(
+                S,
+                ScaLAPACKMatrix<ValueType>(N, processGrid, rowsBlockSize));
+              std::vector<ScaLAPACKMatrix<ValueType>> LMatParVec(
+                S,
+                ScaLAPACKMatrix<ValueType>(
+                  N,
+                  processGrid,
+                  rowsBlockSize,
+                  LAPACKSupport::Property::lower_triangular));
 
-              computeXTransOpX(X, processGrid, overlapMatPar, B);
-
-              overlapMatParConjTrans.copy_conjugate_transposed(overlapMatPar);
-              overlapMatPar.add(overlapMatParConjTrans,
-                                ValueType(1.0),
-                                ValueType(1.0));
-
-              RealType orthoErrValueType = 0;
-              if (processGrid->is_process_active())
-                for (size_type i = 0; i < overlapMatPar.local_n(); ++i)
-                  {
-                    const size_type glob_i = overlapMatPar.global_column(i);
-                    for (size_type j = 0; j < overlapMatPar.local_m(); ++j)
+              while (iPass <= maxPass)
+                {
+                  // Zero-init all per-space overlap matrices
+                  for (size_type s = 0; s < S; ++s)
+                    if (processGrid->is_process_active())
                       {
-                        const size_type glob_j = overlapMatPar.global_row(j);
-                        if (glob_i == glob_j)
-                          {
-                            overlapMatPar.local_el(j, i) *= ValueType(0.5);
-                            orthoErrValueType +=
-                              (overlapMatPar.local_el(j, i) - (ValueType)1.0) *
-                              utils::conjugate<ValueType>(
-                                overlapMatPar.local_el(j, i) - (ValueType)1.0);
-                          }
-                        orthoErrValueType += (overlapMatPar.local_el(j, i)) *
-                                             utils::conjugate<ValueType>(
-                                               overlapMatPar.local_el(j, i));
+                        std::fill(
+                          &overlapMatParVec[s].local_el(0, 0),
+                          &overlapMatParVec[s].local_el(0, 0) +
+                            overlapMatParVec[s].local_m() *
+                              overlapMatParVec[s].local_n(),
+                          ValueType(0.0));
+                        std::fill(
+                          &overlapMatParConjTransVec[s].local_el(0, 0),
+                          &overlapMatParConjTransVec[s].local_el(0, 0) +
+                            overlapMatParConjTransVec[s].local_m() *
+                              overlapMatParConjTransVec[s].local_n(),
+                          ValueType(0.0));
                       }
-                  }
 
-              utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
-                utils::mpi::MPIInPlace,
-                &orthoErrValueType,
-                1,
-                utils::mpi::Types<RealType>::getMPIDatatype(),
-                utils::mpi::MPISum,
-                X.getMPIPatternP2P()->mpiCommunicator());
+                  p.registerStart("Compute X^T M X");
+                  MultiVectorOps::project(B,
+                                          *Xb,
+                                          overlapMatParVec,
+                                          *d_elpaScala,
+                                          d_XinBatch,
+                                          d_XoutBatch,
+                                          d_XinBatchSmall,
+                                          d_XoutBatchSmall);
 
-              orthoErr =
-                std::sqrt(utils::realPart<ValueType>(orthoErrValueType));
-              if (orthoErr < identityTolerance * std::sqrt(numVec))
-                {
-                  break;
-                }
-
-              p.registerEnd("Compute X^T M X");
-
-              p.registerStart("Minimum EigenValue Check");
-              /* do a eigendecomposition and get min eigenvalue and get shift*/
-
-              overlapMatParConjTrans.copy_conjugate_transposed(overlapMatPar);
-
-              if (d_useELPA)
-                {
-                  // For ELPA eigendecomposition the full matrix is required
-                  // unlike ScaLAPACK which can work with only the lower
-                  // triangular part
-                  if (processGrid->is_process_active())
+                  // Symmetrize and compute ortho error over all spaces
+                  RealType orthoErrValueType = 0;
+                  for (size_type s = 0; s < S; ++s)
                     {
-                      int error;
-                      elpa_eigenvalues(d_elpaScala->getElpaHandle(),
-                                       &overlapMatParConjTrans.local_el(0, 0),
-                                       &eigenValuesS[0],
-                                       &error);
-                      if (error != ELPA_OK)
-                        solveSuccess = false;
+                      overlapMatParConjTransVec[s].copy_conjugate_transposed(
+                        overlapMatParVec[s]);
+                      overlapMatParVec[s].add(overlapMatParConjTransVec[s],
+                                              ValueType(1.0),
+                                              ValueType(1.0));
+                      if (processGrid->is_process_active())
+                        for (size_type i = 0;
+                             i < overlapMatParVec[s].local_n();
+                             ++i)
+                          {
+                            const size_type glob_i =
+                              overlapMatParVec[s].global_column(i);
+                            for (size_type j = 0;
+                                 j < overlapMatParVec[s].local_m();
+                                 ++j)
+                              {
+                                const size_type glob_j =
+                                  overlapMatParVec[s].global_row(j);
+                                if (glob_i == glob_j)
+                                  {
+                                    overlapMatParVec[s].local_el(j, i) *=
+                                      ValueType(0.5);
+                                    orthoErrValueType +=
+                                      (overlapMatParVec[s].local_el(j, i) -
+                                       (ValueType)1.0) *
+                                      utils::conjugate<ValueType>(
+                                        overlapMatParVec[s].local_el(j, i) -
+                                        (ValueType)1.0);
+                                  }
+                                orthoErrValueType +=
+                                  (overlapMatParVec[s].local_el(j, i)) *
+                                  utils::conjugate<ValueType>(
+                                    overlapMatParVec[s].local_el(j, i));
+                              }
+                          }
                     }
 
-                  utils::mpi::MPIBcast<utils::MemorySpace::HOST>(
-                    &eigenValuesS[0],
-                    eigenValuesS.size(),
+                  utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
+                    utils::mpi::MPIInPlace,
+                    &orthoErrValueType,
+                    1,
                     utils::mpi::Types<RealType>::getMPIDatatype(),
-                    0,
+                    utils::mpi::MPISum,
                     X.getMPIPatternP2P()->mpiCommunicator());
-                }
-              else
-                {
-                  ScalapackError scalapackError;
-                  p.registerStart("ScaLAPACK eigen decomp, RR step");
-                  eigenValuesS =
-                    overlapMatParConjTrans.eigenpairs_hermitian_by_index_MRRR(
-                      std::make_pair(0, numVec - 1), false, scalapackError);
-                  p.registerEnd("ScaLAPACK eigen decomp, RR step");
 
-                  if (scalapackError.err != ScalapackErrorCode::SUCCESS)
-                    solveSuccess = false;
-                }
+                  orthoErr =
+                    std::sqrt(utils::realPart<ValueType>(orthoErrValueType));
 
-              eigenValueMin = eigenValuesS[0];
+                  p.registerEnd("Compute X^T M X");
 
-              bool     lastPass = false;
-              RealType shift    = (RealType)0;
-              if (eigenValueMin > shiftTolerance)
-                {
-                  shift    = (RealType)0;
-                  lastPass = true;
-                }
-              else
-                shift = shiftTolerance - eigenValueMin;
+                  if (orthoErr < identityTolerance * std::sqrt(S * N))
+                    break;
 
-              /* Shift by D<-D+shift */
+                  p.registerStart("Minimum EigenValue Check");
 
-              if (processGrid->is_process_active())
-                for (size_type i = 0; i < overlapMatPar.local_n(); ++i)
-                  {
-                    const size_type glob_i = overlapMatPar.global_column(i);
-                    for (size_type j = 0; j < overlapMatPar.local_m(); ++j)
-                      {
-                        const size_type glob_j = overlapMatPar.global_row(j);
-                        if (glob_i == glob_j)
+                  // Get min eigenvalue across all spaces
+                  RealType eigenValueMinAll = std::numeric_limits<RealType>::max();
+                  for (size_type s = 0; s < S; ++s)
+                    {
+                      overlapMatParConjTransVec[s].copy_conjugate_transposed(
+                        overlapMatParVec[s]);
+                      if (d_useELPA)
+                        {
+                          eigenValuesPerSpace.resize(N);
+                          if (processGrid->is_process_active())
+                            {
+                              int error;
+                              elpa_eigenvalues(
+                                d_elpaScala->getElpaHandle(),
+                                &overlapMatParConjTransVec[s].local_el(0, 0),
+                                eigenValuesPerSpace.data(),
+                                &error);
+                              if (error != ELPA_OK)
+                                solveSuccess = false;
+                            }
+                          utils::mpi::MPIBcast<utils::MemorySpace::HOST>(
+                            eigenValuesPerSpace.data(),
+                            eigenValuesPerSpace.size(),
+                            utils::mpi::Types<RealType>::getMPIDatatype(),
+                            0,
+                            X.getMPIPatternP2P()->mpiCommunicator());
+                        }
+                      else
+                        {
+                          ScalapackError scalapackError;
+                          eigenValuesPerSpace =
+                            overlapMatParConjTransVec[s]
+                              .eigenpairs_hermitian_by_index_MRRR(
+                                std::make_pair(0, (int)N - 1),
+                                false,
+                                scalapackError);
+                          if (scalapackError.err != ScalapackErrorCode::SUCCESS)
+                            solveSuccess = false;
+                        }
+                      if (!eigenValuesPerSpace.empty())
+                        eigenValueMinAll =
+                          std::min(eigenValueMinAll, eigenValuesPerSpace[0]);
+                    }
+
+                  eigenValueMin = eigenValueMinAll;
+
+                  bool     lastPass = false;
+                  RealType shift    = (RealType)0;
+                  if (eigenValueMin > shiftTolerance)
+                    {
+                      shift    = (RealType)0;
+                      lastPass = true;
+                    }
+                  else
+                    shift = shiftTolerance - eigenValueMin;
+
+                  /* Shift diagonal of each space's overlap */
+                  for (size_type s = 0; s < S; ++s)
+                    if (processGrid->is_process_active())
+                      for (size_type i = 0;
+                           i < overlapMatParVec[s].local_n();
+                           ++i)
+                        {
+                          const size_type glob_i =
+                            overlapMatParVec[s].global_column(i);
+                          for (size_type j = 0;
+                               j < overlapMatParVec[s].local_m();
+                               ++j)
+                            {
+                              const size_type glob_j =
+                                overlapMatParVec[s].global_row(j);
+                              if (glob_i == glob_j)
+                                overlapMatParVec[s].local_el(j, i) +=
+                                  (ValueType)shift;
+                            }
+                        }
+
+                  p.registerEnd("Minimum EigenValue Check");
+                  p.registerStart("Cholesky Orthogonalize");
+
+                  for (size_type s = 0; s < S; ++s)
+                    {
+                      LAPACKSupport::Property overlapMatPropertyPostCholesky;
+                      if (d_useELPA)
+                        {
+                          overlapMatParConjTransVec[s].copy_conjugate_transposed(
+                            overlapMatParVec[s]);
+                          if (processGrid->is_process_active())
+                            {
+                              int error;
+                              elpa_cholesky(
+                                d_elpaScala->getElpaHandle(),
+                                &overlapMatParConjTransVec[s].local_el(0, 0),
+                                &error);
+                              if (error != ELPA_OK)
+                                cholSuccess = false;
+                            }
+                          overlapMatParVec[s].copy_conjugate_transposed(
+                            overlapMatParConjTransVec[s]);
+                          overlapMatPropertyPostCholesky =
+                            LAPACKSupport::Property::lower_triangular;
+                        }
+                      else
+                        {
+                          ScalapackError serr =
+                            overlapMatParVec[s].compute_cholesky_factorization();
+                          if (serr.err != ScalapackErrorCode::SUCCESS)
+                            cholSuccess = false;
+                          overlapMatPropertyPostCholesky =
+                            overlapMatParVec[s].get_property();
+                        }
+
+                      DFTEFE_AssertWithMsg(
+                        overlapMatPropertyPostCholesky ==
+                          LAPACKSupport::Property::lower_triangular,
+                        "DFT-EFE Error: overlap matrix property after cholesky factorization incorrect");
+
+                      if (processGrid->is_process_active())
+                        for (size_type i = 0; i < LMatParVec[s].local_n(); ++i)
                           {
-                            overlapMatPar.local_el(j, i) += (ValueType)shift;
+                            const size_type glob_i =
+                              LMatParVec[s].global_column(i);
+                            for (size_type j = 0;
+                                 j < LMatParVec[s].local_m();
+                                 ++j)
+                              {
+                                const size_type glob_j =
+                                  LMatParVec[s].global_row(j);
+                                if (glob_j < glob_i)
+                                  LMatParVec[s].local_el(j, i) = ValueType(0);
+                                else
+                                  LMatParVec[s].local_el(j, i) =
+                                    overlapMatParVec[s].local_el(j, i);
+                              }
+                          }
+
+                      lapackReturn = LMatParVec[s].invert();
+                    }
+
+                  MultiVectorOps::rotate(*Xb, LMatParVec, *d_elpaScala);
+
+                  p.registerEnd("Cholesky Orthogonalize");
+
+                  if (lastPass)
+                    break;
+
+                  iPass++;
+                }
+            }
+          else
+            {
+              // === COUPLED (ProductSpace or plain MultiVector) ===
+              ScaLAPACKMatrix<ValueType> overlapMatPar(numVec,
+                                                       processGrid,
+                                                       rowsBlockSize);
+              if (processGrid->is_process_active())
+                std::fill(&overlapMatPar.local_el(0, 0),
+                          &overlapMatPar.local_el(0, 0) +
+                            overlapMatPar.local_m() * overlapMatPar.local_n(),
+                          ValueType(0.0));
+
+              ScaLAPACKMatrix<ValueType> overlapMatParConjTrans(numVec,
+                                                                processGrid,
+                                                                rowsBlockSize);
+              if (processGrid->is_process_active())
+                std::fill(&overlapMatParConjTrans.local_el(0, 0),
+                          &overlapMatParConjTrans.local_el(0, 0) +
+                            overlapMatParConjTrans.local_m() *
+                              overlapMatParConjTrans.local_n(),
+                          ValueType(0.0));
+
+              ScaLAPACKMatrix<ValueType> LMatPar(
+                numVec,
+                processGrid,
+                rowsBlockSize,
+                LAPACKSupport::Property::lower_triangular);
+
+              while (iPass <= maxPass)
+                {
+                  p.registerStart("Compute X^T M X");
+
+                  if (processGrid->is_process_active())
+                    std::fill(
+                      &overlapMatPar.local_el(0, 0),
+                      &overlapMatPar.local_el(0, 0) +
+                        overlapMatPar.local_m() * overlapMatPar.local_n(),
+                      ValueType(0.0));
+
+                  if (Xp != nullptr)
+                    {
+                      MultiVectorOps::project(B,
+                                              *Xp,
+                                              overlapMatPar,
+                                              *d_elpaScala,
+                                              d_XinBatch,
+                                              d_XoutBatch,
+                                              d_XinBatchSmall,
+                                              d_XoutBatchSmall);
+                    }
+                  else
+                    {
+                      computeXTransOpX(X, processGrid, overlapMatPar, B);
+                    }
+
+                  overlapMatParConjTrans.copy_conjugate_transposed(
+                    overlapMatPar);
+                  overlapMatPar.add(overlapMatParConjTrans,
+                                    ValueType(1.0),
+                                    ValueType(1.0));
+
+                  RealType orthoErrValueType = 0;
+                  if (processGrid->is_process_active())
+                    for (size_type i = 0; i < overlapMatPar.local_n(); ++i)
+                      {
+                        const size_type glob_i =
+                          overlapMatPar.global_column(i);
+                        for (size_type j = 0; j < overlapMatPar.local_m(); ++j)
+                          {
+                            const size_type glob_j =
+                              overlapMatPar.global_row(j);
+                            if (glob_i == glob_j)
+                              {
+                                overlapMatPar.local_el(j, i) *= ValueType(0.5);
+                                orthoErrValueType +=
+                                  (overlapMatPar.local_el(j, i) -
+                                   (ValueType)1.0) *
+                                  utils::conjugate<ValueType>(
+                                    overlapMatPar.local_el(j, i) -
+                                    (ValueType)1.0);
+                              }
+                            orthoErrValueType +=
+                              (overlapMatPar.local_el(j, i)) *
+                              utils::conjugate<ValueType>(
+                                overlapMatPar.local_el(j, i));
                           }
                       }
-                  }
 
-              p.registerEnd("Minimum EigenValue Check");
+                  utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
+                    utils::mpi::MPIInPlace,
+                    &orthoErrValueType,
+                    1,
+                    utils::mpi::Types<RealType>::getMPIDatatype(),
+                    utils::mpi::MPISum,
+                    X.getMPIPatternP2P()->mpiCommunicator());
 
-              p.registerStart("Cholesky Orthogonalize");
+                  orthoErr =
+                    std::sqrt(utils::realPart<ValueType>(orthoErrValueType));
 
-              LAPACKSupport::Property overlapMatPropertyPostCholesky;
-              if (d_useELPA)
-                {
-                  // For ELPA cholesky only the upper triangular part of the
-                  // hermitian matrix is required
+                  p.registerEnd("Compute X^T M X");
+
+                  if (orthoErr < identityTolerance * std::sqrt(numVec))
+                    break;
+
+                  p.registerStart("Minimum EigenValue Check");
 
                   overlapMatParConjTrans.copy_conjugate_transposed(
                     overlapMatPar);
 
-                  if (processGrid->is_process_active())
+                  if (d_useELPA)
                     {
-                      int error;
-                      elpa_cholesky(d_elpaScala->getElpaHandle(),
-                                    &overlapMatParConjTrans.local_el(0, 0),
-                                    &error);
-
-                      if (error != ELPA_OK)
-                        cholSuccess = false;
+                      if (processGrid->is_process_active())
+                        {
+                          int error;
+                          elpa_eigenvalues(
+                            d_elpaScala->getElpaHandle(),
+                            &overlapMatParConjTrans.local_el(0, 0),
+                            &eigenValuesS[0],
+                            &error);
+                          if (error != ELPA_OK)
+                            solveSuccess = false;
+                        }
+                      utils::mpi::MPIBcast<utils::MemorySpace::HOST>(
+                        &eigenValuesS[0],
+                        eigenValuesS.size(),
+                        utils::mpi::Types<RealType>::getMPIDatatype(),
+                        0,
+                        X.getMPIPatternP2P()->mpiCommunicator());
                     }
-                  overlapMatPar.copy_conjugate_transposed(
-                    overlapMatParConjTrans);
-                  overlapMatPropertyPostCholesky =
-                    LAPACKSupport::Property::lower_triangular;
-                }
-              else
-                {
-                  ScalapackError serr =
-                    overlapMatPar.compute_cholesky_factorization();
+                  else
+                    {
+                      ScalapackError scalapackError;
+                      p.registerStart("ScaLAPACK eigen decomp, RR step");
+                      eigenValuesS =
+                        overlapMatParConjTrans
+                          .eigenpairs_hermitian_by_index_MRRR(
+                            std::make_pair(0, (int)numVec - 1),
+                            false,
+                            scalapackError);
+                      p.registerEnd("ScaLAPACK eigen decomp, RR step");
+                      if (scalapackError.err != ScalapackErrorCode::SUCCESS)
+                        solveSuccess = false;
+                    }
 
-                  if (serr.err != ScalapackErrorCode::SUCCESS)
-                    cholSuccess = false;
+                  eigenValueMin = eigenValuesS[0];
 
-                  overlapMatPropertyPostCholesky = overlapMatPar.get_property();
-                }
+                  bool     lastPass = false;
+                  RealType shift    = (RealType)0;
+                  if (eigenValueMin > shiftTolerance)
+                    {
+                      shift    = (RealType)0;
+                      lastPass = true;
+                    }
+                  else
+                    shift = shiftTolerance - eigenValueMin;
 
-              DFTEFE_AssertWithMsg(
-                overlapMatPropertyPostCholesky ==
-                  LAPACKSupport::Property::lower_triangular,
-                "DFT-EFE Error: overlap matrix property after cholesky factorization incorrect");
-
-              // extract LConj
-
-              if (processGrid->is_process_active())
-                for (size_type i = 0; i < LMatPar.local_n(); ++i)
-                  {
-                    const size_type glob_i = LMatPar.global_column(i);
-                    for (size_type j = 0; j < LMatPar.local_m(); ++j)
+                  if (processGrid->is_process_active())
+                    for (size_type i = 0; i < overlapMatPar.local_n(); ++i)
                       {
-                        const size_type glob_j = LMatPar.global_row(j);
-                        if (glob_j < glob_i)
-                          LMatPar.local_el(j, i) = ValueType(0);
-                        else
-                          LMatPar.local_el(j, i) = overlapMatPar.local_el(j, i);
+                        const size_type glob_i =
+                          overlapMatPar.global_column(i);
+                        for (size_type j = 0; j < overlapMatPar.local_m(); ++j)
+                          {
+                            const size_type glob_j =
+                              overlapMatPar.global_row(j);
+                            if (glob_i == glob_j)
+                              overlapMatPar.local_el(j, i) += (ValueType)shift;
+                          }
                       }
-                  }
 
-              lapackReturn = LMatPar.invert();
+                  p.registerEnd("Minimum EigenValue Check");
+                  p.registerStart("Cholesky Orthogonalize");
 
-              elpaScalaOpInternal::subspaceRotation<ValueType, memorySpace>(
-                X.data(),
-                vecSize,
-                numVec,
-                processGrid,
-                X.getMPIPatternP2P()->mpiCommunicator(),
-                *X.getLinAlgOpContext(),
-                LMatPar,
-                RayleighRitzDefaults::SUBSPACE_ROT_DOF_BATCH,
-                RayleighRitzDefaults::WAVE_FN_BATCH,
-                false,
-                true);
+                  LAPACKSupport::Property overlapMatPropertyPostCholesky;
+                  if (d_useELPA)
+                    {
+                      overlapMatParConjTrans.copy_conjugate_transposed(
+                        overlapMatPar);
+                      if (processGrid->is_process_active())
+                        {
+                          int error;
+                          elpa_cholesky(
+                            d_elpaScala->getElpaHandle(),
+                            &overlapMatParConjTrans.local_el(0, 0),
+                            &error);
+                          if (error != ELPA_OK)
+                            cholSuccess = false;
+                        }
+                      overlapMatPar.copy_conjugate_transposed(
+                        overlapMatParConjTrans);
+                      overlapMatPropertyPostCholesky =
+                        LAPACKSupport::Property::lower_triangular;
+                    }
+                  else
+                    {
+                      ScalapackError serr =
+                        overlapMatPar.compute_cholesky_factorization();
+                      if (serr.err != ScalapackErrorCode::SUCCESS)
+                        cholSuccess = false;
+                      overlapMatPropertyPostCholesky =
+                        overlapMatPar.get_property();
+                    }
 
-              p.registerEnd("Cholesky Orthogonalize");
+                  DFTEFE_AssertWithMsg(
+                    overlapMatPropertyPostCholesky ==
+                      LAPACKSupport::Property::lower_triangular,
+                    "DFT-EFE Error: overlap matrix property after cholesky factorization incorrect");
 
-              if (lastPass)
-                break;
+                  if (processGrid->is_process_active())
+                    for (size_type i = 0; i < LMatPar.local_n(); ++i)
+                      {
+                        const size_type glob_i = LMatPar.global_column(i);
+                        for (size_type j = 0; j < LMatPar.local_m(); ++j)
+                          {
+                            const size_type glob_j = LMatPar.global_row(j);
+                            if (glob_j < glob_i)
+                              LMatPar.local_el(j, i) = ValueType(0);
+                            else
+                              LMatPar.local_el(j, i) =
+                                overlapMatPar.local_el(j, i);
+                          }
+                      }
 
-              iPass++;
+                  lapackReturn = LMatPar.invert();
+
+                  if (Xp != nullptr)
+                    {
+                      MultiVectorOps::rotate(*Xp, LMatPar, *d_elpaScala);
+                    }
+                  else
+                    {
+                      elpaScalaOpInternal::subspaceRotation<ValueType,
+                                                            memorySpace>(
+                        X.data(),
+                        vecSize,
+                        numVec,
+                        processGrid,
+                        X.getMPIPatternP2P()->mpiCommunicator(),
+                        *X.getLinAlgOpContext(),
+                        LMatPar,
+                        RayleighRitzDefaults::SUBSPACE_ROT_DOF_BATCH,
+                        RayleighRitzDefaults::WAVE_FN_BATCH,
+                        false,
+                        true);
+                    }
+
+                  p.registerEnd("Cholesky Orthogonalize");
+
+                  if (lastPass)
+                    break;
+
+                  iPass++;
+                }
             }
-
-          /**
-          //--------------------------DEBUG ONLY------------------------------
-          double norm = OrthonormalizationFunctionsInternal::
-            doesOrthogonalizationPreserveSubspace<ValueTypeOperator,
-                                                  ValueTypeOperand,
-                                                  memorySpace>(copyX,
-                                                               orthogonalizedX,
-                                                               B);
-          //--------------------------DEBUG ONLY------------------------------
-          **/
 
           if (iPass > maxPass)
             {
