@@ -159,8 +159,8 @@ namespace dftefe
                                                  ValueTypeOperand,
                                                  memorySpace>(),
         bool                        isResidualChebyshevFilter = true,
-        const std::vector<double> & atomMagMomentsVec         = {},
-        SpinMode                    spinMode                   = SpinMode::Unpolarized);
+        const std::vector<double> & atomMagZFactors = {},
+        SpinMode                    spinMode        = SpinMode::Unpolarized);
 
 
       // used if numerical poisson solve vself canellation route taken
@@ -251,8 +251,8 @@ namespace dftefe
                                                  ValueTypeOperand,
                                                  memorySpace>(),
         bool                        isResidualChebyshevFilter = true,
-        const std::vector<double> & atomMagMomentsVec         = {},
-        SpinMode                    spinMode                   = SpinMode::Unpolarized);
+        const std::vector<double> & atomMagZFactors = {},
+        SpinMode                    spinMode        = SpinMode::Unpolarized);
 
       // used if delta rho approach is taken with phi total from 1D KS solve
       // with analytical vself energy cancellation
@@ -339,8 +339,8 @@ namespace dftefe
         bool                         isResidualChebyshevFilter = true,
         /* TCI related info */
         const atoms::TCIADataParams &params            = TCIADataDefaults::TCIA_PARAMS,
-        const std::vector<double> &  atomMagMomentsVec = {},
-        SpinMode                     spinMode           = SpinMode::Unpolarized);
+        const std::vector<double> &  atomMagZFactors = {},
+        SpinMode                     spinMode        = SpinMode::Unpolarized);
 
       //// used if analytical vself canellation route taken with PSP
       KohnShamDFT(
@@ -427,8 +427,8 @@ namespace dftefe
                                                  ValueTypeOperand,
                                                  memorySpace>(),
         bool                        isResidualChebyshevFilter = true,
-        const std::vector<double> & atomMagMomentsVec         = {},
-        SpinMode                    spinMode                   = SpinMode::Unpolarized);
+        const std::vector<double> & atomMagZFactors = {},
+        SpinMode                    spinMode        = SpinMode::Unpolarized);
 
 
       // used if delta rho with PSP approach is taken with phi total from 1D KS
@@ -520,8 +520,8 @@ namespace dftefe
         bool isResidualChebyshevFilter = false,
         /* TCI related info */
         const atoms::TCIADataParams &params           = TCIADataDefaults::TCIA_PARAMS,
-        const std::vector<double> &  atomMagMomentsVec = {},
-        SpinMode                     spinMode           = SpinMode::Unpolarized);
+        const std::vector<double> &  atomMagZFactors = {},
+        SpinMode                     spinMode        = SpinMode::Unpolarized);
 
       ~KohnShamDFT();
 

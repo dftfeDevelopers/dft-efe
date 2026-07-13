@@ -509,12 +509,31 @@ int main(int argc, char** argv)
   utils::mpi::MPIBarrier(comm);
   fstream.close();
 
+  // atomChargesVec[i] = -valanceNumber, so n_val = -atomChargesVec[i]
+  // atomMagZFactors is empty when no magnetic moments are specified
+  std::vector<double> atomMagZFactors;
+  {
+    bool anyNonZero = false;
+    for (const auto &m : atomMagMomentsVec)
+      if (std::abs(m) > 1e-12)
+        {
+          anyNonZero = true;
+          break;
+        }
+    if (anyNonZero)
+      {
+        atomMagZFactors.resize(atomMagMomentsVec.size());
+        for (dftefe::size_type i = 0; i < atomMagMomentsVec.size(); ++i)
+          atomMagZFactors[i] = atomMagMomentsVec[i] / (-atomChargesVec[i]);
+      }
+  }
+
   size_type numElectrons = 0;
   for(auto &i : atomChargesVec)
   {
     numElectrons += (size_type)(std::abs(i));
   }
-  
+
   if (numWantedEigenvalues <= numElectrons / 2.0 ||
              numWantedEigenvalues == 0)
   {
@@ -896,7 +915,7 @@ std::shared_ptr<linearAlgebra::OperatorContext<double,
                                           *MContext,
                                           *MInvContext,
                                           true,
-                                          atomMagMomentsVec,
+                                          atomMagZFactors,
                                           spinMode);
   }
   else if (!isNumericalNuclearSolve && isDeltaRhoPoissonSolve)
@@ -953,7 +972,7 @@ std::shared_ptr<linearAlgebra::OperatorContext<double,
                                           *MInvContext,
                                           true,
                                           tciaparams,
-                                          atomMagMomentsVec,
+                                          atomMagZFactors,
                                           spinMode);
   }
   else

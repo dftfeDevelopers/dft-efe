@@ -370,7 +370,7 @@ namespace dftefe
         const OpContext &           MContext,
         const OpContext &           MInvContext,
         bool                        isResidualChebyshevFilter,
-        const std::vector<double> & atomMagMomentsVec,
+        const std::vector<double> & atomMagZFactors,
         SpinMode                    spinMode)
       : d_feBMWaveFn(feBMWaveFn)
       , d_evaluateEnergyEverySCF(evaluateEnergyEverySCF)
@@ -563,26 +563,42 @@ namespace dftefe
       {
         auto initMixDescrMap =
           KohnShamDFTInternal::buildDescrMap(initDescrMap, d_spinMode);
-        if (d_spinMode != SpinMode::Unpolarized && !atomMagMomentsVec.empty())
+        if (d_spinMode != SpinMode::Unpolarized && !atomMagZFactors.empty())
           {
-            double totMag = 0.0;
-            for (const auto &m : atomMagMomentsVec)
-              totMag += m;
-            totMag /= static_cast<double>(numElectrons);
-            if (std::abs(totMag) > 1e-12)
+            auto &          spinDensVal = initMixDescrMap[DensityDescrAttr::Val];
+            const size_type numQuad     = spinDensVal[0].nQuadraturePoints();
+            const double *  quadRealPointsHost =
+              spinDensVal[0]
+                .getQuadratureRuleContainer()
+                ->template getRealPointsPtr<utils::MemorySpace::HOST>();
+            const double densNormFactor =
+              std::abs(static_cast<double>(numElectrons) /
+                       static_cast<double>(totalDensityInQuad));
+            std::vector<double> magZInQuadValues(numQuad, 0.0);
+            atomicElectronicChargeDensityFunction.evaluateHost(
+              numQuad,
+              atoms::AtomSuperpositionFuncType::Identity,
+              quadRealPointsHost,
+              magZInQuadValues.data(),
+              densNormFactor /
+                (atoms::Clm(0, 0) * atoms::Dm(0) * atoms::Qm(0, 0)),
+              atomMagZFactors);
+            for (size_type i = 0; i < numQuad; ++i)
+              spinDensVal[1].data()[i] = magZInQuadValues[i];
+            if (xcType.rfind("GGA", 0) == 0)
               {
-                auto &          valSt = initMixDescrMap[DensityDescrAttr::Val];
-                const size_type nq    = valSt[0].nQuadraturePoints();
-                for (size_type i = 0; i < nq; ++i)
-                  valSt[1].data()[i] = totMag * valSt[0].data()[i];
-                if (xcType.rfind("GGA", 0) == 0)
-                  {
-                    auto &          gradSt =
-                      initMixDescrMap[DensityDescrAttr::Grad];
-                    const size_type nG = gradSt[0].nEntries();
-                    for (size_type i = 0; i < nG; ++i)
-                      gradSt[1].data()[i] = totMag * gradSt[0].data()[i];
-                  }
+                auto &          spinDensGrad =
+                  initMixDescrMap[DensityDescrAttr::Grad];
+                std::vector<double> magZGradInQuadValues(numQuad * dim, 0.0);
+                atomicElectronicChargeDensityFunction.evaluateHost(
+                  numQuad,
+                  atoms::AtomSuperpositionFuncType::Grad,
+                  quadRealPointsHost,
+                  magZGradInQuadValues.data(),
+                  1.0 / (atoms::Clm(0, 0) * atoms::Dm(0) * atoms::Qm(0, 0)),
+                  atomMagZFactors);
+                for (size_type i = 0; i < numQuad * dim; ++i)
+                  spinDensGrad[1].data()[i] = magZGradInQuadValues[i];
               }
           }
         d_rdm1Mix->setDescriptors(initMixDescrMap, {});
@@ -860,7 +876,7 @@ namespace dftefe
         const OpContext &           MContext,
         const OpContext &           MInvContext,
         bool                        isResidualChebyshevFilter,
-        const std::vector<double> & atomMagMomentsVec,
+        const std::vector<double> & atomMagZFactors,
         SpinMode                    spinMode)
       : d_feBMWaveFn(feBMWaveFn)
       , d_evaluateEnergyEverySCF(evaluateEnergyEverySCF)
@@ -1048,26 +1064,42 @@ namespace dftefe
       {
         auto initMixDescrMap =
           KohnShamDFTInternal::buildDescrMap(initDescrMap, d_spinMode);
-        if (d_spinMode != SpinMode::Unpolarized && !atomMagMomentsVec.empty())
+        if (d_spinMode != SpinMode::Unpolarized && !atomMagZFactors.empty())
           {
-            double totMag = 0.0;
-            for (const auto &m : atomMagMomentsVec)
-              totMag += m;
-            totMag /= static_cast<double>(numElectrons);
-            if (std::abs(totMag) > 1e-12)
+            auto &          spinDensVal = initMixDescrMap[DensityDescrAttr::Val];
+            const size_type numQuad     = spinDensVal[0].nQuadraturePoints();
+            const double *  quadRealPointsHost =
+              spinDensVal[0]
+                .getQuadratureRuleContainer()
+                ->template getRealPointsPtr<utils::MemorySpace::HOST>();
+            const double densNormFactor =
+              std::abs(static_cast<double>(numElectrons) /
+                       static_cast<double>(totalDensityInQuad));
+            std::vector<double> magZInQuadValues(numQuad, 0.0);
+            atomicElectronicChargeDensityFunction.evaluateHost(
+              numQuad,
+              atoms::AtomSuperpositionFuncType::Identity,
+              quadRealPointsHost,
+              magZInQuadValues.data(),
+              densNormFactor /
+                (atoms::Clm(0, 0) * atoms::Dm(0) * atoms::Qm(0, 0)),
+              atomMagZFactors);
+            for (size_type i = 0; i < numQuad; ++i)
+              spinDensVal[1].data()[i] = magZInQuadValues[i];
+            if (xcType.rfind("GGA", 0) == 0)
               {
-                auto &          valSt = initMixDescrMap[DensityDescrAttr::Val];
-                const size_type nq    = valSt[0].nQuadraturePoints();
-                for (size_type i = 0; i < nq; ++i)
-                  valSt[1].data()[i] = totMag * valSt[0].data()[i];
-                if (xcType.rfind("GGA", 0) == 0)
-                  {
-                    auto &          gradSt =
-                      initMixDescrMap[DensityDescrAttr::Grad];
-                    const size_type nG = gradSt[0].nEntries();
-                    for (size_type i = 0; i < nG; ++i)
-                      gradSt[1].data()[i] = totMag * gradSt[0].data()[i];
-                  }
+                auto &          spinDensGrad =
+                  initMixDescrMap[DensityDescrAttr::Grad];
+                std::vector<double> magZGradInQuadValues(numQuad * dim, 0.0);
+                atomicElectronicChargeDensityFunction.evaluateHost(
+                  numQuad,
+                  atoms::AtomSuperpositionFuncType::Grad,
+                  quadRealPointsHost,
+                  magZGradInQuadValues.data(),
+                  1.0 / (atoms::Clm(0, 0) * atoms::Dm(0) * atoms::Qm(0, 0)),
+                  atomMagZFactors);
+                for (size_type i = 0; i < numQuad * dim; ++i)
+                  spinDensGrad[1].data()[i] = magZGradInQuadValues[i];
               }
           }
         d_rdm1Mix->setDescriptors(initMixDescrMap, {});
@@ -1348,7 +1380,7 @@ namespace dftefe
         bool                         isResidualChebyshevFilter,
         /* TCI related info */
         const atoms::TCIADataParams &params,
-        const std::vector<double> &  atomMagMomentsVec,
+        const std::vector<double> &  atomMagZFactors,
         SpinMode                     spinMode)
       : d_feBMWaveFn(feBMWaveFn)
       , d_evaluateEnergyEverySCF(evaluateEnergyEverySCF)
@@ -1537,26 +1569,42 @@ namespace dftefe
       {
         auto initMixDescrMap =
           KohnShamDFTInternal::buildDescrMap(initDescrMap, d_spinMode);
-        if (d_spinMode != SpinMode::Unpolarized && !atomMagMomentsVec.empty())
+        if (d_spinMode != SpinMode::Unpolarized && !atomMagZFactors.empty())
           {
-            double totMag = 0.0;
-            for (const auto &m : atomMagMomentsVec)
-              totMag += m;
-            totMag /= static_cast<double>(numElectrons);
-            if (std::abs(totMag) > 1e-12)
+            auto &          spinDensVal = initMixDescrMap[DensityDescrAttr::Val];
+            const size_type numQuad     = spinDensVal[0].nQuadraturePoints();
+            const double *  quadRealPointsHost =
+              spinDensVal[0]
+                .getQuadratureRuleContainer()
+                ->template getRealPointsPtr<utils::MemorySpace::HOST>();
+            const double densNormFactor =
+              std::abs(static_cast<double>(numElectrons) /
+                       static_cast<double>(totalDensityInQuad));
+            std::vector<double> magZInQuadValues(numQuad, 0.0);
+            atomicElectronicChargeDensityFunction.evaluateHost(
+              numQuad,
+              atoms::AtomSuperpositionFuncType::Identity,
+              quadRealPointsHost,
+              magZInQuadValues.data(),
+              densNormFactor /
+                (atoms::Clm(0, 0) * atoms::Dm(0) * atoms::Qm(0, 0)),
+              atomMagZFactors);
+            for (size_type i = 0; i < numQuad; ++i)
+              spinDensVal[1].data()[i] = magZInQuadValues[i];
+            if (xcType.rfind("GGA", 0) == 0)
               {
-                auto &          valSt = initMixDescrMap[DensityDescrAttr::Val];
-                const size_type nq    = valSt[0].nQuadraturePoints();
-                for (size_type i = 0; i < nq; ++i)
-                  valSt[1].data()[i] = totMag * valSt[0].data()[i];
-                if (xcType.rfind("GGA", 0) == 0)
-                  {
-                    auto &          gradSt =
-                      initMixDescrMap[DensityDescrAttr::Grad];
-                    const size_type nG = gradSt[0].nEntries();
-                    for (size_type i = 0; i < nG; ++i)
-                      gradSt[1].data()[i] = totMag * gradSt[0].data()[i];
-                  }
+                auto &          spinDensGrad =
+                  initMixDescrMap[DensityDescrAttr::Grad];
+                std::vector<double> magZGradInQuadValues(numQuad * dim, 0.0);
+                atomicElectronicChargeDensityFunction.evaluateHost(
+                  numQuad,
+                  atoms::AtomSuperpositionFuncType::Grad,
+                  quadRealPointsHost,
+                  magZGradInQuadValues.data(),
+                  1.0 / (atoms::Clm(0, 0) * atoms::Dm(0) * atoms::Qm(0, 0)),
+                  atomMagZFactors);
+                for (size_type i = 0; i < numQuad * dim; ++i)
+                  spinDensGrad[1].data()[i] = magZGradInQuadValues[i];
               }
           }
         d_rdm1Mix->setDescriptors(initMixDescrMap, {});
@@ -1902,7 +1950,7 @@ namespace dftefe
         const OpContext &MContext,
         const OpContext &MInvContext,
         bool                        isResidualChebyshevFilter,
-        const std::vector<double> & atomMagMomentsVec,
+        const std::vector<double> & atomMagZFactors,
         SpinMode                    spinMode)
       : d_feBMWaveFn(feBMWaveFn)
       , d_evaluateEnergyEverySCF(evaluateEnergyEverySCF)
@@ -2156,26 +2204,42 @@ namespace dftefe
       {
         auto initMixDescrMap =
           KohnShamDFTInternal::buildDescrMap(initDescrMap, d_spinMode);
-        if (d_spinMode != SpinMode::Unpolarized && !atomMagMomentsVec.empty())
+        if (d_spinMode != SpinMode::Unpolarized && !atomMagZFactors.empty())
           {
-            double totMag = 0.0;
-            for (const auto &m : atomMagMomentsVec)
-              totMag += m;
-            totMag /= static_cast<double>(numElectrons);
-            if (std::abs(totMag) > 1e-12)
+            auto &          spinDensVal = initMixDescrMap[DensityDescrAttr::Val];
+            const size_type numQuad     = spinDensVal[0].nQuadraturePoints();
+            const double *  quadRealPointsHost =
+              spinDensVal[0]
+                .getQuadratureRuleContainer()
+                ->template getRealPointsPtr<utils::MemorySpace::HOST>();
+            const double densNormFactor =
+              std::abs(static_cast<double>(numElectrons) /
+                       static_cast<double>(totalDensityInQuad));
+            std::vector<double> magZInQuadValues(numQuad, 0.0);
+            atomicElectronicChargeDensityFunction.evaluateHost(
+              numQuad,
+              atoms::AtomSuperpositionFuncType::Identity,
+              quadRealPointsHost,
+              magZInQuadValues.data(),
+              densNormFactor /
+                (atoms::Clm(0, 0) * atoms::Dm(0) * atoms::Qm(0, 0)),
+              atomMagZFactors);
+            for (size_type i = 0; i < numQuad; ++i)
+              spinDensVal[1].data()[i] = magZInQuadValues[i];
+            if (xcType.rfind("GGA", 0) == 0)
               {
-                auto &          valSt = initMixDescrMap[DensityDescrAttr::Val];
-                const size_type nq    = valSt[0].nQuadraturePoints();
-                for (size_type i = 0; i < nq; ++i)
-                  valSt[1].data()[i] = totMag * valSt[0].data()[i];
-                if (xcType.rfind("GGA", 0) == 0)
-                  {
-                    auto &          gradSt =
-                      initMixDescrMap[DensityDescrAttr::Grad];
-                    const size_type nG = gradSt[0].nEntries();
-                    for (size_type i = 0; i < nG; ++i)
-                      gradSt[1].data()[i] = totMag * gradSt[0].data()[i];
-                  }
+                auto &          spinDensGrad =
+                  initMixDescrMap[DensityDescrAttr::Grad];
+                std::vector<double> magZGradInQuadValues(numQuad * dim, 0.0);
+                atomicElectronicChargeDensityFunction.evaluateHost(
+                  numQuad,
+                  atoms::AtomSuperpositionFuncType::Grad,
+                  quadRealPointsHost,
+                  magZGradInQuadValues.data(),
+                  1.0 / (atoms::Clm(0, 0) * atoms::Dm(0) * atoms::Qm(0, 0)),
+                  atomMagZFactors);
+                for (size_type i = 0; i < numQuad * dim; ++i)
+                  spinDensGrad[1].data()[i] = magZGradInQuadValues[i];
               }
           }
         d_rdm1Mix->setDescriptors(initMixDescrMap, {});
@@ -2472,7 +2536,7 @@ namespace dftefe
         bool                         isResidualChebyshevFilter,
         /* TCI related info */
         const atoms::TCIADataParams &params,
-        const std::vector<double> &  atomMagMomentsVec,
+        const std::vector<double> &  atomMagZFactors,
         SpinMode                     spinMode)
       : d_feBMWaveFn(feBMWaveFn)
       , d_evaluateEnergyEverySCF(evaluateEnergyEverySCF)
@@ -2733,26 +2797,42 @@ namespace dftefe
       {
         auto initMixDescrMap =
           KohnShamDFTInternal::buildDescrMap(initDescrMap, d_spinMode);
-        if (d_spinMode != SpinMode::Unpolarized && !atomMagMomentsVec.empty())
+        if (d_spinMode != SpinMode::Unpolarized && !atomMagZFactors.empty())
           {
-            double totMag = 0.0;
-            for (const auto &m : atomMagMomentsVec)
-              totMag += m;
-            totMag /= static_cast<double>(numElectrons);
-            if (std::abs(totMag) > 1e-12)
+            auto &          spinDensVal = initMixDescrMap[DensityDescrAttr::Val];
+            const size_type numQuad     = spinDensVal[0].nQuadraturePoints();
+            const double *  quadRealPointsHost =
+              spinDensVal[0]
+                .getQuadratureRuleContainer()
+                ->template getRealPointsPtr<utils::MemorySpace::HOST>();
+            const double densNormFactor =
+              std::abs(static_cast<double>(numElectrons) /
+                       static_cast<double>(totalDensityInQuad));
+            std::vector<double> magZInQuadValues(numQuad, 0.0);
+            atomicElectronicChargeDensityFunction.evaluateHost(
+              numQuad,
+              atoms::AtomSuperpositionFuncType::Identity,
+              quadRealPointsHost,
+              magZInQuadValues.data(),
+              densNormFactor /
+                (atoms::Clm(0, 0) * atoms::Dm(0) * atoms::Qm(0, 0)),
+              atomMagZFactors);
+            for (size_type i = 0; i < numQuad; ++i)
+              spinDensVal[1].data()[i] = magZInQuadValues[i];
+            if (xcType.rfind("GGA", 0) == 0)
               {
-                auto &          valSt = initMixDescrMap[DensityDescrAttr::Val];
-                const size_type nq    = valSt[0].nQuadraturePoints();
-                for (size_type i = 0; i < nq; ++i)
-                  valSt[1].data()[i] = totMag * valSt[0].data()[i];
-                if (xcType.rfind("GGA", 0) == 0)
-                  {
-                    auto &          gradSt =
-                      initMixDescrMap[DensityDescrAttr::Grad];
-                    const size_type nG = gradSt[0].nEntries();
-                    for (size_type i = 0; i < nG; ++i)
-                      gradSt[1].data()[i] = totMag * gradSt[0].data()[i];
-                  }
+                auto &          spinDensGrad =
+                  initMixDescrMap[DensityDescrAttr::Grad];
+                std::vector<double> magZGradInQuadValues(numQuad * dim, 0.0);
+                atomicElectronicChargeDensityFunction.evaluateHost(
+                  numQuad,
+                  atoms::AtomSuperpositionFuncType::Grad,
+                  quadRealPointsHost,
+                  magZGradInQuadValues.data(),
+                  1.0 / (atoms::Clm(0, 0) * atoms::Dm(0) * atoms::Qm(0, 0)),
+                  atomMagZFactors);
+                for (size_type i = 0; i < numQuad * dim; ++i)
+                  spinDensGrad[1].data()[i] = magZGradInQuadValues[i];
               }
           }
         d_rdm1Mix->setDescriptors(initMixDescrMap, {});
