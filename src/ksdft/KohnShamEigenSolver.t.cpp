@@ -79,7 +79,7 @@ namespace dftefe
       , d_numWantedEigenvalues(numWantedEigenvalues)
       , d_eigenSolveResidualTolerance(eigenSolveResidualTolerance)
       , d_maxChebyshevFilterPass(maxChebyshevFilterPass)
-      , d_waveFunctionBatchSize(waveFunctionBatchSize)
+      , d_waveFunctionBatchSize(spinMode == SpinMode::Collinear ? waveFunctionBatchSize/2 : waveFunctionBatchSize)
       , d_fermiEnergyTolerance(fermiEnergyTolerance)
       , d_fracOccupancyTolerance(fracOccupancyTolerance)
       , d_smearingTemperature(smearingTemperature)

@@ -3399,6 +3399,36 @@ namespace dftefe
 
           d_rootCout << "Electron density out : " << totalDensityOutQuad
                      << "\n";
+
+          if (d_spinMode == SpinMode::Collinear)
+            {
+              auto &          magDensOut = densAttrOut.at(DensityDescrAttr::Val)[1];
+              const size_type numQuad    = magDensOut.nQuadraturePoints();
+              RealType        netMag = 0.0, absMag = 0.0;
+              for (size_type i = 0; i < numQuad; ++i)
+                {
+                  const RealType mz = magDensOut.data()[i];
+                  netMag += mz * d_jxwDataHost[i];
+                  absMag += std::abs(mz) * d_jxwDataHost[i];
+                }
+              utils::mpi::MPIAllreduce<memorySpaceHost>(
+                utils::mpi::MPIInPlace,
+                &netMag,
+                1,
+                utils::mpi::Types<RealType>::getMPIDatatype(),
+                utils::mpi::MPISum,
+                d_mpiCommDomain);
+              utils::mpi::MPIAllreduce<memorySpaceHost>(
+                utils::mpi::MPIInPlace,
+                &absMag,
+                1,
+                utils::mpi::Types<RealType>::getMPIDatatype(),
+                utils::mpi::MPISum,
+                d_mpiCommDomain);
+              d_rootCout << "Net magnetization     : " << netMag << "\n";
+              d_rootCout << "Absolute magnetization: " << absMag << "\n";
+            }
+
           d_pTotal.registerEnd("Density Compute");
           d_p.registerEnd("Density Compute");
 
@@ -3550,6 +3580,35 @@ namespace dftefe
           d_p.print();
 
           scfIter += 1;
+        }
+
+      if (d_spinMode == SpinMode::Collinear)
+        {
+          auto &          magDensFinal = densAttrOut.at(DensityDescrAttr::Val)[1];
+          const size_type numQuad      = magDensFinal.nQuadraturePoints();
+          RealType        netMag = 0.0, absMag = 0.0;
+          for (size_type i = 0; i < numQuad; ++i)
+            {
+              const RealType mz = magDensFinal.data()[i];
+              netMag += mz * d_jxwDataHost[i];
+              absMag += std::abs(mz) * d_jxwDataHost[i];
+            }
+          utils::mpi::MPIAllreduce<memorySpaceHost>(
+            utils::mpi::MPIInPlace,
+            &netMag,
+            1,
+            utils::mpi::Types<RealType>::getMPIDatatype(),
+            utils::mpi::MPISum,
+            d_mpiCommDomain);
+          utils::mpi::MPIAllreduce<memorySpaceHost>(
+            utils::mpi::MPIInPlace,
+            &absMag,
+            1,
+            utils::mpi::Types<RealType>::getMPIDatatype(),
+            utils::mpi::MPISum,
+            d_mpiCommDomain);
+          d_rootCout << "Final net magnetization     : " << netMag << "\n";
+          d_rootCout << "Final absolute magnetization: " << absMag << "\n";
         }
 
       if (!d_evaluateEnergyEverySCF)

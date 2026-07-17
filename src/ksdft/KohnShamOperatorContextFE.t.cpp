@@ -1299,7 +1299,7 @@ namespace dftefe
         const size_type maxWaveFnBatch,
         const bool      useOptimizedImplement,
         const SpinMode  spinMode)
-      : d_maxCellBlock(maxCellBlock)
+      : d_maxCellBlock(spinMode == SpinMode::Collinear ? maxCellBlock/2 : maxCellBlock)
       , d_maxWaveFnBatch(maxWaveFnBatch)
       , d_linAlgOpContext(linAlgOpContext)
       , d_useOptimizedImplement(useOptimizedImplement)

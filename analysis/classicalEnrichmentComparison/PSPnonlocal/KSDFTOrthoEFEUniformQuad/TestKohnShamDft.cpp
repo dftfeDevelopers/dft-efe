@@ -411,6 +411,9 @@ int main(int argc, char** argv)
   dftefe::size_type num1DGaussSubdividedSizeGrad = readParameter<dftefe::size_type>(parameterInputFileName, "num1DGaussSubdividedSizeGrad", rootCout);
   dftefe::size_type gaussSubdividedCopiesGrad = readParameter<dftefe::size_type>(parameterInputFileName, "gaussSubdividedCopiesGrad", rootCout);
   
+  dftefe::size_type num1DGaussSubdividedSizeNonLocOperator = readParameter<dftefe::size_type>(parameterInputFileName, "num1DGaussSubdividedSizeNonLocOperator", rootCout, false, false, 20);
+  dftefe::size_type gaussSubdividedCopiesNonLocOperator = readParameter<dftefe::size_type>(parameterInputFileName, "gaussSubdividedCopiesNonLocOperator", rootCout, false, false, 1);
+
   bool isNumericalNuclearSolve = readParameter<bool>(parameterInputFileName, "isNumericalNuclearSolve", rootCout);
   bool isDeltaRhoPoissonSolve = readParameter<bool>(parameterInputFileName, "isDeltaRhoPoissonSolve", rootCout);
 
@@ -430,9 +433,6 @@ int main(int argc, char** argv)
     spinMode = ksdft::SpinMode::Collinear;
   else if (spinModeStr == "NonCollinear")
     spinMode = ksdft::SpinMode::NonCollinear;
-
-  dftefe::size_type num1DGaussSubdividedSizeNonLocOperator = 14;
-  dftefe::size_type gaussSubdividedCopiesNonLocOperator = 1;
 
   // Set up Triangulation
     std::shared_ptr<basis::TriangulationBase> triangulationBase =
