@@ -90,7 +90,7 @@ namespace dftefe
                   quadRuleContainer,
         RealType *rhoBatch,
         linearAlgebra::LinAlgOpContext<utils::MemorySpace::DEVICE>
-          &      linAlgOpContext,
+          &            linAlgOpContext,
         const SpinMode spinMode);
 
       static void
@@ -105,7 +105,7 @@ namespace dftefe
                   quadRuleContainer,
         RealType *gradRhoBatch,
         linearAlgebra::LinAlgOpContext<utils::MemorySpace::DEVICE>
-          &      linAlgOpContext,
+          &            linAlgOpContext,
         const SpinMode spinMode);
     }; // end of class DensityCalculatorKernels
 #endif

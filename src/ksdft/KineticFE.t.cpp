@@ -53,9 +53,9 @@ namespace dftefe
       , d_mpiPatternP2P(nullptr)
       , d_spinMode(spinMode)
       , d_S((spinMode == SpinMode::Unpolarized) ? 1 : 2)
-      , d_layout((spinMode == SpinMode::NonCollinear)
-                   ? SpinStorageLayout::SpinFastest
-                   : SpinStorageLayout::DofFastest)
+      , d_layout((spinMode == SpinMode::NonCollinear) ?
+                   SpinStorageLayout::SpinFastest :
+                   SpinStorageLayout::DofFastest)
       , d_basisOverlapSize(0)
     {
       reinit(feBasisDataStorage);
@@ -105,7 +105,7 @@ namespace dftefe
       d_basisOverlapSize = 0;
       for (size_type c = 0; c < nCells; ++c)
         {
-          d_numCellDofs[c]    = feBDH->nCellDofs(c);
+          d_numCellDofs[c] = feBDH->nCellDofs(c);
           d_basisOverlapSize += d_numCellDofs[c] * d_numCellDofs[c];
         }
 
@@ -176,9 +176,10 @@ namespace dftefe
 
       const linearAlgebra::MultiVectorProductSpace<ValueTypeBasisCoeff,
                                                    memorySpace> *Xps =
-        static_cast<const linearAlgebra::MultiVectorProductSpace<
-          ValueTypeBasisCoeff,
-          memorySpace> *>(&waveFunc);
+        static_cast<
+          const linearAlgebra::MultiVectorProductSpace<ValueTypeBasisCoeff,
+                                                       memorySpace> *>(
+          &waveFunc);
 
       const size_type numSpaces      = Xps->numSpaces();
       const size_type numVecPerSpace = Xps->numVectorsPerSpace();
@@ -288,7 +289,8 @@ namespace dftefe
             }
 
           for (size_type i = 0; i < numPsiInBatchTotal; ++i)
-            d_energy += (RealType)(dotProds[i] * spinFactor * occupationInBatch[i]);
+            d_energy +=
+              (RealType)(dotProds[i] * spinFactor * occupationInBatch[i]);
         }
 
       // for (size_type psiStartId = 0;

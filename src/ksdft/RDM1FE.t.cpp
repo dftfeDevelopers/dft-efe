@@ -65,8 +65,7 @@ namespace dftefe
       , d_waveFuncBatchSize(waveFuncBatchSize)
     {
       dftefe::utils::throwException<dftefe::utils::InvalidArgument>(
-        !isSOC,
-        "RDM1FE does not yet support SOC density computation.");
+        !isSOC, "RDM1FE does not yet support SOC density computation.");
 
       d_densCalc = std::make_shared<DensityCalculator<ValueTypeBasisData,
                                                       ValueTypeBasisCoeff,
@@ -102,8 +101,8 @@ namespace dftefe
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
     SpinMode
-    RDM1FE<ValueTypeBasisData, ValueTypeBasisCoeff, memorySpace, dim>::spinMode()
-      const
+    RDM1FE<ValueTypeBasisData, ValueTypeBasisCoeff, memorySpace, dim>::
+      spinMode() const
     {
       return d_spinMode;
     }

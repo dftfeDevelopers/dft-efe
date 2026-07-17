@@ -120,11 +120,10 @@ namespace dftefe
                 S, ScaLAPACKMatrix<ValueType>(N, processGrid, rowsBlockSize));
               for (auto &projHamPar : projHamParVec)
                 if (processGrid->is_process_active())
-                  std::fill(
-                    &projHamPar.local_el(0, 0),
-                    &projHamPar.local_el(0, 0) +
-                      projHamPar.local_m() * projHamPar.local_n(),
-                    ValueType(0.0));
+                  std::fill(&projHamPar.local_el(0, 0),
+                            &projHamPar.local_el(0, 0) +
+                              projHamPar.local_m() * projHamPar.local_n(),
+                            ValueType(0.0));
 
               MultiVectorOps::project(A,
                                       *Xb,
@@ -147,24 +146,24 @@ namespace dftefe
                   p.registerStart("ELPA eigen decomp, RR step");
                   for (size_type s = 0; s < S; ++s)
                     {
-                      // Symmetrize projHamParVec[s]: full Hermitian = lower + upper
+                      // Symmetrize projHamParVec[s]: full Hermitian = lower +
+                      // upper
                       ScaLAPACKMatrix<ValueType> projHamParConjTrans(
                         N, processGrid, rowsBlockSize);
                       if (processGrid->is_process_active())
-                        std::fill(
-                          &projHamParConjTrans.local_el(0, 0),
-                          &projHamParConjTrans.local_el(0, 0) +
-                            projHamParConjTrans.local_m() *
-                              projHamParConjTrans.local_n(),
-                          ValueType(0.0));
+                        std::fill(&projHamParConjTrans.local_el(0, 0),
+                                  &projHamParConjTrans.local_el(0, 0) +
+                                    projHamParConjTrans.local_m() *
+                                      projHamParConjTrans.local_n(),
+                                  ValueType(0.0));
                       projHamParConjTrans.copy_conjugate_transposed(
                         projHamParVec[s]);
-                      projHamParVec[s].add(
-                        projHamParConjTrans, ValueType(1.0), ValueType(1.0));
+                      projHamParVec[s].add(projHamParConjTrans,
+                                           ValueType(1.0),
+                                           ValueType(1.0));
                       // halve diagonal
                       if (processGrid->is_process_active())
-                        for (size_type i = 0;
-                             i < projHamParVec[s].local_n();
+                        for (size_type i = 0; i < projHamParVec[s].local_n();
                              ++i)
                           {
                             const size_type glob_i =
@@ -185,12 +184,11 @@ namespace dftefe
                                                                  processGrid,
                                                                  rowsBlockSize);
                       if (processGrid->is_process_active())
-                        std::fill(
-                          &eigenVectorsPar.local_el(0, 0),
-                          &eigenVectorsPar.local_el(0, 0) +
-                            eigenVectorsPar.local_m() *
-                              eigenVectorsPar.local_n(),
-                          ValueType(0.0));
+                        std::fill(&eigenVectorsPar.local_el(0, 0),
+                                  &eigenVectorsPar.local_el(0, 0) +
+                                    eigenVectorsPar.local_m() *
+                                      eigenVectorsPar.local_n(),
+                                  ValueType(0.0));
 
                       std::vector<RealType> eigenValsSpace(N, RealType(0));
                       if (processGrid->is_process_active())
@@ -222,7 +220,7 @@ namespace dftefe
                   p.registerStart("ScaLAPACK eigen decomp, RR step");
                   for (size_type s = 0; s < S; ++s)
                     {
-                      ScalapackError scalapackError;
+                      ScalapackError        scalapackError;
                       std::vector<RealType> eigenValsSpace =
                         projHamParVec[s].eigenpairs_hermitian_by_index_MRRR(
                           std::make_pair(0, (int)N - 1), true, scalapackError);
@@ -283,8 +281,8 @@ namespace dftefe
 
               eigenValues.resize(numVecTotal);
               ScaLAPACKMatrix<ValueType> rotMat(numVecTotal,
-                                               processGrid,
-                                               rowsBlockSize);
+                                                processGrid,
+                                                rowsBlockSize);
 
               if (d_useELPA)
                 {
@@ -407,12 +405,11 @@ namespace dftefe
       else
         {
           utils::throwException(
-            dynamic_cast<
-                MultiVectorProductSpace<ValueType, memorySpace> *>(&X) ==
-              nullptr &&
-              dynamic_cast<MultiVectorProductSpaceBlocked<ValueType,
-                                                          memorySpace> *>(
-                &X) == nullptr,
+            dynamic_cast<MultiVectorProductSpace<ValueType, memorySpace> *>(
+              &X) == nullptr &&
+              dynamic_cast<
+                MultiVectorProductSpaceBlocked<ValueType, memorySpace> *>(&X) ==
+                nullptr,
             "Non-ScaLAPACK Rayleigh-Ritz path does not support "
             "spin-polarized (S>1) wavefunctions.");
           MultiVector<ValueType, memorySpace> eigenVectors(X, (ValueType)0);
@@ -507,16 +504,20 @@ namespace dftefe
             MultiVector<ValueType, memorySpace> &X,
             bool                                 computeEigenVectors)
     {
-      // X memory layout (MultiVectorProductSpace[Blocked], S spaces, N orbitals each):
-      //   data[ dof * (S*N) + s*N + n ]  — DOF slowest, space next, orbital fastest.
-      //   Blocked path (collinear): S independent sub-problems; space-s block starts at
+      // X memory layout (MultiVectorProductSpace[Blocked], S spaces, N orbitals
+      // each):
+      //   data[ dof * (S*N) + s*N + n ]  — DOF slowest, space next, orbital
+      //   fastest. Blocked path (collinear): S independent sub-problems;
+      //   space-s block starts at
       //     ptr = X.data() + s*N,  column stride (lda) = S*N.
-      //   Coupled path (unpolarized S=1 / non-collinear S=2): all S*N columns as one unit.
+      //   Coupled path (unpolarized S=1 / non-collinear S=2): all S*N columns
+      //   as one unit.
       //
       // eigenValues memory layout: space-major, size S*N.
       //   eigenValues[ s*N + n ]  — space s (0..S-1), orbital n (0..N-1).
-      //   Blocked path: filled space-by-space in the ELPA/ScaLAPACK loop (eigenValues[s*N+n]).
-      //   Coupled path: flat eigenValues[0..numVecTotal-1], columns of X in order.
+      //   Blocked path: filled space-by-space in the ELPA/ScaLAPACK loop
+      //   (eigenValues[s*N+n]). Coupled path: flat
+      //   eigenValues[0..numVecTotal-1], columns of X in order.
       EigenSolverError     retunValue;
       EigenSolverErrorCode err;
 
@@ -553,17 +554,16 @@ namespace dftefe
                 {
                   if (processGrid->is_process_active())
                     {
-                      std::fill(
-                        &projHamParVec[s].local_el(0, 0),
-                        &projHamParVec[s].local_el(0, 0) +
-                          projHamParVec[s].local_m() * projHamParVec[s].local_n(),
-                        ValueType(0.0));
-                      std::fill(
-                        &overlapMatParVec[s].local_el(0, 0),
-                        &overlapMatParVec[s].local_el(0, 0) +
-                          overlapMatParVec[s].local_m() *
-                            overlapMatParVec[s].local_n(),
-                        ValueType(0.0));
+                      std::fill(&projHamParVec[s].local_el(0, 0),
+                                &projHamParVec[s].local_el(0, 0) +
+                                  projHamParVec[s].local_m() *
+                                    projHamParVec[s].local_n(),
+                                ValueType(0.0));
+                      std::fill(&overlapMatParVec[s].local_el(0, 0),
+                                &overlapMatParVec[s].local_el(0, 0) +
+                                  overlapMatParVec[s].local_m() *
+                                    overlapMatParVec[s].local_n(),
+                                ValueType(0.0));
                     }
                 }
 
@@ -584,38 +584,36 @@ namespace dftefe
                                       d_XinBatchSmall,
                                       d_XoutBatchSmall);
 
-              // Symmetrize projHamParVec[s] (full Hermitian = lower + upper, halve diag)
+              // Symmetrize projHamParVec[s] (full Hermitian = lower + upper,
+              // halve diag)
               for (size_type s = 0; s < S; ++s)
                 {
-                  ScaLAPACKMatrix<ValueType> projHamParConjTrans(
-                    N, processGrid, rowsBlockSize);
+                  ScaLAPACKMatrix<ValueType> projHamParConjTrans(N,
+                                                                 processGrid,
+                                                                 rowsBlockSize);
                   if (processGrid->is_process_active())
-                    std::fill(
-                      &projHamParConjTrans.local_el(0, 0),
-                      &projHamParConjTrans.local_el(0, 0) +
-                        projHamParConjTrans.local_m() *
-                          projHamParConjTrans.local_n(),
-                      ValueType(0.0));
+                    std::fill(&projHamParConjTrans.local_el(0, 0),
+                              &projHamParConjTrans.local_el(0, 0) +
+                                projHamParConjTrans.local_m() *
+                                  projHamParConjTrans.local_n(),
+                              ValueType(0.0));
                   projHamParConjTrans.copy_conjugate_transposed(
                     projHamParVec[s]);
-                  projHamParVec[s].add(
-                    projHamParConjTrans, ValueType(1.0), ValueType(1.0));
+                  projHamParVec[s].add(projHamParConjTrans,
+                                       ValueType(1.0),
+                                       ValueType(1.0));
                   if (processGrid->is_process_active())
-                    for (size_type i = 0;
-                         i < projHamParVec[s].local_n();
-                         ++i)
+                    for (size_type i = 0; i < projHamParVec[s].local_n(); ++i)
                       {
                         const size_type glob_i =
                           projHamParVec[s].global_column(i);
-                        for (size_type j = 0;
-                             j < projHamParVec[s].local_m();
+                        for (size_type j = 0; j < projHamParVec[s].local_m();
                              ++j)
                           {
                             const size_type glob_j =
                               projHamParVec[s].global_row(j);
                             if (glob_i == glob_j)
-                              projHamParVec[s].local_el(j, i) *=
-                                ValueType(0.5);
+                              projHamParVec[s].local_el(j, i) *= ValueType(0.5);
                           }
                       }
                 }
@@ -636,23 +634,21 @@ namespace dftefe
                                                                  processGrid,
                                                                  rowsBlockSize);
                       if (processGrid->is_process_active())
-                        std::fill(
-                          &eigenVectorsPar.local_el(0, 0),
-                          &eigenVectorsPar.local_el(0, 0) +
-                            eigenVectorsPar.local_m() *
-                              eigenVectorsPar.local_n(),
-                          ValueType(0.0));
+                        std::fill(&eigenVectorsPar.local_el(0, 0),
+                                  &eigenVectorsPar.local_el(0, 0) +
+                                    eigenVectorsPar.local_m() *
+                                      eigenVectorsPar.local_n(),
+                                  ValueType(0.0));
 
                       // ELPA generalized: overlap must be upper-triangular form
                       ScaLAPACKMatrix<ValueType> overlapMatParConjTrans(
                         N, processGrid, rowsBlockSize);
                       if (processGrid->is_process_active())
-                        std::fill(
-                          &overlapMatParConjTrans.local_el(0, 0),
-                          &overlapMatParConjTrans.local_el(0, 0) +
-                            overlapMatParConjTrans.local_m() *
-                              overlapMatParConjTrans.local_n(),
-                          ValueType(0.0));
+                        std::fill(&overlapMatParConjTrans.local_el(0, 0),
+                                  &overlapMatParConjTrans.local_el(0, 0) +
+                                    overlapMatParConjTrans.local_m() *
+                                      overlapMatParConjTrans.local_n(),
+                                  ValueType(0.0));
                       overlapMatParConjTrans.copy_conjugate_transposed(
                         overlapMatParVec[s]);
 
@@ -724,7 +720,7 @@ namespace dftefe
                       LMatPar.mmult(projHamParCopy, projHamParVec[s]);
                       projHamParCopy.zmCmult(projHamParVec[s], LMatPar);
 
-                      ScalapackError scalapackError;
+                      ScalapackError        scalapackError;
                       std::vector<RealType> eigenValsSpace =
                         projHamParVec[s].eigenpairs_hermitian_by_index_MRRR(
                           std::make_pair(0, (int)N - 1), true, scalapackError);
@@ -813,7 +809,9 @@ namespace dftefe
                           ValueType(0.0));
 
               projHamParConjTrans.copy_conjugate_transposed(projHamPar);
-              projHamPar.add(projHamParConjTrans, ValueType(1.0), ValueType(1.0));
+              projHamPar.add(projHamParConjTrans,
+                             ValueType(1.0),
+                             ValueType(1.0));
               if (processGrid->is_process_active())
                 for (size_type i = 0; i < projHamPar.local_n(); ++i)
                   {
@@ -843,9 +841,8 @@ namespace dftefe
                                   eigenVectorsPar.local_n(),
                               ValueType(0.0));
 
-                  ScaLAPACKMatrix<ValueType> overlapMatParConjTrans(numVecTotal,
-                                                                    processGrid,
-                                                                    rowsBlockSize);
+                  ScaLAPACKMatrix<ValueType> overlapMatParConjTrans(
+                    numVecTotal, processGrid, rowsBlockSize);
                   if (processGrid->is_process_active())
                     std::fill(&overlapMatParConjTrans.local_el(0, 0),
                               &overlapMatParConjTrans.local_el(0, 0) +
@@ -853,7 +850,8 @@ namespace dftefe
                                   overlapMatParConjTrans.local_n(),
                               ValueType(0.0));
 
-                  overlapMatParConjTrans.copy_conjugate_transposed(overlapMatPar);
+                  overlapMatParConjTrans.copy_conjugate_transposed(
+                    overlapMatPar);
 
                   if (processGrid->is_process_active())
                     {

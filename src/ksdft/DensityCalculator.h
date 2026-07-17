@@ -93,9 +93,9 @@ namespace dftefe
           &rho,
         std::vector<
           quadrature::QuadratureValuesContainer<RealType, memorySpaceHost> *>
-          &        gradRho,
-        const bool computeGrad = false,
-        const SpinMode spinMode = SpinMode::Unpolarized);
+          &            gradRho,
+        const bool     computeGrad = false,
+        const SpinMode spinMode    = SpinMode::Unpolarized);
 
     private:
       std::shared_ptr<const quadrature::QuadratureRuleContainer>

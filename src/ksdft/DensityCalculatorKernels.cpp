@@ -52,9 +52,9 @@ namespace dftefe
       for (size_type iCell = cellRange.first; iCell < cellRange.second; iCell++)
         numQuadInBlock += quadRuleContainer->nCellQuadraturePoints(iCell);
 
-      const size_type ncomp =
-        (spinMode == SpinMode::Unpolarized) ? 1 :
-        (spinMode == SpinMode::Collinear)   ? 2 : 4;
+      const size_type ncomp = (spinMode == SpinMode::Unpolarized) ? 1 :
+                              (spinMode == SpinMode::Collinear)   ? 2 :
+                                                                    4;
       const size_type batchN =
         (spinMode == SpinMode::Unpolarized) ? batchSize : batchSize / 2;
 
@@ -76,8 +76,9 @@ namespace dftefe
                   RealType b = 0;
                   for (size_type i = 0; i < batchSize; i++)
                     {
-                      const ValueType psi = psiBatchQuad[cumulativeQuadPsiInCell +
-                                                         batchSize * iQuad + i];
+                      const ValueType psi =
+                        psiBatchQuad[cumulativeQuadPsiInCell +
+                                     batchSize * iQuad + i];
                       const RealType absSqPsi = utils::absSq(psi);
                       modPsiSqBatchQuad[cumulativeQuadPsiInCell +
                                         batchSize * iQuad + i] = absSqPsi;
@@ -99,11 +100,12 @@ namespace dftefe
                       const RealType sq_up = utils::absSq(psi_up);
                       const RealType sq_dn = utils::absSq(psi_dn);
                       modPsiSqBatchQuad[cumulativeQuadPsiInCell +
-                                        batchSize * iQuad + n] = sq_up;
+                                        batchSize * iQuad + n]          = sq_up;
                       modPsiSqBatchQuad[cumulativeQuadPsiInCell +
                                         batchSize * iQuad + batchN + n] = sq_dn;
                       const RealType val_up = occupationInBatch[n] * sq_up;
-                      const RealType val_dn = occupationInBatch[batchN + n] * sq_dn;
+                      const RealType val_dn =
+                        occupationInBatch[batchN + n] * sq_dn;
                       b0 += val_up + val_dn;
                       b1 += val_up - val_dn;
                     }
@@ -121,12 +123,12 @@ namespace dftefe
                       const ValueType psi_dn =
                         psiBatchQuad[cumulativeQuadPsiInCell +
                                      batchSize * iQuad + batchN + n];
-                      const RealType sq_up   = utils::absSq(psi_up);
-                      const RealType sq_dn   = utils::absSq(psi_dn);
-                      const RealType cross_re = utils::realPart(
-                        utils::conjugate(psi_up) * psi_dn);
-                      const RealType cross_im = utils::imagPart(
-                        utils::conjugate(psi_up) * psi_dn);
+                      const RealType sq_up = utils::absSq(psi_up);
+                      const RealType sq_dn = utils::absSq(psi_dn);
+                      const RealType cross_re =
+                        utils::realPart(utils::conjugate(psi_up) * psi_dn);
+                      const RealType cross_im =
+                        utils::imagPart(utils::conjugate(psi_up) * psi_dn);
                       const RealType occ = occupationInBatch[n];
                       b0 += occ * (sq_up + sq_dn);
                       b1 += occ * (sq_up - sq_dn);
@@ -167,9 +169,9 @@ namespace dftefe
       for (size_type iCell = cellRange.first; iCell < cellRange.second; iCell++)
         numQuadInBlock += quadRuleContainer->nCellQuadraturePoints(iCell);
 
-      const size_type ncomp =
-        (spinMode == SpinMode::Unpolarized) ? 1 :
-        (spinMode == SpinMode::Collinear)   ? 2 : 4;
+      const size_type ncomp = (spinMode == SpinMode::Unpolarized) ? 1 :
+                              (spinMode == SpinMode::Collinear)   ? 2 :
+                                                                    4;
       const size_type batchN =
         (spinMode == SpinMode::Unpolarized) ? batchSize : batchSize / 2;
 
@@ -220,8 +222,8 @@ namespace dftefe
                             psiBatchQuad[cumulativeQuadPsiInCell +
                                          batchSize * iQuad + batchN + n];
                           const ValueType gPsi_dn =
-                            gradPsiBatchQuad[cumulativeGradPsiInCell +
-                                             batchN + n +
+                            gradPsiBatchQuad[cumulativeGradPsiInCell + batchN +
+                                             n +
                                              batchSize * (iQuad * dim + iDim)];
                           const RealType contrib_up =
                             2.0 * occupationInBatch[n] *
@@ -252,18 +254,18 @@ namespace dftefe
                             psiBatchQuad[cumulativeQuadPsiInCell +
                                          batchSize * iQuad + batchN + n];
                           const ValueType gPsi_dn =
-                            gradPsiBatchQuad[cumulativeGradPsiInCell +
-                                             batchN + n +
+                            gradPsiBatchQuad[cumulativeGradPsiInCell + batchN +
+                                             n +
                                              batchSize * (iQuad * dim + iDim)];
-                          const RealType occ         = occupationInBatch[n];
-                          const RealType re_up_gup   = utils::realPart(
-                            utils::conjugate(psi_up) * gPsi_up);
-                          const RealType re_dn_gdn   = utils::realPart(
-                            utils::conjugate(psi_dn) * gPsi_dn);
-                          const RealType re_up_gdn   = utils::realPart(
-                            utils::conjugate(psi_up) * gPsi_dn);
-                          const RealType im_up_gdn   = utils::imagPart(
-                            utils::conjugate(psi_up) * gPsi_dn);
+                          const RealType occ = occupationInBatch[n];
+                          const RealType re_up_gup =
+                            utils::realPart(utils::conjugate(psi_up) * gPsi_up);
+                          const RealType re_dn_gdn =
+                            utils::realPart(utils::conjugate(psi_dn) * gPsi_dn);
+                          const RealType re_up_gdn =
+                            utils::realPart(utils::conjugate(psi_up) * gPsi_dn);
+                          const RealType im_up_gdn =
+                            utils::imagPart(utils::conjugate(psi_up) * gPsi_dn);
                           b0 += 2.0 * occ * (re_up_gup + re_dn_gdn);
                           b1 += 2.0 * occ * (re_up_gup - re_dn_gdn);
                           b2 += 2.0 * occ * im_up_gdn;

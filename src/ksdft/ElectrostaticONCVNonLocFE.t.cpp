@@ -596,16 +596,16 @@ namespace dftefe
       d_electrostaticLocal->evalEnergy();
       d_energy = d_electrostaticLocal->getEnergy();
 
-      RealType nonLocEnergy = (RealType)0;
+      RealType       nonLocEnergy = (RealType)0;
       const RealType spinFactor =
         (d_spinMode == SpinMode::Unpolarized) ? (RealType)2 : (RealType)1;
       if (d_isNonLocPSP)
         {
           const linearAlgebra::MultiVectorProductSpace<ValueTypeWaveFnCoeff,
                                                        memorySpace> *Xps =
-            static_cast<const linearAlgebra::MultiVectorProductSpace<
-              ValueTypeWaveFnCoeff,
-              memorySpace> *>(&X);
+            static_cast<
+              const linearAlgebra::MultiVectorProductSpace<ValueTypeWaveFnCoeff,
+                                                           memorySpace> *>(&X);
 
           const size_type numSpaces      = Xps->numSpaces();
           const size_type numVecPerSpace = Xps->numVectorsPerSpace();
@@ -662,11 +662,10 @@ namespace dftefe
               std::vector<RealType> occupationInBatch(numPsiInBatchTotal,
                                                       (RealType)0);
               for (size_type s = 0; s < numSpaces; ++s)
-                std::copy(
-                  occupation.begin() + s * numVecPerSpace + psiStartId,
-                  occupation.begin() + s * numVecPerSpace + psiStartId +
-                    numPsiInBatch,
-                  occupationInBatch.begin() + s * numPsiInBatch);
+                std::copy(occupation.begin() + s * numVecPerSpace + psiStartId,
+                          occupation.begin() + s * numVecPerSpace + psiStartId +
+                            numPsiInBatch,
+                          occupationInBatch.begin() + s * numPsiInBatch);
 
               std::vector<
                 linearAlgebra::blasLapack::scalar_type<ValueTypeWaveFnCoeff,
@@ -715,8 +714,7 @@ namespace dftefe
                 }
 
               for (size_type i = 0; i < numPsiInBatchTotal; ++i)
-                nonLocEnergy +=
-                  dotProds[i] * spinFactor * occupationInBatch[i];
+                nonLocEnergy += dotProds[i] * spinFactor * occupationInBatch[i];
             }
         }
       d_rootCout << "\nNonLocal PSP Energy: " << nonLocEnergy << "\n\n";

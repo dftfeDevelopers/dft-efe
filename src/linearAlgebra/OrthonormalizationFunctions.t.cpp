@@ -256,22 +256,21 @@ namespace dftefe
                           ScaLAPACKMatrix<ValueType> overlapMatParConjTrans(
                             N, processGrid, rowsBlockSize);
                           if (processGrid->is_process_active())
-                            std::fill(
-                              &overlapMatParConjTrans.local_el(0, 0),
-                              &overlapMatParConjTrans.local_el(0, 0) +
-                                overlapMatParConjTrans.local_m() *
-                                  overlapMatParConjTrans.local_n(),
-                              ValueType(0.0));
+                            std::fill(&overlapMatParConjTrans.local_el(0, 0),
+                                      &overlapMatParConjTrans.local_el(0, 0) +
+                                        overlapMatParConjTrans.local_m() *
+                                          overlapMatParConjTrans.local_n(),
+                                      ValueType(0.0));
                           overlapMatParConjTrans.copy_conjugate_transposed(
                             overlapMatParVec[s]);
 
                           if (processGrid->is_process_active())
                             {
                               int error;
-                              elpa_cholesky(
-                                d_elpaScala->getElpaHandle(),
-                                &overlapMatParConjTrans.local_el(0, 0),
-                                &error);
+                              elpa_cholesky(d_elpaScala->getElpaHandle(),
+                                            &overlapMatParConjTrans.local_el(0,
+                                                                             0),
+                                            &error);
                               if (error != ELPA_OK)
                                 cholSuccess = false;
                             }
@@ -280,8 +279,7 @@ namespace dftefe
 
                           // extract lower triangular LMatPar
                           if (processGrid->is_process_active())
-                            for (size_type i = 0;
-                                 i < LMatParVec[s].local_n();
+                            for (size_type i = 0; i < LMatParVec[s].local_n();
                                  ++i)
                               {
                                 const size_type glob_i =
@@ -304,8 +302,7 @@ namespace dftefe
                           // Check diagonal
                           size_type flag = 0;
                           if (processGrid->is_process_active())
-                            for (size_type i = 0;
-                                 i < LMatParVec[s].local_n();
+                            for (size_type i = 0; i < LMatParVec[s].local_n();
                                  ++i)
                               {
                                 const size_type glob_i =
@@ -347,7 +344,8 @@ namespace dftefe
                       for (size_type s = 0; s < S; ++s)
                         {
                           ScalapackError serr =
-                            overlapMatParVec[s].compute_cholesky_factorization();
+                            overlapMatParVec[s]
+                              .compute_cholesky_factorization();
                           if (serr.err != ScalapackErrorCode::SUCCESS)
                             cholSuccess = false;
 
@@ -357,8 +355,7 @@ namespace dftefe
                             "DFT-EFE Error: overlap matrix property after cholesky factorization incorrect");
 
                           if (processGrid->is_process_active())
-                            for (size_type i = 0;
-                                 i < LMatParVec[s].local_n();
+                            for (size_type i = 0; i < LMatParVec[s].local_n();
                                  ++i)
                               {
                                 const size_type glob_i =
@@ -381,8 +378,7 @@ namespace dftefe
                           // Check diagonal
                           size_type flag = 0;
                           if (processGrid->is_process_active())
-                            for (size_type i = 0;
-                                 i < LMatParVec[s].local_n();
+                            for (size_type i = 0; i < LMatParVec[s].local_n();
                                  ++i)
                               {
                                 const size_type glob_i =
@@ -443,9 +439,9 @@ namespace dftefe
                     }
                   else
                     {
-                      err        = OrthonormalizationErrorCode::SUCCESS;
-                      retunValue = OrthonormalizationErrorMsg::isSuccessAndMsg(
-                        err);
+                      err = OrthonormalizationErrorCode::SUCCESS;
+                      retunValue =
+                        OrthonormalizationErrorMsg::isSuccessAndMsg(err);
                     }
 
                   p.print();
@@ -626,9 +622,9 @@ namespace dftefe
                     }
                   else
                     {
-                      err        = OrthonormalizationErrorCode::SUCCESS;
-                      retunValue = OrthonormalizationErrorMsg::isSuccessAndMsg(
-                        err);
+                      err = OrthonormalizationErrorCode::SUCCESS;
+                      retunValue =
+                        OrthonormalizationErrorMsg::isSuccessAndMsg(err);
                     }
 
                   p.print();
@@ -638,11 +634,10 @@ namespace dftefe
           else
             {
               utils::throwException(
-                dynamic_cast<
-                    MultiVectorProductSpace<ValueType, memorySpace> *>(&X) ==
-                  nullptr &&
-                  dynamic_cast<MultiVectorProductSpaceBlocked<ValueType,
-                                                              memorySpace> *>(
+                dynamic_cast<MultiVectorProductSpace<ValueType, memorySpace> *>(
+                  &X) == nullptr &&
+                  dynamic_cast<
+                    MultiVectorProductSpaceBlocked<ValueType, memorySpace> *>(
                     &X) == nullptr,
                 "Non-ScaLAPACK orthonormalization path does not support "
                 "product-space (S>1) wavefunctions.");
@@ -795,8 +790,7 @@ namespace dftefe
           auto *Xb = dynamic_cast<
             MultiVectorProductSpaceBlocked<ValueType, memorySpace> *>(&X);
           auto *Xp =
-            dynamic_cast<MultiVectorProductSpace<ValueType, memorySpace> *>(
-              &X);
+            dynamic_cast<MultiVectorProductSpace<ValueType, memorySpace> *>(&X);
 
           if (Xb != nullptr)
             {
@@ -808,11 +802,9 @@ namespace dftefe
 
               // Per-space Scalapack matrices (allocated once, reused each pass)
               std::vector<ScaLAPACKMatrix<ValueType>> overlapMatParVec(
-                S,
-                ScaLAPACKMatrix<ValueType>(N, processGrid, rowsBlockSize));
+                S, ScaLAPACKMatrix<ValueType>(N, processGrid, rowsBlockSize));
               std::vector<ScaLAPACKMatrix<ValueType>> overlapMatParConjTransVec(
-                S,
-                ScaLAPACKMatrix<ValueType>(N, processGrid, rowsBlockSize));
+                S, ScaLAPACKMatrix<ValueType>(N, processGrid, rowsBlockSize));
               std::vector<ScaLAPACKMatrix<ValueType>> LMatParVec(
                 S,
                 ScaLAPACKMatrix<ValueType>(
@@ -827,18 +819,16 @@ namespace dftefe
                   for (size_type s = 0; s < S; ++s)
                     if (processGrid->is_process_active())
                       {
-                        std::fill(
-                          &overlapMatParVec[s].local_el(0, 0),
-                          &overlapMatParVec[s].local_el(0, 0) +
-                            overlapMatParVec[s].local_m() *
-                              overlapMatParVec[s].local_n(),
-                          ValueType(0.0));
-                        std::fill(
-                          &overlapMatParConjTransVec[s].local_el(0, 0),
-                          &overlapMatParConjTransVec[s].local_el(0, 0) +
-                            overlapMatParConjTransVec[s].local_m() *
-                              overlapMatParConjTransVec[s].local_n(),
-                          ValueType(0.0));
+                        std::fill(&overlapMatParVec[s].local_el(0, 0),
+                                  &overlapMatParVec[s].local_el(0, 0) +
+                                    overlapMatParVec[s].local_m() *
+                                      overlapMatParVec[s].local_n(),
+                                  ValueType(0.0));
+                        std::fill(&overlapMatParConjTransVec[s].local_el(0, 0),
+                                  &overlapMatParConjTransVec[s].local_el(0, 0) +
+                                    overlapMatParConjTransVec[s].local_m() *
+                                      overlapMatParConjTransVec[s].local_n(),
+                                  ValueType(0.0));
                       }
 
                   p.registerStart("Compute X^T M X");
@@ -861,8 +851,7 @@ namespace dftefe
                                               ValueType(1.0),
                                               ValueType(1.0));
                       if (processGrid->is_process_active())
-                        for (size_type i = 0;
-                             i < overlapMatParVec[s].local_n();
+                        for (size_type i = 0; i < overlapMatParVec[s].local_n();
                              ++i)
                           {
                             const size_type glob_i =
@@ -911,7 +900,8 @@ namespace dftefe
                   p.registerStart("Minimum EigenValue Check");
 
                   // Get min eigenvalue across all spaces
-                  RealType eigenValueMinAll = std::numeric_limits<RealType>::max();
+                  RealType eigenValueMinAll =
+                    std::numeric_limits<RealType>::max();
                   for (size_type s = 0; s < S; ++s)
                     {
                       overlapMatParConjTransVec[s].copy_conjugate_transposed(
@@ -969,8 +959,7 @@ namespace dftefe
                   /* Shift diagonal of each space's overlap */
                   for (size_type s = 0; s < S; ++s)
                     if (processGrid->is_process_active())
-                      for (size_type i = 0;
-                           i < overlapMatParVec[s].local_n();
+                      for (size_type i = 0; i < overlapMatParVec[s].local_n();
                            ++i)
                         {
                           const size_type glob_i =
@@ -995,8 +984,8 @@ namespace dftefe
                       LAPACKSupport::Property overlapMatPropertyPostCholesky;
                       if (d_useELPA)
                         {
-                          overlapMatParConjTransVec[s].copy_conjugate_transposed(
-                            overlapMatParVec[s]);
+                          overlapMatParConjTransVec[s]
+                            .copy_conjugate_transposed(overlapMatParVec[s]);
                           if (processGrid->is_process_active())
                             {
                               int error;
@@ -1015,7 +1004,8 @@ namespace dftefe
                       else
                         {
                           ScalapackError serr =
-                            overlapMatParVec[s].compute_cholesky_factorization();
+                            overlapMatParVec[s]
+                              .compute_cholesky_factorization();
                           if (serr.err != ScalapackErrorCode::SUCCESS)
                             cholSuccess = false;
                           overlapMatPropertyPostCholesky =
@@ -1032,8 +1022,7 @@ namespace dftefe
                           {
                             const size_type glob_i =
                               LMatParVec[s].global_column(i);
-                            for (size_type j = 0;
-                                 j < LMatParVec[s].local_m();
+                            for (size_type j = 0; j < LMatParVec[s].local_m();
                                  ++j)
                               {
                                 const size_type glob_j =
@@ -1092,11 +1081,11 @@ namespace dftefe
                   p.registerStart("Compute X^T M X");
 
                   if (processGrid->is_process_active())
-                    std::fill(
-                      &overlapMatPar.local_el(0, 0),
-                      &overlapMatPar.local_el(0, 0) +
-                        overlapMatPar.local_m() * overlapMatPar.local_n(),
-                      ValueType(0.0));
+                    std::fill(&overlapMatPar.local_el(0, 0),
+                              &overlapMatPar.local_el(0, 0) +
+                                overlapMatPar.local_m() *
+                                  overlapMatPar.local_n(),
+                              ValueType(0.0));
 
                   if (Xp != nullptr)
                     {
@@ -1124,8 +1113,7 @@ namespace dftefe
                   if (processGrid->is_process_active())
                     for (size_type i = 0; i < overlapMatPar.local_n(); ++i)
                       {
-                        const size_type glob_i =
-                          overlapMatPar.global_column(i);
+                        const size_type glob_i = overlapMatPar.global_column(i);
                         for (size_type j = 0; j < overlapMatPar.local_m(); ++j)
                           {
                             const size_type glob_j =
@@ -1173,11 +1161,11 @@ namespace dftefe
                       if (processGrid->is_process_active())
                         {
                           int error;
-                          elpa_eigenvalues(
-                            d_elpaScala->getElpaHandle(),
-                            &overlapMatParConjTrans.local_el(0, 0),
-                            &eigenValuesS[0],
-                            &error);
+                          elpa_eigenvalues(d_elpaScala->getElpaHandle(),
+                                           &overlapMatParConjTrans.local_el(0,
+                                                                            0),
+                                           &eigenValuesS[0],
+                                           &error);
                           if (error != ELPA_OK)
                             solveSuccess = false;
                         }
@@ -1192,12 +1180,11 @@ namespace dftefe
                     {
                       ScalapackError scalapackError;
                       p.registerStart("ScaLAPACK eigen decomp, RR step");
-                      eigenValuesS =
-                        overlapMatParConjTrans
-                          .eigenpairs_hermitian_by_index_MRRR(
-                            std::make_pair(0, (int)numVec - 1),
-                            false,
-                            scalapackError);
+                      eigenValuesS = overlapMatParConjTrans
+                                       .eigenpairs_hermitian_by_index_MRRR(
+                                         std::make_pair(0, (int)numVec - 1),
+                                         false,
+                                         scalapackError);
                       p.registerEnd("ScaLAPACK eigen decomp, RR step");
                       if (scalapackError.err != ScalapackErrorCode::SUCCESS)
                         solveSuccess = false;
@@ -1218,8 +1205,7 @@ namespace dftefe
                   if (processGrid->is_process_active())
                     for (size_type i = 0; i < overlapMatPar.local_n(); ++i)
                       {
-                        const size_type glob_i =
-                          overlapMatPar.global_column(i);
+                        const size_type glob_i = overlapMatPar.global_column(i);
                         for (size_type j = 0; j < overlapMatPar.local_m(); ++j)
                           {
                             const size_type glob_j =
@@ -1240,10 +1226,9 @@ namespace dftefe
                       if (processGrid->is_process_active())
                         {
                           int error;
-                          elpa_cholesky(
-                            d_elpaScala->getElpaHandle(),
-                            &overlapMatParConjTrans.local_el(0, 0),
-                            &error);
+                          elpa_cholesky(d_elpaScala->getElpaHandle(),
+                                        &overlapMatParConjTrans.local_el(0, 0),
+                                        &error);
                           if (error != ELPA_OK)
                             cholSuccess = false;
                         }

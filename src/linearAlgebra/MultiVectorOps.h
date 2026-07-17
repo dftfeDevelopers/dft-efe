@@ -62,7 +62,8 @@ namespace dftefe
      * scratchXin / scratchXout / scratchXinSmall / scratchXoutSmall for
      * project() are owned by the caller and persist across SCF calls to
      * avoid repeated allocation.  All other scratch (SBlock, rotation buffers)
-     * is allocated internally per call, consistent with ElpaScalapackOperations.
+     * is allocated internally per call, consistent with
+     * ElpaScalapackOperations.
      *
      * dynamic_cast is NOT performed inside these functions.  The caller
      * (RayleighRitzEigenSolver::solve, OrthonormalizationFunctions methods)
@@ -98,13 +99,12 @@ namespace dftefe
                 utils::MemorySpace memorySpace>
       static void
       project(
-        const OperatorContext<ValueTypeOperator,
-                              ValueTypeOperand,
-                              memorySpace> &Op,
-        MultiVectorProductSpaceBlocked<ValueTypeOperand, memorySpace> &X,
+        const OperatorContext<ValueTypeOperator, ValueTypeOperand, memorySpace>
+          &                                                               Op,
+        MultiVectorProductSpaceBlocked<ValueTypeOperand, memorySpace> &   X,
         std::vector<ScaLAPACKMatrix<
           blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>>> &Ps,
-        const ElpaScalapackManager &elpa,
+        const ElpaScalapackManager &                                      elpa,
         std::shared_ptr<MultiVector<
           blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>,
           memorySpace>> &scratchXin,
@@ -141,13 +141,12 @@ namespace dftefe
                 utils::MemorySpace memorySpace>
       static void
       project(
-        const OperatorContext<ValueTypeOperator,
-                              ValueTypeOperand,
-                              memorySpace> &Op,
+        const OperatorContext<ValueTypeOperator, ValueTypeOperand, memorySpace>
+          &                                                     Op,
         MultiVectorProductSpace<ValueTypeOperand, memorySpace> &X,
         ScaLAPACKMatrix<
           blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>> &P,
-        const ElpaScalapackManager &elpa,
+        const ElpaScalapackManager &                                     elpa,
         std::shared_ptr<MultiVector<
           blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>,
           memorySpace>> &scratchXin,
@@ -181,8 +180,8 @@ namespace dftefe
       template <typename ValueType, utils::MemorySpace memorySpace>
       static void
       rotate(MultiVectorProductSpaceBlocked<ValueType, memorySpace> &X,
-             const std::vector<ScaLAPACKMatrix<ValueType>> &          Qs,
-             const ElpaScalapackManager &                              elpa);
+             const std::vector<ScaLAPACKMatrix<ValueType>> &         Qs,
+             const ElpaScalapackManager &                            elpa);
 
       /**
        * @brief Coupled rotate overload (unpolarized / non-collinear,
@@ -208,21 +207,20 @@ namespace dftefe
       // -----------------------------------------------------------------------
 
       // Gather numVecBatch orbitals starting at srcStart for every spin channel
-      // into a flat MultiVector batch (Xbatch columns: spin-0, then spin-1, ...).
-      // Xbatch must have numSpaces * numVecBatch components.
-      // Two-type template mirrors stridedBlockCopy<VT1,VT2>: X stores VT1,
-      // Xbatch stores VT2 (typically VT1==VT2; differs inside projectImpl).
+      // into a flat MultiVector batch (Xbatch columns: spin-0, then spin-1,
+      // ...). Xbatch must have numSpaces * numVecBatch components. Two-type
+      // template mirrors stridedBlockCopy<VT1,VT2>: X stores VT1, Xbatch stores
+      // VT2 (typically VT1==VT2; differs inside projectImpl).
 
       template <typename ValueType1,
                 typename ValueType2,
                 utils::MemorySpace memorySpace>
       static void
-      copyToBatch(
-        const MultiVectorProductSpace<ValueType1, memorySpace> &X,
-        size_type                                                srcStart,
-        size_type                                                numVecBatch,
-        MultiVector<ValueType2, memorySpace> &                  Xbatch,
-        LinAlgOpContext<memorySpace> &                          context);
+      copyToBatch(const MultiVectorProductSpace<ValueType1, memorySpace> &X,
+                  size_type                             srcStart,
+                  size_type                             numVecBatch,
+                  MultiVector<ValueType2, memorySpace> &Xbatch,
+                  LinAlgOpContext<memorySpace> &        context);
 
       // Inverse of copyToBatch: scatter the batch back into the product-space
       // multivector at orbital positions [dstStart, dstStart+numVecBatch).
@@ -231,12 +229,11 @@ namespace dftefe
                 typename ValueType2,
                 utils::MemorySpace memorySpace>
       static void
-      copyFromBatch(
-        const MultiVector<ValueType1, memorySpace> &       Ybatch,
-        size_type                                          dstStart,
-        size_type                                          numVecBatch,
-        MultiVectorProductSpace<ValueType2, memorySpace> &Y,
-        LinAlgOpContext<memorySpace> &                     context);
+      copyFromBatch(const MultiVector<ValueType1, memorySpace> &Ybatch,
+                    size_type                                   dstStart,
+                    size_type                                   numVecBatch,
+                    MultiVectorProductSpace<ValueType2, memorySpace> &Y,
+                    LinAlgOpContext<memorySpace> &                    context);
 
     }; // class MultiVectorOps
 

@@ -193,7 +193,7 @@ namespace dftefe
         const OpContext &M);
 
       SpinMode        d_spinMode;
-      const size_type       d_S;
+      const size_type d_S;
       double          d_smearingTemperature;
       double          d_fermiEnergyTolerance;
       double          d_fracOccupancyTolerance;

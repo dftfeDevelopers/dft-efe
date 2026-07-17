@@ -53,10 +53,10 @@ namespace dftefe
     public:
       MultiVectorProductSpace(
         std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
-                                                       mpiPatternP2P,
-        std::shared_ptr<LinAlgOpContext<memorySpace>>  linAlgOpContext,
-        size_type                                      numSpaces,
-        size_type                                      numVectorsPerSpace,
+                                                      mpiPatternP2P,
+        std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext,
+        size_type                                     numSpaces,
+        size_type                                     numVectorsPerSpace,
         ValueType initVal = utils::Types<ValueType>::zero);
 
       ~MultiVectorProductSpace() = default;

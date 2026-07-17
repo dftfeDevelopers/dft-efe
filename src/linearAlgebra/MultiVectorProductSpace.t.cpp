@@ -32,15 +32,15 @@ namespace dftefe
     template <typename ValueType, utils::MemorySpace memorySpace>
     MultiVectorProductSpace<ValueType, memorySpace>::MultiVectorProductSpace(
       std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
-                                                     mpiPatternP2P,
-      std::shared_ptr<LinAlgOpContext<memorySpace>>  linAlgOpContext,
-      size_type                                      numSpaces,
-      size_type                                      numVectorsPerSpace,
-      ValueType                                      initVal)
+                                                    mpiPatternP2P,
+      std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext,
+      size_type                                     numSpaces,
+      size_type                                     numVectorsPerSpace,
+      ValueType                                     initVal)
       : MultiVector<ValueType, memorySpace>(mpiPatternP2P,
-                                           linAlgOpContext,
-                                           numSpaces * numVectorsPerSpace,
-                                           initVal)
+                                            linAlgOpContext,
+                                            numSpaces * numVectorsPerSpace,
+                                            initVal)
       , d_numSpaces(numSpaces)
       , d_numVectorsPerSpace(numVectorsPerSpace)
     {

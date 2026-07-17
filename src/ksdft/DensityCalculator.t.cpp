@@ -191,22 +191,22 @@ namespace dftefe
         const std::vector<RealType> &occupation,
         const linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
           &waveFunc,
-        std::vector<quadrature::QuadratureValuesContainer<RealType,
-                                                          memorySpaceHost> *>
+        std::vector<
+          quadrature::QuadratureValuesContainer<RealType, memorySpaceHost> *>
           &rho,
-        std::vector<quadrature::QuadratureValuesContainer<RealType,
-                                                          memorySpaceHost> *>
-          &        gradRho,
-        const bool computeGrad,
+        std::vector<
+          quadrature::QuadratureValuesContainer<RealType, memorySpaceHost> *>
+          &            gradRho,
+        const bool     computeGrad,
         const SpinMode spinMode)
     {
-      const size_type numSpaces =
-        (spinMode == SpinMode::Unpolarized) ? 1 : 2;
-      const size_type ncomp =
-        (spinMode == SpinMode::Unpolarized) ? 1 :
-        (spinMode == SpinMode::Collinear)   ? 2 : 4;
-      const size_type batchN        = d_waveFuncBatchSize / numSpaces;
-      const size_type numVecPerSpace = waveFunc.getNumberComponents() / numSpaces;
+      const size_type numSpaces = (spinMode == SpinMode::Unpolarized) ? 1 : 2;
+      const size_type ncomp     = (spinMode == SpinMode::Unpolarized) ? 1 :
+                                  (spinMode == SpinMode::Collinear)   ? 2 :
+                                                                        4;
+      const size_type batchN    = d_waveFuncBatchSize / numSpaces;
+      const size_type numVecPerSpace =
+        waveFunc.getNumberComponents() / numSpaces;
 
       // Lazy-allocate per-component device QVC containers if needed
       if (d_rhoMemspace.size() != ncomp)
@@ -237,10 +237,9 @@ namespace dftefe
                              occMemspace.data(),
                              occupation.data());
 
-      const auto &wavePs =
-        static_cast<const linearAlgebra::MultiVectorProductSpace<
-          ValueTypeBasisCoeff,
-          memorySpace> &>(waveFunc);
+      const auto &wavePs = static_cast<
+        const linearAlgebra::MultiVectorProductSpace<ValueTypeBasisCoeff,
+                                                     memorySpace> &>(waveFunc);
 
       for (size_type cellStartId = 0; cellStartId < d_numLocallyOwnedCells;
            cellStartId += d_cellBlockSize)
@@ -286,7 +285,8 @@ namespace dftefe
                   psiBatchInterim = d_psiBatchSmall;
                 }
 
-              // Assemble occupation batch: spin-major layout in d_occupationInBatch
+              // Assemble occupation batch: spin-major layout in
+              // d_occupationInBatch
               for (size_type s = 0; s < numSpaces; ++s)
                 linearAlgebra::blasLapack::copyValueType1ArrToValueType2Arr(
                   numPsiInBatch,
@@ -295,12 +295,11 @@ namespace dftefe
                   *waveFunc.getLinAlgOpContext());
 
               // Spin-aware gather into flat batch buffer
-              linearAlgebra::MultiVectorOps::copyToBatch(
-                wavePs,
-                psiStartId,
-                numPsiInBatch,
-                *psiBatchInterim,
-                *d_linAlgOpContext);
+              linearAlgebra::MultiVectorOps::copyToBatch(wavePs,
+                                                         psiStartId,
+                                                         numPsiInBatch,
+                                                         *psiBatchInterim,
+                                                         *d_linAlgOpContext);
 
               // Basis data for cellRange is cached across psi-batch iterations
               d_feBasisOp->interpolate(*psiBatchInterim,

@@ -79,7 +79,9 @@ namespace dftefe
       , d_numWantedEigenvalues(numWantedEigenvalues)
       , d_eigenSolveResidualTolerance(eigenSolveResidualTolerance)
       , d_maxChebyshevFilterPass(maxChebyshevFilterPass)
-      , d_waveFunctionBatchSize(spinMode == SpinMode::Collinear ? waveFunctionBatchSize/2 : waveFunctionBatchSize)
+      , d_waveFunctionBatchSize(spinMode == SpinMode::Collinear ?
+                                  waveFunctionBatchSize / 2 :
+                                  waveFunctionBatchSize)
       , d_fermiEnergyTolerance(fermiEnergyTolerance)
       , d_fracOccupancyTolerance(fracOccupancyTolerance)
       , d_smearingTemperature(smearingTemperature)
@@ -148,12 +150,10 @@ namespace dftefe
         std::make_shared<linearAlgebra::MultiVector<ValueType, memorySpace>>(
           mpiPatternP2P, linAlgOpContext, eigenVecBatchSize, ValueType());
 
-      d_kohnShamEnergiesMemspace =
-        utils::MemoryStorage<ValueType, memorySpace>(d_S * d_numWantedEigenvalues,
-                                                     (ValueType)0),
-      d_nOnes =
-        utils::MemoryStorage<ValueType, memorySpace>(d_S * d_numWantedEigenvalues,
-                                                     (ValueType)-1.0);
+      d_kohnShamEnergiesMemspace = utils::MemoryStorage<ValueType, memorySpace>(
+        d_S * d_numWantedEigenvalues, (ValueType)0),
+      d_nOnes = utils::MemoryStorage<ValueType, memorySpace>(
+        d_S * d_numWantedEigenvalues, (ValueType)-1.0);
 
       d_chfsi = std::make_shared<
         linearAlgebra::ChebyshevFilteredEigenSolver<ValueTypeOperator,
@@ -233,13 +233,17 @@ namespace dftefe
             const OpContext &M,
             const OpContext &MInv)
     {
-      // d_fracOccupancy memory layout: spin-major, size S*N (= d_S * d_numWantedEigenvalues).
-      //   d_fracOccupancy[ s*N + n ]  — fractional occupancy for spin s, orbital n.
-      //   Mirrors kohnShamEnergies layout exactly (filled via fermiDirac(kohnShamEnergies[i])).
+      // d_fracOccupancy memory layout: spin-major, size S*N (= d_S *
+      // d_numWantedEigenvalues).
+      //   d_fracOccupancy[ s*N + n ]  — fractional occupancy for spin s,
+      //   orbital n. Mirrors kohnShamEnergies layout exactly (filled via
+      //   fermiDirac(kohnShamEnergies[i])).
       //
-      // d_eigSolveResNorm memory layout: spin-major, size S*N (= d_S * d_numWantedEigenvalues).
-      //   d_eigSolveResNorm[ s*N + n ]  — ||H*psi_{s,n} - E_{s,n}*M*psi_{s,n}|| / ||psi_{s,n}||.
-      //   Scattered by getLinearEigenSolveResidual: residualVec[s*numVecPerSpace + n].
+      // d_eigSolveResNorm memory layout: spin-major, size S*N (= d_S *
+      // d_numWantedEigenvalues).
+      //   d_eigSolveResNorm[ s*N + n ]  — ||H*psi_{s,n} - E_{s,n}*M*psi_{s,n}||
+      //   / ||psi_{s,n}||. Scattered by getLinearEigenSolveResidual:
+      //   residualVec[s*numVecPerSpace + n].
       d_p.reset();
       d_isSolved                  = true;
       global_size_type globalSize = kohnShamWaveFunctions.globalSize();
@@ -436,10 +440,11 @@ namespace dftefe
                   d_smearingTemperature,
                   kohnShamEnergies
                     [(d_spinMode == SpinMode::Collinear) ?
-                       std::ceil(static_cast<double>(d_numElectrons) /
-                                 2.0) - 1 :
+                       std::ceil(static_cast<double>(d_numElectrons) / 2.0) -
+                         1 :
                        std::ceil(static_cast<double>(d_numElectrons * d_S) /
-                                 2.0) - 1]);
+                                 2.0) -
+                         1]);
 
               linearAlgebra::NewtonRaphsonSolver<double> nrs(
                 NewtonRaphsonSolverDefaults::MAX_ITER,
@@ -465,22 +470,23 @@ namespace dftefe
 
               // // TODO : Implement blocked approach for wavefns
               // // calculate residualEigenSolver
-              const size_type numVecPerSpace   = d_numWantedEigenvalues;
-              const size_type eigVecBatchPerSp = d_waveFunctionBatchSize;
-              std::vector<RealType> energiesBatchMajor(d_S * d_numWantedEigenvalues);
+              const size_type       numVecPerSpace   = d_numWantedEigenvalues;
+              const size_type       eigVecBatchPerSp = d_waveFunctionBatchSize;
+              std::vector<RealType> energiesBatchMajor(d_S *
+                                                       d_numWantedEigenvalues);
               size_type             dstOffset = 0;
               for (size_type psiStart = 0; psiStart < numVecPerSpace;
-                    psiStart += eigVecBatchPerSp)
+                   psiStart += eigVecBatchPerSp)
                 {
                   const size_type batchN =
                     std::min(eigVecBatchPerSp, numVecPerSpace - psiStart);
                   for (size_type s = 0; s < d_S; ++s)
                     {
-                      std::copy(
-                        kohnShamEnergies.begin() + s * numVecPerSpace + psiStart,
-                        kohnShamEnergies.begin() + s * numVecPerSpace + psiStart +
-                          batchN,
-                        energiesBatchMajor.begin() + dstOffset);
+                      std::copy(kohnShamEnergies.begin() + s * numVecPerSpace +
+                                  psiStart,
+                                kohnShamEnergies.begin() + s * numVecPerSpace +
+                                  psiStart + batchN,
+                                energiesBatchMajor.begin() + dstOffset);
                       dstOffset += batchN;
                     }
                 }
@@ -515,58 +521,52 @@ namespace dftefe
                     << "Fermi Energy residual is : " << nrs.getResidual()
                     << "\n";
                   {
-                    std::ostream &          os      = d_rootCout.getOStream();
-                    std::ios_base::fmtflags oldFlag = os.flags();
-                    std::streamsize oldPrec          = os.precision();
-                    std::streamsize oldWidth         = os.width();
+                    std::ostream &          os       = d_rootCout.getOStream();
+                    std::ios_base::fmtflags oldFlag  = os.flags();
+                    std::streamsize         oldPrec  = os.precision();
+                    std::streamsize         oldWidth = os.width();
                     os << std::scientific << std::right;
                     if (d_spinMode == SpinMode::Collinear)
                       {
-                        d_rootCout
-                          << std::setw(6) << "No."
-                          << std::setw(24) << "[Spin 0] KS Energy"
-                          << std::setw(24) << "[Spin 1] KS Energy"
-                          << std::setw(22) << "[Spin 0] Frac. Occ."
-                          << std::setw(22) << "[Spin 1] Frac. Occ."
-                          << std::setw(22) << "[Spin 0] Residual"
-                          << std::setw(22) << "[Spin 1] Residual"
-                          << "\n";
+                        d_rootCout << std::setw(6) << "No." << std::setw(24)
+                                   << "[Spin 0] KS Energy" << std::setw(24)
+                                   << "[Spin 1] KS Energy" << std::setw(22)
+                                   << "[Spin 0] Frac. Occ." << std::setw(22)
+                                   << "[Spin 1] Frac. Occ." << std::setw(22)
+                                   << "[Spin 0] Residual" << std::setw(22)
+                                   << "[Spin 1] Residual"
+                                   << "\n";
                         for (size_type i = 0; i < d_numWantedEigenvalues; i++)
                           d_rootCout
-                            << std::setw(6) << i
-                            << std::setw(24) << std::setprecision(10)
-                            << kohnShamEnergies[i]
+                            << std::setw(6) << i << std::setw(24)
+                            << std::setprecision(10) << kohnShamEnergies[i]
                             << std::setw(24) << std::setprecision(10)
                             << kohnShamEnergies[d_numWantedEigenvalues + i]
                             << std::setw(22) << std::setprecision(8)
-                            << d_fracOccupancy[i]
-                            << std::setw(22) << std::setprecision(8)
+                            << d_fracOccupancy[i] << std::setw(22)
+                            << std::setprecision(8)
                             << d_fracOccupancy[d_numWantedEigenvalues + i]
                             << std::setw(22) << std::setprecision(8)
-                            << d_eigSolveResNorm[i]
-                            << std::setw(22) << std::setprecision(8)
+                            << d_eigSolveResNorm[i] << std::setw(22)
+                            << std::setprecision(8)
                             << d_eigSolveResNorm[d_numWantedEigenvalues + i]
                             << "\n";
                       }
                     else
                       {
-                        d_rootCout
-                          << std::setw(6) << "No."
-                          << std::setw(24) << "Kohn Sham Energy"
-                          << std::setw(22) << "Frac. Occupancy"
-                          << std::setw(22) << "Residual Norm"
-                          << "\n";
-                        for (size_type i = 0;
-                             i < d_S * d_numWantedEigenvalues;
+                        d_rootCout << std::setw(6) << "No." << std::setw(24)
+                                   << "Kohn Sham Energy" << std::setw(22)
+                                   << "Frac. Occupancy" << std::setw(22)
+                                   << "Residual Norm"
+                                   << "\n";
+                        for (size_type i = 0; i < d_S * d_numWantedEigenvalues;
                              i++)
                           d_rootCout
-                            << std::setw(6) << i + 1
-                            << std::setw(24) << std::setprecision(10)
-                            << kohnShamEnergies[i]
+                            << std::setw(6) << i + 1 << std::setw(24)
+                            << std::setprecision(10) << kohnShamEnergies[i]
                             << std::setw(22) << std::setprecision(8)
-                            << d_fracOccupancy[i]
-                            << std::setw(22) << std::setprecision(8)
-                            << d_eigSolveResNorm[i]
+                            << d_fracOccupancy[i] << std::setw(22)
+                            << std::setprecision(8) << d_eigSolveResNorm[i]
                             << "\n";
                       }
                     os.flags(oldFlag);

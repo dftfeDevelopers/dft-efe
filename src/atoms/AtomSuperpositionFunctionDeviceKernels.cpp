@@ -112,9 +112,9 @@ namespace dftefe
             {
               const double wt =
                 (atomWeights.empty() ||
-                 atomSupType == AtomSuperpositionFuncType::IdentitySq)
-                  ? 1.0
-                  : atomWeights[d_enrichmentToAtomId[e]];
+                 atomSupType == AtomSuperpositionFuncType::IdentitySq) ?
+                  1.0 :
+                  atomWeights[d_enrichmentToAtomId[e]];
               const std::vector<std::shared_ptr<atoms::SphericalData>>
                 singleVec = {d_sphericalDataVecAll[e]};
               basis::EnrichmentDataEvalKernels<utils::MemorySpace::DEVICE>::
@@ -187,9 +187,9 @@ namespace dftefe
           const std::vector<size_type> pointsPerEnrich(1, numPoints);
           for (size_type e = 0; e < E; ++e)
             {
-              const double wt = atomWeights.empty()
-                                  ? 1.0
-                                  : atomWeights[d_enrichmentToAtomId[e]];
+              const double wt = atomWeights.empty() ?
+                                  1.0 :
+                                  atomWeights[d_enrichmentToAtomId[e]];
               const std::vector<std::shared_ptr<atoms::SphericalData>>
                 singleVec = {d_sphericalDataVecAll[e]};
               basis::EnrichmentDataEvalKernels<utils::MemorySpace::DEVICE>::

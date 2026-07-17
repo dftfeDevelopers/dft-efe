@@ -78,13 +78,13 @@ namespace dftefe
        * @brief Constructor
        */
       LanczosExtremeEigenSolver(
-        const size_type                                   maxKrylovSubspaceSize,
-        const size_type                                   numLowerExtermeEigenValues,
-        const size_type                                   numUpperExtermeEigenValues,
-        std::vector<double> &                             tolerance,
-        double                                            lanczosBetaTolerance,
+        const size_type      maxKrylovSubspaceSize,
+        const size_type      numLowerExtermeEigenValues,
+        const size_type      numUpperExtermeEigenValues,
+        std::vector<double> &tolerance,
+        double               lanczosBetaTolerance,
         const MultiVector<ValueTypeOperand, memorySpace> &initialGuess,
-        bool                                              isAdaptiveSolve = true);
+        bool isAdaptiveSolve = true);
 
       LanczosExtremeEigenSolver(
         const size_type      maxKrylovSubspaceSize,
@@ -142,15 +142,15 @@ namespace dftefe
 
     private:
       MultiVector<ValueTypeOperand, memorySpace> d_initialGuess;
-      size_type                             d_maxKrylovSubspaceSize;
-      size_type                             d_numLowerExtermeEigenValues;
-      size_type                             d_numUpperExtermeEigenValues;
-      std::vector<double>                   d_tolerance;
-      double                                d_lanczosBetaTolerance;
-      std::vector<RealType>                 d_diagonal;
-      std::vector<RealType>                 d_subDiagonal;
-      bool                                  d_isSolved;
-      const bool                            d_isAdaptiveSolve;
+      size_type                                  d_maxKrylovSubspaceSize;
+      size_type                                  d_numLowerExtermeEigenValues;
+      size_type                                  d_numUpperExtermeEigenValues;
+      std::vector<double>                        d_tolerance;
+      double                                     d_lanczosBetaTolerance;
+      std::vector<RealType>                      d_diagonal;
+      std::vector<RealType>                      d_subDiagonal;
+      bool                                       d_isSolved;
+      const bool                                 d_isAdaptiveSolve;
 
 
     }; // end of class LanczosExtremeEigenSolver

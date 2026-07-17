@@ -46,8 +46,8 @@ namespace dftefe
     enum class mixingVariable
     {
       rho,
-      gradRho,  // GGA — dependent (empty weights)
-      magZ,     // collinear / non-collinear — primary (full JxW weights)
+      gradRho, // GGA — dependent (empty weights)
+      magZ,    // collinear / non-collinear — primary (full JxW weights)
       gradMagZ, // collinear GGA / non-collinear GGA — dependent (empty weights)
       magY,     // non-collinear only — primary (full JxW weights)
       gradMagY, // non-collinear GGA — dependent (empty weights)

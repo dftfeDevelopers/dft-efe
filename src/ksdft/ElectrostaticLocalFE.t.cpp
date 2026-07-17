@@ -203,9 +203,9 @@ namespace dftefe
           linearAlgebra::LinAlgOpContextDefaults::LINALG_OP_CONTXT_HOST)
       , d_potentialHamQuadMemspace(nullptr)
       , d_S((spinMode == SpinMode::Unpolarized) ? 1 : 2)
-      , d_layout((spinMode == SpinMode::NonCollinear)
-                   ? SpinStorageLayout::SpinFastest
-                   : SpinStorageLayout::DofFastest)
+      , d_layout((spinMode == SpinMode::NonCollinear) ?
+                   SpinStorageLayout::SpinFastest :
+                   SpinStorageLayout::DofFastest)
       , d_basisOverlapSize(0)
     {
       int rank;
@@ -303,9 +303,9 @@ namespace dftefe
       , d_isTCIEnabled(false)
       , d_potentialHamQuadMemspace(nullptr)
       , d_S((spinMode == SpinMode::Unpolarized) ? 1 : 2)
-      , d_layout((spinMode == SpinMode::NonCollinear)
-                   ? SpinStorageLayout::SpinFastest
-                   : SpinStorageLayout::DofFastest)
+      , d_layout((spinMode == SpinMode::NonCollinear) ?
+                   SpinStorageLayout::SpinFastest :
+                   SpinStorageLayout::DofFastest)
       , d_basisOverlapSize(0)
     {
       int rank;
@@ -412,9 +412,9 @@ namespace dftefe
       , d_integralAtRho(0.)
       , d_potentialHamQuadMemspace(nullptr)
       , d_S((spinMode == SpinMode::Unpolarized) ? 1 : 2)
-      , d_layout((spinMode == SpinMode::NonCollinear)
-                   ? SpinStorageLayout::SpinFastest
-                   : SpinStorageLayout::DofFastest)
+      , d_layout((spinMode == SpinMode::NonCollinear) ?
+                   SpinStorageLayout::SpinFastest :
+                   SpinStorageLayout::DofFastest)
       , d_basisOverlapSize(0)
     {
       int rank;
@@ -612,7 +612,8 @@ namespace dftefe
 
       {
         auto feBDH = std::dynamic_pointer_cast<
-          const basis::FEBasisDofHandler<ValueTypeBasisCoeff, memorySpace, dim>>(
+          const basis::
+            FEBasisDofHandler<ValueTypeBasisCoeff, memorySpace, dim>>(
           feBDHamiltonian->getBasisDofHandler());
         utils::throwException(
           feBDH != nullptr,
@@ -623,7 +624,7 @@ namespace dftefe
         d_basisOverlapSize = 0;
         for (size_type c = 0; c < nCells; ++c)
           {
-            d_numCellDofs[c]    = feBDH->nCellDofs(c);
+            d_numCellDofs[c] = feBDH->nCellDofs(c);
             d_basisOverlapSize += d_numCellDofs[c] * d_numCellDofs[c];
           }
       }
@@ -940,7 +941,8 @@ namespace dftefe
 
       {
         auto feBDH = std::dynamic_pointer_cast<
-          const basis::FEBasisDofHandler<ValueTypeBasisCoeff, memorySpace, dim>>(
+          const basis::
+            FEBasisDofHandler<ValueTypeBasisCoeff, memorySpace, dim>>(
           feBDHamiltonian->getBasisDofHandler());
         utils::throwException(
           feBDH != nullptr,
@@ -951,7 +953,7 @@ namespace dftefe
         d_basisOverlapSize = 0;
         for (size_type c = 0; c < nCells; ++c)
           {
-            d_numCellDofs[c]    = feBDH->nCellDofs(c);
+            d_numCellDofs[c] = feBDH->nCellDofs(c);
             d_basisOverlapSize += d_numCellDofs[c] * d_numCellDofs[c];
           }
       }
@@ -1236,7 +1238,8 @@ namespace dftefe
 
       {
         auto feBDH = std::dynamic_pointer_cast<
-          const basis::FEBasisDofHandler<ValueTypeBasisCoeff, memorySpace, dim>>(
+          const basis::
+            FEBasisDofHandler<ValueTypeBasisCoeff, memorySpace, dim>>(
           feBDHamiltonian->getBasisDofHandler());
         utils::throwException(
           feBDH != nullptr,
@@ -1247,7 +1250,7 @@ namespace dftefe
         d_basisOverlapSize = 0;
         for (size_type c = 0; c < nCells; ++c)
           {
-            d_numCellDofs[c]    = feBDH->nCellDofs(c);
+            d_numCellDofs[c] = feBDH->nCellDofs(c);
             d_basisOverlapSize += d_numCellDofs[c] * d_numCellDofs[c];
           }
       }

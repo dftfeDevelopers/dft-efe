@@ -181,27 +181,28 @@ namespace dftefe
       d_feBasisDataStorage    = feBasisDataStorage;
 
       d_spinMode = rdm1.spinMode();
-      d_S = (d_spinMode == SpinMode::Unpolarized) ? 1 : 2;
+      d_S        = (d_spinMode == SpinMode::Unpolarized) ? 1 : 2;
 
       // K = number of non-zero XC spin blocks in hamiltonain:
       //   unpolarized   → K=1
       //   collinear     → K=2  (V_xc^↑, V_xc^↓)
       //   non-collinear → K=4  (V_xc^↑↑, V_xc^↑↓, V_xc^↓↑, V_xc^↓↓)
       const size_type K = (d_spinMode == SpinMode::NonCollinear) ? 4 :
-                          (d_spinMode == SpinMode::Collinear)    ? 2 : 1;
+                          (d_spinMode == SpinMode::Collinear)    ? 2 :
+                                                                   1;
 
       if (d_spinMode == SpinMode::NonCollinear)
         {
-          d_layout       = SpinStorageLayout::SpinFastest;
+          d_layout        = SpinStorageLayout::SpinFastest;
           d_spinIdsFilled = {{0, 0}, {0, 1}, {1, 0}, {1, 1}};
         }
       else
         {
           d_layout = SpinStorageLayout::DofFastest;
           d_spinIdsFilled =
-            (d_spinMode == SpinMode::Collinear)
-              ? std::vector<std::pair<size_type, size_type>>{{0, 0}, {1, 1}}
-              : std::vector<std::pair<size_type, size_type>>{{0, 0}};
+            (d_spinMode == SpinMode::Collinear) ?
+              std::vector<std::pair<size_type, size_type>>{{0, 0}, {1, 1}} :
+              std::vector<std::pair<size_type, size_type>>{{0, 0}};
         }
 
       d_xcPotentialQuadMemspace.resize(K);
@@ -210,8 +211,9 @@ namespace dftefe
           quadrature::QuadratureValuesContainer<RealType, memorySpace>(
             feBasisDataStorage->getQuadratureRuleContainer(), 1);
 
-      const bool isGGA = (d_excManager.getExcSSDFunctionalObj()
-                            ->getExcFamilyType() == ExcFamilyType::GGA);
+      const bool isGGA =
+        (d_excManager.getExcSSDFunctionalObj()->getExcFamilyType() ==
+         ExcFamilyType::GGA);
       if (isGGA)
         {
           d_derExcWithSigmaTimesGradRhoQuadMemspace.resize(K);
@@ -225,9 +227,7 @@ namespace dftefe
                                                         ValueTypeBasisData,
                                                         memorySpace,
                                                         dim>>(
-          feBasisDataStorage,
-          d_cellBlockSize,
-          K);
+          feBasisDataStorage, d_cellBlockSize, K);
 
       std::shared_ptr<const basis::BasisDofHandler> basisDofHandlerData =
         feBasisDataStorage->getBasisDofHandler();
@@ -245,7 +245,7 @@ namespace dftefe
       d_basisOverlapSize = 0;
       for (size_type c = 0; c < nLocallyOwnedCells; ++c)
         {
-          d_numCellDofs[c]    = d_feBasisDofHandler->nCellDofs(c);
+          d_numCellDofs[c] = d_feBasisDofHandler->nCellDofs(c);
           d_basisOverlapSize += d_numCellDofs[c] * d_numCellDofs[c];
         }
       d_xcCellWiseTemp.resize(K * d_basisOverlapSize, ValueType(0));
@@ -316,12 +316,14 @@ namespace dftefe
         "RDM1::getDescriptors has a different QuadratureRuleContainer "
         "than d_feBasisDataStorage.");
 
-      const size_type nQuads =
-        d_xcPotentialQuadMemspace[0].getQuadratureRuleContainer()
-          ->nQuadraturePoints();
+      const size_type nQuads = d_xcPotentialQuadMemspace[0]
+                                 .getQuadratureRuleContainer()
+                                 ->nQuadraturePoints();
 
-      std::vector<quadrature::QuadratureValuesContainer<RealType, memorySpaceHost>>
-        xcPotentialQuad(K,
+      std::vector<
+        quadrature::QuadratureValuesContainer<RealType, memorySpaceHost>>
+        xcPotentialQuad(
+          K,
           quadrature::QuadratureValuesContainer<RealType, memorySpaceHost>(
             d_feBasisDataStorage->getQuadratureRuleContainer(), 1));
 
@@ -454,9 +456,9 @@ namespace dftefe
       size_type count = 0;
       for (size_type iCell = 0; iCell < xcPotentialQuad[0].nCells(); ++iCell)
         {
-          const size_type nCellQuads =
-            xcPotentialQuad[0].getQuadratureRuleContainer()
-              ->nCellQuadraturePoints(iCell);
+          const size_type nCellQuads = xcPotentialQuad[0]
+                                         .getQuadratureRuleContainer()
+                                         ->nCellQuadraturePoints(iCell);
           std::vector<RealType> cellVxc(nCellQuads * K);
           for (size_type q = 0; q < nCellQuads; ++q, ++count)
             {
@@ -502,9 +504,10 @@ namespace dftefe
           const double *gDownPtr =
             densAttrSSD.at(DensityDescrAttr::Grad)[1].data();
 
-          std::vector<quadrature::QuadratureValuesContainer<RealType,
-                                                            memorySpaceHost>>
-            derExcSigmaGradRhoHost(K,
+          std::vector<
+            quadrature::QuadratureValuesContainer<RealType, memorySpaceHost>>
+            derExcSigmaGradRhoHost(
+              K,
               quadrature::QuadratureValuesContainer<RealType, memorySpaceHost>(
                 d_derExcWithSigmaTimesGradRhoQuadMemspace[0]
                   .getQuadratureRuleContainer(),
@@ -516,9 +519,9 @@ namespace dftefe
           for (size_type iCell = 0; iCell < derExcSigmaGradRhoHost[0].nCells();
                ++iCell)
             {
-              const size_type nQuadPts =
-                derExcSigmaGradRhoHost[0].getQuadratureRuleContainer()
-                  ->nCellQuadraturePoints(iCell);
+              const size_type nQuadPts = derExcSigmaGradRhoHost[0]
+                                           .getQuadratureRuleContainer()
+                                           ->nCellQuadraturePoints(iCell);
               std::vector<RealType> cellSigmaGradField(nQuadPts * K * dim);
               for (size_type q = 0; q < nQuadPts; ++q, ++globalQuadIdx)
                 {
@@ -547,14 +550,16 @@ namespace dftefe
                     }
                 }
               for (size_type s = 0; s < nSpins; ++s)
-                derExcSigmaGradRhoHost[s].template setCellValues<memorySpaceHost>(
-                  iCell, cellSigmaGradField.data() + s * nQuadPts * dim);
+                derExcSigmaGradRhoHost[s]
+                  .template setCellValues<memorySpaceHost>(
+                    iCell, cellSigmaGradField.data() + s * nQuadPts * dim);
             }
 
           for (size_type k = 0; k < K; ++k)
-            memTransH2M.copy(derExcSigmaGradRhoHost[k].nEntries(),
-                             d_derExcWithSigmaTimesGradRhoQuadMemspace[k].data(),
-                             derExcSigmaGradRhoHost[k].data());
+            memTransH2M.copy(
+              derExcSigmaGradRhoHost[k].nEntries(),
+              d_derExcWithSigmaTimesGradRhoQuadMemspace[k].data(),
+              derExcSigmaGradRhoHost[k].data());
         }
     }
 
@@ -597,7 +602,8 @@ namespace dftefe
             *d_linAlgOpContext);
         }
 
-      // Zero-init cellWiseStorage: size = Σ_c (S·d_c)² = S² · d_basisOverlapSize
+      // Zero-init cellWiseStorage: size = Σ_c (S·d_c)² = S² ·
+      // d_basisOverlapSize
       cellWiseStorage.resize(d_S * d_S * d_basisOverlapSize, ValueType(0));
 
       // Block-copy d_xcCellWiseTemp → cellWiseStorage
@@ -654,8 +660,8 @@ namespace dftefe
         "ExchangeCorrelationFE::evalEnergy: only LDA and GGA are currently "
         "supported.");
 
-      const bool isGGA        = (excFamily == ExcFamilyType::GGA);
-      const bool isCollinear  = (d_spinMode == SpinMode::Collinear);
+      const bool isGGA       = (excFamily == ExcFamilyType::GGA);
+      const bool isCollinear = (d_spinMode == SpinMode::Collinear);
 
       std::set<DensityDescrAttr> descrSet = {DensityDescrAttr::Val};
       if (isGGA)
@@ -672,9 +678,9 @@ namespace dftefe
         "RDM1::getDescriptors has a different QuadratureRuleContainer "
         "than d_feBasisDataStorage.");
 
-      const size_type nQuads =
-        d_xcPotentialQuadMemspace[0].getQuadratureRuleContainer()
-          ->nQuadraturePoints();
+      const size_type nQuads = d_xcPotentialQuadMemspace[0]
+                                 .getQuadratureRuleContainer()
+                                 ->nQuadraturePoints();
 
       // --- spin density ---
       ExcAttrStorage spinVals(2);

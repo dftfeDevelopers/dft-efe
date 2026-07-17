@@ -142,16 +142,16 @@ namespace dftefe
         rdm1 != nullptr,
         "RDM1Mixing::mix() called but stored RDM1 has expired or setRDM1() was not called.");
       dftefe::utils::throwException<dftefe::utils::InvalidArgument>(
-        !rdm1->isSOC(),
-        "RDM1Mixing::mix() does not support SOC.");
+        !rdm1->isSOC(), "RDM1Mixing::mix() does not support SOC.");
 
-      const SpinMode  sm    = rdm1->spinMode();
-      const size_type ncomp = (sm == SpinMode::Unpolarized) ? 1 :
-                              (sm == SpinMode::Collinear)   ? 2 : 4;
+      const SpinMode       sm          = rdm1->spinMode();
+      const size_type      ncomp       = (sm == SpinMode::Unpolarized) ? 1 :
+                                         (sm == SpinMode::Collinear)   ? 2 :
+                                                                         4;
       const mixingVariable valVars[4]  = {mixingVariable::rho,
-                                          mixingVariable::magZ,
-                                          mixingVariable::magY,
-                                          mixingVariable::magX};
+                                         mixingVariable::magZ,
+                                         mixingVariable::magY,
+                                         mixingVariable::magX};
       const mixingVariable gradVars[4] = {mixingVariable::gradRho,
                                           mixingVariable::gradMagZ,
                                           mixingVariable::gradMagY,
@@ -180,9 +180,8 @@ namespace dftefe
             for (size_type i = 0; i < nq; ++i)
               resPtr[i] = outPtr[i] - inPtr[i];
           }
-          d_mixingScheme
-            .template addVariableToInHist<utils::MemorySpace::HOST>(
-              valVars[ic], d_densityInAttrVals[ic].data(), nq);
+          d_mixingScheme.template addVariableToInHist<utils::MemorySpace::HOST>(
+            valVars[ic], d_densityInAttrVals[ic].data(), nq);
           d_mixingScheme
             .template addVariableToResidualHist<utils::MemorySpace::HOST>(
               valVars[ic], residual.data(), nq);

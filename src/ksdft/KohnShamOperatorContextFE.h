@@ -111,7 +111,7 @@ namespace dftefe
         const size_type maxCellBlock,
         const size_type maxWaveFnBatch,
         const bool      useOptimizedImplement = true,
-        const SpinMode  spinMode = SpinMode::Unpolarized);
+        const SpinMode  spinMode              = SpinMode::Unpolarized);
 
       ~KohnShamOperatorContextFE() = default;
 

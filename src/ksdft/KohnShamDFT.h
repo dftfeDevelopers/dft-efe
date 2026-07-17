@@ -158,9 +158,9 @@ namespace dftefe
           linearAlgebra::IdentityOperatorContext<ValueTypeOperator,
                                                  ValueTypeOperand,
                                                  memorySpace>(),
-        bool                        isResidualChebyshevFilter = true,
-        const std::vector<double> & atomMagZFactors = {},
-        SpinMode                    spinMode        = SpinMode::Unpolarized);
+        bool                       isResidualChebyshevFilter = true,
+        const std::vector<double> &atomMagZFactors           = {},
+        SpinMode                   spinMode = SpinMode::Unpolarized);
 
 
       // used if numerical poisson solve vself canellation route taken
@@ -250,9 +250,9 @@ namespace dftefe
           linearAlgebra::IdentityOperatorContext<ValueTypeOperator,
                                                  ValueTypeOperand,
                                                  memorySpace>(),
-        bool                        isResidualChebyshevFilter = true,
-        const std::vector<double> & atomMagZFactors = {},
-        SpinMode                    spinMode        = SpinMode::Unpolarized);
+        bool                       isResidualChebyshevFilter = true,
+        const std::vector<double> &atomMagZFactors           = {},
+        SpinMode                   spinMode = SpinMode::Unpolarized);
 
       // used if delta rho approach is taken with phi total from 1D KS solve
       // with analytical vself energy cancellation
@@ -336,9 +336,9 @@ namespace dftefe
           linearAlgebra::IdentityOperatorContext<ValueTypeOperator,
                                                  ValueTypeOperand,
                                                  memorySpace>(),
-        bool                         isResidualChebyshevFilter = true,
+        bool isResidualChebyshevFilter = true,
         /* TCI related info */
-        const atoms::TCIADataParams &params            = TCIADataDefaults::TCIA_PARAMS,
+        const atoms::TCIADataParams &params = TCIADataDefaults::TCIA_PARAMS,
         const std::vector<double> &  atomMagZFactors = {},
         SpinMode                     spinMode        = SpinMode::Unpolarized);
 
@@ -426,9 +426,9 @@ namespace dftefe
           linearAlgebra::IdentityOperatorContext<ValueTypeOperator,
                                                  ValueTypeOperand,
                                                  memorySpace>(),
-        bool                        isResidualChebyshevFilter = true,
-        const std::vector<double> & atomMagZFactors = {},
-        SpinMode                    spinMode        = SpinMode::Unpolarized);
+        bool                       isResidualChebyshevFilter = true,
+        const std::vector<double> &atomMagZFactors           = {},
+        SpinMode                   spinMode = SpinMode::Unpolarized);
 
 
       // used if delta rho with PSP approach is taken with phi total from 1D KS
@@ -519,7 +519,7 @@ namespace dftefe
                                                  memorySpace>(),
         bool isResidualChebyshevFilter = false,
         /* TCI related info */
-        const atoms::TCIADataParams &params           = TCIADataDefaults::TCIA_PARAMS,
+        const atoms::TCIADataParams &params = TCIADataDefaults::TCIA_PARAMS,
         const std::vector<double> &  atomMagZFactors = {},
         SpinMode                     spinMode        = SpinMode::Unpolarized);
 
@@ -537,12 +537,13 @@ namespace dftefe
       void
       printTotalInScopeTimings();
 
-      const std::shared_ptr<KohnShamOperatorContextFE<ValueTypeElectrostaticsCoeff,
-                                                      ValueTypeElectrostaticsBasis,
-                                                      ValueTypeWaveFunctionCoeff,
-                                                      ValueTypeWaveFunctionBasis,
-                                                      memorySpace,
-                                                      dim>> &
+      const std::shared_ptr<
+        KohnShamOperatorContextFE<ValueTypeElectrostaticsCoeff,
+                                  ValueTypeElectrostaticsBasis,
+                                  ValueTypeWaveFunctionCoeff,
+                                  ValueTypeWaveFunctionBasis,
+                                  memorySpace,
+                                  dim>> &
       getHamiltonianOperator() const
       {
         return d_hamitonianOperator;

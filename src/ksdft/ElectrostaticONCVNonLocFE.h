@@ -296,8 +296,8 @@ namespace dftefe
       const size_type                d_maxCellBlock;
       const size_type                d_maxWaveFnBlock;
       const std::vector<std::string> d_atomSymbolVec;
-      bool      d_isNonLocPSP;
-      SpinMode  d_spinMode;
+      bool                           d_isNonLocPSP;
+      SpinMode                       d_spinMode;
 
       std::shared_ptr<linearAlgebra::MultiVector<ValueType, memorySpace>>
         d_psiBatchSmall, d_psiBatch, d_YBatch, d_YBatchSmall;

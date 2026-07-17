@@ -56,17 +56,17 @@ namespace dftefe
           for (size_type t = globalThreadId; t < total;
                t += nThreadsPerBlock * nThreadBlock)
             {
-              const size_type k     = t / (d * d);
-              const size_type ji    = t % (d * d);
-              const size_type j     = ji / d;
-              const size_type i     = ji % d;
-              const size_type sRow  = sRowArr[k];
-              const size_type sCol  = sColArr[k];
-              const size_type Sd    = S * d;
+              const size_type k    = t / (d * d);
+              const size_type ji   = t % (d * d);
+              const size_type j    = ji / d;
+              const size_type i    = ji % d;
+              const size_type sRow = sRowArr[k];
+              const size_type sCol = sColArr[k];
+              const size_type Sd   = S * d;
               const size_type dstIdx =
-                (layout == 0)
-                  ? cellDstOffset + (sCol * d + j) * Sd + sRow * d + i
-                  : cellDstOffset + (j * S + sCol) * Sd + i * S + sRow;
+                (layout == 0) ?
+                  cellDstOffset + (sCol * d + j) * Sd + sRow * d + i :
+                  cellDstOffset + (j * S + sCol) * Sd + i * S + sRow;
               dftefe::utils::copyValue(
                 dst + dstIdx,
                 src[k * basisOverlapSize + cellSrcOffset + j * d + i]);
@@ -92,20 +92,20 @@ namespace dftefe
       copyIntoBlock(
         const utils::MemoryStorage<ValueType, utils::MemorySpace::DEVICE> &src,
         utils::MemoryStorage<ValueType, utils::MemorySpace::DEVICE> &      dst,
-        size_type                                                            S,
-        SpinStorageLayout                                                    layout,
+        size_type                                                          S,
+        SpinStorageLayout                                   layout,
         const std::vector<std::pair<size_type, size_type>> &spinIdsFilled,
-        const std::vector<size_type> &numCellDofs,
+        const std::vector<size_type> &                      numCellDofs,
         linearAlgebra::LinAlgOpContext<utils::MemorySpace::DEVICE>
           &linAlgOpContext)
     {
-      const size_type  K         = spinIdsFilled.size();
-      const size_type  numStreams = linAlgOpContext.numBlasStreams();
-      auto *           streams   = linAlgOpContext.getBlasStreamsVec();
-      const size_type  C         = numCellDofs.size();
-      const auto *srcPtr = utils::makeDataTypeDeviceCompatible(src.begin());
-      auto       *dstPtr = utils::makeDataTypeDeviceCompatible(dst.begin());
-      const int  layoutInt = (layout == SpinStorageLayout::DofFastest) ? 0 : 1;
+      const size_type K          = spinIdsFilled.size();
+      const size_type numStreams = linAlgOpContext.numBlasStreams();
+      auto *          streams    = linAlgOpContext.getBlasStreamsVec();
+      const size_type C          = numCellDofs.size();
+      const auto *    srcPtr = utils::makeDataTypeDeviceCompatible(src.begin());
+      auto *          dstPtr = utils::makeDataTypeDeviceCompatible(dst.begin());
+      const int layoutInt = (layout == SpinStorageLayout::DofFastest) ? 0 : 1;
 
       // Copy spin-index mapping to device
       std::vector<size_type> sRowHost(K), sColHost(K);

@@ -54,50 +54,47 @@ namespace dftefe
         MultiVectorProductSpace<ValueTypeOperand, memorySpace> &X,
         const bool                                              spaceBlocked,
         const std::shared_ptr<const ProcessGrid> &              processGrid,
-        ScaLAPACKMatrix<blasLapack::scalar_type<ValueTypeOperator,
-                                               ValueTypeOperand>>
-          *                                       overlapMatPars,
-        const OperatorContext<ValueTypeOperator,
-                              ValueTypeOperand,
-                              memorySpace> &        Op,
-        const size_type                             eigenVecBatchSize,
-        std::shared_ptr<
-          MultiVector<blasLapack::scalar_type<ValueTypeOperator,
-                                             ValueTypeOperand>,
-                      memorySpace>> &               XinBatch,
-        std::shared_ptr<
-          MultiVector<blasLapack::scalar_type<ValueTypeOperator,
-                                             ValueTypeOperand>,
-                      memorySpace>> &               XoutBatch,
-        std::shared_ptr<
-          MultiVector<blasLapack::scalar_type<ValueTypeOperator,
-                                             ValueTypeOperand>,
-                      memorySpace>> &               XinBatchSmall,
-        std::shared_ptr<
-          MultiVector<blasLapack::scalar_type<ValueTypeOperator,
-                                             ValueTypeOperand>,
-                      memorySpace>> &               XoutBatchSmall)
+        ScaLAPACKMatrix<
+          blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>>
+          *overlapMatPars,
+        const OperatorContext<ValueTypeOperator, ValueTypeOperand, memorySpace>
+          &              Op,
+        const size_type  eigenVecBatchSize,
+        std::shared_ptr<MultiVector<
+          blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>,
+          memorySpace>> &XinBatch,
+        std::shared_ptr<MultiVector<
+          blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>,
+          memorySpace>> &XoutBatch,
+        std::shared_ptr<MultiVector<
+          blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>,
+          memorySpace>> &XinBatchSmall,
+        std::shared_ptr<MultiVector<
+          blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>,
+          memorySpace>> &XoutBatchSmall)
       {
         using ValueType =
           blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>;
 
-        const utils::mpi::MPIComm             comm = X.getMPIPatternP2P()->mpiCommunicator();
-        LinAlgOpContext<memorySpace>           linAlgOpContext = *X.getLinAlgOpContext();
-        const size_type                       vecSize      = X.locallyOwnedSize();
-        const size_type                       vecLocalSize = X.localSize();
+        const utils::mpi::MPIComm comm =
+          X.getMPIPatternP2P()->mpiCommunicator();
+        LinAlgOpContext<memorySpace> linAlgOpContext = *X.getLinAlgOpContext();
+        const size_type              vecSize         = X.locallyOwnedSize();
+        const size_type              vecLocalSize    = X.localSize();
         std::shared_ptr<MultiVector<ValueType, memorySpace>> subspaceBatchIn =
                                                                nullptr,
                                                              subspaceBatchOut =
                                                                nullptr;
 
-        const size_type numSpaces          = X.numSpaces();
-        const size_type numVecPerSp        = X.numVectorsPerSpace();
-        const size_type lda                = X.numVectors();
+        const size_type numSpaces           = X.numSpaces();
+        const size_type numVecPerSp         = X.numVectorsPerSpace();
+        const size_type lda                 = X.numVectors();
         const size_type numSpaceLoops       = spaceBlocked ? numSpaces : 1;
         const size_type eigVecBatchPerSpace = eigenVecBatchSize / numSpaces;
-        const size_type numVecBlock        = spaceBlocked ? numVecPerSp : lda;
+        const size_type numVecBlock         = spaceBlocked ? numVecPerSp : lda;
 
-        // get global to local index maps for Scalapack matrix (one per space loop)
+        // get global to local index maps for Scalapack matrix (one per space
+        // loop)
         std::vector<std::unordered_map<size_type, size_type>>
           globalToLocalColumnIdMaps(numSpaceLoops);
         std::vector<std::unordered_map<size_type, size_type>>
@@ -123,7 +120,7 @@ namespace dftefe
           {
             const size_type eigVecEndId =
               std::min(eigVecStartId + eigVecBatchPerSpace, numVecPerSp);
-            const size_type numEigVecInBatch = eigVecEndId - eigVecStartId;
+            const size_type numEigVecInBatch     = eigVecEndId - eigVecStartId;
             const size_type numComponentsInBatch = numSpaces * numEigVecInBatch;
 
             if (numComponentsInBatch == eigenVecBatchSize)
@@ -137,12 +134,11 @@ namespace dftefe
 
                 MultiVectorOps::copyToBatch<ValueTypeOperand,
                                             ValueType,
-                                            memorySpace>(
-                  X,
-                  eigVecStartId,
-                  numEigVecInBatch,
-                  *XinBatch,
-                  linAlgOpContext);
+                                            memorySpace>(X,
+                                                         eigVecStartId,
+                                                         numEigVecInBatch,
+                                                         *XinBatch,
+                                                         linAlgOpContext);
 
                 subspaceBatchIn  = XinBatch;
                 subspaceBatchOut = XoutBatch;
@@ -153,12 +149,11 @@ namespace dftefe
               {
                 MultiVectorOps::copyToBatch<ValueTypeOperand,
                                             ValueType,
-                                            memorySpace>(
-                  X,
-                  eigVecStartId,
-                  numEigVecInBatch,
-                  *XinBatchSmall,
-                  linAlgOpContext);
+                                            memorySpace>(X,
+                                                         eigVecStartId,
+                                                         numEigVecInBatch,
+                                                         *XinBatchSmall,
+                                                         linAlgOpContext);
 
                 subspaceBatchIn  = XinBatchSmall;
                 subspaceBatchOut = XoutBatchSmall;
@@ -181,12 +176,11 @@ namespace dftefe
 
                 MultiVectorOps::copyToBatch<ValueTypeOperand,
                                             ValueType,
-                                            memorySpace>(
-                  X,
-                  eigVecStartId,
-                  numEigVecInBatch,
-                  *XinBatchSmall,
-                  linAlgOpContext);
+                                            memorySpace>(X,
+                                                         eigVecStartId,
+                                                         numEigVecInBatch,
+                                                         *XinBatchSmall,
+                                                         linAlgOpContext);
 
                 subspaceBatchIn  = XinBatchSmall;
                 subspaceBatchOut = XoutBatchSmall;
@@ -225,10 +219,12 @@ namespace dftefe
                   numVecBlock - eigVecStartId,
                   linAlgOpContext);
 
-                utils::MemoryTransfer<utils::MemorySpace::HOST, memorySpace>::
-                  copy((numVecBlock - eigVecStartId) * gemmCols,
-                       SBlockHost.data(),
-                       SBlock.data());
+                utils::MemoryTransfer<utils::MemorySpace::HOST,
+                                      memorySpace>::copy((numVecBlock -
+                                                          eigVecStartId) *
+                                                           gemmCols,
+                                                         SBlockHost.data(),
+                                                         SBlock.data());
 
                 int mpierr = utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
                   utils::mpi::MPIInPlace,
@@ -248,8 +244,8 @@ namespace dftefe
                 // overlap matrix
                 if (processGrid->is_process_active())
                   for (size_type iSize = 0; iSize < gemmCols; iSize++)
-                    if (globalToLocalColumnIdMaps[s].find(
-                          iSize + eigVecStartId) !=
+                    if (globalToLocalColumnIdMaps[s].find(iSize +
+                                                          eigVecStartId) !=
                         globalToLocalColumnIdMaps[s].end())
                       {
                         const size_type localColumnId =
@@ -261,8 +257,8 @@ namespace dftefe
                             std::unordered_map<size_type, size_type>::iterator
                               it = globalToLocalRowIdMaps[s].find(jSize);
                             if (it != globalToLocalRowIdMaps[s].end())
-                              overlapMatPars[s].local_el(
-                                it->second, localColumnId) =
+                              overlapMatPars[s].local_el(it->second,
+                                                         localColumnId) =
                                 *(SBlockHost.data() +
                                   iSize * (numVecBlock - eigVecStartId) +
                                   jSize - eigVecStartId);
@@ -280,12 +276,11 @@ namespace dftefe
 
             MultiVectorOps::copyFromBatch<ValueType,
                                           ValueTypeOperand,
-                                          memorySpace>(
-              *subspaceBatchIn,
-              eigVecStartId,
-              numEigVecInBatch,
-              X,
-              linAlgOpContext);
+                                          memorySpace>(*subspaceBatchIn,
+                                                       eigVecStartId,
+                                                       numEigVecInBatch,
+                                                       X,
+                                                       linAlgOpContext);
           }
       }
 
@@ -293,8 +288,9 @@ namespace dftefe
       // Copies numVecBatch orbitals per space from copyFromVec → copyToVec.
       // Per space s: src column = srcBase + s*srcSpaceStride,
       //             dst column = dstBase + s*dstSpaceStride.
-      // All numSpaces batches launched concurrently via varBatchedStridedBlockCopy.
-      // Two-type template mirrors varBatchedStridedBlockCopy<VT1,VT2,MS>.
+      // All numSpaces batches launched concurrently via
+      // varBatchedStridedBlockCopy. Two-type template mirrors
+      // varBatchedStridedBlockCopy<VT1,VT2,MS>.
       template <typename ValueType1,
                 typename ValueType2,
                 utils::MemorySpace memorySpace>
@@ -328,21 +324,20 @@ namespace dftefe
             dstBlockStartIdArr[s] = dstBase + s * dstSpaceStride;
           }
 
-        blasLapack::varBatchedStridedBlockCopy<ValueType1,
-                                               ValueType2,
-                                               memorySpace>(
-          numBatch,
-          strideSrc.data(),
-          strideDst.data(),
-          vecSizeArr.data(),
-          numVecArr.data(),
-          srcLeadingDimArr.data(),
-          srcBlockStartIdArr.data(),
-          dstLeadingDimArr.data(),
-          dstBlockStartIdArr.data(),
-          copyFromVec,
-          copyToVec,
-          context);
+        blasLapack::
+          varBatchedStridedBlockCopy<ValueType1, ValueType2, memorySpace>(
+            numBatch,
+            strideSrc.data(),
+            strideDst.data(),
+            vecSizeArr.data(),
+            numVecArr.data(),
+            srcLeadingDimArr.data(),
+            srcBlockStartIdArr.data(),
+            dstLeadingDimArr.data(),
+            dstBlockStartIdArr.data(),
+            copyFromVec,
+            copyToVec,
+            context);
       }
 
 
@@ -356,27 +351,27 @@ namespace dftefe
       // lda > numVecBlock is handled correctly (blocked case).
       template <typename ValueType, utils::MemorySpace memorySpace>
       static void
-      rotateImpl(
-        MultiVectorProductSpace<ValueType, memorySpace> &X,
-        const bool                                       spaceBlocked,
-        const std::shared_ptr<const ProcessGrid> &       processGrid,
-        const ScaLAPACKMatrix<ValueType> *               rotationMatPars,
-        const size_type                                  subspaceRotDofsBlockSize,
-        const size_type                                  wfcBlockSize,
-        const bool rotationMatTranspose   = false,
-        const bool isRotationMatLowerTria = false,
-        const bool allowFullCPUMemSubspaceRot =
-          (memorySpace == utils::MemorySpace::DEVICE ? true : false))
+      rotateImpl(MultiVectorProductSpace<ValueType, memorySpace> &X,
+                 const bool                                       spaceBlocked,
+                 const std::shared_ptr<const ProcessGrid> &       processGrid,
+                 const ScaLAPACKMatrix<ValueType> *rotationMatPars,
+                 const size_type                   subspaceRotDofsBlockSize,
+                 const size_type                   wfcBlockSize,
+                 const bool                        rotationMatTranspose = false,
+                 const bool isRotationMatLowerTria                      = false,
+                 const bool allowFullCPUMemSubspaceRot =
+                   (memorySpace == utils::MemorySpace::DEVICE ? true : false))
       {
-        const size_type              M              = X.locallyOwnedSize();
-        const utils::mpi::MPIComm    mpiCommDomain  = X.getMPIPatternP2P()->mpiCommunicator();
+        const size_type           M = X.locallyOwnedSize();
+        const utils::mpi::MPIComm mpiCommDomain =
+          X.getMPIPatternP2P()->mpiCommunicator();
         LinAlgOpContext<memorySpace> linAlgOpContext = *X.getLinAlgOpContext();
 
-        const size_type numSpaces    = X.numSpaces();
-        const size_type numVecPerSp  = X.numVectorsPerSpace();
-        const size_type lda          = X.numVectors();
+        const size_type numSpaces     = X.numSpaces();
+        const size_type numVecPerSp   = X.numVectorsPerSpace();
+        const size_type lda           = X.numVectors();
         const size_type numSpaceLoops = spaceBlocked ? numSpaces : 1;
-        const size_type numVecBlock  = spaceBlocked ? numVecPerSp : lda;
+        const size_type numVecBlock   = spaceBlocked ? numVecPerSp : lda;
 
         size_type maxNumLocalDofs = 0;
         utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
@@ -399,7 +394,8 @@ namespace dftefe
         utils::MemoryStorage<ValueType, hostMemSpace> rotationMatBlockHost;
         if (allowFullCPUMemSubspaceRot)
           {
-            rotationMatBlockHost.resize(numVecBlock * numVecBlock, ValueType(0));
+            rotationMatBlockHost.resize(numVecBlock * numVecBlock,
+                                        ValueType(0));
             rotationMatBlockHost.setValue(ValueType(0));
           }
         else
@@ -434,7 +430,8 @@ namespace dftefe
             for (size_type idof = 0; idof < maxNumLocalDofs;
                  idof += dofsBlockSize)
               {
-                // Correct block dimensions if block "goes off edge of" the matrix
+                // Correct block dimensions if block "goes off edge of" the
+                // matrix
                 size_type BDof = 0;
                 if (M >= idof)
                   BDof = std::min(dofsBlockSize, M - idof);
@@ -466,16 +463,16 @@ namespace dftefe
                                           globalToLocalRowIdMap[i];
                                         for (size_type j = 0; j < BVec; ++j)
                                           {
-                                            std::unordered_map<size_type,
-                                                               size_type>::
-                                              iterator it =
-                                                globalToLocalColumnIdMap.find(
-                                                  j + jvec);
+                                            std::unordered_map<
+                                              size_type,
+                                              size_type>::iterator it =
+                                              globalToLocalColumnIdMap.find(
+                                                j + jvec);
                                             if (it !=
                                                 globalToLocalColumnIdMap.end())
                                               *(rotationMatBlockHost.begin() +
-                                                jvec * numVecBlock +
-                                                i * BVec + j) =
+                                                jvec * numVecBlock + i * BVec +
+                                                j) =
                                                 rotationMatPars[s].local_el(
                                                   localRowId, it->second);
                                           }
@@ -492,16 +489,16 @@ namespace dftefe
                                           globalToLocalColumnIdMap[i];
                                         for (size_type j = 0; j < BVec; ++j)
                                           {
-                                            std::unordered_map<size_type,
-                                                               size_type>::
-                                              iterator it =
-                                                globalToLocalRowIdMap.find(
-                                                  j + jvec);
+                                            std::unordered_map<
+                                              size_type,
+                                              size_type>::iterator it =
+                                              globalToLocalRowIdMap.find(j +
+                                                                         jvec);
                                             if (it !=
                                                 globalToLocalRowIdMap.end())
                                               *(rotationMatBlockHost.begin() +
-                                                jvec * numVecBlock +
-                                                i * BVec + j) =
+                                                jvec * numVecBlock + i * BVec +
+                                                j) =
                                                 rotationMatPars[s].local_el(
                                                   it->second, localColumnId);
                                           }
@@ -510,8 +507,7 @@ namespace dftefe
 
                             utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
                               utils::mpi::MPIInPlace,
-                              rotationMatBlockHost.begin() +
-                                jvec * numVecBlock,
+                              rotationMatBlockHost.begin() + jvec * numVecBlock,
                               BVec * D,
                               utils::mpi::Types<ValueType>::getMPIDatatype(),
                               utils::mpi::MPISum,
@@ -541,9 +537,8 @@ namespace dftefe
                                       {
                                         std::unordered_map<size_type,
                                                            size_type>::iterator
-                                          it =
-                                            globalToLocalColumnIdMap.find(j +
-                                                                          jvec);
+                                          it = globalToLocalColumnIdMap.find(
+                                            j + jvec);
                                         if (it !=
                                             globalToLocalColumnIdMap.end())
                                           *(rotationMatBlockHost.begin() +
@@ -635,7 +630,7 @@ namespace dftefe
                                                  linAlgOpContext);
                   }
               } // block loop over dofs
-          } // space loop
+          }     // space loop
       }
 
     } // namespace multiVectorOpsInternal
@@ -653,10 +648,9 @@ namespace dftefe
               utils::MemorySpace memorySpace>
     void
     MultiVectorOps::project(
-      const OperatorContext<ValueTypeOperator,
-                            ValueTypeOperand,
-                            memorySpace> &Op,
-      MultiVectorProductSpaceBlocked<ValueTypeOperand, memorySpace> &X,
+      const OperatorContext<ValueTypeOperator, ValueTypeOperand, memorySpace>
+        &                                                               Op,
+      MultiVectorProductSpaceBlocked<ValueTypeOperand, memorySpace> &   X,
       std::vector<ScaLAPACKMatrix<
         blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>>> &Ps,
       const ElpaScalapackManager &                                      elpa,
@@ -683,19 +677,18 @@ namespace dftefe
       const std::shared_ptr<const ProcessGrid> processGrid =
         elpa.getProcessGridDftefeScalaWrapper();
 
-      multiVectorOpsInternal::projectImpl<ValueTypeOperator,
-                                          ValueTypeOperand,
-                                          memorySpace>(
-        X,
-        true,
-        processGrid,
-        Ps.data(),
-        Op,
-        scratchXin->getNumberComponents(),
-        scratchXin,
-        scratchXout,
-        scratchXinSmall,
-        scratchXoutSmall);
+      multiVectorOpsInternal::
+        projectImpl<ValueTypeOperator, ValueTypeOperand, memorySpace>(
+          X,
+          true,
+          processGrid,
+          Ps.data(),
+          Op,
+          scratchXin->getNumberComponents(),
+          scratchXin,
+          scratchXout,
+          scratchXinSmall,
+          scratchXoutSmall);
     }
 
 
@@ -711,9 +704,8 @@ namespace dftefe
               utils::MemorySpace memorySpace>
     void
     MultiVectorOps::project(
-      const OperatorContext<ValueTypeOperator,
-                            ValueTypeOperand,
-                            memorySpace> &Op,
+      const OperatorContext<ValueTypeOperator, ValueTypeOperand, memorySpace>
+        &                                                     Op,
       MultiVectorProductSpace<ValueTypeOperand, memorySpace> &X,
       ScaLAPACKMatrix<
         blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>> &P,
@@ -737,19 +729,18 @@ namespace dftefe
       const std::shared_ptr<const ProcessGrid> processGrid =
         elpa.getProcessGridDftefeScalaWrapper();
 
-      multiVectorOpsInternal::projectImpl<ValueTypeOperator,
-                                          ValueTypeOperand,
-                                          memorySpace>(
-        X,
-        false,
-        processGrid,
-        &P,
-        Op,
-        scratchXin->getNumberComponents(),
-        scratchXin,
-        scratchXout,
-        scratchXinSmall,
-        scratchXoutSmall);
+      multiVectorOpsInternal::
+        projectImpl<ValueTypeOperator, ValueTypeOperand, memorySpace>(
+          X,
+          false,
+          processGrid,
+          &P,
+          Op,
+          scratchXin->getNumberComponents(),
+          scratchXin,
+          scratchXout,
+          scratchXinSmall,
+          scratchXoutSmall);
     }
 
 
@@ -793,10 +784,9 @@ namespace dftefe
     // -------------------------------------------------------------------------
     template <typename ValueType, utils::MemorySpace memorySpace>
     void
-    MultiVectorOps::rotate(
-      MultiVectorProductSpace<ValueType, memorySpace> &X,
-      const ScaLAPACKMatrix<ValueType> &               Q,
-      const ElpaScalapackManager &                     elpa)
+    MultiVectorOps::rotate(MultiVectorProductSpace<ValueType, memorySpace> &X,
+                           const ScaLAPACKMatrix<ValueType> &               Q,
+                           const ElpaScalapackManager &elpa)
     {
       const std::shared_ptr<const ProcessGrid> processGrid =
         elpa.getProcessGridDftefeScalaWrapper();
@@ -820,27 +810,29 @@ namespace dftefe
     void
     MultiVectorOps::copyToBatch(
       const MultiVectorProductSpace<ValueType1, memorySpace> &X,
-      size_type                                                srcStart,
-      size_type                                                numVecBatch,
+      size_type                                               srcStart,
+      size_type                                               numVecBatch,
       MultiVector<ValueType2, memorySpace> &                  Xbatch,
       LinAlgOpContext<memorySpace> &                          context)
     {
       const size_type numSpaces   = X.numSpaces();
       const size_type numVecPerSp = X.numVectorsPerSpace();
       const size_type vecSize     = X.localSize();
-      multiVectorOpsInternal::copyBatchImpl<ValueType1, ValueType2, memorySpace>(
-        X.data(),
-        numSpaces * numVecPerSp,
-        numVecPerSp,
-        srcStart,
-        Xbatch.data(),
-        numSpaces * numVecBatch,
-        numVecBatch,
-        0,
-        vecSize,
-        numSpaces,
-        numVecBatch,
-        context);
+      multiVectorOpsInternal::
+        copyBatchImpl<ValueType1, ValueType2, memorySpace>(X.data(),
+                                                           numSpaces *
+                                                             numVecPerSp,
+                                                           numVecPerSp,
+                                                           srcStart,
+                                                           Xbatch.data(),
+                                                           numSpaces *
+                                                             numVecBatch,
+                                                           numVecBatch,
+                                                           0,
+                                                           vecSize,
+                                                           numSpaces,
+                                                           numVecBatch,
+                                                           context);
     }
 
 
@@ -853,28 +845,30 @@ namespace dftefe
               utils::MemorySpace memorySpace>
     void
     MultiVectorOps::copyFromBatch(
-      const MultiVector<ValueType1, memorySpace> &       Ybatch,
-      size_type                                          dstStart,
-      size_type                                          numVecBatch,
+      const MultiVector<ValueType1, memorySpace> &      Ybatch,
+      size_type                                         dstStart,
+      size_type                                         numVecBatch,
       MultiVectorProductSpace<ValueType2, memorySpace> &Y,
-      LinAlgOpContext<memorySpace> &                     context)
+      LinAlgOpContext<memorySpace> &                    context)
     {
       const size_type numSpaces   = Y.numSpaces();
       const size_type numVecPerSp = Y.numVectorsPerSpace();
       const size_type vecSize     = Y.localSize();
-      multiVectorOpsInternal::copyBatchImpl<ValueType1, ValueType2, memorySpace>(
-        Ybatch.data(),
-        numSpaces * numVecBatch,
-        numVecBatch,
-        0,
-        Y.data(),
-        numSpaces * numVecPerSp,
-        numVecPerSp,
-        dstStart,
-        vecSize,
-        numSpaces,
-        numVecBatch,
-        context);
+      multiVectorOpsInternal::
+        copyBatchImpl<ValueType1, ValueType2, memorySpace>(Ybatch.data(),
+                                                           numSpaces *
+                                                             numVecBatch,
+                                                           numVecBatch,
+                                                           0,
+                                                           Y.data(),
+                                                           numSpaces *
+                                                             numVecPerSp,
+                                                           numVecPerSp,
+                                                           dstStart,
+                                                           vecSize,
+                                                           numSpaces,
+                                                           numVecBatch,
+                                                           context);
     }
 
   } // namespace linearAlgebra

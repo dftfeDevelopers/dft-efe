@@ -259,7 +259,7 @@ namespace dftefe
                                    quadrature::QuadratureValuesContainer<
                                      RealType,
                                      utils::MemorySpace::HOST>> &descrInput,
-                   const SpinMode                                 spinMode)
+                    const SpinMode                               spinMode)
       {
         size_type ncomp = 1;
         if (spinMode == SpinMode::Collinear)
@@ -366,12 +366,12 @@ namespace dftefe
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
           linAlgOpContext,
         /* basis overlap related info */
-        const OpContext &           MContextForInv,
-        const OpContext &           MContext,
-        const OpContext &           MInvContext,
-        bool                        isResidualChebyshevFilter,
-        const std::vector<double> & atomMagZFactors,
-        SpinMode                    spinMode)
+        const OpContext &          MContextForInv,
+        const OpContext &          MContext,
+        const OpContext &          MInvContext,
+        bool                       isResidualChebyshevFilter,
+        const std::vector<double> &atomMagZFactors,
+        SpinMode                   spinMode)
       : d_feBMWaveFn(feBMWaveFn)
       , d_evaluateEnergyEverySCF(evaluateEnergyEverySCF)
       , d_numMaxSCFIter(maxSCFIter)
@@ -403,8 +403,9 @@ namespace dftefe
     {
       std::unique_ptr<
         linearAlgebra::MultiVector<ValueTypeWaveFunctionCoeff, memorySpace>>
-                                       wfnPtr;
-      const size_type numSpacesS = (d_spinMode == SpinMode::Unpolarized) ? 1 : 2;
+                      wfnPtr;
+      const size_type numSpacesS =
+        (d_spinMode == SpinMode::Unpolarized) ? 1 : 2;
       std::vector<std::vector<double>> occupancies = {
         std::vector<double>(numSpacesS * numWantedEigenvalues, 0.0)};
       d_p.registerStart("Pre Init Checks");
@@ -439,7 +440,7 @@ namespace dftefe
       else if (d_spinMode == SpinMode::NonCollinear)
         wfnPtr = std::make_unique<
           linearAlgebra::MultiVectorProductSpace<ValueTypeWaveFunctionCoeff,
-                                                memorySpace>>(
+                                                 memorySpace>>(
           feBMWaveFn->getMPIPatternP2P(),
           linAlgOpContext,
           2,
@@ -448,7 +449,7 @@ namespace dftefe
       else
         wfnPtr = std::make_unique<
           linearAlgebra::MultiVectorProductSpace<ValueTypeWaveFunctionCoeff,
-                                                memorySpace>>(
+                                                 memorySpace>>(
           feBMWaveFn->getMPIPatternP2P(),
           linAlgOpContext,
           1,
@@ -565,8 +566,8 @@ namespace dftefe
           KohnShamDFTInternal::buildDescrMap(initDescrMap, d_spinMode);
         if (d_spinMode != SpinMode::Unpolarized && !atomMagZFactors.empty())
           {
-            auto &          spinDensVal = initMixDescrMap[DensityDescrAttr::Val];
-            const size_type numQuad     = spinDensVal[0].nQuadraturePoints();
+            auto &spinDensVal       = initMixDescrMap[DensityDescrAttr::Val];
+            const size_type numQuad = spinDensVal[0].nQuadraturePoints();
             const double *  quadRealPointsHost =
               spinDensVal[0]
                 .getQuadratureRuleContainer()
@@ -587,8 +588,7 @@ namespace dftefe
               spinDensVal[1].data()[i] = magZInQuadValues[i];
             if (xcType.rfind("GGA", 0) == 0)
               {
-                auto &          spinDensGrad =
-                  initMixDescrMap[DensityDescrAttr::Grad];
+                auto &spinDensGrad = initMixDescrMap[DensityDescrAttr::Grad];
                 std::vector<double> magZGradInQuadValues(numQuad * dim, 0.0);
                 atomicElectronicChargeDensityFunction.evaluateHost(
                   numQuad,
@@ -720,25 +720,27 @@ namespace dftefe
       if (isResidualChebyshevFilter)
         {
           KohnShamEigenSolver<ValueTypeOperator, ValueTypeOperand, memorySpace>
-            ksEigSolve(numElectrons,
-                       smearingTemperature,
-                       fermiEnergyTolerance,
-                       fracOccupancyTolerance,
-                       eigenSolveResidualTolerance,
-                       1,
-                       numWantedEigenvalues,
-                       feBMWaveFn->getMPIPatternP2P(),
-                       linAlgOpContext,
-                       *d_elpaScala,
-                       false,
-                       waveFnBatch,
-                       MContextForInv,
-                       MInvContext,
-                      true, /*isGHEP*/
-                      linearAlgebra::OrthogonalizationType::CHOLESKY_GRAMSCHMIDT, /*orthoType */
-                      false,     /*storeIntermediateSubspaces*/
-                      true,     /*useSameScratchInEigenSolver*/
-                      spinMode);
+            ksEigSolve(
+              numElectrons,
+              smearingTemperature,
+              fermiEnergyTolerance,
+              fracOccupancyTolerance,
+              eigenSolveResidualTolerance,
+              1,
+              numWantedEigenvalues,
+              feBMWaveFn->getMPIPatternP2P(),
+              linAlgOpContext,
+              *d_elpaScala,
+              false,
+              waveFnBatch,
+              MContextForInv,
+              MInvContext,
+              true, /*isGHEP*/
+              linearAlgebra::OrthogonalizationType::CHOLESKY_GRAMSCHMIDT, /*orthoType
+                                                                           */
+              false, /*storeIntermediateSubspaces*/
+              true,  /*useSameScratchInEigenSolver*/
+              spinMode);
 
           ksEigSolve.setChebyshevPolynomialDegree(1);
 
@@ -767,10 +769,11 @@ namespace dftefe
         waveFnBatch,
         MContextForInv,
         MInvContext,
-        true, /*isGHEP*/
-        linearAlgebra::OrthogonalizationType::CHOLESKY_GRAMSCHMIDT, /*orthoType */
-        false,     /*storeIntermediateSubspaces*/
-        true,     /*useSameScratchInEigenSolver*/
+        true,                                                       /*isGHEP*/
+        linearAlgebra::OrthogonalizationType::CHOLESKY_GRAMSCHMIDT, /*orthoType
+                                                                     */
+        false, /*storeIntermediateSubspaces*/
+        true,  /*useSameScratchInEigenSolver*/
         spinMode);
 
       d_rdm1Spectral->setSpectral(std::move(wfnPtr),
@@ -872,12 +875,12 @@ namespace dftefe
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
           linAlgOpContext,
         /* basis overlap related info */
-        const OpContext &           MContextForInv,
-        const OpContext &           MContext,
-        const OpContext &           MInvContext,
-        bool                        isResidualChebyshevFilter,
-        const std::vector<double> & atomMagZFactors,
-        SpinMode                    spinMode)
+        const OpContext &          MContextForInv,
+        const OpContext &          MContext,
+        const OpContext &          MInvContext,
+        bool                       isResidualChebyshevFilter,
+        const std::vector<double> &atomMagZFactors,
+        SpinMode                   spinMode)
       : d_feBMWaveFn(feBMWaveFn)
       , d_evaluateEnergyEverySCF(evaluateEnergyEverySCF)
       , d_numMaxSCFIter(maxSCFIter)
@@ -909,8 +912,9 @@ namespace dftefe
     {
       std::unique_ptr<
         linearAlgebra::MultiVector<ValueTypeWaveFunctionCoeff, memorySpace>>
-                                       wfnPtr;
-      const size_type numSpacesS = (d_spinMode == SpinMode::Unpolarized) ? 1 : 2;
+                      wfnPtr;
+      const size_type numSpacesS =
+        (d_spinMode == SpinMode::Unpolarized) ? 1 : 2;
       std::vector<std::vector<double>> occupancies = {
         std::vector<double>(numSpacesS * numWantedEigenvalues, 0.0)};
 
@@ -940,7 +944,7 @@ namespace dftefe
       else if (d_spinMode == SpinMode::NonCollinear)
         wfnPtr = std::make_unique<
           linearAlgebra::MultiVectorProductSpace<ValueTypeWaveFunctionCoeff,
-                                                memorySpace>>(
+                                                 memorySpace>>(
           feBMWaveFn->getMPIPatternP2P(),
           linAlgOpContext,
           2,
@@ -949,7 +953,7 @@ namespace dftefe
       else
         wfnPtr = std::make_unique<
           linearAlgebra::MultiVectorProductSpace<ValueTypeWaveFunctionCoeff,
-                                                memorySpace>>(
+                                                 memorySpace>>(
           feBMWaveFn->getMPIPatternP2P(),
           linAlgOpContext,
           1,
@@ -1066,8 +1070,8 @@ namespace dftefe
           KohnShamDFTInternal::buildDescrMap(initDescrMap, d_spinMode);
         if (d_spinMode != SpinMode::Unpolarized && !atomMagZFactors.empty())
           {
-            auto &          spinDensVal = initMixDescrMap[DensityDescrAttr::Val];
-            const size_type numQuad     = spinDensVal[0].nQuadraturePoints();
+            auto &spinDensVal       = initMixDescrMap[DensityDescrAttr::Val];
+            const size_type numQuad = spinDensVal[0].nQuadraturePoints();
             const double *  quadRealPointsHost =
               spinDensVal[0]
                 .getQuadratureRuleContainer()
@@ -1088,8 +1092,7 @@ namespace dftefe
               spinDensVal[1].data()[i] = magZInQuadValues[i];
             if (xcType.rfind("GGA", 0) == 0)
               {
-                auto &          spinDensGrad =
-                  initMixDescrMap[DensityDescrAttr::Grad];
+                auto &spinDensGrad = initMixDescrMap[DensityDescrAttr::Grad];
                 std::vector<double> magZGradInQuadValues(numQuad * dim, 0.0);
                 atomicElectronicChargeDensityFunction.evaluateHost(
                   numQuad,
@@ -1225,25 +1228,27 @@ namespace dftefe
       if (isResidualChebyshevFilter)
         {
           KohnShamEigenSolver<ValueTypeOperator, ValueTypeOperand, memorySpace>
-            ksEigSolve(numElectrons,
-                       smearingTemperature,
-                       fermiEnergyTolerance,
-                       fracOccupancyTolerance,
-                       eigenSolveResidualTolerance,
-                       1,
-                       numWantedEigenvalues,
-                       feBMWaveFn->getMPIPatternP2P(),
-                       linAlgOpContext,
-                       *d_elpaScala,
-                       false,
-                       waveFnBatch,
-                       MContextForInv,
-                       MInvContext,
-        true, /*isGHEP*/
-        linearAlgebra::OrthogonalizationType::CHOLESKY_GRAMSCHMIDT, /*orthoType */
-        false,     /*storeIntermediateSubspaces*/
-        true,     /*useSameScratchInEigenSolver*/
-        spinMode);
+            ksEigSolve(
+              numElectrons,
+              smearingTemperature,
+              fermiEnergyTolerance,
+              fracOccupancyTolerance,
+              eigenSolveResidualTolerance,
+              1,
+              numWantedEigenvalues,
+              feBMWaveFn->getMPIPatternP2P(),
+              linAlgOpContext,
+              *d_elpaScala,
+              false,
+              waveFnBatch,
+              MContextForInv,
+              MInvContext,
+              true, /*isGHEP*/
+              linearAlgebra::OrthogonalizationType::CHOLESKY_GRAMSCHMIDT, /*orthoType
+                                                                           */
+              false, /*storeIntermediateSubspaces*/
+              true,  /*useSameScratchInEigenSolver*/
+              spinMode);
 
           ksEigSolve.setChebyshevPolynomialDegree(1);
 
@@ -1272,10 +1277,11 @@ namespace dftefe
         waveFnBatch,
         MContextForInv,
         MInvContext,
-        true, /*isGHEP*/
-        linearAlgebra::OrthogonalizationType::CHOLESKY_GRAMSCHMIDT, /*orthoType */
-        false,     /*storeIntermediateSubspaces*/
-        true,     /*useSameScratchInEigenSolver*/
+        true,                                                       /*isGHEP*/
+        linearAlgebra::OrthogonalizationType::CHOLESKY_GRAMSCHMIDT, /*orthoType
+                                                                     */
+        false, /*storeIntermediateSubspaces*/
+        true,  /*useSameScratchInEigenSolver*/
         spinMode);
 
       d_rdm1Spectral->setSpectral(std::move(wfnPtr),
@@ -1377,7 +1383,7 @@ namespace dftefe
         const OpContext &MContextForInv,
         const OpContext &MContext,
         const OpContext &MInvContext,
-        bool                         isResidualChebyshevFilter,
+        bool             isResidualChebyshevFilter,
         /* TCI related info */
         const atoms::TCIADataParams &params,
         const std::vector<double> &  atomMagZFactors,
@@ -1415,8 +1421,9 @@ namespace dftefe
     {
       std::unique_ptr<
         linearAlgebra::MultiVector<ValueTypeWaveFunctionCoeff, memorySpace>>
-                                       wfnPtr;
-      const size_type numSpacesS = (d_spinMode == SpinMode::Unpolarized) ? 1 : 2;
+                      wfnPtr;
+      const size_type numSpacesS =
+        (d_spinMode == SpinMode::Unpolarized) ? 1 : 2;
       std::vector<std::vector<double>> occupancies = {
         std::vector<double>(numSpacesS * numWantedEigenvalues, 0.0)};
       d_p.registerStart("Pre Init Checks");
@@ -1445,7 +1452,7 @@ namespace dftefe
       else if (d_spinMode == SpinMode::NonCollinear)
         wfnPtr = std::make_unique<
           linearAlgebra::MultiVectorProductSpace<ValueTypeWaveFunctionCoeff,
-                                                memorySpace>>(
+                                                 memorySpace>>(
           feBMWaveFn->getMPIPatternP2P(),
           linAlgOpContext,
           2,
@@ -1454,7 +1461,7 @@ namespace dftefe
       else
         wfnPtr = std::make_unique<
           linearAlgebra::MultiVectorProductSpace<ValueTypeWaveFunctionCoeff,
-                                                memorySpace>>(
+                                                 memorySpace>>(
           feBMWaveFn->getMPIPatternP2P(),
           linAlgOpContext,
           1,
@@ -1571,8 +1578,8 @@ namespace dftefe
           KohnShamDFTInternal::buildDescrMap(initDescrMap, d_spinMode);
         if (d_spinMode != SpinMode::Unpolarized && !atomMagZFactors.empty())
           {
-            auto &          spinDensVal = initMixDescrMap[DensityDescrAttr::Val];
-            const size_type numQuad     = spinDensVal[0].nQuadraturePoints();
+            auto &spinDensVal       = initMixDescrMap[DensityDescrAttr::Val];
+            const size_type numQuad = spinDensVal[0].nQuadraturePoints();
             const double *  quadRealPointsHost =
               spinDensVal[0]
                 .getQuadratureRuleContainer()
@@ -1593,8 +1600,7 @@ namespace dftefe
               spinDensVal[1].data()[i] = magZInQuadValues[i];
             if (xcType.rfind("GGA", 0) == 0)
               {
-                auto &          spinDensGrad =
-                  initMixDescrMap[DensityDescrAttr::Grad];
+                auto &spinDensGrad = initMixDescrMap[DensityDescrAttr::Grad];
                 std::vector<double> magZGradInQuadValues(numQuad * dim, 0.0);
                 atomicElectronicChargeDensityFunction.evaluateHost(
                   numQuad,
@@ -1795,25 +1801,27 @@ namespace dftefe
       if (isResidualChebyshevFilter)
         {
           KohnShamEigenSolver<ValueTypeOperator, ValueTypeOperand, memorySpace>
-            ksEigSolve(numElectrons,
-                       smearingTemperature,
-                       fermiEnergyTolerance,
-                       fracOccupancyTolerance,
-                       eigenSolveResidualTolerance,
-                       1,
-                       numWantedEigenvalues,
-                       feBMWaveFn->getMPIPatternP2P(),
-                       linAlgOpContext,
-                       *d_elpaScala,
-                       false,
-                       waveFnBatch,
-                       MContextForInv,
-                       MInvContext,
-        true, /*isGHEP*/
-        linearAlgebra::OrthogonalizationType::CHOLESKY_GRAMSCHMIDT, /*orthoType */
-        false,     /*storeIntermediateSubspaces*/
-        true,     /*useSameScratchInEigenSolver*/
-        spinMode);
+            ksEigSolve(
+              numElectrons,
+              smearingTemperature,
+              fermiEnergyTolerance,
+              fracOccupancyTolerance,
+              eigenSolveResidualTolerance,
+              1,
+              numWantedEigenvalues,
+              feBMWaveFn->getMPIPatternP2P(),
+              linAlgOpContext,
+              *d_elpaScala,
+              false,
+              waveFnBatch,
+              MContextForInv,
+              MInvContext,
+              true, /*isGHEP*/
+              linearAlgebra::OrthogonalizationType::CHOLESKY_GRAMSCHMIDT, /*orthoType
+                                                                           */
+              false, /*storeIntermediateSubspaces*/
+              true,  /*useSameScratchInEigenSolver*/
+              spinMode);
 
           ksEigSolve.setChebyshevPolynomialDegree(1);
 
@@ -1842,10 +1850,11 @@ namespace dftefe
         waveFnBatch,
         MContextForInv,
         MInvContext,
-        true, /*isGHEP*/
-        linearAlgebra::OrthogonalizationType::CHOLESKY_GRAMSCHMIDT, /*orthoType */
-        false,     /*storeIntermediateSubspaces*/
-        true,     /*useSameScratchInEigenSolver*/
+        true,                                                       /*isGHEP*/
+        linearAlgebra::OrthogonalizationType::CHOLESKY_GRAMSCHMIDT, /*orthoType
+                                                                     */
+        false, /*storeIntermediateSubspaces*/
+        true,  /*useSameScratchInEigenSolver*/
         spinMode);
 
       d_rdm1Spectral->setSpectral(std::move(wfnPtr),
@@ -1946,12 +1955,12 @@ namespace dftefe
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
           linAlgOpContext,
         /* basis overlap related info */
-        const OpContext &MContextForInv,
-        const OpContext &MContext,
-        const OpContext &MInvContext,
-        bool                        isResidualChebyshevFilter,
-        const std::vector<double> & atomMagZFactors,
-        SpinMode                    spinMode)
+        const OpContext &          MContextForInv,
+        const OpContext &          MContext,
+        const OpContext &          MInvContext,
+        bool                       isResidualChebyshevFilter,
+        const std::vector<double> &atomMagZFactors,
+        SpinMode                   spinMode)
       : d_feBMWaveFn(feBMWaveFn)
       , d_evaluateEnergyEverySCF(evaluateEnergyEverySCF)
       , d_numMaxSCFIter(maxSCFIter)
@@ -1981,8 +1990,9 @@ namespace dftefe
     {
       std::unique_ptr<
         linearAlgebra::MultiVector<ValueTypeWaveFunctionCoeff, memorySpace>>
-                                       wfnPtr;
-      const size_type numSpacesS = (d_spinMode == SpinMode::Unpolarized) ? 1 : 2;
+                      wfnPtr;
+      const size_type numSpacesS =
+        (d_spinMode == SpinMode::Unpolarized) ? 1 : 2;
       std::vector<std::vector<double>> occupancies = {
         std::vector<double>(numSpacesS * numWantedEigenvalues, 0.0)};
 
@@ -2079,7 +2089,7 @@ namespace dftefe
       else if (d_spinMode == SpinMode::NonCollinear)
         wfnPtr = std::make_unique<
           linearAlgebra::MultiVectorProductSpace<ValueTypeWaveFunctionCoeff,
-                                                memorySpace>>(
+                                                 memorySpace>>(
           feBMWaveFn->getMPIPatternP2P(),
           linAlgOpContext,
           2,
@@ -2088,7 +2098,7 @@ namespace dftefe
       else
         wfnPtr = std::make_unique<
           linearAlgebra::MultiVectorProductSpace<ValueTypeWaveFunctionCoeff,
-                                                memorySpace>>(
+                                                 memorySpace>>(
           feBMWaveFn->getMPIPatternP2P(),
           linAlgOpContext,
           1,
@@ -2206,8 +2216,8 @@ namespace dftefe
           KohnShamDFTInternal::buildDescrMap(initDescrMap, d_spinMode);
         if (d_spinMode != SpinMode::Unpolarized && !atomMagZFactors.empty())
           {
-            auto &          spinDensVal = initMixDescrMap[DensityDescrAttr::Val];
-            const size_type numQuad     = spinDensVal[0].nQuadraturePoints();
+            auto &spinDensVal       = initMixDescrMap[DensityDescrAttr::Val];
+            const size_type numQuad = spinDensVal[0].nQuadraturePoints();
             const double *  quadRealPointsHost =
               spinDensVal[0]
                 .getQuadratureRuleContainer()
@@ -2228,8 +2238,7 @@ namespace dftefe
               spinDensVal[1].data()[i] = magZInQuadValues[i];
             if (xcType.rfind("GGA", 0) == 0)
               {
-                auto &          spinDensGrad =
-                  initMixDescrMap[DensityDescrAttr::Grad];
+                auto &spinDensGrad = initMixDescrMap[DensityDescrAttr::Grad];
                 std::vector<double> magZGradInQuadValues(numQuad * dim, 0.0);
                 atomicElectronicChargeDensityFunction.evaluateHost(
                   numQuad,
@@ -2381,25 +2390,27 @@ namespace dftefe
       if (isResidualChebyshevFilter)
         {
           KohnShamEigenSolver<ValueTypeOperator, ValueTypeOperand, memorySpace>
-            ksEigSolve(numElectrons,
-                       smearingTemperature,
-                       fermiEnergyTolerance,
-                       fracOccupancyTolerance,
-                       eigenSolveResidualTolerance,
-                       1,
-                       numWantedEigenvalues,
-                       feBMWaveFn->getMPIPatternP2P(),
-                       linAlgOpContext,
-                       *d_elpaScala,
-                       false,
-                       waveFnBatch,
-                       MContextForInv,
-                       MInvContext,
-        true, /*isGHEP*/
-        linearAlgebra::OrthogonalizationType::CHOLESKY_GRAMSCHMIDT, /*orthoType */
-        false,     /*storeIntermediateSubspaces*/
-        true,     /*useSameScratchInEigenSolver*/
-        spinMode);
+            ksEigSolve(
+              numElectrons,
+              smearingTemperature,
+              fermiEnergyTolerance,
+              fracOccupancyTolerance,
+              eigenSolveResidualTolerance,
+              1,
+              numWantedEigenvalues,
+              feBMWaveFn->getMPIPatternP2P(),
+              linAlgOpContext,
+              *d_elpaScala,
+              false,
+              waveFnBatch,
+              MContextForInv,
+              MInvContext,
+              true, /*isGHEP*/
+              linearAlgebra::OrthogonalizationType::CHOLESKY_GRAMSCHMIDT, /*orthoType
+                                                                           */
+              false, /*storeIntermediateSubspaces*/
+              true,  /*useSameScratchInEigenSolver*/
+              spinMode);
 
           ksEigSolve.setChebyshevPolynomialDegree(1);
 
@@ -2428,10 +2439,11 @@ namespace dftefe
         waveFnBatch,
         MContextForInv,
         MInvContext,
-        true, /*isGHEP*/
-        linearAlgebra::OrthogonalizationType::CHOLESKY_GRAMSCHMIDT, /*orthoType */
-        false,     /*storeIntermediateSubspaces*/
-        true,     /*useSameScratchInEigenSolver*/
+        true,                                                       /*isGHEP*/
+        linearAlgebra::OrthogonalizationType::CHOLESKY_GRAMSCHMIDT, /*orthoType
+                                                                     */
+        false, /*storeIntermediateSubspaces*/
+        true,  /*useSameScratchInEigenSolver*/
         spinMode);
 
       d_rdm1Spectral->setSpectral(std::move(wfnPtr),
@@ -2533,7 +2545,7 @@ namespace dftefe
         const OpContext &MContextForInv,
         const OpContext &MContext,
         const OpContext &MInvContext,
-        bool                         isResidualChebyshevFilter,
+        bool             isResidualChebyshevFilter,
         /* TCI related info */
         const atoms::TCIADataParams &params,
         const std::vector<double> &  atomMagZFactors,
@@ -2567,9 +2579,11 @@ namespace dftefe
     {
       std::unique_ptr<
         linearAlgebra::MultiVector<ValueTypeWaveFunctionCoeff, memorySpace>>
-                                       wfnPtr;
-      const size_type numSpacesS = (d_spinMode == SpinMode::Unpolarized) ? 1 : 2;
-      std::vector<std::vector<double>> occupancies = {std::vector<double>(numSpacesS * numWantedEigenvalues, 0.0)};
+                      wfnPtr;
+      const size_type numSpacesS =
+        (d_spinMode == SpinMode::Unpolarized) ? 1 : 2;
+      std::vector<std::vector<double>> occupancies = {
+        std::vector<double>(numSpacesS * numWantedEigenvalues, 0.0)};
       utils::Profiler<utils::MemorySpace::HOST> p(
         feBMWaveFn->getMPIPatternP2P()->mpiCommunicator(), "Pre Init Checks");
       d_p.registerStart("Pre Init Checks");
@@ -2668,7 +2682,7 @@ namespace dftefe
       else if (d_spinMode == SpinMode::NonCollinear)
         wfnPtr = std::make_unique<
           linearAlgebra::MultiVectorProductSpace<ValueTypeWaveFunctionCoeff,
-                                                memorySpace>>(
+                                                 memorySpace>>(
           feBMWaveFn->getMPIPatternP2P(),
           linAlgOpContext,
           2,
@@ -2677,7 +2691,7 @@ namespace dftefe
       else
         wfnPtr = std::make_unique<
           linearAlgebra::MultiVectorProductSpace<ValueTypeWaveFunctionCoeff,
-                                                memorySpace>>(
+                                                 memorySpace>>(
           feBMWaveFn->getMPIPatternP2P(),
           linAlgOpContext,
           1,
@@ -2799,8 +2813,8 @@ namespace dftefe
           KohnShamDFTInternal::buildDescrMap(initDescrMap, d_spinMode);
         if (d_spinMode != SpinMode::Unpolarized && !atomMagZFactors.empty())
           {
-            auto &          spinDensVal = initMixDescrMap[DensityDescrAttr::Val];
-            const size_type numQuad     = spinDensVal[0].nQuadraturePoints();
+            auto &spinDensVal       = initMixDescrMap[DensityDescrAttr::Val];
+            const size_type numQuad = spinDensVal[0].nQuadraturePoints();
             const double *  quadRealPointsHost =
               spinDensVal[0]
                 .getQuadratureRuleContainer()
@@ -2821,8 +2835,7 @@ namespace dftefe
               spinDensVal[1].data()[i] = magZInQuadValues[i];
             if (xcType.rfind("GGA", 0) == 0)
               {
-                auto &          spinDensGrad =
-                  initMixDescrMap[DensityDescrAttr::Grad];
+                auto &spinDensGrad = initMixDescrMap[DensityDescrAttr::Grad];
                 std::vector<double> magZGradInQuadValues(numQuad * dim, 0.0);
                 atomicElectronicChargeDensityFunction.evaluateHost(
                   numQuad,
@@ -3111,25 +3124,27 @@ namespace dftefe
       if (isResidualChebyshevFilter)
         {
           KohnShamEigenSolver<ValueTypeOperator, ValueTypeOperand, memorySpace>
-            ksEigSolve(numElectrons,
-                       smearingTemperature,
-                       fermiEnergyTolerance,
-                       fracOccupancyTolerance,
-                       eigenSolveResidualTolerance,
-                       1,
-                       numWantedEigenvalues,
-                       feBMWaveFn->getMPIPatternP2P(),
-                       linAlgOpContext,
-                       *d_elpaScala,
-                       false,
-                       waveFnBatch,
-                       MContextForInv,
-                       MInvContext,
-        true, /*isGHEP*/
-        linearAlgebra::OrthogonalizationType::CHOLESKY_GRAMSCHMIDT, /*orthoType */
-        false,     /*storeIntermediateSubspaces*/
-        true,     /*useSameScratchInEigenSolver*/
-        spinMode);
+            ksEigSolve(
+              numElectrons,
+              smearingTemperature,
+              fermiEnergyTolerance,
+              fracOccupancyTolerance,
+              eigenSolveResidualTolerance,
+              1,
+              numWantedEigenvalues,
+              feBMWaveFn->getMPIPatternP2P(),
+              linAlgOpContext,
+              *d_elpaScala,
+              false,
+              waveFnBatch,
+              MContextForInv,
+              MInvContext,
+              true, /*isGHEP*/
+              linearAlgebra::OrthogonalizationType::CHOLESKY_GRAMSCHMIDT, /*orthoType
+                                                                           */
+              false, /*storeIntermediateSubspaces*/
+              true,  /*useSameScratchInEigenSolver*/
+              spinMode);
 
           ksEigSolve.setChebyshevPolynomialDegree(1);
 
@@ -3158,10 +3173,11 @@ namespace dftefe
         waveFnBatch,
         MContextForInv,
         MInvContext,
-        true, /*isGHEP*/
-        linearAlgebra::OrthogonalizationType::CHOLESKY_GRAMSCHMIDT, /*orthoType */
-        false,     /*storeIntermediateSubspaces*/
-        true,     /*useSameScratchInEigenSolver*/
+        true,                                                       /*isGHEP*/
+        linearAlgebra::OrthogonalizationType::CHOLESKY_GRAMSCHMIDT, /*orthoType
+                                                                     */
+        false, /*storeIntermediateSubspaces*/
+        true,  /*useSameScratchInEigenSolver*/
         spinMode);
 
       d_rdm1Spectral->setSpectral(std::move(wfnPtr),
@@ -3246,9 +3262,9 @@ namespace dftefe
       //
       // Begin SCF iteration
       //
-      size_type scfIter  = 0;
-      double    norm     = 1.0;
-      double    magNorm  = 0.0;
+      size_type scfIter = 0;
+      double    norm    = 1.0;
+      double    magNorm = 0.0;
       d_rootCout << "Starting SCF iterations....\n";
 
       std::unordered_map<
@@ -3341,11 +3357,13 @@ namespace dftefe
           // reinit the chfsi bounds
           if (scfIter > 0)
             {
-              RealType topEig = d_kohnShamEnergies[d_numWantedEigenvalues - 1];
-              size_type numSpacesS = (d_spinMode == SpinMode::Unpolarized) ? 1 : 2;
+              RealType  topEig = d_kohnShamEnergies[d_numWantedEigenvalues - 1];
+              size_type numSpacesS =
+                (d_spinMode == SpinMode::Unpolarized) ? 1 : 2;
               for (size_type s = 1; s < numSpacesS; ++s)
-                topEig = std::max(topEig,
-                                  d_kohnShamEnergies[(s + 1) * d_numWantedEigenvalues - 1]);
+                topEig = std::max(
+                  topEig,
+                  d_kohnShamEnergies[(s + 1) * d_numWantedEigenvalues - 1]);
               d_ksEigSolve->reinitBounds(d_kohnShamEnergies[0], topEig);
               // d_ksEigSolve->reinitBounds(
               //   d_kohnShamEnergies[0],
@@ -3402,8 +3420,8 @@ namespace dftefe
 
           if (d_spinMode == SpinMode::Collinear)
             {
-              auto &          magDensOut = densAttrOut.at(DensityDescrAttr::Val)[1];
-              const size_type numQuad    = magDensOut.nQuadraturePoints();
+              auto &magDensOut = densAttrOut.at(DensityDescrAttr::Val)[1];
+              const size_type numQuad = magDensOut.nQuadraturePoints();
               RealType        netMag = 0.0, absMag = 0.0;
               for (size_type i = 0; i < numQuad; ++i)
                 {
@@ -3456,7 +3474,8 @@ namespace dftefe
                 {
                   auto &magDensOut = densAttrOut.at(DensityDescrAttr::Val)[1];
                   auto &magDensIn  = densAttrIn.at(DensityDescrAttr::Val)[1];
-                  quadrature::QuadratureValuesContainer<RealType, memorySpaceHost>
+                  quadrature::QuadratureValuesContainer<RealType,
+                                                        memorySpaceHost>
                     magResidualQuadValues(magDensIn);
                   magNorm = KohnShamDFTInternal::computeResidualQuadData(
                     magDensOut,
@@ -3538,12 +3557,13 @@ namespace dftefe
 
               // calculate band energy
               const RealType bandEnergySpinFactor =
-                (d_spinMode == SpinMode::Unpolarized) ? (RealType)2 : (RealType)1;
+                (d_spinMode == SpinMode::Unpolarized) ? (RealType)2 :
+                                                        (RealType)1;
               RealType bandEnergy = 0;
               for (size_type i = 0; i < occupancies[0].size(); i++)
                 {
-                  bandEnergy +=
-                    bandEnergySpinFactor * occupancies[0][i] * d_kohnShamEnergies[i];
+                  bandEnergy += bandEnergySpinFactor * occupancies[0][i] *
+                                d_kohnShamEnergies[i];
                 }
 
               d_rootCout << "Band energy: " << bandEnergy << "\n";
@@ -3569,8 +3589,9 @@ namespace dftefe
 
           if (scfIter > 0)
             {
-              d_rootCout << "ANDERSON mixing, L2 norm of electron-density difference: "
-                         << norm << "\n";
+              d_rootCout
+                << "ANDERSON mixing, L2 norm of electron-density difference: "
+                << norm << "\n";
               if (d_spinMode != SpinMode::Unpolarized)
                 d_rootCout
                   << "ANDERSON mixing, L2 norm of magnetization-density difference: "
@@ -3584,8 +3605,8 @@ namespace dftefe
 
       if (d_spinMode == SpinMode::Collinear)
         {
-          auto &          magDensFinal = densAttrOut.at(DensityDescrAttr::Val)[1];
-          const size_type numQuad      = magDensFinal.nQuadraturePoints();
+          auto &magDensFinal      = densAttrOut.at(DensityDescrAttr::Val)[1];
+          const size_type numQuad = magDensFinal.nQuadraturePoints();
           RealType        netMag = 0.0, absMag = 0.0;
           for (size_type i = 0; i < numQuad; ++i)
             {
@@ -3679,8 +3700,8 @@ namespace dftefe
           RealType bandEnergy = 0;
           for (size_type i = 0; i < occupancies[0].size(); i++)
             {
-              bandEnergy +=
-                bandEnergySpinFactor * occupancies[0][i] * d_kohnShamEnergies[i];
+              bandEnergy += bandEnergySpinFactor * occupancies[0][i] *
+                            d_kohnShamEnergies[i];
             }
 
           rootCout << "Band energy: " << bandEnergy << "\n";

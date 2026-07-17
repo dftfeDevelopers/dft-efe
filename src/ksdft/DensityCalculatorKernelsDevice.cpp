@@ -204,7 +204,7 @@ namespace dftefe
                   quadRuleContainer,
         RealType *rhoBatch,
         linearAlgebra::LinAlgOpContext<utils::MemorySpace::DEVICE>
-          &      linAlgOpContext,
+          &            linAlgOpContext,
         const SpinMode spinMode)
     {
       size_type quadPtsInCellsBlockSize = 0;
@@ -220,7 +220,8 @@ namespace dftefe
                            batchSize,
                            quadPtsInCellsBlockSize,
                            utils::makeDataTypeDeviceCompatible(psiBatchQuad),
-                           utils::makeDataTypeDeviceCompatible(modPsiSqBatchQuad));
+                           utils::makeDataTypeDeviceCompatible(
+                             modPsiSqBatchQuad));
 
       if (spinMode == SpinMode::Unpolarized)
         {
@@ -228,9 +229,20 @@ namespace dftefe
           const RealType beta  = 0.0;
           linearAlgebra::blasLapack::
             gemm<RealType, RealType, utils::MemorySpace::DEVICE>(
-              'N', 'N', 1, quadPtsInCellsBlockSize, batchSize, alpha,
-              occupationInBatch, 1, modPsiSqBatchQuad, batchSize,
-              beta, rhoBatch, 1, linAlgOpContext);
+              'N',
+              'N',
+              1,
+              quadPtsInCellsBlockSize,
+              batchSize,
+              alpha,
+              occupationInBatch,
+              1,
+              modPsiSqBatchQuad,
+              batchSize,
+              beta,
+              rhoBatch,
+              1,
+              linAlgOpContext);
         }
       else if (spinMode == SpinMode::Collinear)
         {
@@ -239,33 +251,69 @@ namespace dftefe
           // ρ_total = spin-up + spin-down
           linearAlgebra::blasLapack::
             gemm<RealType, RealType, utils::MemorySpace::DEVICE>(
-              'N', 'N', 1, quadPtsInCellsBlockSize, batchN, (RealType)1.0,
-              occupationInBatch, 1,
-              modPsiSqBatchQuad, batchSize,
-              (RealType)0.0, rhoBatch + 0 * quadPtsInCellsBlockSize, 1,
+              'N',
+              'N',
+              1,
+              quadPtsInCellsBlockSize,
+              batchN,
+              (RealType)1.0,
+              occupationInBatch,
+              1,
+              modPsiSqBatchQuad,
+              batchSize,
+              (RealType)0.0,
+              rhoBatch + 0 * quadPtsInCellsBlockSize,
+              1,
               linAlgOpContext);
           linearAlgebra::blasLapack::
             gemm<RealType, RealType, utils::MemorySpace::DEVICE>(
-              'N', 'N', 1, quadPtsInCellsBlockSize, batchN, (RealType)1.0,
-              occupationInBatch + batchN, 1,
-              modPsiSqBatchQuad + batchN, batchSize,
-              (RealType)1.0, rhoBatch + 0 * quadPtsInCellsBlockSize, 1,
+              'N',
+              'N',
+              1,
+              quadPtsInCellsBlockSize,
+              batchN,
+              (RealType)1.0,
+              occupationInBatch + batchN,
+              1,
+              modPsiSqBatchQuad + batchN,
+              batchSize,
+              (RealType)1.0,
+              rhoBatch + 0 * quadPtsInCellsBlockSize,
+              1,
               linAlgOpContext);
 
           // Mz = spin-up - spin-down
           linearAlgebra::blasLapack::
             gemm<RealType, RealType, utils::MemorySpace::DEVICE>(
-              'N', 'N', 1, quadPtsInCellsBlockSize, batchN, (RealType)1.0,
-              occupationInBatch, 1,
-              modPsiSqBatchQuad, batchSize,
-              (RealType)0.0, rhoBatch + 1 * quadPtsInCellsBlockSize, 1,
+              'N',
+              'N',
+              1,
+              quadPtsInCellsBlockSize,
+              batchN,
+              (RealType)1.0,
+              occupationInBatch,
+              1,
+              modPsiSqBatchQuad,
+              batchSize,
+              (RealType)0.0,
+              rhoBatch + 1 * quadPtsInCellsBlockSize,
+              1,
               linAlgOpContext);
           linearAlgebra::blasLapack::
             gemm<RealType, RealType, utils::MemorySpace::DEVICE>(
-              'N', 'N', 1, quadPtsInCellsBlockSize, batchN, (RealType)-1.0,
-              occupationInBatch + batchN, 1,
-              modPsiSqBatchQuad + batchN, batchSize,
-              (RealType)1.0, rhoBatch + 1 * quadPtsInCellsBlockSize, 1,
+              'N',
+              'N',
+              1,
+              quadPtsInCellsBlockSize,
+              batchN,
+              (RealType)-1.0,
+              occupationInBatch + batchN,
+              1,
+              modPsiSqBatchQuad + batchN,
+              batchSize,
+              (RealType)1.0,
+              rhoBatch + 1 * quadPtsInCellsBlockSize,
+              1,
               linAlgOpContext);
         }
       else
@@ -293,7 +341,7 @@ namespace dftefe
                   quadRuleContainer,
         RealType *gradRhoBatch,
         linearAlgebra::LinAlgOpContext<utils::MemorySpace::DEVICE>
-          &      linAlgOpContext,
+          &            linAlgOpContext,
         const SpinMode spinMode)
     {
       size_type quadPtsInCellsBlockSize = 0;
@@ -318,13 +366,25 @@ namespace dftefe
 
       if (spinMode == SpinMode::Unpolarized)
         {
-          const RealType alpha = 4.0; // 2 for spin up and down, 2 for grad(|psi|^2) = 2Re(psi* grad psi)
+          const RealType alpha = 4.0; // 2 for spin up and down, 2 for
+                                      // grad(|psi|^2) = 2Re(psi* grad psi)
           const RealType beta = 0.0;
           linearAlgebra::blasLapack::
             gemm<RealType, RealType, utils::MemorySpace::DEVICE>(
-              'N', 'N', 1, quadPtsInCellsBlockSize * dim, batchSize, alpha,
-              occupationInBatch, 1, psiGradPsiBatch, batchSize,
-              beta, gradRhoBatch, 1, linAlgOpContext);
+              'N',
+              'N',
+              1,
+              quadPtsInCellsBlockSize * dim,
+              batchSize,
+              alpha,
+              occupationInBatch,
+              1,
+              psiGradPsiBatch,
+              batchSize,
+              beta,
+              gradRhoBatch,
+              1,
+              linAlgOpContext);
         }
       else if (spinMode == SpinMode::Collinear)
         {
@@ -333,33 +393,69 @@ namespace dftefe
           // ∇ρ_total = 2*(occ_up * psiGradPsi_up + occ_dn * psiGradPsi_dn)
           linearAlgebra::blasLapack::
             gemm<RealType, RealType, utils::MemorySpace::DEVICE>(
-              'N', 'N', 1, quadPtsInCellsBlockSize * dim, batchN, (RealType)2.0,
-              occupationInBatch, 1,
-              psiGradPsiBatch, batchSize,
-              (RealType)0.0, gradRhoBatch + 0 * quadPtsInCellsBlockSize * dim, 1,
+              'N',
+              'N',
+              1,
+              quadPtsInCellsBlockSize * dim,
+              batchN,
+              (RealType)2.0,
+              occupationInBatch,
+              1,
+              psiGradPsiBatch,
+              batchSize,
+              (RealType)0.0,
+              gradRhoBatch + 0 * quadPtsInCellsBlockSize * dim,
+              1,
               linAlgOpContext);
           linearAlgebra::blasLapack::
             gemm<RealType, RealType, utils::MemorySpace::DEVICE>(
-              'N', 'N', 1, quadPtsInCellsBlockSize * dim, batchN, (RealType)2.0,
-              occupationInBatch + batchN, 1,
-              psiGradPsiBatch + batchN, batchSize,
-              (RealType)1.0, gradRhoBatch + 0 * quadPtsInCellsBlockSize * dim, 1,
+              'N',
+              'N',
+              1,
+              quadPtsInCellsBlockSize * dim,
+              batchN,
+              (RealType)2.0,
+              occupationInBatch + batchN,
+              1,
+              psiGradPsiBatch + batchN,
+              batchSize,
+              (RealType)1.0,
+              gradRhoBatch + 0 * quadPtsInCellsBlockSize * dim,
+              1,
               linAlgOpContext);
 
           // ∇Mz = 2*(occ_up * psiGradPsi_up - occ_dn * psiGradPsi_dn)
           linearAlgebra::blasLapack::
             gemm<RealType, RealType, utils::MemorySpace::DEVICE>(
-              'N', 'N', 1, quadPtsInCellsBlockSize * dim, batchN, (RealType)2.0,
-              occupationInBatch, 1,
-              psiGradPsiBatch, batchSize,
-              (RealType)0.0, gradRhoBatch + 1 * quadPtsInCellsBlockSize * dim, 1,
+              'N',
+              'N',
+              1,
+              quadPtsInCellsBlockSize * dim,
+              batchN,
+              (RealType)2.0,
+              occupationInBatch,
+              1,
+              psiGradPsiBatch,
+              batchSize,
+              (RealType)0.0,
+              gradRhoBatch + 1 * quadPtsInCellsBlockSize * dim,
+              1,
               linAlgOpContext);
           linearAlgebra::blasLapack::
             gemm<RealType, RealType, utils::MemorySpace::DEVICE>(
-              'N', 'N', 1, quadPtsInCellsBlockSize * dim, batchN, (RealType)-2.0,
-              occupationInBatch + batchN, 1,
-              psiGradPsiBatch + batchN, batchSize,
-              (RealType)1.0, gradRhoBatch + 1 * quadPtsInCellsBlockSize * dim, 1,
+              'N',
+              'N',
+              1,
+              quadPtsInCellsBlockSize * dim,
+              batchN,
+              (RealType)-2.0,
+              occupationInBatch + batchN,
+              1,
+              psiGradPsiBatch + batchN,
+              batchSize,
+              (RealType)1.0,
+              gradRhoBatch + 1 * quadPtsInCellsBlockSize * dim,
+              1,
               linAlgOpContext);
         }
       else

@@ -36,7 +36,11 @@ namespace dftefe
 {
   namespace ksdft
   {
-    enum class SpinStorageLayout { DofFastest, SpinFastest };
+    enum class SpinStorageLayout
+    {
+      DofFastest,
+      SpinFastest
+    };
 
     template <typename ValueType, utils::MemorySpace memorySpace>
     class HamiltonianSpinBlockCopyKernels
@@ -60,28 +64,28 @@ namespace dftefe
        */
       static void
       copyIntoBlock(
-        const utils::MemoryStorage<ValueType, memorySpace> &              src,
-        utils::MemoryStorage<ValueType, memorySpace> &                    dst,
-        size_type                                                          S,
-        SpinStorageLayout                                                  layout,
+        const utils::MemoryStorage<ValueType, memorySpace> &src,
+        utils::MemoryStorage<ValueType, memorySpace> &      dst,
+        size_type                                           S,
+        SpinStorageLayout                                   layout,
         const std::vector<std::pair<size_type, size_type>> &spinIdsFilled,
-        const std::vector<size_type> &                       numCellDofs,
-        linearAlgebra::LinAlgOpContext<memorySpace> &        linAlgOpContext);
+        const std::vector<size_type> &                      numCellDofs,
+        linearAlgebra::LinAlgOpContext<memorySpace> &       linAlgOpContext);
     };
 
     template <typename ValueType, utils::MemorySpace memorySpace>
     void
     HamiltonianSpinBlockCopyKernels<ValueType, memorySpace>::copyIntoBlock(
-      const utils::MemoryStorage<ValueType, memorySpace> &              src,
-      utils::MemoryStorage<ValueType, memorySpace> &                    dst,
-      size_type                                                          S,
-      SpinStorageLayout                                                  layout,
+      const utils::MemoryStorage<ValueType, memorySpace> &src,
+      utils::MemoryStorage<ValueType, memorySpace> &      dst,
+      size_type                                           S,
+      SpinStorageLayout                                   layout,
       const std::vector<std::pair<size_type, size_type>> &spinIdsFilled,
-      const std::vector<size_type> &                       numCellDofs,
+      const std::vector<size_type> &                      numCellDofs,
       linearAlgebra::LinAlgOpContext<memorySpace> & /*linAlgOpContext*/)
     {
-      const size_type  K = spinIdsFilled.size();
-      size_type        basisOverlapSize = 0;
+      const size_type K                = spinIdsFilled.size();
+      size_type       basisOverlapSize = 0;
       for (const size_type d : numCellDofs)
         basisOverlapSize += d * d;
 
@@ -90,8 +94,8 @@ namespace dftefe
 
       for (size_type k = 0; k < K; ++k)
         {
-          const size_type sRow  = spinIdsFilled[k].first;
-          const size_type sCol  = spinIdsFilled[k].second;
+          const size_type sRow          = spinIdsFilled[k].first;
+          const size_type sCol          = spinIdsFilled[k].second;
           size_type       cellSrcOffset = 0;
           size_type       cellDstOffset = 0;
           for (const size_type d : numCellDofs)
@@ -101,9 +105,9 @@ namespace dftefe
                 for (size_type i = 0; i < d; ++i)
                   {
                     const size_type dstIdx =
-                      (layout == SpinStorageLayout::DofFastest)
-                        ? cellDstOffset + (sCol * d + j) * Sd + sRow * d + i
-                        : cellDstOffset + (j * S + sCol) * Sd + i * S + sRow;
+                      (layout == SpinStorageLayout::DofFastest) ?
+                        cellDstOffset + (sCol * d + j) * Sd + sRow * d + i :
+                        cellDstOffset + (j * S + sCol) * Sd + i * S + sRow;
                     dstPtr[dstIdx] =
                       srcPtr[k * basisOverlapSize + cellSrcOffset + j * d + i];
                   }
@@ -115,21 +119,19 @@ namespace dftefe
 
 #ifdef DFTEFE_WITH_DEVICE
     template <typename ValueType>
-    class HamiltonianSpinBlockCopyKernels<ValueType,
-                                          utils::MemorySpace::DEVICE>
+    class HamiltonianSpinBlockCopyKernels<ValueType, utils::MemorySpace::DEVICE>
     {
     public:
       static void
       copyIntoBlock(
-        const utils::MemoryStorage<ValueType,
-                                   utils::MemorySpace::DEVICE> &src,
-        utils::MemoryStorage<ValueType, utils::MemorySpace::DEVICE> &dst,
-        size_type                                                     S,
-        SpinStorageLayout                                             layout,
+        const utils::MemoryStorage<ValueType, utils::MemorySpace::DEVICE> &src,
+        utils::MemoryStorage<ValueType, utils::MemorySpace::DEVICE> &      dst,
+        size_type                                                          S,
+        SpinStorageLayout                                   layout,
         const std::vector<std::pair<size_type, size_type>> &spinIdsFilled,
-        const std::vector<size_type> &                       numCellDofs,
-        linearAlgebra::LinAlgOpContext<utils::MemorySpace::DEVICE> &
-          linAlgOpContext);
+        const std::vector<size_type> &                      numCellDofs,
+        linearAlgebra::LinAlgOpContext<utils::MemorySpace::DEVICE>
+          &linAlgOpContext);
     };
 #endif
 

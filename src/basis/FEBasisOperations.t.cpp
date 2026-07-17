@@ -44,8 +44,8 @@ namespace dftefe
       BasisWeakFormKernelWithField(
         realspace::LinearLocalOp L1,
         realspace::VectorMathOp  Op1,
-        const std::vector<quadrature::QuadratureValuesContainer<ValueTypeUnion,
-                                                                memorySpace>>
+        const std::vector<
+          quadrature::QuadratureValuesContainer<ValueTypeUnion, memorySpace>>
           &                      fVec,
         realspace::VectorMathOp  Op2,
         realspace::LinearLocalOp L2,
@@ -68,8 +68,9 @@ namespace dftefe
           std::shared_ptr<const quadrature::QuadratureRuleContainer>
             quadRuleContainer = fVec[0].getQuadratureRuleContainer();
           const quadrature::QuadratureRuleAttributes
-            &quadratureRuleAttributesf =
-              fVec[0].getQuadratureRuleContainer()->getQuadratureRuleAttributes();
+            &quadratureRuleAttributesf = fVec[0]
+                                           .getQuadratureRuleContainer()
+                                           ->getQuadratureRuleAttributes();
           utils::throwException(
             quadratureRuleAttributes == quadratureRuleAttributesf,
             "Mismatch in the underlying QuadratureRuleAttributes of the "
@@ -199,9 +200,9 @@ namespace dftefe
                   ldaSizes[iCell] = mSizes[iCell];
                   ldbSizes[iCell] = nSizes[iCell];
                   ldcSizes[iCell] = mSizes[iCell];
-                  strideA[iCell] = mSizes[iCell] * kSizes[iCell];
-                  strideB[iCell] = kSizes[iCell] * nSizes[iCell];
-                  strideC[iCell] = mSizes[iCell] * nSizes[iCell];
+                  strideA[iCell]  = mSizes[iCell] * kSizes[iCell];
+                  strideB[iCell]  = kSizes[iCell] * nSizes[iCell];
+                  strideC[iCell]  = mSizes[iCell] * nSizes[iCell];
                 }
 
               ValueTypeUnion alpha = 1.0;
@@ -219,45 +220,43 @@ namespace dftefe
                   linearAlgebra::blasLapack::scaleStridedVarBatched<
                     ValueTypeBasisCoeff,
                     ValueTypeBasisData,
-                    memorySpace>(
-                    numCellsInBlock,
-                    layout,
-                    scalarOpA,
-                    scalarOpB,
-                    stA.data(),
-                    stB.data(),
-                    stC.data(),
-                    m.data(),
-                    n.data(),
-                    k.data(),
-                    fxJxW.data(),
-                    d_basisDataInCellRange.data(),
-                    d_fxJxWxNBlock.data(),
-                    linAlgOpContext);
+                    memorySpace>(numCellsInBlock,
+                                 layout,
+                                 scalarOpA,
+                                 scalarOpB,
+                                 stA.data(),
+                                 stB.data(),
+                                 stC.data(),
+                                 m.data(),
+                                 n.data(),
+                                 k.data(),
+                                 fxJxW.data(),
+                                 d_basisDataInCellRange.data(),
+                                 d_fxJxWxNBlock.data(),
+                                 linAlgOpContext);
 
                   linearAlgebra::blasLapack::gemmStridedVarBatched<
                     ValueTypeBasisData,
                     ValueTypeUnion,
-                    memorySpace>(
-                    numCellsInBlock,
-                    transA.data(),
-                    transB.data(),
-                    strideA.data(),
-                    strideB.data(),
-                    strideC.data(),
-                    mSizes.data(),
-                    nSizes.data(),
-                    kSizes.data(),
-                    alpha,
-                    d_fxJxWxNBlock.data(),
-                    ldaSizes.data(),
-                    d_basisDataInCellRange.data(),
-                    ldbSizes.data(),
-                    beta,
-                    cellWiseFEData.begin() + kComp * basisOverlapSize +
-                      NifNjStartOffset,
-                    ldcSizes.data(),
-                    linAlgOpContext);
+                    memorySpace>(numCellsInBlock,
+                                 transA.data(),
+                                 transB.data(),
+                                 strideA.data(),
+                                 strideB.data(),
+                                 strideC.data(),
+                                 mSizes.data(),
+                                 nSizes.data(),
+                                 kSizes.data(),
+                                 alpha,
+                                 d_fxJxWxNBlock.data(),
+                                 ldaSizes.data(),
+                                 d_basisDataInCellRange.data(),
+                                 ldbSizes.data(),
+                                 beta,
+                                 cellWiseFEData.begin() +
+                                   kComp * basisOverlapSize + NifNjStartOffset,
+                                 ldcSizes.data(),
+                                 linAlgOpContext);
                 }
 
               NifNjStartOffset += numCumulativeDofsxDofsCellsInBlock;
@@ -284,8 +283,8 @@ namespace dftefe
                       memorySpace,
                       dim>::
       BasisWeakFormKernelWithField(
-        const std::vector<quadrature::QuadratureValuesContainer<ValueTypeUnion,
-                                                                memorySpace>>
+        const std::vector<
+          quadrature::QuadratureValuesContainer<ValueTypeUnion, memorySpace>>
           &                      fVec,
         realspace::VectorMathOp  Op12,
         realspace::LinearLocalOp L12,
@@ -307,16 +306,17 @@ namespace dftefe
           std::shared_ptr<const quadrature::QuadratureRuleContainer>
             quadRuleContainer = fVec[0].getQuadratureRuleContainer();
           const quadrature::QuadratureRuleAttributes
-            &quadratureRuleAttributesf =
-              fVec[0].getQuadratureRuleContainer()->getQuadratureRuleAttributes();
+            &quadratureRuleAttributesf = fVec[0]
+                                           .getQuadratureRuleContainer()
+                                           ->getQuadratureRuleAttributes();
           utils::throwException(
             quadratureRuleAttributes == quadratureRuleAttributesf,
             "Mismatch in the underlying QuadratureRuleAttributes of the "
             "input QuadratureValuesContainer and the one passed to the "
             " computeFEMatrices()");
 
-          const size_type K = fVec.size();
-          size_type basisOverlapSize = 0;
+          const size_type K                = fVec.size();
+          size_type       basisOverlapSize = 0;
 
           for (size_type iCell = 0; iCell < d_numLocallyOwnedCells; iCell++)
             {
@@ -337,7 +337,8 @@ namespace dftefe
           const size_type numCumulativeQuadCells =
             std::accumulate(d_numCellQuad.begin(), d_numCellQuad.end(), 0);
 
-          // fxJxW[d,q] = JxW[q]*fVec[kComp][d,q] — built per kComp per cell block
+          // fxJxW[d,q] = JxW[q]*fVec[kComp][d,q] — built per kComp per cell
+          // block
           StorageUnion fxJxW(dim * numCumulativeQuadCells, ValueTypeUnion());
 
           if (d_fxJxWxNBlock.size() !=
@@ -398,7 +399,8 @@ namespace dftefe
                 linearAlgebra::blasLapack::ScalarOp::Identity;
 
               // Per-block strides for building fxJxW[d,q] = JxW[q]*fVec[k][d,q]
-              // jxw is scalar [1 x numQuad] per cell; fVec[k] is [dim x numQuad].
+              // jxw is scalar [1 x numQuad] per cell; fVec[k] is [dim x
+              // numQuad].
               std::vector<size_type> mFxJxW(numCellsInBlock, 1);
               std::vector<size_type> nFxJxW(numCellsInBlock, dim);
               std::vector<size_type> kFxJxW(numCellsInBlock, 0);
@@ -484,37 +486,37 @@ namespace dftefe
                     ValueTypeBasisCoeff,
                     ValueTypeBasisData,
                     memorySpace>(numCellsInBlock,
-                                layout,
-                                scalarOpA,
-                                scalarOpB,
-                                stAFxJxW.data(),
-                                stBFxJxW.data(),
-                                stCFxJxW.data(),
-                                mFxJxW.data(),
-                                nFxJxW.data(),
-                                kFxJxW.data(),
-                                jxwStorage.data() + jxwBlockOffset,
-                                fVec[kComp].begin() + dim * jxwBlockOffset,
-                                fxJxW.data(),
-                                linAlgOpContext);
+                                 layout,
+                                 scalarOpA,
+                                 scalarOpB,
+                                 stAFxJxW.data(),
+                                 stBFxJxW.data(),
+                                 stCFxJxW.data(),
+                                 mFxJxW.data(),
+                                 nFxJxW.data(),
+                                 kFxJxW.data(),
+                                 jxwStorage.data() + jxwBlockOffset,
+                                 fVec[kComp].begin() + dim * jxwBlockOffset,
+                                 fxJxW.data(),
+                                 linAlgOpContext);
 
                   linearAlgebra::blasLapack::scaleStridedVarBatched<
                     ValueTypeBasisCoeff,
                     ValueTypeBasisData,
                     memorySpace>(numCellsInBlock,
-                                layout,
-                                scalarOpA,
-                                scalarOpB,
-                                stA.data(),
-                                stB.data(),
-                                stC.data(),
-                                m.data(),
-                                n.data(),
-                                k.data(),
-                                fxJxW.data(),
-                                d_basisDataInCellRange.data(),
-                                d_fxJxWxNBlock.data(),
-                                linAlgOpContext);
+                                 layout,
+                                 scalarOpA,
+                                 scalarOpB,
+                                 stA.data(),
+                                 stB.data(),
+                                 stC.data(),
+                                 m.data(),
+                                 n.data(),
+                                 k.data(),
+                                 fxJxW.data(),
+                                 d_basisDataInCellRange.data(),
+                                 d_fxJxWxNBlock.data(),
+                                 linAlgOpContext);
 
                   ValueTypeUnion alpha = 1.0;
                   ValueTypeUnion beta  = 0.0;
@@ -522,51 +524,49 @@ namespace dftefe
                   linearAlgebra::blasLapack::gemmStridedVarBatched<
                     ValueTypeBasisData,
                     ValueTypeUnion,
-                    memorySpace>(
-                    numCellsInBlock,
-                    transA.data(),
-                    transB.data(),
-                    strideA.data(),
-                    strideB.data(),
-                    strideC.data(),
-                    mSizes.data(),
-                    nSizes.data(),
-                    kSizes.data(),
-                    alpha,
-                    d_fxJxWxNBlock.data(),
-                    ldaSizes.data(),
-                    d_basisGradientDataInCellRange.data(),
-                    ldbSizes.data(),
-                    beta,
-                    cellWiseFEData.begin() + kComp * basisOverlapSize +
-                      NifNjStartOffset,
-                    ldcSizes.data(),
-                    linAlgOpContext);
+                    memorySpace>(numCellsInBlock,
+                                 transA.data(),
+                                 transB.data(),
+                                 strideA.data(),
+                                 strideB.data(),
+                                 strideC.data(),
+                                 mSizes.data(),
+                                 nSizes.data(),
+                                 kSizes.data(),
+                                 alpha,
+                                 d_fxJxWxNBlock.data(),
+                                 ldaSizes.data(),
+                                 d_basisGradientDataInCellRange.data(),
+                                 ldbSizes.data(),
+                                 beta,
+                                 cellWiseFEData.begin() +
+                                   kComp * basisOverlapSize + NifNjStartOffset,
+                                 ldcSizes.data(),
+                                 linAlgOpContext);
 
                   beta = 1.0;
                   linearAlgebra::blasLapack::gemmStridedVarBatched<
                     ValueTypeBasisData,
                     ValueTypeUnion,
-                    memorySpace>(
-                    numCellsInBlock,
-                    transA.data(),
-                    transB.data(),
-                    strideA.data(),
-                    strideB.data(),
-                    strideC.data(),
-                    mSizes.data(),
-                    nSizes.data(),
-                    kSizes.data(),
-                    alpha,
-                    d_basisGradientDataInCellRange.data(),
-                    ldaSizes.data(),
-                    d_fxJxWxNBlock.data(),
-                    ldbSizes.data(),
-                    beta,
-                    cellWiseFEData.begin() + kComp * basisOverlapSize +
-                      NifNjStartOffset,
-                    ldcSizes.data(),
-                    linAlgOpContext);
+                    memorySpace>(numCellsInBlock,
+                                 transA.data(),
+                                 transB.data(),
+                                 strideA.data(),
+                                 strideB.data(),
+                                 strideC.data(),
+                                 mSizes.data(),
+                                 nSizes.data(),
+                                 kSizes.data(),
+                                 alpha,
+                                 d_basisGradientDataInCellRange.data(),
+                                 ldaSizes.data(),
+                                 d_fxJxWxNBlock.data(),
+                                 ldbSizes.data(),
+                                 beta,
+                                 cellWiseFEData.begin() +
+                                   kComp * basisOverlapSize + NifNjStartOffset,
+                                 ldcSizes.data(),
+                                 linAlgOpContext);
                 }
 
               NifNjStartOffset += numCumulativeDofsxDofsCellsInBlock;
@@ -1885,8 +1885,8 @@ namespace dftefe
       computeFEMatrices(
         realspace::LinearLocalOp L1,
         realspace::VectorMathOp  Op1,
-        const std::vector<quadrature::QuadratureValuesContainer<ValueTypeUnion,
-                                                                memorySpace>>
+        const std::vector<
+          quadrature::QuadratureValuesContainer<ValueTypeUnion, memorySpace>>
           &                                          fVec,
         realspace::VectorMathOp                      Op2,
         realspace::LinearLocalOp                     L2,
@@ -1920,8 +1920,8 @@ namespace dftefe
                       memorySpace,
                       dim>::
       computeFEMatrices(
-        const std::vector<quadrature::QuadratureValuesContainer<ValueTypeUnion,
-                                                                memorySpace>>
+        const std::vector<
+          quadrature::QuadratureValuesContainer<ValueTypeUnion, memorySpace>>
           &                                          fVec,
         realspace::VectorMathOp                      Op12,
         realspace::LinearLocalOp                     L12,

@@ -43,11 +43,11 @@ namespace dftefe
                               ValueTypeOperand,
                               memorySpace>::
       LanczosExtremeEigenSolver(
-        const size_type                                   maxKrylovSubspaceSize,
-        const size_type                                   numLowerExtermeEigenValues,
-        const size_type                                   numUpperExtermeEigenValues,
-        std::vector<double> &                             tolerance,
-        double                                            lanczosBetaTolerance,
+        const size_type      maxKrylovSubspaceSize,
+        const size_type      numLowerExtermeEigenValues,
+        const size_type      numUpperExtermeEigenValues,
+        std::vector<double> &tolerance,
+        double               lanczosBetaTolerance,
         const MultiVector<ValueTypeOperand, memorySpace> &initialGuess,
         bool                                              isAdaptiveSolve)
       : d_isAdaptiveSolve(isAdaptiveSolve)
@@ -75,8 +75,8 @@ namespace dftefe
         std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
                                                       mpiPatternP2P,
         std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext,
-        bool      isAdaptiveSolve,
-        size_type numSpaces)
+        bool                                          isAdaptiveSolve,
+        size_type                                     numSpaces)
       : d_isAdaptiveSolve(isAdaptiveSolve)
     {
       reinit(maxKrylovSubspaceSize,

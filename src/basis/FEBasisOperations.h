@@ -151,8 +151,8 @@ namespace dftefe
       computeFEMatrices(
         realspace::LinearLocalOp L1,
         realspace::VectorMathOp  Op1,
-        const std::vector<quadrature::QuadratureValuesContainer<ValueTypeUnion,
-                                                                memorySpace>>
+        const std::vector<
+          quadrature::QuadratureValuesContainer<ValueTypeUnion, memorySpace>>
           &                                          fVec,
         realspace::VectorMathOp                      L2,
         realspace::LinearLocalOp                     Op2,
@@ -163,8 +163,8 @@ namespace dftefe
       /* \integral f L12 op12 (N1.N2) dx */
       void
       computeFEMatrices(
-        const std::vector<quadrature::QuadratureValuesContainer<ValueTypeUnion,
-                                                                memorySpace>>
+        const std::vector<
+          quadrature::QuadratureValuesContainer<ValueTypeUnion, memorySpace>>
           &                                          fVec,
         realspace::VectorMathOp                      Op12,
         realspace::LinearLocalOp                     L12,
@@ -216,8 +216,8 @@ namespace dftefe
       BasisWeakFormKernelWithField(
         realspace::LinearLocalOp L1,
         realspace::VectorMathOp  Op1,
-        const std::vector<quadrature::QuadratureValuesContainer<ValueTypeUnion,
-                                                                memorySpace>>
+        const std::vector<
+          quadrature::QuadratureValuesContainer<ValueTypeUnion, memorySpace>>
           &                      fVec,
         realspace::VectorMathOp  Op2,
         realspace::LinearLocalOp L2,
@@ -230,8 +230,8 @@ namespace dftefe
 
       void
       BasisWeakFormKernelWithField(
-        const std::vector<quadrature::QuadratureValuesContainer<ValueTypeUnion,
-                                                                memorySpace>>
+        const std::vector<
+          quadrature::QuadratureValuesContainer<ValueTypeUnion, memorySpace>>
           &                      fVec,
         realspace::VectorMathOp  Op12,
         realspace::LinearLocalOp L12,
