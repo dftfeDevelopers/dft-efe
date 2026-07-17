@@ -720,27 +720,27 @@ namespace dftefe
       if (isResidualChebyshevFilter)
         {
           KohnShamEigenSolver<ValueTypeOperator, ValueTypeOperand, memorySpace>
-            ksEigSolve(
-              numElectrons,
-              smearingTemperature,
-              fermiEnergyTolerance,
-              fracOccupancyTolerance,
-              eigenSolveResidualTolerance,
-              1,
-              numWantedEigenvalues,
-              feBMWaveFn->getMPIPatternP2P(),
-              linAlgOpContext,
-              *d_elpaScala,
-              false,
-              waveFnBatch,
-              MContextForInv,
-              MInvContext,
-              true, /*isGHEP*/
-              linearAlgebra::OrthogonalizationType::CHOLESKY_GRAMSCHMIDT, /*orthoType
-                                                                           */
-              false, /*storeIntermediateSubspaces*/
-              true,  /*useSameScratchInEigenSolver*/
-              spinMode);
+            ksEigSolve(numElectrons,
+                       smearingTemperature,
+                       fermiEnergyTolerance,
+                       fracOccupancyTolerance,
+                       eigenSolveResidualTolerance,
+                       1,
+                       numWantedEigenvalues,
+                       feBMWaveFn->getMPIPatternP2P(),
+                       linAlgOpContext,
+                       *d_elpaScala,
+                       false,
+                       waveFnBatch,
+                       MContextForInv,
+                       MInvContext,
+                       true, /*isGHEP*/
+                       linearAlgebra::OrthogonalizationType::
+                         CHOLESKY_GRAMSCHMIDT, /*orthoType
+                                                */
+                       false,                  /*storeIntermediateSubspaces*/
+                       true,                   /*useSameScratchInEigenSolver*/
+                       spinMode);
 
           ksEigSolve.setChebyshevPolynomialDegree(1);
 
@@ -1228,27 +1228,27 @@ namespace dftefe
       if (isResidualChebyshevFilter)
         {
           KohnShamEigenSolver<ValueTypeOperator, ValueTypeOperand, memorySpace>
-            ksEigSolve(
-              numElectrons,
-              smearingTemperature,
-              fermiEnergyTolerance,
-              fracOccupancyTolerance,
-              eigenSolveResidualTolerance,
-              1,
-              numWantedEigenvalues,
-              feBMWaveFn->getMPIPatternP2P(),
-              linAlgOpContext,
-              *d_elpaScala,
-              false,
-              waveFnBatch,
-              MContextForInv,
-              MInvContext,
-              true, /*isGHEP*/
-              linearAlgebra::OrthogonalizationType::CHOLESKY_GRAMSCHMIDT, /*orthoType
-                                                                           */
-              false, /*storeIntermediateSubspaces*/
-              true,  /*useSameScratchInEigenSolver*/
-              spinMode);
+            ksEigSolve(numElectrons,
+                       smearingTemperature,
+                       fermiEnergyTolerance,
+                       fracOccupancyTolerance,
+                       eigenSolveResidualTolerance,
+                       1,
+                       numWantedEigenvalues,
+                       feBMWaveFn->getMPIPatternP2P(),
+                       linAlgOpContext,
+                       *d_elpaScala,
+                       false,
+                       waveFnBatch,
+                       MContextForInv,
+                       MInvContext,
+                       true, /*isGHEP*/
+                       linearAlgebra::OrthogonalizationType::
+                         CHOLESKY_GRAMSCHMIDT, /*orthoType
+                                                */
+                       false,                  /*storeIntermediateSubspaces*/
+                       true,                   /*useSameScratchInEigenSolver*/
+                       spinMode);
 
           ksEigSolve.setChebyshevPolynomialDegree(1);
 
@@ -1801,27 +1801,27 @@ namespace dftefe
       if (isResidualChebyshevFilter)
         {
           KohnShamEigenSolver<ValueTypeOperator, ValueTypeOperand, memorySpace>
-            ksEigSolve(
-              numElectrons,
-              smearingTemperature,
-              fermiEnergyTolerance,
-              fracOccupancyTolerance,
-              eigenSolveResidualTolerance,
-              1,
-              numWantedEigenvalues,
-              feBMWaveFn->getMPIPatternP2P(),
-              linAlgOpContext,
-              *d_elpaScala,
-              false,
-              waveFnBatch,
-              MContextForInv,
-              MInvContext,
-              true, /*isGHEP*/
-              linearAlgebra::OrthogonalizationType::CHOLESKY_GRAMSCHMIDT, /*orthoType
-                                                                           */
-              false, /*storeIntermediateSubspaces*/
-              true,  /*useSameScratchInEigenSolver*/
-              spinMode);
+            ksEigSolve(numElectrons,
+                       smearingTemperature,
+                       fermiEnergyTolerance,
+                       fracOccupancyTolerance,
+                       eigenSolveResidualTolerance,
+                       1,
+                       numWantedEigenvalues,
+                       feBMWaveFn->getMPIPatternP2P(),
+                       linAlgOpContext,
+                       *d_elpaScala,
+                       false,
+                       waveFnBatch,
+                       MContextForInv,
+                       MInvContext,
+                       true, /*isGHEP*/
+                       linearAlgebra::OrthogonalizationType::
+                         CHOLESKY_GRAMSCHMIDT, /*orthoType
+                                                */
+                       false,                  /*storeIntermediateSubspaces*/
+                       true,                   /*useSameScratchInEigenSolver*/
+                       spinMode);
 
           ksEigSolve.setChebyshevPolynomialDegree(1);
 
@@ -2390,27 +2390,27 @@ namespace dftefe
       if (isResidualChebyshevFilter)
         {
           KohnShamEigenSolver<ValueTypeOperator, ValueTypeOperand, memorySpace>
-            ksEigSolve(
-              numElectrons,
-              smearingTemperature,
-              fermiEnergyTolerance,
-              fracOccupancyTolerance,
-              eigenSolveResidualTolerance,
-              1,
-              numWantedEigenvalues,
-              feBMWaveFn->getMPIPatternP2P(),
-              linAlgOpContext,
-              *d_elpaScala,
-              false,
-              waveFnBatch,
-              MContextForInv,
-              MInvContext,
-              true, /*isGHEP*/
-              linearAlgebra::OrthogonalizationType::CHOLESKY_GRAMSCHMIDT, /*orthoType
-                                                                           */
-              false, /*storeIntermediateSubspaces*/
-              true,  /*useSameScratchInEigenSolver*/
-              spinMode);
+            ksEigSolve(numElectrons,
+                       smearingTemperature,
+                       fermiEnergyTolerance,
+                       fracOccupancyTolerance,
+                       eigenSolveResidualTolerance,
+                       1,
+                       numWantedEigenvalues,
+                       feBMWaveFn->getMPIPatternP2P(),
+                       linAlgOpContext,
+                       *d_elpaScala,
+                       false,
+                       waveFnBatch,
+                       MContextForInv,
+                       MInvContext,
+                       true, /*isGHEP*/
+                       linearAlgebra::OrthogonalizationType::
+                         CHOLESKY_GRAMSCHMIDT, /*orthoType
+                                                */
+                       false,                  /*storeIntermediateSubspaces*/
+                       true,                   /*useSameScratchInEigenSolver*/
+                       spinMode);
 
           ksEigSolve.setChebyshevPolynomialDegree(1);
 
@@ -3124,27 +3124,27 @@ namespace dftefe
       if (isResidualChebyshevFilter)
         {
           KohnShamEigenSolver<ValueTypeOperator, ValueTypeOperand, memorySpace>
-            ksEigSolve(
-              numElectrons,
-              smearingTemperature,
-              fermiEnergyTolerance,
-              fracOccupancyTolerance,
-              eigenSolveResidualTolerance,
-              1,
-              numWantedEigenvalues,
-              feBMWaveFn->getMPIPatternP2P(),
-              linAlgOpContext,
-              *d_elpaScala,
-              false,
-              waveFnBatch,
-              MContextForInv,
-              MInvContext,
-              true, /*isGHEP*/
-              linearAlgebra::OrthogonalizationType::CHOLESKY_GRAMSCHMIDT, /*orthoType
-                                                                           */
-              false, /*storeIntermediateSubspaces*/
-              true,  /*useSameScratchInEigenSolver*/
-              spinMode);
+            ksEigSolve(numElectrons,
+                       smearingTemperature,
+                       fermiEnergyTolerance,
+                       fracOccupancyTolerance,
+                       eigenSolveResidualTolerance,
+                       1,
+                       numWantedEigenvalues,
+                       feBMWaveFn->getMPIPatternP2P(),
+                       linAlgOpContext,
+                       *d_elpaScala,
+                       false,
+                       waveFnBatch,
+                       MContextForInv,
+                       MInvContext,
+                       true, /*isGHEP*/
+                       linearAlgebra::OrthogonalizationType::
+                         CHOLESKY_GRAMSCHMIDT, /*orthoType
+                                                */
+                       false,                  /*storeIntermediateSubspaces*/
+                       true,                   /*useSameScratchInEigenSolver*/
+                       spinMode);
 
           ksEigSolve.setChebyshevPolynomialDegree(1);
 
