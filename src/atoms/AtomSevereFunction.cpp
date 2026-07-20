@@ -30,8 +30,53 @@ namespace dftefe
   namespace atoms
   {
     template class AtomSevereFunction<utils::MemorySpace::HOST>;
+
+    template AtomSevereFunction<utils::MemorySpace::HOST>::AtomSevereFunction<
+      AtomSevereFuncType::PSP>(
+      std::shared_ptr<const AtomSphericalDataContainer>,
+      const std::vector<std::string> &,
+      const std::vector<utils::Point> &,
+      const std::vector<double> &,
+      double,
+      AtomSevereFuncType::PSP,
+      double,
+      linearAlgebra::LinAlgOpContext<utils::MemorySpace::HOST> *);
+
+    template AtomSevereFunction<utils::MemorySpace::HOST>::AtomSevereFunction<
+      AtomSevereFuncType::Atomic>(
+      std::shared_ptr<const AtomSphericalDataContainer>,
+      const std::vector<std::string> &,
+      const std::vector<utils::Point> &,
+      const std::vector<double> &,
+      double,
+      AtomSevereFuncType::Atomic,
+      double,
+      linearAlgebra::LinAlgOpContext<utils::MemorySpace::HOST> *);
+
 #ifdef DFTEFE_WITH_DEVICE
     template class AtomSevereFunction<utils::MemorySpace::DEVICE>;
+
+    template AtomSevereFunction<utils::MemorySpace::DEVICE>::AtomSevereFunction<
+      AtomSevereFuncType::PSP>(
+      std::shared_ptr<const AtomSphericalDataContainer>,
+      const std::vector<std::string> &,
+      const std::vector<utils::Point> &,
+      const std::vector<double> &,
+      double,
+      AtomSevereFuncType::PSP,
+      double,
+      linearAlgebra::LinAlgOpContext<utils::MemorySpace::DEVICE> *);
+
+    template AtomSevereFunction<utils::MemorySpace::DEVICE>::AtomSevereFunction<
+      AtomSevereFuncType::Atomic>(
+      std::shared_ptr<const AtomSphericalDataContainer>,
+      const std::vector<std::string> &,
+      const std::vector<utils::Point> &,
+      const std::vector<double> &,
+      double,
+      AtomSevereFuncType::Atomic,
+      double,
+      linearAlgebra::LinAlgOpContext<utils::MemorySpace::DEVICE> *);
 #endif
   } // namespace atoms
 } // namespace dftefe

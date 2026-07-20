@@ -304,6 +304,9 @@ namespace dftefe
       std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
         d_mpiPatternP2P;
 
+      const std::vector<double> d_atomCharges;
+      const double              d_smearedChargeRadius;
+
     }; // end of class ElectrostaticONCVNonLocFE
   }    // end of namespace ksdft
 } // end of namespace dftefe

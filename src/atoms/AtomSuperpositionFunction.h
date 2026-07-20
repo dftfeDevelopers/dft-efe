@@ -108,7 +108,7 @@ namespace dftefe
                  const std::vector<double> &     atomWeights = {}) const;
 #endif
 
-    private:
+    protected:
       const std::shared_ptr<const AtomSphericalDataContainer>
                                      d_atomSphericalDataContainer;
       const std::vector<std::string> d_atomSymbolVec;

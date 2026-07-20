@@ -38,6 +38,7 @@ IF (ENABLE_GPU)
         SphericalDataNumericalDeviceKernels.cpp
         SphericalDataMixedDeviceKernels.cpp
         AtomSuperpositionFunctionDeviceKernels.cpp
+        AtomSevereFunctionDeviceKernels.cpp
         )
     IF ("${GPU_LANG}" STREQUAL "cuda")
         set_source_files_properties(${DFT-EFE-ATOMS-DEVICE-SOURCES} PROPERTIES LANGUAGE CUDA)

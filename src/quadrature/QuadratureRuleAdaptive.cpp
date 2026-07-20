@@ -1,5 +1,6 @@
 #include <utils/Exceptions.h>
 #include <quadrature/QuadratureRuleAdaptive.h>
+#include <utils/MemoryStorage.h>
 #include <numeric>
 #include <functional>
 #include <algorithm>
@@ -143,6 +144,19 @@ namespace dftefe
 
         return returnValue;
       }
+
+      struct CellWork
+      {
+        // root cells co-own with triangulation (shared_ptr copy from cells vec)
+        // child cells naturally owning (from createChildCells)
+        // globalCell is always a root mesh cell — raw ptr, always valid
+        std::shared_ptr<const basis::TriangulationCellBase> cell;
+        const basis::TriangulationCellBase *                globalCell;
+        size_type                                           cellIndex;
+        std::vector<double>                                 integralValues;
+        double                                              volume;
+        size_type                                           recursionLevel;
+      };
 
       inline void
       recursiveIntegrate(
@@ -418,6 +432,309 @@ namespace dftefe
       d_numPoints = d_weights.size();
     }
 
+
+    template <utils::MemorySpace memorySpace>
+    std::vector<QuadratureRule>
+    QuadratureRuleAdaptive::QuadratureRuleAdaptiveBFS(
+      const std::vector<std::shared_ptr<const basis::TriangulationCellBase>>
+        &                                   cells,
+      const QuadratureRule &                baseQuadratureRule,
+      const basis::CellMappingBase &        cellMapping,
+      basis::ParentToChildCellsManagerBase &parentToChildCellsManager,
+      std::vector<std::shared_ptr<const utils::ScalarSpatialFunctionReal>>
+                                     functions,
+      const std::vector<double> &    absoluteTolerances,
+      const std::vector<double> &    relativeTolerances,
+      const std::vector<double> &    integralThresholds,
+      std::map<std::string, double> &timer,
+      const double                   smallestCellVolume,
+      const dftefe::size_type        maxRecursion)
+    {
+      const size_type numberCells          = cells.size();
+      const size_type numberBaseQuadPoints = baseQuadratureRule.nPoints();
+      const size_type numberFunctions      = functions.size();
+      const size_type dim                  = baseQuadratureRule.getDim();
+      const size_type numberChildren       = intPowPositiveInt(2, dim);
+
+      const std::vector<utils::Point> &baseParamPts =
+        baseQuadratureRule.getPoints();
+      const std::vector<double> &baseWeights = baseQuadratureRule.getWeights();
+
+      std::vector<std::vector<utils::Point>> cellAdaptiveQuadPoints(
+        numberCells);
+      std::vector<std::vector<double>> cellAdaptiveQuadWeights(numberCells);
+
+      auto evalFunctions = [&](const std::vector<utils::Point> &allRealPoints,
+                               size_type                        totalPoints,
+                               size_type                        iFunction,
+                               std::vector<double> &functionValues) {
+        std::vector<double> flatCoordsHostVec(totalPoints * dim, 0.0);
+        for (size_type iPoint = 0; iPoint < totalPoints; ++iPoint)
+          for (size_type d = 0; d < dim; ++d)
+            flatCoordsHostVec[iPoint * dim + d] = allRealPoints[iPoint][d];
+        utils::MemoryStorage<double, memorySpace> flatCoordsStorage(
+          totalPoints * dim);
+        utils::MemoryStorage<double, memorySpace> outputStorage(totalPoints);
+        flatCoordsStorage.copyFrom(flatCoordsHostVec, totalPoints * dim, 0, 0);
+        functions[iFunction]->template eval<memorySpace>(
+          totalPoints, flatCoordsStorage.data(), outputStorage.data());
+        outputStorage.copyTo(functionValues, totalPoints, 0, 0);
+      };
+
+      // Depth 0: batch eval for all mesh cells
+      std::vector<utils::Point>        allRootRealPoints;
+      std::vector<std::vector<double>> rootCellJxW(
+        numberCells, std::vector<double>(numberBaseQuadPoints, 0.0));
+      std::vector<double> rootCellVolume(numberCells, 0.0);
+
+      allRootRealPoints.reserve(numberCells * numberBaseQuadPoints);
+      for (size_type iCell = 0; iCell < numberCells; ++iCell)
+        {
+          std::vector<utils::Point> cellRealPoints(numberBaseQuadPoints,
+                                                   utils::Point(dim, 0.0));
+          cellMapping.getRealPoints(baseParamPts,
+                                    *cells[iCell],
+                                    cellRealPoints);
+          cellMapping.getJxW(*cells[iCell],
+                             baseParamPts,
+                             baseWeights,
+                             rootCellJxW[iCell]);
+          rootCellVolume[iCell] = std::accumulate(rootCellJxW[iCell].begin(),
+                                                  rootCellJxW[iCell].end(),
+                                                  0.0);
+          allRootRealPoints.insert(allRootRealPoints.end(),
+                                   cellRealPoints.begin(),
+                                   cellRealPoints.end());
+        }
+
+      std::vector<std::vector<double>> rootCellIntegralValues(
+        numberCells, std::vector<double>(numberFunctions, 0.0));
+      for (size_type iFunction = 0; iFunction < numberFunctions; ++iFunction)
+        {
+          std::vector<double> functionValues;
+          evalFunctions(allRootRealPoints,
+                        numberCells * numberBaseQuadPoints,
+                        iFunction,
+                        functionValues);
+          for (size_type iCell = 0; iCell < numberCells; ++iCell)
+            {
+              const size_type offset = iCell * numberBaseQuadPoints;
+              rootCellIntegralValues[iCell][iFunction] =
+                std::inner_product(functionValues.begin() + offset,
+                                   functionValues.begin() + offset +
+                                     numberBaseQuadPoints,
+                                   rootCellJxW[iCell].begin(),
+                                   0.0);
+            }
+        }
+
+      // Seed BFS queue
+      std::vector<CellWork> currentLevelWork;
+      currentLevelWork.reserve(numberCells);
+      for (size_type iCell = 0; iCell < numberCells; ++iCell)
+        currentLevelWork.push_back({cells[iCell],
+                                    cells[iCell].get(),
+                                    iCell,
+                                    rootCellIntegralValues[iCell],
+                                    rootCellVolume[iCell],
+                                    0});
+
+      while (!currentLevelWork.empty())
+        {
+          std::vector<CellWork> nextLevelWork;
+
+          std::vector<CellWork *> terminalCellWork, nonTerminalCellWork;
+          for (auto &cellWork : currentLevelWork)
+            {
+              if (cellWork.volume < smallestCellVolume ||
+                  cellWork.recursionLevel > maxRecursion)
+                terminalCellWork.push_back(&cellWork);
+              else
+                nonTerminalCellWork.push_back(&cellWork);
+            }
+
+          for (auto *cellWork : terminalCellWork)
+            {
+              std::vector<double> cellJxW(numberBaseQuadPoints, 0.0);
+              cellMapping.getJxW(*cellWork->cell,
+                                 baseParamPts,
+                                 baseWeights,
+                                 cellJxW);
+              updateAdaptiveQuadratureRule(
+                *cellWork->cell,
+                *cellWork->globalCell,
+                baseQuadratureRule,
+                cellMapping,
+                cellJxW,
+                cellAdaptiveQuadPoints[cellWork->cellIndex],
+                cellAdaptiveQuadWeights[cellWork->cellIndex]);
+            }
+
+          if (nonTerminalCellWork.empty())
+            break;
+
+          const size_type numberNonTerminalCells = nonTerminalCellWork.size();
+
+          std::vector<
+            std::vector<std::shared_ptr<const basis::TriangulationCellBase>>>
+            childCellsPerParent(numberNonTerminalCells);
+          for (size_type iParent = 0; iParent < numberNonTerminalCells;
+               ++iParent)
+            childCellsPerParent[iParent] =
+              parentToChildCellsManager.createChildCells(
+                *nonTerminalCellWork[iParent]->cell);
+
+          std::vector<std::vector<std::vector<utils::Point>>>
+            childCellRealPoints(
+              numberNonTerminalCells,
+              std::vector<std::vector<utils::Point>>(
+                numberChildren,
+                std::vector<utils::Point>(numberBaseQuadPoints,
+                                          utils::Point(dim, 0.0))));
+          std::vector<std::vector<std::vector<double>>> childCellsJxW(
+            numberNonTerminalCells,
+            std::vector<std::vector<double>>(
+              numberChildren, std::vector<double>(numberBaseQuadPoints, 0.0)));
+          std::vector<std::vector<double>> childCellsVolume(
+            numberNonTerminalCells, std::vector<double>(numberChildren, 0.0));
+
+          std::vector<utils::Point> allChildRealPoints;
+          allChildRealPoints.reserve(numberNonTerminalCells * numberChildren *
+                                     numberBaseQuadPoints);
+          for (size_type iParent = 0; iParent < numberNonTerminalCells;
+               ++iParent)
+            for (size_type iChild = 0; iChild < numberChildren; ++iChild)
+              {
+                cellMapping.getRealPoints(baseParamPts,
+                                          *childCellsPerParent[iParent][iChild],
+                                          childCellRealPoints[iParent][iChild]);
+                cellMapping.getJxW(*childCellsPerParent[iParent][iChild],
+                                   baseParamPts,
+                                   baseWeights,
+                                   childCellsJxW[iParent][iChild]);
+                childCellsVolume[iParent][iChild] =
+                  std::accumulate(childCellsJxW[iParent][iChild].begin(),
+                                  childCellsJxW[iParent][iChild].end(),
+                                  0.0);
+                allChildRealPoints.insert(
+                  allChildRealPoints.end(),
+                  childCellRealPoints[iParent][iChild].begin(),
+                  childCellRealPoints[iParent][iChild].end());
+              }
+
+          const size_type totalChildPoints =
+            numberNonTerminalCells * numberChildren * numberBaseQuadPoints;
+          std::vector<std::vector<std::vector<double>>>
+            childCellsIntegralValues(
+              numberNonTerminalCells,
+              std::vector<std::vector<double>>(
+                numberChildren, std::vector<double>(numberFunctions, 0.0)));
+
+          for (size_type iFunction = 0; iFunction < numberFunctions;
+               ++iFunction)
+            {
+              std::vector<double> functionValues;
+              evalFunctions(allChildRealPoints,
+                            totalChildPoints,
+                            iFunction,
+                            functionValues);
+              for (size_type iParent = 0; iParent < numberNonTerminalCells;
+                   ++iParent)
+                for (size_type iChild = 0; iChild < numberChildren; ++iChild)
+                  {
+                    const size_type offset =
+                      (iParent * numberChildren + iChild) *
+                      numberBaseQuadPoints;
+                    childCellsIntegralValues[iParent][iChild][iFunction] =
+                      std::inner_product(functionValues.begin() + offset,
+                                         functionValues.begin() + offset +
+                                           numberBaseQuadPoints,
+                                         childCellsJxW[iParent][iChild].begin(),
+                                         0.0);
+                  }
+            }
+
+          for (size_type iParent = 0; iParent < numberNonTerminalCells;
+               ++iParent)
+            {
+              if (haveIntegralsConverged(
+                    nonTerminalCellWork[iParent]->integralValues,
+                    integralThresholds,
+                    childCellsIntegralValues[iParent],
+                    absoluteTolerances,
+                    relativeTolerances))
+                {
+                  std::vector<double> parentJxW(numberBaseQuadPoints, 0.0);
+                  cellMapping.getJxW(*nonTerminalCellWork[iParent]->cell,
+                                     baseParamPts,
+                                     baseWeights,
+                                     parentJxW);
+                  updateAdaptiveQuadratureRule(
+                    *nonTerminalCellWork[iParent]->cell,
+                    *nonTerminalCellWork[iParent]->globalCell,
+                    baseQuadratureRule,
+                    cellMapping,
+                    parentJxW,
+                    cellAdaptiveQuadPoints[nonTerminalCellWork[iParent]
+                                             ->cellIndex],
+                    cellAdaptiveQuadWeights[nonTerminalCellWork[iParent]
+                                              ->cellIndex]);
+                }
+              else
+                {
+                  for (size_type iChild = 0; iChild < numberChildren; ++iChild)
+                    nextLevelWork.push_back(
+                      {childCellsPerParent[iParent][iChild],
+                       nonTerminalCellWork[iParent]->globalCell,
+                       nonTerminalCellWork[iParent]->cellIndex,
+                       childCellsIntegralValues[iParent][iChild],
+                       childCellsVolume[iParent][iChild],
+                       nonTerminalCellWork[iParent]->recursionLevel + 1});
+                }
+            }
+
+          currentLevelWork = std::move(nextLevelWork);
+        }
+
+      std::vector<QuadratureRule> result;
+      result.reserve(numberCells);
+      for (size_type iCell = 0; iCell < numberCells; ++iCell)
+        result.emplace_back(dim,
+                            cellAdaptiveQuadPoints[iCell],
+                            cellAdaptiveQuadWeights[iCell]);
+      return result;
+    }
+
+    template std::vector<QuadratureRule>
+    QuadratureRuleAdaptive::QuadratureRuleAdaptiveBFS<utils::MemorySpace::HOST>(
+      const std::vector<std::shared_ptr<const basis::TriangulationCellBase>> &,
+      const QuadratureRule &,
+      const basis::CellMappingBase &,
+      basis::ParentToChildCellsManagerBase &,
+      std::vector<std::shared_ptr<const utils::ScalarSpatialFunctionReal>>,
+      const std::vector<double> &,
+      const std::vector<double> &,
+      const std::vector<double> &,
+      std::map<std::string, double> &,
+      const double,
+      const dftefe::size_type);
+
+#ifdef DFTEFE_WITH_DEVICE
+    template std::vector<QuadratureRule>
+    QuadratureRuleAdaptive::QuadratureRuleAdaptiveBFS<
+      utils::MemorySpace::DEVICE>(
+      const std::vector<std::shared_ptr<const basis::TriangulationCellBase>> &,
+      const QuadratureRule &,
+      const basis::CellMappingBase &,
+      basis::ParentToChildCellsManagerBase &,
+      std::vector<std::shared_ptr<const utils::ScalarSpatialFunctionReal>>,
+      const std::vector<double> &,
+      const std::vector<double> &,
+      const std::vector<double> &,
+      std::map<std::string, double> &,
+      const double,
+      const dftefe::size_type);
+#endif
 
   } // end of namespace quadrature
 } // end of namespace dftefe

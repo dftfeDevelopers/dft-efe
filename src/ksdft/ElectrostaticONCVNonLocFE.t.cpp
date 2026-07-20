@@ -92,6 +92,8 @@ namespace dftefe
       , d_energy((RealType)0)
       , d_atomSphericalDataContainerPSP(atomSphericalDataContainerPSP)
       , d_spinMode(spinMode)
+      , d_smearedChargeRadius(smearedChargeRadius)
+      , d_atomCharges(atomCharges)
     {
       int rank;
       utils::mpi::MPICommRank(d_mpiComm, &rank);
@@ -132,10 +134,10 @@ namespace dftefe
           d_atomSphericalDataContainerPSP,
           atomSymbolVec,
           atomCoordinates,
-          "vlocal",
-          0,
-          1,
-          1,
+          atomCharges,
+          smearedChargeRadius,
+          atoms::AtomSevereFuncType::PSP::vLocal,
+          1.0,
           d_linAlgOpContext.get());
 
       d_electrostaticLocal =
@@ -227,6 +229,8 @@ namespace dftefe
       , d_energy((RealType)0)
       , d_atomSphericalDataContainerPSP(atomSphericalDataContainerPSP)
       , d_spinMode(spinMode)
+      , d_smearedChargeRadius(smearedChargeRadius)
+      , d_atomCharges(atomCharges)
     {
       int rank;
       utils::mpi::MPICommRank(d_mpiComm, &rank);
@@ -267,10 +271,10 @@ namespace dftefe
           d_atomSphericalDataContainerPSP,
           atomSymbolVec,
           atomCoordinates,
-          "vlocal",
-          0,
-          1,
-          1,
+          atomCharges,
+          smearedChargeRadius,
+          atoms::AtomSevereFuncType::PSP::vLocal,
+          1.0,
           d_linAlgOpContext.get());
 
       ////-------DEBUG V_Local print---------------------
@@ -372,10 +376,10 @@ namespace dftefe
           d_atomSphericalDataContainerPSP,
           d_atomSymbolVec,
           atomCoordinates,
-          "vlocal",
-          0,
-          1,
-          1,
+          d_atomCharges,
+          d_smearedChargeRadius,
+          atoms::AtomSevereFuncType::PSP::vLocal,
+          1.0,
           d_linAlgOpContext.get());
 
       d_electrostaticLocal->reinitBasis(atomCoordinates,
@@ -455,10 +459,10 @@ namespace dftefe
           d_atomSphericalDataContainerPSP,
           d_atomSymbolVec,
           atomCoordinates,
-          "vlocal",
-          0,
-          1,
-          1,
+          d_atomCharges,
+          d_smearedChargeRadius,
+          atoms::AtomSevereFuncType::PSP::vLocal,
+          1.0,
           d_linAlgOpContext.get());
 
       d_electrostaticLocal->reinitBasis(atomCoordinates,

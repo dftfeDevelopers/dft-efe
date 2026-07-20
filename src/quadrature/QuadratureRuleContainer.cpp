@@ -639,6 +639,133 @@ namespace dftefe
     }
 
 
+    template <utils::MemorySpace memorySpace>
+    QuadratureRuleContainer::QuadratureRuleContainer(
+      FuncEvalTag<memorySpace>,
+      const QuadratureRuleAttributes &                quadratureRuleAttributes,
+      std::shared_ptr<const QuadratureRule>           baseQuadratureRule,
+      std::shared_ptr<const basis::TriangulationBase> triangulation,
+      const basis::CellMappingBase &                  cellMapping,
+      basis::ParentToChildCellsManagerBase &          parentToChildCellsManager,
+      std::vector<std::shared_ptr<const utils::ScalarSpatialFunctionReal>>
+                                 functions,
+      const std::vector<double> &absoluteTolerances,
+      const std::vector<double> &relativeTolerances,
+      const std::vector<double> &integralThresholds,
+      const double               smallestCellVolume,
+      const dftefe::size_type    maxRecursion)
+      : d_quadratureRuleAttributes(quadratureRuleAttributes)
+      , d_dim(triangulation->getDim())
+      , d_triangulation(triangulation)
+      , d_cellMapping(cellMapping)
+    {
+      utils::throwException(
+        d_dim == baseQuadratureRule->getDim(),
+        "Mismatch of dimension of the quadrature points and the triangulation.");
+      utils::throwException<utils::LogicError>(
+        d_quadratureRuleAttributes.getQuadratureFamily() ==
+          QuadratureFamily::ADAPTIVE,
+        "BFS constructor is only valid for QuadratureFamily ADAPTIVE.");
+
+      d_numCells = triangulation->nLocallyOwnedCells();
+
+      std::vector<std::shared_ptr<const basis::TriangulationCellBase>> cells;
+      cells.reserve(d_numCells);
+      for (auto cellIter = triangulation->beginLocal();
+           cellIter != triangulation->endLocal();
+           ++cellIter)
+        cells.push_back(*cellIter);
+
+      std::map<std::string, double> timer;
+
+      std::vector<QuadratureRule> quadRules =
+        QuadratureRuleAdaptive::QuadratureRuleAdaptiveBFS<memorySpace>(
+          cells,
+          *baseQuadratureRule,
+          cellMapping,
+          parentToChildCellsManager,
+          functions,
+          absoluteTolerances,
+          relativeTolerances,
+          integralThresholds,
+          timer,
+          smallestCellVolume,
+          maxRecursion);
+
+      d_quadratureRuleVec.resize(d_numCells);
+      d_numCellQuadPoints.resize(d_numCells, 0);
+      d_cellQuadStartIds.resize(d_numCells, 0);
+      d_numQuadPoints = 0;
+      for (size_type iCell = 0; iCell < d_numCells; ++iCell)
+        {
+          d_quadratureRuleVec[iCell] =
+            std::make_shared<QuadratureRule>(std::move(quadRules[iCell]));
+          d_numCellQuadPoints[iCell] = d_quadratureRuleVec[iCell]->nPoints();
+          d_cellQuadStartIds[iCell]  = d_numQuadPoints;
+          d_numQuadPoints += d_numCellQuadPoints[iCell];
+        }
+
+      d_realPoints.resize(d_numQuadPoints, dftefe::utils::Point(d_dim, 0.0));
+      d_JxW.resize(d_numQuadPoints, 0.0);
+      size_type iCell = 0;
+      for (auto cellIter = triangulation->beginLocal();
+           cellIter != triangulation->endLocal();
+           ++cellIter, ++iCell)
+        {
+          const size_type numCellQuadPoints = d_numCellQuadPoints[iCell];
+          const size_type cellQuadStartId   = d_cellQuadStartIds[iCell];
+          const std::vector<dftefe::utils::Point> &parametricPoints =
+            d_quadratureRuleVec[iCell]->getPoints();
+          const std::vector<double> &weights =
+            d_quadratureRuleVec[iCell]->getWeights();
+          std::vector<dftefe::utils::Point> cellRealPoints(
+            numCellQuadPoints, dftefe::utils::Point(d_dim, 0.0));
+          cellMapping.getRealPoints(parametricPoints,
+                                    *(*cellIter),
+                                    cellRealPoints);
+          std::vector<double> cellJxW(numCellQuadPoints, 0.0);
+          cellMapping.getJxW(*(*cellIter), parametricPoints, weights, cellJxW);
+          std::copy(cellRealPoints.begin(),
+                    cellRealPoints.end(),
+                    d_realPoints.begin() + cellQuadStartId);
+          std::copy(cellJxW.begin(),
+                    cellJxW.end(),
+                    d_JxW.begin() + cellQuadStartId);
+        }
+
+      d_realPointsHost = utils::flatten(d_realPoints);
+    }
+
+    template QuadratureRuleContainer::QuadratureRuleContainer(
+      FuncEvalTag<utils::MemorySpace::HOST>,
+      const QuadratureRuleAttributes &,
+      std::shared_ptr<const QuadratureRule>,
+      std::shared_ptr<const basis::TriangulationBase>,
+      const basis::CellMappingBase &,
+      basis::ParentToChildCellsManagerBase &,
+      std::vector<std::shared_ptr<const utils::ScalarSpatialFunctionReal>>,
+      const std::vector<double> &,
+      const std::vector<double> &,
+      const std::vector<double> &,
+      const double,
+      const dftefe::size_type);
+
+#ifdef DFTEFE_WITH_DEVICE
+    template QuadratureRuleContainer::QuadratureRuleContainer(
+      FuncEvalTag<utils::MemorySpace::DEVICE>,
+      const QuadratureRuleAttributes &,
+      std::shared_ptr<const QuadratureRule>,
+      std::shared_ptr<const basis::TriangulationBase>,
+      const basis::CellMappingBase &,
+      basis::ParentToChildCellsManagerBase &,
+      std::vector<std::shared_ptr<const utils::ScalarSpatialFunctionReal>>,
+      const std::vector<double> &,
+      const std::vector<double> &,
+      const std::vector<double> &,
+      const double,
+      const dftefe::size_type);
+#endif
+
     const QuadratureRuleAttributes &
     QuadratureRuleContainer::getQuadratureRuleAttributes() const
     {
