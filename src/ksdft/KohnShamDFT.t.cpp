@@ -406,8 +406,7 @@ namespace dftefe
                       wfnPtr;
       const size_type numSpacesS =
         (d_spinMode == SpinMode::Unpolarized) ? 1 : 2;
-      std::vector<std::vector<double>> occupancies = {
-        std::vector<double>(numSpacesS * numWantedEigenvalues, 0.0)};
+
       d_p.registerStart("Pre Init Checks");
       if (dynamic_cast<
             const basis::EFEBasisDofHandler<ValueTypeWaveFunctionCoeff,
@@ -776,9 +775,15 @@ namespace dftefe
         true,  /*useSameScratchInEigenSolver*/
         spinMode);
 
-      d_rdm1Spectral->setSpectral(std::move(wfnPtr),
-                                  occupancies,
-                                  numWantedEigenvalues);
+      auto spec    = std::make_unique<SpectralRep<
+        linearAlgebra::blasLapack::scalar_type<ValueTypeWaveFunctionBasis,
+                                               ValueTypeWaveFunctionCoeff>,
+        memorySpace>>();
+      spec->ksOrbs = std::move(wfnPtr);
+      spec->occupancies =
+        std::vector<double>(numSpacesS * numWantedEigenvalues, 0.0);
+      spec->nKSOrbs = numWantedEigenvalues;
+      d_rdm1Spectral->setSpectral(std::move(spec));
 
       d_p.registerEnd("KS EigenSolver Init");
 
@@ -915,8 +920,7 @@ namespace dftefe
                       wfnPtr;
       const size_type numSpacesS =
         (d_spinMode == SpinMode::Unpolarized) ? 1 : 2;
-      std::vector<std::vector<double>> occupancies = {
-        std::vector<double>(numSpacesS * numWantedEigenvalues, 0.0)};
+
 
       d_p.registerStart("Pre Init Checks");
       if (dynamic_cast<
@@ -1284,9 +1288,15 @@ namespace dftefe
         true,  /*useSameScratchInEigenSolver*/
         spinMode);
 
-      d_rdm1Spectral->setSpectral(std::move(wfnPtr),
-                                  occupancies,
-                                  numWantedEigenvalues);
+      auto spec    = std::make_unique<SpectralRep<
+        linearAlgebra::blasLapack::scalar_type<ValueTypeWaveFunctionBasis,
+                                               ValueTypeWaveFunctionCoeff>,
+        memorySpace>>();
+      spec->ksOrbs = std::move(wfnPtr);
+      spec->occupancies =
+        std::vector<double>(numSpacesS * numWantedEigenvalues, 0.0);
+      spec->nKSOrbs = numWantedEigenvalues;
+      d_rdm1Spectral->setSpectral(std::move(spec));
 
       d_p.registerEnd("KS EigenSolver Init");
 
@@ -1424,8 +1434,7 @@ namespace dftefe
                       wfnPtr;
       const size_type numSpacesS =
         (d_spinMode == SpinMode::Unpolarized) ? 1 : 2;
-      std::vector<std::vector<double>> occupancies = {
-        std::vector<double>(numSpacesS * numWantedEigenvalues, 0.0)};
+
       d_p.registerStart("Pre Init Checks");
       if (dynamic_cast<
             const basis::EFEBasisDofHandler<ValueTypeWaveFunctionCoeff,
@@ -1857,9 +1866,15 @@ namespace dftefe
         true,  /*useSameScratchInEigenSolver*/
         spinMode);
 
-      d_rdm1Spectral->setSpectral(std::move(wfnPtr),
-                                  occupancies,
-                                  numWantedEigenvalues);
+      auto spec    = std::make_unique<SpectralRep<
+        linearAlgebra::blasLapack::scalar_type<ValueTypeWaveFunctionBasis,
+                                               ValueTypeWaveFunctionCoeff>,
+        memorySpace>>();
+      spec->ksOrbs = std::move(wfnPtr);
+      spec->occupancies =
+        std::vector<double>(numSpacesS * numWantedEigenvalues, 0.0);
+      spec->nKSOrbs = numWantedEigenvalues;
+      d_rdm1Spectral->setSpectral(std::move(spec));
 
       d_p.registerEnd("KS EigenSolver Init");
 
@@ -1993,8 +2008,7 @@ namespace dftefe
                       wfnPtr;
       const size_type numSpacesS =
         (d_spinMode == SpinMode::Unpolarized) ? 1 : 2;
-      std::vector<std::vector<double>> occupancies = {
-        std::vector<double>(numSpacesS * numWantedEigenvalues, 0.0)};
+
 
       d_p.registerStart("Pre Init Checks");
       const std::vector<std::string> metadataNames =
@@ -2446,9 +2460,15 @@ namespace dftefe
         true,  /*useSameScratchInEigenSolver*/
         spinMode);
 
-      d_rdm1Spectral->setSpectral(std::move(wfnPtr),
-                                  occupancies,
-                                  numWantedEigenvalues);
+      auto spec    = std::make_unique<SpectralRep<
+        linearAlgebra::blasLapack::scalar_type<ValueTypeWaveFunctionBasis,
+                                               ValueTypeWaveFunctionCoeff>,
+        memorySpace>>();
+      spec->ksOrbs = std::move(wfnPtr);
+      spec->occupancies =
+        std::vector<double>(numSpacesS * numWantedEigenvalues, 0.0);
+      spec->nKSOrbs = numWantedEigenvalues;
+      d_rdm1Spectral->setSpectral(std::move(spec));
 
       d_p.registerEnd("KS EigenSolver Init");
 
@@ -2582,8 +2602,7 @@ namespace dftefe
                       wfnPtr;
       const size_type numSpacesS =
         (d_spinMode == SpinMode::Unpolarized) ? 1 : 2;
-      std::vector<std::vector<double>> occupancies = {
-        std::vector<double>(numSpacesS * numWantedEigenvalues, 0.0)};
+
       utils::Profiler<utils::MemorySpace::HOST> p(
         feBMWaveFn->getMPIPatternP2P()->mpiCommunicator(), "Pre Init Checks");
       d_p.registerStart("Pre Init Checks");
@@ -3180,9 +3199,15 @@ namespace dftefe
         true,  /*useSameScratchInEigenSolver*/
         spinMode);
 
-      d_rdm1Spectral->setSpectral(std::move(wfnPtr),
-                                  occupancies,
-                                  numWantedEigenvalues);
+      auto spec    = std::make_unique<SpectralRep<
+        linearAlgebra::blasLapack::scalar_type<ValueTypeWaveFunctionBasis,
+                                               ValueTypeWaveFunctionCoeff>,
+        memorySpace>>();
+      spec->ksOrbs = std::move(wfnPtr);
+      spec->occupancies =
+        std::vector<double>(numSpacesS * numWantedEigenvalues, 0.0);
+      spec->nKSOrbs = numWantedEigenvalues;
+      d_rdm1Spectral->setSpectral(std::move(spec));
 
       d_p.registerEnd("KS EigenSolver Init");
       utils::printCurrentMemoryUsage<memorySpace>(d_mpiCommDomain,
@@ -3225,14 +3250,7 @@ namespace dftefe
       d_pTotal.reset();
       d_isSolved = true;
 
-      std::unique_ptr<
-        linearAlgebra::MultiVector<ValueTypeWaveFunctionCoeff, memorySpace>>
-                                         wfnPtr;
-      std::vector<std::vector<RealType>> occupancies;
-      size_type                          nKSOrbs;
-
-      d_rdm1Spectral->getSpectral(wfnPtr, occupancies, nKSOrbs);
-
+      const auto &s0 = d_rdm1Spectral->getSpectral();
       if (auto hamiltonian = std::dynamic_pointer_cast<
             ElectrostaticLocalFE<ValueTypeElectrostaticsBasis,
                                  ValueTypeElectrostaticsCoeff,
@@ -3250,10 +3268,8 @@ namespace dftefe
                                            memorySpace,
                                            dim>>(d_hamitonianElec))
         {
-          hamiltonian->evalEnergy(occupancies[0], *wfnPtr);
+          hamiltonian->evalEnergy(s0.occupancies, *s0.ksOrbs);
         }
-
-      d_rdm1Spectral->setSpectral(std::move(wfnPtr), occupancies, nKSOrbs);
 
       RealType elecEnergy = d_hamitonianElec->getEnergy();
       d_rootCout << "Electrostatic energy with guess density: " << elecEnergy
@@ -3374,19 +3390,17 @@ namespace dftefe
             d_ksEigSolve->setChebyPolyScalingFactor(1.34);
 
           // Linear Eigen Solve
-          d_rdm1Spectral->getSpectral(wfnPtr, occupancies, nKSOrbs);
-
+          auto                            acc = d_rdm1Spectral->getAccess();
+          auto &                          s   = acc.getSpectral();
           linearAlgebra::EigenSolverError err =
             d_ksEigSolve->solve(*d_hamitonianOperator,
                                 d_kohnShamEnergies,
-                                *wfnPtr,
+                                *s.ksOrbs,
                                 true,
                                 *d_MContext,
                                 *d_MInvContext);
-
-          occupancies = {d_ksEigSolve->getFractionalOccupancy()};
-
-          d_rdm1Spectral->setSpectral(std::move(wfnPtr), occupancies, nKSOrbs);
+          s.occupancies = d_ksEigSolve->getFractionalOccupancy();
+          acc.returnBack();
 
           std::vector<RealType> eigSolveResNorm =
             d_ksEigSolve->getEigenSolveResidualNorm();
@@ -3516,10 +3530,10 @@ namespace dftefe
                   hamiltonian->reinitField(densOut);
                 }
 
-              d_rdm1Spectral->getSpectral(wfnPtr, occupancies, nKSOrbs);
-              d_hamitonianKin->evalEnergy(occupancies[0],
+              const auto &s = d_rdm1Spectral->getSpectral();
+              d_hamitonianKin->evalEnergy(s.occupancies,
                                           *d_feBMWaveFn,
-                                          *wfnPtr);
+                                          *s.ksOrbs);
 
               RealType kinEnergy = d_hamitonianKin->getEnergy();
               d_rootCout << "Kinetic energy: " << kinEnergy << "\n";
@@ -3541,12 +3555,8 @@ namespace dftefe
                                                    memorySpace,
                                                    dim>>(d_hamitonianElec))
                 {
-                  hamiltonian->evalEnergy(occupancies[0], *wfnPtr);
+                  hamiltonian->evalEnergy(s.occupancies, *s.ksOrbs);
                 }
-
-              d_rdm1Spectral->setSpectral(std::move(wfnPtr),
-                                          occupancies,
-                                          nKSOrbs);
 
               RealType elecEnergy = d_hamitonianElec->getEnergy();
               d_rootCout << "Electrostatic energy: " << elecEnergy << "\n";
@@ -3560,9 +3570,9 @@ namespace dftefe
                 (d_spinMode == SpinMode::Unpolarized) ? (RealType)2 :
                                                         (RealType)1;
               RealType bandEnergy = 0;
-              for (size_type i = 0; i < occupancies[0].size(); i++)
+              for (size_type i = 0; i < s.occupancies.size(); i++)
                 {
-                  bandEnergy += bandEnergySpinFactor * occupancies[0][i] *
+                  bandEnergy += bandEnergySpinFactor * s.occupancies[i] *
                                 d_kohnShamEnergies[i];
                 }
 
@@ -3575,7 +3585,7 @@ namespace dftefe
               d_groundStateEnergy = totalEnergy;
 
               RealType entEnergy = KohnShamDFTInternal::computeEntropicEnergy(
-                occupancies[0],
+                s.occupancies,
                 d_smearingTemperature,
                 (d_spinMode == SpinMode::Unpolarized) ? 2.0 : 1.0);
 
@@ -3661,8 +3671,10 @@ namespace dftefe
               hamiltonian->reinitField(densOut);
             }
 
-          d_rdm1Spectral->getSpectral(wfnPtr, occupancies, nKSOrbs);
-          d_hamitonianKin->evalEnergy(occupancies[0], *d_feBMWaveFn, *wfnPtr);
+          const auto &sp = d_rdm1Spectral->getSpectral();
+          d_hamitonianKin->evalEnergy(sp.occupancies,
+                                      *d_feBMWaveFn,
+                                      *sp.ksOrbs);
           RealType kinEnergy = d_hamitonianKin->getEnergy();
           rootCout << "Kinetic energy: " << kinEnergy << "\n";
 
@@ -3683,9 +3695,8 @@ namespace dftefe
                                                memorySpace,
                                                dim>>(d_hamitonianElec))
             {
-              hamiltonian->evalEnergy(occupancies[0], *wfnPtr);
+              hamiltonian->evalEnergy(sp.occupancies, *sp.ksOrbs);
             }
-          d_rdm1Spectral->setSpectral(std::move(wfnPtr), occupancies, nKSOrbs);
 
           RealType elecEnergy = d_hamitonianElec->getEnergy();
           rootCout << "Electrostatic energy: " << elecEnergy << "\n";
@@ -3698,9 +3709,9 @@ namespace dftefe
           const RealType bandEnergySpinFactor =
             (d_spinMode == SpinMode::Unpolarized) ? (RealType)2 : (RealType)1;
           RealType bandEnergy = 0;
-          for (size_type i = 0; i < occupancies[0].size(); i++)
+          for (size_type i = 0; i < sp.occupancies.size(); i++)
             {
-              bandEnergy += bandEnergySpinFactor * occupancies[0][i] *
+              bandEnergy += bandEnergySpinFactor * sp.occupancies[i] *
                             d_kohnShamEnergies[i];
             }
 
@@ -3713,7 +3724,7 @@ namespace dftefe
           d_groundStateEnergy = totalEnergy;
 
           RealType entEnergy = KohnShamDFTInternal::computeEntropicEnergy(
-            occupancies[0],
+            sp.occupancies,
             d_smearingTemperature,
             (d_spinMode == SpinMode::Unpolarized) ? 2.0 : 1.0);
 

@@ -46,7 +46,7 @@ namespace dftefe
                                   dim> &feBMPsi,
       std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
                                  linAlgOpContext,
-      const MPI_Comm &           mpiCommDomain,
+      const utils::mpi::MPIComm &mpiCommDomain,
       const size_type            cellBlockSize,
       const size_type            waveFuncBatchSize,
       const SpinMode             spinMode /*= SpinMode::Unpolarized*/,
@@ -126,7 +126,7 @@ namespace dftefe
     RDM1FE<ValueTypeBasisData, ValueTypeBasisCoeff, memorySpace, dim>::
       getnKSOrbs() const
     {
-      return this->d_nKSOrbs;
+      return this->getSpectral().nKSOrbs;
     }
 
     template <typename ValueTypeBasisData,
@@ -198,9 +198,9 @@ namespace dftefe
       if (needEval)
         {
           dftefe::utils::throwException<dftefe::utils::LogicError>(
-            this->d_ksSetFlag,
-            "Re-evaluation of descriptors in RDM1FE::getDescriptors() requires the "
-            "KS orbitals to be set via RDM1Spectral::setSpectral(), but d_ksSetFlag is false.");
+            this->isSpectralSet(),
+            "Re-evaluation of descriptors in RDM1FE::getDescriptors() requires "
+            "the KS orbitals to be set via RDM1Spectral::setSpectral().");
 
           DFTEFE_AssertWithMsg(
             wfcAttrs.find(WfcDescrAttr::Tau) == wfcAttrs.end(),
@@ -213,12 +213,7 @@ namespace dftefe
           else if (d_spinMode == SpinMode::NonCollinear)
             ncomp = 4;
 
-          // Use the first k-point/spin occupancy for density computation.
-          // For non-spinpolarized single-k-point: d_occupancies[0] has length
-          // nKSOrbs.
-          const std::vector<double> &occ =
-            (this->d_occupancies.empty() ? std::vector<double>{} :
-                                           this->d_occupancies[0]);
+          const std::vector<double> &occ = this->d_spectral->occupancies;
 
           std::shared_ptr<const quadrature::QuadratureRuleContainer>
             quadRuleContainer =
@@ -267,8 +262,12 @@ namespace dftefe
             gradRhoVec(gradNcomp);
           for (size_type ic = 0; ic < gradNcomp; ++ic)
             gradRhoVec[ic] = &gradDensVal[ic];
-          d_densCalc->computeRho(
-            occ, *this->d_ksOrbs, rhoVec, gradRhoVec, needGrad, d_spinMode);
+          d_densCalc->computeRho(occ,
+                                 *this->d_spectral->ksOrbs,
+                                 rhoVec,
+                                 gradRhoVec,
+                                 needGrad,
+                                 d_spinMode);
 
           this->d_evalFlag = false;
         }
@@ -358,13 +357,11 @@ namespace dftefe
       if (needDensityEval)
         {
           dftefe::utils::throwException<dftefe::utils::LogicError>(
-            this->d_ksSetFlag,
+            this->isSpectralSet(),
             "Re-evaluation of density observables in RDM1FE::getDensityObs() "
-            "requires KS orbitals set via RDM1Spectral::setSpectral(), but d_ksSetFlag is false.");
+            "requires KS orbitals set via RDM1Spectral::setSpectral().");
 
-          const std::vector<double> &occ =
-            (this->d_occupancies.empty() ? std::vector<double>{} :
-                                           this->d_occupancies[0]);
+          const std::vector<double> &occ = this->d_spectral->occupancies;
 
           std::shared_ptr<const quadrature::QuadratureRuleContainer>
             quadRuleContainer =
@@ -390,8 +387,12 @@ namespace dftefe
           for (size_type ic = 0; ic < ncomp; ++ic)
             rhoVec2[ic] = &densVal[ic];
           gradRhoVec2[0] = &gradDensVal[0];
-          d_densCalc->computeRho(
-            occ, *this->d_ksOrbs, rhoVec2, gradRhoVec2, false, d_spinMode);
+          d_densCalc->computeRho(occ,
+                                 *this->d_spectral->ksOrbs,
+                                 rhoVec2,
+                                 gradRhoVec2,
+                                 false,
+                                 d_spinMode);
         }
 
       // Determine the maximum moment order requested.

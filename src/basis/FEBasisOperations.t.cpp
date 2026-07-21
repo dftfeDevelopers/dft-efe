@@ -103,16 +103,23 @@ namespace dftefe
           // fxJxW[q] = JxW[q] * fVec[kComp][q] — built per kComp per cell block
           StorageUnion fxJxW(numCumulativeQuadCells, ValueTypeUnion());
 
-          if (d_fxJxWxNBlock.size() !=
-              d_maxQuadInCell * cellBlockSize * d_maxDofInCell)
-            d_fxJxWxNBlock.resize(d_maxQuadInCell * cellBlockSize *
-                                    d_maxDofInCell,
+          size_type maxQuadPerBatch = 0;
+          for (size_type s = 0; s < d_numLocallyOwnedCells; s += cellBlockSize)
+            {
+              const size_type e =
+                std::min(s + cellBlockSize, d_numLocallyOwnedCells);
+              size_type sum = 0;
+              for (size_type iCell = s; iCell < e; ++iCell)
+                sum += d_numCellQuad[iCell];
+              maxQuadPerBatch = std::max(maxQuadPerBatch, sum);
+            }
+
+          if (d_fxJxWxNBlock.size() < maxQuadPerBatch * d_maxDofInCell)
+            d_fxJxWxNBlock.resize(maxQuadPerBatch * d_maxDofInCell,
                                   ValueTypeUnion());
 
-          if (d_basisDataInCellRange.size() <
-              d_maxQuadInCell * cellBlockSize * d_maxDofInCell)
-            d_basisDataInCellRange.resize(d_maxQuadInCell * cellBlockSize *
-                                            d_maxDofInCell,
+          if (d_basisDataInCellRange.size() < maxQuadPerBatch * d_maxDofInCell)
+            d_basisDataInCellRange.resize(maxQuadPerBatch * d_maxDofInCell,
                                           ValueTypeBasisData());
           /** --- Storages --------- **/
 
@@ -341,22 +348,28 @@ namespace dftefe
           // block
           StorageUnion fxJxW(dim * numCumulativeQuadCells, ValueTypeUnion());
 
-          if (d_fxJxWxNBlock.size() !=
-              d_maxQuadInCell * cellBlockSize * d_maxDofInCell * dim)
-            d_fxJxWxNBlock.resize(d_maxQuadInCell * cellBlockSize *
-                                    d_maxDofInCell * dim,
+          size_type maxQuadPerBatch = 0;
+          for (size_type s = 0; s < d_numLocallyOwnedCells; s += cellBlockSize)
+            {
+              const size_type e =
+                std::min(s + cellBlockSize, d_numLocallyOwnedCells);
+              size_type sum = 0;
+              for (size_type iCell = s; iCell < e; ++iCell)
+                sum += d_numCellQuad[iCell];
+              maxQuadPerBatch = std::max(maxQuadPerBatch, sum);
+            }
+
+          if (d_fxJxWxNBlock.size() < maxQuadPerBatch * d_maxDofInCell * dim)
+            d_fxJxWxNBlock.resize(maxQuadPerBatch * d_maxDofInCell * dim,
                                   ValueTypeUnion());
 
-          if (d_basisDataInCellRange.size() <
-              d_maxQuadInCell * cellBlockSize * d_maxDofInCell)
-            d_basisDataInCellRange.resize(d_maxQuadInCell * cellBlockSize *
-                                            d_maxDofInCell,
+          if (d_basisDataInCellRange.size() < maxQuadPerBatch * d_maxDofInCell)
+            d_basisDataInCellRange.resize(maxQuadPerBatch * d_maxDofInCell,
                                           ValueTypeBasisData());
 
-          if (d_basisGradientDataInCellRange.size() !=
-              d_maxQuadInCell * cellBlockSize * d_maxDofInCell * dim)
-            d_basisGradientDataInCellRange.resize(d_maxQuadInCell *
-                                                    cellBlockSize *
+          if (d_basisGradientDataInCellRange.size() <
+              maxQuadPerBatch * d_maxDofInCell * dim)
+            d_basisGradientDataInCellRange.resize(maxQuadPerBatch *
                                                     d_maxDofInCell * dim,
                                                   ValueTypeBasisData());
           /** --- Storages --------- **/
@@ -627,16 +640,24 @@ namespace dftefe
           size_type gradNigradNjStartOffset = 0;
 
           /** --- Storages --------- **/
-          if (d_JxWxGradNBlock.size() !=
-              d_maxQuadInCell * cellBlockSize * d_maxDofInCell * dim)
-            d_JxWxGradNBlock.resize(d_maxQuadInCell * cellBlockSize *
-                                      d_maxDofInCell * dim,
+          size_type maxQuadPerBatch = 0;
+          for (size_type s = 0; s < d_numLocallyOwnedCells; s += cellBlockSize)
+            {
+              const size_type e =
+                std::min(s + cellBlockSize, d_numLocallyOwnedCells);
+              size_type sum = 0;
+              for (size_type iCell = s; iCell < e; ++iCell)
+                sum += d_numCellQuad[iCell];
+              maxQuadPerBatch = std::max(maxQuadPerBatch, sum);
+            }
+
+          if (d_JxWxGradNBlock.size() < maxQuadPerBatch * d_maxDofInCell * dim)
+            d_JxWxGradNBlock.resize(maxQuadPerBatch * d_maxDofInCell * dim,
                                     ValueTypeUnion());
 
-          if (d_basisGradientDataInCellRange.size() !=
-              d_maxQuadInCell * cellBlockSize * d_maxDofInCell * dim)
-            d_basisGradientDataInCellRange.resize(d_maxQuadInCell *
-                                                    cellBlockSize *
+          if (d_basisGradientDataInCellRange.size() <
+              maxQuadPerBatch * d_maxDofInCell * dim)
+            d_basisGradientDataInCellRange.resize(maxQuadPerBatch *
                                                     d_maxDofInCell * dim,
                                                   ValueTypeBasisData());
           /** --- Storages --------- **/
@@ -998,15 +1019,25 @@ namespace dftefe
         ((d_maxFieldBlock != 0) ? d_maxFieldBlock / numComponents : 1);
 
       /** --- Storages --------- **/
+
+      size_type maxQuadPerBatch = 0;
+      for (size_type s = 0; s < d_numLocallyOwnedCells; s += cellBlockSize)
+        {
+          const size_type e =
+            std::min(s + cellBlockSize, d_numLocallyOwnedCells);
+          size_type sum = 0;
+          for (size_type iCell = s; iCell < e; ++iCell)
+            sum += d_numCellQuad[iCell];
+          maxQuadPerBatch = std::max(maxQuadPerBatch, sum);
+        }
+
       if (d_fieldCellValues.size() !=
           cellBlockSize * d_maxDofInCell * numComponents)
         d_fieldCellValues.resize(cellBlockSize * d_maxDofInCell *
                                  numComponents);
 
-      if (d_basisDataInCellRange.size() <
-          d_maxQuadInCell * cellBlockSize * d_maxDofInCell)
-        d_basisDataInCellRange.resize(d_maxQuadInCell * cellBlockSize *
-                                        d_maxDofInCell,
+      if (d_basisDataInCellRange.size() < maxQuadPerBatch * d_maxDofInCell)
+        d_basisDataInCellRange.resize(maxQuadPerBatch * d_maxDofInCell,
                                       ValueTypeBasisData());
       /** --- Storages --------- **/
 
@@ -1514,15 +1545,27 @@ namespace dftefe
         d_maxCellBlock *
         ((d_maxFieldBlock != 0) ? d_maxFieldBlock / numComponents : 1);
       /** --- Storages --------- **/
+
+      size_type maxQuadPerBatch = 0;
+      for (size_type s = 0; s < d_numLocallyOwnedCells; s += cellBlockSize)
+        {
+          const size_type e =
+            std::min(s + cellBlockSize, d_numLocallyOwnedCells);
+          size_type sum = 0;
+          for (size_type iCell = s; iCell < e; ++iCell)
+            sum += d_numCellQuad[iCell];
+          maxQuadPerBatch = std::max(maxQuadPerBatch, sum);
+        }
+
       if (d_fieldCellValues.size() !=
           cellBlockSize * d_maxDofInCell * numComponents)
         d_fieldCellValues.resize(cellBlockSize * d_maxDofInCell *
                                  numComponents);
 
-      if (d_basisGradientDataInCellRange.size() !=
-          d_maxQuadInCell * cellBlockSize * d_maxDofInCell * dim)
-        d_basisGradientDataInCellRange.resize(d_maxQuadInCell * cellBlockSize *
-                                                d_maxDofInCell * dim,
+      if (d_basisGradientDataInCellRange.size() <
+          maxQuadPerBatch * d_maxDofInCell * dim)
+        d_basisGradientDataInCellRange.resize(maxQuadPerBatch * d_maxDofInCell *
+                                                dim,
                                               ValueTypeBasisData());
       /** --- Storages --------- **/
 
@@ -1701,9 +1744,19 @@ namespace dftefe
         ((d_maxFieldBlock != 0) ? d_maxFieldBlock / numComponents : 1);
 
       /** --- Storages --------- **/
-      if (d_JxWxNBlock.size() !=
-          d_maxQuadInCell * cellBlockSize * d_maxDofInCell)
-        d_JxWxNBlock.resize(d_maxQuadInCell * cellBlockSize * d_maxDofInCell,
+      size_type maxQuadPerBatch = 0;
+      for (size_type s = 0; s < d_numLocallyOwnedCells; s += cellBlockSize)
+        {
+          const size_type e =
+            std::min(s + cellBlockSize, d_numLocallyOwnedCells);
+          size_type sum = 0;
+          for (size_type iCell = s; iCell < e; ++iCell)
+            sum += d_numCellQuad[iCell];
+          maxQuadPerBatch = std::max(maxQuadPerBatch, sum);
+        }
+
+      if (d_JxWxNBlock.size() < maxQuadPerBatch * d_maxDofInCell)
+        d_JxWxNBlock.resize(maxQuadPerBatch * d_maxDofInCell,
                             ValueTypeBasisData());
 
       if (d_fieldCellValues.size() !=
@@ -1711,10 +1764,8 @@ namespace dftefe
         d_fieldCellValues.resize(cellBlockSize * d_maxDofInCell * numComponents,
                                  ValueTypeUnion());
 
-      if (d_basisDataInCellRange.size() <
-          d_maxQuadInCell * cellBlockSize * d_maxDofInCell)
-        d_basisDataInCellRange.resize(d_maxQuadInCell * cellBlockSize *
-                                        d_maxDofInCell,
+      if (d_basisDataInCellRange.size() < maxQuadPerBatch * d_maxDofInCell)
+        d_basisDataInCellRange.resize(maxQuadPerBatch * d_maxDofInCell,
                                       ValueTypeBasisData());
       /** --- Storages --------- **/
 

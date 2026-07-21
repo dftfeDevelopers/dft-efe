@@ -650,7 +650,7 @@ int main(int argc, char** argv)
 
     // Set up base quadrature rule for adaptive quadrature 
 
-    std::shared_ptr<quadrature::QuadratureRule> baseQuadRuleEigen = std::make_shared<quadrature::QuadratureRuleGauss>(dim, feOrderEigen + 1);
+    std::shared_ptr<quadrature::QuadratureRule> baseQuadRuleEigen = std::make_shared<quadrature::QuadratureRuleGauss>(dim, feOrderEigen > feOrderElec ? feOrderEigen : feOrderElec + 1);
       // feOrderEigen > feOrderElec ? std::make_shared<quadrature::QuadratureRuleGauss>(dim, feOrderEigen + 1) : 
       //   std::make_shared<quadrature::QuadratureRuleGauss>(dim, feOrderElec + 1);
 

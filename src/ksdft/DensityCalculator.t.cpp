@@ -133,34 +133,71 @@ namespace dftefe
       std::vector<size_type> numCellQuad(d_numLocallyOwnedCells, 0);
       for (size_type iCell = 0; iCell < d_numLocallyOwnedCells; ++iCell)
         numCellQuad[iCell] = d_quadRuleContainer->nCellQuadraturePoints(iCell);
-      const size_type maxQuadInCell =
-        *std::max_element(numCellQuad.begin(), numCellQuad.end());
 
-      d_psiBatchQuad = new dftefe::utils::MemoryStorage<ValueType, memorySpace>(
-        d_waveFuncBatchSize * d_cellBlockSize * maxQuadInCell);
+      size_type maxQuadPerBatch = 0;
+      for (size_type s = 0; s < d_numLocallyOwnedCells; s += d_cellBlockSize)
+        {
+          const size_type e =
+            std::min(s + d_cellBlockSize, d_numLocallyOwnedCells);
+          size_type sum = 0;
+          for (size_type iCell = s; iCell < e; ++iCell)
+            sum += numCellQuad[iCell];
+          maxQuadPerBatch = std::max(maxQuadPerBatch, sum);
+        }
 
-      d_modPsiSqBatchQuad = dftefe::utils::MemoryStorage<RealType, memorySpace>(
-        d_waveFuncBatchSize * d_cellBlockSize * maxQuadInCell);
+      if (d_psiBatchQuad == nullptr ||
+          d_psiBatchQuad->size() < d_waveFuncBatchSize * maxQuadPerBatch)
+        {
+          delete d_psiBatchQuad;
+          d_psiBatchQuad =
+            new dftefe::utils::MemoryStorage<ValueType, memorySpace>(
+              d_waveFuncBatchSize * maxQuadPerBatch);
+        }
 
-      d_occupationInBatch = dftefe::utils::MemoryStorage<RealType, memorySpace>(
-        d_waveFuncBatchSize);
+      if (d_modPsiSqBatchQuad.size() < d_waveFuncBatchSize * maxQuadPerBatch)
+        d_modPsiSqBatchQuad =
+          dftefe::utils::MemoryStorage<RealType, memorySpace>(
+            d_waveFuncBatchSize * maxQuadPerBatch);
+
+      if (d_occupationInBatch.size() < d_waveFuncBatchSize)
+        d_occupationInBatch =
+          dftefe::utils::MemoryStorage<RealType, memorySpace>(
+            d_waveFuncBatchSize);
 
       d_rhoMemspace.clear();
 
-      d_rhoBatch = new dftefe::utils::MemoryStorage<RealType, memorySpace>(
-        4 * d_cellBlockSize * maxQuadInCell);
+      if (d_rhoBatch == nullptr || d_rhoBatch->size() < 4 * maxQuadPerBatch)
+        {
+          delete d_rhoBatch;
+          d_rhoBatch = new dftefe::utils::MemoryStorage<RealType, memorySpace>(
+            4 * maxQuadPerBatch);
+        }
 
-      d_gradPsiBatchQuad =
-        new dftefe::utils::MemoryStorage<ValueType, memorySpace>(
-          d_waveFuncBatchSize * d_cellBlockSize * maxQuadInCell * dim);
+      if (d_gradPsiBatchQuad == nullptr ||
+          d_gradPsiBatchQuad->size() <
+            d_waveFuncBatchSize * maxQuadPerBatch * dim)
+        {
+          delete d_gradPsiBatchQuad;
+          d_gradPsiBatchQuad =
+            new dftefe::utils::MemoryStorage<ValueType, memorySpace>(
+              d_waveFuncBatchSize * maxQuadPerBatch * dim);
+        }
 
-      d_psiGradPsiBatch = dftefe::utils::MemoryStorage<RealType, memorySpace>(
-        d_waveFuncBatchSize * d_cellBlockSize * maxQuadInCell * dim);
+      if (d_psiGradPsiBatch.size() <
+          d_waveFuncBatchSize * maxQuadPerBatch * dim)
+        d_psiGradPsiBatch = dftefe::utils::MemoryStorage<RealType, memorySpace>(
+          d_waveFuncBatchSize * maxQuadPerBatch * dim);
 
       d_gradRhoMemspace.clear();
 
-      d_gradRhoBatch = new dftefe::utils::MemoryStorage<RealType, memorySpace>(
-        4 * d_cellBlockSize * maxQuadInCell * dim);
+      if (d_gradRhoBatch == nullptr ||
+          d_gradRhoBatch->size() < 4 * maxQuadPerBatch * dim)
+        {
+          delete d_gradRhoBatch;
+          d_gradRhoBatch =
+            new dftefe::utils::MemoryStorage<RealType, memorySpace>(
+              4 * maxQuadPerBatch * dim);
+        }
 
       d_psiBatch =
         new linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>(
