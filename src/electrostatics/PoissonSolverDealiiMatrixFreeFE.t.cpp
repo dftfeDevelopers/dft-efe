@@ -1432,7 +1432,11 @@ namespace dftefe
                   beta = delta / beta;
 
                   // q = beta * q - d
-                  saddDevice(d_qvec.begin(), d_dvec.begin(), beta, d_xLocalDof);
+                  saddDevice(d_qvec.begin(),
+                             d_dvec.begin(),
+                             beta,
+                             d_xLocalDof,
+                             *d_linAlgOpContext);
                 }
               else
                 {
@@ -1532,8 +1536,12 @@ namespace dftefe
         DEVICE_API_CHECK(err);
       }
 
-      applyPreconditionAndComputeDotProductDevice(
-        d_dvec.begin(), d_devSumPtr, d_rvec.begin(), d_jacobi, d_xLocalDof);
+      applyPreconditionAndComputeDotProductDevice(d_dvec.begin(),
+                                                  d_devSumPtr,
+                                                  d_rvec.begin(),
+                                                  d_jacobi,
+                                                  d_xLocalDof,
+                                                  *d_linAlgOpContext);
 
       dftefe::utils::MemoryTransfer<
         dftefe::utils::MemorySpace::HOST,
@@ -1565,8 +1573,12 @@ namespace dftefe
         DEVICE_API_CHECK(err);
       }
 
-      applyPreconditionComputeDotProductAndSaddDevice(
-        d_qvec.begin(), d_devSumPtr, d_rvec.begin(), d_jacobi, d_xLocalDof);
+      applyPreconditionComputeDotProductAndSaddDevice(d_qvec.begin(),
+                                                      d_devSumPtr,
+                                                      d_rvec.begin(),
+                                                      d_jacobi,
+                                                      d_xLocalDof,
+                                                      *d_linAlgOpContext);
 
       dftefe::utils::MemoryTransfer<
         dftefe::utils::MemorySpace::HOST,
@@ -1605,7 +1617,8 @@ namespace dftefe
                                   d_qvec.begin(),
                                   d_dvec.begin(),
                                   alpha,
-                                  d_xLocalDof);
+                                  d_xLocalDof,
+                                  *d_linAlgOpContext);
 
       dftefe::utils::MemoryTransfer<
         dftefe::utils::MemorySpace::HOST,

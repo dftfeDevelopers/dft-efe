@@ -710,8 +710,8 @@ std::shared_ptr<linearAlgebra::OperatorContext<double,
       triangulationBase, 
       *cellMapping); 
 
-    unsigned int nQuad = quadRuleContainerGaussSubdividedElec->nQuadraturePoints();
-    unsigned int nQuadMax = nQuad;
+    size_type nQuad = quadRuleContainerGaussSubdividedElec->nQuadraturePoints();
+    size_type nQuadMax = nQuad;
     int mpierr = utils::mpi::MPIAllreduce<Host>(
       utils::mpi::MPIInPlace,
       &nQuad,

@@ -283,17 +283,20 @@ namespace dftefe
     template <typename ValueType>
     void
     FECellWiseDataOperations<ValueType, utils::MemorySpace::DEVICE>::
-      copyFieldToCellWiseData(const ValueType *data,
-                              const size_type  numComponents,
-                              const size_type *cellLocalIdsStartPtr,
-                              const size_type  totalCellDofs,
-                              ValueType *      itCellWiseStorageBegin)
+      copyFieldToCellWiseData(
+        const ValueType *data,
+        const size_type  numComponents,
+        const size_type *cellLocalIdsStartPtr,
+        const size_type  totalCellDofs,
+        ValueType *      itCellWiseStorageBegin,
+        linearAlgebra::LinAlgOpContext<dftefe::utils::MemorySpace::DEVICE>
+          &linAlgOpContext)
     {
       DFTEFE_LAUNCH_KERNEL(
         copyFieldToCellWiseDataDeviceKernel,
         (totalCellDofs * numComponents) / dftefe::utils::DEVICE_BLOCK_SIZE + 1,
         dftefe::utils::DEVICE_BLOCK_SIZE,
-        dftefe::utils::defaultStream,
+        linAlgOpContext.getBlasStream(),
         dftefe::utils::makeDataTypeDeviceCompatible(data),
         numComponents,
         cellLocalIdsStartPtr,
@@ -304,17 +307,20 @@ namespace dftefe
     template <typename ValueType>
     void
     FECellWiseDataOperations<ValueType, utils::MemorySpace::DEVICE>::
-      addCellWiseDataToFieldData(const ValueType *itCellWiseStorageBegin,
-                                 const size_type  numComponents,
-                                 const size_type *cellLocalIdsStartPtr,
-                                 const size_type  totalCellDofs,
-                                 ValueType *      data)
+      addCellWiseDataToFieldData(
+        const ValueType *itCellWiseStorageBegin,
+        const size_type  numComponents,
+        const size_type *cellLocalIdsStartPtr,
+        const size_type  totalCellDofs,
+        ValueType *      data,
+        linearAlgebra::LinAlgOpContext<dftefe::utils::MemorySpace::DEVICE>
+          &linAlgOpContext)
     {
       DFTEFE_LAUNCH_KERNEL(
         addCellWiseDataToFieldDataDeviceKernel,
         (totalCellDofs * numComponents) / dftefe::utils::DEVICE_BLOCK_SIZE + 1,
         dftefe::utils::DEVICE_BLOCK_SIZE,
-        dftefe::utils::defaultStream,
+        linAlgOpContext.getBlasStream(),
         dftefe::utils::makeDataTypeDeviceCompatible(itCellWiseStorageBegin),
         numComponents,
         cellLocalIdsStartPtr,
@@ -332,14 +338,17 @@ namespace dftefe
         const size_type *cellLocalIdsStartPtr,
         const size_type  totalCellDofs,
         utils::MemoryStorage<ValueType, utils::MemorySpace::DEVICE>
-          &cellWiseStorage)
+          &cellWiseStorage,
+        linearAlgebra::LinAlgOpContext<dftefe::utils::MemorySpace::DEVICE>
+          &linAlgOpContext)
     {
       auto itCellWiseStorageBegin = cellWiseStorage.begin();
       copyFieldToCellWiseData(data,
                               numComponents,
                               cellLocalIdsStartPtr,
                               totalCellDofs,
-                              itCellWiseStorageBegin);
+                              itCellWiseStorageBegin,
+                              linAlgOpContext);
     }
 
     template <typename ValueType>
@@ -351,14 +360,17 @@ namespace dftefe
         const size_type  numComponents,
         const size_type *cellLocalIdsStartPtr,
         const size_type  totalCellDofs,
-        ValueType *      data)
+        ValueType *      data,
+        linearAlgebra::LinAlgOpContext<dftefe::utils::MemorySpace::DEVICE>
+          &linAlgOpContext)
     {
       auto itCellWiseStorageBegin = cellWiseStorage.begin();
       addCellWiseDataToFieldData(itCellWiseStorageBegin,
                                  numComponents,
                                  cellLocalIdsStartPtr,
                                  totalCellDofs,
-                                 data);
+                                 data,
+                                 linAlgOpContext);
     }
 
 
@@ -371,13 +383,15 @@ namespace dftefe
         const utils::MemoryStorage<size_type, utils::MemorySpace::DEVICE>
           &             numCellDofs,
         const size_type totalCellDofs,
-        ValueType *     data)
+        ValueType *     data,
+        linearAlgebra::LinAlgOpContext<dftefe::utils::MemorySpace::DEVICE>
+          &linAlgOpContext)
     {
       DFTEFE_LAUNCH_KERNEL(
         addCellWiseBasisDataToDiagonalDataDeviceKernel,
         (totalCellDofs) / dftefe::utils::DEVICE_BLOCK_SIZE + 1,
         dftefe::utils::DEVICE_BLOCK_SIZE,
-        dftefe::utils::defaultStream,
+        linAlgOpContext.getBlasStream(),
         dftefe::utils::makeDataTypeDeviceCompatible(cellWiseBasisDataBegin),
         cellLocalIdsStartPtr,
         numCellDofs.begin(),
@@ -396,7 +410,9 @@ namespace dftefe
         const size_type numComponents,
         const utils::MemoryStorage<size_type, utils::MemorySpace::DEVICE>
           &        numCellVecs,
-        ValueType *data)
+        ValueType *data,
+        linearAlgebra::LinAlgOpContext<dftefe::utils::MemorySpace::DEVICE>
+          &linAlgOpContext)
     {
       utils::throwException(
         false,

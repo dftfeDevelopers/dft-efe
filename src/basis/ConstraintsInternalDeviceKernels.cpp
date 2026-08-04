@@ -559,7 +559,9 @@ namespace dftefe
         const size_type blockSize,
         const utils::MemoryStorage<size_type,
                                    dftefe::utils::MemorySpace::DEVICE>
-          &rowConstraintsIdsLocal)
+          &rowConstraintsIdsLocal,
+        linearAlgebra::LinAlgOpContext<dftefe::utils::MemorySpace::DEVICE>
+          &linAlgOpContext)
     {
       const size_type numConstrainedDofs = rowConstraintsIdsLocal.size();
 
@@ -570,7 +572,7 @@ namespace dftefe
         constraintsInternal::setValueKernel,
         numConstrainedDofs * blockSize / dftefe::utils::DEVICE_BLOCK_SIZE + 1,
         utils::DEVICE_BLOCK_SIZE,
-        dftefe::utils::defaultStream,
+        linAlgOpContext.getBlasStream(),
         dftefe::utils::makeDataTypeDeviceCompatible(vectorData.data()),
         rowConstraintsIdsLocal.data(),
         numConstrainedDofs,
@@ -590,7 +592,9 @@ namespace dftefe
         const utils::MemoryStorage<size_type,
                                    dftefe::utils::MemorySpace::DEVICE>
           &                       rowConstraintsIdsLocal,
-        const ValueTypeBasisCoeff alpha)
+        const ValueTypeBasisCoeff alpha,
+        linearAlgebra::LinAlgOpContext<dftefe::utils::MemorySpace::DEVICE>
+          &linAlgOpContext)
     {
       const size_type numConstrainedDofs = rowConstraintsIdsLocal.size();
 
@@ -601,7 +605,7 @@ namespace dftefe
         constraintsInternal::setValueKernel,
         numConstrainedDofs * blockSize / dftefe::utils::DEVICE_BLOCK_SIZE + 1,
         utils::DEVICE_BLOCK_SIZE,
-        dftefe::utils::defaultStream,
+        linAlgOpContext.getBlasStream(),
         dftefe::utils::makeDataTypeDeviceCompatible(vectorData.data()),
         rowConstraintsIdsLocal.data(),
         numConstrainedDofs,

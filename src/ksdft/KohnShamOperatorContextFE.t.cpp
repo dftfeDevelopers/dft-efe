@@ -802,7 +802,8 @@ namespace dftefe
                                         cellLocalIdsOffset,
                                       // cellsInBlockNumDoFs,
                                       cellsInBlockNumCumulativeDoFs,
-                                      xCellValues);
+                                      xCellValues,
+                                      linAlgOpContext);
 
             const size_type numOrbitals = numVecs / S;
             const size_type batchCount  = (spinMode == SpinMode::Collinear) ?
@@ -963,7 +964,8 @@ namespace dftefe
                                            cellLocalIdsOffset,
                                          // cellsInBlockNumDoFs,
                                          cellsInBlockNumCumulativeDoFs,
-                                         y);
+                                         y,
+                                         linAlgOpContext);
 
             for (size_type iCell = 0; iCell < numCellsInBlock; ++iCell)
               {
@@ -1091,7 +1093,8 @@ namespace dftefe
                                       // cellsInBlockNumDoFs,
                                       cellsInBlockNumCumulativeDoFs,
                                       xCellValues.data() +
-                                        cellLocalIdsOffset * numVecs);
+                                        cellLocalIdsOffset * numVecs,
+                                      linAlgOpContext);
 
             if (electroONCVHamiltonian != nullptr)
               electroONCVHamiltonian->getAtomCenterNonLocalOpContextFE()
@@ -1304,7 +1307,8 @@ namespace dftefe
                                            cellLocalIdsOffset,
                                          // cellsInBlockNumDoFs,
                                          cellsInBlockNumCumulativeDoFs,
-                                         y);
+                                         y,
+                                         linAlgOpContext);
 
             for (size_type iCell = 0; iCell < numCellsInBlock; ++iCell)
               {

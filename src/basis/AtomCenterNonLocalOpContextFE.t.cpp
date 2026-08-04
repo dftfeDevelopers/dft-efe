@@ -223,7 +223,8 @@ namespace dftefe
                                         cellLocalIdsOffsetX,
                                       // cellsInBlockNumXLocalIds,
                                       numCumulativeXLocalIdsCellsInBlock,
-                                      xCellValues);
+                                      xCellValues,
+                                      linAlgOpContext);
 
             cellWiseGEMM(std::make_pair(cellStartId, cellEndId),
                          cellWiseC,
@@ -245,7 +246,8 @@ namespace dftefe
                                            cellLocalIdsOffsetY,
                                          // cellsInBlockNumYLocalIds,
                                          numCumulativeYLocalIdsCellsInBlock,
-                                         y);
+                                         y,
+                                         linAlgOpContext);
 
             for (size_type iCell = 0; iCell < numCellsInBlock; ++iCell)
               {
@@ -961,7 +963,8 @@ namespace dftefe
               d_locallyOwnedCellLocalProjectorIds.begin() + cellLocalIdsOffsetY,
               // cellsInBlockLocalIds,
               numCumulativeLocalIdsCellsInBlock,
-              d_CX->data());
+              d_CX->data(),
+              *d_linAlgOpContext);
         }
       else
         {
@@ -1060,7 +1063,8 @@ namespace dftefe
               d_locallyOwnedCellLocalProjectorIds.begin() + cellLocalIdsOffsetX,
               // cellsInBlockLocalIds,
               numCumulativeLocalIdsCellsInBlock,
-              d_CXCellValues);
+              d_CXCellValues,
+              *d_linAlgOpContext);
 
           AtomCenterNonLocalOpContextFEInternal::cellWiseGEMM(
             cellRange,

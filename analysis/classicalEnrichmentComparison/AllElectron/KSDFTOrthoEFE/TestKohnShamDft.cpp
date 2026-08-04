@@ -717,11 +717,13 @@ int main(int argc, char** argv)
   // 4. Make EFEBasisDataStorage with input as quadratureContainer.
 
     // Set the CFE basis manager and handler for bassiInterfaceCoeffcient distributed vector
-  std::shared_ptr<basis::FEBasisDofHandler<double, Host,dim>> cfeBasisDofHandlerElec =  
+  p.registerStart("CFE DofHandler creation");
+  std::shared_ptr<basis::FEBasisDofHandler<double, Host,dim>> cfeBasisDofHandlerElec =
    std::make_shared<basis::CFEBasisDofHandlerDealii<double, Host,dim>>(triangulationBase, feOrderElec, comm);
 
-  std::shared_ptr<basis::FEBasisDofHandler<double, memorySpace,dim>> cfeBasisDofHandlerEigen =  
+  std::shared_ptr<basis::FEBasisDofHandler<double, memorySpace,dim>> cfeBasisDofHandlerEigen =
    std::make_shared<basis::CFEBasisDofHandlerDealii<double, memorySpace,dim>>(triangulationBase, feOrderEigen, comm);
+  p.registerEnd("CFE DofHandler creation");
 
   rootCout << "Total Number of classical dofs electrostatics: " << cfeBasisDofHandlerElec->nGlobalNodes() << "\n";
   rootCout << "Total Number of classical dofs eigensolve: " << cfeBasisDofHandlerEigen->nGlobalNodes() << "\n";
@@ -745,6 +747,7 @@ int main(int argc, char** argv)
   basisAttrMap[basis::BasisStorageAttributes::StoreJxW] = true;
 
     // Set up the CFE Basis Data Storage for Overlap Matrix
+  p.registerStart("CFE GLL basis data eval");
     std::shared_ptr<basis::FEBasisDataStorage<double, Host>> cfeBasisDataStorageGLLElec =
       std::make_shared<basis::CFEBasisDataStorageDealii<double, double,Host, dim>>
       (cfeBasisDofHandlerElec, quadAttrGllElec, basisAttrMap, *linAlgOpContextHost);
@@ -756,6 +759,7 @@ int main(int argc, char** argv)
   // evaluate basis data
   cfeBasisDataStorageGLLElec->evaluateBasisData(quadAttrGllElec, basisAttrMap);
   cfeBasisDataStorageGLLEigen->evaluateBasisData(quadAttrGllEigen, basisAttrMap);
+  p.registerEnd("CFE GLL basis data eval");
 
     // Set the CFE basis manager and handler for bassiInterfaceCoeffcient distributed vector
 
@@ -767,17 +771,20 @@ int main(int argc, char** argv)
   basisAttrMap[basis::BasisStorageAttributes::StoreJxW] = true;
 
     // Set up the CFE Basis Data Storage for Rhs
+  p.registerStart("CFE Adaptive orbital basis data eval");
     std::shared_ptr<basis::FEBasisDataStorage<double, memorySpace>> cfeBasisDataStorageAdaptiveOrbital =
       std::make_shared<basis::CFEBasisDataStorageDealii<double, double,memorySpace, dim>>
       (cfeBasisDofHandlerEigen, quadAttrAdaptive, basisAttrMap, *linAlgOpContext);
   // evaluate basis data
   cfeBasisDataStorageAdaptiveOrbital->evaluateBasisData(quadAttrAdaptive, quadRuleContainerAdaptiveOrbital, basisAttrMap);
+  p.registerEnd("CFE Adaptive orbital basis data eval");
 
       std::shared_ptr<basis::EnrichmentClassicalInterfaceSpherical
                           <double, Host, dim>>
         enrichClassIntfceTotalPot = nullptr;
 
     // Create the enrichmentClassicalInterface object for wavefn
+  p.registerStart("ECI orbital construction");
   std::shared_ptr<basis::EnrichmentClassicalInterfaceSpherical
                           <double, memorySpace, dim>>
     enrichClassIntfceOrbital = std::make_shared<basis::EnrichmentClassicalInterfaceSpherical
@@ -791,6 +798,7 @@ int main(int argc, char** argv)
                           "orbital",
                           linAlgOpContext,
                           comm);
+  p.registerEnd("ECI orbital construction");
 
   // initialize the basis Manager
 
@@ -806,12 +814,15 @@ int main(int argc, char** argv)
     basisAttrMap[basis::BasisStorageAttributes::StoreJxW] = true;
 
     // Set up the CFE Basis Data Storage for Rhs
+  p.registerStart("CFE Adaptive vtotal basis data eval");
     std::shared_ptr<basis::FEBasisDataStorage<double, Host>> cfeBasisDataStorageAdaptiveElec =
       std::make_shared<basis::CFEBasisDataStorageDealii<double, double,Host, dim>>
       (cfeBasisDofHandlerElec, quadAttrAdaptive, basisAttrMap, *linAlgOpContextHost);
     // evaluate basis data
     cfeBasisDataStorageAdaptiveElec->evaluateBasisData(quadAttrAdaptive, quadRuleContainerAdaptiveElec, basisAttrMap);
+  p.registerEnd("CFE Adaptive vtotal basis data eval");
 
+  p.registerStart("ECI vtotal construction");
     enrichClassIntfceTotalPot = std::make_shared<basis::EnrichmentClassicalInterfaceSpherical
                         <double, Host, dim>>
                         (cfeBasisDataStorageGLLElec,
@@ -823,16 +834,22 @@ int main(int argc, char** argv)
                         "vtotal",
                         linAlgOpContextHost,
                         comm);
-     basisDofHandlerTotalPot =  
+  p.registerEnd("ECI vtotal construction");
+
+  p.registerStart("EFE DofHandler totalPot creation");
+     basisDofHandlerTotalPot =
     std::make_shared<basis::EFEBasisDofHandlerDealii<double, double,Host,dim>>(
       enrichClassIntfceTotalPot, comm);
+  p.registerEnd("EFE DofHandler totalPot creation");
   }
   else
     basisDofHandlerTotalPot = cfeBasisDofHandlerElec;
 
-  std::shared_ptr<basis::FEBasisDofHandler<double, memorySpace,dim>> basisDofHandlerWaveFn =  
+  p.registerStart("EFE DofHandler wavefn creation");
+  std::shared_ptr<basis::FEBasisDofHandler<double, memorySpace,dim>> basisDofHandlerWaveFn =
     std::make_shared<basis::EFEBasisDofHandlerDealii<double, double,memorySpace,dim>>(
       enrichClassIntfceOrbital, comm);
+  p.registerEnd("EFE DofHandler wavefn creation");
 
   p.registerEnd("Ortho EFE basis manager creation");
   utils::printCurrentMemoryUsage<memorySpace>(comm, "Ortho EFE basis manager creation");

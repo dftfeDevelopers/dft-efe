@@ -78,7 +78,8 @@ namespace dftefe
             itCellLocalIdsBegin,
             locallyOwnedCellsNumDoFs,
             numCumulativeDofsCells,
-            diagonal.data());
+            diagonal.data(),
+            *diagonal.getLinAlgOpContext());
 
         // function to do a static condensation to send the constraint nodes to
         // its parent nodes

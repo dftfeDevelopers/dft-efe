@@ -26,6 +26,21 @@
 #ifndef BlasLapackTemplates_h
 #define BlasLapackTemplates_h
 
+#include <complex>
+
+// This file's callers (LapackAPIWrapperHost.cpp, BlasAPIWrapperDevice.cpp,
+// etc.) pass unsigned int*/std::complex<T>* arguments matching the
+// extern "C" prototypes declared below. MKL's own mkl_lapack.h (pulled in
+// transitively via oneMKL headers once SYCL is the GPU backend) declares
+// the same LAPACK symbols but with incompatible MKL_INT*/MKL_Complex16*
+// parameter types, which the call sites don't match. Rather than let MKL's
+// declarations replace ours (breaking every call site), pre-empt its own
+// include guard so its conflicting declarations are never parsed in any
+// translation unit that includes this header first.
+#ifdef DFTEFE_WITH_DEVICE_MKL
+#  define _MKL_LAPACK_H_
+#endif
+
 namespace dftefe
 {
   namespace linearAlgebra
@@ -35,6 +50,9 @@ namespace dftefe
     //
     extern "C"
     {
+      //
+      // BLAS routines
+      //
       void
       dgemv_(const char *        TRANS,
              const unsigned int *M,
@@ -98,59 +116,6 @@ namespace dftefe
              double *            C,
              const unsigned int *INCY);
       void
-      dgesv_(int *   n,
-             int *   nrhs,
-             double *a,
-             int *   lda,
-             int *   ipiv,
-             double *b,
-             int *   ldb,
-             int *   info);
-
-      void
-      zgesv_(int *                 n,
-             int *                 nrhs,
-             std::complex<double> *a,
-             int *                 lda,
-             int *                 ipiv,
-             std::complex<double> *b,
-             int *                 ldb,
-             int *                 info);
-
-      void
-      dsysv_(const char *UPLO,
-             const int * n,
-             const int * nrhs,
-             double *    a,
-             const int * lda,
-             int *       ipiv,
-             double *    b,
-             const int * ldb,
-             double *    work,
-             const int * lwork,
-             int *       info);
-
-      void
-      dsteqr_(const char *jobz,
-              const int * n,
-              double *    D,
-              double *    E,
-              double *    Z,
-              const int * lda,
-              double *    work,
-              int *       info);
-
-      void
-      zsteqr_(const char *          jobz,
-              const int *           n,
-              double *              D,
-              double *              E,
-              std::complex<double> *Z,
-              const int *           lda,
-              std::complex<double> *work,
-              int *                 info);
-
-      void
       dscal_(const unsigned int *n,
              const double *      alpha,
              double *            x,
@@ -212,116 +177,8 @@ namespace dftefe
              const float *       beta,
              float *             C,
              const unsigned int *ldc);
-      void
-      dsyevd_(const char *        jobz,
-              const char *        uplo,
-              const unsigned int *n,
-              double *            A,
-              const unsigned int *lda,
-              double *            w,
-              double *            work,
-              const unsigned int *lwork,
-              int *               iwork,
-              const unsigned int *liwork,
-              int *               info);
-      void
-      dsygvx_(const int *   itype,
-              const char *  jobz,
-              const char *  range,
-              const char *  uplo,
-              const int *   n,
-              double *      a,
-              const int *   lda,
-              double *      b,
-              const int *   ldb,
-              const double *vl,
-              const double *vu,
-              const int *   il,
-              const int *   iu,
-              const double *abstol,
-              int *         m,
-              double *      w,
-              double *      z,
-              const int *   ldz,
-              double *      work,
-              const int *   lwork,
-              int *         iwork,
-              int *         ifail,
-              int *         info);
-
-      void
-      dsygv_(const int * itype,
-             const char *jobz,
-             const char *uplo,
-             const int * n,
-             double *    a,
-             const int * lda,
-             double *    b,
-             const int * ldb,
-             double *    w,
-             double *    work,
-             const int * lwork,
-             int *       info);
-
-      void
-      zhegv_(const int *           itype,
-             const char *          jobz,
-             const char *          uplo,
-             const int *           n,
-             std::complex<double> *a,
-             const int *           lda,
-             std::complex<double> *b,
-             const int *           ldb,
-             double *              w,
-             std::complex<double> *work,
-             const int *           lwork,
-             int *                 info);
-
-      void
-      dsyevx_(const char *  jobz,
-              const char *  range,
-              const char *  uplo,
-              const int *   n,
-              double *      a,
-              const int *   lda,
-              const double *vl,
-              const double *vu,
-              const int *   il,
-              const int *   iu,
-              const double *abstol,
-              int *         m,
-              double *      w,
-              double *      z,
-              const int *   ldz,
-              double *      work,
-              const int *   lwork,
-              int *         iwork,
-              int *         ifail,
-              int *         info);
       double
       dlamch_(const char *cmach);
-      void
-      dsyevr_(const char *        jobz,
-              const char *        range,
-              const char *        uplo,
-              const unsigned int *n,
-              double *            A,
-              const unsigned int *lda,
-              const double *      vl,
-              const double *      vu,
-              const unsigned int *il,
-              const unsigned int *iu,
-              const double *      abstol,
-              const unsigned int *m,
-              double *            w,
-              double *            Z,
-              const unsigned int *ldz,
-              unsigned int *      isuppz,
-              double *            work,
-              const int *         lwork,
-              int *               iwork,
-              const int *         liwork,
-              int *               info);
       void
       dsyrk_(const char *        uplo,
              const char *        trans,
@@ -391,44 +248,6 @@ namespace dftefe
              const std::complex<float> *beta,
              std::complex<float> *      C,
              const unsigned int *       ldc);
-      void
-      zheevd_(const char *          jobz,
-              const char *          uplo,
-              const unsigned int *  n,
-              std::complex<double> *A,
-              const unsigned int *  lda,
-              double *              w,
-              std::complex<double> *work,
-              const unsigned int *  lwork,
-              double *              rwork,
-              const unsigned int *  lrwork,
-              int *                 iwork,
-              const unsigned int *  liwork,
-              int *                 info);
-      void
-      zheevr_(const char *          jobz,
-              const char *          range,
-              const char *          uplo,
-              const unsigned int *  n,
-              std::complex<double> *A,
-              const unsigned int *  lda,
-              const double *        vl,
-              const double *        vu,
-              const unsigned int *  il,
-              const unsigned int *  iu,
-              const double *        abstol,
-              const unsigned int *  m,
-              double *              w,
-              std::complex<double> *Z,
-              const unsigned int *  ldz,
-              unsigned int *        isuppz,
-              std::complex<double> *work,
-              const int *           lwork,
-              double *              rwork,
-              const int *           lrwork,
-              int *                 iwork,
-              const int *           liwork,
-              int *                 info);
       void
       zherk_(const char *                uplo,
              const char *                trans,
@@ -534,6 +353,218 @@ namespace dftefe
              const unsigned int *       incx,
              std::complex<float> *      y,
              const unsigned int *       incy);
+
+      //
+      // LAPACK routines.
+      //
+      // mkl_lapack.h declares the same symbols with
+      // incompatible MKL_INT*/MKL_Complex16* parameter types; the #define
+      // _MKL_LAPACK_H_ above pre-empts its include guard so that header's
+      // conflicting declarations never get parsed here, leaving these
+      // (call-site-compatible) prototypes as the only ones in effect.
+      //
+      void
+      dgesv_(int *   n,
+             int *   nrhs,
+             double *a,
+             int *   lda,
+             int *   ipiv,
+             double *b,
+             int *   ldb,
+             int *   info);
+
+      void
+      zgesv_(int *                 n,
+             int *                 nrhs,
+             std::complex<double> *a,
+             int *                 lda,
+             int *                 ipiv,
+             std::complex<double> *b,
+             int *                 ldb,
+             int *                 info);
+
+      void
+      dsysv_(const char *UPLO,
+             const int * n,
+             const int * nrhs,
+             double *    a,
+             const int * lda,
+             int *       ipiv,
+             double *    b,
+             const int * ldb,
+             double *    work,
+             const int * lwork,
+             int *       info);
+
+      void
+      dsteqr_(const char *jobz,
+              const int * n,
+              double *    D,
+              double *    E,
+              double *    Z,
+              const int * lda,
+              double *    work,
+              int *       info);
+
+      void
+      zsteqr_(const char *          jobz,
+              const int *           n,
+              double *              D,
+              double *              E,
+              std::complex<double> *Z,
+              const int *           lda,
+              std::complex<double> *work,
+              int *                 info);
+
+      void
+      dsyevd_(const char *        jobz,
+              const char *        uplo,
+              const unsigned int *n,
+              double *            A,
+              const unsigned int *lda,
+              double *            w,
+              double *            work,
+              const unsigned int *lwork,
+              int *               iwork,
+              const unsigned int *liwork,
+              int *               info);
+      void
+      dsygvx_(const int *   itype,
+              const char *  jobz,
+              const char *  range,
+              const char *  uplo,
+              const int *   n,
+              double *      a,
+              const int *   lda,
+              double *      b,
+              const int *   ldb,
+              const double *vl,
+              const double *vu,
+              const int *   il,
+              const int *   iu,
+              const double *abstol,
+              int *         m,
+              double *      w,
+              double *      z,
+              const int *   ldz,
+              double *      work,
+              const int *   lwork,
+              int *         iwork,
+              int *         ifail,
+              int *         info);
+
+      void
+      dsygv_(const int * itype,
+             const char *jobz,
+             const char *uplo,
+             const int * n,
+             double *    a,
+             const int * lda,
+             double *    b,
+             const int * ldb,
+             double *    w,
+             double *    work,
+             const int * lwork,
+             int *       info);
+
+      void
+      zhegv_(const int *           itype,
+             const char *          jobz,
+             const char *          uplo,
+             const int *           n,
+             std::complex<double> *a,
+             const int *           lda,
+             std::complex<double> *b,
+             const int *           ldb,
+             double *              w,
+             std::complex<double> *work,
+             const int *           lwork,
+             int *                 info);
+
+      void
+      dsyevx_(const char *  jobz,
+              const char *  range,
+              const char *  uplo,
+              const int *   n,
+              double *      a,
+              const int *   lda,
+              const double *vl,
+              const double *vu,
+              const int *   il,
+              const int *   iu,
+              const double *abstol,
+              int *         m,
+              double *      w,
+              double *      z,
+              const int *   ldz,
+              double *      work,
+              const int *   lwork,
+              int *         iwork,
+              int *         ifail,
+              int *         info);
+
+      void
+      dsyevr_(const char *        jobz,
+              const char *        range,
+              const char *        uplo,
+              const unsigned int *n,
+              double *            A,
+              const unsigned int *lda,
+              const double *      vl,
+              const double *      vu,
+              const unsigned int *il,
+              const unsigned int *iu,
+              const double *      abstol,
+              const unsigned int *m,
+              double *            w,
+              double *            Z,
+              const unsigned int *ldz,
+              unsigned int *      isuppz,
+              double *            work,
+              const int *         lwork,
+              int *               iwork,
+              const int *         liwork,
+              int *               info);
+
+      void
+      zheevd_(const char *          jobz,
+              const char *          uplo,
+              const unsigned int *  n,
+              std::complex<double> *A,
+              const unsigned int *  lda,
+              double *              w,
+              std::complex<double> *work,
+              const unsigned int *  lwork,
+              double *              rwork,
+              const unsigned int *  lrwork,
+              int *                 iwork,
+              const unsigned int *  liwork,
+              int *                 info);
+      void
+      zheevr_(const char *          jobz,
+              const char *          range,
+              const char *          uplo,
+              const unsigned int *  n,
+              std::complex<double> *A,
+              const unsigned int *  lda,
+              const double *        vl,
+              const double *        vu,
+              const unsigned int *  il,
+              const unsigned int *  iu,
+              const double *        abstol,
+              const unsigned int *  m,
+              double *              w,
+              std::complex<double> *Z,
+              const unsigned int *  ldz,
+              unsigned int *        isuppz,
+              std::complex<double> *work,
+              const int *           lwork,
+              double *              rwork,
+              const int *           lrwork,
+              int *                 iwork,
+              const int *           liwork,
+              int *                 info);
+
       void
       dpotrf_(const char *        uplo,
               const unsigned int *n,

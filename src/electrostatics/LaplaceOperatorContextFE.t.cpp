@@ -104,7 +104,8 @@ namespace dftefe
                                         cellLocalIdsOffset,
                                       // cellsInBlockNumDoFs,
                                       cellsInBlockNumCumulativeDoFs,
-                                      xCellValues);
+                                      xCellValues,
+                                      linAlgOpContext);
 
             std::vector<char> transA(numCellsInBlock, 'N');
             std::vector<char> transB(numCellsInBlock, 'N');
@@ -186,7 +187,8 @@ namespace dftefe
                                            cellLocalIdsOffset,
                                          // cellsInBlockNumDoFs,
                                          cellsInBlockNumCumulativeDoFs,
-                                         y);
+                                         y,
+                                         linAlgOpContext);
 
             for (size_type iCell = 0; iCell < numCellsInBlock; ++iCell)
               {

@@ -26,6 +26,7 @@
 #ifdef DFTEFE_WITH_DEVICE
 #  include <utils/DeviceKernelLauncherHelpers.h>
 #  include <utils/DeviceAPICalls.h>
+#  include <utils/DeviceDataTypeOverloads.h>
 #  include <utils/PointChargePotentialFunction.h>
 #  include <cmath>
 
@@ -54,7 +55,7 @@ namespace dftefe
                 }
               r = sqrt(r);
               if (r >= 1e-12)
-                atomicAdd(&q[iPoint], z[iAtom] / r);
+                dftefe::utils::atomicAddWrapper(&q[iPoint], z[iAtom] / r);
             }
         },
         const size_type numPoints,

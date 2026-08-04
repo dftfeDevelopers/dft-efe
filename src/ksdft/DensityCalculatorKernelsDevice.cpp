@@ -216,7 +216,7 @@ namespace dftefe
                            (batchSize + (utils::DEVICE_BLOCK_SIZE - 1)) /
                              utils::DEVICE_BLOCK_SIZE * quadPtsInCellsBlockSize,
                            utils::DEVICE_BLOCK_SIZE,
-                           utils::defaultStream,
+                           linAlgOpContext.getBlasStream(),
                            batchSize,
                            quadPtsInCellsBlockSize,
                            utils::makeDataTypeDeviceCompatible(psiBatchQuad),
@@ -356,7 +356,7 @@ namespace dftefe
         (totalEntries + (utils::DEVICE_BLOCK_SIZE - 1)) /
           utils::DEVICE_BLOCK_SIZE,
         utils::DEVICE_BLOCK_SIZE,
-        utils::defaultStream,
+        linAlgOpContext.getBlasStream(),
         batchSize,
         quadPtsInCellsBlockSize,
         dim,

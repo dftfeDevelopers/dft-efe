@@ -542,7 +542,8 @@ namespace dftefe
       ConstraintsInternal<ValueTypeBasisCoeff, memorySpace>::
         constraintsSetConstrainedNodesToZero(vectorData,
                                              blockSize,
-                                             d_rowConstraintsIdsLocal);
+                                             d_rowConstraintsIdsLocal,
+                                             *vectorData.getLinAlgOpContext());
     }
 
     template <typename ValueTypeBasisCoeff,
@@ -559,7 +560,8 @@ namespace dftefe
         constraintsSetConstrainedNodes(vectorData,
                                        blockSize,
                                        d_rowConstraintsIdsLocal,
-                                       alpha);
+                                       alpha,
+                                       *vectorData.getLinAlgOpContext());
     }
 
     template <typename ValueTypeBasisCoeff,

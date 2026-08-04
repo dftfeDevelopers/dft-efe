@@ -21,6 +21,8 @@
  */
 
 #include <sycl/sycl.hpp>
+#include <utils/TypeConfig.h>
+#include <utils/DeviceTypeConfig.h>
 #include <utils/DeviceKernelLauncherHelpers.h>
 
 

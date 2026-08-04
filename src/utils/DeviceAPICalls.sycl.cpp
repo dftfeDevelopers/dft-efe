@@ -154,7 +154,15 @@ namespace dftefe
                              makeDataTypeDeviceCompatible(value),
                              size);
             });
-      DEVICE_API_CHECK(event);
+      try
+        {
+          event.wait();
+        }
+      catch (const sycl::exception &e)
+        {
+          std::cerr << "SYCL error in " << __func__ << " at " << __FILE__ << ":"
+                    << __LINE__ << ". Error code: " << e.what() << ".\n";
+        }
     }
 
     template void

@@ -26,6 +26,7 @@
 #ifdef DFTEFE_WITH_DEVICE
 #  include <utils/DeviceKernelLauncherHelpers.h>
 #  include <utils/DeviceAPICalls.h>
+#  include <utils/DeviceDataTypeOverloads.h>
 #  include <atoms/AtomSevereFunction.h>
 #  include <cmath>
 
@@ -42,8 +43,9 @@ namespace dftefe
           for (size_type iPoint = globalThreadId; iPoint < numPoints;
                iPoint += nThreadsPerBlock * nThreadBlock)
             {
-              atomicAdd(&q[iPoint],
-                        fabs(vtotal[iPoint] * (b[iPoint] + rho[iPoint])));
+              dftefe::utils::atomicAddWrapper(&q[iPoint],
+                                              fabs(vtotal[iPoint] *
+                                                   (b[iPoint] + rho[iPoint])));
             }
         },
         const size_type numPoints,
@@ -59,7 +61,9 @@ namespace dftefe
           for (size_type iPoint = globalThreadId; iPoint < numPoints;
                iPoint += nThreadsPerBlock * nThreadBlock)
             {
-              atomicAdd(&q[iPoint], fabs(vnuclear[iPoint] * b[iPoint]));
+              dftefe::utils::atomicAddWrapper(&q[iPoint],
+                                              fabs(vnuclear[iPoint] *
+                                                   b[iPoint]));
             }
         },
         const size_type numPoints,
@@ -74,8 +78,9 @@ namespace dftefe
           for (size_type iPoint = globalThreadId; iPoint < numPoints;
                iPoint += nThreadsPerBlock * nThreadBlock)
             {
-              atomicAdd(&q[iPoint],
-                        fabs(orbital[iPoint] * orbital[iPoint] * vext[iPoint]));
+              dftefe::utils::atomicAddWrapper(
+                &q[iPoint],
+                fabs(orbital[iPoint] * orbital[iPoint] * vext[iPoint]));
             }
         },
         const size_type numPoints,

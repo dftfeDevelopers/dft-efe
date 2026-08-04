@@ -91,6 +91,16 @@ set(DFT-EFE-KSDFT-SOURCES
 
 add_library(dft-efe-ksdft SHARED ${DFT-EFE-KSDFT-SOURCES})
 
+IF (ENABLE_GPU)
+IF ("${GPU_LANG}" STREQUAL "sycl")
+# COMPILE_FLAGS on the source files above only affects their compile step;
+# the library's own link step needs the SYCL flags too (-fsycl
+# -fsycl-targets=... ) or its device kernels don't get linked into the
+# final .so's device image, causing "No kernel named ..." at runtime.
+set_target_properties(dft-efe-ksdft PROPERTIES LINK_FLAGS ${CMAKE_SYCL_FLAGS})
+ENDIF()
+ENDIF()
+
 if (NOT TARGET dft-efe-utils)
   add_subdirectory(../utils ${CMAKE_CURRENT_BINARY_DIR}/buildUtils)
 endif()

@@ -1,4 +1,5 @@
 #include <vector>
+#include <utils/DeviceTypeConfig.h>
 
 namespace dftefe
 {
@@ -25,10 +26,10 @@ namespace dftefe
     double
     YDer(const double x, const double r, const double d);
 
-    double
+    DFTEFE_HOST_DEVICE_FUNC double
     smoothCutoffValue(const double x, const double r, const double d);
 
-    double
+    DFTEFE_HOST_DEVICE_FUNC double
     smoothCutoffDerivative(const double x,
                            const double r,
                            const double d,
@@ -115,10 +116,10 @@ namespace dftefe
     double
     Clm(const int l, const int m);
 
-    double
+    DFTEFE_HOST_DEVICE_FUNC double
     Qm(const int m, const double phi);
 
-    double
+    DFTEFE_HOST_DEVICE_FUNC double
     dQmDPhi(const int m, const double phi);
 
     double

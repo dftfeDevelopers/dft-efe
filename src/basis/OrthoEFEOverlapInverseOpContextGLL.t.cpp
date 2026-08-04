@@ -1577,7 +1577,7 @@ namespace dftefe
 
       utils::MemoryStorage<size_type, memorySpace> locallyOwnedCellsNumDoFs(
         numLocallyOwnedCells);
-      locallyOwnedCellsNumDoFs.template copyFrom(locallyOwnedCellsNumDoFsSTL);
+      locallyOwnedCellsNumDoFs.copyFrom(locallyOwnedCellsNumDoFsSTL);
 
       linearAlgebra::Vector<ValueTypeOperator, memorySpace> diagonal(
         d_feBasisManager->getMPIPatternP2P(), linAlgOpContext);
@@ -1594,7 +1594,8 @@ namespace dftefe
                                            itCellLocalIdsBegin,
                                            locallyOwnedCellsNumDoFs,
                                            numCumulativeDofsCells,
-                                           diagonal.data());
+                                           diagonal.data(),
+                                           *linAlgOpContext);
 
       // function to do a static condensation to send the constraint nodes to
       // its parent nodes

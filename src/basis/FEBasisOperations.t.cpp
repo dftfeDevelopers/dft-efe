@@ -1065,7 +1065,8 @@ namespace dftefe
                                     numComponents,
                                     itCellLocalIdsBegin + cellLocalIdsOffset,
                                     numCumulativeDofsCellsInBlock,
-                                    d_fieldCellValues);
+                                    d_fieldCellValues,
+                                    *vectorData.getLinAlgOpContext());
 
           std::vector<char>      transA(numCellsInBlock, 'N');
           std::vector<char>      transB(numCellsInBlock, 'N');
@@ -1232,7 +1233,8 @@ namespace dftefe
                                 numComponents,
                                 itCellLocalIdsBegin + cellLocalIdsOffset,
                                 numCumulativeDofsCellsInRange,
-                                d_fieldCellValues);
+                                d_fieldCellValues,
+                                *vectorData.getLinAlgOpContext());
 
       std::vector<char>      transA(numCellsInRange, 'N');
       std::vector<char>      transB(numCellsInRange, 'N');
@@ -1384,7 +1386,8 @@ namespace dftefe
                                 numComponents,
                                 itCellLocalIdsBegin + cellLocalIdsOffset,
                                 numCumulativeDofsCellsInRange,
-                                d_fieldCellValues);
+                                d_fieldCellValues,
+                                *vectorData.getLinAlgOpContext());
 
       std::vector<char>      transA(numCellsInRange, 'N');
       std::vector<char>      transB(numCellsInRange, 'N');
@@ -1593,7 +1596,8 @@ namespace dftefe
                                     numComponents,
                                     itCellLocalIdsBegin + cellLocalIdsOffset,
                                     numCumulativeDofsCellsInBlock,
-                                    d_fieldCellValues);
+                                    d_fieldCellValues,
+                                    *vectorData.getLinAlgOpContext());
 
           std::vector<char>      transA(numCellsInBlock, 'N');
           std::vector<char>      transB(numCellsInBlock, 'N');
@@ -1903,7 +1907,8 @@ namespace dftefe
                                        numComponents,
                                        itCellLocalIdsBegin + cellLocalIdsOffset,
                                        numCumulativeDofsCellsInBlock,
-                                       vectorData.begin());
+                                       vectorData.begin(),
+                                       linAlgOpContext);
 
           for (size_type iCell = 0; iCell < numCellsInBlock; ++iCell)
             {
