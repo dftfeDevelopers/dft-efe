@@ -366,12 +366,15 @@ namespace dftefe
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
           linAlgOpContext,
         /* basis overlap related info */
-        const OpContext &          MContextForInv,
-        const OpContext &          MContext,
-        const OpContext &          MInvContext,
-        bool                       isResidualChebyshevFilter,
-        const std::vector<double> &atomMagZFactors,
-        SpinMode                   spinMode)
+        const OpContext &                    MContextForInv,
+        const OpContext &                    MContext,
+        const OpContext &                    MInvContext,
+        bool                                 isResidualChebyshevFilter,
+        const std::vector<double> &          atomMagZFactors,
+        SpinMode                             spinMode,
+        bool                                 isGHEP,
+        linearAlgebra::OrthogonalizationType orthoType,
+        const size_type                      chebyshevPolynomialDegree)
       : d_feBMWaveFn(feBMWaveFn)
       , d_evaluateEnergyEverySCF(evaluateEnergyEverySCF)
       , d_numMaxSCFIter(maxSCFIter)
@@ -733,12 +736,10 @@ namespace dftefe
                        waveFnBatch,
                        MContextForInv,
                        MInvContext,
-                       true, /*isGHEP*/
-                       linearAlgebra::OrthogonalizationType::
-                         CHOLESKY_GRAMSCHMIDT, /*orthoType
-                                                */
-                       false,                  /*storeIntermediateSubspaces*/
-                       true,                   /*useSameScratchInEigenSolver*/
+                       isGHEP,
+                       orthoType,
+                       false, /*storeIntermediateSubspaces*/
+                       true,  /*useSameScratchInEigenSolver*/
                        spinMode);
 
           ksEigSolve.setChebyshevPolynomialDegree(1);
@@ -768,12 +769,15 @@ namespace dftefe
         waveFnBatch,
         MContextForInv,
         MInvContext,
-        true,                                                       /*isGHEP*/
-        linearAlgebra::OrthogonalizationType::CHOLESKY_GRAMSCHMIDT, /*orthoType
-                                                                     */
+        isGHEP,
+        orthoType,
         false, /*storeIntermediateSubspaces*/
         true,  /*useSameScratchInEigenSolver*/
         spinMode);
+
+
+      if (chebyshevPolynomialDegree > 0)
+        d_ksEigSolve->setChebyshevPolynomialDegree(chebyshevPolynomialDegree);
 
       auto spec    = std::make_unique<SpectralRep<
         linearAlgebra::blasLapack::scalar_type<ValueTypeWaveFunctionBasis,
@@ -880,12 +884,15 @@ namespace dftefe
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
           linAlgOpContext,
         /* basis overlap related info */
-        const OpContext &          MContextForInv,
-        const OpContext &          MContext,
-        const OpContext &          MInvContext,
-        bool                       isResidualChebyshevFilter,
-        const std::vector<double> &atomMagZFactors,
-        SpinMode                   spinMode)
+        const OpContext &                    MContextForInv,
+        const OpContext &                    MContext,
+        const OpContext &                    MInvContext,
+        bool                                 isResidualChebyshevFilter,
+        const std::vector<double> &          atomMagZFactors,
+        SpinMode                             spinMode,
+        bool                                 isGHEP,
+        linearAlgebra::OrthogonalizationType orthoType,
+        const size_type                      chebyshevPolynomialDegree)
       : d_feBMWaveFn(feBMWaveFn)
       , d_evaluateEnergyEverySCF(evaluateEnergyEverySCF)
       , d_numMaxSCFIter(maxSCFIter)
@@ -1246,12 +1253,10 @@ namespace dftefe
                        waveFnBatch,
                        MContextForInv,
                        MInvContext,
-                       true, /*isGHEP*/
-                       linearAlgebra::OrthogonalizationType::
-                         CHOLESKY_GRAMSCHMIDT, /*orthoType
-                                                */
-                       false,                  /*storeIntermediateSubspaces*/
-                       true,                   /*useSameScratchInEigenSolver*/
+                       isGHEP,
+                       orthoType,
+                       false, /*storeIntermediateSubspaces*/
+                       true,  /*useSameScratchInEigenSolver*/
                        spinMode);
 
           ksEigSolve.setChebyshevPolynomialDegree(1);
@@ -1281,12 +1286,15 @@ namespace dftefe
         waveFnBatch,
         MContextForInv,
         MInvContext,
-        true,                                                       /*isGHEP*/
-        linearAlgebra::OrthogonalizationType::CHOLESKY_GRAMSCHMIDT, /*orthoType
-                                                                     */
+        isGHEP,
+        orthoType,
         false, /*storeIntermediateSubspaces*/
         true,  /*useSameScratchInEigenSolver*/
         spinMode);
+
+
+      if (chebyshevPolynomialDegree > 0)
+        d_ksEigSolve->setChebyshevPolynomialDegree(chebyshevPolynomialDegree);
 
       auto spec    = std::make_unique<SpectralRep<
         linearAlgebra::blasLapack::scalar_type<ValueTypeWaveFunctionBasis,
@@ -1395,9 +1403,12 @@ namespace dftefe
         const OpContext &MInvContext,
         bool             isResidualChebyshevFilter,
         /* TCI related info */
-        const atoms::TCIADataParams &params,
-        const std::vector<double> &  atomMagZFactors,
-        SpinMode                     spinMode)
+        const atoms::TCIADataParams &        params,
+        const std::vector<double> &          atomMagZFactors,
+        SpinMode                             spinMode,
+        bool                                 isGHEP,
+        linearAlgebra::OrthogonalizationType orthoType,
+        const size_type                      chebyshevPolynomialDegree)
       : d_feBMWaveFn(feBMWaveFn)
       , d_evaluateEnergyEverySCF(evaluateEnergyEverySCF)
       // , d_densityInQuadValues(electronChargeDensityInput)
@@ -1824,12 +1835,10 @@ namespace dftefe
                        waveFnBatch,
                        MContextForInv,
                        MInvContext,
-                       true, /*isGHEP*/
-                       linearAlgebra::OrthogonalizationType::
-                         CHOLESKY_GRAMSCHMIDT, /*orthoType
-                                                */
-                       false,                  /*storeIntermediateSubspaces*/
-                       true,                   /*useSameScratchInEigenSolver*/
+                       isGHEP,
+                       orthoType,
+                       false, /*storeIntermediateSubspaces*/
+                       true,  /*useSameScratchInEigenSolver*/
                        spinMode);
 
           ksEigSolve.setChebyshevPolynomialDegree(1);
@@ -1859,12 +1868,15 @@ namespace dftefe
         waveFnBatch,
         MContextForInv,
         MInvContext,
-        true,                                                       /*isGHEP*/
-        linearAlgebra::OrthogonalizationType::CHOLESKY_GRAMSCHMIDT, /*orthoType
-                                                                     */
+        isGHEP,
+        orthoType,
         false, /*storeIntermediateSubspaces*/
         true,  /*useSameScratchInEigenSolver*/
         spinMode);
+
+
+      if (chebyshevPolynomialDegree > 0)
+        d_ksEigSolve->setChebyshevPolynomialDegree(chebyshevPolynomialDegree);
 
       auto spec    = std::make_unique<SpectralRep<
         linearAlgebra::blasLapack::scalar_type<ValueTypeWaveFunctionBasis,
@@ -1975,7 +1987,8 @@ namespace dftefe
         const OpContext &          MInvContext,
         bool                       isResidualChebyshevFilter,
         const std::vector<double> &atomMagZFactors,
-        SpinMode                   spinMode)
+        SpinMode                   spinMode,
+        const size_type            chebyshevPolynomialDegree)
       : d_feBMWaveFn(feBMWaveFn)
       , d_evaluateEnergyEverySCF(evaluateEnergyEverySCF)
       , d_numMaxSCFIter(maxSCFIter)
@@ -2460,6 +2473,10 @@ namespace dftefe
         true,  /*useSameScratchInEigenSolver*/
         spinMode);
 
+
+      if (chebyshevPolynomialDegree > 0)
+        d_ksEigSolve->setChebyshevPolynomialDegree(chebyshevPolynomialDegree);
+
       auto spec    = std::make_unique<SpectralRep<
         linearAlgebra::blasLapack::scalar_type<ValueTypeWaveFunctionBasis,
                                                ValueTypeWaveFunctionCoeff>,
@@ -2569,7 +2586,8 @@ namespace dftefe
         /* TCI related info */
         const atoms::TCIADataParams &params,
         const std::vector<double> &  atomMagZFactors,
-        SpinMode                     spinMode)
+        SpinMode                     spinMode,
+        const size_type              chebyshevPolynomialDegree)
       : d_feBMWaveFn(feBMWaveFn)
       , d_evaluateEnergyEverySCF(evaluateEnergyEverySCF)
       , d_numMaxSCFIter(maxSCFIter)
@@ -3198,6 +3216,10 @@ namespace dftefe
         false, /*storeIntermediateSubspaces*/
         true,  /*useSameScratchInEigenSolver*/
         spinMode);
+
+
+      if (chebyshevPolynomialDegree > 0)
+        d_ksEigSolve->setChebyshevPolynomialDegree(chebyshevPolynomialDegree);
 
       auto spec    = std::make_unique<SpectralRep<
         linearAlgebra::blasLapack::scalar_type<ValueTypeWaveFunctionBasis,

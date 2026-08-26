@@ -119,6 +119,21 @@ namespace dftefe
 
     }; // end of class NewtonRaphsonSolverDefaults
 
+    class BisectionSolverDefaults
+    {
+    public:
+      //
+      // Maximum iteration for bisection
+      //
+      static const size_type MAX_ITER;
+
+      //
+      // Tolerance on |getValue(x)| at the bisected midpoint
+      //
+      static const double TOL;
+
+    }; // end of class BisectionSolverDefaults
+
     class Constants
     {
     public:

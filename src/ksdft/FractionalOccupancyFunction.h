@@ -28,6 +28,7 @@
 
 #include <linearAlgebra/NewtonRaphsonSolver.h>
 #include <linearAlgebra/NewtonRaphsonSolverFunction.h>
+#include <linearAlgebra/BisectionSolverFunction.h>
 
 namespace dftefe
 {
@@ -46,7 +47,8 @@ namespace dftefe
                   const double T);
 
     class FractionalOccupancyFunction
-      : public linearAlgebra::NewtonRaphsonSolverFunction<double>
+      : public linearAlgebra::NewtonRaphsonSolverFunction<double>,
+        public linearAlgebra::BisectionSolverFunction<double>
     {
     public:
       /**
@@ -75,13 +77,34 @@ namespace dftefe
       const double &
       getInitialGuess() const override;
 
+      const double
+      getLowerBound() const override;
+
+      const double
+      getUpperBound() const override;
+
     private:
+      // Computes d_lowerBound/d_upperBound: starts from
+      // [min(d_eigenValues), max(d_eigenValues)] and, if that does not
+      // already bracket a root of getValue(), expands both ends outward
+      // by the bracket's own width and rechecks - repeated up to 1000
+      // times before giving up (throws otherwise). This bracket
+      // construction is only valid because getValue() (a sum of
+      // Fermi-Dirac sigmoids) is strictly monotonic in x - a property
+      // specific to this function, not something the generic
+      // BisectionSolver can assume for an arbitrary BisectionSolverFunction,
+      // which is why this lives here rather than there.
+      void
+      computeBracket();
+
       double              d_x;
       double              d_initialGuess;
       std::vector<double> d_eigenValues;
       size_type           d_numElectrons;
       double              d_kb;
       double              d_T;
+      double              d_lowerBound;
+      double              d_upperBound;
 
     }; // end of class FractionalOccupancyFunction
   }    // end of namespace ksdft

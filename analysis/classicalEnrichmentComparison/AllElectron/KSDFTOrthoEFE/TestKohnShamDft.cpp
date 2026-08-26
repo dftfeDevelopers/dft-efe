@@ -278,6 +278,10 @@ int main(int argc, char** argv)
   double    fracOccupancyTolerance = readParameter<double>(parameterInputFileName, "fracOccupancyTolerance", rootCout);
   double    eigenSolveResidualTolerance = readParameter<double>(parameterInputFileName, "eigenSolveResidualTolerance", rootCout);
   size_type maxChebyshevFilterPass = readParameter<size_type>(parameterInputFileName, "maxChebyshevFilterPass", rootCout);
+  // Optional: if not present in the parameter file (or 0), the Chebyshev
+  // polynomial degree is computed each SCF iteration from the internal
+  // CHEBY_ORDER_LOOKUP table (see ksdft::LinearEigenSolverDefaults) instead.
+  size_type chebyshevPolynomialDegree = readParameter<size_type>(parameterInputFileName, "chebyshevPolynomialDegree", rootCout, false, false, size_type(0));
   size_type numWantedEigenvalues = readParameter<size_type>(parameterInputFileName, "numWantedEigenvalues", rootCout);
   double scfDensityResidualNormTolerance = readParameter<double>(parameterInputFileName, "scfDensityResidualNormTolerance", rootCout);
   size_type maxSCFIter = readParameter<size_type>(parameterInputFileName, "maxSCFIter", rootCout);
@@ -312,6 +316,16 @@ int main(int argc, char** argv)
     spinMode = ksdft::SpinMode::Collinear;
   else if (spinModeStr == "NonCollinear")
     spinMode = ksdft::SpinMode::NonCollinear;
+
+  bool isGHEP = readParameter<bool>(parameterInputFileName, "isGHEP", rootCout, false, false, true);
+  std::string orthoTypeStr = readParameter<std::string>(parameterInputFileName, "orthoType", rootCout, false, false, std::string("CHOLESKY_GRAMSCHMIDT"));
+  linearAlgebra::OrthogonalizationType orthoType = linearAlgebra::OrthogonalizationType::CHOLESKY_GRAMSCHMIDT;
+  if (orthoTypeStr == "MULTIPASS_CGS")
+    orthoType = linearAlgebra::OrthogonalizationType::MULTIPASS_CGS;
+  else if (orthoTypeStr == "MULTIPASS_LOWDIN")
+    orthoType = linearAlgebra::OrthogonalizationType::MULTIPASS_LOWDIN;
+  else if (orthoTypeStr != "CHOLESKY_GRAMSCHMIDT")
+    utils::throwException(false, "Unknown orthoType: " + orthoTypeStr);
 
   // Set up Triangulation
     std::shared_ptr<basis::TriangulationBase> triangulationBase =
@@ -1056,7 +1070,7 @@ int main(int argc, char** argv)
   std::shared_ptr<linearAlgebra::OperatorContext<double,
                                                    double,
                                                    memorySpace>> MInvContext =
-    std::make_shared<basis::/*OrthoEFEOverlapInverseOpContextGLL*/OEFEAtomBlockOverlapInvOpContextGLL<double,
+    std::make_shared<basis::OrthoEFEOverlapInverseOpContextGLL/*OEFEAtomBlockOverlapInvOpContextGLL*/<double,
                                                    double,
                                                    memorySpace,
                                                    dim>>
@@ -1131,7 +1145,10 @@ int main(int argc, char** argv)
                                   *MInvContext,
                                   true,
                                   atomMagZFactors,
-                                  spinMode);
+                                  spinMode,
+                                  isGHEP,
+                                  orthoType,
+                                  chebyshevPolynomialDegree);
   }
   else if (!isNumericalNuclearSolve && !isDeltaRhoPoissonSolve)
   {
@@ -1175,7 +1192,10 @@ int main(int argc, char** argv)
                                   *MInvContext,
                                   true,
                                   atomMagZFactors,
-                                  spinMode);
+                                  spinMode,
+                                  isGHEP,
+                                  orthoType,
+                                  chebyshevPolynomialDegree);
   }
   else if (!isNumericalNuclearSolve && isDeltaRhoPoissonSolve)
   {
@@ -1230,7 +1250,10 @@ int main(int argc, char** argv)
                                   true,
                                   tciaparams,
                                   atomMagZFactors,
-                                  spinMode);
+                                  spinMode,
+                                  isGHEP,
+                                  orthoType,
+                                  chebyshevPolynomialDegree);
   }
   else
   {

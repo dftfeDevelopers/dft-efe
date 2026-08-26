@@ -28,6 +28,7 @@
 #include <linearAlgebra/ChebyshevFilteredEigenSolver.h>
 #include <linearAlgebra/MultiVectorOps.h>
 #include <ksdft/FractionalOccupancyFunction.h>
+#include <linearAlgebra/BisectionSolver.h>
 #include <iomanip>
 namespace dftefe
 {
@@ -424,13 +425,19 @@ namespace dftefe
               d_rootCout << "Chebyshev Filter Pass: [" << iPass << "] "
                          << chfsiErr.msg << std::endl;
 
-              // for(auto &i : kohnShamEnergies)
-              //   std::cout <<  i <<", ";
-              // std::cout << "\n";
-
               d_p.registerStart("Compute chemical potential");
               d_pTotal.registerStart("Compute chemical potential");
-              // Calculate the chemical potential using newton raphson
+              // Calculate the chemical potential: bisect within the
+              // bracket of all filtered eigenvalues first (see
+              // BisectionSolver - immune to sharply-peaked/vanishing
+              // derivatives since it only ever evaluates getValue()), then
+              // hand off to Newton
+
+              const size_type initialGuessIdx =
+                (d_spinMode == SpinMode::Collinear) ?
+                  std::ceil(static_cast<double>(d_numElectrons) / 2.0) - 1 :
+                  std::ceil(static_cast<double>(d_numElectrons * d_S) / 2.0) -
+                    1;
 
               std::shared_ptr<ksdft::FractionalOccupancyFunction> fOcc =
                 std::make_shared<ksdft::FractionalOccupancyFunction>(
@@ -438,13 +445,22 @@ namespace dftefe
                   d_numElectrons * d_S,
                   Constants::BOLTZMANN_CONST_HARTREE,
                   d_smearingTemperature,
-                  kohnShamEnergies
-                    [(d_spinMode == SpinMode::Collinear) ?
-                       std::ceil(static_cast<double>(d_numElectrons) / 2.0) -
-                         1 :
-                       std::ceil(static_cast<double>(d_numElectrons * d_S) /
-                                 2.0) -
-                         1]);
+                  kohnShamEnergies[initialGuessIdx]);
+
+              linearAlgebra::BisectionSolver<double> bisectionSolver(
+                BisectionSolverDefaults::MAX_ITER,
+                BisectionSolverDefaults::TOL);
+
+              linearAlgebra::BisectionError bisectionErr =
+                bisectionSolver.solve(*fOcc);
+
+              utils::throwException(
+                bisectionErr.isSuccess,
+                "KohnShamEigenSolver: bisection pre-pass for the Fermi "
+                "energy failed - " +
+                  bisectionErr.msg +
+                  " This should not happen for a monotonic occupancy "
+                  "function; check for NaN/Inf eigenvalues.");
 
               linearAlgebra::NewtonRaphsonSolver<double> nrs(
                 NewtonRaphsonSolverDefaults::MAX_ITER,
@@ -452,6 +468,15 @@ namespace dftefe
                 NewtonRaphsonSolverDefaults::FORCE_TOL);
 
               nrErr = nrs.solve(*fOcc);
+
+              utils::throwException(
+                nrErr.isSuccess,
+                "KohnShamEigenSolver: Newton-Raphson polish for the Fermi "
+                "energy failed - " +
+                  nrErr.msg +
+                  " This should not happen starting from a "
+                  "bisection-refined estimate; check for NaN/Inf "
+                  "eigenvalues.");
 
               fOcc->getSolution(d_fermiEnergy);
 

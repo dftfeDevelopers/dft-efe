@@ -158,9 +158,17 @@ namespace dftefe
           linearAlgebra::IdentityOperatorContext<ValueTypeOperator,
                                                  ValueTypeOperand,
                                                  memorySpace>(),
-        bool                       isResidualChebyshevFilter = true,
-        const std::vector<double> &atomMagZFactors           = {},
-        SpinMode                   spinMode = SpinMode::Unpolarized);
+        bool                                 isResidualChebyshevFilter = true,
+        const std::vector<double> &          atomMagZFactors           = {},
+        SpinMode                             spinMode = SpinMode::Unpolarized,
+        bool                                 isGHEP   = true,
+        linearAlgebra::OrthogonalizationType orthoType =
+          linearAlgebra::OrthogonalizationType::CHOLESKY_GRAMSCHMIDT,
+        /* If 0 (default), the Chebyshev polynomial degree is computed each
+         * SCF iteration from CHEBY_ORDER_LOOKUP (see
+         * ksdft::LinearEigenSolverDefaults); if > 0, it is pinned to this
+         * value for the whole run. */
+        const size_type chebyshevPolynomialDegree = 0);
 
 
       // used if numerical poisson solve vself canellation route taken
@@ -250,9 +258,17 @@ namespace dftefe
           linearAlgebra::IdentityOperatorContext<ValueTypeOperator,
                                                  ValueTypeOperand,
                                                  memorySpace>(),
-        bool                       isResidualChebyshevFilter = true,
-        const std::vector<double> &atomMagZFactors           = {},
-        SpinMode                   spinMode = SpinMode::Unpolarized);
+        bool                                 isResidualChebyshevFilter = true,
+        const std::vector<double> &          atomMagZFactors           = {},
+        SpinMode                             spinMode = SpinMode::Unpolarized,
+        bool                                 isGHEP   = true,
+        linearAlgebra::OrthogonalizationType orthoType =
+          linearAlgebra::OrthogonalizationType::CHOLESKY_GRAMSCHMIDT,
+        /* If 0 (default), the Chebyshev polynomial degree is computed each
+         * SCF iteration from CHEBY_ORDER_LOOKUP (see
+         * ksdft::LinearEigenSolverDefaults); if > 0, it is pinned to this
+         * value for the whole run. */
+        const size_type chebyshevPolynomialDegree = 0);
 
       // used if delta rho approach is taken with phi total from 1D KS solve
       // with analytical vself energy cancellation
@@ -340,7 +356,15 @@ namespace dftefe
         /* TCI related info */
         const atoms::TCIADataParams &params = TCIADataDefaults::TCIA_PARAMS,
         const std::vector<double> &  atomMagZFactors = {},
-        SpinMode                     spinMode        = SpinMode::Unpolarized);
+        SpinMode                     spinMode        = SpinMode::Unpolarized,
+        bool                         isGHEP          = true,
+        linearAlgebra::OrthogonalizationType orthoType =
+          linearAlgebra::OrthogonalizationType::CHOLESKY_GRAMSCHMIDT,
+        /* If 0 (default), the Chebyshev polynomial degree is computed each
+         * SCF iteration from CHEBY_ORDER_LOOKUP (see
+         * ksdft::LinearEigenSolverDefaults); if > 0, it is pinned to this
+         * value for the whole run. */
+        const size_type chebyshevPolynomialDegree = 0);
 
       //// used if analytical vself canellation route taken with PSP
       KohnShamDFT(
@@ -428,7 +452,12 @@ namespace dftefe
                                                  memorySpace>(),
         bool                       isResidualChebyshevFilter = true,
         const std::vector<double> &atomMagZFactors           = {},
-        SpinMode                   spinMode = SpinMode::Unpolarized);
+        SpinMode                   spinMode = SpinMode::Unpolarized,
+        /* If 0 (default), the Chebyshev polynomial degree is computed each
+         * SCF iteration from CHEBY_ORDER_LOOKUP (see
+         * ksdft::LinearEigenSolverDefaults); if > 0, it is pinned to this
+         * value for the whole run. */
+        const size_type chebyshevPolynomialDegree = 0);
 
 
       // used if delta rho with PSP approach is taken with phi total from 1D KS
@@ -521,7 +550,12 @@ namespace dftefe
         /* TCI related info */
         const atoms::TCIADataParams &params = TCIADataDefaults::TCIA_PARAMS,
         const std::vector<double> &  atomMagZFactors = {},
-        SpinMode                     spinMode        = SpinMode::Unpolarized);
+        SpinMode                     spinMode        = SpinMode::Unpolarized,
+        /* If 0 (default), the Chebyshev polynomial degree is computed each
+         * SCF iteration from CHEBY_ORDER_LOOKUP (see
+         * ksdft::LinearEigenSolverDefaults); if > 0, it is pinned to this
+         * value for the whole run. */
+        const size_type chebyshevPolynomialDegree = 0);
 
       ~KohnShamDFT();
 

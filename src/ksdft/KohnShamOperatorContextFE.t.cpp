@@ -1347,8 +1347,9 @@ namespace dftefe
         const size_type maxWaveFnBatch,
         const bool      useOptimizedImplement,
         const SpinMode  spinMode)
-      : d_maxCellBlock(spinMode == SpinMode::Collinear ? maxCellBlock / 2 :
-                                                         maxCellBlock)
+      : d_maxCellBlock(spinMode == SpinMode::Collinear ?
+                         std::max(maxCellBlock / 2, (size_type)1) :
+                         maxCellBlock)
       , d_maxWaveFnBatch(maxWaveFnBatch)
       , d_linAlgOpContext(linAlgOpContext)
       , d_useOptimizedImplement(useOptimizedImplement)
@@ -1519,7 +1520,7 @@ namespace dftefe
       constraintsX.distributeParentToChild(X, numVecs);
 
       const size_type cellBlockSize =
-        (d_maxCellBlock * d_maxWaveFnBatch) / numVecs;
+        std::max((d_maxCellBlock * d_maxWaveFnBatch) / numVecs, (size_type)1);
       Y.setValue(0.0);
 
       //

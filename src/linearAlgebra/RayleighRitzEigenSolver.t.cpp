@@ -404,92 +404,257 @@ namespace dftefe
         }
       else
         {
-          utils::throwException(
-            dynamic_cast<MultiVectorProductSpace<ValueType, memorySpace> *>(
-              &X) == nullptr &&
-              dynamic_cast<
-                MultiVectorProductSpaceBlocked<ValueType, memorySpace> *>(&X) ==
-                nullptr,
-            "Non-ScaLAPACK Rayleigh-Ritz path does not support "
-            "spin-polarized (S>1) wavefunctions.");
-          MultiVector<ValueType, memorySpace> eigenVectors(X, (ValueType)0);
-          // // ------- For DEBUG ---------------
-          EigenSolverError                             retunValue;
-          LapackError                                  lapackReturn;
-          utils::MemoryStorage<ValueType, memorySpace> XprojectedA(
-            numVec * numVec, utils::Types<ValueType>::zero);
-          utils::MemoryStorage<ValueType, utils::MemorySpace::HOST>
-            XprojectedAHost(numVec * numVec, utils::Types<ValueType>::zero);
-          utils::MemoryStorage<ValueType, utils::MemorySpace::HOST>
-            eigenVectorsXSubspace(numVec * numVec,
-                                  utils::Types<ValueType>::zero);
-          eigenValues.resize(numVec);
-
-          computeXTransOpX(X, XprojectedA, A);
-
-          // Solve the standard eigenvalue problem
-
-          utils::MemoryTransfer<utils::MemorySpace::HOST, memorySpace>::copy(
-            XprojectedA.size(),
-            eigenVectorsXSubspace.data(),
-            XprojectedA.data());
-
-          lapackReturn = blasLapack::heevd<ValueType, utils::MemorySpace::HOST>(
-            computeEigenVectors ? 'V' : 'N',
-            'L',
-            numVec,
-            eigenVectorsXSubspace.data(),
-            numVec,
-            eigenValues.data(),
-            *LinAlgOpContextDefaults::LINALG_OP_CONTXT_HOST);
-
-          if (computeEigenVectors)
+          if (auto *Xb = dynamic_cast<
+                MultiVectorProductSpaceBlocked<ValueType, memorySpace> *>(&X))
             {
-              int mpierr = utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
-                utils::mpi::MPIInPlace,
-                eigenVectorsXSubspace.data(),
-                eigenVectorsXSubspace.size(),
-                utils::mpi::Types<ValueType>::getMPIDatatype(),
-                utils::mpi::MPISum,
-                X.getMPIPatternP2P()->mpiCommunicator());
+              // === BLOCKED (collinear): S independent N×N sub-problems,
+              // host LAPACK (no ScaLAPACK/ELPA) ===
+              EigenSolverError retunValue;
+              LapackError      lapackReturn;
+              bool             solveSuccess = true;
 
-              utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::
-                copy(XprojectedA.size(),
-                     XprojectedA.data(),
-                     eigenVectorsXSubspace.data());
+              const size_type N            = Xb->numVectorsPerSpace();
+              const size_type S            = Xb->numSpaces();
+              const size_type vecLocalSize = X.localSize();
+              eigenValues.resize(S * N);
 
-              blasLapack::gemm<ValueType, ValueType, memorySpace>(
-                'T',
-                'N',
-                numVec,
-                vecSize,
-                numVec,
-                (ValueType)1,
-                XprojectedA.data(),
-                numVec,
-                X.data(),
-                numVec,
-                (ValueType)0,
-                eigenVectors.data(),
-                numVec,
-                *X.getLinAlgOpContext());
+              MultiVector<ValueType, memorySpace> eigenVectors(X, (ValueType)0);
+              MultiVector<ValueType, memorySpace> Xs(X.getMPIPatternP2P(),
+                                                     X.getLinAlgOpContext(),
+                                                     N,
+                                                     (ValueType)0);
+              MultiVector<ValueType, memorySpace> OpXs(X.getMPIPatternP2P(),
+                                                       X.getLinAlgOpContext(),
+                                                       N,
+                                                       (ValueType)0);
+              MultiVector<ValueType, memorySpace> eigenVectorsBlock(
+                X.getMPIPatternP2P(), X.getLinAlgOpContext(), N, (ValueType)0);
 
-              X = eigenVectors;
-            }
+              utils::MemoryStorage<ValueType, memorySpace> XprojectedA(
+                N * N, utils::Types<ValueType>::zero);
+              utils::MemoryStorage<ValueType, utils::MemorySpace::HOST>
+                eigenVectorsXSubspace(N * N, utils::Types<ValueType>::zero);
 
-          if (lapackReturn.err == LapackErrorCode::FAILED_STANDARD_EIGENPROBLEM)
-            {
-              err        = EigenSolverErrorCode::LAPACK_ERROR;
-              retunValue = EigenSolverErrorMsg::isSuccessAndMsg(err);
-              retunValue.msg += lapackReturn.msg;
+              for (size_type s = 0; s < S; ++s)
+                {
+                  // Gather space-s block (N columns strided by numVec=S*N)
+                  // into the contiguous scratch multivector Xs
+                  blasLapack::stridedBlockCopy(vecLocalSize,
+                                               N,
+                                               numVec,
+                                               s * N,
+                                               N,
+                                               0,
+                                               X.data(),
+                                               Xs.data(),
+                                               *X.getLinAlgOpContext());
+
+                  A.apply(Xs, OpXs, true, false);
+
+                  // XprojectedA = Xs^H * (A*Xs)  (N x N)
+                  blasLapack::gemm<ValueType, ValueType, memorySpace>(
+                    'N',
+                    'C',
+                    N,
+                    N,
+                    vecSize,
+                    (ValueType)1,
+                    OpXs.data(),
+                    N,
+                    Xs.data(),
+                    N,
+                    (ValueType)0,
+                    XprojectedA.data(),
+                    N,
+                    *X.getLinAlgOpContext());
+
+                  utils::MemoryTransfer<utils::MemorySpace::HOST,
+                                        memorySpace>::copy(XprojectedA.size(),
+                                                           eigenVectorsXSubspace
+                                                             .data(),
+                                                           XprojectedA.data());
+
+                  int mpierr =
+                    utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
+                      utils::mpi::MPIInPlace,
+                      eigenVectorsXSubspace.data(),
+                      eigenVectorsXSubspace.size(),
+                      utils::mpi::Types<ValueType>::getMPIDatatype(),
+                      utils::mpi::MPISum,
+                      X.getMPIPatternP2P()->mpiCommunicator());
+                  std::pair<bool, std::string> mpiIsSuccessAndMsg =
+                    utils::mpi::MPIErrIsSuccessAndMsg(mpierr);
+                  DFTEFE_AssertWithMsg(mpiIsSuccessAndMsg.first,
+                                       "MPI Error:" +
+                                         mpiIsSuccessAndMsg.second);
+
+                  // Solve the standard eigenvalue problem for space s
+                  lapackReturn =
+                    blasLapack::heevd<ValueType, utils::MemorySpace::HOST>(
+                      computeEigenVectors ? 'V' : 'N',
+                      'L',
+                      N,
+                      eigenVectorsXSubspace.data(),
+                      N,
+                      eigenValues.data() + s * N,
+                      *LinAlgOpContextDefaults::LINALG_OP_CONTXT_HOST);
+
+                  if (lapackReturn.err ==
+                      LapackErrorCode::FAILED_STANDARD_EIGENPROBLEM)
+                    solveSuccess = false;
+
+                  if (computeEigenVectors)
+                    {
+                      utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
+                        utils::mpi::MPIInPlace,
+                        eigenVectorsXSubspace.data(),
+                        eigenVectorsXSubspace.size(),
+                        utils::mpi::Types<ValueType>::getMPIDatatype(),
+                        utils::mpi::MPISum,
+                        X.getMPIPatternP2P()->mpiCommunicator());
+
+                      utils::MemoryTransfer<memorySpace,
+                                            utils::MemorySpace::HOST>::
+                        copy(XprojectedA.size(),
+                             XprojectedA.data(),
+                             eigenVectorsXSubspace.data());
+
+                      // eigenVectorsBlock = XprojectedA^T * Xs  (N x vecSize)
+                      blasLapack::gemm<ValueType, ValueType, memorySpace>(
+                        'T',
+                        'N',
+                        N,
+                        vecSize,
+                        N,
+                        (ValueType)1,
+                        XprojectedA.data(),
+                        N,
+                        Xs.data(),
+                        N,
+                        (ValueType)0,
+                        eigenVectorsBlock.data(),
+                        N,
+                        *X.getLinAlgOpContext());
+
+                      // Scatter the rotated space-s block back into the
+                      // full (S*N)-wide eigenVectors multivector
+                      blasLapack::stridedBlockCopy(vecSize,
+                                                   N,
+                                                   N,
+                                                   0,
+                                                   numVec,
+                                                   s * N,
+                                                   eigenVectorsBlock.data(),
+                                                   eigenVectors.data(),
+                                                   *X.getLinAlgOpContext());
+                    }
+                }
+
+              if (computeEigenVectors)
+                X = eigenVectors;
+
+              if (!solveSuccess)
+                {
+                  err        = EigenSolverErrorCode::LAPACK_ERROR;
+                  retunValue = EigenSolverErrorMsg::isSuccessAndMsg(err);
+                }
+              else
+                {
+                  err        = EigenSolverErrorCode::SUCCESS;
+                  retunValue = EigenSolverErrorMsg::isSuccessAndMsg(err);
+                }
+
+              return retunValue;
             }
           else
             {
-              err        = EigenSolverErrorCode::SUCCESS;
-              retunValue = EigenSolverErrorMsg::isSuccessAndMsg(err);
-            }
+              // === Generic path: plain MultiVector, and the COUPLED
+              // (unpolarized S=1 / non-collinear S=2) MultiVectorProductSpace
+              // case, which is already correct here unmodified since it
+              // treats the full numVec = S*N columns as one coupled block. ===
+              MultiVector<ValueType, memorySpace> eigenVectors(X, (ValueType)0);
+              // // ------- For DEBUG ---------------
+              EigenSolverError                             retunValue;
+              LapackError                                  lapackReturn;
+              utils::MemoryStorage<ValueType, memorySpace> XprojectedA(
+                numVec * numVec, utils::Types<ValueType>::zero);
+              utils::MemoryStorage<ValueType, utils::MemorySpace::HOST>
+                XprojectedAHost(numVec * numVec, utils::Types<ValueType>::zero);
+              utils::MemoryStorage<ValueType, utils::MemorySpace::HOST>
+                eigenVectorsXSubspace(numVec * numVec,
+                                      utils::Types<ValueType>::zero);
+              eigenValues.resize(numVec);
 
-          return retunValue;
+              computeXTransOpX(X, XprojectedA, A);
+
+              // Solve the standard eigenvalue problem
+
+              utils::MemoryTransfer<utils::MemorySpace::HOST,
+                                    memorySpace>::copy(XprojectedA.size(),
+                                                       eigenVectorsXSubspace
+                                                         .data(),
+                                                       XprojectedA.data());
+
+              lapackReturn =
+                blasLapack::heevd<ValueType, utils::MemorySpace::HOST>(
+                  computeEigenVectors ? 'V' : 'N',
+                  'L',
+                  numVec,
+                  eigenVectorsXSubspace.data(),
+                  numVec,
+                  eigenValues.data(),
+                  *LinAlgOpContextDefaults::LINALG_OP_CONTXT_HOST);
+
+              if (computeEigenVectors)
+                {
+                  int mpierr =
+                    utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
+                      utils::mpi::MPIInPlace,
+                      eigenVectorsXSubspace.data(),
+                      eigenVectorsXSubspace.size(),
+                      utils::mpi::Types<ValueType>::getMPIDatatype(),
+                      utils::mpi::MPISum,
+                      X.getMPIPatternP2P()->mpiCommunicator());
+
+                  utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::
+                    copy(XprojectedA.size(),
+                         XprojectedA.data(),
+                         eigenVectorsXSubspace.data());
+
+                  blasLapack::gemm<ValueType, ValueType, memorySpace>(
+                    'T',
+                    'N',
+                    numVec,
+                    vecSize,
+                    numVec,
+                    (ValueType)1,
+                    XprojectedA.data(),
+                    numVec,
+                    X.data(),
+                    numVec,
+                    (ValueType)0,
+                    eigenVectors.data(),
+                    numVec,
+                    *X.getLinAlgOpContext());
+
+                  X = eigenVectors;
+                }
+
+              if (lapackReturn.err ==
+                  LapackErrorCode::FAILED_STANDARD_EIGENPROBLEM)
+                {
+                  err        = EigenSolverErrorCode::LAPACK_ERROR;
+                  retunValue = EigenSolverErrorMsg::isSuccessAndMsg(err);
+                  retunValue.msg += lapackReturn.msg;
+                }
+              else
+                {
+                  err        = EigenSolverErrorCode::SUCCESS;
+                  retunValue = EigenSolverErrorMsg::isSuccessAndMsg(err);
+                }
+
+              return retunValue;
+            }
         }
     }
 

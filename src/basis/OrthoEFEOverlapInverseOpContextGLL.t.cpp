@@ -1324,7 +1324,7 @@ namespace dftefe
                                                               ValueTypeOperator,
                                                               memorySpace>(
               numCellsInBlock,
-              linearAlgebra::blasLapack::Layout::RowMajor,
+              linearAlgebra::blasLapack::Layout::ColMajor,
               linearAlgebra::blasLapack::ScalarOp::Identity,
               linearAlgebra::blasLapack::ScalarOp::Identity,
               strideA.data(),
@@ -1341,7 +1341,7 @@ namespace dftefe
               linAlgOpContext);
 
             std::fill(transA.begin(), transA.end(), 'N');
-            std::fill(transB.begin(), transB.end(), 'N');
+            std::fill(transB.begin(), transB.end(), 'C');
 
             for (size_type iCell = 0; iCell < numCellsInBlock; ++iCell)
               {
@@ -1350,7 +1350,7 @@ namespace dftefe
                 kSizes[iCell] =
                   nQuadPointInCellBlockEnrichmentBlockEnrichment[iCell];
                 ldaSizes[iCell] = mSizes[iCell];
-                ldbSizes[iCell] = kSizes[iCell];
+                ldbSizes[iCell] = nSizes[iCell];
                 ldcSizes[iCell] = dofsPerCellInCellBlock[iCell];
                 strideA[iCell]  = mSizes[iCell] * kSizes[iCell];
                 strideB[iCell]  = kSizes[iCell] * nSizes[iCell];
@@ -1380,7 +1380,7 @@ namespace dftefe
               ldcSizes.data(),
               linAlgOpContext);
 
-            std::fill(transA.begin(), transA.end(), 'T');
+            std::fill(transA.begin(), transA.end(), 'N');
             std::fill(transB.begin(), transB.end(), 'T');
 
             for (size_type iCell = 0; iCell < numCellsInBlock; ++iCell)
@@ -1389,7 +1389,7 @@ namespace dftefe
                 nSizes[iCell] = numEnrichmentIdsInCellBlock[iCell];
                 kSizes[iCell] =
                   nQuadPointInCellBlockEnrichmentBlockEnrichment[iCell];
-                ldaSizes[iCell] = kSizes[iCell];
+                ldaSizes[iCell] = mSizes[iCell];
                 ldbSizes[iCell] = nSizes[iCell];
                 ldcSizes[iCell] = dofsPerCellInCellBlock[iCell];
                 strideA[iCell]  = mSizes[iCell] * kSizes[iCell];

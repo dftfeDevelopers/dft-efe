@@ -1324,7 +1324,7 @@ namespace dftefe
             {
               err        = OrthonormalizationErrorCode::SUCCESS;
               retunValue = OrthonormalizationErrorMsg::isSuccessAndMsg(err);
-              retunValue.msg += "Maximum number of Lowdin passes are " +
+              retunValue.msg += "Maximum number of CGS passes are " +
                                 std::to_string(iPass) + ".";
             }
         }
