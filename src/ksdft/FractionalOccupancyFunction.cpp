@@ -81,8 +81,7 @@ namespace dftefe
       double yRight = getValue(xRight);
 
       bool intervalFound = yLeft * yRight <= 0.0;
-      for (size_type iter = 0;
-           !intervalFound && iter < maxBracketExpansionIter;
+      for (size_type iter = 0; !intervalFound && iter < maxBracketExpansionIter;
            ++iter)
         {
           xLeft -= spectrumWidth;
@@ -100,9 +99,8 @@ namespace dftefe
         "interval that brackets the target electron count after " +
           std::to_string(maxBracketExpansionIter) +
           " bracket expansions. xLeft=" + std::to_string(xLeft) +
-          " (getValue=" + std::to_string(yLeft) +
-          "), xRight=" + std::to_string(xRight) +
-          " (getValue=" + std::to_string(yRight) +
+          " (getValue=" + std::to_string(yLeft) + "), xRight=" +
+          std::to_string(xRight) + " (getValue=" + std::to_string(yRight) +
           "). Check for NaN/Inf eigenvalues; the number of wanted "
           "eigenvalues may also be insufficient.");
 
