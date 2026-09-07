@@ -28,6 +28,7 @@
 #include <linearAlgebra/BlasLapackTypedef.h>
 #include <linearAlgebra/LinAlgOpContext.h>
 #include <basis/FECellWiseDataOperations.h>
+#include <numeric>
 namespace dftefe
 {
   namespace basis
@@ -98,7 +99,9 @@ namespace dftefe
 
           /** --- Storages --------- **/
           const size_type numCumulativeQuadCells =
-            std::accumulate(d_numCellQuad.begin(), d_numCellQuad.end(), 0);
+            std::accumulate(d_numCellQuad.begin(),
+                            d_numCellQuad.end(),
+                            (size_type)0);
 
           // fxJxW[q] = JxW[q] * fVec[kComp][q] — built per kComp per cell block
           StorageUnion fxJxW(numCumulativeQuadCells, ValueTypeUnion());
@@ -142,7 +145,7 @@ namespace dftefe
               const size_type numCumulativeQuadCellsInBlock =
                 std::accumulate(numCellsInBlockQuad.begin(),
                                 numCellsInBlockQuad.end(),
-                                0);
+                                (size_type)0);
 
               // size_type numCumulativeQuadxDofsCellsInBlock = 0;
               size_type numCumulativeDofsxDofsCellsInBlock = 0;
@@ -342,7 +345,9 @@ namespace dftefe
 
           /** --- Storages --------- **/
           const size_type numCumulativeQuadCells =
-            std::accumulate(d_numCellQuad.begin(), d_numCellQuad.end(), 0);
+            std::accumulate(d_numCellQuad.begin(),
+                            d_numCellQuad.end(),
+                            (size_type)0);
 
           // fxJxW[d,q] = JxW[q]*fVec[kComp][d,q] — built per kComp per cell
           // block
@@ -394,7 +399,7 @@ namespace dftefe
               const size_type numCumulativeQuadCellsInBlock =
                 std::accumulate(numCellsInBlockQuad.begin(),
                                 numCellsInBlockQuad.end(),
-                                0);
+                                (size_type)0);
 
               size_type numCumulativeDofsxDofsCellsInBlock = 0;
               for (size_type iCell = 0; iCell < numCellsInBlock; iCell++)
@@ -1055,7 +1060,7 @@ namespace dftefe
           const size_type numCumulativeDofsCellsInBlock =
             std::accumulate(numCellsInBlockDofs.begin(),
                             numCellsInBlockDofs.end(),
-                            0);
+                            (size_type)0);
 
           utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>
             memoryTransfer;
@@ -1195,7 +1200,7 @@ namespace dftefe
       const size_type numCumulativeDofsCellsInRange =
         std::accumulate(numCellsInRangeDofs.begin(),
                         numCellsInRangeDofs.end(),
-                        0);
+                        (size_type)0);
 
       size_type cellLocalIdsOffset = 0;
       for (size_type iCell = 0; iCell < cellStartId; ++iCell)
@@ -1210,8 +1215,9 @@ namespace dftefe
         d_fieldCellValues.resize(numCellsInRange * d_maxDofInCell *
                                  numComponents);
 
-      const size_type basisDataSize =
-        d_maxQuadInCell * numCellsInRange * d_maxDofInCell;
+      size_type basisDataSize = 0;
+      for (size_type iCell = cellStartId; iCell < cellEndId; ++iCell)
+        basisDataSize += d_numCellQuad[iCell] * d_numCellDofs[iCell];
       if (d_basisDataInCellRange.size() < basisDataSize)
         {
           d_basisDataInCellRange.resize(basisDataSize, ValueTypeBasisData());
@@ -1350,7 +1356,7 @@ namespace dftefe
       const size_type numCumulativeDofsCellsInRange =
         std::accumulate(numCellsInRangeDofs.begin(),
                         numCellsInRangeDofs.end(),
-                        0);
+                        (size_type)0);
 
       size_type cellLocalIdsOffset = 0;
       for (size_type iCell = 0; iCell < cellStartId; ++iCell)
@@ -1362,8 +1368,10 @@ namespace dftefe
         d_fieldCellValues.resize(numCellsInRange * d_maxDofInCell *
                                  numComponents);
 
-      const size_type basisGradSize =
-        d_maxQuadInCell * numCellsInRange * d_maxDofInCell * dim;
+      size_type basisGradSize = 0;
+      for (size_type iCell = cellStartId; iCell < cellEndId; ++iCell)
+        basisGradSize += d_numCellQuad[iCell] * d_numCellDofs[iCell] * dim;
+
       if (d_basisGradientDataInCellRange.size() < basisGradSize)
         {
           d_basisGradientDataInCellRange.resize(basisGradSize,
@@ -1586,7 +1594,7 @@ namespace dftefe
           const size_type numCumulativeDofsCellsInBlock =
             std::accumulate(numCellsInBlockDofs.begin(),
                             numCellsInBlockDofs.end(),
-                            0);
+                            (size_type)0);
 
           utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>
             memoryTransfer;
@@ -1787,7 +1795,7 @@ namespace dftefe
           const size_type numCumulativeDofsCellsInBlock =
             std::accumulate(numCellsInBlockDofs.begin(),
                             numCellsInBlockDofs.end(),
-                            0);
+                            (size_type)0);
 
           utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>
             memoryTransfer;
@@ -1800,7 +1808,7 @@ namespace dftefe
           const size_type numCumulativeQuadCellsInBlock =
             std::accumulate(numCellsInBlockQuad.begin(),
                             numCellsInBlockQuad.end(),
-                            0);
+                            (size_type)0);
 
           linearAlgebra::blasLapack::ScalarOp scalarOpA =
             linearAlgebra::blasLapack::ScalarOp::Identity;

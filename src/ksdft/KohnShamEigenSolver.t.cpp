@@ -30,6 +30,7 @@
 #include <ksdft/FractionalOccupancyFunction.h>
 #include <linearAlgebra/BisectionSolver.h>
 #include <iomanip>
+#include <cmath>
 namespace dftefe
 {
   namespace ksdft
@@ -46,6 +47,67 @@ namespace dftefe
             lower->second :
             1250;
         return val;
+      }
+
+      /**
+       * Largest Chebyshev degree an all-electron spectrum can tolerate.
+       *
+       * The filter maps [a, b] = [wantedUpper, unWantedUpper] onto [-1, 1]
+       * through x(lambda) = (lambda - c)/e, e = (b - a)/2, c = (b + a)/2
+       * (see ChebyshevFilter.t.cpp), so the lowest wanted eigenvalue a0
+       * lands at
+       *
+       *   |x_low| = (b + a - 2*a0)/(b - a) = 1 + 2*rho,
+       *   rho     = (a - a0)/(b - a).
+       *
+       * Outside [-1, 1] the Chebyshev polynomial grows as
+       * T_m(x) = cosh(m*acosh|x|), i.e. log10|T_m| ~ m*acosh|x|/ln(10).
+       * The filtered subspace therefore spans that many decades between its
+       * lowest and highest wanted state. Once that exceeds the ~16 decades
+       * of a double, the upper states fall below round-off relative to the
+       * lowest one, the subspace collapses in rank and Rayleigh-Ritz returns
+       * garbage for everything above the deepest few states. So invert the
+       * relation for m at CHEBY_FILTER_TARGET_DECADES.
+       *
+       * Only used for all-electron. A pseudopotential spectrum has a shallow
+       * a0 (rho ~ 1e-4), which puts this bound in the thousands where it
+       * never binds - hence CHEBY_ORDER_LOOKUP alone has always sufficed
+       * there, and that path is left untouched.
+       */
+      size_type
+      getChebyPolynomialDegreeAllElectron(double wantedSpectrumLowerBound,
+                                          double wantedSpectrumUpperBound,
+                                          double unWantedSpectrumUpperBound)
+      {
+        //
+        // Number of decades of dynamic range the Chebyshev filter is allowed
+        // to span across the wanted spectrum in an all-electron calculation.
+        // Kept below the ~16 decades of a double so that the Gram-Schmidt
+        // orthogonalization still has headroom to recover the upper states.
+        //
+        const double CHEBY_FILTER_TARGET_DECADES = 11.0;
+        //
+        // Floor for the all-electron Chebyshev degree, so a pathological
+        // (or inverted) set of spectrum bounds still yields a usable filter.
+        //
+        const size_type CHEBY_ORDER_ALLELECTRON_MIN = 10;
+
+        const double unWantedWidth =
+          unWantedSpectrumUpperBound - wantedSpectrumUpperBound;
+        const double wantedWidth =
+          wantedSpectrumUpperBound - wantedSpectrumLowerBound;
+
+        // Degenerate or inverted bounds: e <= 0 in the filter, so there is
+        // no meaningful dynamic range to solve for. Fall back to the floor
+        // rather than feeding acosh an argument below 1.
+        if (unWantedWidth <= 0.0 || wantedWidth <= 0.0)
+          return CHEBY_ORDER_ALLELECTRON_MIN;
+
+        const double xLow = 1.0 + 2.0 * wantedWidth / unWantedWidth;
+        const double degree =
+          CHEBY_FILTER_TARGET_DECADES * std::log(10.0) / std::acosh(xLow);
+
+        return std::max(CHEBY_ORDER_ALLELECTRON_MIN, (size_type)degree);
       }
     } // namespace
 
@@ -74,7 +136,8 @@ namespace dftefe
         linearAlgebra::OrthogonalizationType       orthoType,
         bool                                       storeIntermediateSubspaces,
         bool                                       useSameScratchInEigenSolver,
-        SpinMode                                   spinMode)
+        SpinMode                                   spinMode,
+        CalculationType                            calculationType)
       : d_spinMode(spinMode)
       , d_S((spinMode == SpinMode::Unpolarized) ? 1 : 2)
       , d_numWantedEigenvalues(numWantedEigenvalues)
@@ -95,6 +158,8 @@ namespace dftefe
       , d_chebyPolyScalingFactor(1.0)
       , d_isResidualChebyFilter(isResidualChebyshevFilter)
       , d_setChebyPolDegExternally(false)
+      , d_isChebyPolDegComputed(false)
+      , d_calculationType(calculationType)
       , d_storeIntermediateSubspaces(storeIntermediateSubspaces)
       , d_filteredSubspace(nullptr)
       , d_filteredSubspaceOrtho((nullptr))
@@ -121,12 +186,15 @@ namespace dftefe
                   const OpContext &MLanczos,
                   const OpContext &MInvLanczos)
     {
-      d_isSolved        = false;
-      d_isBoundKnown    = false;
-      d_mpiPatternP2P   = mpiPatternP2P;
-      d_linAlgOpContext = linAlgOpContext;
-      d_MLanczos        = &MLanczos;
-      d_MInvLanczos     = &MInvLanczos;
+      d_isSolved     = false;
+      d_isBoundKnown = false;
+      // A new basis means a new spectrum, so any all-electron degree latched
+      // against the old bounds is stale and has to be derived again.
+      d_isChebyPolDegComputed = false;
+      d_mpiPatternP2P         = mpiPatternP2P;
+      d_linAlgOpContext       = linAlgOpContext;
+      d_MLanczos              = &MLanczos;
+      d_MInvLanczos           = &MInvLanczos;
       int rank;
       utils::mpi::MPICommRank(mpiPatternP2P->mpiCommunicator(), &rank);
       d_rootCout.setCondition(rank == 0);
@@ -325,14 +393,33 @@ namespace dftefe
           d_rootCout << "unWantedSpectrumUpperBound: "
                      << eigenValuesLanczos[1] + residual << "\n";
 
-          if (!d_setChebyPolDegExternally)
+          // All-electron derives the degree from the spectrum bounds, which
+          // are set by the deep core states and so barely move once the run
+          // is under way. It is therefore computed once and kept for every
+          // later SCF. Pseudopotential keeps recomputing from the lookup
+          // each SCF, as before.
+          if (!d_setChebyPolDegExternally &&
+              !(d_calculationType == CalculationType::AE &&
+                d_isChebyPolDegComputed))
             {
-              // Calculating polynomial degree after each scf?
               d_chebyshevPolynomialDegree =
-                getChebyPolynomialDegree(eigenValuesLanczos[1] + residual);
+                d_calculationType == CalculationType::AE ?
+                  getChebyPolynomialDegreeAllElectron(
+                    d_wantedSpectrumLowerBound,
+                    d_wantedSpectrumUpperBound,
+                    eigenValuesLanczos[1] + residual) :
+                  getChebyPolynomialDegree(eigenValuesLanczos[1] + residual);
 
               d_chebyshevPolynomialDegree =
                 d_chebyshevPolynomialDegree * d_chebyPolyScalingFactor;
+
+              // Latch only once the bounds are the ones the run actually
+              // uses. On the very first SCF they still come from the initial
+              // guess above, which is a far narrower window than the
+              // Ritz-based one reinitBounds() supplies from the next SCF on,
+              // so a degree latched there would be calibrated for a window
+              // that is never seen again.
+              d_isChebyPolDegComputed = d_isBoundKnown;
             }
 
           d_rootCout << "Chebyshev Polynomial Degree : "
@@ -469,14 +556,36 @@ namespace dftefe
 
               nrErr = nrs.solve(*fOcc);
 
-              utils::throwException(
-                nrErr.isSuccess,
-                "KohnShamEigenSolver: Newton-Raphson polish for the Fermi "
-                "energy failed - " +
-                  nrErr.msg +
-                  " This should not happen starting from a "
-                  "bisection-refined estimate; check for NaN/Inf "
-                  "eigenvalues.");
+              if (!nrErr.isSuccess &&
+                  nrErr.err ==
+                    linearAlgebra::NewtonRaphsonErrorCode::FORCE_TOLERANCE_ERR)
+                {
+                  d_rootCout
+                    << "KohnShamEigenSolver: Newton-Raphson found the "
+                       "derivative already vanished at the bisected Fermi "
+                       "energy estimate (likely a HOMO-LUMO gap); keeping "
+                       "the bisected value. "
+                    << nrErr.msg << std::endl;
+
+                  // The bisected estimate is being deliberately accepted
+                  // here, so this is not a genuine failure - reset nrErr
+                  // to SUCCESS so it does not spuriously trip the CHFSI
+                  // break condition or get reported as a
+                  // KS_NEWTON_RAPHSON_ERROR below.
+                  nrErr = linearAlgebra::NewtonRaphsonErrorMsg::isSuccessAndMsg(
+                    linearAlgebra::NewtonRaphsonErrorCode::SUCCESS);
+                }
+              else
+                {
+                  utils::throwException(
+                    nrErr.isSuccess,
+                    "KohnShamEigenSolver: Newton-Raphson polish for the "
+                    "Fermi energy failed - " +
+                      nrErr.msg +
+                      " This should not happen starting from a "
+                      "bisection-refined estimate; check for NaN/Inf "
+                      "eigenvalues.");
+                }
 
               fOcc->getSolution(d_fermiEnergy);
 

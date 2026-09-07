@@ -752,7 +752,7 @@ namespace dftefe
                   cumulativeC += stridec[ibatch];
                 }
 
-              for (int s = 0; s < numStreams; ++s)
+              for (size_type s = 0; s < numStreams; ++s)
                 {
                   utils::deviceError_t err =
                     utils::deviceStreamSynchronize(streams[s]);
@@ -941,7 +941,7 @@ namespace dftefe
                   cumulativeC += stridec[ibatch];
                 }
 
-              for (int s = 0; s < numStreams; ++s)
+              for (size_type s = 0; s < numStreams; ++s)
                 {
                   utils::deviceError_t err =
                     utils::deviceStreamSynchronize(streams[s]);

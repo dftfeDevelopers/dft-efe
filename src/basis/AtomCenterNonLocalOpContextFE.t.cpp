@@ -424,8 +424,9 @@ namespace dftefe
 
       d_maxProjInCell =
         *std::max_element(d_numProjsInCells.begin(), d_numProjsInCells.end());
-      d_totProjInProc =
-        std::accumulate(d_numProjsInCells.begin(), d_numProjsInCells.end(), 0);
+      d_totProjInProc = std::accumulate(d_numProjsInCells.begin(),
+                                        d_numProjsInCells.end(),
+                                        (size_type)0);
 
       cellIndex                                                     = 0;
       size_type                                  cumulativeDofxProj = 0;

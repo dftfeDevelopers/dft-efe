@@ -114,9 +114,10 @@ namespace dftefe
         const bool                           isGHEP = true,
         linearAlgebra::OrthogonalizationType orthoType =
           linearAlgebra::OrthogonalizationType::CHOLESKY_GRAMSCHMIDT,
-        bool     storeIntermediateSubspaces  = false,
-        bool     useSameScratchInEigenSolver = true,
-        SpinMode spinMode                    = SpinMode::Unpolarized);
+        bool            storeIntermediateSubspaces  = false,
+        bool            useSameScratchInEigenSolver = true,
+        SpinMode        spinMode                    = SpinMode::Unpolarized,
+        CalculationType calculationType             = CalculationType::PSP);
 
       /**
        *@brief Default Destructor
@@ -221,6 +222,8 @@ namespace dftefe
       bool                      d_isBoundKnown;
       double                    d_chebyPolyScalingFactor;
       bool                      d_setChebyPolDegExternally;
+      bool                      d_isChebyPolDegComputed;
+      CalculationType           d_calculationType;
 
       std::shared_ptr<
         linearAlgebra::ChebyshevFilteredEigenSolver<ValueTypeOperator,

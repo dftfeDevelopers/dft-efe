@@ -677,7 +677,7 @@ namespace dftefe
       RealType                     d_groundStateEnergy;
       bool                         d_isSolved;
       utils::Profiler<memorySpace> d_p, d_pTotal;
-      bool                         d_isPSPCalculation;
+      CalculationType              d_calculationType;
 
       std::shared_ptr<ElectrostaticExcFE<ValueTypeElectrostaticsCoeff,
                                          ValueTypeElectrostaticsBasis,

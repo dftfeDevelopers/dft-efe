@@ -752,7 +752,12 @@ namespace dftefe
                            *d_MInvContext);
         }
 
-      // form the kohn sham operator
+      d_calculationType =
+        dynamic_cast<const utils::PointChargePotentialFunction *>(
+          &externalPotentialFunction) != nullptr ?
+          CalculationType::AE :
+          CalculationType::PSP;
+
       d_ksEigSolve = std::make_shared<
         KohnShamEigenSolver<ValueTypeOperator, ValueTypeOperand, memorySpace>>(
         numElectrons,
@@ -773,7 +778,8 @@ namespace dftefe
         orthoType,
         false, /*storeIntermediateSubspaces*/
         true,  /*useSameScratchInEigenSolver*/
-        spinMode);
+        spinMode,
+        d_calculationType);
 
 
       if (chebyshevPolynomialDegree > 0)
@@ -791,11 +797,6 @@ namespace dftefe
 
       d_p.registerEnd("KS EigenSolver Init");
 
-      if (dynamic_cast<const utils::PointChargePotentialFunction *>(
-            &externalPotentialFunction) != nullptr)
-        d_isPSPCalculation = false;
-      else
-        d_isPSPCalculation = true;
       d_p.print();
     }
 
@@ -1269,7 +1270,12 @@ namespace dftefe
                            *d_MInvContext);
         }
 
-      // form the kohn sham operator
+      d_calculationType =
+        dynamic_cast<const utils::PointChargePotentialFunction *>(
+          &externalPotentialFunction) != nullptr ?
+          CalculationType::AE :
+          CalculationType::PSP;
+
       d_ksEigSolve = std::make_shared<
         KohnShamEigenSolver<ValueTypeOperator, ValueTypeOperand, memorySpace>>(
         numElectrons,
@@ -1290,7 +1296,8 @@ namespace dftefe
         orthoType,
         false, /*storeIntermediateSubspaces*/
         true,  /*useSameScratchInEigenSolver*/
-        spinMode);
+        spinMode,
+        d_calculationType);
 
 
       if (chebyshevPolynomialDegree > 0)
@@ -1308,11 +1315,6 @@ namespace dftefe
 
       d_p.registerEnd("KS EigenSolver Init");
 
-      if (dynamic_cast<const utils::PointChargePotentialFunction *>(
-            &externalPotentialFunction) != nullptr)
-        d_isPSPCalculation = false;
-      else
-        d_isPSPCalculation = true;
       d_p.print();
     }
 
@@ -1851,7 +1853,12 @@ namespace dftefe
                            *d_MInvContext);
         }
 
-      // form the kohn sham operator
+      d_calculationType =
+        dynamic_cast<const utils::PointChargePotentialFunction *>(
+          &externalPotentialFunction) != nullptr ?
+          CalculationType::AE :
+          CalculationType::PSP;
+
       d_ksEigSolve = std::make_shared<
         KohnShamEigenSolver<ValueTypeOperator, ValueTypeOperand, memorySpace>>(
         numElectrons,
@@ -1872,7 +1879,8 @@ namespace dftefe
         orthoType,
         false, /*storeIntermediateSubspaces*/
         true,  /*useSameScratchInEigenSolver*/
-        spinMode);
+        spinMode,
+        d_calculationType);
 
 
       if (chebyshevPolynomialDegree > 0)
@@ -1890,11 +1898,6 @@ namespace dftefe
 
       d_p.registerEnd("KS EigenSolver Init");
 
-      if (dynamic_cast<const utils::PointChargePotentialFunction *>(
-            &externalPotentialFunction) != nullptr)
-        d_isPSPCalculation = false;
-      else
-        d_isPSPCalculation = true;
       d_p.print();
     }
 
@@ -2489,7 +2492,7 @@ namespace dftefe
 
       d_p.registerEnd("KS EigenSolver Init");
 
-      d_isPSPCalculation = true;
+      d_calculationType = CalculationType::PSP;
       d_p.print();
     }
 
@@ -3235,7 +3238,7 @@ namespace dftefe
       utils::printCurrentMemoryUsage<memorySpace>(d_mpiCommDomain,
                                                   "After KS EigenSolver Init");
 
-      d_isPSPCalculation = true;
+      d_calculationType = CalculationType::PSP;
       d_p.print();
     }
 
@@ -3408,7 +3411,7 @@ namespace dftefe
               //   d_kohnShamEnergies[d_numWantedEigenvalues - 1]);
             }
 
-          if (scfIter == 0 && d_isPSPCalculation)
+          if (scfIter == 0 && d_calculationType == CalculationType::PSP)
             d_ksEigSolve->setChebyPolyScalingFactor(1.34);
 
           // Linear Eigen Solve

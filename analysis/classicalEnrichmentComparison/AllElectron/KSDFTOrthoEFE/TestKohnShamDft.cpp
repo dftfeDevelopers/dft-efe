@@ -106,6 +106,85 @@ T readParameter(const std::string &ParamFile,
   return t;
 }
 
+// The enrichment functions have a cusp at the nucleus and their radial spline is
+// tabulated only down to r ~ 5e-4 a.u. A quadrature point that lands on (or very
+// near) an atom therefore gets an extrapolated radial value, while
+// SphericalDataNumerical::getGradientValue clamps the gradient to zero for
+// r < RADIUS_TOL (1e-10). The gradXSq integrands are then wrong exactly at that
+// point, the parent-vs-children comparison in QuadratureRuleAdaptive never
+// converges, and the recursion runs to maxRecursion around that atom.
+//
+// An exact hit is possible because the coarse mesh is a uniform parallelepiped
+// re-centred on the origin (GenerateMesh::generateCoarseMesh): with an odd number
+// of subdivisions the origin is a cell *centre*, and the middle point of an odd
+// order Gauss rule then sits exactly on an atom placed there. Near-hits are
+// possible for any atom position.
+//
+// Report the closest approach of any quadrature point to any nucleus so that the
+// condition is detectable instead of only showing up as a quadrature blow-up.
+double
+reportMinQuadPointAtomDistance(
+  const quadrature::QuadratureRuleContainer &quadRuleContainer,
+  const std::vector<utils::Point> &          atomCoordinates,
+  const std::string &                        tag,
+  utils::mpi::MPIComm                        comm,
+  utils::ConditionalOStream &                rootCout,
+  const double                               tolerance = 1e-8)
+{
+  const std::vector<utils::Point> &realPoints =
+    quadRuleContainer.getRealPoints();
+  const size_type numAtoms = atomCoordinates.size();
+  const size_type dim      = (numAtoms == 0) ? 0 : atomCoordinates[0].size();
+
+  double minDistSq   = std::numeric_limits<double>::max();
+  double numTooClose = 0.0;
+
+  for (const auto &q : realPoints)
+    {
+      double pointMinDistSq = std::numeric_limits<double>::max();
+      for (size_type iAtom = 0; iAtom < numAtoms; ++iAtom)
+        {
+          double distSq = 0.0;
+          for (size_type j = 0; j < dim; ++j)
+            {
+              const double d = q[j] - atomCoordinates[iAtom][j];
+              distSq += d * d;
+            }
+          pointMinDistSq = std::min(pointMinDistSq, distSq);
+        }
+      minDistSq = std::min(minDistSq, pointMinDistSq);
+      if (pointMinDistSq < tolerance * tolerance)
+        numTooClose += 1.0;
+    }
+
+  double minDist = std::sqrt(minDistSq);
+  utils::mpi::MPIAllreduce<Host>(utils::mpi::MPIInPlace,
+                                 &minDist,
+                                 1,
+                                 utils::mpi::Types<double>::getMPIDatatype(),
+                                 utils::mpi::MPIMin,
+                                 comm);
+  utils::mpi::MPIAllreduce<Host>(utils::mpi::MPIInPlace,
+                                 &numTooClose,
+                                 1,
+                                 utils::mpi::Types<double>::getMPIDatatype(),
+                                 utils::mpi::MPISum,
+                                 comm);
+
+  rootCout << tag << ": min |quadPoint - atom| = " << minDist << "\n";
+  if (numTooClose > 0.0)
+    {
+      rootCout
+        << "  *** WARNING: " << (size_type)numTooClose
+        << " quadrature point(s) are within " << tolerance
+        << " a.u. of a nucleus. The enrichment cusp is not resolvable there "
+           "(radial spline is extrapolated below its first grid point and the "
+           "gradient is clamped to zero), so the adaptive refinement will "
+           "recurse to maxRecursion around that atom. ***\n";
+    }
+  return minDist;
+}
+
 // AtomicTotalElectrostaticPotentialFunction replaced by atoms::AtomSevereFunction<memorySpace> with "vtotal" field
 
   template <typename ValueTypeBasisData,
@@ -531,14 +610,18 @@ int main(int argc, char** argv)
           atomCoordinatesVec,
           atomChargesVec,
           0.0,
-          atoms::AtomSevereFuncType::Atomic::vTotalSq));
+          atoms::AtomSevereFuncType::Atomic::vTotalSq,
+          1.0,
+          linAlgOpContext.get()));
       functionsVec.push_back(std::make_shared<atoms::AtomSevereFunction<memorySpace>>(
           atomSphericalDataContainer,
           atomSymbolVec,
           atomCoordinatesVec,
           atomChargesVec,
           0.0,
-          atoms::AtomSevereFuncType::Atomic::gradVTotalSq));
+          atoms::AtomSevereFuncType::Atomic::gradVTotalSq,
+          1.0,
+          linAlgOpContext.get()));
     }
     if(isDeltaRhoPoissonSolve && (tciaFolder == "" || tciaOutFilePrefix == ""))
     {
@@ -563,14 +646,18 @@ int main(int argc, char** argv)
           atomCoordinatesVec,
           atomChargesVec,
           0.0,
-          atoms::AtomSevereFuncType::Atomic::vNuclearSq));
+          atoms::AtomSevereFuncType::Atomic::vNuclearSq,
+          1.0,
+          linAlgOpContext.get()));
       functionsVec.push_back(std::make_shared<atoms::AtomSevereFunction<memorySpace>>(
           atomSphericalDataContainer,
           atomSymbolVec,
           atomCoordinatesVec,
           atomChargesVec,
           0.0,
-          atoms::AtomSevereFuncType::Atomic::gradVNuclearSq));
+          atoms::AtomSevereFuncType::Atomic::gradVNuclearSq,
+          1.0,
+          linAlgOpContext.get()));
       functionsVec.push_back(std::make_shared<atoms::AtomSevereFunction<memorySpace>>(
           atomSphericalDataContainer,
           atomSymbolVec,
@@ -656,6 +743,12 @@ int main(int argc, char** argv)
                << " max=" << (size_type)cellMaxStats.max
                << " avg=" << (double)nQuad / totalCells << "\n";
     }
+
+    reportMinQuadPointAtomDistance(*quadRuleContainerAdaptiveElec,
+                                   atomCoordinatesVec,
+                                   "Elec adaptive quad",
+                                   comm,
+                                   rootCout);
     }
 
     //Set up quadAttr for Rhs and OverlapMatrix
@@ -718,6 +811,12 @@ int main(int argc, char** argv)
                << " max=" << (size_type)cellMaxStats.max
                << " avg=" << (double)nQuad / totalCells << "\n";
     }
+
+    reportMinQuadPointAtomDistance(*quadRuleContainerAdaptiveOrbital,
+                                   atomCoordinatesVec,
+                                   "Orbital adaptive quad",
+                                   comm,
+                                   rootCout);
 
   p.registerEnd("Quadrature Rule Creation");
     utils::printCurrentMemoryUsage<memorySpace>(comm, "Quadrature Rule Creation");
@@ -1070,7 +1169,7 @@ int main(int argc, char** argv)
   std::shared_ptr<linearAlgebra::OperatorContext<double,
                                                    double,
                                                    memorySpace>> MInvContext =
-    std::make_shared<basis::OrthoEFEOverlapInverseOpContextGLL/*OEFEAtomBlockOverlapInvOpContextGLL*/<double,
+    std::make_shared<basis::/*OrthoEFEOverlapInverseOpContextGLL*/OEFEAtomBlockOverlapInvOpContextGLL<double,
                                                    double,
                                                    memorySpace,
                                                    dim>>
