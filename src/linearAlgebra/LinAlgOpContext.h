@@ -73,12 +73,18 @@ namespace dftefe
       static utils::deviceStream_t &
       getBlasStream()
       {
-        return d_stream;
+#if defined(DFTEFE_WITH_DEVICE_LANG_SYCL)
+        enforceDefaultStreamExclusivity();
+#endif
+        return d_defaultStream;
       }
 
       static utils::deviceBlasHandle_t &
       getDeviceBlasHandle()
       {
+#if defined(DFTEFE_WITH_DEVICE_LANG_SYCL)
+        enforceDefaultStreamExclusivity();
+#endif
         return d_deviceBlasHandle;
       }
 
@@ -91,12 +97,18 @@ namespace dftefe
       static utils::deviceStream_t *
       getBlasStreamsVec()
       {
+#if defined(DFTEFE_WITH_DEVICE_LANG_SYCL)
+        enforceNonDefaultStreamExclusivity();
+#endif
         return d_streams.data();
       }
 
       static utils::deviceBlasHandle_t *
       getDeviceBlasHandlesVec()
       {
+#if defined(DFTEFE_WITH_DEVICE_LANG_SYCL)
+        enforceNonDefaultStreamExclusivity();
+#endif
         return d_deviceBlasHandles.data();
       }
 
@@ -106,10 +118,49 @@ namespace dftefe
       inline static std::vector<utils::deviceStream_t>     d_streams;
 
       inline static utils::deviceBlasHandle_t d_deviceBlasHandle;
-      inline static utils::deviceStream_t     d_stream;
+      inline static utils::deviceStream_t     d_defaultStream;
 
       /// storage for deviceblas handle
       TensorOpDataType d_opType;
+
+#if defined(DFTEFE_WITH_DEVICE_LANG_SYCL)
+      // SYCL queues (unlike CUDA/HIP streams) have no implicit ordering
+      // relationship with one another, so the default-stream/non-default-
+      // stream mutual exclusivity that CUDA/HIP get for free from the driver
+      // (stream 0 implicitly synchronizes with every other blocking stream)
+      // has to be enforced here explicitly for callers that go through
+      // getBlasStream()/getDeviceBlasHandle()/getBlasStreamsVec()/
+      // getDeviceBlasHandlesVec().
+      enum class ActiveStreamSide
+      {
+        Default,
+        NonDefault
+      };
+
+      inline static ActiveStreamSide d_activeStreamSide =
+        ActiveStreamSide::Default;
+
+      static void
+      enforceDefaultStreamExclusivity()
+      {
+        if (d_activeStreamSide == ActiveStreamSide::NonDefault)
+          {
+            for (auto &stream : d_streams)
+              utils::deviceStreamSynchronize(stream);
+            d_activeStreamSide = ActiveStreamSide::Default;
+          }
+      }
+
+      static void
+      enforceNonDefaultStreamExclusivity()
+      {
+        if (d_activeStreamSide == ActiveStreamSide::Default)
+          {
+            utils::deviceStreamSynchronize(d_defaultStream);
+            d_activeStreamSide = ActiveStreamSide::NonDefault;
+          }
+      }
+#endif
 
       static utils::deviceBlasStatus_t
       setBlasStream(utils::deviceBlasHandle_t &handleId,

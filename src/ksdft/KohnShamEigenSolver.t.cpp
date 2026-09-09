@@ -26,7 +26,11 @@
 #include <ksdft/Defaults.h>
 #include <linearAlgebra/LanczosExtremeEigenSolver.h>
 #include <linearAlgebra/ChebyshevFilteredEigenSolver.h>
+#include <linearAlgebra/MultiVectorOps.h>
 #include <ksdft/FractionalOccupancyFunction.h>
+#include <linearAlgebra/BisectionSolver.h>
+#include <iomanip>
+#include <cmath>
 namespace dftefe
 {
   namespace ksdft
@@ -43,6 +47,67 @@ namespace dftefe
             lower->second :
             1250;
         return val;
+      }
+
+      /**
+       * Largest Chebyshev degree an all-electron spectrum can tolerate.
+       *
+       * The filter maps [a, b] = [wantedUpper, unWantedUpper] onto [-1, 1]
+       * through x(lambda) = (lambda - c)/e, e = (b - a)/2, c = (b + a)/2
+       * (see ChebyshevFilter.t.cpp), so the lowest wanted eigenvalue a0
+       * lands at
+       *
+       *   |x_low| = (b + a - 2*a0)/(b - a) = 1 + 2*rho,
+       *   rho     = (a - a0)/(b - a).
+       *
+       * Outside [-1, 1] the Chebyshev polynomial grows as
+       * T_m(x) = cosh(m*acosh|x|), i.e. log10|T_m| ~ m*acosh|x|/ln(10).
+       * The filtered subspace therefore spans that many decades between its
+       * lowest and highest wanted state. Once that exceeds the ~16 decades
+       * of a double, the upper states fall below round-off relative to the
+       * lowest one, the subspace collapses in rank and Rayleigh-Ritz returns
+       * garbage for everything above the deepest few states. So invert the
+       * relation for m at CHEBY_FILTER_TARGET_DECADES.
+       *
+       * Only used for all-electron. A pseudopotential spectrum has a shallow
+       * a0 (rho ~ 1e-4), which puts this bound in the thousands where it
+       * never binds - hence CHEBY_ORDER_LOOKUP alone has always sufficed
+       * there, and that path is left untouched.
+       */
+      size_type
+      getChebyPolynomialDegreeAllElectron(double wantedSpectrumLowerBound,
+                                          double wantedSpectrumUpperBound,
+                                          double unWantedSpectrumUpperBound)
+      {
+        //
+        // Number of decades of dynamic range the Chebyshev filter is allowed
+        // to span across the wanted spectrum in an all-electron calculation.
+        // Kept below the ~16 decades of a double so that the Gram-Schmidt
+        // orthogonalization still has headroom to recover the upper states.
+        //
+        const double CHEBY_FILTER_TARGET_DECADES = 11.0;
+        //
+        // Floor for the all-electron Chebyshev degree, so a pathological
+        // (or inverted) set of spectrum bounds still yields a usable filter.
+        //
+        const size_type CHEBY_ORDER_ALLELECTRON_MIN = 10;
+
+        const double unWantedWidth =
+          unWantedSpectrumUpperBound - wantedSpectrumUpperBound;
+        const double wantedWidth =
+          wantedSpectrumUpperBound - wantedSpectrumLowerBound;
+
+        // Degenerate or inverted bounds: e <= 0 in the filter, so there is
+        // no meaningful dynamic range to solve for. Fall back to the floor
+        // rather than feeding acosh an argument below 1.
+        if (unWantedWidth <= 0.0 || wantedWidth <= 0.0)
+          return CHEBY_ORDER_ALLELECTRON_MIN;
+
+        const double xLow = 1.0 + 2.0 * wantedWidth / unWantedWidth;
+        const double degree =
+          CHEBY_FILTER_TARGET_DECADES * std::log(10.0) / std::acosh(xLow);
+
+        return std::max(CHEBY_ORDER_ALLELECTRON_MIN, (size_type)degree);
       }
     } // namespace
 
@@ -70,16 +135,22 @@ namespace dftefe
         const bool                                 isGHEP,
         linearAlgebra::OrthogonalizationType       orthoType,
         bool                                       storeIntermediateSubspaces,
-        bool                                       useSameScratchInEigenSolver)
-      : d_numWantedEigenvalues(numWantedEigenvalues)
+        bool                                       useSameScratchInEigenSolver,
+        SpinMode                                   spinMode,
+        CalculationType                            calculationType)
+      : d_spinMode(spinMode)
+      , d_S((spinMode == SpinMode::Unpolarized) ? 1 : 2)
+      , d_numWantedEigenvalues(numWantedEigenvalues)
       , d_eigenSolveResidualTolerance(eigenSolveResidualTolerance)
       , d_maxChebyshevFilterPass(maxChebyshevFilterPass)
-      , d_waveFunctionBatchSize(waveFunctionBatchSize)
+      , d_waveFunctionBatchSize(spinMode == SpinMode::Collinear ?
+                                  waveFunctionBatchSize / 2 :
+                                  waveFunctionBatchSize)
       , d_fermiEnergyTolerance(fermiEnergyTolerance)
       , d_fracOccupancyTolerance(fracOccupancyTolerance)
       , d_smearingTemperature(smearingTemperature)
-      , d_fracOccupancy(d_numWantedEigenvalues)
-      , d_eigSolveResNorm(d_numWantedEigenvalues)
+      , d_fracOccupancy(d_S * d_numWantedEigenvalues)
+      , d_eigSolveResNorm(d_S * d_numWantedEigenvalues)
       , d_numElectrons(numElectrons)
       , d_rootCout(std::cout)
       , d_batchSizeSmall(0)
@@ -87,6 +158,8 @@ namespace dftefe
       , d_chebyPolyScalingFactor(1.0)
       , d_isResidualChebyFilter(isResidualChebyshevFilter)
       , d_setChebyPolDegExternally(false)
+      , d_isChebyPolDegComputed(false)
+      , d_calculationType(calculationType)
       , d_storeIntermediateSubspaces(storeIntermediateSubspaces)
       , d_filteredSubspace(nullptr)
       , d_filteredSubspaceOrtho((nullptr))
@@ -113,22 +186,27 @@ namespace dftefe
                   const OpContext &MLanczos,
                   const OpContext &MInvLanczos)
     {
-      d_isSolved        = false;
-      d_isBoundKnown    = false;
-      d_mpiPatternP2P   = mpiPatternP2P;
-      d_linAlgOpContext = linAlgOpContext;
-      d_MLanczos        = &MLanczos;
-      d_MInvLanczos     = &MInvLanczos;
+      d_isSolved     = false;
+      d_isBoundKnown = false;
+      // A new basis means a new spectrum, so any all-electron degree latched
+      // against the old bounds is stale and has to be derived again.
+      d_isChebyPolDegComputed = false;
+      d_mpiPatternP2P         = mpiPatternP2P;
+      d_linAlgOpContext       = linAlgOpContext;
+      d_MLanczos              = &MLanczos;
+      d_MInvLanczos           = &MInvLanczos;
       int rank;
       utils::mpi::MPICommRank(mpiPatternP2P->mpiCommunicator(), &rank);
       d_rootCout.setCondition(rank == 0);
 
+      const size_type eigenVecBatchSize = d_S * d_waveFunctionBatchSize;
+
       d_waveFnBatch =
         std::make_shared<linearAlgebra::MultiVector<ValueType, memorySpace>>(
-          mpiPatternP2P, linAlgOpContext, d_waveFunctionBatchSize, ValueType());
+          mpiPatternP2P, linAlgOpContext, eigenVecBatchSize, ValueType());
       d_HXBatch =
         std::make_shared<linearAlgebra::MultiVector<ValueType, memorySpace>>(
-          mpiPatternP2P, linAlgOpContext, d_waveFunctionBatchSize, ValueType());
+          mpiPatternP2P, linAlgOpContext, eigenVecBatchSize, ValueType());
 
       if (d_useSameScratch)
         d_scratch = std::make_shared<
@@ -139,14 +217,12 @@ namespace dftefe
 
       d_MXBatch =
         std::make_shared<linearAlgebra::MultiVector<ValueType, memorySpace>>(
-          mpiPatternP2P, linAlgOpContext, d_waveFunctionBatchSize, ValueType());
+          mpiPatternP2P, linAlgOpContext, eigenVecBatchSize, ValueType());
 
-      d_kohnShamEnergiesMemspace =
-        utils::MemoryStorage<ValueType, memorySpace>(d_numWantedEigenvalues,
-                                                     (ValueType)0),
-      d_nOnes =
-        utils::MemoryStorage<ValueType, memorySpace>(d_numWantedEigenvalues,
-                                                     (ValueType)-1.0);
+      d_kohnShamEnergiesMemspace = utils::MemoryStorage<ValueType, memorySpace>(
+        d_S * d_numWantedEigenvalues, (ValueType)0),
+      d_nOnes = utils::MemoryStorage<ValueType, memorySpace>(
+        d_S * d_numWantedEigenvalues, (ValueType)-1.0);
 
       d_chfsi = std::make_shared<
         linearAlgebra::ChebyshevFilteredEigenSolver<ValueTypeOperator,
@@ -161,7 +237,7 @@ namespace dftefe
         linAlgOpContext,
         *d_elpaScala,
         d_isResidualChebyFilter,
-        d_waveFunctionBatchSize,
+        eigenVecBatchSize,
         d_isGHEP,
         d_orthoType,
         d_storeIntermediateSubspaces,
@@ -226,6 +302,17 @@ namespace dftefe
             const OpContext &M,
             const OpContext &MInv)
     {
+      // d_fracOccupancy memory layout: spin-major, size S*N (= d_S *
+      // d_numWantedEigenvalues).
+      //   d_fracOccupancy[ s*N + n ]  — fractional occupancy for spin s,
+      //   orbital n. Mirrors kohnShamEnergies layout exactly (filled via
+      //   fermiDirac(kohnShamEnergies[i])).
+      //
+      // d_eigSolveResNorm memory layout: spin-major, size S*N (= d_S *
+      // d_numWantedEigenvalues).
+      //   d_eigSolveResNorm[ s*N + n ]  — ||H*psi_{s,n} - E_{s,n}*M*psi_{s,n}||
+      //   / ||psi_{s,n}||. Scattered by getLinearEigenSolveResidual:
+      //   residualVec[s*numVecPerSpace + n].
       d_p.reset();
       d_isSolved                  = true;
       global_size_type globalSize = kohnShamWaveFunctions.globalSize();
@@ -254,7 +341,8 @@ namespace dftefe
                 ksdft::LinearEigenSolverDefaults::LANCZOS_BETA_TOL,
                 d_mpiPatternP2P,
                 d_linAlgOpContext,
-                false);
+                false,
+                d_S);
 
       linearAlgebra::MultiVector<ValueType, memorySpace> eigenVectorsLanczos;
 
@@ -305,14 +393,33 @@ namespace dftefe
           d_rootCout << "unWantedSpectrumUpperBound: "
                      << eigenValuesLanczos[1] + residual << "\n";
 
-          if (!d_setChebyPolDegExternally)
+          // All-electron derives the degree from the spectrum bounds, which
+          // are set by the deep core states and so barely move once the run
+          // is under way. It is therefore computed once and kept for every
+          // later SCF. Pseudopotential keeps recomputing from the lookup
+          // each SCF, as before.
+          if (!d_setChebyPolDegExternally &&
+              !(d_calculationType == CalculationType::AE &&
+                d_isChebyPolDegComputed))
             {
-              // Calculating polynomial degree after each scf?
               d_chebyshevPolynomialDegree =
-                getChebyPolynomialDegree(eigenValuesLanczos[1] + residual);
+                d_calculationType == CalculationType::AE ?
+                  getChebyPolynomialDegreeAllElectron(
+                    d_wantedSpectrumLowerBound,
+                    d_wantedSpectrumUpperBound,
+                    eigenValuesLanczos[1] + residual) :
+                  getChebyPolynomialDegree(eigenValuesLanczos[1] + residual);
 
               d_chebyshevPolynomialDegree =
                 d_chebyshevPolynomialDegree * d_chebyPolyScalingFactor;
+
+              // Latch only once the bounds are the ones the run actually
+              // uses. On the very first SCF they still come from the initial
+              // guess above, which is a far narrower window than the
+              // Ritz-based one reinitBounds() supplies from the next SCF on,
+              // so a degree latched there would be calibrated for a window
+              // that is never seen again.
+              d_isChebyPolDegComputed = d_isBoundKnown;
             }
 
           d_rootCout << "Chebyshev Polynomial Degree : "
@@ -405,22 +512,42 @@ namespace dftefe
               d_rootCout << "Chebyshev Filter Pass: [" << iPass << "] "
                          << chfsiErr.msg << std::endl;
 
-              // for(auto &i : kohnShamEnergies)
-              //   std::cout <<  i <<", ";
-              // std::cout << "\n";
-
               d_p.registerStart("Compute chemical potential");
               d_pTotal.registerStart("Compute chemical potential");
-              // Calculate the chemical potential using newton raphson
+              // Calculate the chemical potential: bisect within the
+              // bracket of all filtered eigenvalues first (see
+              // BisectionSolver - immune to sharply-peaked/vanishing
+              // derivatives since it only ever evaluates getValue()), then
+              // hand off to Newton
+
+              const size_type initialGuessIdx =
+                (d_spinMode == SpinMode::Collinear) ?
+                  std::ceil(static_cast<double>(d_numElectrons) / 2.0) - 1 :
+                  std::ceil(static_cast<double>(d_numElectrons * d_S) / 2.0) -
+                    1;
 
               std::shared_ptr<ksdft::FractionalOccupancyFunction> fOcc =
                 std::make_shared<ksdft::FractionalOccupancyFunction>(
                   kohnShamEnergies,
-                  d_numElectrons,
+                  d_numElectrons * d_S,
                   Constants::BOLTZMANN_CONST_HARTREE,
                   d_smearingTemperature,
-                  kohnShamEnergies
-                    [std::ceil(static_cast<double>(d_numElectrons) / 2.0) - 1]);
+                  kohnShamEnergies[initialGuessIdx]);
+
+              linearAlgebra::BisectionSolver<double> bisectionSolver(
+                BisectionSolverDefaults::MAX_ITER,
+                BisectionSolverDefaults::TOL);
+
+              linearAlgebra::BisectionError bisectionErr =
+                bisectionSolver.solve(*fOcc);
+
+              utils::throwException(
+                bisectionErr.isSuccess,
+                "KohnShamEigenSolver: bisection pre-pass for the Fermi "
+                "energy failed - " +
+                  bisectionErr.msg +
+                  " This should not happen for a monotonic occupancy "
+                  "function; check for NaN/Inf eigenvalues.");
 
               linearAlgebra::NewtonRaphsonSolver<double> nrs(
                 NewtonRaphsonSolverDefaults::MAX_ITER,
@@ -428,6 +555,37 @@ namespace dftefe
                 NewtonRaphsonSolverDefaults::FORCE_TOL);
 
               nrErr = nrs.solve(*fOcc);
+
+              if (!nrErr.isSuccess &&
+                  nrErr.err ==
+                    linearAlgebra::NewtonRaphsonErrorCode::FORCE_TOLERANCE_ERR)
+                {
+                  d_rootCout
+                    << "KohnShamEigenSolver: Newton-Raphson found the "
+                       "derivative already vanished at the bisected Fermi "
+                       "energy estimate (likely a HOMO-LUMO gap); keeping "
+                       "the bisected value. "
+                    << nrErr.msg << std::endl;
+
+                  // The bisected estimate is being deliberately accepted
+                  // here, so this is not a genuine failure - reset nrErr
+                  // to SUCCESS so it does not spuriously trip the CHFSI
+                  // break condition or get reported as a
+                  // KS_NEWTON_RAPHSON_ERROR below.
+                  nrErr = linearAlgebra::NewtonRaphsonErrorMsg::isSuccessAndMsg(
+                    linearAlgebra::NewtonRaphsonErrorCode::SUCCESS);
+                }
+              else
+                {
+                  utils::throwException(
+                    nrErr.isSuccess,
+                    "KohnShamEigenSolver: Newton-Raphson polish for the "
+                    "Fermi energy failed - " +
+                      nrErr.msg +
+                      " This should not happen starting from a "
+                      "bisection-refined estimate; check for NaN/Inf "
+                      "eigenvalues.");
+                }
 
               fOcc->getSolution(d_fermiEnergy);
 
@@ -446,9 +604,29 @@ namespace dftefe
 
               // // TODO : Implement blocked approach for wavefns
               // // calculate residualEigenSolver
-              memoryTransfer.copy(d_numWantedEigenvalues,
+              const size_type       numVecPerSpace   = d_numWantedEigenvalues;
+              const size_type       eigVecBatchPerSp = d_waveFunctionBatchSize;
+              std::vector<RealType> energiesBatchMajor(d_S *
+                                                       d_numWantedEigenvalues);
+              size_type             dstOffset = 0;
+              for (size_type psiStart = 0; psiStart < numVecPerSpace;
+                   psiStart += eigVecBatchPerSp)
+                {
+                  const size_type batchN =
+                    std::min(eigVecBatchPerSp, numVecPerSpace - psiStart);
+                  for (size_type s = 0; s < d_S; ++s)
+                    {
+                      std::copy(kohnShamEnergies.begin() + s * numVecPerSpace +
+                                  psiStart,
+                                kohnShamEnergies.begin() + s * numVecPerSpace +
+                                  psiStart + batchN,
+                                energiesBatchMajor.begin() + dstOffset);
+                      dstOffset += batchN;
+                    }
+                }
+              memoryTransfer.copy(d_S * d_numWantedEigenvalues,
                                   d_kohnShamEnergiesMemspace.data(),
-                                  kohnShamEnergies.data());
+                                  energiesBatchMajor.data());
 
               d_p.registerEnd("Compute chemical potential");
               d_pTotal.registerEnd("Compute chemical potential");
@@ -463,7 +641,7 @@ namespace dftefe
                                                 kohnShamWaveFunctions,
                                                 M);
 
-                  for (size_type i = 0; i < d_numWantedEigenvalues; i++)
+                  for (size_type i = 0; i < d_S * d_numWantedEigenvalues; i++)
                     {
                       if (d_fracOccupancy[i] > d_fracOccupancyTolerance &&
                           d_eigSolveResNorm[i] <= d_eigenSolveResidualTolerance)
@@ -476,12 +654,59 @@ namespace dftefe
                   d_rootCout
                     << "Fermi Energy residual is : " << nrs.getResidual()
                     << "\n";
-                  d_rootCout
-                    << "EigenVector No.\t\tKohn Sham Energy\t\tFractional Occupancy\t\tEigen Solve Residual Norm\n";
-                  for (size_type i = 0; i < d_numWantedEigenvalues; i++)
-                    d_rootCout << i + 1 << "\t\t" << kohnShamEnergies[i]
-                               << "\t\t" << d_fracOccupancy[i] << "\t\t"
-                               << d_eigSolveResNorm[i] << "\n";
+                  {
+                    std::ostream &          os       = d_rootCout.getOStream();
+                    std::ios_base::fmtflags oldFlag  = os.flags();
+                    std::streamsize         oldPrec  = os.precision();
+                    std::streamsize         oldWidth = os.width();
+                    os << std::scientific << std::right;
+                    if (d_spinMode == SpinMode::Collinear)
+                      {
+                        d_rootCout << std::setw(6) << "No." << std::setw(24)
+                                   << "[Spin 0] KS Energy" << std::setw(24)
+                                   << "[Spin 1] KS Energy" << std::setw(22)
+                                   << "[Spin 0] Frac. Occ." << std::setw(22)
+                                   << "[Spin 1] Frac. Occ." << std::setw(22)
+                                   << "[Spin 0] Residual" << std::setw(22)
+                                   << "[Spin 1] Residual"
+                                   << "\n";
+                        for (size_type i = 0; i < d_numWantedEigenvalues; i++)
+                          d_rootCout
+                            << std::setw(6) << i << std::setw(24)
+                            << std::setprecision(10) << kohnShamEnergies[i]
+                            << std::setw(24) << std::setprecision(10)
+                            << kohnShamEnergies[d_numWantedEigenvalues + i]
+                            << std::setw(22) << std::setprecision(8)
+                            << d_fracOccupancy[i] << std::setw(22)
+                            << std::setprecision(8)
+                            << d_fracOccupancy[d_numWantedEigenvalues + i]
+                            << std::setw(22) << std::setprecision(8)
+                            << d_eigSolveResNorm[i] << std::setw(22)
+                            << std::setprecision(8)
+                            << d_eigSolveResNorm[d_numWantedEigenvalues + i]
+                            << "\n";
+                      }
+                    else
+                      {
+                        d_rootCout << std::setw(6) << "No." << std::setw(24)
+                                   << "Kohn Sham Energy" << std::setw(22)
+                                   << "Frac. Occupancy" << std::setw(22)
+                                   << "Residual Norm"
+                                   << "\n";
+                        for (size_type i = 0; i < d_S * d_numWantedEigenvalues;
+                             i++)
+                          d_rootCout
+                            << std::setw(6) << i + 1 << std::setw(24)
+                            << std::setprecision(10) << kohnShamEnergies[i]
+                            << std::setw(22) << std::setprecision(8)
+                            << d_fracOccupancy[i] << std::setw(22)
+                            << std::setprecision(8) << d_eigSolveResNorm[i]
+                            << "\n";
+                      }
+                    os.flags(oldFlag);
+                    os.precision(oldPrec);
+                    os.width(oldWidth);
+                  }
                   d_rootCout << "\n";
                 }
               else
@@ -502,7 +727,7 @@ namespace dftefe
                 {
                   d_wantedSpectrumLowerBound = kohnShamEnergies[0];
                   d_wantedSpectrumUpperBound =
-                    kohnShamEnergies[d_numWantedEigenvalues - 1];
+                    kohnShamEnergies[d_S * d_numWantedEigenvalues - 1];
                   d_pTotal.registerStart("Reinit CHFSI");
                   d_p.registerStart("Reinit CHFSI");
                   d_chfsi->reinit(
@@ -619,45 +844,46 @@ namespace dftefe
       size_type           eigenVecLocalSize = kohnShamWaveFunctions.localSize();
       utils::MemoryTransfer<memorySpace, memorySpace> memoryTransfer;
 
+      const size_type eigenVecBatchSize = d_S * d_waveFunctionBatchSize;
+
+      auto *Xps = static_cast<
+        const linearAlgebra::MultiVectorProductSpace<ValueType, memorySpace> *>(
+        &kohnShamWaveFunctions);
+      const size_type numSpaces        = Xps->numSpaces();
+      const size_type numVecPerSpace   = Xps->numVectorsPerSpace();
+      const size_type eigVecBatchPerSp = eigenVecBatchSize / numSpaces;
+
       if (d_scratch)
         d_scratch->acquire();
 
-      for (size_type waveFnStartId = 0; waveFnStartId < numEigenVectors;
-           waveFnStartId += d_waveFunctionBatchSize)
+      for (size_type waveFnStartId = 0; waveFnStartId < numVecPerSpace;
+           waveFnStartId += eigVecBatchPerSp)
         {
-          const size_type waveFnEndId =
-            std::min(waveFnStartId + d_waveFunctionBatchSize, numEigenVectors);
-          const size_type numEigVecInBatch = waveFnEndId - waveFnStartId;
+          const size_type numEigVecInBatch =
+            std::min(waveFnStartId + eigVecBatchPerSp, numVecPerSpace) -
+            waveFnStartId;
+          const size_type numEigVecInBatchTotal = numSpaces * numEigVecInBatch;
 
-          if (numEigVecInBatch % d_waveFunctionBatchSize == 0)
+          if (numEigVecInBatch == eigVecBatchPerSp)
             {
-              linearAlgebra::blasLapack::stridedBlockCopy(
-                eigenVecLocalSize,
-                numEigVecInBatch,
-                numEigenVectors,
+              linearAlgebra::MultiVectorOps::copyToBatch(
+                *Xps,
                 waveFnStartId,
                 numEigVecInBatch,
-                0,
-                kohnShamWaveFunctions.data(),
-                d_waveFnBatch->data(),
+                *d_waveFnBatch,
                 *kohnShamWaveFunctions.getLinAlgOpContext());
 
               XBatch  = d_waveFnBatch;
               HXBatch = d_HXBatch;
               MXBatch = d_MXBatch;
             }
-          else if (numEigVecInBatch % d_waveFunctionBatchSize ==
-                   d_batchSizeSmall)
+          else if (numEigVecInBatch == d_batchSizeSmall)
             {
-              linearAlgebra::blasLapack::stridedBlockCopy(
-                eigenVecLocalSize,
-                numEigVecInBatch,
-                numEigenVectors,
+              linearAlgebra::MultiVectorOps::copyToBatch(
+                *Xps,
                 waveFnStartId,
                 numEigVecInBatch,
-                0,
-                kohnShamWaveFunctions.data(),
-                d_waveFnBatchSmall->data(),
+                *d_waveFnBatchSmall,
                 *kohnShamWaveFunctions.getLinAlgOpContext());
 
               XBatch  = d_waveFnBatchSmall;
@@ -671,7 +897,7 @@ namespace dftefe
               const bool useSmallScratch =
                 d_scratch != nullptr && d_scratch->hasXinBatchSmall() &&
                 d_scratch->hasXoutBatchSmall() &&
-                d_scratch->getXinBatchSmallSize() == numEigVecInBatch;
+                d_scratch->getXinBatchSmallSize() == numEigVecInBatchTotal;
 
               if (useSmallScratch)
                 {
@@ -684,14 +910,14 @@ namespace dftefe
                     linearAlgebra::MultiVector<ValueType, memorySpace>>(
                     kohnShamWaveFunctions.getMPIPatternP2P(),
                     kohnShamWaveFunctions.getLinAlgOpContext(),
-                    numEigVecInBatch,
+                    numEigVecInBatchTotal,
                     ValueType());
 
                   d_HXBatchSmall = std::make_shared<
                     linearAlgebra::MultiVector<ValueType, memorySpace>>(
                     kohnShamWaveFunctions.getMPIPatternP2P(),
                     kohnShamWaveFunctions.getLinAlgOpContext(),
-                    numEigVecInBatch,
+                    numEigVecInBatchTotal,
                     ValueType());
                   if (d_scratch != nullptr)
                     {
@@ -704,18 +930,14 @@ namespace dftefe
                 linearAlgebra::MultiVector<ValueType, memorySpace>>(
                 kohnShamWaveFunctions.getMPIPatternP2P(),
                 kohnShamWaveFunctions.getLinAlgOpContext(),
-                numEigVecInBatch,
+                numEigVecInBatchTotal,
                 ValueType());
 
-              linearAlgebra::blasLapack::stridedBlockCopy(
-                eigenVecLocalSize,
-                numEigVecInBatch,
-                numEigenVectors,
+              linearAlgebra::MultiVectorOps::copyToBatch(
+                *Xps,
                 waveFnStartId,
                 numEigVecInBatch,
-                0,
-                kohnShamWaveFunctions.data(),
-                d_waveFnBatchSmall->data(),
+                *d_waveFnBatchSmall,
                 *kohnShamWaveFunctions.getLinAlgOpContext());
 
               XBatch  = d_waveFnBatchSmall;
@@ -730,21 +952,22 @@ namespace dftefe
           linearAlgebra::blasLapack::
             axpbyBlocked<ValueType, ValueType, memorySpace>(
               eigenVecLocalSize,
-              numEigVecInBatch,
+              numEigVecInBatchTotal,
               1,
               d_nOnes.data(),
               HXBatch->data(),
               1,
-              d_kohnShamEnergiesMemspace.data() + waveFnStartId,
+              d_kohnShamEnergiesMemspace.data() + waveFnStartId * numSpaces,
               MXBatch->data(),
               XBatch->data(),
               *kohnShamWaveFunctions.getLinAlgOpContext());
 
           std::vector<double> normVec = XBatch->l2Norms();
 
-          std::copy(normVec.begin(),
-                    normVec.end(),
-                    residualVec.begin() + waveFnStartId);
+          for (size_type s = 0; s < numSpaces; ++s)
+            std::copy(normVec.begin() + s * numEigVecInBatch,
+                      normVec.begin() + (s + 1) * numEigVecInBatch,
+                      residualVec.begin() + s * numVecPerSpace + waveFnStartId);
         }
 
       if (d_scratch)

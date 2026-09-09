@@ -410,6 +410,14 @@ int main(int argc, char** argv)
 
   const atoms::TCIADataParams  tciaparams{tciaFolder , tciaOutFilePrefix};
 
+  std::string xcFunctional = readParameter<std::string>(parameterInputFileName, "xc", rootCout, false, false, std::string("GGA-PBE"));
+  std::string spinModeStr = readParameter<std::string>(parameterInputFileName, "spintype", rootCout, false, false, std::string("Unpolarized"));
+  ksdft::SpinMode spinMode = ksdft::SpinMode::Unpolarized;
+  if (spinModeStr == "Collinear")
+    spinMode = ksdft::SpinMode::Collinear;
+  else if (spinModeStr == "NonCollinear")
+    spinMode = ksdft::SpinMode::NonCollinear;
+
   // Set up Triangulation
     std::shared_ptr<basis::TriangulationBase> triangulationBase =
         std::make_shared<basis::TriangulationDealiiParallel<dim>>(comm);
@@ -429,6 +437,7 @@ int main(int argc, char** argv)
   coordinates.resize(dim,0.);
   std::vector<std::string> atomSymbolVec(0);
   std::vector<double> atomChargesVec(0);
+  std::vector<double> atomMagMomentsVec(0);
   std::string symbol;
   double atomicNumber;
   atomSymbolVec.resize(0);
@@ -438,14 +447,34 @@ int main(int argc, char** argv)
       ss >> symbol; 
       ss >> atomicNumber; 
       for(unsigned int i=0 ; i<dim ; i++){
-          ss >> coordinates[i]; 
+          ss >> coordinates[i];
       }
+      double magMoment = 0.0;
+      ss >> magMoment;
+      atomMagMomentsVec.push_back(magMoment);
       atomCoordinatesVec.push_back(coordinates);
       atomSymbolVec.push_back(symbol);
       atomChargesVec.push_back((-1.0)*atomicNumber);
   }
   utils::mpi::MPIBarrier(comm);
   fstream.close();
+
+  std::vector<double> atomMagZFactors;
+  {
+    bool anyNonZero = false;
+    for (const auto &m : atomMagMomentsVec)
+      if (std::abs(m) > 1e-12)
+        {
+          anyNonZero = true;
+          break;
+        }
+    if (anyNonZero)
+      {
+        atomMagZFactors.resize(atomMagMomentsVec.size());
+        for (dftefe::size_type i = 0; i < atomMagMomentsVec.size(); ++i)
+          atomMagZFactors[i] = atomMagMomentsVec[i] / (-atomChargesVec[i]);
+      }
+  }
 
   size_type numElectrons = 0;
   for(auto &i : atomChargesVec)
@@ -773,11 +802,14 @@ std::shared_ptr<linearAlgebra::OperatorContext<double,
                                           feBDElectrostaticsHamiltonian,
                                           feBDEXCHamiltonian,
                                           *externalPotentialFunction,
-                                          "LDA-PW",
+                                          xcFunctional,
                                           linAlgOpContext,
                                           *MContextForInv,
                                           *MContext,
-                                          *MInvContext);
+                                          *MInvContext,
+                                          true,
+                                          atomMagZFactors,
+                                          spinMode);
   }
   else if(isNumericalNuclearSolve && !isDeltaRhoPoissonSolve)
   {
@@ -820,11 +852,14 @@ std::shared_ptr<linearAlgebra::OperatorContext<double,
                                           feBDElectrostaticsHamiltonian,
                                           feBDEXCHamiltonian,
                                           *externalPotentialFunction,
-                                          "LDA-PW",
+                                          xcFunctional,
                                           linAlgOpContext,
                                           *MContextForInv,
                                           *MContext,
-                                          *MInvContext);
+                                          *MInvContext,
+                                          true,
+                                          atomMagZFactors,
+                                          spinMode);
   }
   else if (!isNumericalNuclearSolve && isDeltaRhoPoissonSolve)
   {
@@ -880,13 +915,15 @@ std::shared_ptr<linearAlgebra::OperatorContext<double,
                                           feBDElectrostaticsHamiltonian,
                                           feBDEXCHamiltonian,
                                           *externalPotentialFunction,
-                                          "LDA-PW",
+                                          xcFunctional,
                                           linAlgOpContext,
                                           *MContextForInv,
                                           *MContext,
                                           *MInvContext,
                                           true,
-                                          tciaparams);
+                                          tciaparams,
+                                          atomMagZFactors,
+                                          spinMode);
   }
   else
   {

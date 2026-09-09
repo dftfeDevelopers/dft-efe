@@ -35,8 +35,11 @@
 #include <ksdft/Defaults.h>
 #include <ksdft/RDM1.h>
 #include <ksdft/ExcManager.h>
+#include <ksdft/KSAttributes.h>
+#include <ksdft/HamiltonianSpinBlockCopyKernels.h>
 #include <atoms/AtomSuperpositionFunction.h>
 #include <utils/Point.h>
+#include <vector>
 
 namespace dftefe
 {
@@ -100,7 +103,8 @@ namespace dftefe
       RealType
       getEnergy() const override;
 
-      const quadrature::QuadratureValuesContainer<ValueType, memorySpace> &
+      const std::vector<
+        quadrature::QuadratureValuesContainer<RealType, memorySpace>> &
       getFunctionalDerivative() const;
 
       void
@@ -129,14 +133,12 @@ namespace dftefe
       getExcFamilyType() const;
 
     private:
-      std::shared_ptr<
-        quadrature::QuadratureValuesContainer<RealType, memorySpace>>
+      std::vector<quadrature::QuadratureValuesContainer<RealType, memorySpace>>
         d_xcPotentialQuadMemspace;
       // GGA only: returns the dim-component field
       // f_d = 2*(dEx/dσ_αα+dEc/dσ_αα)*∇ρ↑_d + (dEx/dσ_αβ+dEc/dσ_αβ)*∇ρ↓_d
       // used by getLocal to assemble ∫ f·∇(φ_iφ_j) dV
-      std::shared_ptr<
-        quadrature::QuadratureValuesContainer<RealType, memorySpace>>
+      std::vector<quadrature::QuadratureValuesContainer<RealType, memorySpace>>
         d_derExcWithSigmaTimesGradRhoQuadMemspace;
       std::shared_ptr<
         const basis::FEBasisDofHandler<ValueTypeBasisCoeff, memorySpace, dim>>
@@ -156,6 +158,14 @@ namespace dftefe
 
       ExcManager<memorySpace> d_excManager;
       mutable Storage         d_sigmaGradRhoCellStorage;
+      mutable Storage         d_xcCellWiseTemp;
+
+      SpinMode                                     d_spinMode;
+      size_type                                    d_S;
+      SpinStorageLayout                            d_layout;
+      std::vector<std::pair<size_type, size_type>> d_spinIdsFilled;
+      std::vector<size_type>                       d_numCellDofs;
+      size_type                                    d_basisOverlapSize;
 
       std::shared_ptr<
         quadrature::QuadratureValuesContainer<RealType, memorySpaceHost>>

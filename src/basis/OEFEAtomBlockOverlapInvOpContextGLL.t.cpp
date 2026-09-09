@@ -1407,7 +1407,7 @@ namespace dftefe
 
       utils::MemoryStorage<size_type, memorySpace> locallyOwnedCellsNumDoFs(
         numLocallyOwnedCells);
-      locallyOwnedCellsNumDoFs.template copyFrom(locallyOwnedCellsNumDoFsSTL);
+      locallyOwnedCellsNumDoFs.copyFrom(locallyOwnedCellsNumDoFsSTL);
 
       const size_type numCumulativeDofsCells =
         std::accumulate(locallyOwnedCellsNumDoFsSTL.begin(),
@@ -1424,7 +1424,8 @@ namespace dftefe
                                            itCellLocalIdsBegin,
                                            locallyOwnedCellsNumDoFs,
                                            numCumulativeDofsCells,
-                                           diagonal.data());
+                                           diagonal.data(),
+                                           *linAlgOpContext);
 
       // function to do a static condensation to send the constraint nodes to
       // its parent nodes

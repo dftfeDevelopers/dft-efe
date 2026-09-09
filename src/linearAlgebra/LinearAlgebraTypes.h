@@ -122,6 +122,13 @@ namespace dftefe
       OTHER_ERROR
     };
 
+    enum class BisectionErrorCode
+    {
+      SUCCESS,
+      FAILED_TO_CONVERGE,
+      OTHER_ERROR
+    };
+
     struct LapackError
     {
       bool            isSuccess;
@@ -162,6 +169,13 @@ namespace dftefe
       bool                   isSuccess;
       NewtonRaphsonErrorCode err;
       std::string            msg;
+    };
+
+    struct BisectionError
+    {
+      bool               isSuccess;
+      BisectionErrorCode err;
+      std::string        msg;
     };
 
     /**
@@ -237,6 +251,16 @@ namespace dftefe
     private:
       static const std::map<NewtonRaphsonErrorCode, std::string> d_errToMsgMap;
     }; // end of class NewtonRaphsonErrorMsg
+
+    class BisectionErrorMsg
+    {
+    public:
+      static BisectionError
+      isSuccessAndMsg(const BisectionErrorCode &errorCode);
+
+    private:
+      static const std::map<BisectionErrorCode, std::string> d_errToMsgMap;
+    }; // end of class BisectionErrorMsg
 
   } // end of namespace linearAlgebra
 } // end of namespace dftefe

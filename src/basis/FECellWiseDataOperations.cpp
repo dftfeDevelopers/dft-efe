@@ -38,14 +38,16 @@ namespace dftefe
       // const typename BasisManager<ValueType, memorySpace>::SizeTypeVector
       //   &                                           numCellDofs,
       const size_type                               totalCellDofs,
-      utils::MemoryStorage<ValueType, memorySpace> &cellWiseStorage)
+      utils::MemoryStorage<ValueType, memorySpace> &cellWiseStorage,
+      linearAlgebra::LinAlgOpContext<memorySpace> & linAlgOpContext)
     {
       auto itCellWiseStorageBegin = cellWiseStorage.begin();
       copyFieldToCellWiseData(data,
                               numComponents,
                               cellLocalIdsStartPtr,
                               totalCellDofs,
-                              itCellWiseStorageBegin);
+                              itCellWiseStorageBegin,
+                              linAlgOpContext);
     }
 
     template <typename ValueType, utils::MemorySpace memorySpace>
@@ -56,8 +58,9 @@ namespace dftefe
       const size_type *cellLocalIdsStartPtr,
       // const typename BasisManager<ValueType, memorySpace>::SizeTypeVector
       //   &        numCellDofs,
-      const size_type totalCellDofs,
-      ValueType *     itCellWiseStorageBegin)
+      const size_type                              totalCellDofs,
+      ValueType *                                  itCellWiseStorageBegin,
+      linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext)
     {
       // const size_type numCells           = numCellDofs.size();
       // size_type       cumulativeCellDofs = 0;
@@ -94,8 +97,9 @@ namespace dftefe
         const size_type *cellLocalIdsStartPtr,
         // const typename BasisManager<ValueType, memorySpace>::SizeTypeVector
         //   &        numCellDofs,
-        const size_type totalCellDofs,
-        ValueType *     data)
+        const size_type                              totalCellDofs,
+        ValueType *                                  data,
+        linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext)
     {
       // const size_type numCells           = numCellDofs.size();
       // size_type       cumulativeCellDofs = 0;
@@ -140,15 +144,17 @@ namespace dftefe
         const size_type *cellLocalIdsStartPtr,
         // const typename BasisManager<ValueType, memorySpace>::SizeTypeVector
         //   &        numCellDofs,
-        const size_type totalCellDofs,
-        ValueType *     data)
+        const size_type                              totalCellDofs,
+        ValueType *                                  data,
+        linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext)
     {
       auto itCellWiseStorageBegin = cellWiseStorage.begin();
       addCellWiseDataToFieldData(itCellWiseStorageBegin,
                                  numComponents,
                                  cellLocalIdsStartPtr,
                                  totalCellDofs,
-                                 data);
+                                 data,
+                                 linAlgOpContext);
     }
 
 
@@ -160,7 +166,8 @@ namespace dftefe
         const size_type *cellLocalIdsStartPtr,
         const utils::MemoryStorage<size_type, memorySpace> &numCellDofs,
         const size_type                                     totalCellDofs,
-        ValueType *                                         data)
+        ValueType *                                         data,
+        linearAlgebra::LinAlgOpContext<memorySpace> &       linAlgOpContext)
     {
       const size_type numCells                 = numCellDofs.size();
       size_type       cumulativeCellDofs       = 0;
@@ -190,7 +197,8 @@ namespace dftefe
         &                                                 cellWiseStorage,
       const size_type                                     numComponents,
       const utils::MemoryStorage<size_type, memorySpace> &numCellVecs,
-      ValueType *                                         data)
+      ValueType *                                         data,
+      linearAlgebra::LinAlgOpContext<memorySpace> &       linAlgOpContext)
     {
       auto            itCellWiseStorageBegin     = cellWiseStorage.begin();
       const size_type numCells                   = numCellVecs.size();

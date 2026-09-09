@@ -1,4 +1,7 @@
 cmake_minimum_required(VERSION 3.20)
+IF ("${GPU_VENDOR}" STREQUAL "intel")
+  add_compile_options("-fno-sycl-id-queries-fit-in-int")
+ENDIF()
 project(poisson_problem_comprison)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)

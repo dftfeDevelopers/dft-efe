@@ -23,51 +23,106 @@
  * @author Bikash Kanungo
  */
 
+#include <utils/Exceptions.h>
+
 namespace dftefe
 {
   namespace ksdft
   {
+    //--------------------------------------------------------------------------
+    // RDM1Spectral
+    //--------------------------------------------------------------------------
+
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     RDM1Spectral<ValueType, memorySpace>::RDM1Spectral()
-      : d_nKSOrbs(0)
-      , d_ksSetFlag(false)
+      : d_spectral(nullptr)
       , d_evalFlag(false)
     {}
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     void
     RDM1Spectral<ValueType, memorySpace>::setSpectral(
-      std::unique_ptr<linearAlgebra::MultiVector<ValueType, memorySpace>>
-                                              ksOrbitals,
-      const std::vector<std::vector<double>> &occupancies,
-      const size_type                         nKSOrbs)
+      std::unique_ptr<SpectralRep<ValueType, memorySpace>> spectral)
     {
-      d_ksOrbs      = std::move(ksOrbitals);
-      d_occupancies = occupancies;
-      d_nKSOrbs     = nKSOrbs;
-      d_evalFlag    = true;
-      d_ksSetFlag   = true;
+      d_spectral = std::move(spectral);
+      d_evalFlag = true;
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    void
-    RDM1Spectral<ValueType, memorySpace>::getSpectral(
-      std::unique_ptr<linearAlgebra::MultiVector<ValueType, memorySpace>>
-        &                               ksOrbitals,
-      std::vector<std::vector<double>> &occupancies,
-      size_type &                       nKSOrbs)
+    const SpectralRep<ValueType, memorySpace> &
+    RDM1Spectral<ValueType, memorySpace>::getSpectral() const
     {
-      ksOrbitals  = std::move(d_ksOrbs);
-      occupancies = d_occupancies;
-      nKSOrbs     = d_nKSOrbs;
-      d_ksSetFlag = false;
+      dftefe::utils::throwException<dftefe::utils::LogicError>(
+        d_spectral != nullptr,
+        "RDM1Spectral::getSpectral() called but spectral data is not set.");
+      return *d_spectral;
+    }
+
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    RDM1Access<ValueType, memorySpace>
+    RDM1Spectral<ValueType, memorySpace>::getAccess()
+    {
+      dftefe::utils::throwException<dftefe::utils::LogicError>(
+        d_spectral != nullptr,
+        "RDM1Spectral::getAccess() called but spectral data is not set "
+        "(or access is already held by another RDM1Access).");
+      return RDM1Access<ValueType, memorySpace>(this, std::move(d_spectral));
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     bool
-    RDM1Spectral<ValueType, memorySpace>::getKSSetFlag() const
+    RDM1Spectral<ValueType, memorySpace>::isSpectralSet() const
     {
-      return d_ksSetFlag;
+      return d_spectral != nullptr;
+    }
+
+    //--------------------------------------------------------------------------
+    // RDM1Access
+    //--------------------------------------------------------------------------
+
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    RDM1Access<ValueType, memorySpace>::RDM1Access(
+      RDM1Spectral<ValueType, memorySpace> *               owner,
+      std::unique_ptr<SpectralRep<ValueType, memorySpace>> spectral)
+      : d_owner(owner)
+      , d_spectral(std::move(spectral))
+    {}
+
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    RDM1Access<ValueType, memorySpace>::RDM1Access(
+      RDM1Access<ValueType, memorySpace> &&other) noexcept
+      : d_owner(other.d_owner)
+      , d_spectral(std::move(other.d_spectral))
+    {
+      other.d_owner = nullptr;
+    }
+
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    RDM1Access<ValueType, memorySpace>::~RDM1Access()
+    {
+      if (d_owner != nullptr)
+        d_owner->setSpectral(std::move(d_spectral));
+    }
+
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    void
+    RDM1Access<ValueType, memorySpace>::returnBack()
+    {
+      if (d_owner != nullptr)
+        {
+          d_owner->setSpectral(std::move(d_spectral));
+          d_owner = nullptr;
+        }
+    }
+
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    SpectralRep<ValueType, memorySpace> &
+    RDM1Access<ValueType, memorySpace>::getSpectral()
+    {
+      dftefe::utils::throwException<dftefe::utils::LogicError>(
+        d_spectral != nullptr,
+        "RDM1Access::getSpectral() called but spectral data is null.");
+      return *d_spectral;
     }
 
   } // namespace ksdft

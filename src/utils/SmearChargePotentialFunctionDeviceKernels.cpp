@@ -26,6 +26,7 @@
 #ifdef DFTEFE_WITH_DEVICE
 #  include <utils/DeviceKernelLauncherHelpers.h>
 #  include <utils/DeviceAPICalls.h>
+#  include <utils/DeviceDataTypeOverloads.h>
 #  include <utils/SmearChargePotentialFunction.h>
 #  include <cmath>
 
@@ -67,7 +68,7 @@ namespace dftefe
                          12.0 * rci * rci * rci * rci * rci * rci * rci) /
                         (5.0 * rci * rci * rci * rci * rci * rci * rci * rci);
                 }
-              atomicAdd(&q[iPoint], val);
+              dftefe::utils::atomicAddWrapper(&q[iPoint], val);
             }
         },
         const size_type numPoints,

@@ -114,6 +114,12 @@ namespace dftefe
         {NewtonRaphsonErrorCode::FAILED_TO_CONVERGE, "Failed to converge. "},
         {NewtonRaphsonErrorCode::OTHER_ERROR, "Other error encountered. "}};
 
+    const std::map<BisectionErrorCode, std::string>
+      BisectionErrorMsg::d_errToMsgMap = {
+        {BisectionErrorCode::SUCCESS, "Success. "},
+        {BisectionErrorCode::FAILED_TO_CONVERGE, "Failed to converge. "},
+        {BisectionErrorCode::OTHER_ERROR, "Other error encountered. "}};
+
     LinearSolverError
     LinearSolverErrorMsg::isSuccessAndMsg(const LinearSolverErrorCode &error)
     {
@@ -245,6 +251,28 @@ namespace dftefe
         {
           utils::throwException<utils::InvalidArgument>(
             false, "Invalid linearAlgebra::NewtonRaphsonErrorCode passed.");
+        }
+      return ret;
+    }
+
+    BisectionError
+    BisectionErrorMsg::isSuccessAndMsg(const BisectionErrorCode &error)
+    {
+      BisectionError ret;
+      auto           it = d_errToMsgMap.find(error);
+      if (it != d_errToMsgMap.end())
+        {
+          if (error == BisectionErrorCode::SUCCESS)
+            ret.isSuccess = true;
+          else
+            ret.isSuccess = false;
+          ret.err = error;
+          ret.msg = it->second;
+        }
+      else
+        {
+          utils::throwException<utils::InvalidArgument>(
+            false, "Invalid linearAlgebra::BisectionErrorCode passed.");
         }
       return ret;
     }

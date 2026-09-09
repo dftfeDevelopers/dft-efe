@@ -1,4 +1,10 @@
 cmake_minimum_required(VERSION 3.17)
+IF ("${GPU_VENDOR}" STREQUAL "intel")
+  add_compile_options("-fno-sycl-id-queries-fit-in-int") 
+ENDIF()
+#
+#so that sycl with uint64_t works
+#
 project(dft-efe-proj VERSION 0.1)
 add_executable(dft-efe src/main.cpp)
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)

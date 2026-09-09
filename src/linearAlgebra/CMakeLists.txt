@@ -97,6 +97,16 @@ if (NOT TARGET dft-efe-linalg)
 
     add_library(dft-efe-linalg SHARED ${DFT-EFE-LINALG-SOURCES})
 
+    IF (ENABLE_GPU)
+    IF ("${GPU_LANG}" STREQUAL "sycl")
+    # COMPILE_FLAGS on the source files above only affects their compile step;
+    # the library's own link step needs the SYCL flags too (-fsycl
+    # -fsycl-targets=... ) or its device kernels don't get linked into the
+    # final .so's device image, causing "No kernel named ..." at runtime.
+    set_target_properties(dft-efe-linalg PROPERTIES LINK_FLAGS ${CMAKE_SYCL_FLAGS})
+    ENDIF()
+    ENDIF()
+
     include_directories(../)
 
     if (ENABLE_MPI)
@@ -126,6 +136,13 @@ if (NOT TARGET dft-efe-linalg)
 
     #NOTE : DFTFE doesn't link to scalapack directly. Check this.
     target_link_libraries(dft-efe-linalg PUBLIC ${SCALAPACK_LIBRARIES})
+
+    IF (ENABLE_GPU)
+        IF ("${GPU_LANG}" STREQUAL "hip")
+            find_package(rocblas REQUIRED)
+            target_link_libraries(dft-efe-linalg PUBLIC rocblas)
+        ENDIF()
+    ENDIF()
 
     find_package(ELPA 2023 REQUIRED)
     target_link_libraries(dft-efe-linalg PUBLIC ELPA::ELPA dft-efe-utils ${DFTEFE_LINEARALGEBRA_MPI_LIBRARIES})

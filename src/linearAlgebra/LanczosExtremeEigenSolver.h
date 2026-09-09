@@ -78,13 +78,13 @@ namespace dftefe
        * @brief Constructor
        */
       LanczosExtremeEigenSolver(
-        const size_type                              maxKrylovSubspaceSize,
-        const size_type                              numLowerExtermeEigenValues,
-        const size_type                              numUpperExtermeEigenValues,
-        std::vector<double> &                        tolerance,
-        double                                       lanczosBetaTolerance,
-        const Vector<ValueTypeOperand, memorySpace> &initialGuess,
-        bool                                         isAdaptiveSolve = true);
+        const size_type      maxKrylovSubspaceSize,
+        const size_type      numLowerExtermeEigenValues,
+        const size_type      numUpperExtermeEigenValues,
+        std::vector<double> &tolerance,
+        double               lanczosBetaTolerance,
+        const MultiVector<ValueTypeOperand, memorySpace> &initialGuess,
+        bool isAdaptiveSolve = true);
 
       LanczosExtremeEigenSolver(
         const size_type      maxKrylovSubspaceSize,
@@ -95,7 +95,8 @@ namespace dftefe
         std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
                                                       mpiPatternP2P,
         std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext,
-        bool                                          isAdaptiveSolve = true);
+        bool                                          isAdaptiveSolve,
+        size_type                                     numSpaces);
 
       /**
        *@brief Default Destructor
@@ -109,7 +110,7 @@ namespace dftefe
              const size_type      numUpperExtermeEigenValues,
              std::vector<double> &tolerance,
              double               lanczosBetaTolerance,
-             const Vector<ValueTypeOperand, memorySpace> &initialGuess);
+             const MultiVector<ValueTypeOperand, memorySpace> &initialGuess);
 
       void
       reinit(const size_type      maxKrylovSubspaceSize,
@@ -119,7 +120,8 @@ namespace dftefe
              double               lanczosBetaTolerance,
              std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
                                                            mpiPatternP2P,
-             std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext);
+             std::shared_ptr<LinAlgOpContext<memorySpace>> linAlgOpContext,
+             size_type                                     numSpaces);
 
       EigenSolverError
       solve(const OpContext &                    A,
@@ -139,16 +141,16 @@ namespace dftefe
                            std::vector<RealType> &subDiagonal) const;
 
     private:
-      Vector<ValueTypeOperand, memorySpace> d_initialGuess;
-      size_type                             d_maxKrylovSubspaceSize;
-      size_type                             d_numLowerExtermeEigenValues;
-      size_type                             d_numUpperExtermeEigenValues;
-      std::vector<double>                   d_tolerance;
-      double                                d_lanczosBetaTolerance;
-      std::vector<RealType>                 d_diagonal;
-      std::vector<RealType>                 d_subDiagonal;
-      bool                                  d_isSolved;
-      const bool                            d_isAdaptiveSolve;
+      MultiVector<ValueTypeOperand, memorySpace> d_initialGuess;
+      size_type                                  d_maxKrylovSubspaceSize;
+      size_type                                  d_numLowerExtermeEigenValues;
+      size_type                                  d_numUpperExtermeEigenValues;
+      std::vector<double>                        d_tolerance;
+      double                                     d_lanczosBetaTolerance;
+      std::vector<RealType>                      d_diagonal;
+      std::vector<RealType>                      d_subDiagonal;
+      bool                                       d_isSolved;
+      const bool                                 d_isAdaptiveSolve;
 
 
     }; // end of class LanczosExtremeEigenSolver

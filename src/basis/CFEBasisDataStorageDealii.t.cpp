@@ -32,6 +32,7 @@
 #include <deal.II/base/quadrature_lib.h>
 #include <deal.II/fe/fe_values.h>
 #include <quadrature/QuadratureAttributes.h>
+#include <utility>
 #include <basis/ParentToChildCellsManagerDealii.h>
 namespace dftefe
 {
@@ -609,7 +610,10 @@ namespace dftefe
         std::vector<size_type> &cellStartIdsBasisQuadStorage,
         std::vector<size_type> &cellStartIdsBasisGradientQuadStorage,
         std::vector<size_type> &cellStartIdsBasisHessianQuadStorage,
-        const BasisStorageAttributesBoolMap basisStorageAttributesBoolMap)
+        const BasisStorageAttributesBoolMap basisStorageAttributesBoolMap,
+        // isFast selects, per cell, how the dealii::FEValues used below is
+        // obtained
+        const bool isFast = true)
       {
         const quadrature::QuadratureFamily quadratureFamily =
           quadratureRuleAttributes.getQuadratureFamily();
@@ -735,6 +739,21 @@ namespace dftefe
         std::shared_ptr<const dealii::DoFHandler<dim>> dealiiDofHandler =
           feBDH->getDoFHandler();
 
+        // Used only when isFast: holds one dealii::FEValues per *distinct*
+        // quadrature rule (i.e. distinct set of points and weights)
+        // encountered so far, not one per cell. Adaptive quadrature
+        // typically leaves the bulk of cells (away from a
+        // refined/singular region) sharing the exact same (unrefined)
+        // rule -- even though quadrature::QuadratureRuleContainer hands
+        // back a distinct QuadratureRule *object* per cell regardless, so
+        // cells are matched by comparing actual point/weight content, not
+        // object identity. Plain vector with a linear scan, since the
+        // number of distinct adaptive-quadrature rules across a mesh is
+        // expected to be small.
+        std::vector<std::pair<std::vector<double>,
+                              std::shared_ptr<dealii::FEValues<dim>>>>
+          uniqueQuadFEValues;
+
         size_type cumulativeQuadPoints = 0;
         for (; locallyOwnedCellIter != feBDH->endLocallyOwnedCells();
              ++locallyOwnedCellIter)
@@ -752,15 +771,64 @@ namespace dftefe
               quadratureRuleContainer->getCellQuadratureWeights(cellIndex);
             convertToDealiiPoint<dim>(cellParametricQuadPoints,
                                       dealiiParametricQuadPoints);
-            dealii::Quadrature<dim> dealiiQuadratureRule(
-              dealiiParametricQuadPoints, quadWeights);
-            dealii::FEValues<dim> dealiiFEValues(feBDH->getReferenceFE(
-                                                   cellIndex),
-                                                 dealiiQuadratureRule,
-                                                 dealiiUpdateFlags);
             feCellDealii = std::dynamic_pointer_cast<FECellDealii<dim>>(
               *locallyOwnedCellIter);
-            dealiiFEValues.reinit(feCellDealii->getDealiiFECellIter());
+
+            // The only place isFast changes anything: how dealiiFEValues
+            // is obtained. isFast == false rebuilds it fresh every cell
+            // (the original behaviour); isFast == true looks it up from
+            // uniqueQuadFEValues by exact quadrature-content match,
+            // building (and remembering) a new one only on a miss.
+            // Everything below that reads off dealiiFEValues is identical
+            // either way -- the speedup comes entirely from skipping
+            // the repeated, expensive dealii::FEValues construction
+            // (dofsPerCell x nQuadPoint shape function evaluation) on a
+            // cache hit; reinit() itself is cheap.
+            std::unique_ptr<dealii::FEValues<dim>> freshFEValues;
+            dealii::FEValues<dim> *                dealiiFEValuesPtr = nullptr;
+            if (isFast)
+              {
+                std::vector<double> quadKey =
+                  utils::flatten(cellParametricQuadPoints);
+                quadKey.insert(quadKey.end(),
+                               quadWeights.begin(),
+                               quadWeights.end());
+
+                std::shared_ptr<dealii::FEValues<dim>> matchedFEValues;
+                for (const auto &entry : uniqueQuadFEValues)
+                  if (entry.first == quadKey)
+                    {
+                      matchedFEValues = entry.second;
+                      break;
+                    }
+
+                if (!matchedFEValues)
+                  {
+                    dealii::Quadrature<dim> dealiiQuadratureRule(
+                      dealiiParametricQuadPoints, quadWeights);
+                    matchedFEValues = std::make_shared<dealii::FEValues<dim>>(
+                      feBDH->getReferenceFE(cellIndex),
+                      dealiiQuadratureRule,
+                      dealiiUpdateFlags);
+                    uniqueQuadFEValues.emplace_back(std::move(quadKey),
+                                                    matchedFEValues);
+                  }
+                matchedFEValues->reinit(feCellDealii->getDealiiFECellIter());
+                dealiiFEValuesPtr = matchedFEValues.get();
+              }
+            else
+              {
+                dealii::Quadrature<dim> dealiiQuadratureRule(
+                  dealiiParametricQuadPoints, quadWeights);
+                freshFEValues =
+                  std::make_unique<dealii::FEValues<dim>>(feBDH->getReferenceFE(
+                                                            cellIndex),
+                                                          dealiiQuadratureRule,
+                                                          dealiiUpdateFlags);
+                freshFEValues->reinit(feCellDealii->getDealiiFECellIter());
+                dealiiFEValuesPtr = freshFEValues.get();
+              }
+            dealii::FEValues<dim> &dealiiFEValues = *dealiiFEValuesPtr;
             if (basisStorageAttributesBoolMap
                   .find(BasisStorageAttributes::StoreValues)
                   ->second)

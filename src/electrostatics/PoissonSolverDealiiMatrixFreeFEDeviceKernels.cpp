@@ -284,11 +284,14 @@ namespace dftefe
     } // namespace
 
     void
-    applyPreconditionAndComputeDotProductDevice(double *        d_dvec,
-                                                double *        d_devSum,
-                                                const double *  d_rvec,
-                                                const double *  d_jacobi,
-                                                const size_type N)
+    applyPreconditionAndComputeDotProductDevice(
+      double *        d_dvec,
+      double *        d_devSum,
+      const double *  d_rvec,
+      const double *  d_jacobi,
+      const size_type N,
+      linearAlgebra::LinAlgOpContext<utils::MemorySpace::DEVICE>
+        &linAlgOpContext)
     {
       const size_type blocks =
         (N + (dftefe::utils::DEVICE_BLOCK_SIZE * 2 - 1)) /
@@ -301,7 +304,7 @@ namespace dftefe
                                   dftefe::utils::DEVICE_BLOCK_SIZE,
                                   double,
                                   dftefe::utils::DEVICE_BLOCK_SIZE,
-                                  dftefe::utils::defaultStream,
+                                  linAlgOpContext.getBlasStream(),
                                   d_dvec,
                                   d_devSum,
                                   d_rvec,
@@ -311,11 +314,14 @@ namespace dftefe
 
 
     void
-    applyPreconditionComputeDotProductAndSaddDevice(double *        d_qvec,
-                                                    double *        d_devSum,
-                                                    const double *  d_rvec,
-                                                    const double *  d_jacobi,
-                                                    const size_type N)
+    applyPreconditionComputeDotProductAndSaddDevice(
+      double *        d_qvec,
+      double *        d_devSum,
+      const double *  d_rvec,
+      const double *  d_jacobi,
+      const size_type N,
+      linearAlgebra::LinAlgOpContext<utils::MemorySpace::DEVICE>
+        &linAlgOpContext)
     {
       const size_type blocks =
         (N + (dftefe::utils::DEVICE_BLOCK_SIZE * 2 - 1)) /
@@ -328,7 +334,7 @@ namespace dftefe
         dftefe::utils::DEVICE_BLOCK_SIZE,
         double,
         dftefe::utils::DEVICE_BLOCK_SIZE,
-        dftefe::utils::defaultStream,
+        linAlgOpContext.getBlasStream(),
         d_qvec,
         d_devSum,
         d_rvec,
@@ -338,13 +344,16 @@ namespace dftefe
 
 
     void
-    scaleXRandComputeNormDevice(double *        x,
-                                double *        d_rvec,
-                                double *        d_devSum,
-                                const double *  d_qvec,
-                                const double *  d_dvec,
-                                const double    alpha,
-                                const size_type N)
+    scaleXRandComputeNormDevice(
+      double *        x,
+      double *        d_rvec,
+      double *        d_devSum,
+      const double *  d_qvec,
+      const double *  d_dvec,
+      const double    alpha,
+      const size_type N,
+      linearAlgebra::LinAlgOpContext<utils::MemorySpace::DEVICE>
+        &linAlgOpContext)
     {
       const size_type blocks =
         (N + (dftefe::utils::DEVICE_BLOCK_SIZE * 2 - 1)) /
@@ -357,7 +366,7 @@ namespace dftefe
         dftefe::utils::DEVICE_BLOCK_SIZE,
         double,
         dftefe::utils::DEVICE_BLOCK_SIZE,
-        dftefe::utils::defaultStream,
+        linAlgOpContext.getBlasStream(),
         x,
         d_rvec,
         d_devSum,
@@ -368,7 +377,12 @@ namespace dftefe
     }
 
     void
-    saddDevice(double *y, double *x, const double beta, const size_type size)
+    saddDevice(double *        y,
+               double *        x,
+               const double    beta,
+               const size_type size,
+               linearAlgebra::LinAlgOpContext<utils::MemorySpace::DEVICE>
+                 &linAlgOpContext)
     {
       const size_type gridSize =
         (size / dftefe::utils::DEVICE_BLOCK_SIZE) +
@@ -376,7 +390,7 @@ namespace dftefe
       DFTEFE_LAUNCH_KERNEL(saddKernel,
                            gridSize,
                            dftefe::utils::DEVICE_BLOCK_SIZE,
-                           dftefe::utils::defaultStream,
+                           linAlgOpContext.getBlasStream(),
                            y,
                            x,
                            beta,

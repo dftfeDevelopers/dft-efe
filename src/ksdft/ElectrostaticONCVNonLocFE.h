@@ -117,7 +117,8 @@ namespace dftefe
                         linAlgOpContext,
         const size_type maxCellBlock,
         const size_type maxWaveFnBlock,
-        const bool      useDealiiMatrixFreePoissonSolve = true);
+        const bool      useDealiiMatrixFreePoissonSolve = true,
+        SpinMode        spinMode = SpinMode::Unpolarized);
 
       // used if delta rho approach is taken with phi total from 1D KS solve
       // with analytical vself energy cancellation
@@ -164,7 +165,8 @@ namespace dftefe
         const std::unordered_map<std::string,
                                  std::shared_ptr<atoms::AtomTCIASpline>>
                    fieldToTCIASplineMap            = {},
-        const bool useDealiiMatrixFreePoissonSolve = true);
+        const bool useDealiiMatrixFreePoissonSolve = true,
+        SpinMode   spinMode                        = SpinMode::Unpolarized);
 
       ~ElectrostaticONCVNonLocFE() = default;
 
@@ -258,7 +260,7 @@ namespace dftefe
       RealType
       getEnergy() const override;
 
-      const quadrature::QuadratureValuesContainer<ValueType, memorySpace> &
+      std::vector<quadrature::QuadratureValuesContainer<ValueType, memorySpace>>
       getFunctionalDerivative() const override;
 
       std::shared_ptr<
@@ -295,11 +297,15 @@ namespace dftefe
       const size_type                d_maxWaveFnBlock;
       const std::vector<std::string> d_atomSymbolVec;
       bool                           d_isNonLocPSP;
+      SpinMode                       d_spinMode;
 
       std::shared_ptr<linearAlgebra::MultiVector<ValueType, memorySpace>>
         d_psiBatchSmall, d_psiBatch, d_YBatch, d_YBatchSmall;
       std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
         d_mpiPatternP2P;
+
+      const std::vector<double> d_atomCharges;
+      const double              d_smearedChargeRadius;
 
     }; // end of class ElectrostaticONCVNonLocFE
   }    // end of namespace ksdft

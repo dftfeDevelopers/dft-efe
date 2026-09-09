@@ -33,20 +33,43 @@ namespace dftefe
 {
   namespace atoms
   {
+    struct AtomSevereFuncType
+    {
+      enum class PSP
+      {
+        vLocal
+      };
+
+      enum class Atomic
+      {
+        density,
+        vNuclearSq,
+        gradVNuclearSq,
+        vTotalSq,
+        gradVTotalSq,
+        orbitalSq,
+        gradOrbitalSq,
+        bPlusRhoTimesVTotal,
+        bTimesVNuclear,
+        vExtTimesOrbitalSq
+      };
+    };
+
     template <utils::MemorySpace memorySpace>
     class AtomSevereFunction : public AtomSuperpositionFunction<memorySpace>,
                                public utils::ScalarSpatialFunctionReal
     {
     public:
+      template <typename FuncType>
       AtomSevereFunction(
         std::shared_ptr<const AtomSphericalDataContainer>
                                                      atomSphericalDataContainer,
         const std::vector<std::string> &             atomSymbol,
         const std::vector<utils::Point> &            atomCoordinates,
-        const std::string                            fieldName,
-        const size_type                              derivativeType,
-        const size_type                              sphericalValPower = 2,
-        const double                                 constant          = 1.0,
+        const std::vector<double> &                  atomCharges,
+        double                                       smearedChargeRadius,
+        FuncType                                     type,
+        double                                       constant        = 1.0,
         linearAlgebra::LinAlgOpContext<memorySpace> *linAlgOpContext = nullptr);
 
       double
@@ -67,9 +90,13 @@ namespace dftefe
 #endif
 
     private:
-      AtomSuperpositionFuncType d_atomSupType;
-      size_type                 d_dim;
-      double                    d_constant;
+      AtomSuperpositionFuncType                         d_atomSupType;
+      double                                            d_constant;
+      bool                                              d_isComposite;
+      AtomSevereFuncType::Atomic                        d_atomicType;
+      std::shared_ptr<utils::ScalarSpatialFunctionReal> d_b;
+      std::shared_ptr<utils::ScalarSpatialFunctionReal> d_vext;
+      std::shared_ptr<utils::ScalarSpatialFunctionReal> d_rho;
     };
 
   } // namespace atoms

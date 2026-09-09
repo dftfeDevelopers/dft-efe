@@ -35,7 +35,8 @@ namespace dftefe
     {
       double
       computeEntropicEnergy(const std::vector<double> &partialOccupancies,
-                            const double               temperature)
+                            const double               temperature,
+                            const double               spinFactor)
       {
         double          entropy        = 0.0;
         const size_type numEigenValues = partialOccupancies.size();
@@ -58,7 +59,7 @@ namespace dftefe
                 oneminusfTimeslogoneminusf =
                   (1.0 - partialOccupancy) * log(1.0 - partialOccupancy);
               }
-            entropy += -2.0 * Constants::BOLTZMANN_CONST_HARTREE *
+            entropy += -spinFactor * Constants::BOLTZMANN_CONST_HARTREE *
                        (fTimeslogf + oneminusfTimeslogoneminusf);
           }
 
@@ -257,15 +258,31 @@ namespace dftefe
       buildDescrMap(const std::map<DensityDescrAttr,
                                    quadrature::QuadratureValuesContainer<
                                      RealType,
-                                     utils::MemorySpace::HOST>> &descrInput)
+                                     utils::MemorySpace::HOST>> &descrInput,
+                    const SpinMode                               spinMode)
       {
+        size_type ncomp = 1;
+        if (spinMode == SpinMode::Collinear)
+          ncomp = 2;
+        else if (spinMode == SpinMode::NonCollinear)
+          ncomp = 4;
+
         std::unordered_map<DensityDescrAttr,
                            std::vector<quadrature::QuadratureValuesContainer<
                              RealType,
                              utils::MemorySpace::HOST>>>
           descrMap;
         for (const auto &[attr, qvc] : descrInput)
-          descrMap[attr] = {qvc};
+          {
+            descrMap[attr].resize(
+              ncomp,
+              quadrature::QuadratureValuesContainer<RealType,
+                                                    utils::MemorySpace::HOST>(
+                qvc.getQuadratureRuleContainer(),
+                qvc.getNumberComponents(),
+                static_cast<RealType>(0.0)));
+            descrMap[attr][0] = qvc;
+          }
         return descrMap;
       }
     } // namespace KohnShamDFTInternal
@@ -349,10 +366,16 @@ namespace dftefe
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
           linAlgOpContext,
         /* basis overlap related info */
-        const OpContext &MContextForInv,
-        const OpContext &MContext,
-        const OpContext &MInvContext,
-        bool             isResidualChebyshevFilter)
+        const OpContext &                    MContextForInv,
+        const OpContext &                    MContext,
+        const OpContext &                    MInvContext,
+        bool                                 isResidualChebyshevFilter,
+        const std::vector<double> &          atomMagZFactors,
+        SpinMode                             spinMode,
+        bool                                 isGHEP,
+        linearAlgebra::OrthogonalizationType orthoType,
+        const size_type                      chebyshevPolynomialDegree,
+        const double                         spinMixingEnhancementFactor)
       : d_feBMWaveFn(feBMWaveFn)
       , d_evaluateEnergyEverySCF(evaluateEnergyEverySCF)
       , d_numMaxSCFIter(maxSCFIter)
@@ -375,6 +398,7 @@ namespace dftefe
       , d_smearingTemperature(smearingTemperature)
       , d_p(feBMWaveFn->getMPIPatternP2P()->mpiCommunicator(), "Kohn Sham DFT")
       , d_isResidualChebyshevFilter(isResidualChebyshevFilter)
+      , d_spinMode(spinMode)
       , d_isONCVNonLocPSP(false)
       , d_isNlcc(false)
       , d_pTotal(feBMWaveFn->getMPIPatternP2P()->mpiCommunicator(),
@@ -383,10 +407,10 @@ namespace dftefe
     {
       std::unique_ptr<
         linearAlgebra::MultiVector<ValueTypeWaveFunctionCoeff, memorySpace>>
-                                       wfnPtr;
-      std::vector<std::vector<double>> occupancies = {
-        std::vector<double>(numWantedEigenvalues, 0.0)};
-      size_type nKSOrbs;
+                      wfnPtr;
+      const size_type numSpacesS =
+        (d_spinMode == SpinMode::Unpolarized) ? 1 : 2;
+
       d_p.registerStart("Pre Init Checks");
       if (dynamic_cast<
             const basis::EFEBasisDofHandler<ValueTypeWaveFunctionCoeff,
@@ -408,17 +432,37 @@ namespace dftefe
         quadrature::QuadratureValuesContainer<RealType, memorySpaceHost>(
           feBDElectronicChargeRhs->getQuadratureRuleContainer(), 1, 0.0);
 
-      wfnPtr = std::make_unique<
-        linearAlgebra::MultiVector<ValueTypeWaveFunctionCoeff, memorySpace>>(
-        feBMWaveFn->getMPIPatternP2P(),
-        linAlgOpContext,
-        numWantedEigenvalues,
-        (ValueTypeWaveFunctionCoeff)0.0);
+      if (d_spinMode == SpinMode::Collinear)
+        wfnPtr = std::make_unique<linearAlgebra::MultiVectorProductSpaceBlocked<
+          ValueTypeWaveFunctionCoeff,
+          memorySpace>>(feBMWaveFn->getMPIPatternP2P(),
+                        linAlgOpContext,
+                        2,
+                        numWantedEigenvalues,
+                        (ValueTypeWaveFunctionCoeff)0.0);
+      else if (d_spinMode == SpinMode::NonCollinear)
+        wfnPtr = std::make_unique<
+          linearAlgebra::MultiVectorProductSpace<ValueTypeWaveFunctionCoeff,
+                                                 memorySpace>>(
+          feBMWaveFn->getMPIPatternP2P(),
+          linAlgOpContext,
+          2,
+          numWantedEigenvalues,
+          (ValueTypeWaveFunctionCoeff)0.0);
+      else
+        wfnPtr = std::make_unique<
+          linearAlgebra::MultiVectorProductSpace<ValueTypeWaveFunctionCoeff,
+                                                 memorySpace>>(
+          feBMWaveFn->getMPIPatternP2P(),
+          linAlgOpContext,
+          1,
+          numWantedEigenvalues,
+          (ValueTypeWaveFunctionCoeff)0.0);
 
       KohnShamDFTInternal::generateRandNormDistMultivec(*wfnPtr);
       wfnPtr->updateGhostValues();
       feBMWaveFn->getConstraints().distributeParentToChild(
-        *wfnPtr, numWantedEigenvalues);
+        *wfnPtr, wfnPtr->numVectors());
 
       d_rdm1Spectral = std::make_shared<RDM1FE<ValueTypeWaveFunctionBasis,
                                                ValueTypeWaveFunctionCoeff,
@@ -429,7 +473,8 @@ namespace dftefe
         linAlgOpContext,
         d_mpiCommDomain,
         KSDFTDefaults<memorySpace>::CELL_BATCH_SIZE,
-        KSDFTDefaults<memorySpace>::MAX_DENSCOMP_WAVEFN_BATCH_SIZE);
+        KSDFTDefaults<memorySpace>::MAX_DENSCOMP_WAVEFN_BATCH_SIZE,
+        spinMode);
 
       utils::throwException(densIn.getNumberComponents() == 1,
                             "Electron density should have only one component.");
@@ -449,15 +494,6 @@ namespace dftefe
       //************* CHANGE THIS **********************
       d_jxwDataHost = quadRuleContainerRho->getJxW();
 
-      if (KohnShamDFTInternal::getDescrAttributes(xcType).count(
-            DensityDescrAttr::Grad) > 0)
-        d_mixingScheme.addMixingVariable(
-          mixingVariable::gradRho,
-          utils::MemoryStorage<RealType, utils::MemorySpace::HOST>(),
-          false,
-          mixingParameter,
-          isAdaptiveAndersonMixingParameter);
-
       d_rdm1Mix = std::make_shared<RDM1Mixing<
         linearAlgebra::blasLapack::scalar_type<ValueTypeWaveFunctionBasis,
                                                ValueTypeWaveFunctionCoeff>,
@@ -467,6 +503,9 @@ namespace dftefe
         d_jxwDataHost,
         mixingParameter,
         isAdaptiveAndersonMixingParameter,
+        spinMixingEnhancementFactor,
+        d_spinMode,
+        xcType,
         linearAlgebra::LinAlgOpContextDefaults::LINALG_OP_CONTXT_HOST,
         d_mpiCommDomain);
 
@@ -526,8 +565,48 @@ namespace dftefe
           initDescrMap[DensityDescrAttr::Grad] = gradIn;
         }
 
-      d_rdm1Mix->setDescriptors(
-        KohnShamDFTInternal::buildDescrMap(initDescrMap), {});
+      {
+        auto initMixDescrMap =
+          KohnShamDFTInternal::buildDescrMap(initDescrMap, d_spinMode);
+        if (d_spinMode != SpinMode::Unpolarized && !atomMagZFactors.empty())
+          {
+            auto &spinDensVal       = initMixDescrMap[DensityDescrAttr::Val];
+            const size_type numQuad = spinDensVal[0].nQuadraturePoints();
+            const double *  quadRealPointsHost =
+              spinDensVal[0]
+                .getQuadratureRuleContainer()
+                ->template getRealPointsPtr<utils::MemorySpace::HOST>();
+            const double densNormFactor =
+              std::abs(static_cast<double>(numElectrons) /
+                       static_cast<double>(totalDensityInQuad));
+            std::vector<double> magZInQuadValues(numQuad, 0.0);
+            atomicElectronicChargeDensityFunction.evaluateHost(
+              numQuad,
+              atoms::AtomSuperpositionFuncType::Identity,
+              quadRealPointsHost,
+              magZInQuadValues.data(),
+              densNormFactor /
+                (atoms::Clm(0, 0) * atoms::Dm(0) * atoms::Qm(0, 0)),
+              atomMagZFactors);
+            for (size_type i = 0; i < numQuad; ++i)
+              spinDensVal[1].data()[i] = magZInQuadValues[i];
+            if (xcType.rfind("GGA", 0) == 0)
+              {
+                auto &spinDensGrad = initMixDescrMap[DensityDescrAttr::Grad];
+                std::vector<double> magZGradInQuadValues(numQuad * dim, 0.0);
+                atomicElectronicChargeDensityFunction.evaluateHost(
+                  numQuad,
+                  atoms::AtomSuperpositionFuncType::Grad,
+                  quadRealPointsHost,
+                  magZGradInQuadValues.data(),
+                  1.0 / (atoms::Clm(0, 0) * atoms::Dm(0) * atoms::Qm(0, 0)),
+                  atomMagZFactors);
+                for (size_type i = 0; i < numQuad * dim; ++i)
+                  spinDensGrad[1].data()[i] = magZGradInQuadValues[i];
+              }
+          }
+        d_rdm1Mix->setDescriptors(initMixDescrMap, {});
+      }
 
       d_p.registerEnd("Pre Init Checks");
       d_p.registerStart("Hamiltonian Components Initilization");
@@ -541,7 +620,8 @@ namespace dftefe
         numWantedEigenvalues >
             KSDFTDefaults<memorySpace>::MAX_KINENG_WAVEFN_BATCH_SIZE ?
           KSDFTDefaults<memorySpace>::MAX_KINENG_WAVEFN_BATCH_SIZE :
-          numWantedEigenvalues);
+          numWantedEigenvalues,
+        spinMode);
 
       d_hamitonianElec =
         std::make_shared<ElectrostaticLocalFE<ValueTypeElectrostaticsBasis,
@@ -560,10 +640,12 @@ namespace dftefe
           feBDElectrostaticsHamiltonian,
           externalPotentialFunction,
           linAlgOpContext,
-          KSDFTDefaults<memorySpace>::CELL_BATCH_SIZE);
+          KSDFTDefaults<memorySpace>::CELL_BATCH_SIZE,
+          true,
+          spinMode);
 
       d_rdm1Spectral->setDescriptors(
-        KohnShamDFTInternal::buildDescrMap(initDescrMap), {});
+        KohnShamDFTInternal::buildDescrMap(initDescrMap, d_spinMode), {});
 
       d_hamitonianXC =
         std::make_shared<ExchangeCorrelationFE<ValueTypeWaveFunctionBasis,
@@ -609,7 +691,9 @@ namespace dftefe
           hamiltonianComponentsVec,
           linAlgOpContext,
           KSDFTDefaults<memorySpace>::CELL_BATCH_SIZE,
-          waveFnBatch);
+          waveFnBatch,
+          true,
+          spinMode);
       d_p.registerEnd("Hamiltonian Operator Creation");
 
       d_p.registerStart("KS EigenSolver Init");
@@ -653,7 +737,12 @@ namespace dftefe
                        false,
                        waveFnBatch,
                        MContextForInv,
-                       MInvContext);
+                       MInvContext,
+                       isGHEP,
+                       orthoType,
+                       false, /*storeIntermediateSubspaces*/
+                       true,  /*useSameScratchInEigenSolver*/
+                       spinMode);
 
           ksEigSolve.setChebyshevPolynomialDegree(1);
 
@@ -665,7 +754,12 @@ namespace dftefe
                            *d_MInvContext);
         }
 
-      // form the kohn sham operator
+      d_calculationType =
+        dynamic_cast<const utils::PointChargePotentialFunction *>(
+          &externalPotentialFunction) != nullptr ?
+          CalculationType::AE :
+          CalculationType::PSP;
+
       d_ksEigSolve = std::make_shared<
         KohnShamEigenSolver<ValueTypeOperator, ValueTypeOperand, memorySpace>>(
         numElectrons,
@@ -681,19 +775,30 @@ namespace dftefe
         isResidualChebyshevFilter,
         waveFnBatch,
         MContextForInv,
-        MInvContext);
+        MInvContext,
+        isGHEP,
+        orthoType,
+        false, /*storeIntermediateSubspaces*/
+        true,  /*useSameScratchInEigenSolver*/
+        spinMode,
+        d_calculationType);
 
-      d_rdm1Spectral->setSpectral(std::move(wfnPtr),
-                                  occupancies,
-                                  numWantedEigenvalues);
+
+      if (chebyshevPolynomialDegree > 0)
+        d_ksEigSolve->setChebyshevPolynomialDegree(chebyshevPolynomialDegree);
+
+      auto spec    = std::make_unique<SpectralRep<
+        linearAlgebra::blasLapack::scalar_type<ValueTypeWaveFunctionBasis,
+                                               ValueTypeWaveFunctionCoeff>,
+        memorySpace>>();
+      spec->ksOrbs = std::move(wfnPtr);
+      spec->occupancies =
+        std::vector<double>(numSpacesS * numWantedEigenvalues, 0.0);
+      spec->nKSOrbs = numWantedEigenvalues;
+      d_rdm1Spectral->setSpectral(std::move(spec));
 
       d_p.registerEnd("KS EigenSolver Init");
 
-      if (dynamic_cast<const utils::PointChargePotentialFunction *>(
-            &externalPotentialFunction) != nullptr)
-        d_isPSPCalculation = false;
-      else
-        d_isPSPCalculation = true;
       d_p.print();
     }
 
@@ -782,10 +887,16 @@ namespace dftefe
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
           linAlgOpContext,
         /* basis overlap related info */
-        const OpContext &MContextForInv,
-        const OpContext &MContext,
-        const OpContext &MInvContext,
-        bool             isResidualChebyshevFilter)
+        const OpContext &                    MContextForInv,
+        const OpContext &                    MContext,
+        const OpContext &                    MInvContext,
+        bool                                 isResidualChebyshevFilter,
+        const std::vector<double> &          atomMagZFactors,
+        SpinMode                             spinMode,
+        bool                                 isGHEP,
+        linearAlgebra::OrthogonalizationType orthoType,
+        const size_type                      chebyshevPolynomialDegree,
+        const double                         spinMixingEnhancementFactor)
       : d_feBMWaveFn(feBMWaveFn)
       , d_evaluateEnergyEverySCF(evaluateEnergyEverySCF)
       , d_numMaxSCFIter(maxSCFIter)
@@ -808,6 +919,7 @@ namespace dftefe
       , d_smearingTemperature(smearingTemperature)
       , d_p(feBMWaveFn->getMPIPatternP2P()->mpiCommunicator(), "Kohn Sham DFT")
       , d_isResidualChebyshevFilter(isResidualChebyshevFilter)
+      , d_spinMode(spinMode)
       , d_isONCVNonLocPSP(false)
       , d_isNlcc(false)
       , d_pTotal(feBMWaveFn->getMPIPatternP2P()->mpiCommunicator(),
@@ -816,10 +928,10 @@ namespace dftefe
     {
       std::unique_ptr<
         linearAlgebra::MultiVector<ValueTypeWaveFunctionCoeff, memorySpace>>
-                                       wfnPtr;
-      std::vector<std::vector<double>> occupancies = {
-        std::vector<double>(numWantedEigenvalues, 0.0)};
-      size_type nKSOrbs;
+                      wfnPtr;
+      const size_type numSpacesS =
+        (d_spinMode == SpinMode::Unpolarized) ? 1 : 2;
+
 
       d_p.registerStart("Pre Init Checks");
       if (dynamic_cast<
@@ -836,17 +948,37 @@ namespace dftefe
         quadrature::QuadratureValuesContainer<RealType, memorySpaceHost>(
           feBDElectronicChargeRhs->getQuadratureRuleContainer(), 1, 0.0);
 
-      wfnPtr = std::make_unique<
-        linearAlgebra::MultiVector<ValueTypeWaveFunctionCoeff, memorySpace>>(
-        feBMWaveFn->getMPIPatternP2P(),
-        linAlgOpContext,
-        numWantedEigenvalues,
-        (ValueTypeWaveFunctionCoeff)0.0);
+      if (d_spinMode == SpinMode::Collinear)
+        wfnPtr = std::make_unique<linearAlgebra::MultiVectorProductSpaceBlocked<
+          ValueTypeWaveFunctionCoeff,
+          memorySpace>>(feBMWaveFn->getMPIPatternP2P(),
+                        linAlgOpContext,
+                        2,
+                        numWantedEigenvalues,
+                        (ValueTypeWaveFunctionCoeff)0.0);
+      else if (d_spinMode == SpinMode::NonCollinear)
+        wfnPtr = std::make_unique<
+          linearAlgebra::MultiVectorProductSpace<ValueTypeWaveFunctionCoeff,
+                                                 memorySpace>>(
+          feBMWaveFn->getMPIPatternP2P(),
+          linAlgOpContext,
+          2,
+          numWantedEigenvalues,
+          (ValueTypeWaveFunctionCoeff)0.0);
+      else
+        wfnPtr = std::make_unique<
+          linearAlgebra::MultiVectorProductSpace<ValueTypeWaveFunctionCoeff,
+                                                 memorySpace>>(
+          feBMWaveFn->getMPIPatternP2P(),
+          linAlgOpContext,
+          1,
+          numWantedEigenvalues,
+          (ValueTypeWaveFunctionCoeff)0.0);
 
       KohnShamDFTInternal::generateRandNormDistMultivec(*wfnPtr);
       wfnPtr->updateGhostValues();
       feBMWaveFn->getConstraints().distributeParentToChild(
-        *wfnPtr, numWantedEigenvalues);
+        *wfnPtr, wfnPtr->numVectors());
 
       d_rdm1Spectral = std::make_shared<RDM1FE<ValueTypeWaveFunctionBasis,
                                                ValueTypeWaveFunctionCoeff,
@@ -857,7 +989,8 @@ namespace dftefe
         linAlgOpContext,
         d_mpiCommDomain,
         KSDFTDefaults<memorySpace>::CELL_BATCH_SIZE,
-        KSDFTDefaults<memorySpace>::MAX_DENSCOMP_WAVEFN_BATCH_SIZE);
+        KSDFTDefaults<memorySpace>::MAX_DENSCOMP_WAVEFN_BATCH_SIZE,
+        spinMode);
 
       utils::throwException(densIn.getNumberComponents() == 1,
                             "Electron density should have only one component.");
@@ -877,15 +1010,6 @@ namespace dftefe
       //************* CHANGE THIS **********************
       d_jxwDataHost = quadRuleContainerRho->getJxW();
 
-      if (KohnShamDFTInternal::getDescrAttributes(xcType).count(
-            DensityDescrAttr::Grad) > 0)
-        d_mixingScheme.addMixingVariable(
-          mixingVariable::gradRho,
-          utils::MemoryStorage<RealType, utils::MemorySpace::HOST>(),
-          false,
-          mixingParameter,
-          isAdaptiveAndersonMixingParameter);
-
       d_rdm1Mix = std::make_shared<RDM1Mixing<
         linearAlgebra::blasLapack::scalar_type<ValueTypeWaveFunctionBasis,
                                                ValueTypeWaveFunctionCoeff>,
@@ -895,6 +1019,9 @@ namespace dftefe
         d_jxwDataHost,
         mixingParameter,
         isAdaptiveAndersonMixingParameter,
+        spinMixingEnhancementFactor,
+        d_spinMode,
+        xcType,
         linearAlgebra::LinAlgOpContextDefaults::LINALG_OP_CONTXT_HOST,
         d_mpiCommDomain);
 
@@ -954,8 +1081,48 @@ namespace dftefe
           initDescrMap[DensityDescrAttr::Grad] = gradIn;
         }
 
-      d_rdm1Mix->setDescriptors(
-        KohnShamDFTInternal::buildDescrMap(initDescrMap), {});
+      {
+        auto initMixDescrMap =
+          KohnShamDFTInternal::buildDescrMap(initDescrMap, d_spinMode);
+        if (d_spinMode != SpinMode::Unpolarized && !atomMagZFactors.empty())
+          {
+            auto &spinDensVal       = initMixDescrMap[DensityDescrAttr::Val];
+            const size_type numQuad = spinDensVal[0].nQuadraturePoints();
+            const double *  quadRealPointsHost =
+              spinDensVal[0]
+                .getQuadratureRuleContainer()
+                ->template getRealPointsPtr<utils::MemorySpace::HOST>();
+            const double densNormFactor =
+              std::abs(static_cast<double>(numElectrons) /
+                       static_cast<double>(totalDensityInQuad));
+            std::vector<double> magZInQuadValues(numQuad, 0.0);
+            atomicElectronicChargeDensityFunction.evaluateHost(
+              numQuad,
+              atoms::AtomSuperpositionFuncType::Identity,
+              quadRealPointsHost,
+              magZInQuadValues.data(),
+              densNormFactor /
+                (atoms::Clm(0, 0) * atoms::Dm(0) * atoms::Qm(0, 0)),
+              atomMagZFactors);
+            for (size_type i = 0; i < numQuad; ++i)
+              spinDensVal[1].data()[i] = magZInQuadValues[i];
+            if (xcType.rfind("GGA", 0) == 0)
+              {
+                auto &spinDensGrad = initMixDescrMap[DensityDescrAttr::Grad];
+                std::vector<double> magZGradInQuadValues(numQuad * dim, 0.0);
+                atomicElectronicChargeDensityFunction.evaluateHost(
+                  numQuad,
+                  atoms::AtomSuperpositionFuncType::Grad,
+                  quadRealPointsHost,
+                  magZGradInQuadValues.data(),
+                  1.0 / (atoms::Clm(0, 0) * atoms::Dm(0) * atoms::Qm(0, 0)),
+                  atomMagZFactors);
+                for (size_type i = 0; i < numQuad * dim; ++i)
+                  spinDensGrad[1].data()[i] = magZGradInQuadValues[i];
+              }
+          }
+        d_rdm1Mix->setDescriptors(initMixDescrMap, {});
+      }
 
       d_p.registerEnd("Pre Init Checks");
       d_p.registerStart("Hamiltonian Components Initilization");
@@ -969,7 +1136,8 @@ namespace dftefe
         numWantedEigenvalues >
             KSDFTDefaults<memorySpace>::MAX_KINENG_WAVEFN_BATCH_SIZE ?
           KSDFTDefaults<memorySpace>::MAX_KINENG_WAVEFN_BATCH_SIZE :
-          numWantedEigenvalues);
+          numWantedEigenvalues,
+        spinMode);
 
       d_hamitonianElec =
         std::make_shared<ElectrostaticLocalFE<ValueTypeElectrostaticsBasis,
@@ -990,10 +1158,12 @@ namespace dftefe
           feBDElectrostaticsHamiltonian,
           externalPotentialFunction,
           linAlgOpContext,
-          KSDFTDefaults<memorySpace>::CELL_BATCH_SIZE);
+          KSDFTDefaults<memorySpace>::CELL_BATCH_SIZE,
+          true,
+          spinMode);
 
       d_rdm1Spectral->setDescriptors(
-        KohnShamDFTInternal::buildDescrMap(initDescrMap), {});
+        KohnShamDFTInternal::buildDescrMap(initDescrMap, d_spinMode), {});
 
       d_hamitonianXC =
         std::make_shared<ExchangeCorrelationFE<ValueTypeWaveFunctionBasis,
@@ -1040,7 +1210,9 @@ namespace dftefe
           hamiltonianComponentsVec,
           linAlgOpContext,
           KSDFTDefaults<memorySpace>::CELL_BATCH_SIZE,
-          waveFnBatch);
+          waveFnBatch,
+          true,
+          spinMode);
       d_p.registerEnd("Hamiltonian Operator Creation");
       d_p.print();
 
@@ -1085,7 +1257,12 @@ namespace dftefe
                        false,
                        waveFnBatch,
                        MContextForInv,
-                       MInvContext);
+                       MInvContext,
+                       isGHEP,
+                       orthoType,
+                       false, /*storeIntermediateSubspaces*/
+                       true,  /*useSameScratchInEigenSolver*/
+                       spinMode);
 
           ksEigSolve.setChebyshevPolynomialDegree(1);
 
@@ -1097,7 +1274,12 @@ namespace dftefe
                            *d_MInvContext);
         }
 
-      // form the kohn sham operator
+      d_calculationType =
+        dynamic_cast<const utils::PointChargePotentialFunction *>(
+          &externalPotentialFunction) != nullptr ?
+          CalculationType::AE :
+          CalculationType::PSP;
+
       d_ksEigSolve = std::make_shared<
         KohnShamEigenSolver<ValueTypeOperator, ValueTypeOperand, memorySpace>>(
         numElectrons,
@@ -1113,19 +1295,30 @@ namespace dftefe
         isResidualChebyshevFilter,
         waveFnBatch,
         MContextForInv,
-        MInvContext);
+        MInvContext,
+        isGHEP,
+        orthoType,
+        false, /*storeIntermediateSubspaces*/
+        true,  /*useSameScratchInEigenSolver*/
+        spinMode,
+        d_calculationType);
 
-      d_rdm1Spectral->setSpectral(std::move(wfnPtr),
-                                  occupancies,
-                                  numWantedEigenvalues);
+
+      if (chebyshevPolynomialDegree > 0)
+        d_ksEigSolve->setChebyshevPolynomialDegree(chebyshevPolynomialDegree);
+
+      auto spec    = std::make_unique<SpectralRep<
+        linearAlgebra::blasLapack::scalar_type<ValueTypeWaveFunctionBasis,
+                                               ValueTypeWaveFunctionCoeff>,
+        memorySpace>>();
+      spec->ksOrbs = std::move(wfnPtr);
+      spec->occupancies =
+        std::vector<double>(numSpacesS * numWantedEigenvalues, 0.0);
+      spec->nKSOrbs = numWantedEigenvalues;
+      d_rdm1Spectral->setSpectral(std::move(spec));
 
       d_p.registerEnd("KS EigenSolver Init");
 
-      if (dynamic_cast<const utils::PointChargePotentialFunction *>(
-            &externalPotentialFunction) != nullptr)
-        d_isPSPCalculation = false;
-      else
-        d_isPSPCalculation = true;
       d_p.print();
     }
 
@@ -1216,7 +1409,13 @@ namespace dftefe
         const OpContext &MInvContext,
         bool             isResidualChebyshevFilter,
         /* TCI related info */
-        const atoms::TCIADataParams &params)
+        const atoms::TCIADataParams &        params,
+        const std::vector<double> &          atomMagZFactors,
+        SpinMode                             spinMode,
+        bool                                 isGHEP,
+        linearAlgebra::OrthogonalizationType orthoType,
+        const size_type                      chebyshevPolynomialDegree,
+        const double                         spinMixingEnhancementFactor)
       : d_feBMWaveFn(feBMWaveFn)
       , d_evaluateEnergyEverySCF(evaluateEnergyEverySCF)
       // , d_densityInQuadValues(electronChargeDensityInput)
@@ -1241,6 +1440,7 @@ namespace dftefe
       , d_smearingTemperature(smearingTemperature)
       , d_p(feBMWaveFn->getMPIPatternP2P()->mpiCommunicator(), "Kohn Sham DFT")
       , d_isResidualChebyshevFilter(isResidualChebyshevFilter)
+      , d_spinMode(spinMode)
       , d_isONCVNonLocPSP(false)
       , d_isNlcc(false)
       , d_pTotal(feBMWaveFn->getMPIPatternP2P()->mpiCommunicator(),
@@ -1249,10 +1449,10 @@ namespace dftefe
     {
       std::unique_ptr<
         linearAlgebra::MultiVector<ValueTypeWaveFunctionCoeff, memorySpace>>
-                                       wfnPtr;
-      std::vector<std::vector<double>> occupancies = {
-        std::vector<double>(numWantedEigenvalues, 0.0)};
-      size_type nKSOrbs;
+                      wfnPtr;
+      const size_type numSpacesS =
+        (d_spinMode == SpinMode::Unpolarized) ? 1 : 2;
+
       d_p.registerStart("Pre Init Checks");
       if (dynamic_cast<
             const basis::EFEBasisDofHandler<ValueTypeWaveFunctionCoeff,
@@ -1268,17 +1468,37 @@ namespace dftefe
         quadrature::QuadratureValuesContainer<RealType, memorySpaceHost>(
           feBDElectronicChargeRhs->getQuadratureRuleContainer(), 1, 0.0);
 
-      wfnPtr = std::make_unique<
-        linearAlgebra::MultiVector<ValueTypeWaveFunctionCoeff, memorySpace>>(
-        feBMWaveFn->getMPIPatternP2P(),
-        linAlgOpContext,
-        numWantedEigenvalues,
-        (ValueTypeWaveFunctionCoeff)0.0);
+      if (d_spinMode == SpinMode::Collinear)
+        wfnPtr = std::make_unique<linearAlgebra::MultiVectorProductSpaceBlocked<
+          ValueTypeWaveFunctionCoeff,
+          memorySpace>>(feBMWaveFn->getMPIPatternP2P(),
+                        linAlgOpContext,
+                        2,
+                        numWantedEigenvalues,
+                        (ValueTypeWaveFunctionCoeff)0.0);
+      else if (d_spinMode == SpinMode::NonCollinear)
+        wfnPtr = std::make_unique<
+          linearAlgebra::MultiVectorProductSpace<ValueTypeWaveFunctionCoeff,
+                                                 memorySpace>>(
+          feBMWaveFn->getMPIPatternP2P(),
+          linAlgOpContext,
+          2,
+          numWantedEigenvalues,
+          (ValueTypeWaveFunctionCoeff)0.0);
+      else
+        wfnPtr = std::make_unique<
+          linearAlgebra::MultiVectorProductSpace<ValueTypeWaveFunctionCoeff,
+                                                 memorySpace>>(
+          feBMWaveFn->getMPIPatternP2P(),
+          linAlgOpContext,
+          1,
+          numWantedEigenvalues,
+          (ValueTypeWaveFunctionCoeff)0.0);
 
       KohnShamDFTInternal::generateRandNormDistMultivec(*wfnPtr);
       wfnPtr->updateGhostValues();
       feBMWaveFn->getConstraints().distributeParentToChild(
-        *wfnPtr, numWantedEigenvalues);
+        *wfnPtr, wfnPtr->numVectors());
 
       d_rdm1Spectral = std::make_shared<RDM1FE<ValueTypeWaveFunctionBasis,
                                                ValueTypeWaveFunctionCoeff,
@@ -1289,7 +1509,8 @@ namespace dftefe
         linAlgOpContext,
         d_mpiCommDomain,
         KSDFTDefaults<memorySpace>::CELL_BATCH_SIZE,
-        KSDFTDefaults<memorySpace>::MAX_DENSCOMP_WAVEFN_BATCH_SIZE);
+        KSDFTDefaults<memorySpace>::MAX_DENSCOMP_WAVEFN_BATCH_SIZE,
+        spinMode);
 
       utils::throwException(densIn.getNumberComponents() == 1,
                             "Electron density should have only one component.");
@@ -1309,15 +1530,6 @@ namespace dftefe
       //************* CHANGE THIS **********************
       d_jxwDataHost = quadRuleContainerRho->getJxW();
 
-      if (KohnShamDFTInternal::getDescrAttributes(xcType).count(
-            DensityDescrAttr::Grad) > 0)
-        d_mixingScheme.addMixingVariable(
-          mixingVariable::gradRho,
-          utils::MemoryStorage<RealType, utils::MemorySpace::HOST>(),
-          false,
-          mixingParameter,
-          isAdaptiveAndersonMixingParameter);
-
       d_rdm1Mix = std::make_shared<RDM1Mixing<
         linearAlgebra::blasLapack::scalar_type<ValueTypeWaveFunctionBasis,
                                                ValueTypeWaveFunctionCoeff>,
@@ -1327,6 +1539,9 @@ namespace dftefe
         d_jxwDataHost,
         mixingParameter,
         isAdaptiveAndersonMixingParameter,
+        spinMixingEnhancementFactor,
+        d_spinMode,
+        xcType,
         linearAlgebra::LinAlgOpContextDefaults::LINALG_OP_CONTXT_HOST,
         d_mpiCommDomain);
 
@@ -1386,8 +1601,48 @@ namespace dftefe
           initDescrMap[DensityDescrAttr::Grad] = gradIn;
         }
 
-      d_rdm1Mix->setDescriptors(
-        KohnShamDFTInternal::buildDescrMap(initDescrMap), {});
+      {
+        auto initMixDescrMap =
+          KohnShamDFTInternal::buildDescrMap(initDescrMap, d_spinMode);
+        if (d_spinMode != SpinMode::Unpolarized && !atomMagZFactors.empty())
+          {
+            auto &spinDensVal       = initMixDescrMap[DensityDescrAttr::Val];
+            const size_type numQuad = spinDensVal[0].nQuadraturePoints();
+            const double *  quadRealPointsHost =
+              spinDensVal[0]
+                .getQuadratureRuleContainer()
+                ->template getRealPointsPtr<utils::MemorySpace::HOST>();
+            const double densNormFactor =
+              std::abs(static_cast<double>(numElectrons) /
+                       static_cast<double>(totalDensityInQuad));
+            std::vector<double> magZInQuadValues(numQuad, 0.0);
+            atomicElectronicChargeDensityFunction.evaluateHost(
+              numQuad,
+              atoms::AtomSuperpositionFuncType::Identity,
+              quadRealPointsHost,
+              magZInQuadValues.data(),
+              densNormFactor /
+                (atoms::Clm(0, 0) * atoms::Dm(0) * atoms::Qm(0, 0)),
+              atomMagZFactors);
+            for (size_type i = 0; i < numQuad; ++i)
+              spinDensVal[1].data()[i] = magZInQuadValues[i];
+            if (xcType.rfind("GGA", 0) == 0)
+              {
+                auto &spinDensGrad = initMixDescrMap[DensityDescrAttr::Grad];
+                std::vector<double> magZGradInQuadValues(numQuad * dim, 0.0);
+                atomicElectronicChargeDensityFunction.evaluateHost(
+                  numQuad,
+                  atoms::AtomSuperpositionFuncType::Grad,
+                  quadRealPointsHost,
+                  magZGradInQuadValues.data(),
+                  1.0 / (atoms::Clm(0, 0) * atoms::Dm(0) * atoms::Qm(0, 0)),
+                  atomMagZFactors);
+                for (size_type i = 0; i < numQuad * dim; ++i)
+                  spinDensGrad[1].data()[i] = magZGradInQuadValues[i];
+              }
+          }
+        d_rdm1Mix->setDescriptors(initMixDescrMap, {});
+      }
 
       d_p.registerEnd("Pre Init Checks");
       d_p.registerStart("Hamiltonian Components Initilization");
@@ -1401,7 +1656,8 @@ namespace dftefe
         numWantedEigenvalues >
             KSDFTDefaults<memorySpace>::MAX_KINENG_WAVEFN_BATCH_SIZE ?
           KSDFTDefaults<memorySpace>::MAX_KINENG_WAVEFN_BATCH_SIZE :
-          numWantedEigenvalues);
+          numWantedEigenvalues,
+        spinMode);
 
       std::unordered_map<std::string, std::shared_ptr<atoms::AtomTCIASpline>>
         fieldToTCIASplineMap = {};
@@ -1488,10 +1744,13 @@ namespace dftefe
           externalPotentialFunction,
           linAlgOpContext,
           KSDFTDefaults<memorySpace>::CELL_BATCH_SIZE,
-          fieldToTCIASplineMap);
+          fieldToTCIASplineMap,
+          true,
+          false,
+          spinMode);
 
       d_rdm1Spectral->setDescriptors(
-        KohnShamDFTInternal::buildDescrMap(initDescrMap), {});
+        KohnShamDFTInternal::buildDescrMap(initDescrMap, d_spinMode), {});
 
       d_hamitonianXC =
         std::make_shared<ExchangeCorrelationFE<ValueTypeWaveFunctionBasis,
@@ -1538,7 +1797,9 @@ namespace dftefe
           hamiltonianComponentsVec,
           linAlgOpContext,
           KSDFTDefaults<memorySpace>::CELL_BATCH_SIZE,
-          waveFnBatch);
+          waveFnBatch,
+          true,
+          spinMode);
       d_p.registerEnd("Hamiltonian Operator Creation");
 
       d_p.registerStart("KS EigenSolver Init");
@@ -1581,7 +1842,12 @@ namespace dftefe
                        false,
                        waveFnBatch,
                        MContextForInv,
-                       MInvContext);
+                       MInvContext,
+                       isGHEP,
+                       orthoType,
+                       false, /*storeIntermediateSubspaces*/
+                       true,  /*useSameScratchInEigenSolver*/
+                       spinMode);
 
           ksEigSolve.setChebyshevPolynomialDegree(1);
 
@@ -1593,7 +1859,12 @@ namespace dftefe
                            *d_MInvContext);
         }
 
-      // form the kohn sham operator
+      d_calculationType =
+        dynamic_cast<const utils::PointChargePotentialFunction *>(
+          &externalPotentialFunction) != nullptr ?
+          CalculationType::AE :
+          CalculationType::PSP;
+
       d_ksEigSolve = std::make_shared<
         KohnShamEigenSolver<ValueTypeOperator, ValueTypeOperand, memorySpace>>(
         numElectrons,
@@ -1609,19 +1880,30 @@ namespace dftefe
         isResidualChebyshevFilter,
         waveFnBatch,
         MContextForInv,
-        MInvContext);
+        MInvContext,
+        isGHEP,
+        orthoType,
+        false, /*storeIntermediateSubspaces*/
+        true,  /*useSameScratchInEigenSolver*/
+        spinMode,
+        d_calculationType);
 
-      d_rdm1Spectral->setSpectral(std::move(wfnPtr),
-                                  occupancies,
-                                  numWantedEigenvalues);
+
+      if (chebyshevPolynomialDegree > 0)
+        d_ksEigSolve->setChebyshevPolynomialDegree(chebyshevPolynomialDegree);
+
+      auto spec    = std::make_unique<SpectralRep<
+        linearAlgebra::blasLapack::scalar_type<ValueTypeWaveFunctionBasis,
+                                               ValueTypeWaveFunctionCoeff>,
+        memorySpace>>();
+      spec->ksOrbs = std::move(wfnPtr);
+      spec->occupancies =
+        std::vector<double>(numSpacesS * numWantedEigenvalues, 0.0);
+      spec->nKSOrbs = numWantedEigenvalues;
+      d_rdm1Spectral->setSpectral(std::move(spec));
 
       d_p.registerEnd("KS EigenSolver Init");
 
-      if (dynamic_cast<const utils::PointChargePotentialFunction *>(
-            &externalPotentialFunction) != nullptr)
-        d_isPSPCalculation = false;
-      else
-        d_isPSPCalculation = true;
       d_p.print();
     }
 
@@ -1709,10 +1991,14 @@ namespace dftefe
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
           linAlgOpContext,
         /* basis overlap related info */
-        const OpContext &MContextForInv,
-        const OpContext &MContext,
-        const OpContext &MInvContext,
-        bool             isResidualChebyshevFilter)
+        const OpContext &          MContextForInv,
+        const OpContext &          MContext,
+        const OpContext &          MInvContext,
+        bool                       isResidualChebyshevFilter,
+        const std::vector<double> &atomMagZFactors,
+        SpinMode                   spinMode,
+        const size_type            chebyshevPolynomialDegree,
+        const double               spinMixingEnhancementFactor)
       : d_feBMWaveFn(feBMWaveFn)
       , d_evaluateEnergyEverySCF(evaluateEnergyEverySCF)
       , d_numMaxSCFIter(maxSCFIter)
@@ -1735,16 +2021,17 @@ namespace dftefe
       , d_smearingTemperature(smearingTemperature)
       , d_p(feBMWaveFn->getMPIPatternP2P()->mpiCommunicator(), "Kohn Sham DFT")
       , d_isResidualChebyshevFilter(isResidualChebyshevFilter)
+      , d_spinMode(spinMode)
       , d_pTotal(feBMWaveFn->getMPIPatternP2P()->mpiCommunicator(),
                  "Kohn Sham DFT Solve time")
       , d_xcType(xcType)
     {
       std::unique_ptr<
         linearAlgebra::MultiVector<ValueTypeWaveFunctionCoeff, memorySpace>>
-                                       wfnPtr;
-      std::vector<std::vector<double>> occupancies = {
-        std::vector<double>(numWantedEigenvalues, 0.0)};
-      size_type nKSOrbs;
+                      wfnPtr;
+      const size_type numSpacesS =
+        (d_spinMode == SpinMode::Unpolarized) ? 1 : 2;
+
 
       d_p.registerStart("Pre Init Checks");
       const std::vector<std::string> metadataNames =
@@ -1828,17 +2115,37 @@ namespace dftefe
       else
         d_isOEFEBasis = false;
 
-      wfnPtr = std::make_unique<
-        linearAlgebra::MultiVector<ValueTypeWaveFunctionCoeff, memorySpace>>(
-        feBMWaveFn->getMPIPatternP2P(),
-        linAlgOpContext,
-        numWantedEigenvalues,
-        (ValueTypeWaveFunctionCoeff)0.0);
+      if (d_spinMode == SpinMode::Collinear)
+        wfnPtr = std::make_unique<linearAlgebra::MultiVectorProductSpaceBlocked<
+          ValueTypeWaveFunctionCoeff,
+          memorySpace>>(feBMWaveFn->getMPIPatternP2P(),
+                        linAlgOpContext,
+                        2,
+                        numWantedEigenvalues,
+                        (ValueTypeWaveFunctionCoeff)0.0);
+      else if (d_spinMode == SpinMode::NonCollinear)
+        wfnPtr = std::make_unique<
+          linearAlgebra::MultiVectorProductSpace<ValueTypeWaveFunctionCoeff,
+                                                 memorySpace>>(
+          feBMWaveFn->getMPIPatternP2P(),
+          linAlgOpContext,
+          2,
+          numWantedEigenvalues,
+          (ValueTypeWaveFunctionCoeff)0.0);
+      else
+        wfnPtr = std::make_unique<
+          linearAlgebra::MultiVectorProductSpace<ValueTypeWaveFunctionCoeff,
+                                                 memorySpace>>(
+          feBMWaveFn->getMPIPatternP2P(),
+          linAlgOpContext,
+          1,
+          numWantedEigenvalues,
+          (ValueTypeWaveFunctionCoeff)0.0);
 
       KohnShamDFTInternal::generateRandNormDistMultivec(*wfnPtr);
       wfnPtr->updateGhostValues();
       feBMWaveFn->getConstraints().distributeParentToChild(
-        *wfnPtr, numWantedEigenvalues);
+        *wfnPtr, wfnPtr->numVectors());
 
       d_rdm1Spectral = std::make_shared<RDM1FE<ValueTypeWaveFunctionBasis,
                                                ValueTypeWaveFunctionCoeff,
@@ -1849,7 +2156,8 @@ namespace dftefe
         linAlgOpContext,
         d_mpiCommDomain,
         KSDFTDefaults<memorySpace>::CELL_BATCH_SIZE,
-        KSDFTDefaults<memorySpace>::MAX_DENSCOMP_WAVEFN_BATCH_SIZE);
+        KSDFTDefaults<memorySpace>::MAX_DENSCOMP_WAVEFN_BATCH_SIZE,
+        spinMode);
 
       utils::throwException(densIn.getNumberComponents() == 1,
                             "Electron density should have only one component.");
@@ -1888,15 +2196,6 @@ namespace dftefe
       //************* CHANGE THIS **********************
       d_jxwDataHost = quadRuleContainerRho->getJxW();
 
-      if (KohnShamDFTInternal::getDescrAttributes(xcType).count(
-            DensityDescrAttr::Grad) > 0)
-        d_mixingScheme.addMixingVariable(
-          mixingVariable::gradRho,
-          utils::MemoryStorage<RealType, utils::MemorySpace::HOST>(),
-          false,
-          mixingParameter,
-          isAdaptiveAndersonMixingParameter);
-
       d_rdm1Mix = std::make_shared<RDM1Mixing<
         linearAlgebra::blasLapack::scalar_type<ValueTypeWaveFunctionBasis,
                                                ValueTypeWaveFunctionCoeff>,
@@ -1906,6 +2205,9 @@ namespace dftefe
         d_jxwDataHost,
         mixingParameter,
         isAdaptiveAndersonMixingParameter,
+        spinMixingEnhancementFactor,
+        d_spinMode,
+        xcType,
         linearAlgebra::LinAlgOpContextDefaults::LINALG_OP_CONTXT_HOST,
         d_mpiCommDomain);
 
@@ -1947,8 +2249,48 @@ namespace dftefe
           initDescrMap[DensityDescrAttr::Grad] = gradIn;
         }
 
-      d_rdm1Mix->setDescriptors(
-        KohnShamDFTInternal::buildDescrMap(initDescrMap), {});
+      {
+        auto initMixDescrMap =
+          KohnShamDFTInternal::buildDescrMap(initDescrMap, d_spinMode);
+        if (d_spinMode != SpinMode::Unpolarized && !atomMagZFactors.empty())
+          {
+            auto &spinDensVal       = initMixDescrMap[DensityDescrAttr::Val];
+            const size_type numQuad = spinDensVal[0].nQuadraturePoints();
+            const double *  quadRealPointsHost =
+              spinDensVal[0]
+                .getQuadratureRuleContainer()
+                ->template getRealPointsPtr<utils::MemorySpace::HOST>();
+            const double densNormFactor =
+              std::abs(static_cast<double>(numElectrons) /
+                       static_cast<double>(totalDensityInQuad));
+            std::vector<double> magZInQuadValues(numQuad, 0.0);
+            atomicElectronicChargeDensityFunction.evaluateHost(
+              numQuad,
+              atoms::AtomSuperpositionFuncType::Identity,
+              quadRealPointsHost,
+              magZInQuadValues.data(),
+              densNormFactor /
+                (atoms::Clm(0, 0) * atoms::Dm(0) * atoms::Qm(0, 0)),
+              atomMagZFactors);
+            for (size_type i = 0; i < numQuad; ++i)
+              spinDensVal[1].data()[i] = magZInQuadValues[i];
+            if (xcType.rfind("GGA", 0) == 0)
+              {
+                auto &spinDensGrad = initMixDescrMap[DensityDescrAttr::Grad];
+                std::vector<double> magZGradInQuadValues(numQuad * dim, 0.0);
+                atomicElectronicChargeDensityFunction.evaluateHost(
+                  numQuad,
+                  atoms::AtomSuperpositionFuncType::Grad,
+                  quadRealPointsHost,
+                  magZGradInQuadValues.data(),
+                  1.0 / (atoms::Clm(0, 0) * atoms::Dm(0) * atoms::Qm(0, 0)),
+                  atomMagZFactors);
+                for (size_type i = 0; i < numQuad * dim; ++i)
+                  spinDensGrad[1].data()[i] = magZGradInQuadValues[i];
+              }
+          }
+        d_rdm1Mix->setDescriptors(initMixDescrMap, {});
+      }
 
       d_p.registerEnd("Pre Init Checks");
       d_p.registerStart("Hamiltonian Components Initilization");
@@ -1962,7 +2304,8 @@ namespace dftefe
         numWantedEigenvalues >
             KSDFTDefaults<memorySpace>::MAX_KINENG_WAVEFN_BATCH_SIZE ?
           KSDFTDefaults<memorySpace>::MAX_KINENG_WAVEFN_BATCH_SIZE :
-          numWantedEigenvalues);
+          numWantedEigenvalues,
+        spinMode);
 
       size_type waveFnBatch =
         numWantedEigenvalues >
@@ -1992,10 +2335,12 @@ namespace dftefe
           feBDAtomCenterNonLocalOperator,
           linAlgOpContext,
           KSDFTDefaults<memorySpace>::CELL_BATCH_SIZE,
-          waveFnBatch);
+          waveFnBatch,
+          true,
+          spinMode);
 
       d_rdm1Spectral->setDescriptors(
-        KohnShamDFTInternal::buildDescrMap(initDescrMap), {});
+        KohnShamDFTInternal::buildDescrMap(initDescrMap, d_spinMode), {});
 
       if (d_isNlcc && d_isONCVNonLocPSP)
         d_hamitonianXC =
@@ -2050,7 +2395,9 @@ namespace dftefe
           hamiltonianComponentsVec,
           linAlgOpContext,
           KSDFTDefaults<memorySpace>::CELL_BATCH_SIZE,
-          waveFnBatch);
+          waveFnBatch,
+          true,
+          spinMode);
       d_p.registerEnd("Hamiltonian Operator Creation");
 
       d_p.registerStart("KS EigenSolver Init");
@@ -2094,7 +2441,14 @@ namespace dftefe
                        false,
                        waveFnBatch,
                        MContextForInv,
-                       MInvContext);
+                       MInvContext,
+                       true, /*isGHEP*/
+                       linearAlgebra::OrthogonalizationType::
+                         CHOLESKY_GRAMSCHMIDT, /*orthoType
+                                                */
+                       false,                  /*storeIntermediateSubspaces*/
+                       true,                   /*useSameScratchInEigenSolver*/
+                       spinMode);
 
           ksEigSolve.setChebyshevPolynomialDegree(1);
 
@@ -2122,15 +2476,31 @@ namespace dftefe
         isResidualChebyshevFilter,
         waveFnBatch,
         MContextForInv,
-        MInvContext);
+        MInvContext,
+        true,                                                       /*isGHEP*/
+        linearAlgebra::OrthogonalizationType::CHOLESKY_GRAMSCHMIDT, /*orthoType
+                                                                     */
+        false, /*storeIntermediateSubspaces*/
+        true,  /*useSameScratchInEigenSolver*/
+        spinMode);
 
-      d_rdm1Spectral->setSpectral(std::move(wfnPtr),
-                                  occupancies,
-                                  numWantedEigenvalues);
+
+      if (chebyshevPolynomialDegree > 0)
+        d_ksEigSolve->setChebyshevPolynomialDegree(chebyshevPolynomialDegree);
+
+      auto spec    = std::make_unique<SpectralRep<
+        linearAlgebra::blasLapack::scalar_type<ValueTypeWaveFunctionBasis,
+                                               ValueTypeWaveFunctionCoeff>,
+        memorySpace>>();
+      spec->ksOrbs = std::move(wfnPtr);
+      spec->occupancies =
+        std::vector<double>(numSpacesS * numWantedEigenvalues, 0.0);
+      spec->nKSOrbs = numWantedEigenvalues;
+      d_rdm1Spectral->setSpectral(std::move(spec));
 
       d_p.registerEnd("KS EigenSolver Init");
 
-      d_isPSPCalculation = true;
+      d_calculationType = CalculationType::PSP;
       d_p.print();
     }
 
@@ -2225,7 +2595,11 @@ namespace dftefe
         const OpContext &MInvContext,
         bool             isResidualChebyshevFilter,
         /* TCI related info */
-        const atoms::TCIADataParams &params)
+        const atoms::TCIADataParams &params,
+        const std::vector<double> &  atomMagZFactors,
+        SpinMode                     spinMode,
+        const size_type              chebyshevPolynomialDegree,
+        const double                 spinMixingEnhancementFactor)
       : d_feBMWaveFn(feBMWaveFn)
       , d_evaluateEnergyEverySCF(evaluateEnergyEverySCF)
       , d_numMaxSCFIter(maxSCFIter)
@@ -2248,16 +2622,17 @@ namespace dftefe
       , d_smearingTemperature(smearingTemperature)
       , d_p(feBMWaveFn->getMPIPatternP2P()->mpiCommunicator(), "Kohn Sham DFT")
       , d_isResidualChebyshevFilter(isResidualChebyshevFilter)
+      , d_spinMode(spinMode)
       , d_pTotal(feBMWaveFn->getMPIPatternP2P()->mpiCommunicator(),
                  "Kohn Sham DFT Solve time")
       , d_xcType(xcType)
     {
       std::unique_ptr<
         linearAlgebra::MultiVector<ValueTypeWaveFunctionCoeff, memorySpace>>
-                                       wfnPtr;
-      std::vector<std::vector<double>> occupancies = {
-        std::vector<double>(numWantedEigenvalues, 0.0)};
-      size_type                                 nKSOrbs;
+                      wfnPtr;
+      const size_type numSpacesS =
+        (d_spinMode == SpinMode::Unpolarized) ? 1 : 2;
+
       utils::Profiler<utils::MemorySpace::HOST> p(
         feBMWaveFn->getMPIPatternP2P()->mpiCommunicator(), "Pre Init Checks");
       d_p.registerStart("Pre Init Checks");
@@ -2345,17 +2720,37 @@ namespace dftefe
       else
         d_isOEFEBasis = false;
 
-      wfnPtr = std::make_unique<
-        linearAlgebra::MultiVector<ValueTypeWaveFunctionCoeff, memorySpace>>(
-        feBMWaveFn->getMPIPatternP2P(),
-        linAlgOpContext,
-        numWantedEigenvalues,
-        (ValueTypeWaveFunctionCoeff)0.0);
+      if (d_spinMode == SpinMode::Collinear)
+        wfnPtr = std::make_unique<linearAlgebra::MultiVectorProductSpaceBlocked<
+          ValueTypeWaveFunctionCoeff,
+          memorySpace>>(feBMWaveFn->getMPIPatternP2P(),
+                        linAlgOpContext,
+                        2,
+                        numWantedEigenvalues,
+                        (ValueTypeWaveFunctionCoeff)0.0);
+      else if (d_spinMode == SpinMode::NonCollinear)
+        wfnPtr = std::make_unique<
+          linearAlgebra::MultiVectorProductSpace<ValueTypeWaveFunctionCoeff,
+                                                 memorySpace>>(
+          feBMWaveFn->getMPIPatternP2P(),
+          linAlgOpContext,
+          2,
+          numWantedEigenvalues,
+          (ValueTypeWaveFunctionCoeff)0.0);
+      else
+        wfnPtr = std::make_unique<
+          linearAlgebra::MultiVectorProductSpace<ValueTypeWaveFunctionCoeff,
+                                                 memorySpace>>(
+          feBMWaveFn->getMPIPatternP2P(),
+          linAlgOpContext,
+          1,
+          numWantedEigenvalues,
+          (ValueTypeWaveFunctionCoeff)0.0);
 
       KohnShamDFTInternal::generateRandNormDistMultivec(*wfnPtr);
       wfnPtr->updateGhostValues();
       feBMWaveFn->getConstraints().distributeParentToChild(
-        *wfnPtr, numWantedEigenvalues);
+        *wfnPtr, wfnPtr->numVectors());
 
       d_rdm1Spectral = std::make_shared<RDM1FE<ValueTypeWaveFunctionBasis,
                                                ValueTypeWaveFunctionCoeff,
@@ -2366,7 +2761,8 @@ namespace dftefe
         linAlgOpContext,
         d_mpiCommDomain,
         KSDFTDefaults<memorySpace>::CELL_BATCH_SIZE,
-        KSDFTDefaults<memorySpace>::MAX_DENSCOMP_WAVEFN_BATCH_SIZE);
+        KSDFTDefaults<memorySpace>::MAX_DENSCOMP_WAVEFN_BATCH_SIZE,
+        spinMode);
 
       utils::throwException(densIn.getNumberComponents() == 1,
                             "Electron density should have only one component.");
@@ -2408,15 +2804,6 @@ namespace dftefe
       //************* CHANGE THIS **********************
       d_jxwDataHost = quadRuleContainerRho->getJxW();
 
-      if (KohnShamDFTInternal::getDescrAttributes(xcType).count(
-            DensityDescrAttr::Grad) > 0)
-        d_mixingScheme.addMixingVariable(
-          mixingVariable::gradRho,
-          utils::MemoryStorage<RealType, utils::MemorySpace::HOST>(),
-          false,
-          mixingParameter,
-          isAdaptiveAndersonMixingParameter);
-
       d_rdm1Mix = std::make_shared<RDM1Mixing<
         linearAlgebra::blasLapack::scalar_type<ValueTypeWaveFunctionBasis,
                                                ValueTypeWaveFunctionCoeff>,
@@ -2426,6 +2813,9 @@ namespace dftefe
         d_jxwDataHost,
         mixingParameter,
         isAdaptiveAndersonMixingParameter,
+        spinMixingEnhancementFactor,
+        d_spinMode,
+        xcType,
         linearAlgebra::LinAlgOpContextDefaults::LINALG_OP_CONTXT_HOST,
         d_mpiCommDomain);
 
@@ -2468,8 +2858,48 @@ namespace dftefe
           initDescrMap[DensityDescrAttr::Grad] = gradIn;
         }
 
-      d_rdm1Mix->setDescriptors(
-        KohnShamDFTInternal::buildDescrMap(initDescrMap), {});
+      {
+        auto initMixDescrMap =
+          KohnShamDFTInternal::buildDescrMap(initDescrMap, d_spinMode);
+        if (d_spinMode != SpinMode::Unpolarized && !atomMagZFactors.empty())
+          {
+            auto &spinDensVal       = initMixDescrMap[DensityDescrAttr::Val];
+            const size_type numQuad = spinDensVal[0].nQuadraturePoints();
+            const double *  quadRealPointsHost =
+              spinDensVal[0]
+                .getQuadratureRuleContainer()
+                ->template getRealPointsPtr<utils::MemorySpace::HOST>();
+            const double densNormFactor =
+              std::abs(static_cast<double>(numElectrons) /
+                       static_cast<double>(totalDensityInQuad));
+            std::vector<double> magZInQuadValues(numQuad, 0.0);
+            atomicElectronicChargeDensityFunction.evaluateHost(
+              numQuad,
+              atoms::AtomSuperpositionFuncType::Identity,
+              quadRealPointsHost,
+              magZInQuadValues.data(),
+              densNormFactor /
+                (atoms::Clm(0, 0) * atoms::Dm(0) * atoms::Qm(0, 0)),
+              atomMagZFactors);
+            for (size_type i = 0; i < numQuad; ++i)
+              spinDensVal[1].data()[i] = magZInQuadValues[i];
+            if (xcType.rfind("GGA", 0) == 0)
+              {
+                auto &spinDensGrad = initMixDescrMap[DensityDescrAttr::Grad];
+                std::vector<double> magZGradInQuadValues(numQuad * dim, 0.0);
+                atomicElectronicChargeDensityFunction.evaluateHost(
+                  numQuad,
+                  atoms::AtomSuperpositionFuncType::Grad,
+                  quadRealPointsHost,
+                  magZGradInQuadValues.data(),
+                  1.0 / (atoms::Clm(0, 0) * atoms::Dm(0) * atoms::Qm(0, 0)),
+                  atomMagZFactors);
+                for (size_type i = 0; i < numQuad * dim; ++i)
+                  spinDensGrad[1].data()[i] = magZGradInQuadValues[i];
+              }
+          }
+        d_rdm1Mix->setDescriptors(initMixDescrMap, {});
+      }
 
       d_p.registerEnd("Pre Init Checks");
 
@@ -2488,7 +2918,8 @@ namespace dftefe
         numWantedEigenvalues >
             KSDFTDefaults<memorySpace>::MAX_KINENG_WAVEFN_BATCH_SIZE ?
           KSDFTDefaults<memorySpace>::MAX_KINENG_WAVEFN_BATCH_SIZE :
-          numWantedEigenvalues);
+          numWantedEigenvalues,
+        spinMode);
       d_p.registerEnd("Hamiltonian Components Initilization Kinetic Op");
       utils::printCurrentMemoryUsage<memorySpace>(d_mpiCommDomain,
                                                   "After KinEngy Init");
@@ -2644,14 +3075,16 @@ namespace dftefe
           linAlgOpContext,
           KSDFTDefaults<memorySpace>::CELL_BATCH_SIZE,
           waveFnBatch,
-          fieldToTCIASplineMap);
+          fieldToTCIASplineMap,
+          true,
+          spinMode);
       d_p.registerEnd("Hamiltonian Components Initilization Electrostatic Op");
       utils::printCurrentMemoryUsage<memorySpace>(d_mpiCommDomain,
                                                   "After Elec Init");
       d_p.registerStart("Hamiltonian Components Initilization Exc Op");
 
       d_rdm1Spectral->setDescriptors(
-        KohnShamDFTInternal::buildDescrMap(initDescrMap), {});
+        KohnShamDFTInternal::buildDescrMap(initDescrMap, d_spinMode), {});
 
       if (d_isNlcc && d_isONCVNonLocPSP)
         d_hamitonianXC =
@@ -2707,7 +3140,9 @@ namespace dftefe
           hamiltonianComponentsVec,
           linAlgOpContext,
           KSDFTDefaults<memorySpace>::CELL_BATCH_SIZE,
-          waveFnBatch);
+          waveFnBatch,
+          true,
+          spinMode);
       d_p.registerEnd("Hamiltonian Operator Creation");
       utils::printCurrentMemoryUsage<memorySpace>(
         d_mpiCommDomain, "After Hamiltonian Operator Init");
@@ -2752,7 +3187,14 @@ namespace dftefe
                        false,
                        waveFnBatch,
                        MContextForInv,
-                       MInvContext);
+                       MInvContext,
+                       true, /*isGHEP*/
+                       linearAlgebra::OrthogonalizationType::
+                         CHOLESKY_GRAMSCHMIDT, /*orthoType
+                                                */
+                       false,                  /*storeIntermediateSubspaces*/
+                       true,                   /*useSameScratchInEigenSolver*/
+                       spinMode);
 
           ksEigSolve.setChebyshevPolynomialDegree(1);
 
@@ -2780,17 +3222,33 @@ namespace dftefe
         isResidualChebyshevFilter,
         waveFnBatch,
         MContextForInv,
-        MInvContext);
+        MInvContext,
+        true,                                                       /*isGHEP*/
+        linearAlgebra::OrthogonalizationType::CHOLESKY_GRAMSCHMIDT, /*orthoType
+                                                                     */
+        false, /*storeIntermediateSubspaces*/
+        true,  /*useSameScratchInEigenSolver*/
+        spinMode);
 
-      d_rdm1Spectral->setSpectral(std::move(wfnPtr),
-                                  occupancies,
-                                  numWantedEigenvalues);
+
+      if (chebyshevPolynomialDegree > 0)
+        d_ksEigSolve->setChebyshevPolynomialDegree(chebyshevPolynomialDegree);
+
+      auto spec    = std::make_unique<SpectralRep<
+        linearAlgebra::blasLapack::scalar_type<ValueTypeWaveFunctionBasis,
+                                               ValueTypeWaveFunctionCoeff>,
+        memorySpace>>();
+      spec->ksOrbs = std::move(wfnPtr);
+      spec->occupancies =
+        std::vector<double>(numSpacesS * numWantedEigenvalues, 0.0);
+      spec->nKSOrbs = numWantedEigenvalues;
+      d_rdm1Spectral->setSpectral(std::move(spec));
 
       d_p.registerEnd("KS EigenSolver Init");
       utils::printCurrentMemoryUsage<memorySpace>(d_mpiCommDomain,
                                                   "After KS EigenSolver Init");
 
-      d_isPSPCalculation = true;
+      d_calculationType = CalculationType::PSP;
       d_p.print();
     }
 
@@ -2827,14 +3285,7 @@ namespace dftefe
       d_pTotal.reset();
       d_isSolved = true;
 
-      std::unique_ptr<
-        linearAlgebra::MultiVector<ValueTypeWaveFunctionCoeff, memorySpace>>
-                                         wfnPtr;
-      std::vector<std::vector<RealType>> occupancies;
-      size_type                          nKSOrbs;
-
-      d_rdm1Spectral->getSpectral(wfnPtr, occupancies, nKSOrbs);
-
+      const auto &s0 = d_rdm1Spectral->getSpectral();
       if (auto hamiltonian = std::dynamic_pointer_cast<
             ElectrostaticLocalFE<ValueTypeElectrostaticsBasis,
                                  ValueTypeElectrostaticsCoeff,
@@ -2852,10 +3303,8 @@ namespace dftefe
                                            memorySpace,
                                            dim>>(d_hamitonianElec))
         {
-          hamiltonian->evalEnergy(occupancies[0], *wfnPtr);
+          hamiltonian->evalEnergy(s0.occupancies, *s0.ksOrbs);
         }
-
-      d_rdm1Spectral->setSpectral(std::move(wfnPtr), occupancies, nKSOrbs);
 
       RealType elecEnergy = d_hamitonianElec->getEnergy();
       d_rootCout << "Electrostatic energy with guess density: " << elecEnergy
@@ -2866,6 +3315,7 @@ namespace dftefe
       //
       size_type scfIter = 0;
       double    norm    = 1.0;
+      double    magNorm = 0.0;
       d_rootCout << "Starting SCF iterations....\n";
 
       std::unordered_map<
@@ -2958,28 +3408,34 @@ namespace dftefe
           // reinit the chfsi bounds
           if (scfIter > 0)
             {
-              d_ksEigSolve->reinitBounds(
-                d_kohnShamEnergies[0],
-                d_kohnShamEnergies[d_numWantedEigenvalues - 1]);
+              RealType  topEig = d_kohnShamEnergies[d_numWantedEigenvalues - 1];
+              size_type numSpacesS =
+                (d_spinMode == SpinMode::Unpolarized) ? 1 : 2;
+              for (size_type s = 1; s < numSpacesS; ++s)
+                topEig = std::max(
+                  topEig,
+                  d_kohnShamEnergies[(s + 1) * d_numWantedEigenvalues - 1]);
+              d_ksEigSolve->reinitBounds(d_kohnShamEnergies[0], topEig);
+              // d_ksEigSolve->reinitBounds(
+              //   d_kohnShamEnergies[0],
+              //   d_kohnShamEnergies[d_numWantedEigenvalues - 1]);
             }
 
-          if (scfIter == 0 && d_isPSPCalculation)
+          if (scfIter == 0 && d_calculationType == CalculationType::PSP)
             d_ksEigSolve->setChebyPolyScalingFactor(1.34);
 
           // Linear Eigen Solve
-          d_rdm1Spectral->getSpectral(wfnPtr, occupancies, nKSOrbs);
-
+          auto                            acc = d_rdm1Spectral->getAccess();
+          auto &                          s   = acc.getSpectral();
           linearAlgebra::EigenSolverError err =
             d_ksEigSolve->solve(*d_hamitonianOperator,
                                 d_kohnShamEnergies,
-                                *wfnPtr,
+                                *s.ksOrbs,
                                 true,
                                 *d_MContext,
                                 *d_MInvContext);
-
-          occupancies = {d_ksEigSolve->getFractionalOccupancy()};
-
-          d_rdm1Spectral->setSpectral(std::move(wfnPtr), occupancies, nKSOrbs);
+          s.occupancies = d_ksEigSolve->getFractionalOccupancy();
+          acc.returnBack();
 
           std::vector<RealType> eigSolveResNorm =
             d_ksEigSolve->getEigenSolveResidualNorm();
@@ -3010,6 +3466,36 @@ namespace dftefe
 
           d_rootCout << "Electron density out : " << totalDensityOutQuad
                      << "\n";
+
+          if (d_spinMode == SpinMode::Collinear)
+            {
+              auto &magDensOut = densAttrOut.at(DensityDescrAttr::Val)[1];
+              const size_type numQuad = magDensOut.nQuadraturePoints();
+              RealType        netMag = 0.0, absMag = 0.0;
+              for (size_type i = 0; i < numQuad; ++i)
+                {
+                  const RealType mz = magDensOut.data()[i];
+                  netMag += mz * d_jxwDataHost[i];
+                  absMag += std::abs(mz) * d_jxwDataHost[i];
+                }
+              utils::mpi::MPIAllreduce<memorySpaceHost>(
+                utils::mpi::MPIInPlace,
+                &netMag,
+                1,
+                utils::mpi::Types<RealType>::getMPIDatatype(),
+                utils::mpi::MPISum,
+                d_mpiCommDomain);
+              utils::mpi::MPIAllreduce<memorySpaceHost>(
+                utils::mpi::MPIInPlace,
+                &absMag,
+                1,
+                utils::mpi::Types<RealType>::getMPIDatatype(),
+                utils::mpi::MPISum,
+                d_mpiCommDomain);
+              d_rootCout << "Net magnetization     : " << netMag << "\n";
+              d_rootCout << "Absolute magnetization: " << absMag << "\n";
+            }
+
           d_pTotal.registerEnd("Density Compute");
           d_p.registerEnd("Density Compute");
 
@@ -3032,6 +3518,23 @@ namespace dftefe
                 true,
                 *d_linAlgOpContextHost,
                 d_mpiCommDomain);
+
+              if (d_spinMode != SpinMode::Unpolarized)
+                {
+                  auto &magDensOut = densAttrOut.at(DensityDescrAttr::Val)[1];
+                  auto &magDensIn  = densAttrIn.at(DensityDescrAttr::Val)[1];
+                  quadrature::QuadratureValuesContainer<RealType,
+                                                        memorySpaceHost>
+                    magResidualQuadValues(magDensIn);
+                  magNorm = KohnShamDFTInternal::computeResidualQuadData(
+                    magDensOut,
+                    magDensIn,
+                    magResidualQuadValues,
+                    d_jxwDataHost,
+                    true,
+                    *d_linAlgOpContextHost,
+                    d_mpiCommDomain);
+                }
             }
 
           d_rdm1Mix->mix();
@@ -3062,10 +3565,10 @@ namespace dftefe
                   hamiltonian->reinitField(densOut);
                 }
 
-              d_rdm1Spectral->getSpectral(wfnPtr, occupancies, nKSOrbs);
-              d_hamitonianKin->evalEnergy(occupancies[0],
+              const auto &s = d_rdm1Spectral->getSpectral();
+              d_hamitonianKin->evalEnergy(s.occupancies,
                                           *d_feBMWaveFn,
-                                          *wfnPtr);
+                                          *s.ksOrbs);
 
               RealType kinEnergy = d_hamitonianKin->getEnergy();
               d_rootCout << "Kinetic energy: " << kinEnergy << "\n";
@@ -3087,12 +3590,8 @@ namespace dftefe
                                                    memorySpace,
                                                    dim>>(d_hamitonianElec))
                 {
-                  hamiltonian->evalEnergy(occupancies[0], *wfnPtr);
+                  hamiltonian->evalEnergy(s.occupancies, *s.ksOrbs);
                 }
-
-              d_rdm1Spectral->setSpectral(std::move(wfnPtr),
-                                          occupancies,
-                                          nKSOrbs);
 
               RealType elecEnergy = d_hamitonianElec->getEnergy();
               d_rootCout << "Electrostatic energy: " << elecEnergy << "\n";
@@ -3102,10 +3601,14 @@ namespace dftefe
               d_rootCout << " EXC energy: " << xcEnergy << "\n";
 
               // calculate band energy
+              const RealType bandEnergySpinFactor =
+                (d_spinMode == SpinMode::Unpolarized) ? (RealType)2 :
+                                                        (RealType)1;
               RealType bandEnergy = 0;
-              for (size_type i = 0; i < occupancies[0].size(); i++)
+              for (size_type i = 0; i < s.occupancies.size(); i++)
                 {
-                  bandEnergy += 2 * occupancies[0][i] * d_kohnShamEnergies[i];
+                  bandEnergy += bandEnergySpinFactor * s.occupancies[i] *
+                                d_kohnShamEnergies[i];
                 }
 
               d_rootCout << "Band energy: " << bandEnergy << "\n";
@@ -3117,7 +3620,9 @@ namespace dftefe
               d_groundStateEnergy = totalEnergy;
 
               RealType entEnergy = KohnShamDFTInternal::computeEntropicEnergy(
-                occupancies[0], d_smearingTemperature);
+                s.occupancies,
+                d_smearingTemperature,
+                (d_spinMode == SpinMode::Unpolarized) ? 2.0 : 1.0);
 
               d_rootCout << "Entropic Energy: " << entEnergy << "\n";
 
@@ -3128,11 +3633,48 @@ namespace dftefe
             }
 
           if (scfIter > 0)
-            d_rootCout << "Density Residual Norm : " << norm << "\n";
+            {
+              d_rootCout
+                << "ANDERSON mixing, L2 norm of electron-density difference: "
+                << norm << "\n";
+              if (d_spinMode != SpinMode::Unpolarized)
+                d_rootCout
+                  << "ANDERSON mixing, L2 norm of magnetization-density difference: "
+                  << magNorm << "\n";
+            }
 
           d_p.print();
 
           scfIter += 1;
+        }
+
+      if (d_spinMode == SpinMode::Collinear)
+        {
+          auto &magDensFinal      = densAttrOut.at(DensityDescrAttr::Val)[1];
+          const size_type numQuad = magDensFinal.nQuadraturePoints();
+          RealType        netMag = 0.0, absMag = 0.0;
+          for (size_type i = 0; i < numQuad; ++i)
+            {
+              const RealType mz = magDensFinal.data()[i];
+              netMag += mz * d_jxwDataHost[i];
+              absMag += std::abs(mz) * d_jxwDataHost[i];
+            }
+          utils::mpi::MPIAllreduce<memorySpaceHost>(
+            utils::mpi::MPIInPlace,
+            &netMag,
+            1,
+            utils::mpi::Types<RealType>::getMPIDatatype(),
+            utils::mpi::MPISum,
+            d_mpiCommDomain);
+          utils::mpi::MPIAllreduce<memorySpaceHost>(
+            utils::mpi::MPIInPlace,
+            &absMag,
+            1,
+            utils::mpi::Types<RealType>::getMPIDatatype(),
+            utils::mpi::MPISum,
+            d_mpiCommDomain);
+          d_rootCout << "Final net magnetization     : " << netMag << "\n";
+          d_rootCout << "Final absolute magnetization: " << absMag << "\n";
         }
 
       if (!d_evaluateEnergyEverySCF)
@@ -3164,8 +3706,10 @@ namespace dftefe
               hamiltonian->reinitField(densOut);
             }
 
-          d_rdm1Spectral->getSpectral(wfnPtr, occupancies, nKSOrbs);
-          d_hamitonianKin->evalEnergy(occupancies[0], *d_feBMWaveFn, *wfnPtr);
+          const auto &sp = d_rdm1Spectral->getSpectral();
+          d_hamitonianKin->evalEnergy(sp.occupancies,
+                                      *d_feBMWaveFn,
+                                      *sp.ksOrbs);
           RealType kinEnergy = d_hamitonianKin->getEnergy();
           rootCout << "Kinetic energy: " << kinEnergy << "\n";
 
@@ -3186,9 +3730,8 @@ namespace dftefe
                                                memorySpace,
                                                dim>>(d_hamitonianElec))
             {
-              hamiltonian->evalEnergy(occupancies[0], *wfnPtr);
+              hamiltonian->evalEnergy(sp.occupancies, *sp.ksOrbs);
             }
-          d_rdm1Spectral->setSpectral(std::move(wfnPtr), occupancies, nKSOrbs);
 
           RealType elecEnergy = d_hamitonianElec->getEnergy();
           rootCout << "Electrostatic energy: " << elecEnergy << "\n";
@@ -3198,10 +3741,13 @@ namespace dftefe
           rootCout << "EXC energy: " << xcEnergy << "\n";
 
           // calculate band energy
+          const RealType bandEnergySpinFactor =
+            (d_spinMode == SpinMode::Unpolarized) ? (RealType)2 : (RealType)1;
           RealType bandEnergy = 0;
-          for (size_type i = 0; i < occupancies[0].size(); i++)
+          for (size_type i = 0; i < sp.occupancies.size(); i++)
             {
-              bandEnergy += 2 * occupancies[0][i] * d_kohnShamEnergies[i];
+              bandEnergy += bandEnergySpinFactor * sp.occupancies[i] *
+                            d_kohnShamEnergies[i];
             }
 
           rootCout << "Band energy: " << bandEnergy << "\n";
@@ -3212,9 +3758,10 @@ namespace dftefe
 
           d_groundStateEnergy = totalEnergy;
 
-          RealType entEnergy =
-            KohnShamDFTInternal::computeEntropicEnergy(occupancies[0],
-                                                       d_smearingTemperature);
+          RealType entEnergy = KohnShamDFTInternal::computeEntropicEnergy(
+            sp.occupancies,
+            d_smearingTemperature,
+            (d_spinMode == SpinMode::Unpolarized) ? 2.0 : 1.0);
 
           rootCout << "Entropic Energy: " << entEnergy << "\n";
 

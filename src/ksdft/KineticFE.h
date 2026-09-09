@@ -32,6 +32,9 @@
 #include <basis/FEBasisDataStorage.h>
 #include <electrostatics/LaplaceOperatorContextFE.h>
 #include <basis/FEBasisOperations.h>
+#include <basis/FEBasisDofHandler.h>
+#include <ksdft/KSAttributes.h>
+#include <ksdft/HamiltonianSpinBlockCopyKernels.h>
 
 namespace dftefe
 {
@@ -67,7 +70,8 @@ namespace dftefe
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
                         linAlgOpContext,
         const size_type maxCellBlock,
-        const size_type waveFuncBatchSize);
+        const size_type waveFuncBatchSize,
+        SpinMode        spinMode = SpinMode::Unpolarized);
 
       ~KineticFE() = default;
 
@@ -118,6 +122,12 @@ namespace dftefe
       // quadrature::QuadratureValuesContainer<ValueType, memorySpace>
       // *d_gradPsi;
       std::shared_ptr<Storage> d_cellWiseStorageKineticEnergy;
+
+      SpinMode               d_spinMode;
+      size_type              d_S;
+      SpinStorageLayout      d_layout;
+      std::vector<size_type> d_numCellDofs;
+      size_type              d_basisOverlapSize;
 
       std::shared_ptr<linearAlgebra::MultiVector<ValueType, memorySpace>>
         d_psiBatchSmall, d_psiBatch, d_YBatch, d_YBatchSmall;
