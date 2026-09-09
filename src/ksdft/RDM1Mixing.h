@@ -76,6 +76,13 @@ namespace dftefe
        *   inside mix(). The caller is responsible for calling
        *   addMixingVariable() on the scheme before the first setRDM1() call.
        * @param mixingHistory     Anderson mixing history length.
+       * @param mixingParameter   Anderson mixing parameter applied to the
+       *   charge-density variable (rho, gradRho).
+       * @param spinMixingEnhancementFactor  Multiplier applied on top of
+       *   mixingParameter for the spin/magnetization variables (magZ, magY,
+       *   magX and their gradients). Magnetization typically needs a more
+       *   aggressive mixing coefficient than the charge density to avoid
+       *   lagging/oscillating relative to it
        * @param xcType  XC functional string (e.g. "GGA-PBE", "LDA-PW").
        *   Used to determine whether gradient density mixing variables
        *   (gradRho, gradMag*) should be registered.
@@ -87,6 +94,7 @@ namespace dftefe
                  const std::vector<RealType> &     jxwDataHost,
                  const double                      mixingParameter,
                  const bool                        isAdaptiveMixingParameter,
+                 const double                      spinMixingEnhancementFactor,
                  const SpinMode                    spinMode,
                  const std::string &               xcType,
                  std::shared_ptr<

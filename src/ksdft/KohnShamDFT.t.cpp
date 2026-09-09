@@ -374,7 +374,8 @@ namespace dftefe
         SpinMode                             spinMode,
         bool                                 isGHEP,
         linearAlgebra::OrthogonalizationType orthoType,
-        const size_type                      chebyshevPolynomialDegree)
+        const size_type                      chebyshevPolynomialDegree,
+        const double                         spinMixingEnhancementFactor)
       : d_feBMWaveFn(feBMWaveFn)
       , d_evaluateEnergyEverySCF(evaluateEnergyEverySCF)
       , d_numMaxSCFIter(maxSCFIter)
@@ -502,6 +503,7 @@ namespace dftefe
         d_jxwDataHost,
         mixingParameter,
         isAdaptiveAndersonMixingParameter,
+        spinMixingEnhancementFactor,
         d_spinMode,
         xcType,
         linearAlgebra::LinAlgOpContextDefaults::LINALG_OP_CONTXT_HOST,
@@ -893,7 +895,8 @@ namespace dftefe
         SpinMode                             spinMode,
         bool                                 isGHEP,
         linearAlgebra::OrthogonalizationType orthoType,
-        const size_type                      chebyshevPolynomialDegree)
+        const size_type                      chebyshevPolynomialDegree,
+        const double                         spinMixingEnhancementFactor)
       : d_feBMWaveFn(feBMWaveFn)
       , d_evaluateEnergyEverySCF(evaluateEnergyEverySCF)
       , d_numMaxSCFIter(maxSCFIter)
@@ -1016,6 +1019,7 @@ namespace dftefe
         d_jxwDataHost,
         mixingParameter,
         isAdaptiveAndersonMixingParameter,
+        spinMixingEnhancementFactor,
         d_spinMode,
         xcType,
         linearAlgebra::LinAlgOpContextDefaults::LINALG_OP_CONTXT_HOST,
@@ -1410,7 +1414,8 @@ namespace dftefe
         SpinMode                             spinMode,
         bool                                 isGHEP,
         linearAlgebra::OrthogonalizationType orthoType,
-        const size_type                      chebyshevPolynomialDegree)
+        const size_type                      chebyshevPolynomialDegree,
+        const double                         spinMixingEnhancementFactor)
       : d_feBMWaveFn(feBMWaveFn)
       , d_evaluateEnergyEverySCF(evaluateEnergyEverySCF)
       // , d_densityInQuadValues(electronChargeDensityInput)
@@ -1534,6 +1539,7 @@ namespace dftefe
         d_jxwDataHost,
         mixingParameter,
         isAdaptiveAndersonMixingParameter,
+        spinMixingEnhancementFactor,
         d_spinMode,
         xcType,
         linearAlgebra::LinAlgOpContextDefaults::LINALG_OP_CONTXT_HOST,
@@ -1991,7 +1997,8 @@ namespace dftefe
         bool                       isResidualChebyshevFilter,
         const std::vector<double> &atomMagZFactors,
         SpinMode                   spinMode,
-        const size_type            chebyshevPolynomialDegree)
+        const size_type            chebyshevPolynomialDegree,
+        const double               spinMixingEnhancementFactor)
       : d_feBMWaveFn(feBMWaveFn)
       , d_evaluateEnergyEverySCF(evaluateEnergyEverySCF)
       , d_numMaxSCFIter(maxSCFIter)
@@ -2198,6 +2205,7 @@ namespace dftefe
         d_jxwDataHost,
         mixingParameter,
         isAdaptiveAndersonMixingParameter,
+        spinMixingEnhancementFactor,
         d_spinMode,
         xcType,
         linearAlgebra::LinAlgOpContextDefaults::LINALG_OP_CONTXT_HOST,
@@ -2590,7 +2598,8 @@ namespace dftefe
         const atoms::TCIADataParams &params,
         const std::vector<double> &  atomMagZFactors,
         SpinMode                     spinMode,
-        const size_type              chebyshevPolynomialDegree)
+        const size_type              chebyshevPolynomialDegree,
+        const double                 spinMixingEnhancementFactor)
       : d_feBMWaveFn(feBMWaveFn)
       , d_evaluateEnergyEverySCF(evaluateEnergyEverySCF)
       , d_numMaxSCFIter(maxSCFIter)
@@ -2804,6 +2813,7 @@ namespace dftefe
         d_jxwDataHost,
         mixingParameter,
         isAdaptiveAndersonMixingParameter,
+        spinMixingEnhancementFactor,
         d_spinMode,
         xcType,
         linearAlgebra::LinAlgOpContextDefaults::LINALG_OP_CONTXT_HOST,

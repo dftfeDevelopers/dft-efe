@@ -195,6 +195,19 @@ namespace dftefe
       static const size_type SIZE_TYPE_MAX;
     }; // end of class MaxSizeDefaults
 
+    class MixingDefaults
+    {
+    public:
+      //
+      // Multiplier applied on top of the Anderson mixingParameter for the
+      // spin/magnetization mixing variables (magZ, magY, magX and their
+      // gradients). Magnetization typically needs more aggressive mixing
+      // than the charge density to avoid lagging/oscillating relative to
+      // it (cf. DFT-FE's SPIN MIXING ENHANCEMENT FACTOR).
+      //
+      static const double SPIN_MIXING_ENHANCEMENT_FACTOR;
+    }; // end of class MixingDefaults
+
   } // end of namespace ksdft
 
   static constexpr utils::MemorySpace memorySpaceHost =

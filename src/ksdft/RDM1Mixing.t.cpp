@@ -40,6 +40,7 @@ namespace dftefe
       const std::vector<RealType> &     jxwDataHost,
       const double                      mixingParameter,
       const bool                        isAdaptiveMixingParameter,
+      const double                      spinMixingEnhancementFactor,
       const SpinMode                    spinMode,
       const std::string &               xcType,
       std::shared_ptr<linearAlgebra::LinAlgOpContext<utils::MemorySpace::HOST>>
@@ -53,6 +54,8 @@ namespace dftefe
       utils::MemoryStorage<RealType, utils::MemorySpace::HOST> jxwStorage(
         jxwDataHost.size());
       jxwStorage.copyFrom(jxwDataHost);
+      const double spinMixingParameter =
+        mixingParameter * spinMixingEnhancementFactor;
       d_mixingScheme.addMixingVariable(mixingVariable::rho,
                                        jxwStorage,
                                        true,
@@ -63,19 +66,19 @@ namespace dftefe
           d_mixingScheme.addMixingVariable(mixingVariable::magZ,
                                            jxwStorage,
                                            true,
-                                           mixingParameter,
+                                           spinMixingParameter,
                                            isAdaptiveMixingParameter);
           if (spinMode == SpinMode::NonCollinear)
             {
               d_mixingScheme.addMixingVariable(mixingVariable::magY,
                                                jxwStorage,
                                                true,
-                                               mixingParameter,
+                                               spinMixingParameter,
                                                isAdaptiveMixingParameter);
               d_mixingScheme.addMixingVariable(mixingVariable::magX,
                                                jxwStorage,
                                                true,
-                                               mixingParameter,
+                                               spinMixingParameter,
                                                isAdaptiveMixingParameter);
             }
         }
@@ -93,7 +96,7 @@ namespace dftefe
                 mixingVariable::gradMagZ,
                 utils::MemoryStorage<RealType, utils::MemorySpace::HOST>(),
                 false,
-                mixingParameter,
+                spinMixingParameter,
                 isAdaptiveMixingParameter);
               if (spinMode == SpinMode::NonCollinear)
                 {
@@ -101,13 +104,13 @@ namespace dftefe
                     mixingVariable::gradMagY,
                     utils::MemoryStorage<RealType, utils::MemorySpace::HOST>(),
                     false,
-                    mixingParameter,
+                    spinMixingParameter,
                     isAdaptiveMixingParameter);
                   d_mixingScheme.addMixingVariable(
                     mixingVariable::gradMagX,
                     utils::MemoryStorage<RealType, utils::MemorySpace::HOST>(),
                     false,
-                    mixingParameter,
+                    spinMixingParameter,
                     isAdaptiveMixingParameter);
                 }
             }

@@ -128,5 +128,10 @@ namespace dftefe
 
     const size_type MaxSizeDefaults::SIZE_TYPE_MAX =
       std::numeric_limits<size_type>::max();
+
+    /**
+     * @brief Setting all the MixingDefaults
+     */
+    const double MixingDefaults::SPIN_MIXING_ENHANCEMENT_FACTOR = 4.0;
   } // end of namespace ksdft
 } // end of namespace dftefe

@@ -168,7 +168,9 @@ namespace dftefe
          * SCF iteration from CHEBY_ORDER_LOOKUP (see
          * ksdft::LinearEigenSolverDefaults); if > 0, it is pinned to this
          * value for the whole run. */
-        const size_type chebyshevPolynomialDegree = 0);
+        const size_type chebyshevPolynomialDegree = 0,
+        const double    spinMixingEnhancementFactor =
+          MixingDefaults::SPIN_MIXING_ENHANCEMENT_FACTOR);
 
 
       // used if numerical poisson solve vself canellation route taken
@@ -268,7 +270,9 @@ namespace dftefe
          * SCF iteration from CHEBY_ORDER_LOOKUP (see
          * ksdft::LinearEigenSolverDefaults); if > 0, it is pinned to this
          * value for the whole run. */
-        const size_type chebyshevPolynomialDegree = 0);
+        const size_type chebyshevPolynomialDegree = 0,
+        const double    spinMixingEnhancementFactor =
+          MixingDefaults::SPIN_MIXING_ENHANCEMENT_FACTOR);
 
       // used if delta rho approach is taken with phi total from 1D KS solve
       // with analytical vself energy cancellation
@@ -364,7 +368,9 @@ namespace dftefe
          * SCF iteration from CHEBY_ORDER_LOOKUP (see
          * ksdft::LinearEigenSolverDefaults); if > 0, it is pinned to this
          * value for the whole run. */
-        const size_type chebyshevPolynomialDegree = 0);
+        const size_type chebyshevPolynomialDegree = 0,
+        const double    spinMixingEnhancementFactor =
+          MixingDefaults::SPIN_MIXING_ENHANCEMENT_FACTOR);
 
       //// used if analytical vself canellation route taken with PSP
       KohnShamDFT(
@@ -457,7 +463,9 @@ namespace dftefe
          * SCF iteration from CHEBY_ORDER_LOOKUP (see
          * ksdft::LinearEigenSolverDefaults); if > 0, it is pinned to this
          * value for the whole run. */
-        const size_type chebyshevPolynomialDegree = 0);
+        const size_type chebyshevPolynomialDegree = 0,
+        const double    spinMixingEnhancementFactor =
+          MixingDefaults::SPIN_MIXING_ENHANCEMENT_FACTOR);
 
 
       // used if delta rho with PSP approach is taken with phi total from 1D KS
@@ -555,7 +563,9 @@ namespace dftefe
          * SCF iteration from CHEBY_ORDER_LOOKUP (see
          * ksdft::LinearEigenSolverDefaults); if > 0, it is pinned to this
          * value for the whole run. */
-        const size_type chebyshevPolynomialDegree = 0);
+        const size_type chebyshevPolynomialDegree = 0,
+        const double    spinMixingEnhancementFactor =
+          MixingDefaults::SPIN_MIXING_ENHANCEMENT_FACTOR);
 
       ~KohnShamDFT();
 
