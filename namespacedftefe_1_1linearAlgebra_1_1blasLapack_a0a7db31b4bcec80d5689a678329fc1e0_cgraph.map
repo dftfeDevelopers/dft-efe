@@ -1,0 +1,5 @@
+<map id="dftefe::linearAlgebra::blasLapack::varBatchedStridedBlockCopy" name="dftefe::linearAlgebra::blasLapack::varBatchedStridedBlockCopy">
+<area shape="rect" id="node1" title=" " alt="" coords="5,5,213,60"/>
+<area shape="rect" id="node2" href="$classdftefe_1_1linearAlgebra_1_1blasLapack_1_1CopyKernelTwoValueTypes.html#a1a97481059fc4f56bb1a7100d8d8bd3c" title=" " alt="" coords="261,5,527,60"/>
+<area shape="rect" id="node3" href="$classdftefe_1_1utils_1_1MemoryTransfer.html#a7f0d9eed66c1e39ad68c80643f4b6ac0" title="Copy array from the memory space of source to the memory space of destination." alt="" coords="575,13,760,53"/>
+</map>

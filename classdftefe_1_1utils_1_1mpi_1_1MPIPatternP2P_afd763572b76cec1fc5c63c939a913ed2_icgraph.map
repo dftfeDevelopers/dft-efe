@@ -1,0 +1,5 @@
+<map id="dftefe::utils::mpi::MPIPatternP2P::getGlobalRanges" name="dftefe::utils::mpi::MPIPatternP2P::getGlobalRanges">
+<area shape="rect" id="node1" title=" " alt="" coords="324,45,504,100"/>
+<area shape="rect" id="node2" href="$classdftefe_1_1basis_1_1OEFEAtomBlockOverlapInvOpContextGLL.html#aa2bfaccb251079725142675d7e4437e2" title=" " alt="" coords="5,5,276,60"/>
+<area shape="rect" id="node3" href="$classdftefe_1_1basis_1_1OrthoEFEOverlapOperatorContext.html#a4a9a97b79dcac00ede202f3b569b458e" title="Constructor where the classical dofs have a different quadrature rule than that of the enrichment dof..." alt="" coords="29,84,252,139"/>
+</map>

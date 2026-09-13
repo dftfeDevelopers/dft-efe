@@ -1,0 +1,5 @@
+<map id="dftefe::utils::MPICommunicatorP2PKernels::accumAddLocallyOwnedContrRecvBufferFromTargetProcs" name="dftefe::utils::MPICommunicatorP2PKernels::accumAddLocallyOwnedContrRecvBufferFromTargetProcs">
+<area shape="rect" id="node1" title="Function template for architecture adaptable accumlate kernel from recv buffer." alt="" coords="5,30,247,85"/>
+<area shape="rect" id="node2" href="$classdftefe_1_1utils_1_1MemoryStorage.html#a0b7d69ed206a226bdb79c0ba12e42111" title="Return the raw pointer to the Vector." alt="" coords="295,5,477,45"/>
+<area shape="rect" id="node3" href="$classdftefe_1_1utils_1_1MemoryStorage.html#ab6dc2f530a90b36a9308fcdf17104362" title="Returns the dimension of the Vector." alt="" coords="295,69,477,109"/>
+</map>

@@ -1,0 +1,8 @@
+var classdftefe_1_1linearAlgebra_1_1OperatorContextFE_01_1_1OperatorContext_3_01ValueTypeOperator_0052fac58c39a07e8921677715bb495901 =
+[
+    [ "~OperatorContextFE", "classdftefe_1_1linearAlgebra_1_1OperatorContextFE_01_1_1OperatorContext_3_01ValueTypeOperator_0052fac58c39a07e8921677715bb495901.html#a2154bd3073b458969dee8a970f1b38fd", null ],
+    [ "apply", "classdftefe_1_1linearAlgebra_1_1OperatorContextFE_01_1_1OperatorContext_3_01ValueTypeOperator_0052fac58c39a07e8921677715bb495901.html#a0785d6f601ec31139ad356fcb8f0fcf5", null ],
+    [ "getCellMatrixDataInAllCells", "classdftefe_1_1linearAlgebra_1_1OperatorContextFE_01_1_1OperatorContext_3_01ValueTypeOperator_0052fac58c39a07e8921677715bb495901.html#a27bdba5a91c233c6379d3f8cbd84a102", null ],
+    [ "getCellMatrixDataInCell", "classdftefe_1_1linearAlgebra_1_1OperatorContextFE_01_1_1OperatorContext_3_01ValueTypeOperator_0052fac58c39a07e8921677715bb495901.html#acaf6ec1ce5ed8380a5ff463569fb11fd", null ],
+    [ "OperatorContextFE", "classdftefe_1_1linearAlgebra_1_1OperatorContextFE_01_1_1OperatorContext_3_01ValueTypeOperator_0052fac58c39a07e8921677715bb495901.html#ae78f5dca9e1d6381cad90ce88f958780", null ]
+];

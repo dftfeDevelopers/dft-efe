@@ -1,0 +1,6 @@
+<map id="dftefe::utils::operator+=" name="dftefe::utils::operator+=">
+<area shape="rect" id="node1" title="In&#45;place addition of two pointts p&#45;&gt; p + q." alt="" coords="5,70,160,95"/>
+<area shape="rect" id="node2" href="$classdftefe_1_1utils_1_1PointImpl.html#a9acad104ec6ce3573aabf549f6ba652d" title="Return iterator pointing to the begining of point data." alt="" coords="221,5,368,45"/>
+<area shape="rect" id="node3" href="$classdftefe_1_1utils_1_1PointImpl.html#a92c18d3da38d9c547bf942c2080cb63f" title="Return iterator pointing to the end of PointImpl data." alt="" coords="208,70,381,95"/>
+<area shape="rect" id="node4" href="$classdftefe_1_1utils_1_1PointImpl.html#a8899ace443be40fe29fef56cf7800073" title="Returns the dimension of the point." alt="" coords="221,120,368,160"/>
+</map>

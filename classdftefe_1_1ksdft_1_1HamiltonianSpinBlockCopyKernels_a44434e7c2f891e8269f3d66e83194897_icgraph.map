@@ -1,0 +1,6 @@
+<map id="dftefe::ksdft::HamiltonianSpinBlockCopyKernels::copyIntoBlock" name="dftefe::ksdft::HamiltonianSpinBlockCopyKernels::copyIntoBlock">
+<area shape="rect" id="node1" title=" " alt="" coords="268,69,511,109"/>
+<area shape="rect" id="node2" href="$classdftefe_1_1ksdft_1_1ElectrostaticLocalFE.html#a020c1a4d4a65f0b652afce066293f908" title=" " alt="" coords="29,5,197,45"/>
+<area shape="rect" id="node3" href="$classdftefe_1_1ksdft_1_1ExchangeCorrelationFE.html#a869cb1f5fb41fd7c1736ea2f1e09041d" title=" " alt="" coords="5,69,220,109"/>
+<area shape="rect" id="node4" href="$classdftefe_1_1ksdft_1_1KineticFE.html#a283be6de365e6067b56005105a2594f4" title=" " alt="" coords="37,133,189,173"/>
+</map>

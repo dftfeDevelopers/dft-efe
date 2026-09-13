@@ -1,0 +1,15 @@
+var ksdft_2Defaults_8h =
+[
+    [ "dftefe::ksdft::PoissonProblemDefaults", "classdftefe_1_1ksdft_1_1PoissonProblemDefaults.html", "classdftefe_1_1ksdft_1_1PoissonProblemDefaults" ],
+    [ "dftefe::ksdft::LinearEigenSolverDefaults", "classdftefe_1_1ksdft_1_1LinearEigenSolverDefaults.html", "classdftefe_1_1ksdft_1_1LinearEigenSolverDefaults" ],
+    [ "dftefe::ksdft::NewtonRaphsonSolverDefaults", "classdftefe_1_1ksdft_1_1NewtonRaphsonSolverDefaults.html", "classdftefe_1_1ksdft_1_1NewtonRaphsonSolverDefaults" ],
+    [ "dftefe::ksdft::BisectionSolverDefaults", "classdftefe_1_1ksdft_1_1BisectionSolverDefaults.html", "classdftefe_1_1ksdft_1_1BisectionSolverDefaults" ],
+    [ "dftefe::ksdft::Constants", "classdftefe_1_1ksdft_1_1Constants.html", "classdftefe_1_1ksdft_1_1Constants" ],
+    [ "dftefe::ksdft::LibxcDefaults", "classdftefe_1_1ksdft_1_1LibxcDefaults.html", "classdftefe_1_1ksdft_1_1LibxcDefaults" ],
+    [ "dftefe::ksdft::KSDFTDefaults< memorySpace >", "classdftefe_1_1ksdft_1_1KSDFTDefaults.html", "classdftefe_1_1ksdft_1_1KSDFTDefaults" ],
+    [ "dftefe::ksdft::ElectroHamiltonianDefaults", "classdftefe_1_1ksdft_1_1ElectroHamiltonianDefaults.html", "classdftefe_1_1ksdft_1_1ElectroHamiltonianDefaults" ],
+    [ "dftefe::ksdft::TCIADataDefaults", "classdftefe_1_1ksdft_1_1TCIADataDefaults.html", "classdftefe_1_1ksdft_1_1TCIADataDefaults" ],
+    [ "dftefe::ksdft::MaxSizeDefaults", "classdftefe_1_1ksdft_1_1MaxSizeDefaults.html", "classdftefe_1_1ksdft_1_1MaxSizeDefaults" ],
+    [ "dftefe::ksdft::MixingDefaults", "classdftefe_1_1ksdft_1_1MixingDefaults.html", "classdftefe_1_1ksdft_1_1MixingDefaults" ],
+    [ "memorySpaceHost", "ksdft_2Defaults_8h.html#af88b6c587dbbeb3ccc9806709d7ce75e", null ]
+];

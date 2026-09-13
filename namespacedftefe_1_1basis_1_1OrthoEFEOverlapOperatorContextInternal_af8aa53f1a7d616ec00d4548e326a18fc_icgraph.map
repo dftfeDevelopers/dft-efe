@@ -1,0 +1,4 @@
+<map id="dftefe::basis::OrthoEFEOverlapOperatorContextInternal::computeBasisOverlapMatrixBlocked" name="dftefe::basis::OrthoEFEOverlapOperatorContextInternal::computeBasisOverlapMatrixBlocked">
+<area shape="rect" id="node1" title=" " alt="" coords="276,5,508,60"/>
+<area shape="rect" id="node2" href="$classdftefe_1_1basis_1_1OrthoEFEOverlapOperatorContext.html#a157a9aa3fb402d031854d24803522ebd" title="Constructor where the classical dofs have a different quadrature rule than that of the enrichment dof..." alt="" coords="5,5,228,60"/>
+</map>

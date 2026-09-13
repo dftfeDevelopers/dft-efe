@@ -1,0 +1,5 @@
+<map id="dftefe::linearAlgebra::MultiVectorProductSpaceBlocked&lt; ValueType, memorySpace &gt;" name="dftefe::linearAlgebra::MultiVectorProductSpaceBlocked&lt; ValueType, memorySpace &gt;">
+<area shape="rect" id="node1" title="Type&#45;tag subclass of MultiVectorProductSpace for collinear spin (S=2)." alt="" coords="5,211,228,265"/>
+<area shape="rect" id="node2" href="$classdftefe_1_1linearAlgebra_1_1MultiVectorProductSpace.html" title="MultiVector for product spaces: flat layout M × S × N where S = numSpaces, N = numVectorsPerSpace." alt="" coords="19,108,214,163"/>
+<area shape="rect" id="node3" href="$classdftefe_1_1linearAlgebra_1_1MultiVector.html" title="An class template to encapsulate a MultiVector. A MultiVector is a collection of &#160;vectors belonging t..." alt="" coords="31,5,202,60"/>
+</map>

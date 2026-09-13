@@ -1,0 +1,7 @@
+<map id="dftefe::basis::FEBasisDataStorage::getJxWInAllCells" name="dftefe::basis::FEBasisDataStorage::getJxWInAllCells">
+<area shape="rect" id="node1" title=" " alt="" coords="563,91,737,131"/>
+<area shape="rect" id="node2" href="$namespacedftefe_1_1basis_1_1OEFEAtomBlockOverlapInvOpContextGLLInternal.html#a5f07f4d557873e9d624703fdb197390d" title=" " alt="" coords="276,5,515,60"/>
+<area shape="rect" id="node3" href="$namespacedftefe_1_1basis_1_1OrthoEFEOverlapInverseOpContextGLLInternal.html#a48d4ed1957e64e1a7983047b021b53f6" title=" " alt="" coords="276,84,515,139"/>
+<area shape="rect" id="node4" href="$namespacedftefe_1_1basis_1_1OrthoEFEOverlapOperatorContextInternal.html#af8aa53f1a7d616ec00d4548e326a18fc" title=" " alt="" coords="279,163,511,217"/>
+<area shape="rect" id="node5" href="$classdftefe_1_1basis_1_1OrthoEFEOverlapOperatorContext.html#a157a9aa3fb402d031854d24803522ebd" title="Constructor where the classical dofs have a different quadrature rule than that of the enrichment dof..." alt="" coords="5,163,228,217"/>
+</map>

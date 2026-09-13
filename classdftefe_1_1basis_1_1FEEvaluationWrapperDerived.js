@@ -1,0 +1,28 @@
+var classdftefe_1_1basis_1_1FEEvaluationWrapperDerived =
+[
+    [ "FEEvaluationWrapperDerived", "classdftefe_1_1basis_1_1FEEvaluationWrapperDerived.html#af8e1bd160534a8b7e995a92326b43079", null ],
+    [ "~FEEvaluationWrapperDerived", "classdftefe_1_1basis_1_1FEEvaluationWrapperDerived.html#a4201c79558b4a482a765c274032260b0", null ],
+    [ "alphaTimesQuadValuesPlusYFromSubCell", "classdftefe_1_1basis_1_1FEEvaluationWrapperDerived.html#a73296d0c518eb24b00508bdc840e4ab9", null ],
+    [ "distributeLocalToGlobal", "classdftefe_1_1basis_1_1FEEvaluationWrapperDerived.html#a1605769a46aaaf944fda1a103490e723", null ],
+    [ "evaluate", "classdftefe_1_1basis_1_1FEEvaluationWrapperDerived.html#acc4878147586409efbc310438010c78e", null ],
+    [ "getQuadGradientsForSubCell", "classdftefe_1_1basis_1_1FEEvaluationWrapperDerived.html#acfe4a7d94d915a725e3914f90936de94", null ],
+    [ "getQuadHessianForSubCell", "classdftefe_1_1basis_1_1FEEvaluationWrapperDerived.html#a288ac86a013ad45f2ce6d7a178404129", null ],
+    [ "getQuadraturePoint", "classdftefe_1_1basis_1_1FEEvaluationWrapperDerived.html#a19962eea2e16cb4a91d53ef3eab00d96", null ],
+    [ "getValues", "classdftefe_1_1basis_1_1FEEvaluationWrapperDerived.html#aac3957a5ad27cfafb7d104959f5f897c", null ],
+    [ "integrate", "classdftefe_1_1basis_1_1FEEvaluationWrapperDerived.html#aeedb57c38a821a40671bc8c1423c2b9f", null ],
+    [ "integrateValue", "classdftefe_1_1basis_1_1FEEvaluationWrapperDerived.html#ab8072778231c7012b2208feb2c552abc", null ],
+    [ "readDoFValues", "classdftefe_1_1basis_1_1FEEvaluationWrapperDerived.html#af900c1232215c3e603f0516aba2bd3e9", null ],
+    [ "readDoFValuesPlain", "classdftefe_1_1basis_1_1FEEvaluationWrapperDerived.html#a89295aac15e2e88415c034855b1f7cf9", null ],
+    [ "reinit", "classdftefe_1_1basis_1_1FEEvaluationWrapperDerived.html#a7f886fc7d2c06398c966b1baa990ae46", null ],
+    [ "submitGradients", "classdftefe_1_1basis_1_1FEEvaluationWrapperDerived.html#a0685f8fc0c61044db649f09ba09b0cba", null ],
+    [ "submitInterpolatedGradientsAndMultiply", "classdftefe_1_1basis_1_1FEEvaluationWrapperDerived.html#a18596ca2e8ca0842a681cac2c377a834", null ],
+    [ "submitInterpolatedValuesAndMultiply", "classdftefe_1_1basis_1_1FEEvaluationWrapperDerived.html#a5c02e785d832ef83d39013be2f7422c1", null ],
+    [ "submitInterpolatedValuesAndMultiply", "classdftefe_1_1basis_1_1FEEvaluationWrapperDerived.html#a0c8897a9fa05cfe48e80fbef87392045", null ],
+    [ "submitInterpolatedValuesAndMultiplySquared", "classdftefe_1_1basis_1_1FEEvaluationWrapperDerived.html#a78f2a7a5f6cb3c998bafebf542874146", null ],
+    [ "submitInterpolatedValuesSubmitInterpolatedGradients", "classdftefe_1_1basis_1_1FEEvaluationWrapperDerived.html#a1ce827fcf233026d0ce59523ad944004", null ],
+    [ "submitValueAtQuadpoint", "classdftefe_1_1basis_1_1FEEvaluationWrapperDerived.html#ae703b5d5d9464e3d85e51a4f1c8f13d2", null ],
+    [ "submitValues", "classdftefe_1_1basis_1_1FEEvaluationWrapperDerived.html#a2083ac147fa3d4cde8c7bea4e55252c9", null ],
+    [ "submitValues", "classdftefe_1_1basis_1_1FEEvaluationWrapperDerived.html#a1dff7d84d28d804f24408a4a1d92432a", null ],
+    [ "totalNumberofQuadraturePoints", "classdftefe_1_1basis_1_1FEEvaluationWrapperDerived.html#a7bcf96c7d963ae94504e14314234dfd2", null ],
+    [ "d_dealiiFEEvaluation", "classdftefe_1_1basis_1_1FEEvaluationWrapperDerived.html#a24d9aff89c968e1d4492b0bb46a71344", null ]
+];

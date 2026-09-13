@@ -1,0 +1,25 @@
+var classdftefe_1_1linearAlgebra_1_1ProcessGrid =
+[
+    [ "ProcessGrid", "classdftefe_1_1linearAlgebra_1_1ProcessGrid.html#a0d44f0ad17e6f38e48e71acc610f2433", null ],
+    [ "ProcessGrid", "classdftefe_1_1linearAlgebra_1_1ProcessGrid.html#ac796f94880e986e18e3e74b0128c192f", null ],
+    [ "~ProcessGrid", "classdftefe_1_1linearAlgebra_1_1ProcessGrid.html#a144ea8dfcddfab84958c6695e32e85f8", null ],
+    [ "ProcessGrid", "classdftefe_1_1linearAlgebra_1_1ProcessGrid.html#ac8e3684fb726201ea2cee609eea691cd", null ],
+    [ "get_blacs_context", "classdftefe_1_1linearAlgebra_1_1ProcessGrid.html#ac66bbc7b4648045e93a6ec50bbb91ac6", null ],
+    [ "get_mpi_communicator", "classdftefe_1_1linearAlgebra_1_1ProcessGrid.html#ab104cc2fce57c8a69dd86d78e85e437c", null ],
+    [ "get_process_grid_columns", "classdftefe_1_1linearAlgebra_1_1ProcessGrid.html#aade6a2138cf8519800ca354b40b8a669", null ],
+    [ "get_process_grid_rows", "classdftefe_1_1linearAlgebra_1_1ProcessGrid.html#a7d9f4df800e1d29063fa19467e2e830f", null ],
+    [ "get_this_process_column", "classdftefe_1_1linearAlgebra_1_1ProcessGrid.html#a27afdc9d9b249c194e4bb27be28787b4", null ],
+    [ "get_this_process_row", "classdftefe_1_1linearAlgebra_1_1ProcessGrid.html#aa41c0c6ecaa6e2432830ac5c6cf4a8a3", null ],
+    [ "is_process_active", "classdftefe_1_1linearAlgebra_1_1ProcessGrid.html#a1409d3355faa07b9740ec8c299639bf2", null ],
+    [ "send_to_inactive", "classdftefe_1_1linearAlgebra_1_1ProcessGrid.html#a322df1be0b38f4fad7f7f0811f5cb441", null ],
+    [ "blacs_context", "classdftefe_1_1linearAlgebra_1_1ProcessGrid.html#a88cd3cdb04868ebfa91326345a24a5d8", null ],
+    [ "mpi_communicator", "classdftefe_1_1linearAlgebra_1_1ProcessGrid.html#a087065e7bbd7db5bb4d5ff429ee71524", null ],
+    [ "mpi_communicator_inactive_with_root", "classdftefe_1_1linearAlgebra_1_1ProcessGrid.html#ac7fca64a190c06a3b0859861f332b56b", null ],
+    [ "mpi_process_is_active", "classdftefe_1_1linearAlgebra_1_1ProcessGrid.html#af41b0c4f9648094fa953018e9f31ad25", null ],
+    [ "n_mpi_processes", "classdftefe_1_1linearAlgebra_1_1ProcessGrid.html#ac6f5c0edbbcf4043be3bb73a5ee026a8", null ],
+    [ "n_process_columns", "classdftefe_1_1linearAlgebra_1_1ProcessGrid.html#ac5c9ceb371fbd8f16c1365caf85c3b63", null ],
+    [ "n_process_rows", "classdftefe_1_1linearAlgebra_1_1ProcessGrid.html#aa42f7d83100816ea193c7a0de6c9cbb4", null ],
+    [ "this_mpi_process", "classdftefe_1_1linearAlgebra_1_1ProcessGrid.html#a194d847b6e83662e683442648ea247f1", null ],
+    [ "this_process_column", "classdftefe_1_1linearAlgebra_1_1ProcessGrid.html#a76165597525debfed12d30354151836e", null ],
+    [ "this_process_row", "classdftefe_1_1linearAlgebra_1_1ProcessGrid.html#a090c8ab581adcdb42c790773be9affc8", null ]
+];

@@ -1,0 +1,52 @@
+<map id="dftefe::utils::MemoryStorage::size" name="dftefe::utils::MemoryStorage::size">
+<area shape="rect" id="node1" title="Returns the dimension of the Vector." alt="" coords="641,1623,824,1663"/>
+<area shape="rect" id="node2" href="$classdftefe_1_1utils_1_1MPICommunicatorP2PKernels.html#a01e5dbc2fdfe3d2310991da1e522c7f3" title="Function template for architecture adaptable accumlate kernel from recv buffer." alt="" coords="338,111,579,165"/>
+<area shape="rect" id="node3" href="$classdftefe_1_1basis_1_1FECellWiseDataOperations.html#a32e4ac046461f9ee3cf36b37bd196294" title=" " alt="" coords="347,268,570,323"/>
+<area shape="rect" id="node8" href="$classdftefe_1_1basis_1_1OEFEAtomBlockOverlapInvOpContextGLL.html#aa2bfaccb251079725142675d7e4437e2" title=" " alt="" coords="5,320,276,375"/>
+<area shape="rect" id="node9" href="$classdftefe_1_1basis_1_1OrthoEFEOverlapInverseOpContextGLL.html#a41d13bfdd3ee7fcdddfaa539df5284dc" title=" " alt="" coords="11,399,270,453"/>
+<area shape="rect" id="node10" href="$classdftefe_1_1basis_1_1OrthoEFEOverlapOperatorContext.html#a5939179aaaad0c8ab9e485585dc7845b" title="Constructor where the classical dofs have a different quadrature rule than that of the enrichment dof..." alt="" coords="29,477,252,532"/>
+<area shape="rect" id="node11" href="$classdftefe_1_1ksdft_1_1MixingScheme.html#a934a4577325f244f9a67eca0d07d04c1" title="This function is used to add the mixing variables and its corresponding JxW values For dependent vari..." alt="" coords="368,499,549,539"/>
+<area shape="rect" id="node13" href="$classdftefe_1_1basis_1_1OrthoEFEOverlapInverseOpContextGLL.html#a623d7eddf250f7b027e4c7e2967400cb" title=" " alt="" coords="359,563,558,603"/>
+<area shape="rect" id="node14" href="$classdftefe_1_1basis_1_1OrthoEFEOverlapOperatorContext.html#a8f18379728c0217f62847973c015bf64" title="Apply AX = B where A is the discretized matrix, X is the operand and B is the result." alt="" coords="359,627,558,667"/>
+<area shape="rect" id="node15" href="$classdftefe_1_1basis_1_1AtomCenterNonLocalOpContextFE.html#ad7c27a220ad0c56b06f8a5266750e425" title="Constructor Class does : \sum_atoms \sum_lpm CVC^T X = Y where V = coupling matrix C_lpm,..." alt="" coords="343,692,574,747"/>
+<area shape="rect" id="node16" href="$classdftefe_1_1ksdft_1_1MixingScheme.html#a745e062b793a9286775273dbc513fd67" title="Clears all the the history." alt="" coords="368,771,549,825"/>
+<area shape="rect" id="node17" href="$namespacedftefe_1_1basis_1_1OrthoEFEOverlapOperatorContextInternal.html#ae1ec3b8ed7ad7102971db8615b79d1ef" title=" " alt="" coords="359,849,558,904"/>
+<area shape="rect" id="node19" href="$namespacedftefe_1_1basis_1_1OEFEAtomBlockOverlapInvOpContextGLLInternal.html#a078119e8fd021f40e54d6f3a9a16bd62" title=" " alt="" coords="351,928,566,983"/>
+<area shape="rect" id="node20" href="$namespacedftefe_1_1basis_1_1OrthoEFEOverlapInverseOpContextGLLInternal.html#a4e1cd645aa932ab0812870b4e81b3eb4" title=" " alt="" coords="359,1007,558,1061"/>
+<area shape="rect" id="node21" href="$namespacedftefe_1_1basis_1_1CFEOverlapInverseOpContextGLLInternal.html#a4ed2ff16477264120e916d6ceaff9d57" title=" " alt="" coords="361,189,556,244"/>
+<area shape="rect" id="node22" href="$namespacedftefe_1_1basis_1_1CFEOverlapOperatorContextInternal.html#a11dd09df323caf7b6bc541b969271eb0" title=" " alt="" coords="363,1085,554,1140"/>
+<area shape="rect" id="node23" href="$classdftefe_1_1linearAlgebra_1_1OrthonormalizationFunctions.html#ae5b7e9dd23c9a8612b2b025b581f4a30" title=" " alt="" coords="362,1164,555,1219"/>
+<area shape="rect" id="node24" href="$classdftefe_1_1linearAlgebra_1_1RayleighRitzEigenSolver.html#a6a35a581793db77a6e23e79e1ee7febb" title=" " alt="" coords="375,1243,543,1297"/>
+<area shape="rect" id="node25" href="$classdftefe_1_1basis_1_1ConstraintsInternal.html#ab688fea691f3c9c24953fcf1e5c3bc65" title=" " alt="" coords="363,1321,554,1376"/>
+<area shape="rect" id="node26" href="$classdftefe_1_1basis_1_1ConstraintsInternal.html#abf8f16dd410ec3874f0ddfbbb9167ecc" title=" " alt="" coords="363,1400,554,1455"/>
+<area shape="rect" id="node27" href="$classdftefe_1_1basis_1_1ConstraintsInternal.html#acc79f85578e305cfae3bdc6deb4a95f8" title=" " alt="" coords="327,1479,590,1519"/>
+<area shape="rect" id="node28" href="$classdftefe_1_1basis_1_1ConstraintsInternal.html#a799dfc73b1d1df08b9b00a6d52f6133c" title=" " alt="" coords="347,1544,571,1599"/>
+<area shape="rect" id="node29" href="$classdftefe_1_1utils_1_1MemoryStorage.html#ae53237f8f422012c01111353a2feedce" title="Copies data from a MemoryStorage object in a different memory space. This provides a seamless interfa..." alt="" coords="356,1623,561,1663"/>
+<area shape="rect" id="node30" href="$classdftefe_1_1utils_1_1MemoryStorage.html#afc501984e4ab70ce31da09a23f44911a" title="Copies the data to a MemoryStorage object in a different memory space. This provides a seamless inter..." alt="" coords="367,1687,550,1727"/>
+<area shape="rect" id="node31" href="$namespacedftefe_1_1linearAlgebra_1_1OrthonormalizationFunctionsInternal.html#aae815cd933c3a9139cc222a4a69d0cb9" title=" " alt="" coords="333,1751,584,1821"/>
+<area shape="rect" id="node32" href="$classdftefe_1_1ksdft_1_1ExchangeCorrelationFE.html#a58b22e3d4a028faa80c32cfcdeed982a" title=" " alt="" coords="351,1845,566,1885"/>
+<area shape="rect" id="node33" href="$classdftefe_1_1utils_1_1MPICommunicatorP2PKernels.html#a68b85ff1d7ab91af7ad64ac91fe99b44" title="Function template for architecture adaptable gather kernel to send buffer." alt="" coords="334,1909,583,1964"/>
+<area shape="rect" id="node34" href="$classdftefe_1_1utils_1_1MPICommunicatorP2PKernels.html#adb152ee65e9fd40c2fcdc9ab8b0aeb7c" title="Function template for architecture adaptable gather kernel to send buffer." alt="" coords="331,1988,586,2043"/>
+<area shape="rect" id="node35" href="$namespacedftefe_1_1ksdft_1_1KohnShamDFTInternal.html#a71f9a797d983de9b19ff9c7a0a690675" title=" " alt="" coords="345,2067,573,2107"/>
+<area shape="rect" id="node36" href="$classdftefe_1_1ksdft_1_1KohnShamDFT.html#ac96bd9cd6a423c3fabe6f1b87e815cd7" title=" " alt="" coords="48,2095,233,2135"/>
+<area shape="rect" id="node37" href="$classdftefe_1_1ksdft_1_1ElectrostaticExcFE.html#a3d47be6c4ab87b09db4a51e79f765aae" title=" " alt="" coords="375,2182,543,2222"/>
+<area shape="rect" id="node38" href="$classdftefe_1_1MatrixFree.html#a3cbfefc8f0232e5083e92de5a465da40" title="Initialize data structures for MatrixFree class." alt="" coords="397,2246,520,2286"/>
+<area shape="rect" id="node39" href="$classdftefe_1_1utils_1_1MPICommunicatorP2PKernels.html#aadae6943c2c0cc54d5db50f1b1e530b3" title="Function template for architecture adaptable insert kernel from recv buffer." alt="" coords="341,2311,577,2365"/>
+<area shape="rect" id="node40" href="$classdftefe_1_1utils_1_1MemoryStorage.html#a244d9ab5a6f633118824c21bd28800e6" title="Constructor for Vector with size and initial value arguments." alt="" coords="367,2390,550,2430"/>
+<area shape="rect" id="node41" href="$classdftefe_1_1linearAlgebra_1_1OrthonormalizationFunctions.html#ad9151d4b00499163e318d104ee638dd8" title=" " alt="" coords="362,2455,555,2509"/>
+<area shape="rect" id="node42" href="$classdftefe_1_1ksdft_1_1ElectrostaticLocalFE.html#a23ea0a6cd65afafc7f0c17bda804bf9e" title=" " alt="" coords="375,2534,543,2574"/>
+<area shape="rect" id="node43" href="$classdftefe_1_1basis_1_1FECellWiseDataOperations.html#af8890e7f8ed9096c587ad5447e9d7c4f" title=" " alt="" coords="337,2598,580,2638"/>
+<area shape="rect" id="node44" href="$namespacedftefe_1_1linearAlgebra.html#aec72a9b69bd3c2702ea22dd92f6c94f4" title=" " alt="" coords="359,2662,558,2702"/>
+<area shape="rect" id="node45" href="$classdftefe_1_1linearAlgebra_1_1RayleighRitzEigenSolver.html#a5ef89e3aff712b50a48d8a5ed40fb593" title=" " alt="" coords="375,2727,543,2781"/>
+<area shape="rect" id="node46" href="$classdftefe_1_1linearAlgebra_1_1LanczosExtremeEigenSolver.html#ac653c35378fee8e266211889d59eb062" title=" " alt="" coords="362,2805,555,2860"/>
+<area shape="rect" id="node47" href="$namespacedftefe_1_1basis_1_1EFEBasisDataStorageDealiiInternal.html#ab05cce93f0479ddad74ff99b723e279f" title=" " alt="" coords="350,2884,567,2939"/>
+<area shape="rect" id="node48" href="$namespacedftefe_1_1basis_1_1EFEBDSOnTheFlyComputeDealiiInternal.html#a108d535e9f882105a90aba02603defad" title=" " alt="" coords="324,2963,593,3017"/>
+<area shape="rect" id="node49" href="$namespacedftefe_1_1basis_1_1EFEBasisDataStorageDealiiInternal.html#a690ad41f1fd7e294ea3a5015bb07a77a" title=" " alt="" coords="350,3041,567,3096"/>
+<area shape="rect" id="node50" href="$namespacedftefe_1_1basis_1_1EFEBDSOnTheFlyComputeDealiiInternal.html#a8f9643377265f8094d988e940dcf551b" title=" " alt="" coords="335,3121,582,3190"/>
+<area shape="rect" id="node4" href="$classdftefe_1_1basis_1_1CFEOverlapInverseOpContextGLL.html#aa8437e5784e96b364a184b3805813213" title=" " alt="" coords="27,5,255,60"/>
+<area shape="rect" id="node5" href="$classdftefe_1_1basis_1_1CFEOverlapOperatorContext.html#afacd3f53936471456f3334151fbe6afa" title=" " alt="" coords="19,84,262,139"/>
+<area shape="rect" id="node6" href="$namespacedftefe_1_1electrostatics_1_1PoissonLinearSolverFunctionFEInternal.html#ab8ae4b8a95b87bd649b328bc96767ff2" title=" " alt="" coords="41,163,240,217"/>
+<area shape="rect" id="node7" href="$namespacedftefe_1_1basis_1_1L2ProjectionLinearSolverFunctionInternal.html#aa2ebd70cdc9925c23e04ec3f7e283a2f" title=" " alt="" coords="47,241,235,296"/>
+<area shape="rect" id="node12" href="$classdftefe_1_1ksdft_1_1RDM1Mixing.html#a7b01e3c362b7bf918b61682d0379babd" title="Constructor." alt="" coords="56,557,225,597"/>
+<area shape="rect" id="node18" href="$classdftefe_1_1basis_1_1OrthoEFEOverlapOperatorContext.html#a9b2035250e2ffc9b1333a0c3b3aa012b" title="Constructor where the classical dofs have a different quadrature rule than that of the enrichment dof..." alt="" coords="29,849,252,904"/>
+</map>

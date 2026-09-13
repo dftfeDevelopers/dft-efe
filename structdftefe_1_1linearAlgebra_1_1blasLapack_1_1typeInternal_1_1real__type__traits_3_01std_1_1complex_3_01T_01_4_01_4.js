@@ -1,0 +1,4 @@
+var structdftefe_1_1linearAlgebra_1_1blasLapack_1_1typeInternal_1_1real__type__traits_3_01std_1_1complex_3_01T_01_4_01_4 =
+[
+    [ "real_t", "structdftefe_1_1linearAlgebra_1_1blasLapack_1_1typeInternal_1_1real__type__traits_3_01std_1_1complex_3_01T_01_4_01_4.html#aeba31f4366902446470e94d89346ed5b", null ]
+];

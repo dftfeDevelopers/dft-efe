@@ -1,0 +1,9 @@
+<map id="dftefe::ksdft::KineticFE::getLocal" name="dftefe::ksdft::KineticFE::getLocal">
+<area shape="rect" id="node1" title=" " alt="" coords="5,69,157,109"/>
+<area shape="rect" id="node2" href="$classdftefe_1_1ksdft_1_1HamiltonianSpinBlockCopyKernels.html#a44434e7c2f891e8269f3d66e83194897" title=" " alt="" coords="205,21,448,61"/>
+<area shape="rect" id="node4" href="$classdftefe_1_1utils_1_1MemoryStorage.html#a27a99259f56c8c34eac291943b080675" title="Deallocates and then resizes Vector with new size and initial value arguments." alt="" coords="235,101,418,141"/>
+<area shape="rect" id="node3" href="$classdftefe_1_1utils_1_1MemoryStorage.html#a51b8cb789b4fb7a976d6d914acac5482" title="Return iterator pointing to the beginning of point data." alt="" coords="510,5,693,45"/>
+<area shape="rect" id="node5" href="$classdftefe_1_1utils_1_1MemoryManager.html#a5b70ed03cd2d2b274182f8c7c2b4738b" title=" " alt="" coords="508,69,695,109"/>
+<area shape="rect" id="node6" href="$classdftefe_1_1utils_1_1MemoryManager.html#aca93dde952680d547c2e2534382a29da" title=" " alt="" coords="508,133,695,173"/>
+<area shape="rect" id="node7" href="$classdftefe_1_1utils_1_1MemoryManager.html#a8bcc70cc31721152c6e120e8010fe288" title=" " alt="" coords="496,198,707,223"/>
+</map>

@@ -1,0 +1,35 @@
+<map id="src/atoms/AtomSevereFunction.t.cpp" name="src/atoms/AtomSevereFunction.t.cpp">
+<area shape="rect" id="node1" title=" " alt="" coords="1086,5,1323,31"/>
+<area shape="rect" id="node2" href="$SmearChargeDensityFunction_8h.html" title=" " alt="" coords="820,79,992,119"/>
+<area shape="rect" id="node30" href="$PointChargePotentialFunction_8h.html" title=" " alt="" coords="1016,79,1188,119"/>
+<area shape="rect" id="node31" href="$SphericalHarmonics_8h.html" title=" " alt="" coords="1213,86,1402,111"/>
+<area shape="rect" id="node33" title=" " alt="" coords="1426,86,1509,111"/>
+<area shape="rect" id="node3" href="$ScalarSpatialFunction_8h.html" title=" " alt="" coords="841,167,1000,192"/>
+<area shape="rect" id="node6" href="$TypeConfig_8h.html" title=" " alt="" coords="751,387,847,412"/>
+<area shape="rect" id="node10" title=" " alt="" coords="1145,387,1203,412"/>
+<area shape="rect" id="node18" href="$MemorySpaceType_8h.html" title=" " alt="" coords="5,387,148,412"/>
+<area shape="rect" id="node19" href="$MemoryStorage_8h.html" title=" " alt="" coords="694,167,817,192"/>
+<area shape="rect" id="node29" title=" " alt="" coords="1076,167,1144,192"/>
+<area shape="rect" id="node4" href="$Point_8h.html" title=" " alt="" coords="973,240,1036,265"/>
+<area shape="rect" id="node7" title=" " alt="" coords="849,460,920,485"/>
+<area shape="rect" id="node12" href="$Exceptions_8h.html" title=" " alt="" coords="611,460,705,485"/>
+<area shape="rect" id="node5" href="$PointImpl_8h.html" title=" " alt="" coords="923,313,1009,339"/>
+<area shape="rect" id="node9" title=" " alt="" coords="907,533,979,559"/>
+<area shape="rect" id="node11" href="$PointImpl_8t_8cpp.html" title=" " alt="" coords="517,387,625,412"/>
+<area shape="rect" id="node8" title=" " alt="" coords="763,460,825,485"/>
+<area shape="rect" id="node17" title=" " alt="" coords="477,460,551,485"/>
+<area shape="rect" id="node13" title=" " alt="" coords="460,533,515,559"/>
+<area shape="rect" id="node14" title=" " alt="" coords="539,533,617,559"/>
+<area shape="rect" id="node15" title=" " alt="" coords="641,533,709,559"/>
+<area shape="rect" id="node16" href="$Exceptions_8t_8cpp.html" title=" " alt="" coords="733,533,849,559"/>
+<area shape="rect" id="node20" href="$MemoryManager_8h.html" title=" " alt="" coords="259,313,415,339"/>
+<area shape="rect" id="node26" href="$MemoryStorage_8t_8cpp.html" title=" " alt="" coords="473,240,617,265"/>
+<area shape="rect" id="node21" href="$MemoryManager_8t_8cpp.html" title=" " alt="" coords="173,387,322,412"/>
+<area shape="rect" id="node22" href="$DeviceAPICalls_8h.html" title=" " alt="" coords="330,460,453,485"/>
+<area shape="rect" id="node23" title=" " alt="" coords="81,460,136,485"/>
+<area shape="rect" id="node24" title=" " alt="" coords="160,460,220,485"/>
+<area shape="rect" id="node25" title=" " alt="" coords="245,460,306,485"/>
+<area shape="rect" id="node27" href="$MemoryTransfer_8h.html" title=" " alt="" coords="439,313,594,339"/>
+<area shape="rect" id="node28" href="$MemoryTransfer_8t_8cpp.html" title=" " alt="" coords="346,387,493,412"/>
+<area shape="rect" id="node32" href="$DeviceTypeConfig_8h.html" title=" " alt="" coords="1339,167,1503,192"/>
+</map>

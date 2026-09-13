@@ -1,0 +1,52 @@
+<map id="src/basis/PristineEFEOverlapOperatorContext.t.cpp" name="src/basis/PristineEFEOverlapOperatorContext.t.cpp">
+<area shape="rect" id="node1" title=" " alt="" coords="3472,5,3664,45"/>
+<area shape="rect" id="node2" href="$BlasLapack_8h.html" title=" " alt="" coords="3306,189,3486,214"/>
+<area shape="rect" id="node13" title=" " alt="" coords="4801,577,4860,603"/>
+<area shape="rect" id="node16" href="$LinAlgOpContext_8h.html" title=" " alt="" coords="1336,343,1467,368"/>
+<area shape="rect" id="node24" href="$BlasLapackTypedef_8h.html" title=" " alt="" coords="5,416,176,456"/>
+<area shape="rect" id="node30" href="$FECellWiseDataOperations_8h.html" title=" " alt="" coords="2036,269,2260,295"/>
+<area shape="rect" id="node34" href="$OptimizedIndexSet_8h.html" title=" " alt="" coords="5266,189,5435,214"/>
+<area shape="rect" id="node37" title=" " alt="" coords="5541,343,5651,368"/>
+<area shape="rect" id="node38" href="$EnrichmentClassicalInterfaceSpherical_8h.html" title=" " alt="" coords="3543,93,3718,133"/>
+<area shape="rect" id="node3" href="$LinearAlgebraTypes_8h.html" title=" " alt="" coords="3801,416,3983,456"/>
+<area shape="rect" id="node6" href="$ConditionalOStream_8h.html" title=" " alt="" coords="1684,343,1860,368"/>
+<area shape="rect" id="node11" href="$Profiler_8h.html" title=" " alt="" coords="4642,343,4742,368"/>
+<area shape="rect" id="node14" href="$linearAlgebra_2Defaults_8h.html" title=" " alt="" coords="3356,269,3436,295"/>
+<area shape="rect" id="node28" href="$BlasAPIWrapper_8h.html" title=" " alt="" coords="1190,269,1397,295"/>
+<area shape="rect" id="node29" href="$BlasLapack_8t_8cpp.html" title=" " alt="" coords="3249,343,3372,368"/>
+<area shape="rect" id="node4" title=" " alt="" coords="3715,504,3762,529"/>
+<area shape="rect" id="node5" title=" " alt="" coords="4271,504,4326,529"/>
+<area shape="rect" id="node7" title=" " alt="" coords="1876,423,1945,449"/>
+<area shape="rect" id="node8" href="$utils_2Defaults_8h.html" title=" " alt="" coords="1743,423,1851,449"/>
+<area shape="rect" id="node9" title=" " alt="" coords="2277,651,2347,676"/>
+<area shape="rect" id="node10" href="$TypeConfig_8h.html" title=" " alt="" coords="2785,577,2909,603"/>
+<area shape="rect" id="node12" href="$MPITypes_8h.html" title=" " alt="" coords="4869,423,4987,449"/>
+<area shape="rect" id="node15" title=" " alt="" coords="2202,504,2270,529"/>
+<area shape="rect" id="node25" href="$MemoryStorage_8h.html" title=" " alt="" coords="3385,504,3535,529"/>
+<area shape="rect" id="node17" href="$MemorySpaceType_8h.html" title=" " alt="" coords="2273,423,2444,449"/>
+<area shape="rect" id="node18" href="$DeviceUtils_8h.html" title=" " alt="" coords="1541,423,1667,449"/>
+<area shape="rect" id="node19" href="$DeviceTypeConfig_8h.html" title=" " alt="" coords="302,423,466,449"/>
+<area shape="rect" id="node20" href="$DeviceKernelLauncherHelpers_8h.html" title=" " alt="" coords="491,416,672,456"/>
+<area shape="rect" id="node21" href="$DeviceAPICalls_8h.html" title=" " alt="" coords="696,423,819,449"/>
+<area shape="rect" id="node22" href="$DeviceDataTypeOverloads_8h.html" title=" " alt="" coords="843,423,1058,449"/>
+<area shape="rect" id="node23" href="$DeviceTypeConfigHalfPrec_8h.html" title=" " alt="" coords="1083,416,1261,456"/>
+<area shape="rect" id="node27" href="$LinAlgOpContext_8t_8cpp.html" title=" " alt="" coords="1286,423,1517,449"/>
+<area shape="rect" id="node26" title=" " alt="" coords="110,504,175,529"/>
+<area shape="rect" id="node31" href="$BasisManager_8h.html" title=" " alt="" coords="3221,423,3371,449"/>
+<area shape="rect" id="node33" href="$BasisDataStorage_8h.html" title=" " alt="" coords="2037,343,2209,368"/>
+<area shape="rect" id="node32" href="$Point_8h.html" title=" " alt="" coords="3075,504,3138,529"/>
+<area shape="rect" id="node35" title=" " alt="" coords="4897,269,4937,295"/>
+<area shape="rect" id="node36" href="$OptimizedIndexSet_8t_8cpp.html" title=" " alt="" coords="5367,269,5558,295"/>
+<area shape="rect" id="node39" href="$MPIWrapper_8h.html" title=" " alt="" coords="4383,343,4515,368"/>
+<area shape="rect" id="node40" href="$FEBasisManager_8h.html" title=" " alt="" coords="2906,269,3073,295"/>
+<area shape="rect" id="node41" href="$FEBasisDofHandler_8h.html" title=" " alt="" coords="2943,343,3124,368"/>
+<area shape="rect" id="node42" href="$TriangulationBase_8h.html" title=" " alt="" coords="2823,423,2993,449"/>
+<area shape="rect" id="node43" href="$FEBasisDataStorage_8h.html" title=" " alt="" coords="2589,269,2777,295"/>
+<area shape="rect" id="node44" href="$CFEOverlapOperatorContext_8h.html" title=" " alt="" coords="1783,181,1961,221"/>
+<area shape="rect" id="node45" href="$FEBasisOperations_8h.html" title=" " alt="" coords="2335,189,2513,214"/>
+<area shape="rect" id="node46" href="$AtomIdsPartition_8h.html" title=" " alt="" coords="4485,269,4649,295"/>
+<area shape="rect" id="node47" href="$basis_2Defaults_8h.html" title=" " alt="" coords="4041,343,4156,368"/>
+<area shape="rect" id="node48" href="$AtomSphericalDataContainer_8h.html" title=" " alt="" coords="3511,269,3750,295"/>
+<area shape="rect" id="node49" href="$EnrichmentIdsPartition_8h.html" title=" " alt="" coords="4002,189,4201,214"/>
+<area shape="rect" id="node50" href="$EnrichmentClassicalInterfaceSpherical_8t_8cpp.html" title=" " alt="" coords="4830,181,5005,221"/>
+</map>

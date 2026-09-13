@@ -1,0 +1,4 @@
+<map id="dftefe::quadrature::QuadratureRuleContainer::getCellParametricPoints" name="dftefe::quadrature::QuadratureRuleContainer::getCellParametricPoints">
+<area shape="rect" id="node1" title="Function that returns a vector containing the real coordinates of the quad points in cell correspondi..." alt="" coords="227,5,400,60"/>
+<area shape="rect" id="node2" href="$classdftefe_1_1quadrature_1_1QuadratureRuleContainer.html#abe1c7b1dacd4cd250dafbcc30796beb9" title="Constructor for creating a subdivided quadrature rule in each cell based user&#45;defined functions and a..." alt="" coords="5,5,179,60"/>
+</map>

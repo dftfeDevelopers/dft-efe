@@ -1,0 +1,6 @@
+<map id="dftefe::utils::MemoryStorage::resize" name="dftefe::utils::MemoryStorage::resize">
+<area shape="rect" id="node1" title="Deallocates and then resizes Vector with new size and initial value arguments." alt="" coords="5,69,188,109"/>
+<area shape="rect" id="node2" href="$classdftefe_1_1utils_1_1MemoryManager.html#a5b70ed03cd2d2b274182f8c7c2b4738b" title=" " alt="" coords="248,5,435,45"/>
+<area shape="rect" id="node3" href="$classdftefe_1_1utils_1_1MemoryManager.html#aca93dde952680d547c2e2534382a29da" title=" " alt="" coords="248,69,435,109"/>
+<area shape="rect" id="node4" href="$classdftefe_1_1utils_1_1MemoryManager.html#a8bcc70cc31721152c6e120e8010fe288" title=" " alt="" coords="236,134,447,159"/>
+</map>

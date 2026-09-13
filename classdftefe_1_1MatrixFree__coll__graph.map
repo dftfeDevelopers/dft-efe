@@ -1,0 +1,7 @@
+<map id="dftefe::MatrixFree&lt; T, operatorID, memorySpace, isComplex, nDofsPerDim, nQuadPointsPerDim, batchSize, subBatchSize &gt;" name="dftefe::MatrixFree&lt; T, operatorID, memorySpace, isComplex, nDofsPerDim, nQuadPointsPerDim, batchSize, subBatchSize &gt;">
+<area shape="rect" id="node1" title="MatrixFree class template. template parameter nDofsPerDim is the finite element polynomial order...." alt="" coords="417,85,628,169"/>
+<area shape="rect" id="node2" href="$classdftefe_1_1utils_1_1MemoryStorage.html" title=" " alt="" coords="14,5,197,45"/>
+<area shape="rect" id="node3" href="$classdftefe_1_1utils_1_1MemoryStorage.html" title=" " alt="" coords="8,69,203,109"/>
+<area shape="rect" id="node4" href="$classdftefe_1_1utils_1_1MemoryStorage.html" title=" " alt="" coords="5,137,205,191"/>
+<area shape="rect" id="node5" href="$classdftefe_1_1utils_1_1MemoryStorage.html" title=" " alt="" coords="14,299,197,354"/>
+</map>

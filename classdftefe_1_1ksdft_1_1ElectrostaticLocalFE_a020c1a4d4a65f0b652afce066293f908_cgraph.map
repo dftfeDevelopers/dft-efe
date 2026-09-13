@@ -1,0 +1,9 @@
+<map id="dftefe::ksdft::ElectrostaticLocalFE::getLocal" name="dftefe::ksdft::ElectrostaticLocalFE::getLocal">
+<area shape="rect" id="node1" title=" " alt="" coords="5,147,173,187"/>
+<area shape="rect" id="node2" href="$namespacedftefe_1_1quadrature.html#a7fc259e3f52195575c91bb2164fa8bda" title="Perform ." alt="" coords="268,97,417,123"/>
+<area shape="rect" id="node5" href="$classdftefe_1_1utils_1_1MemoryTransfer.html#a7f0d9eed66c1e39ad68c80643f4b6ac0" title="Copy array from the memory space of source to the memory space of destination." alt="" coords="250,147,435,187"/>
+<area shape="rect" id="node6" href="$classdftefe_1_1ksdft_1_1HamiltonianSpinBlockCopyKernels.html#a44434e7c2f891e8269f3d66e83194897" title=" " alt="" coords="221,211,464,251"/>
+<area shape="rect" id="node3" href="$classdftefe_1_1quadrature_1_1QuadratureValuesContainer.html#ac0f80485fa38eff33ee059b6c36a005f" title=" " alt="" coords="512,29,699,84"/>
+<area shape="rect" id="node4" href="$classdftefe_1_1quadrature_1_1QuadratureValuesContainer.html#ad2504793324141b6cc7802b8c0967d35" title=" " alt="" coords="512,108,699,163"/>
+<area shape="rect" id="node7" href="$classdftefe_1_1utils_1_1MemoryStorage.html#a51b8cb789b4fb7a976d6d914acac5482" title="Return iterator pointing to the beginning of point data." alt="" coords="514,211,697,251"/>
+</map>

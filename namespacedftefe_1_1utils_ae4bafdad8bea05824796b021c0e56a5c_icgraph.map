@@ -1,0 +1,8 @@
+<map id="dftefe::utils::flatten" name="dftefe::utils::flatten">
+<area shape="rect" id="node1" title="Flatten a vector of points into a contiguous coordinate array. Output layout: [x0,..." alt="" coords="533,99,660,124"/>
+<area shape="rect" id="node2" href="$classdftefe_1_1quadrature_1_1QuadratureRuleContainer.html#a6e9cfbdc335fa04022b78f843c5b05a7" title="Constructor for assigning each cell with a common quadrature rule." alt="" coords="290,5,463,60"/>
+<area shape="rect" id="node3" href="$namespacedftefe_1_1basis_1_1CFEBasisDataStorageDealiiInternal.html#a413b6591cb54c3f21942a405b7699841" title=" " alt="" coords="268,84,485,139"/>
+<area shape="rect" id="node5" href="$namespacedftefe_1_1basis_1_1EFEBasisDataStorageDealiiInternal.html#ab05cce93f0479ddad74ff99b723e279f" title=" " alt="" coords="268,163,485,217"/>
+<area shape="rect" id="node4" href="$classdftefe_1_1basis_1_1CFEBasisDataStorageDealii.html#aa5ed61b23a3d6fc7455d2eba504b040b" title=" " alt="" coords="5,91,220,131"/>
+<area shape="rect" id="node6" href="$classdftefe_1_1basis_1_1EFEBasisDataStorageDealii.html#a2d48545c496bfde83c91323341b8d412" title=" " alt="" coords="5,170,220,210"/>
+</map>

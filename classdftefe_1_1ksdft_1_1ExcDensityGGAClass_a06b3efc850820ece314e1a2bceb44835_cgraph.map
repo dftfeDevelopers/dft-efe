@@ -1,0 +1,4 @@
+<map id="dftefe::ksdft::ExcDensityGGAClass::computeRhoTauDependentXCData" name="dftefe::ksdft::ExcDensityGGAClass::computeRhoTauDependentXCData">
+<area shape="rect" id="node1" title="Pure virtual. Call directly when you have pre&#45;built density maps (e.g. from non&#45;spin&#45;polarized RDM1 s..." alt="" coords="5,5,252,60"/>
+<area shape="rect" id="node2" href="$namespacedftefe_1_1ksdft_1_1internal.html#ad730bfc190601257cb466420cb2d185d" title=" " alt="" coords="300,13,439,53"/>
+</map>
