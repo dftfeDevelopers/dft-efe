@@ -98,6 +98,16 @@ ENDIF()
 
 add_library(dft-efe-basis SHARED ${DFT-EFE-BASIS-SOURCES})
 
+IF (ENABLE_GPU)
+IF ("${GPU_LANG}" STREQUAL "sycl")
+# LINK_FLAGS on the source files above only affects their compile step;
+# the library's own link step needs the SYCL flags too (-fsycl
+# -fsycl-targets=... ) or its device kernels don't get linked into the
+# final .so's device image, causing "No kernel named ..." at runtime.
+set_target_properties(dft-efe-basis PROPERTIES LINK_FLAGS ${CMAKE_SYCL_FLAGS})
+ENDIF()
+ENDIF()
+
 include_directories(../)
 
 find_package(deal.II 9.7.0 REQUIRED HINTS ${DEALII_PATH})

@@ -19,6 +19,7 @@
 #ifdef DFTEFE_WITH_DEVICE_LANG_SYCL
 #  include <utils/DeviceAPICalls.h>
 #  include <stdio.h>
+#  include <iostream>
 #  include <vector>
 #  include <utils/DeviceDataTypeOverloads.h>
 #  include <utils/DeviceKernelLauncherHelpers.h>
@@ -69,14 +70,16 @@ namespace dftefe
     {
       try
         {
-          *free =
+          // free_memory is the free *global* device memory; global_mem_size is
+          // the total. The previous code reported local_mem_size (SLM per
+          // work-group, ~64 KiB) as "free" and free_memory as "total", which
+          // made Profiler's `used = total - free` print the free memory as if
+          // it were the memory in use.
+          const auto &dev =
             dftefe::utils::queueRegistry.find(dftefe::utils::defaultStream)
-              ->second.get_device()
-              .get_info<sycl::info::device::local_mem_size>();
-          *total =
-            dftefe::utils::queueRegistry.find(dftefe::utils::defaultStream)
-              ->second.get_device()
-              .get_info<sycl::ext::intel::info::device::free_memory>();
+              ->second.get_device();
+          *free  = dev.get_info<sycl::ext::intel::info::device::free_memory>();
+          *total = dev.get_info<sycl::info::device::global_mem_size>();
         }
       catch (const deviceError_t &e)
         {
@@ -112,6 +115,7 @@ namespace dftefe
     deviceError_t
     deviceMalloc(void **devPtr, std::size_t size)
     {
+      *devPtr = nullptr;
       try
         {
           *devPtr = sycl::malloc_device(size,
@@ -119,9 +123,27 @@ namespace dftefe
                                           .find(dftefe::utils::defaultStream)
                                           ->second);
         }
+      catch (const sycl::exception &e)
+        {
+          std::cerr << "sycl::malloc_device failed for " << size
+                    << " bytes: " << e.what() << std::endl;
+          return sycl::make_error_code(sycl::errc::memory_allocation);
+        }
       catch (const dftefe::utils::deviceError_t &e)
         {
           return e;
+        }
+      // sycl::malloc_device reports out-of-memory by returning nullptr rather
+      // than throwing. Without this check the null pointer was handed back
+      // alongside deviceSuccess, and the first device write through it (e.g.
+      // the fill in MemoryStorage::resize) faulted as a GPU page fault at a
+      // near-null address instead of reporting the failed allocation.
+      if (size > 0 && *devPtr == nullptr)
+        {
+          std::cerr << "sycl::malloc_device returned nullptr for " << size
+                    << " bytes (" << (double)size / 1073741824.0
+                    << " GB) -- out of device memory." << std::endl;
+          return sycl::make_error_code(sycl::errc::memory_allocation);
         }
       return dftefe::utils::deviceSuccess;
     }
@@ -154,7 +176,15 @@ namespace dftefe
                              makeDataTypeDeviceCompatible(value),
                              size);
             });
-      DEVICE_API_CHECK(event);
+      try
+        {
+          event.wait();
+        }
+      catch (const sycl::exception &e)
+        {
+          std::cerr << "SYCL error in " << __func__ << " at " << __FILE__ << ":"
+                    << __LINE__ << ". Error code: " << e.what() << ".\n";
+        }
     }
 
     template void

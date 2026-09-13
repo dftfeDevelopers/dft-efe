@@ -38,6 +38,7 @@
 #include <type_traits>
 #include <ksdft/ElectrostaticONCVNonLocFE.h>
 #include <ksdft/ElectrostaticExcFE.h>
+#include <ksdft/KSAttributes.h>
 
 namespace dftefe
 {
@@ -109,7 +110,8 @@ namespace dftefe
                         linAlgOpContext,
         const size_type maxCellBlock,
         const size_type maxWaveFnBatch,
-        const bool      useOptimizedImplement = true);
+        const bool      useOptimizedImplement = true,
+        const SpinMode  spinMode              = SpinMode::Unpolarized);
 
       ~KohnShamOperatorContextFE() = default;
 
@@ -126,6 +128,12 @@ namespace dftefe
             bool updateGhostX = false,
             bool updateGhostY = false) const override;
 
+      const Storage &
+      getHamiltonianInAllCells() const
+      {
+        return d_hamiltonianInAllCells;
+      }
+
     private:
       const basis::FEBasisManager<ValueTypeOperand,
                                   ValueTypeWaveFunctionBasis,
@@ -141,7 +149,9 @@ namespace dftefe
       mutable linearAlgebra::MultiVector<ValueTypeOperator, memorySpace>
         d_scratchNonLocPSPApply;
 
-      const bool d_useOptimizedImplement;
+      const bool      d_useOptimizedImplement;
+      const SpinMode  d_spinMode;
+      const size_type d_S;
 
       mutable std::shared_ptr<
         utils::MemoryStorage<ValueTypeOperand, memorySpace>>

@@ -2004,7 +2004,8 @@ namespace dftefe
                                         cellLocalIdsOffset,
                                       // cellsInBlockNumDoFs,
                                       cellsInBlockNumCumulativeDoFs,
-                                      xCellValues);
+                                      xCellValues,
+                                      linAlgOpContext);
 
             std::vector<char> transA(numCellsInBlock, 'N');
             std::vector<char> transB(numCellsInBlock, 'N');
@@ -2086,7 +2087,8 @@ namespace dftefe
                                            cellLocalIdsOffset,
                                          // cellsInBlockNumDoFs,
                                          cellsInBlockNumCumulativeDoFs,
-                                         y);
+                                         y,
+                                         linAlgOpContext);
 
             for (size_type iCell = 0; iCell < numCellsInBlock; ++iCell)
               {
@@ -2293,7 +2295,7 @@ namespace dftefe
 
       utils::MemoryStorage<size_type, memorySpace> locallyOwnedCellsNumDoFs(
         numLocallyOwnedCells);
-      locallyOwnedCellsNumDoFs.template copyFrom(locallyOwnedCellsNumDoFsSTL);
+      locallyOwnedCellsNumDoFs.copyFrom(locallyOwnedCellsNumDoFsSTL);
 
       const size_type numCumulativeDofsCells =
         std::accumulate(locallyOwnedCellsNumDoFsSTL.begin(),
@@ -2311,7 +2313,8 @@ namespace dftefe
                                            itCellLocalIdsBegin,
                                            locallyOwnedCellsNumDoFs,
                                            numCumulativeDofsCells,
-                                           d_diagonal->data());
+                                           d_diagonal->data(),
+                                           *linAlgOpContext);
 
       d_feBasisManager->getConstraints().distributeChildToParent(*d_diagonal,
                                                                  1);
@@ -2704,7 +2707,7 @@ namespace dftefe
 
       utils::MemoryStorage<size_type, memorySpace> locallyOwnedCellsNumDoFs(
         numLocallyOwnedCells);
-      locallyOwnedCellsNumDoFs.template copyFrom(locallyOwnedCellsNumDoFsSTL);
+      locallyOwnedCellsNumDoFs.copyFrom(locallyOwnedCellsNumDoFsSTL);
 
       const size_type numCumulativeDofsCells =
         std::accumulate(locallyOwnedCellsNumDoFsSTL.begin(),
@@ -2722,7 +2725,8 @@ namespace dftefe
                                            itCellLocalIdsBegin,
                                            locallyOwnedCellsNumDoFs,
                                            numCumulativeDofsCells,
-                                           d_diagonal->data());
+                                           d_diagonal->data(),
+                                           *linAlgOpContext);
 
       d_feBasisManager->getConstraints().distributeChildToParent(*d_diagonal,
                                                                  1);

@@ -20,6 +20,8 @@
 #ifndef dftefeDeviceKernelLauncherHelpers_h
 #define dftefeDeviceKernelLauncherHelpers_h
 
+#include <tuple>
+
 #ifdef DFTEFE_WITH_DEVICE
 #  ifdef DFTEFE_WITH_DEVICE_NVIDIA
 namespace dftefe
@@ -76,14 +78,27 @@ namespace dftefe
         }                                                                  \
       while (0)
 #  elif defined(DFTEFE_WITH_DEVICE_LANG_SYCL)
+  // __VA_ARGS__ is evaluated eagerly via std::make_tuple, then unpacked back
+  // into a plain parameter pack via std::apply *on the host*, before the
+  // kernel lambda is created. The kernel lambda itself ends up an ordinary
+  // capture-by-value lambda over N plain values -- never `this`, a member,
+  // or a MemoryStorage object that a call site's argument expression (e.g.
+  // `d_x`, `storage.data()`) would otherwise require capturing in order to
+  // re-evaluate on the device. Crucially, no std::apply/std::tuple survives
+  // *inside* the kernel body or its capture list: unpacking inside the
+  // kernel (rather than before it's built) compiles and links fine but can
+  // silently break AOT (-fsycl-targets=spir64_gen) kernel enumeration, so
+  // the SYCL runtime can't find the device binary for it at launch time.
 #    define DFTEFE_LAUNCH_KERNEL(kernel, grid, block, stream, ...)        \
-      do                                                                  \
-        {                                                                 \
+      std::apply(                                                         \
+        [&](auto &&...dftefe_launch_kernel_args_) {                       \
           dftefe::utils::queueRegistry.find(stream)->second.parallel_for( \
             sycl::nd_range<1>((grid) * (block), block),                   \
-            [=](sycl::nd_item<1> ind) { kernel(ind, __VA_ARGS__); });     \
-        }                                                                 \
-      while (0)
+            [=](sycl::nd_item<1> ind) {                                   \
+              kernel(ind, dftefe_launch_kernel_args_...);                 \
+            });                                                           \
+        },                                                                \
+        std::make_tuple(__VA_ARGS__))
 #  else
 #    error \
       "No device backend defined (DFTEFE_WITH_DEVICE_LANG_CUDA or DFTEFE_WITH_DEVICE_LANG_HIP or DFTEFE_WITH_DEVICE_LANG_SYCL)"
@@ -114,8 +129,8 @@ namespace dftefe
 #  elif defined(DFTEFE_WITH_DEVICE_LANG_SYCL)
 #    define DFTEFE_LAUNCH_KERNEL_SMEM_D(                                   \
       kernel, grid, block, smemtype, smemcount, stream, ...)               \
-      do                                                                   \
-        {                                                                  \
+      std::apply(                                                          \
+        [&](auto &&...dftefe_launch_kernel_args_) {                        \
           dftefe::utils::queueRegistry.find(stream)->second.submit(        \
             [=](sycl::handler &cgh) {                                      \
               sycl::local_accessor<smemtype, 1> SMem_acc(smemcount, cgh);  \
@@ -123,11 +138,11 @@ namespace dftefe
                                [=](sycl::nd_item<1> ind) {                 \
                                  kernel(ind,                               \
                                         SMem_acc.get_pointer(),            \
-                                        __VA_ARGS__);                      \
+                                        dftefe_launch_kernel_args_...);    \
                                });                                         \
             });                                                            \
-        }                                                                  \
-      while (0)
+        },                                                                 \
+        std::make_tuple(__VA_ARGS__))
 #  else
 #    error \
       "No device backend defined (DFTEFE_WITH_DEVICE_LANG_CUDA or DFTEFE_WITH_DEVICE_LANG_HIP or DFTEFE_WITH_DEVICE_LANG_SYCL)"
@@ -153,8 +168,8 @@ namespace dftefe
 #  elif defined(DFTEFE_WITH_DEVICE_LANG_SYCL)
 #    define DFTEFE_LAUNCH_KERNEL_SMEM_S(                                   \
       kernel, grid, block, smemtype, smemcount, stream, ...)               \
-      do                                                                   \
-        {                                                                  \
+      std::apply(                                                          \
+        [&](auto &&...dftefe_launch_kernel_args_) {                        \
           dftefe::utils::queueRegistry.find(stream)->second.submit(        \
             [=](sycl::handler &cgh) {                                      \
               sycl::local_accessor<smemtype, 1> SMem_acc(smemcount, cgh);  \
@@ -162,11 +177,11 @@ namespace dftefe
                                [=](sycl::nd_item<1> ind) {                 \
                                  kernel(ind,                               \
                                         SMem_acc.get_pointer(),            \
-                                        __VA_ARGS__);                      \
+                                        dftefe_launch_kernel_args_...);    \
                                });                                         \
             });                                                            \
-        }                                                                  \
-      while (0)
+        },                                                                 \
+        std::make_tuple(__VA_ARGS__))
 #  else
 #    error \
       "No device backend defined (DFTEFE_WITH_DEVICE_LANG_CUDA or DFTEFE_WITH_DEVICE_LANG_HIP or DFTEFE_WITH_DEVICE_LANG_SYCL)"

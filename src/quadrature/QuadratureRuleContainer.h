@@ -18,6 +18,10 @@ namespace dftefe
 {
   namespace quadrature
   {
+    template <utils::MemorySpace memorySpace>
+    struct FuncEvalTag
+    {};
+
     /**
      * This class stores the quadrature points and corresponding JxW in each
      * cell. This supports adaptive quadrature i.e each cell can have different
@@ -71,6 +75,24 @@ namespace dftefe
        * point
        */
       QuadratureRuleContainer(
+        const QuadratureRuleAttributes &      quadratureRuleAttributes,
+        std::shared_ptr<const QuadratureRule> baseQuadratureRule,
+        std::shared_ptr<const basis::TriangulationBase> triangulation,
+        const basis::CellMappingBase &                  cellMapping,
+        basis::ParentToChildCellsManagerBase &parentToChildCellsManager,
+        std::vector<std::shared_ptr<const utils::ScalarSpatialFunctionReal>>
+                                   functions,
+        const std::vector<double> &absoluteTolerances,
+        const std::vector<double> &relativeTolerances,
+        const std::vector<double> &integralThresholds,
+        const double               smallestCellVolume =
+          QuadratureRuleAdaptiveDefaults::SMALLEST_CELL_VOLUME,
+        const dftefe::size_type maxRecursion =
+          QuadratureRuleAdaptiveDefaults::MAX_RECURSION);
+
+      template <utils::MemorySpace memorySpace>
+      QuadratureRuleContainer(
+        FuncEvalTag<memorySpace>,
         const QuadratureRuleAttributes &      quadratureRuleAttributes,
         std::shared_ptr<const QuadratureRule> baseQuadratureRule,
         std::shared_ptr<const basis::TriangulationBase> triangulation,

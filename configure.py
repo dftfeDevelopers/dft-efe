@@ -51,7 +51,9 @@ cmake_dict = {'ELPA_DIR':['', 'Path to ELPA installation',
               'CMAKE_HIP_FLAGS':['','Additional flags for CUDA',
                                   '''--CMAKE_CUDA_FLAGS="-I'$MPICH_DIR'/include -arch=sm_80"'''],
               'CMAKE_HIP_ARCHITECTURES':['','Additional flags for CUDA',
-                                  '''--CMAKE_CUDA_ARCHITECTURES="80"'''],                                  
+                                  '''--CMAKE_CUDA_ARCHITECTURES="80"'''],
+              'CMAKE_SYCL_FLAGS':['','Additional flags for SYCL',
+                                  '''"--intel -fsycl -O2 -fsycl-targets=spir64_gen -Xsycl-target-backend \"-device pvc\" -fp-model=precise"'''],
               'LIBXML_LIBRARIES': ['', 'Path to libxml2 libraries',
                                   '''--LIBXML_LIBRARIES=
                                    "-L/path/to/libxml2/libraries -lxml2"

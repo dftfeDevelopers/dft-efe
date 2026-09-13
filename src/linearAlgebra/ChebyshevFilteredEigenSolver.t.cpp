@@ -25,6 +25,7 @@
 
 #include <linearAlgebra/BlasLapackTypedef.h>
 #include <linearAlgebra/BlasLapack.h>
+#include <linearAlgebra/MultiVectorOps.h>
 #include <utils/DataTypeOverloads.h>
 #include <linearAlgebra/Defaults.h>
 #include <utils/ConditionalOStream.h>
@@ -298,23 +299,32 @@ namespace dftefe
         chfsiScratch2 = nullptr, chfsiResidualScratch1 = nullptr,
         chfsiResidualScratch2 = nullptr;
 
+      auto *Xps = static_cast<
+        linearAlgebra::MultiVectorProductSpace<ValueType, memorySpace> *>(
+        &eigenVectors);
+      const size_type numSpaces        = Xps->numSpaces();
+      const size_type numVecPerSpace   = Xps->numVectorsPerSpace();
+      const size_type eigVecBatchPerSp = d_eigenVecBatchSize / numSpaces;
+
       if (d_scratch)
         d_scratch->acquire();
 
-      for (size_type eigVecStartId = 0; eigVecStartId < numEigenVectors;
-           eigVecStartId += d_eigenVecBatchSize)
+      for (size_type eigVecStartId = 0; eigVecStartId < numVecPerSpace;
+           eigVecStartId += eigVecBatchPerSp)
         {
-          const size_type eigVecEndId =
-            std::min(eigVecStartId + d_eigenVecBatchSize, numEigenVectors);
-          const size_type numEigVecInBatch = eigVecEndId - eigVecStartId;
+          const size_type numEigVecInBatch =
+            std::min(eigVecStartId + eigVecBatchPerSp, numVecPerSpace) -
+            eigVecStartId;
+          const size_type numEigVecInBatchTotal = numSpaces * numEigVecInBatch;
 
-          std::vector<RealType> eigenValBatch(numEigVecInBatch, 0);
+          std::vector<RealType> eigenValBatch(numEigVecInBatchTotal, 0);
+          for (size_type s = 0; s < numSpaces; ++s)
+            std::copy(eigenValues.data() + s * numVecPerSpace + eigVecStartId,
+                      eigenValues.data() + s * numVecPerSpace + eigVecStartId +
+                        numEigVecInBatch,
+                      eigenValBatch.begin() + s * numEigVecInBatch);
 
-          std::copy(eigenValues.data() + eigVecStartId,
-                    eigenValues.data() + eigVecEndId,
-                    eigenValBatch.begin());
-
-          if (numEigVecInBatch % d_eigenVecBatchSize == 0)
+          if (numEigVecInBatch == eigVecBatchPerSp)
             {
               // for (size_type iSize = 0; iSize < eigenVecLocalSize; iSize++)
               //   memoryTransfer.copy(numEigVecInBatch,
@@ -324,15 +334,11 @@ namespace dftefe
               //                         iSize * numEigenVectors +
               //                         eigVecStartId);
 
-              blasLapack::stridedBlockCopy(eigenVecLocalSize,
-                                           numEigVecInBatch,
-                                           numEigenVectors,
-                                           eigVecStartId,
-                                           numEigVecInBatch,
-                                           0,
-                                           eigenVectors.data(),
-                                           d_XinBatch->data(),
-                                           *eigenVectors.getLinAlgOpContext());
+              MultiVectorOps::copyToBatch(*Xps,
+                                          eigVecStartId,
+                                          numEigVecInBatch,
+                                          *d_XinBatch,
+                                          *eigenVectors.getLinAlgOpContext());
 
               subspaceBatchIn  = d_XinBatch;
               subspaceBatchOut = d_XoutBatch;
@@ -342,17 +348,13 @@ namespace dftefe
               chfsiResidualScratch1 = d_chfsiResidualScratch1;
               chfsiResidualScratch2 = d_chfsiResidualScratch2;
             }
-          else if (numEigVecInBatch % d_eigenVecBatchSize == d_batchSizeSmall)
+          else if (numEigVecInBatch == d_batchSizeSmall)
             {
-              blasLapack::stridedBlockCopy(eigenVecLocalSize,
-                                           numEigVecInBatch,
-                                           numEigenVectors,
-                                           eigVecStartId,
-                                           numEigVecInBatch,
-                                           0,
-                                           eigenVectors.data(),
-                                           d_XinBatchSmall->data(),
-                                           *eigenVectors.getLinAlgOpContext());
+              MultiVectorOps::copyToBatch(*Xps,
+                                          eigVecStartId,
+                                          numEigVecInBatch,
+                                          *d_XinBatchSmall,
+                                          *eigenVectors.getLinAlgOpContext());
 
               subspaceBatchIn  = d_XinBatchSmall;
               subspaceBatchOut = d_XoutBatchSmall;
@@ -369,7 +371,7 @@ namespace dftefe
               const bool useSmallScratch =
                 d_scratch != nullptr && d_scratch->hasXinBatchSmall() &&
                 d_scratch->hasXoutBatchSmall() &&
-                d_scratch->getXinBatchSmallSize() == numEigVecInBatch;
+                d_scratch->getXinBatchSmallSize() == numEigVecInBatchTotal;
 
               if (useSmallScratch)
                 {
@@ -382,14 +384,14 @@ namespace dftefe
                     linearAlgebra::MultiVector<ValueType, memorySpace>>(
                     d_mpiPatternP2P,
                     eigenVectors.getLinAlgOpContext(),
-                    numEigVecInBatch,
+                    numEigVecInBatchTotal,
                     ValueType());
 
                   d_XoutBatchSmall = std::make_shared<
                     linearAlgebra::MultiVector<ValueType, memorySpace>>(
                     d_mpiPatternP2P,
                     eigenVectors.getLinAlgOpContext(),
-                    numEigVecInBatch,
+                    numEigVecInBatchTotal,
                     ValueType());
                   if (d_scratch != nullptr)
                     {
@@ -402,13 +404,13 @@ namespace dftefe
                 linearAlgebra::MultiVector<ValueType, memorySpace>>(
                 d_mpiPatternP2P,
                 eigenVectors.getLinAlgOpContext(),
-                numEigVecInBatch,
+                numEigVecInBatchTotal,
                 ValueType());
               d_chfsiScratch2Small = std::make_shared<
                 linearAlgebra::MultiVector<ValueType, memorySpace>>(
                 d_mpiPatternP2P,
                 eigenVectors.getLinAlgOpContext(),
-                numEigVecInBatch,
+                numEigVecInBatchTotal,
                 ValueType());
               if (d_isResidualChebyFilter)
                 {
@@ -416,25 +418,21 @@ namespace dftefe
                     linearAlgebra::MultiVector<ValueType, memorySpace>>(
                     d_mpiPatternP2P,
                     eigenVectors.getLinAlgOpContext(),
-                    numEigVecInBatch,
+                    numEigVecInBatchTotal,
                     ValueType());
                   d_chfsiResidualScratch2Small = std::make_shared<
                     linearAlgebra::MultiVector<ValueType, memorySpace>>(
                     d_mpiPatternP2P,
                     eigenVectors.getLinAlgOpContext(),
-                    numEigVecInBatch,
+                    numEigVecInBatchTotal,
                     ValueType());
                 }
 
-              blasLapack::stridedBlockCopy(eigenVecLocalSize,
-                                           numEigVecInBatch,
-                                           numEigenVectors,
-                                           eigVecStartId,
-                                           numEigVecInBatch,
-                                           0,
-                                           eigenVectors.data(),
-                                           d_XinBatchSmall->data(),
-                                           *eigenVectors.getLinAlgOpContext());
+              MultiVectorOps::copyToBatch(*Xps,
+                                          eigVecStartId,
+                                          numEigVecInBatch,
+                                          *d_XinBatchSmall,
+                                          *eigenVectors.getLinAlgOpContext());
 
               subspaceBatchIn  = d_XinBatchSmall;
               subspaceBatchOut = d_XoutBatchSmall;
@@ -479,15 +477,11 @@ namespace dftefe
             d_mpiPatternP2P->mpiCommunicator(),
             "During blocked chebyshev filtering");
 
-          blasLapack::stridedBlockCopy(eigenVecLocalSize,
-                                       numEigVecInBatch,
-                                       numEigVecInBatch,
-                                       0,
-                                       numEigenVectors,
-                                       eigVecStartId,
-                                       subspaceBatchOut->data(),
-                                       eigenVectors.data(),
-                                       *eigenVectors.getLinAlgOpContext());
+          MultiVectorOps::copyFromBatch(*subspaceBatchOut,
+                                        eigVecStartId,
+                                        numEigVecInBatch,
+                                        *Xps,
+                                        *eigenVectors.getLinAlgOpContext());
 
           // for (size_type iSize = 0; iSize < eigenVecLocalSize; iSize++)
           //   memoryTransfer.copy(numEigVecInBatch,

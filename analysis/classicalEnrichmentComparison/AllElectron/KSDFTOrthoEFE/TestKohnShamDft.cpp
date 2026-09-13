@@ -106,200 +106,84 @@ T readParameter(const std::string &ParamFile,
   return t;
 }
 
-// RhoFunction replaced by atoms::AtomSevereFunction<memorySpace> with "density" field
+// The enrichment functions have a cusp at the nucleus and their radial spline is
+// tabulated only down to r ~ 5e-4 a.u. A quadrature point that lands on (or very
+// near) an atom therefore gets an extrapolated radial value, while
+// SphericalDataNumerical::getGradientValue clamps the gradient to zero for
+// r < RADIUS_TOL (1e-10). The gradXSq integrands are then wrong exactly at that
+// point, the parent-vs-children comparison in QuadratureRuleAdaptive never
+// converges, and the recursion runs to maxRecursion around that atom.
+//
+// An exact hit is possible because the coarse mesh is a uniform parallelepiped
+// re-centred on the origin (GenerateMesh::generateCoarseMesh): with an odd number
+// of subdivisions the origin is a cell *centre*, and the middle point of an odd
+// order Gauss rule then sits exactly on an atom placed there. Near-hits are
+// possible for any atom position.
+//
+// Report the closest approach of any quadrature point to any nucleus so that the
+// condition is detectable instead of only showing up as a quadrature blow-up.
+double
+reportMinQuadPointAtomDistance(
+  const quadrature::QuadratureRuleContainer &quadRuleContainer,
+  const std::vector<utils::Point> &          atomCoordinates,
+  const std::string &                        tag,
+  utils::mpi::MPIComm                        comm,
+  utils::ConditionalOStream &                rootCout,
+  const double                               tolerance = 1e-8)
+{
+  const std::vector<utils::Point> &realPoints =
+    quadRuleContainer.getRealPoints();
+  const size_type numAtoms = atomCoordinates.size();
+  const size_type dim      = (numAtoms == 0) ? 0 : atomCoordinates[0].size();
 
-  class BPlusRhoTimesVTotalFunction : public utils::ScalarSpatialFunctionReal
-  {
-  private:
-      std::shared_ptr<const atoms::AtomSphericalDataContainer>
-                                d_atomSphericalDataContainer;
-      std::vector<std::string>  d_atomSymbolVec;
-      std::vector<utils::Point> d_atomCoordinatesVec;
-      std::shared_ptr<const utils::ScalarSpatialFunctionReal> d_b, d_rho;
+  double minDistSq   = std::numeric_limits<double>::max();
+  double numTooClose = 0.0;
 
-  public:
-    BPlusRhoTimesVTotalFunction(
-      std::shared_ptr<const atoms::AtomSphericalDataContainer>
-                                         atomSphericalDataContainer,
-        const std::vector<std::string> & atomSymbol,
-        const std::vector<double> &      atomCharges,
-        const double &      smearedChargeRadius,
-        const std::vector<utils::Point> &atomCoordinates)
-      : d_atomSphericalDataContainer(atomSphericalDataContainer)
-      , d_atomSymbolVec(atomSymbol)
-      , d_atomCoordinatesVec(atomCoordinates)
-      {
-        d_b = std::make_shared
-                <utils::SmearChargeDensityFunction>(atomCoordinates, atomCharges, smearedChargeRadius);
-        d_rho = std::make_shared<atoms::AtomSevereFunction<memorySpace>>(
-          atomSphericalDataContainer, atomSymbol, atomCoordinates,
-          "density", 0, 1,
-          1.0/(atoms::Clm(0, 0) * atoms::Dm(0) * atoms::Qm(0, 0)));
-      }
-
-    double
-    operator()(const utils::Point &point) const
+  for (const auto &q : realPoints)
     {
-      double   retValue = 0;
-      for (size_type atomId = 0 ; atomId < d_atomCoordinatesVec.size() ; atomId++)
+      double pointMinDistSq = std::numeric_limits<double>::max();
+      for (size_type iAtom = 0; iAtom < numAtoms; ++iAtom)
         {
-          utils::Point origin(d_atomCoordinatesVec[atomId]);
-          for(auto &enrichmentObjId : 
-            d_atomSphericalDataContainer->getSphericalData(d_atomSymbolVec[atomId], "vtotal"))
-          {
-            retValue = retValue + std::abs(enrichmentObjId->getValue(point, origin) *
-                                    ((*d_b)(point) + (*d_rho)(point)));
-          }
-        }
-      return retValue;
-    }
-    std::vector<double>
-    operator()(const std::vector<utils::Point> &points) const
-    {
-      std::vector<double> ret(0);
-      ret.resize(points.size());
-      for (size_type atomId = 0 ; atomId < d_atomCoordinatesVec.size() ; atomId++)
-        {
-          utils::Point origin(d_atomCoordinatesVec[atomId]);
-          auto vec = d_atomSphericalDataContainer->getSphericalData(d_atomSymbolVec[atomId], "vtotal");
-          for (dftefe::size_type i = 0 ; i < points.size() ; i++)
-          {
-            for(auto &enrichmentObjId : vec)
+          double distSq = 0.0;
+          for (size_type j = 0; j < dim; ++j)
             {
-              ret[i] = ret[i] + std::abs(enrichmentObjId->getValue(points[i], origin) *
-                                      ((*d_b)(points[i]) + (*d_rho)(points[i])));
+              const double d = q[j] - atomCoordinates[iAtom][j];
+              distSq += d * d;
             }
-          }  
+          pointMinDistSq = std::min(pointMinDistSq, distSq);
         }
-      return ret;
+      minDistSq = std::min(minDistSq, pointMinDistSq);
+      if (pointMinDistSq < tolerance * tolerance)
+        numTooClose += 1.0;
     }
-  };
 
-  class BTimesVNuclearFunction : public utils::ScalarSpatialFunctionReal
-  {
-  private:
-      std::shared_ptr<const atoms::AtomSphericalDataContainer>
-                                d_atomSphericalDataContainer;
-      std::vector<std::string>  d_atomSymbolVec;
-      std::vector<utils::Point> d_atomCoordinatesVec;
-      std::shared_ptr<const utils::ScalarSpatialFunctionReal> d_b;
+  double minDist = std::sqrt(minDistSq);
+  utils::mpi::MPIAllreduce<Host>(utils::mpi::MPIInPlace,
+                                 &minDist,
+                                 1,
+                                 utils::mpi::Types<double>::getMPIDatatype(),
+                                 utils::mpi::MPIMin,
+                                 comm);
+  utils::mpi::MPIAllreduce<Host>(utils::mpi::MPIInPlace,
+                                 &numTooClose,
+                                 1,
+                                 utils::mpi::Types<double>::getMPIDatatype(),
+                                 utils::mpi::MPISum,
+                                 comm);
 
-  public:
-    BTimesVNuclearFunction(
-      std::shared_ptr<const atoms::AtomSphericalDataContainer>
-                                         atomSphericalDataContainer,
-        const std::vector<std::string> & atomSymbol,
-        const std::vector<double> &      atomCharges,
-        const double &      smearedChargeRadius,
-        const std::vector<utils::Point> &atomCoordinates)
-      : d_atomSphericalDataContainer(atomSphericalDataContainer)
-      , d_atomSymbolVec(atomSymbol)
-      , d_atomCoordinatesVec(atomCoordinates)
-      {
-        d_b = std::make_shared
-                <utils::SmearChargeDensityFunction>(atomCoordinates, atomCharges, smearedChargeRadius);
-      }
-
-    double
-    operator()(const utils::Point &point) const
+  rootCout << tag << ": min |quadPoint - atom| = " << minDist << "\n";
+  if (numTooClose > 0.0)
     {
-      double   retValue = 0;
-      for (size_type atomId = 0 ; atomId < d_atomCoordinatesVec.size() ; atomId++)
-        {
-          utils::Point origin(d_atomCoordinatesVec[atomId]);
-          for(auto &enrichmentObjId : 
-            d_atomSphericalDataContainer->getSphericalData(d_atomSymbolVec[atomId], "vnuclear"))
-          {
-            retValue = retValue + std::abs(enrichmentObjId->getValue(point, origin) *
-                                    ((*d_b)(point)));
-          }
-        }
-      return retValue;
+      rootCout
+        << "  *** WARNING: " << (size_type)numTooClose
+        << " quadrature point(s) are within " << tolerance
+        << " a.u. of a nucleus. The enrichment cusp is not resolvable there "
+           "(radial spline is extrapolated below its first grid point and the "
+           "gradient is clamped to zero), so the adaptive refinement will "
+           "recurse to maxRecursion around that atom. ***\n";
     }
-    std::vector<double>
-    operator()(const std::vector<utils::Point> &points) const
-    {
-      std::vector<double> ret(0);
-      ret.resize(points.size());
-      for (size_type atomId = 0 ; atomId < d_atomCoordinatesVec.size() ; atomId++)
-        {
-          utils::Point origin(d_atomCoordinatesVec[atomId]);
-          auto vec = d_atomSphericalDataContainer->getSphericalData(d_atomSymbolVec[atomId], "vnuclear");
-          for (dftefe::size_type i = 0 ; i < points.size() ; i++)
-          {
-            for(auto &enrichmentObjId : vec)
-            {
-              ret[i] = ret[i] + std::abs(enrichmentObjId->getValue(points[i], origin) *
-                                    ((*d_b)(points[i])));
-            }
-          }  
-        }
-      return ret;
-    }
-  };
-
-  class VExternalTimesOrbitalSqFunction : public utils::ScalarSpatialFunctionReal
-  {
-  private:
-      std::shared_ptr<const atoms::AtomSphericalDataContainer>
-                                d_atomSphericalDataContainer;
-      std::vector<std::string>  d_atomSymbolVec;
-      std::vector<utils::Point> d_atomCoordinatesVec;
-      std::shared_ptr<const utils::ScalarSpatialFunctionReal> d_vext;
-
-  public:
-    VExternalTimesOrbitalSqFunction(
-      std::shared_ptr<const atoms::AtomSphericalDataContainer>
-                                         atomSphericalDataContainer,
-        const std::vector<std::string> & atomSymbol,
-        const std::vector<double> &      atomCharges,
-        const std::vector<utils::Point> &atomCoordinates)
-      : d_atomSphericalDataContainer(atomSphericalDataContainer)
-      , d_atomSymbolVec(atomSymbol)
-      , d_atomCoordinatesVec(atomCoordinates)
-      {
-        d_vext = std::make_shared
-                <utils::PointChargePotentialFunction>(atomCoordinates, atomCharges);
-      }
-
-    double
-    operator()(const utils::Point &point) const
-    {
-      double   retValue = 0;
-      for (size_type atomId = 0 ; atomId < d_atomCoordinatesVec.size() ; atomId++)
-        {
-          utils::Point origin(d_atomCoordinatesVec[atomId]);
-          for(auto &enrichmentObjId : 
-            d_atomSphericalDataContainer->getSphericalData(d_atomSymbolVec[atomId], "orbital"))
-          {
-            retValue = retValue + std::abs(enrichmentObjId->getValue(point, origin) * enrichmentObjId->getValue(point, origin) *
-                                    (*d_vext)(point));
-          }
-        }
-      return retValue;
-    }
-    std::vector<double>
-    operator()(const std::vector<utils::Point> &points) const
-    {
-      std::vector<double> ret(0);
-      ret.resize(points.size());
-      for (size_type atomId = 0 ; atomId < d_atomCoordinatesVec.size() ; atomId++)
-        {
-          utils::Point origin(d_atomCoordinatesVec[atomId]);
-          auto vec = d_atomSphericalDataContainer->getSphericalData(d_atomSymbolVec[atomId], "orbital");
-          for (dftefe::size_type i = 0 ; i < points.size() ; i++)
-          {
-            for(auto &enrichmentObjId : vec)
-            {
-              double val = enrichmentObjId->getValue(points[i], origin);              
-              ret[i] = ret[i] + std::abs(val * val * (*d_vext)(points[i]));
-            }
-          }
-        }
-      return ret;
-    }
-  };
-
+  return minDist;
+}
 
 // AtomicTotalElectrostaticPotentialFunction replaced by atoms::AtomSevereFunction<memorySpace> with "vtotal" field
 
@@ -473,6 +357,10 @@ int main(int argc, char** argv)
   double    fracOccupancyTolerance = readParameter<double>(parameterInputFileName, "fracOccupancyTolerance", rootCout);
   double    eigenSolveResidualTolerance = readParameter<double>(parameterInputFileName, "eigenSolveResidualTolerance", rootCout);
   size_type maxChebyshevFilterPass = readParameter<size_type>(parameterInputFileName, "maxChebyshevFilterPass", rootCout);
+  // Optional: if not present in the parameter file (or 0), the Chebyshev
+  // polynomial degree is computed each SCF iteration from the internal
+  // CHEBY_ORDER_LOOKUP table (see ksdft::LinearEigenSolverDefaults) instead.
+  size_type chebyshevPolynomialDegree = readParameter<size_type>(parameterInputFileName, "chebyshevPolynomialDegree", rootCout, false, false, size_type(0));
   size_type numWantedEigenvalues = readParameter<size_type>(parameterInputFileName, "numWantedEigenvalues", rootCout);
   double scfDensityResidualNormTolerance = readParameter<double>(parameterInputFileName, "scfDensityResidualNormTolerance", rootCout);
   size_type maxSCFIter = readParameter<size_type>(parameterInputFileName, "maxSCFIter", rootCout);
@@ -500,6 +388,24 @@ int main(int argc, char** argv)
 
   const atoms::TCIADataParams  tciaparams{tciaFolder , tciaOutFilePrefix};
 
+  std::string xcFunctional = readParameter<std::string>(parameterInputFileName, "xc", rootCout, false, false, std::string("GGA-PBE"));
+  std::string spinModeStr = readParameter<std::string>(parameterInputFileName, "spintype", rootCout, false, false, std::string("Unpolarized"));
+  ksdft::SpinMode spinMode = ksdft::SpinMode::Unpolarized;
+  if (spinModeStr == "Collinear")
+    spinMode = ksdft::SpinMode::Collinear;
+  else if (spinModeStr == "NonCollinear")
+    spinMode = ksdft::SpinMode::NonCollinear;
+
+  bool isGHEP = readParameter<bool>(parameterInputFileName, "isGHEP", rootCout, false, false, true);
+  std::string orthoTypeStr = readParameter<std::string>(parameterInputFileName, "orthoType", rootCout, false, false, std::string("CHOLESKY_GRAMSCHMIDT"));
+  linearAlgebra::OrthogonalizationType orthoType = linearAlgebra::OrthogonalizationType::CHOLESKY_GRAMSCHMIDT;
+  if (orthoTypeStr == "MULTIPASS_CGS")
+    orthoType = linearAlgebra::OrthogonalizationType::MULTIPASS_CGS;
+  else if (orthoTypeStr == "MULTIPASS_LOWDIN")
+    orthoType = linearAlgebra::OrthogonalizationType::MULTIPASS_LOWDIN;
+  else if (orthoTypeStr != "CHOLESKY_GRAMSCHMIDT")
+    utils::throwException(false, "Unknown orthoType: " + orthoTypeStr);
+
   // Set up Triangulation
     std::shared_ptr<basis::TriangulationBase> triangulationBase =
         std::make_shared<basis::TriangulationDealiiParallel<dim>>(comm);
@@ -520,6 +426,7 @@ int main(int argc, char** argv)
   coordinates.resize(dim,0.);
   std::vector<std::string> atomSymbolVec(0);
   std::vector<double> atomChargesVec(0);
+  std::vector<double> atomMagMomentsVec(0);
   std::string symbol , basisFilePath, pspFilePath;
   std::map<std::string, double> atomSymbolToChargeMap;
   double atomicNumber;
@@ -554,8 +461,11 @@ int main(int argc, char** argv)
       ss >> symbol; 
       ss >> atomicNumber; 
       for(dftefe::size_type i=0 ; i<dim ; i++){
-          ss >> coordinates[i]; 
+          ss >> coordinates[i];
       }
+      double magMoment = 0.0;
+      ss >> magMoment;
+      atomMagMomentsVec.push_back(magMoment);
       atomCoordinatesVec.push_back(coordinates);
       atomSymbolVec.push_back(symbol);
       if(atomSymbolToBasisFileName.find(symbol) == atomSymbolToBasisFileName.end())
@@ -568,6 +478,23 @@ int main(int argc, char** argv)
   }
   utils::mpi::MPIBarrier(comm);
   fstream.close();
+
+  std::vector<double> atomMagZFactors;
+  {
+    bool anyNonZero = false;
+    for (const auto &m : atomMagMomentsVec)
+      if (std::abs(m) > 1e-12)
+        {
+          anyNonZero = true;
+          break;
+        }
+    if (anyNonZero)
+      {
+        atomMagZFactors.resize(atomMagMomentsVec.size());
+        for (dftefe::size_type i = 0; i < atomMagMomentsVec.size(); ++i)
+          atomMagZFactors[i] = atomMagMomentsVec[i] / (-atomChargesVec[i]);
+      }
+  }
 
   size_type numElectrons = 0;
   for(auto &i : atomChargesVec)
@@ -649,67 +576,95 @@ int main(int argc, char** argv)
     std::vector<std::shared_ptr<const utils::ScalarSpatialFunctionReal>> functionsVec(0);
     std::vector<double> absoluteTolerances(0), relativeTolerances(0), integralThresholds(0);
 
-    for ( dftefe::size_type i=0 ;i < 2 ; i++ )
-    {
-      functionsVec.push_back(std::make_shared<atoms::AtomSevereFunction<memorySpace>>(
-          atomSphericalDataContainer,
-          atomSymbolVec,
-          atomCoordinatesVec,
-          "orbital",
-          i));
-    }
-      functionsVec.push_back(std::make_shared<VExternalTimesOrbitalSqFunction>(
+    functionsVec.push_back(std::make_shared<atoms::AtomSevereFunction<memorySpace>>(
         atomSphericalDataContainer,
         atomSymbolVec,
+        atomCoordinatesVec,
         atomChargesVec,
-        atomCoordinatesVec));
+        rc,
+        atoms::AtomSevereFuncType::Atomic::orbitalSq,
+        1.0,
+        linAlgOpContext.get()));
+    functionsVec.push_back(std::make_shared<atoms::AtomSevereFunction<memorySpace>>(
+        atomSphericalDataContainer,
+        atomSymbolVec,
+        atomCoordinatesVec,
+        atomChargesVec,
+        rc,
+        atoms::AtomSevereFuncType::Atomic::gradOrbitalSq,
+        1.0,
+        linAlgOpContext.get()));
+    functionsVec.push_back(std::make_shared<atoms::AtomSevereFunction<memorySpace>>(
+        atomSphericalDataContainer,
+        atomSymbolVec,
+        atomCoordinatesVec,
+        atomChargesVec,
+        rc,
+        atoms::AtomSevereFuncType::Atomic::vExtTimesOrbitalSq));
 
     if(!isDeltaRhoPoissonSolve)
     {
-    for ( dftefe::size_type i=0 ;i < 2 ; i++ )
+      functionsVec.push_back(std::make_shared<atoms::AtomSevereFunction<memorySpace>>(
+          atomSphericalDataContainer,
+          atomSymbolVec,
+          atomCoordinatesVec,
+          atomChargesVec,
+          0.0,
+          atoms::AtomSevereFuncType::Atomic::vTotalSq,
+          1.0,
+          linAlgOpContext.get()));
+      functionsVec.push_back(std::make_shared<atoms::AtomSevereFunction<memorySpace>>(
+          atomSphericalDataContainer,
+          atomSymbolVec,
+          atomCoordinatesVec,
+          atomChargesVec,
+          0.0,
+          atoms::AtomSevereFuncType::Atomic::gradVTotalSq,
+          1.0,
+          linAlgOpContext.get()));
+    }
+    if(isDeltaRhoPoissonSolve && (tciaFolder == "" || tciaOutFilePrefix == ""))
+    {
+      functionsVec.push_back(std::make_shared<atoms::AtomSevereFunction<memorySpace>>(
+        atomSphericalDataContainer,
+        atomSymbolVec,
+        atomCoordinatesVec,
+        atomChargesVec,
+        rc,
+        atoms::AtomSevereFuncType::Atomic::bPlusRhoTimesVTotal,
+        1.0,
+        linAlgOpContext.get()));
+      // functionsVec.push_back(std::make_shared<atoms::AtomSevereFunction<memorySpace>>(
+      // atomSphericalDataContainer, atomSymbolVec, atomCoordinatesVec,
+      // atomChargesVec, rc, atoms::AtomSevereFuncType::Atomic::bTimesVNuclear));
+    }
+    if(isNumericalNuclearSolve)
     {
       functionsVec.push_back(std::make_shared<atoms::AtomSevereFunction<memorySpace>>(
           atomSphericalDataContainer,
           atomSymbolVec,
           atomCoordinatesVec,
-          "vtotal",
-          i));
-    }
-    }
-    if(isDeltaRhoPoissonSolve && (tciaFolder == "" || tciaOutFilePrefix == ""))
-    {
-      functionsVec.push_back(std::make_shared<BPlusRhoTimesVTotalFunction>(
-        atomSphericalDataContainer,
-        atomSymbolVec,
-        atomChargesVec,
-        rc,
-        atomCoordinatesVec));
-      // functionsVec.push_back(std::make_shared<BTimesVNuclearFunction>(
-      // atomSphericalDataContainer,
-      // atomSymbolVec,
-      // atomChargesVec,
-      // rc,
-      // atomCoordinatesVec));
-    }
-    if(isNumericalNuclearSolve)
-    {
-      for ( dftefe::size_type i=0 ;i < 3 ; i++ )
-      {
-        if( i < 2)
-          functionsVec.push_back(std::make_shared<atoms::AtomSevereFunction<memorySpace>>(
-            atomSphericalDataContainer,
-            atomSymbolVec,
-            atomCoordinatesVec,
-            "vnuclear",
-            i));
-        else
-            functionsVec.push_back(std::make_shared<BTimesVNuclearFunction>(
-            atomSphericalDataContainer,
-            atomSymbolVec,
-            atomChargesVec,
-            rc,
-            atomCoordinatesVec));
-      }
+          atomChargesVec,
+          0.0,
+          atoms::AtomSevereFuncType::Atomic::vNuclearSq,
+          1.0,
+          linAlgOpContext.get()));
+      functionsVec.push_back(std::make_shared<atoms::AtomSevereFunction<memorySpace>>(
+          atomSphericalDataContainer,
+          atomSymbolVec,
+          atomCoordinatesVec,
+          atomChargesVec,
+          0.0,
+          atoms::AtomSevereFuncType::Atomic::gradVNuclearSq,
+          1.0,
+          linAlgOpContext.get()));
+      functionsVec.push_back(std::make_shared<atoms::AtomSevereFunction<memorySpace>>(
+          atomSphericalDataContainer,
+          atomSymbolVec,
+          atomCoordinatesVec,
+          atomChargesVec,
+          rc,
+          atoms::AtomSevereFuncType::Atomic::bTimesVNuclear));
     }
     for ( dftefe::size_type i=0 ;i < functionsVec.size() ; i++ )
     {
@@ -740,10 +695,11 @@ int main(int argc, char** argv)
 
     quadRuleContainerAdaptiveElec =
       std::make_shared<quadrature::QuadratureRuleContainer>
-      (quadAttrAdaptive, 
-      baseQuadRuleElec, 
-      triangulationBase, 
-      *cellMapping, 
+      (quadrature::FuncEvalTag<memorySpace>{},
+      quadAttrAdaptive,
+      baseQuadRuleElec,
+      triangulationBase,
+      *cellMapping,
       *parentToChildCellsManager,
       functionsVec,
       absoluteTolerances,
@@ -762,6 +718,37 @@ int main(int argc, char** argv)
       utils::mpi::MPISum,
       comm);
   rootCout << "Number of quadrature points in adaptive quadrature: "<< nQuad<<"\n";
+
+    {
+      double localQuad = (double)quadRuleContainerAdaptiveElec->nQuadraturePoints();
+      auto   procStats = utils::mpi::MPIAllreduceMinMaxAvg<double, Host>(localQuad, comm);
+      rootCout << "Elec adaptive quad proc load: min=" << (size_type)procStats.min
+               << " max=" << (size_type)procStats.max
+               << " ratio(min/max)=" << procStats.min / procStats.max << "\n";
+
+      dftefe::size_type nLocalCells = quadRuleContainerAdaptiveElec->nCells();
+      double minCell = std::numeric_limits<double>::max(), maxCell = 0.0;
+      for (dftefe::size_type iCell = 0; iCell < nLocalCells; ++iCell)
+        {
+          double cq = (double)quadRuleContainerAdaptiveElec->nCellQuadraturePoints(iCell);
+          minCell = std::min(minCell, cq);
+          maxCell = std::max(maxCell, cq);
+        }
+      auto   cellMinStats = utils::mpi::MPIAllreduceMinMaxAvg<double, Host>(minCell, comm);
+      auto   cellMaxStats = utils::mpi::MPIAllreduceMinMaxAvg<double, Host>(maxCell, comm);
+      double totalCells   = (double)nLocalCells;
+      utils::mpi::MPIAllreduce<Host>(utils::mpi::MPIInPlace, &totalCells, 1,
+        utils::mpi::Types<double>::getMPIDatatype(), utils::mpi::MPISum, comm);
+      rootCout << "Elec adaptive quad per cell: min=" << (size_type)cellMinStats.min
+               << " max=" << (size_type)cellMaxStats.max
+               << " avg=" << (double)nQuad / totalCells << "\n";
+    }
+
+    reportMinQuadPointAtomDistance(*quadRuleContainerAdaptiveElec,
+                                   atomCoordinatesVec,
+                                   "Elec adaptive quad",
+                                   comm,
+                                   rootCout);
     }
 
     //Set up quadAttr for Rhs and OverlapMatrix
@@ -770,16 +757,17 @@ int main(int argc, char** argv)
 
     // Set up base quadrature rule for adaptive quadrature 
 
-    std::shared_ptr<quadrature::QuadratureRule> baseQuadRuleEigen = std::make_shared<quadrature::QuadratureRuleGauss>(dim, feOrderEigen + 1);
+    std::shared_ptr<quadrature::QuadratureRule> baseQuadRuleEigen = std::make_shared<quadrature::QuadratureRuleGauss>(dim, feOrderEigen > feOrderElec ? feOrderEigen : feOrderElec + 1);
       // feOrderEigen > feOrderElec ? std::make_shared<quadrature::QuadratureRuleGauss>(dim, feOrderEigen + 1) : 
       //   std::make_shared<quadrature::QuadratureRuleGauss>(dim, feOrderElec + 1);
 
     std::shared_ptr<quadrature::QuadratureRuleContainer> quadRuleContainerAdaptiveOrbital = (quadRuleContainerAdaptiveElec != nullptr) ? quadRuleContainerAdaptiveElec :
       std::make_shared<quadrature::QuadratureRuleContainer>
-      (quadAttrAdaptive, 
-      baseQuadRuleEigen, 
-      triangulationBase, 
-      *cellMapping, 
+      (quadrature::FuncEvalTag<memorySpace>{},
+      quadAttrAdaptive,
+      baseQuadRuleEigen,
+      triangulationBase,
+      *cellMapping,
       *parentToChildCellsManager,
       functionsVec,
       absoluteTolerances,
@@ -799,6 +787,37 @@ int main(int argc, char** argv)
 
   rootCout << "Number of quadrature points in wave function adaptive quadrature: "<<nQuad<<"\n";
 
+    {
+      double localQuad = (double)quadRuleContainerAdaptiveOrbital->nQuadraturePoints();
+      auto   procStats = utils::mpi::MPIAllreduceMinMaxAvg<double, Host>(localQuad, comm);
+      rootCout << "Orbital adaptive quad proc load: min=" << (size_type)procStats.min
+               << " max=" << (size_type)procStats.max
+               << " ratio(min/max)=" << procStats.min / procStats.max << "\n";
+
+      dftefe::size_type nLocalCells = quadRuleContainerAdaptiveOrbital->nCells();
+      double minCell = std::numeric_limits<double>::max(), maxCell = 0.0;
+      for (dftefe::size_type iCell = 0; iCell < nLocalCells; ++iCell)
+        {
+          double cq = (double)quadRuleContainerAdaptiveOrbital->nCellQuadraturePoints(iCell);
+          minCell = std::min(minCell, cq);
+          maxCell = std::max(maxCell, cq);
+        }
+      auto   cellMinStats = utils::mpi::MPIAllreduceMinMaxAvg<double, Host>(minCell, comm);
+      auto   cellMaxStats = utils::mpi::MPIAllreduceMinMaxAvg<double, Host>(maxCell, comm);
+      double totalCells   = (double)nLocalCells;
+      utils::mpi::MPIAllreduce<Host>(utils::mpi::MPIInPlace, &totalCells, 1,
+        utils::mpi::Types<double>::getMPIDatatype(), utils::mpi::MPISum, comm);
+      rootCout << "Orbital adaptive quad per cell: min=" << (size_type)cellMinStats.min
+               << " max=" << (size_type)cellMaxStats.max
+               << " avg=" << (double)nQuad / totalCells << "\n";
+    }
+
+    reportMinQuadPointAtomDistance(*quadRuleContainerAdaptiveOrbital,
+                                   atomCoordinatesVec,
+                                   "Orbital adaptive quad",
+                                   comm,
+                                   rootCout);
+
   p.registerEnd("Quadrature Rule Creation");
     utils::printCurrentMemoryUsage<memorySpace>(comm, "Quadrature Rule Creation");
   p.registerStart("Ortho EFE basis manager creation");
@@ -811,11 +830,13 @@ int main(int argc, char** argv)
   // 4. Make EFEBasisDataStorage with input as quadratureContainer.
 
     // Set the CFE basis manager and handler for bassiInterfaceCoeffcient distributed vector
-  std::shared_ptr<basis::FEBasisDofHandler<double, Host,dim>> cfeBasisDofHandlerElec =  
+  p.registerStart("CFE DofHandler creation");
+  std::shared_ptr<basis::FEBasisDofHandler<double, Host,dim>> cfeBasisDofHandlerElec =
    std::make_shared<basis::CFEBasisDofHandlerDealii<double, Host,dim>>(triangulationBase, feOrderElec, comm);
 
-  std::shared_ptr<basis::FEBasisDofHandler<double, memorySpace,dim>> cfeBasisDofHandlerEigen =  
+  std::shared_ptr<basis::FEBasisDofHandler<double, memorySpace,dim>> cfeBasisDofHandlerEigen =
    std::make_shared<basis::CFEBasisDofHandlerDealii<double, memorySpace,dim>>(triangulationBase, feOrderEigen, comm);
+  p.registerEnd("CFE DofHandler creation");
 
   rootCout << "Total Number of classical dofs electrostatics: " << cfeBasisDofHandlerElec->nGlobalNodes() << "\n";
   rootCout << "Total Number of classical dofs eigensolve: " << cfeBasisDofHandlerEigen->nGlobalNodes() << "\n";
@@ -839,6 +860,7 @@ int main(int argc, char** argv)
   basisAttrMap[basis::BasisStorageAttributes::StoreJxW] = true;
 
     // Set up the CFE Basis Data Storage for Overlap Matrix
+  p.registerStart("CFE GLL basis data eval");
     std::shared_ptr<basis::FEBasisDataStorage<double, Host>> cfeBasisDataStorageGLLElec =
       std::make_shared<basis::CFEBasisDataStorageDealii<double, double,Host, dim>>
       (cfeBasisDofHandlerElec, quadAttrGllElec, basisAttrMap, *linAlgOpContextHost);
@@ -850,6 +872,7 @@ int main(int argc, char** argv)
   // evaluate basis data
   cfeBasisDataStorageGLLElec->evaluateBasisData(quadAttrGllElec, basisAttrMap);
   cfeBasisDataStorageGLLEigen->evaluateBasisData(quadAttrGllEigen, basisAttrMap);
+  p.registerEnd("CFE GLL basis data eval");
 
     // Set the CFE basis manager and handler for bassiInterfaceCoeffcient distributed vector
 
@@ -861,17 +884,20 @@ int main(int argc, char** argv)
   basisAttrMap[basis::BasisStorageAttributes::StoreJxW] = true;
 
     // Set up the CFE Basis Data Storage for Rhs
+  p.registerStart("CFE Adaptive orbital basis data eval");
     std::shared_ptr<basis::FEBasisDataStorage<double, memorySpace>> cfeBasisDataStorageAdaptiveOrbital =
       std::make_shared<basis::CFEBasisDataStorageDealii<double, double,memorySpace, dim>>
       (cfeBasisDofHandlerEigen, quadAttrAdaptive, basisAttrMap, *linAlgOpContext);
   // evaluate basis data
   cfeBasisDataStorageAdaptiveOrbital->evaluateBasisData(quadAttrAdaptive, quadRuleContainerAdaptiveOrbital, basisAttrMap);
+  p.registerEnd("CFE Adaptive orbital basis data eval");
 
       std::shared_ptr<basis::EnrichmentClassicalInterfaceSpherical
                           <double, Host, dim>>
         enrichClassIntfceTotalPot = nullptr;
 
     // Create the enrichmentClassicalInterface object for wavefn
+  p.registerStart("ECI orbital construction");
   std::shared_ptr<basis::EnrichmentClassicalInterfaceSpherical
                           <double, memorySpace, dim>>
     enrichClassIntfceOrbital = std::make_shared<basis::EnrichmentClassicalInterfaceSpherical
@@ -885,6 +911,7 @@ int main(int argc, char** argv)
                           "orbital",
                           linAlgOpContext,
                           comm);
+  p.registerEnd("ECI orbital construction");
 
   // initialize the basis Manager
 
@@ -900,12 +927,15 @@ int main(int argc, char** argv)
     basisAttrMap[basis::BasisStorageAttributes::StoreJxW] = true;
 
     // Set up the CFE Basis Data Storage for Rhs
+  p.registerStart("CFE Adaptive vtotal basis data eval");
     std::shared_ptr<basis::FEBasisDataStorage<double, Host>> cfeBasisDataStorageAdaptiveElec =
       std::make_shared<basis::CFEBasisDataStorageDealii<double, double,Host, dim>>
       (cfeBasisDofHandlerElec, quadAttrAdaptive, basisAttrMap, *linAlgOpContextHost);
     // evaluate basis data
     cfeBasisDataStorageAdaptiveElec->evaluateBasisData(quadAttrAdaptive, quadRuleContainerAdaptiveElec, basisAttrMap);
+  p.registerEnd("CFE Adaptive vtotal basis data eval");
 
+  p.registerStart("ECI vtotal construction");
     enrichClassIntfceTotalPot = std::make_shared<basis::EnrichmentClassicalInterfaceSpherical
                         <double, Host, dim>>
                         (cfeBasisDataStorageGLLElec,
@@ -917,16 +947,22 @@ int main(int argc, char** argv)
                         "vtotal",
                         linAlgOpContextHost,
                         comm);
-     basisDofHandlerTotalPot =  
+  p.registerEnd("ECI vtotal construction");
+
+  p.registerStart("EFE DofHandler totalPot creation");
+     basisDofHandlerTotalPot =
     std::make_shared<basis::EFEBasisDofHandlerDealii<double, double,Host,dim>>(
       enrichClassIntfceTotalPot, comm);
+  p.registerEnd("EFE DofHandler totalPot creation");
   }
   else
     basisDofHandlerTotalPot = cfeBasisDofHandlerElec;
 
-  std::shared_ptr<basis::FEBasisDofHandler<double, memorySpace,dim>> basisDofHandlerWaveFn =  
+  p.registerStart("EFE DofHandler wavefn creation");
+  std::shared_ptr<basis::FEBasisDofHandler<double, memorySpace,dim>> basisDofHandlerWaveFn =
     std::make_shared<basis::EFEBasisDofHandlerDealii<double, double,memorySpace,dim>>(
       enrichClassIntfceOrbital, comm);
+  p.registerEnd("EFE DofHandler wavefn creation");
 
   p.registerEnd("Ortho EFE basis manager creation");
   utils::printCurrentMemoryUsage<memorySpace>(comm, "Ortho EFE basis manager creation");
@@ -1201,11 +1237,17 @@ int main(int argc, char** argv)
                                   feBDElectrostaticsHamiltonian,
                                   feBDEXCHamiltonian,
                                   *externalPotentialFunction,
-                                  "LDA-PW",
+                                  xcFunctional,
                                   linAlgOpContext,
                                   *MContextForInv,
                                   *MContext,
-                                  *MInvContext);
+                                  *MInvContext,
+                                  true,
+                                  atomMagZFactors,
+                                  spinMode,
+                                  isGHEP,
+                                  orthoType,
+                                  chebyshevPolynomialDegree);
   }
   else if (!isNumericalNuclearSolve && !isDeltaRhoPoissonSolve)
   {
@@ -1242,11 +1284,17 @@ int main(int argc, char** argv)
                                   feBDElectrostaticsHamiltonian,
                                   feBDEXCHamiltonian,
                                   *externalPotentialFunction,
-                                  "LDA-PW",
+                                  xcFunctional,
                                   linAlgOpContext,
                                   *MContextForInv,
                                   *MContext,
-                                  *MInvContext);
+                                  *MInvContext,
+                                  true,
+                                  atomMagZFactors,
+                                  spinMode,
+                                  isGHEP,
+                                  orthoType,
+                                  chebyshevPolynomialDegree);
   }
   else if (!isNumericalNuclearSolve && isDeltaRhoPoissonSolve)
   {
@@ -1293,13 +1341,18 @@ int main(int argc, char** argv)
                                   feBDElectrostaticsHamiltonian, 
                                   feBDEXCHamiltonian,                                                                            
                                   *externalPotentialFunction,
-                                  "LDA-PW",
+                                  xcFunctional,
                                   linAlgOpContext,
                                   *MContextForInv,
                                   *MContext,
                                   *MInvContext,
                                   true,
-                                  tciaparams);                                     
+                                  tciaparams,
+                                  atomMagZFactors,
+                                  spinMode,
+                                  isGHEP,
+                                  orthoType,
+                                  chebyshevPolynomialDegree);
   }
   else
   {

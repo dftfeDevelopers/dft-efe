@@ -30,6 +30,7 @@ namespace dftefe
   namespace atoms
   {
     template class AtomSevereFunction<utils::MemorySpace::HOST>;
+
 #ifdef DFTEFE_WITH_DEVICE
     template class AtomSevereFunction<utils::MemorySpace::DEVICE>;
 #endif

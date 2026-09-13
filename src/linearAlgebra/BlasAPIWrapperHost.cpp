@@ -22,8 +22,13 @@
 /*
  * @author Avirup Sircar
  */
-#include "BlasAPIWrapper.h"
+// BlasLapackTemplates.h must be included before BlasAPIWrapper.h: the
+// latter transitively pulls in oneMKL's mkl_lapack.h (via LinAlgOpContext.h
+// -> utils/DeviceTypeConfig.h), and BlasLapackTemplates.h needs to pre-empt
+// that header's include guard before its conflicting declarations are
+// parsed (see the comment in BlasLapackTemplates.h).
 #include "BlasLapackTemplates.h"
+#include "BlasAPIWrapper.h"
 namespace dftefe
 {
   namespace linearAlgebra

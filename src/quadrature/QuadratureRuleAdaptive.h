@@ -36,6 +36,25 @@ namespace dftefe
         const dftefe::size_type maxRecursion =
           QuadratureRuleAdaptiveDefaults::MAX_RECURSION);
 
+      template <utils::MemorySpace memorySpace>
+      static std::vector<QuadratureRule>
+      QuadratureRuleAdaptiveBFS(
+        const std::vector<std::shared_ptr<const basis::TriangulationCellBase>>
+          &                                   cells,
+        const QuadratureRule &                baseQuadratureRule,
+        const basis::CellMappingBase &        cellMapping,
+        basis::ParentToChildCellsManagerBase &parentToChildCellsManager,
+        std::vector<std::shared_ptr<const utils::ScalarSpatialFunctionReal>>
+                                       functions,
+        const std::vector<double> &    absoluteTolerances,
+        const std::vector<double> &    relativeTolerances,
+        const std::vector<double> &    integralThresholds,
+        std::map<std::string, double> &timer,
+        const double                   smallestCellVolume =
+          QuadratureRuleAdaptiveDefaults::SMALLEST_CELL_VOLUME,
+        const dftefe::size_type maxRecursion =
+          QuadratureRuleAdaptiveDefaults::MAX_RECURSION);
+
     private:
     };
 

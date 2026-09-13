@@ -17,18 +17,32 @@
 #ifndef dftefeDeviceExceptions_syclh
 #define dftefeDeviceExceptions_syclh
 
-#define DEVICE_API_CHECK(event)                                                \
-  {                                                                            \
-    try                                                                        \
-      {                                                                        \
-        event.wait();                                                          \
-      }                                                                        \
-    catch (const sycl::exception &e)                                           \
-      {                                                                        \
-        std::cerr << "SYCL error in " << __func__ << " at " << __FILE__ << ":" \
-                  << __LINE__ << ". Error code: " << e.what() << ".\n";        \
-      }                                                                        \
-  }
+#include <iostream>
+#include <system_error>
+
+namespace dftefe
+{
+  namespace utils
+  {
+    // deviceError_t (std::error_code) is what every device API call site in
+    // this codebase passes here -- just check the code, nothing to wait on.
+    inline void
+    deviceApiCheck(const std::error_code &errorCode,
+                   const char *           func,
+                   const char *           file,
+                   int                    line)
+    {
+      if (errorCode)
+        {
+          std::cerr << "SYCL error in " << func << " at " << file << ":" << line
+                    << ". Error code: " << errorCode.message() << ".\n";
+        }
+    }
+  } // namespace utils
+} // namespace dftefe
+
+#define DEVICE_API_CHECK(x) \
+  dftefe::utils::deviceApiCheck(x, __func__, __FILE__, __LINE__)
 
 #define DEVICEBLAS_API_CHECK(expr)                                 \
   do                                                               \

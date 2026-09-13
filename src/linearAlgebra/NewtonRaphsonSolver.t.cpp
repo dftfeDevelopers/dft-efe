@@ -26,6 +26,7 @@
 #include <linearAlgebra/BlasLapackTypedef.h>
 #include <linearAlgebra/BlasLapack.h>
 #include <utils/DataTypeOverloads.h>
+#include <utils/Exceptions.h>
 #include <iostream>
 namespace dftefe
 {
@@ -50,9 +51,9 @@ namespace dftefe
       NewtonRaphsonSolverFunction<ValueType> &newtonRaphsonSolverFunction)
     {
       NewtonRaphsonError retunValue;
-      d_isSolved  = true;
-      ValueType x = newtonRaphsonSolverFunction.getInitialGuess();
-      ValueType xConverged;
+      d_isSolved           = true;
+      ValueType x          = newtonRaphsonSolverFunction.getInitialGuess();
+      ValueType xConverged = x;
 
       //
       // NR loop
@@ -60,14 +61,30 @@ namespace dftefe
       NewtonRaphsonErrorCode err  = NewtonRaphsonErrorCode::OTHER_ERROR;
       size_type              iter = 0;
       bool                   isForceTolErr = false;
+      std::string            forceTolDetail;
 
       for (; iter <= d_maxIter; ++iter)
         {
           if (utils::abs_(newtonRaphsonSolverFunction.getForce(x)) <
               d_forceTolerance)
             {
-              err           = NewtonRaphsonErrorCode::FORCE_TOLERANCE_ERR;
-              isForceTolErr = true;
+              // The derivative has (numerically) vanished - dividing by it
+              // below would produce +-inf, and the following iteration's
+              // "inf - inf" would poison x to NaN. A NaN residual can never
+              // satisfy the convergence check, which would silently run the
+              // loop out to d_maxIter (confirmed: x collapses to -nan within
+              // 1e5 iterations and stays -nan for the rest of the 2e7-
+              // iteration cap - what looked like a hang). Report the
+              // failure back to the caller instead of limping on with a
+              // poisoned x - it can decide how severely to react.
+              err            = NewtonRaphsonErrorCode::FORCE_TOLERANCE_ERR;
+              isForceTolErr  = true;
+              xConverged     = x;
+              forceTolDetail = "force magnitude fell below tolerance (" +
+                               std::to_string(d_forceTolerance) +
+                               ") at x = " + std::to_string(x) + " after " +
+                               std::to_string(iter) + " iterations.";
+              break;
             }
 
           ValueType x1 = x - newtonRaphsonSolverFunction.getValue(x) /
@@ -75,7 +92,21 @@ namespace dftefe
 
           d_residual = utils::abs_(x1 - x);
 
-          if (d_residual < d_tolerance)
+          // Near a root where the derivative is small but not small
+          // enough to trip the force-tolerance check above (a sparse
+          // spectrum has stretches of low local "density of states"), the
+          // step size |x1-x| = |getValue(x)/force| can stay above
+          // d_tolerance indefinitely (a stable finite cycle) even once
+          // getValue(x) itself is already at numerical zero - confirmed:
+          // observed value ~5.7e-14 with residual ~8.1e-7 oscillating
+          // forever, never satisfying the step-size check alone. So also
+          // accept convergence on the function value residual, matching
+          // DFT-FE's Fermi energy solver (src/dft/fermiEnergy.cc), which
+          // checks the value residual R rather than a step size.
+          ValueType valueResidual =
+            utils::abs_(newtonRaphsonSolverFunction.getValue(x1));
+
+          if (d_residual < d_tolerance || valueResidual < d_tolerance)
             {
               err        = NewtonRaphsonErrorCode::SUCCESS;
               xConverged = x1;
@@ -95,9 +126,9 @@ namespace dftefe
       std::string msg = "";
       retunValue      = NewtonRaphsonErrorMsg::isSuccessAndMsg(err);
 
-      if (iter > d_maxIter && isForceTolErr)
+      if (isForceTolErr)
         {
-          retunValue.msg += "Failed to converge.";
+          retunValue.msg += forceTolDetail;
         }
 
       if (retunValue.isSuccess)

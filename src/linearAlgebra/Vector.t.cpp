@@ -56,8 +56,10 @@ namespace dftefe
       // d_numVectors set to 1 as it is a single vector
       d_numVectors         = 1;
       d_mpiCommunicatorP2P = std::make_unique<
-        utils::mpi::MPICommunicatorP2P<ValueType, memorySpace>>(d_mpiPatternP2P,
-                                                                d_numVectors);
+        utils::mpi::MPICommunicatorP2P<ValueType, memorySpace>>(
+        d_mpiPatternP2P, d_numVectors, [this]() {
+          return d_linAlgOpContext->getBlasStream();
+        });
     }
 
     /**
@@ -84,8 +86,10 @@ namespace dftefe
       // d_numVectors set to 1 as it is a single vector
       d_numVectors         = 1;
       d_mpiCommunicatorP2P = std::make_unique<
-        utils::mpi::MPICommunicatorP2P<ValueType, memorySpace>>(d_mpiPatternP2P,
-                                                                d_numVectors);
+        utils::mpi::MPICommunicatorP2P<ValueType, memorySpace>>(
+        d_mpiPatternP2P, d_numVectors, [this]() {
+          return d_linAlgOpContext->getBlasStream();
+        });
     }
 
     /**
@@ -113,8 +117,10 @@ namespace dftefe
       // d_numVectors set to 1 as it is a single vector
       d_numVectors         = 1;
       d_mpiCommunicatorP2P = std::make_unique<
-        utils::mpi::MPICommunicatorP2P<ValueType, memorySpace>>(mpiPatternP2P,
-                                                                d_numVectors);
+        utils::mpi::MPICommunicatorP2P<ValueType, memorySpace>>(
+        mpiPatternP2P, d_numVectors, [this]() {
+          return d_linAlgOpContext->getBlasStream();
+        });
     }
 
     //
@@ -144,8 +150,10 @@ namespace dftefe
       // d_numVectors set to 1 as it is a single vector
       d_numVectors         = 1;
       d_mpiCommunicatorP2P = std::make_unique<
-        utils::mpi::MPICommunicatorP2P<ValueType, memorySpace>>(mpiPatternP2P,
-                                                                d_numVectors);
+        utils::mpi::MPICommunicatorP2P<ValueType, memorySpace>>(
+        mpiPatternP2P, d_numVectors, [this]() {
+          return d_linAlgOpContext->getBlasStream();
+        });
 
       utils::RandNumGen<ValueType> rand(min, max);
       std::vector<ValueType>       randVec(d_locallyOwnedSize);
@@ -182,8 +190,10 @@ namespace dftefe
       // d_numVectors set to 1 as it is a single vector
       d_numVectors         = 1;
       d_mpiCommunicatorP2P = std::make_unique<
-        utils::mpi::MPICommunicatorP2P<ValueType, memorySpace>>(mpiPatternP2P,
-                                                                d_numVectors);
+        utils::mpi::MPICommunicatorP2P<ValueType, memorySpace>>(
+        mpiPatternP2P, d_numVectors, [this]() {
+          return d_linAlgOpContext->getBlasStream();
+        });
     }
 
     /**
@@ -227,8 +237,10 @@ namespace dftefe
       // d_numVectors set to 1 as it is a single vector
       d_numVectors         = 1;
       d_mpiCommunicatorP2P = std::make_unique<
-        utils::mpi::MPICommunicatorP2P<ValueType, memorySpace>>(d_mpiPatternP2P,
-                                                                d_numVectors);
+        utils::mpi::MPICommunicatorP2P<ValueType, memorySpace>>(
+        d_mpiPatternP2P, d_numVectors, [this]() {
+          return d_linAlgOpContext->getBlasStream();
+        });
 
       d_vectorAttributes = VectorAttributes::Distribution::DISTRIBUTED;
       d_globalSize       = d_mpiPatternP2P->nGlobalIndices();
@@ -283,8 +295,10 @@ namespace dftefe
       // d_numVectors set to 1 as it is a single vector
       d_numVectors         = 1;
       d_mpiCommunicatorP2P = std::make_unique<
-        utils::mpi::MPICommunicatorP2P<ValueType, memorySpace>>(d_mpiPatternP2P,
-                                                                d_numVectors);
+        utils::mpi::MPICommunicatorP2P<ValueType, memorySpace>>(
+        d_mpiPatternP2P, d_numVectors, [this]() {
+          return d_linAlgOpContext->getBlasStream();
+        });
 
       d_vectorAttributes = VectorAttributes::Distribution::DISTRIBUTED;
       d_globalSize       = d_mpiPatternP2P->nGlobalIndices();
@@ -369,8 +383,10 @@ namespace dftefe
       // d_numVectors set to 1 as it is a single vector
       d_numVectors         = 1;
       d_mpiCommunicatorP2P = std::make_unique<
-        utils::mpi::MPICommunicatorP2P<ValueType, memorySpace>>(d_mpiPatternP2P,
-                                                                d_numVectors);
+        utils::mpi::MPICommunicatorP2P<ValueType, memorySpace>>(
+        d_mpiPatternP2P, d_numVectors, [this]() {
+          return d_linAlgOpContext->getBlasStream();
+        });
 
       d_vectorAttributes =
         VectorAttributes(VectorAttributes::Distribution::DISTRIBUTED);
@@ -399,7 +415,9 @@ namespace dftefe
       d_mpiPatternP2P      = u.d_mpiPatternP2P;
       d_mpiCommunicatorP2P = std::make_unique<
         utils::mpi::MPICommunicatorP2P<ValueType, memorySpace>>(
-        u.d_mpiPatternP2P, u.d_mpiCommunicatorP2P->getBlockSize());
+        u.d_mpiPatternP2P, u.d_mpiCommunicatorP2P->getBlockSize(), [this]() {
+          return d_linAlgOpContext->getBlasStream();
+        });
       d_linAlgOpContext  = u.d_linAlgOpContext;
       d_vectorAttributes = u.d_vectorAttributes;
       d_localSize        = u.d_localSize;
@@ -424,7 +442,9 @@ namespace dftefe
       d_mpiPatternP2P      = u.d_mpiPatternP2P;
       d_mpiCommunicatorP2P = std::make_unique<
         utils::mpi::MPICommunicatorP2P<ValueType, memorySpace>>(
-        u.d_mpiPatternP2P, u.d_mpiCommunicatorP2P->getBlockSize());
+        u.d_mpiPatternP2P, u.d_mpiCommunicatorP2P->getBlockSize(), [this]() {
+          return d_linAlgOpContext->getBlasStream();
+        });
       d_linAlgOpContext  = u.d_linAlgOpContext;
       d_vectorAttributes = u.d_vectorAttributes;
       d_localSize        = u.d_localSize;
@@ -468,7 +488,9 @@ namespace dftefe
       *d_storage           = *(u.d_storage);
       d_mpiCommunicatorP2P = std::make_unique<
         utils::mpi::MPICommunicatorP2P<ValueType, memorySpace>>(
-        u.d_mpiPatternP2P, u.d_mpiCommunicatorP2P->getBlockSize());
+        u.d_mpiPatternP2P, u.d_mpiCommunicatorP2P->getBlockSize(), [this]() {
+          return d_linAlgOpContext->getBlasStream();
+        });
       d_linAlgOpContext  = u.d_linAlgOpContext;
       d_vectorAttributes = u.d_vectorAttributes;
       d_localSize        = u.d_localSize;

@@ -75,7 +75,7 @@ namespace dftefe
                                          dim> &feBMPsi,
              std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
                                         linAlgOpContext,
-             const MPI_Comm &           mpiCommDomain,
+             const utils::mpi::MPIComm &mpiCommDomain,
              const size_type            cellBlockSize,
              const size_type            waveFuncBatchSize,
              const SpinMode             spinMode      = SpinMode::Unpolarized,
@@ -114,11 +114,8 @@ namespace dftefe
         std::unordered_map<DensityObsAttr, std::vector<std::vector<double>>>
           &densityObsAttrVals);
 
-      bool
-      isSpinPolarized() const;
-
-      bool
-      isNonCollinear() const;
+      SpinMode
+      spinMode() const;
 
       bool
       isSOC() const;
@@ -163,10 +160,9 @@ namespace dftefe
 
       std::vector<double>                               d_kPointCoords;
       std::vector<double>                               d_kPointWeights;
-      bool                                              d_isSpinPolarized;
-      bool                                              d_isNonCollinear;
+      SpinMode                                          d_spinMode;
       bool                                              d_isSOC;
-      std::reference_wrapper<const MPI_Comm>            d_mpiCommDomain;
+      std::reference_wrapper<const utils::mpi::MPIComm> d_mpiCommDomain;
       size_type                                         d_cellBlockSize;
       size_type                                         d_waveFuncBatchSize;
       std::unordered_map<DensityDescrAttr, AttrStorage> d_densityAttrVals;

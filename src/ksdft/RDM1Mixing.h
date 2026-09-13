@@ -54,8 +54,9 @@ namespace dftefe
      *                  normalizes densIn and densOut externally.
      * getDescriptors — returns d_densityInAttrVals (the last mixed in-density).
      *
-     * The caller (KohnShamDFT) owns and configures the MixingScheme object
-     * (including addMixingVariable) before the first setRDM1() call.
+     * The caller (KohnShamDFT) owns the MixingScheme object. All mixing
+     * variables (rho, mag*, gradRho, gradMag*) are registered in the
+     * RDM1Mixing constructor based on spinMode and xcType.
      * d_rdm1Ptr is null until the first setRDM1() call.
      */
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
@@ -75,8 +76,16 @@ namespace dftefe
        *   inside mix(). The caller is responsible for calling
        *   addMixingVariable() on the scheme before the first setRDM1() call.
        * @param mixingHistory     Anderson mixing history length.
-       * @param numElectrons  Number of electrons (unused internally; kept for
-       *   interface compatibility).
+       * @param mixingParameter   Anderson mixing parameter applied to the
+       *   charge-density variable (rho, gradRho).
+       * @param spinMixingEnhancementFactor  Multiplier applied on top of
+       *   mixingParameter for the spin/magnetization variables (magZ, magY,
+       *   magX and their gradients). Magnetization typically needs a more
+       *   aggressive mixing coefficient than the charge density to avoid
+       *   lagging/oscillating relative to it
+       * @param xcType  XC functional string (e.g. "GGA-PBE", "LDA-PW").
+       *   Used to determine whether gradient density mixing variables
+       *   (gradRho, gradMag*) should be registered.
        * @param linAlgOpContextHost  LinAlg context for HOST-side operations.
        * @param mpiCommDomain MPI communicator.
        */
@@ -85,6 +94,9 @@ namespace dftefe
                  const std::vector<RealType> &     jxwDataHost,
                  const double                      mixingParameter,
                  const bool                        isAdaptiveMixingParameter,
+                 const double                      spinMixingEnhancementFactor,
+                 const SpinMode                    spinMode,
+                 const std::string &               xcType,
                  std::shared_ptr<
                    linearAlgebra::LinAlgOpContext<utils::MemorySpace::HOST>>
                                  linAlgOpContextHost,
@@ -103,9 +115,11 @@ namespace dftefe
 
       /**
        * @brief Execute the Anderson mixing pipeline using the stored d_rdm1Ptr.
-       *        On the first call d_densityInAttrVals is adopted from densOut.
-       *        Subsequent calls compute residual, mix, and update
-       *        d_densityInAttrVals. No normalization is performed here.
+       *        Computes residual = densOut - d_densityInAttrVals, updates the
+       *        Anderson history, and overwrites d_densityInAttrVals with the
+       *        mixed density. d_densityInAttrVals must be initialized via
+       *        setDescriptors() (done in KohnShamDFT constructor) before the
+       *        first call. No normalization is performed here.
        */
       void
       mix();
@@ -136,10 +150,8 @@ namespace dftefe
 
       void
       setEvalDescrFlag(const bool evalFlag) override;
-      bool
-      isSpinPolarized() const override;
-      bool
-      isNonCollinear() const override;
+      SpinMode
+      spinMode() const override;
       bool
       isSOC() const override;
       size_type

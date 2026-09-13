@@ -45,8 +45,23 @@ namespace dftefe
         std::shared_ptr<const quadrature::QuadratureRuleContainer>
                                                      quadRuleContainer,
         RealType *                                   rhoBatch,
-        linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext)
+        linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext,
+        const SpinMode                               spinMode)
     {
+      size_type numQuadInBlock = 0;
+      for (size_type iCell = cellRange.first; iCell < cellRange.second; iCell++)
+        numQuadInBlock += quadRuleContainer->nCellQuadraturePoints(iCell);
+
+      const size_type ncomp = (spinMode == SpinMode::Unpolarized) ? 1 :
+                              (spinMode == SpinMode::Collinear)   ? 2 :
+                                                                    4;
+      const size_type batchN =
+        (spinMode == SpinMode::Unpolarized) ? batchSize : batchSize / 2;
+
+      for (size_type ic = 0; ic < ncomp; ++ic)
+        for (size_type q = 0; q < numQuadInBlock; ++q)
+          rhoBatch[ic * numQuadInBlock + q] = (RealType)0;
+
       size_type cumulativeQuadInCell = 0, cumulativeQuadPsiInCell = 0;
       for (size_type iCell = cellRange.first; iCell < cellRange.second; iCell++)
         {
@@ -54,17 +69,77 @@ namespace dftefe
             quadRuleContainer->nCellQuadraturePoints(iCell);
           for (size_type iQuad = 0; iQuad < numQuadInCell; iQuad++)
             {
-              RealType b = 0;
-              for (size_type i = 0; i < batchSize; i++)
+              const size_type q = cumulativeQuadInCell + iQuad;
+
+              if (spinMode == SpinMode::Unpolarized)
                 {
-                  const ValueType psi = psiBatchQuad[cumulativeQuadPsiInCell +
-                                                     batchSize * iQuad + i];
-                  const RealType  absSqPsi                 = utils::absSq(psi);
-                  modPsiSqBatchQuad[cumulativeQuadPsiInCell +
-                                    batchSize * iQuad + i] = absSqPsi;
-                  b += 2.0 * absSqPsi * occupationInBatch[i];
+                  RealType b = 0;
+                  for (size_type i = 0; i < batchSize; i++)
+                    {
+                      const ValueType psi =
+                        psiBatchQuad[cumulativeQuadPsiInCell +
+                                     batchSize * iQuad + i];
+                      const RealType absSqPsi = utils::absSq(psi);
+                      modPsiSqBatchQuad[cumulativeQuadPsiInCell +
+                                        batchSize * iQuad + i] = absSqPsi;
+                      b += 2.0 * absSqPsi * occupationInBatch[i];
+                    }
+                  rhoBatch[q] = b;
                 }
-              rhoBatch[cumulativeQuadInCell + iQuad] = b;
+              else if (spinMode == SpinMode::Collinear)
+                {
+                  RealType b0 = 0, b1 = 0;
+                  for (size_type n = 0; n < batchN; n++)
+                    {
+                      const ValueType psi_up =
+                        psiBatchQuad[cumulativeQuadPsiInCell +
+                                     batchSize * iQuad + n];
+                      const ValueType psi_dn =
+                        psiBatchQuad[cumulativeQuadPsiInCell +
+                                     batchSize * iQuad + batchN + n];
+                      const RealType sq_up = utils::absSq(psi_up);
+                      const RealType sq_dn = utils::absSq(psi_dn);
+                      modPsiSqBatchQuad[cumulativeQuadPsiInCell +
+                                        batchSize * iQuad + n]          = sq_up;
+                      modPsiSqBatchQuad[cumulativeQuadPsiInCell +
+                                        batchSize * iQuad + batchN + n] = sq_dn;
+                      const RealType val_up = occupationInBatch[n] * sq_up;
+                      const RealType val_dn =
+                        occupationInBatch[batchN + n] * sq_dn;
+                      b0 += val_up + val_dn;
+                      b1 += val_up - val_dn;
+                    }
+                  rhoBatch[0 * numQuadInBlock + q] = b0;
+                  rhoBatch[1 * numQuadInBlock + q] = b1;
+                }
+              else // NonCollinear
+                {
+                  RealType b0 = 0, b1 = 0, b2 = 0, b3 = 0;
+                  for (size_type n = 0; n < batchN; n++)
+                    {
+                      const ValueType psi_up =
+                        psiBatchQuad[cumulativeQuadPsiInCell +
+                                     batchSize * iQuad + n];
+                      const ValueType psi_dn =
+                        psiBatchQuad[cumulativeQuadPsiInCell +
+                                     batchSize * iQuad + batchN + n];
+                      const RealType sq_up = utils::absSq(psi_up);
+                      const RealType sq_dn = utils::absSq(psi_dn);
+                      const RealType cross_re =
+                        utils::realPart(utils::conjugate(psi_up) * psi_dn);
+                      const RealType cross_im =
+                        utils::imagPart(utils::conjugate(psi_up) * psi_dn);
+                      const RealType occ = occupationInBatch[n];
+                      b0 += occ * (sq_up + sq_dn);
+                      b1 += occ * (sq_up - sq_dn);
+                      b2 += occ * 2 * cross_im;
+                      b3 += occ * 2 * cross_re;
+                    }
+                  rhoBatch[0 * numQuadInBlock + q] = b0;
+                  rhoBatch[1 * numQuadInBlock + q] = b1;
+                  rhoBatch[2 * numQuadInBlock + q] = b2;
+                  rhoBatch[3 * numQuadInBlock + q] = b3;
+                }
             }
           cumulativeQuadPsiInCell += numQuadInCell * batchSize;
           cumulativeQuadInCell += numQuadInCell;
@@ -87,8 +162,23 @@ namespace dftefe
         std::shared_ptr<const quadrature::QuadratureRuleContainer>
                                                      quadRuleContainer,
         RealType *                                   gradRhoBatch,
-        linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext)
+        linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext,
+        const SpinMode                               spinMode)
     {
+      size_type numQuadInBlock = 0;
+      for (size_type iCell = cellRange.first; iCell < cellRange.second; iCell++)
+        numQuadInBlock += quadRuleContainer->nCellQuadraturePoints(iCell);
+
+      const size_type ncomp = (spinMode == SpinMode::Unpolarized) ? 1 :
+                              (spinMode == SpinMode::Collinear)   ? 2 :
+                                                                    4;
+      const size_type batchN =
+        (spinMode == SpinMode::Unpolarized) ? batchSize : batchSize / 2;
+
+      for (size_type ic = 0; ic < ncomp; ++ic)
+        for (size_type qd = 0; qd < numQuadInBlock * dim; ++qd)
+          gradRhoBatch[ic * numQuadInBlock * dim + qd] = (RealType)0;
+
       size_type cumulativeQuadInCell    = 0;
       size_type cumulativeQuadPsiInCell = 0;
       size_type cumulativeGradPsiInCell = 0;
@@ -98,21 +188,98 @@ namespace dftefe
             quadRuleContainer->nCellQuadraturePoints(iCell);
           for (size_type iQuad = 0; iQuad < numQuadInCell; iQuad++)
             {
+              const size_type q = cumulativeQuadInCell + iQuad;
               for (size_type iDim = 0; iDim < dim; iDim++)
                 {
-                  RealType b = 0;
-                  for (size_type i = 0; i < batchSize; i++)
+                  if (spinMode == SpinMode::Unpolarized)
                     {
-                      const ValueType psi =
-                        psiBatchQuad[cumulativeQuadPsiInCell +
-                                     batchSize * iQuad + i];
-                      const ValueType gradPsi =
-                        gradPsiBatchQuad[cumulativeGradPsiInCell + i +
-                                         batchSize * (iQuad * dim + iDim)];
-                      b += 4.0 * occupationInBatch[i] *
-                           utils::realPart(utils::conjugate(psi) * gradPsi);
+                      RealType b = 0;
+                      for (size_type i = 0; i < batchSize; i++)
+                        {
+                          const ValueType psi =
+                            psiBatchQuad[cumulativeQuadPsiInCell +
+                                         batchSize * iQuad + i];
+                          const ValueType gradPsi =
+                            gradPsiBatchQuad[cumulativeGradPsiInCell + i +
+                                             batchSize * (iQuad * dim + iDim)];
+                          b += 4.0 * occupationInBatch[i] *
+                               utils::realPart(utils::conjugate(psi) * gradPsi);
+                        }
+                      gradRhoBatch[q * dim + iDim] = b;
                     }
-                  gradRhoBatch[cumulativeQuadInCell + iQuad * dim + iDim] = b;
+                  else if (spinMode == SpinMode::Collinear)
+                    {
+                      RealType b0 = 0, b1 = 0;
+                      for (size_type n = 0; n < batchN; n++)
+                        {
+                          const ValueType psi_up =
+                            psiBatchQuad[cumulativeQuadPsiInCell +
+                                         batchSize * iQuad + n];
+                          const ValueType gPsi_up =
+                            gradPsiBatchQuad[cumulativeGradPsiInCell + n +
+                                             batchSize * (iQuad * dim + iDim)];
+                          const ValueType psi_dn =
+                            psiBatchQuad[cumulativeQuadPsiInCell +
+                                         batchSize * iQuad + batchN + n];
+                          const ValueType gPsi_dn =
+                            gradPsiBatchQuad[cumulativeGradPsiInCell + batchN +
+                                             n +
+                                             batchSize * (iQuad * dim + iDim)];
+                          const RealType contrib_up =
+                            2.0 * occupationInBatch[n] *
+                            utils::realPart(utils::conjugate(psi_up) * gPsi_up);
+                          const RealType contrib_dn =
+                            2.0 * occupationInBatch[batchN + n] *
+                            utils::realPart(utils::conjugate(psi_dn) * gPsi_dn);
+                          b0 += contrib_up + contrib_dn;
+                          b1 += contrib_up - contrib_dn;
+                        }
+                      gradRhoBatch[0 * numQuadInBlock * dim + q * dim + iDim] =
+                        b0;
+                      gradRhoBatch[1 * numQuadInBlock * dim + q * dim + iDim] =
+                        b1;
+                    }
+                  else // NonCollinear
+                    {
+                      RealType b0 = 0, b1 = 0, b2 = 0, b3 = 0;
+                      for (size_type n = 0; n < batchN; n++)
+                        {
+                          const ValueType psi_up =
+                            psiBatchQuad[cumulativeQuadPsiInCell +
+                                         batchSize * iQuad + n];
+                          const ValueType gPsi_up =
+                            gradPsiBatchQuad[cumulativeGradPsiInCell + n +
+                                             batchSize * (iQuad * dim + iDim)];
+                          const ValueType psi_dn =
+                            psiBatchQuad[cumulativeQuadPsiInCell +
+                                         batchSize * iQuad + batchN + n];
+                          const ValueType gPsi_dn =
+                            gradPsiBatchQuad[cumulativeGradPsiInCell + batchN +
+                                             n +
+                                             batchSize * (iQuad * dim + iDim)];
+                          const RealType occ = occupationInBatch[n];
+                          const RealType re_up_gup =
+                            utils::realPart(utils::conjugate(psi_up) * gPsi_up);
+                          const RealType re_dn_gdn =
+                            utils::realPart(utils::conjugate(psi_dn) * gPsi_dn);
+                          const RealType re_up_gdn =
+                            utils::realPart(utils::conjugate(psi_up) * gPsi_dn);
+                          const RealType im_up_gdn =
+                            utils::imagPart(utils::conjugate(psi_up) * gPsi_dn);
+                          b0 += 2.0 * occ * (re_up_gup + re_dn_gdn);
+                          b1 += 2.0 * occ * (re_up_gup - re_dn_gdn);
+                          b2 += 2.0 * occ * im_up_gdn;
+                          b3 += 2.0 * occ * re_up_gdn;
+                        }
+                      gradRhoBatch[0 * numQuadInBlock * dim + q * dim + iDim] =
+                        b0;
+                      gradRhoBatch[1 * numQuadInBlock * dim + q * dim + iDim] =
+                        b1;
+                      gradRhoBatch[2 * numQuadInBlock * dim + q * dim + iDim] =
+                        b2;
+                      gradRhoBatch[3 * numQuadInBlock * dim + q * dim + iDim] =
+                        b3;
+                    }
                 }
             }
           cumulativeQuadPsiInCell += numQuadInCell * batchSize;

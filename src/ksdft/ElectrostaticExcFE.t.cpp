@@ -25,6 +25,7 @@
 
 #include <utils/DataTypeOverloads.h>
 #include <ksdft/Defaults.h>
+#include <linearAlgebra/BlasLapack.h>
 
 namespace dftefe
 {
@@ -99,45 +100,31 @@ namespace dftefe
                        memorySpace,
                        dim>::getLocal(Storage &cellWiseStorage) const
     {
-      std::shared_ptr<
-        quadrature::QuadratureValuesContainer<ValueType, memorySpace>>
-        elextroxcPotentialQuad = nullptr;
+      const bool hasElec = d_electroHamiltonian->hasLocalComponent();
+      const bool hasXC   = d_excHamiltonian->hasLocalComponent();
 
-      if (d_electroHamiltonian->hasLocalComponent() &&
-          !d_excHamiltonian->hasLocalComponent())
+      if (hasElec && hasXC)
         {
-          elextroxcPotentialQuad = std::make_shared<
-            quadrature::QuadratureValuesContainer<ValueType, memorySpace>>(
-            d_electroHamiltonian->getFunctionalDerivative());
+          d_electroHamiltonian->getLocal(cellWiseStorage);
+          Storage xcStorage;
+          d_excHamiltonian->getLocal(xcStorage);
+          linearAlgebra::blasLapack::axpby<ValueType, ValueType, memorySpace>(
+            cellWiseStorage.size(),
+            (ValueType)1,
+            cellWiseStorage.data(),
+            (ValueType)1,
+            xcStorage.data(),
+            cellWiseStorage.data(),
+            *d_excHamiltonian->getLinAlgOpContext());
         }
-      else if (!d_electroHamiltonian->hasLocalComponent() &&
-               d_excHamiltonian->hasLocalComponent())
+      else if (hasElec)
         {
-          elextroxcPotentialQuad = std::make_shared<
-            quadrature::QuadratureValuesContainer<ValueType, memorySpace>>(
-            d_excHamiltonian->getFunctionalDerivative());
+          d_electroHamiltonian->getLocal(cellWiseStorage);
         }
-      else
+      else if (hasXC)
         {
-          elextroxcPotentialQuad = std::make_shared<
-            quadrature::QuadratureValuesContainer<ValueType, memorySpace>>(
-            d_electroHamiltonian->getFunctionalDerivative());
-
-          quadrature::add((ValueType)1.0,
-                          d_excHamiltonian->getFunctionalDerivative(),
-                          (ValueType)1.0,
-                          *elextroxcPotentialQuad,
-                          *d_excHamiltonian->getLinAlgOpContext());
+          d_excHamiltonian->getLocal(cellWiseStorage);
         }
-
-      d_excHamiltonian->getHamiltonianFEBasisOperations()->computeFEMatrices(
-        basis::realspace::LinearLocalOp::IDENTITY,
-        basis::realspace::VectorMathOp::MULT,
-        *elextroxcPotentialQuad,
-        basis::realspace::VectorMathOp::MULT,
-        basis::realspace::LinearLocalOp::IDENTITY,
-        cellWiseStorage,
-        *d_excHamiltonian->getLinAlgOpContext());
     }
 
     template <typename ValueTypeElectrostaticsCoeff,

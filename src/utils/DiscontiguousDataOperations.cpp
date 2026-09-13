@@ -36,11 +36,12 @@ namespace dftefe
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     void
     DiscontiguousDataOperations<ValueType, memorySpace>::
-      copyFromDiscontiguousMemory(const ValueType *src,
-                                  ValueType *      dst,
-                                  const size_type *discontIds,
-                                  const size_type  N,
-                                  const size_type  nComponents)
+      copyFromDiscontiguousMemory(const ValueType *     src,
+                                  ValueType *           dst,
+                                  const size_type *     discontIds,
+                                  const size_type       N,
+                                  const size_type       nComponents,
+                                  utils::deviceStream_t streamId)
     {
       MemoryTransfer<memorySpace, memorySpace> memoryTransfer;
       for (size_type i = 0; i < N; ++i)
@@ -55,11 +56,12 @@ namespace dftefe
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     void
     DiscontiguousDataOperations<ValueType, memorySpace>::
-      copyToDiscontiguousMemory(const ValueType *src,
-                                ValueType *      dst,
-                                const size_type *discontIds,
-                                const size_type  N,
-                                const size_type  nComponents)
+      copyToDiscontiguousMemory(const ValueType *     src,
+                                ValueType *           dst,
+                                const size_type *     discontIds,
+                                const size_type       N,
+                                const size_type       nComponents,
+                                utils::deviceStream_t streamId)
     {
       MemoryTransfer<memorySpace, memorySpace> memoryTransfer;
       for (size_type i = 0; i < N; ++i)
@@ -74,11 +76,12 @@ namespace dftefe
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     void
     DiscontiguousDataOperations<ValueType, memorySpace>::
-      addToDiscontiguousMemory(const ValueType *src,
-                               ValueType *      dst,
-                               const size_type *discontIds,
-                               const size_type  N,
-                               const size_type  nComponents)
+      addToDiscontiguousMemory(const ValueType *     src,
+                               ValueType *           dst,
+                               const size_type *     discontIds,
+                               const size_type       N,
+                               const size_type       nComponents,
+                               utils::deviceStream_t streamId)
     {
       for (size_type i = 0; i < N; ++i)
         {

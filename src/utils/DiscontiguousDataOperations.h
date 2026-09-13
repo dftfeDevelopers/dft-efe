@@ -29,6 +29,7 @@
 #include <utils/MemorySpaceType.h>
 #include <utils/MemoryStorage.h>
 #include <utils/TypeConfig.h>
+#include <utils/DeviceTypeConfig.h>
 
 namespace dftefe
 {
@@ -67,12 +68,17 @@ namespace dftefe
        * That is, src[d_i*C + j] must be s a valid memory access for a d_i's and
        * j's
        */
+      // NOTE: streamId is accepted (and ignored) here too, even though HOST
+      // has no stream concept, purely so callers (e.g. MPICommunicatorP2P,
+      // templated over memorySpace) can use one uniform call site for both
+      // HOST and DEVICE instead of branching with `if constexpr`.
       static void
-      copyFromDiscontiguousMemory(const ValueType *src,
-                                  ValueType *      dst,
-                                  const size_type *discontIds,
-                                  const size_type  N,
-                                  const size_type  nComponents);
+      copyFromDiscontiguousMemory(const ValueType *     src,
+                                  ValueType *           dst,
+                                  const size_type *     discontIds,
+                                  const size_type       N,
+                                  const size_type       nComponents,
+                                  utils::deviceStream_t streamId);
 
       /**
        * @brief Function to copy a source array \p x to a destination array \p y,
@@ -103,11 +109,12 @@ namespace dftefe
        * That is, src[i*C + j] must be a valid memory access for all i's and j's
        */
       static void
-      copyToDiscontiguousMemory(const ValueType *src,
-                                ValueType *      dst,
-                                const size_type *discontIds,
-                                const size_type  N,
-                                const size_type  nComponents);
+      copyToDiscontiguousMemory(const ValueType *     src,
+                                ValueType *           dst,
+                                const size_type *     discontIds,
+                                const size_type       N,
+                                const size_type       nComponents,
+                                utils::deviceStream_t streamId);
 
       /**
        * @brief Function to add a source array \p x to a destination array \p y,
@@ -138,15 +145,20 @@ namespace dftefe
        * That is, src[i*C + j] must be a valid memory access for all i's and j's
        */
       static void
-      addToDiscontiguousMemory(const ValueType *src,
-                               ValueType *      dst,
-                               const size_type *discontIds,
-                               const size_type  N,
-                               const size_type  nComponents);
+      addToDiscontiguousMemory(const ValueType *     src,
+                               ValueType *           dst,
+                               const size_type *     discontIds,
+                               const size_type       N,
+                               const size_type       nComponents,
+                               utils::deviceStream_t streamId);
     }; // end of class DiscontiguousDataOperations
 
 
 // partial template specialization for DEVICE
+// NOTE: streamId has no default value on purpose -- callers must always be
+// explicit about which stream this runs on (see LinAlgOpContext's default-
+// vs-non-default-stream exclusivity, which relies on every SYCL submission
+// going through a real accessor rather than an implicit stream 0).
 #ifdef DFTEFE_WITH_DEVICE
     template <typename ValueType>
     class DiscontiguousDataOperations<ValueType, utils::MemorySpace::DEVICE>
@@ -184,11 +196,12 @@ namespace dftefe
        * j's
        */
       static void
-      copyFromDiscontiguousMemory(const ValueType *src,
-                                  ValueType *      dst,
-                                  const size_type *discontIds,
-                                  const size_type  N,
-                                  const size_type  nComponents);
+      copyFromDiscontiguousMemory(const ValueType *     src,
+                                  ValueType *           dst,
+                                  const size_type *     discontIds,
+                                  const size_type       N,
+                                  const size_type       nComponents,
+                                  utils::deviceStream_t streamId);
 
       /**
        * @brief Function to copy a source array \p x to a destination array \p y,
@@ -219,11 +232,12 @@ namespace dftefe
        * That is, src[i*C + j] must be a valid memory access for all i's and j's
        */
       static void
-      copyToDiscontiguousMemory(const ValueType *src,
-                                ValueType *      dst,
-                                const size_type *discontIds,
-                                const size_type  N,
-                                const size_type  nComponents);
+      copyToDiscontiguousMemory(const ValueType *     src,
+                                ValueType *           dst,
+                                const size_type *     discontIds,
+                                const size_type       N,
+                                const size_type       nComponents,
+                                utils::deviceStream_t streamId);
 
       /**
        * @brief Function to add a source array \p x to a destination array \p y,
@@ -254,11 +268,12 @@ namespace dftefe
        * That is, src[i*C + j] must be a valid memory access for all i's and j's
        */
       static void
-      addToDiscontiguousMemory(const ValueType *src,
-                               ValueType *      dst,
-                               const size_type *discontIds,
-                               const size_type  N,
-                               const size_type  nComponents);
+      addToDiscontiguousMemory(const ValueType *     src,
+                               ValueType *           dst,
+                               const size_type *     discontIds,
+                               const size_type       N,
+                               const size_type       nComponents,
+                               utils::deviceStream_t streamId);
     }; // end of class DiscontiguousDataOperations for DEVICE
 #endif // DFTEFE_WITH_DEVICE
 

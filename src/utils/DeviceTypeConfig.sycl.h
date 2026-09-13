@@ -22,6 +22,7 @@
 #include <complex>
 #include <set>
 #include <map>
+#include <utils/TypeConfig.h>
 namespace dftefe
 {
   namespace utils

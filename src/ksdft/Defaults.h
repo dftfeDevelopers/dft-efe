@@ -119,6 +119,21 @@ namespace dftefe
 
     }; // end of class NewtonRaphsonSolverDefaults
 
+    class BisectionSolverDefaults
+    {
+    public:
+      //
+      // Maximum iteration for bisection
+      //
+      static const size_type MAX_ITER;
+
+      //
+      // Tolerance on |getValue(x)| at the bisected midpoint
+      //
+      static const double TOL;
+
+    }; // end of class BisectionSolverDefaults
+
     class Constants
     {
     public:
@@ -179,6 +194,19 @@ namespace dftefe
     public:
       static const size_type SIZE_TYPE_MAX;
     }; // end of class MaxSizeDefaults
+
+    class MixingDefaults
+    {
+    public:
+      //
+      // Multiplier applied on top of the Anderson mixingParameter for the
+      // spin/magnetization mixing variables (magZ, magY, magX and their
+      // gradients). Magnetization typically needs more aggressive mixing
+      // than the charge density to avoid lagging/oscillating relative to
+      // it (cf. DFT-FE's SPIN MIXING ENHANCEMENT FACTOR).
+      //
+      static const double SPIN_MIXING_ENHANCEMENT_FACTOR;
+    }; // end of class MixingDefaults
 
   } // end of namespace ksdft
 

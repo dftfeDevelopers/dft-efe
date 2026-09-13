@@ -382,7 +382,7 @@ namespace dftefe
       // //
       // // polynomial loop
       // //
-      for (unsigned int degree = 2; degree <= polynomialDegree; ++degree)
+      for (size_type degree = 2; degree <= polynomialDegree; ++degree)
         {
           sigma2 = 1.0 / (gamma - sigma);
           alpha1 = 2.0 * sigma2 / e, alpha2 = -(sigma * sigma2);

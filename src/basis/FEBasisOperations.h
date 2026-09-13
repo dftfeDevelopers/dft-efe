@@ -151,8 +151,9 @@ namespace dftefe
       computeFEMatrices(
         realspace::LinearLocalOp L1,
         realspace::VectorMathOp  Op1,
-        const quadrature::QuadratureValuesContainer<ValueTypeUnion, memorySpace>
-          &                                          f,
+        const std::vector<
+          quadrature::QuadratureValuesContainer<ValueTypeUnion, memorySpace>>
+          &                                          fVec,
         realspace::VectorMathOp                      L2,
         realspace::LinearLocalOp                     Op2,
         StorageUnion &                               cellWiseFEData,
@@ -162,8 +163,9 @@ namespace dftefe
       /* \integral f L12 op12 (N1.N2) dx */
       void
       computeFEMatrices(
-        const quadrature::QuadratureValuesContainer<ValueTypeUnion, memorySpace>
-          &                                          f,
+        const std::vector<
+          quadrature::QuadratureValuesContainer<ValueTypeUnion, memorySpace>>
+          &                                          fVec,
         realspace::VectorMathOp                      Op12,
         realspace::LinearLocalOp                     L12,
         StorageUnion &                               cellWiseFEData,
@@ -214,8 +216,9 @@ namespace dftefe
       BasisWeakFormKernelWithField(
         realspace::LinearLocalOp L1,
         realspace::VectorMathOp  Op1,
-        const quadrature::QuadratureValuesContainer<ValueTypeUnion, memorySpace>
-          &                      f,
+        const std::vector<
+          quadrature::QuadratureValuesContainer<ValueTypeUnion, memorySpace>>
+          &                      fVec,
         realspace::VectorMathOp  Op2,
         realspace::LinearLocalOp L2,
         std::shared_ptr<
@@ -227,8 +230,9 @@ namespace dftefe
 
       void
       BasisWeakFormKernelWithField(
-        const quadrature::QuadratureValuesContainer<ValueTypeUnion, memorySpace>
-          &                      f,
+        const std::vector<
+          quadrature::QuadratureValuesContainer<ValueTypeUnion, memorySpace>>
+          &                      fVec,
         realspace::VectorMathOp  Op12,
         realspace::LinearLocalOp L12,
         std::shared_ptr<

@@ -35,11 +35,28 @@ namespace dftefe
 {
   namespace ksdft
   {
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    class RDM1Access;
+
+    /**
+     * @brief Plain data bundle holding the KS spectral decomposition:
+     * orbitals, occupancies (one vector per k-point/spin), and orbital count.
+     */
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    struct SpectralRep
+    {
+      std::unique_ptr<linearAlgebra::MultiVector<ValueType, memorySpace>>
+                          ksOrbs;
+      std::vector<double> occupancies;
+      size_type           nKSOrbs;
+    };
+
     /**
      * @brief Intermediate abstract class that stores the spectral (eigen)
      * decomposition of the one-particle reduced density matrix — KS orbitals,
-     * occupancies, and orbital count. Concrete subclasses (e.g. RDM1FE)
-     * implement getDescriptors() and getDensityObs() using this stored data.
+     * occupancies, and orbital count via a SpectralRep bundle.
+     * Concrete subclasses (e.g. RDM1FE) implement getDescriptors() and
+     * getDensityObs() using this stored data.
      */
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     class RDM1Spectral : public RDM1<ValueType, memorySpace>
@@ -51,30 +68,69 @@ namespace dftefe
       RDM1Spectral();
       virtual ~RDM1Spectral() = default;
 
+      /**
+       * @brief Store the spectral representation (takes ownership).
+       *        Sets d_evalFlag = true.
+       */
       void
       setSpectral(
-        std::unique_ptr<linearAlgebra::MultiVector<ValueType, memorySpace>>
-                                                ksOrbitals,
-        const std::vector<std::vector<double>> &occupancies,
-        const size_type                         nKSOrbs);
+        std::unique_ptr<SpectralRep<ValueType, memorySpace>> spectral);
 
-      void
-      getSpectral(
-        std::unique_ptr<linearAlgebra::MultiVector<ValueType, memorySpace>>
-          &                               ksOrbitals,
-        std::vector<std::vector<double>> &occupancies,
-        size_type &                       nKSOrbs);
+      /**
+       * @brief Read-only reference to the spectral data — does not move
+       *        ownership.  Use for Ts / Exc / NLPSP read-only access.
+       */
+      const SpectralRep<ValueType, memorySpace> &
+      getSpectral() const;
+
+      /**
+       * @brief Resource Acquisition Is Initialization (RAII) access object
+       * that moves ownership out for the
+       *        eigensolver (write access).  Returns ownership on destruction
+       *        or explicit returnBack().
+       */
+      RDM1Access<ValueType, memorySpace>
+      getAccess();
 
       bool
-      getKSSetFlag() const;
+      isSpectralSet() const;
 
     protected:
-      std::unique_ptr<linearAlgebra::MultiVector<ValueType, memorySpace>>
-                                       d_ksOrbs;
-      size_type                        d_nKSOrbs;
-      std::vector<std::vector<double>> d_occupancies;
-      bool                             d_ksSetFlag;
-      bool                             d_evalFlag;
+      std::unique_ptr<SpectralRep<ValueType, memorySpace>> d_spectral;
+      bool                                                 d_evalFlag;
+    };
+
+    /**
+     * @brief Resource Acquisition Is Initialization (RAII) wrapper that
+     * temporarily holds the SpectralRep moved out of
+     *        an RDM1Spectral.  On destruction (or returnBack()) the rep is
+     *        returned via setSpectral().
+     */
+    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
+    class RDM1Access
+    {
+      RDM1Spectral<ValueType, memorySpace> *               d_owner;
+      std::unique_ptr<SpectralRep<ValueType, memorySpace>> d_spectral;
+
+    public:
+      RDM1Access(RDM1Spectral<ValueType, memorySpace> *               owner,
+                 std::unique_ptr<SpectralRep<ValueType, memorySpace>> spectral);
+
+      RDM1Access(const RDM1Access &) = delete;
+      RDM1Access &
+      operator=(const RDM1Access &) = delete;
+
+      RDM1Access(RDM1Access &&other) noexcept;
+
+      ~RDM1Access();
+
+      /** Explicit early return of ownership before scope ends. */
+      void
+      returnBack();
+
+      /** Mutable reference for eigensolver write access. */
+      SpectralRep<ValueType, memorySpace> &
+      getSpectral();
     };
 
   } // namespace ksdft

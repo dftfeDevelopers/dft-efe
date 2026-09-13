@@ -26,6 +26,7 @@
 #ifdef DFTEFE_WITH_DEVICE
 #  include <utils/DeviceKernelLauncherHelpers.h>
 #  include <utils/DeviceAPICalls.h>
+#  include <utils/DeviceDataTypeOverloads.h>
 #  include <utils/SmearChargeDensityFunction.h>
 #  include <cmath>
 
@@ -61,7 +62,7 @@ namespace dftefe
                                (6.0 * r * r + 3.0 * r * rci + rci * rci) /
                                (5.0 * M_PI * rci * rci * rci * rci * rci * rci *
                                 rci * rci);
-                  atomicAdd(&q[iPoint], val);
+                  dftefe::utils::atomicAddWrapper(&q[iPoint], val);
                 }
             }
         },

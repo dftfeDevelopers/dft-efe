@@ -57,6 +57,16 @@ namespace dftefe
       Collinear,
       NonCollinear,
     };
+
+    /**
+     * Whether the nuclear potential is a pseudopotential or the bare
+     * point charge (all-electron).
+     */
+    enum class CalculationType
+    {
+      PSP,
+      AE,
+    };
   } // namespace ksdft
 } // namespace dftefe
 #endif // dftefe_KSAttributes_h

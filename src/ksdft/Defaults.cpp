@@ -59,9 +59,20 @@ namespace dftefe
 
     /**
      * @brief Setting all the NewtonRaphsonSolverDefaults
+     *
+     * MAX_ITER used to be 2e7,
+     * BisectionSolver (see BisectionSolverDefaults below) always
+     * localizes the root first, plain Newton-Raphson only has to polish
+     * an already-good estimate and converges in a handful of iterations.
      */
-    const size_type NewtonRaphsonSolverDefaults::MAX_ITER  = 2e7;
+    const size_type NewtonRaphsonSolverDefaults::MAX_ITER  = 1000;
     const double    NewtonRaphsonSolverDefaults::FORCE_TOL = 1e-14;
+
+    /**
+     * @brief Setting all the BisectionSolverDefaults
+     */
+    const size_type BisectionSolverDefaults::MAX_ITER = 100;
+    const double    BisectionSolverDefaults::TOL      = 1e-9;
 
     /**
      * @brief Setting all the constants
@@ -117,5 +128,10 @@ namespace dftefe
 
     const size_type MaxSizeDefaults::SIZE_TYPE_MAX =
       std::numeric_limits<size_type>::max();
+
+    /**
+     * @brief Setting all the MixingDefaults
+     */
+    const double MixingDefaults::SPIN_MIXING_ENHANCEMENT_FACTOR = 4.0;
   } // end of namespace ksdft
 } // end of namespace dftefe

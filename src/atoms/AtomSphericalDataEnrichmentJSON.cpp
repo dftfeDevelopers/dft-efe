@@ -660,9 +660,12 @@ namespace dftefe
                           cutOffInfoVec[i].first =
                             10 * (smoothness / (1 + smoothness));
                         }
-                      cutOffInfoVec[i].first =
-                        radialPoints[std::max(cutoffId, cutoffId1)] *
-                        (smoothness / (1 + smoothness));
+                      else
+                        {
+                          cutOffInfoVec[i].first =
+                            radialPoints[std::max(cutoffId, cutoffId1)] *
+                            (smoothness / (1 + smoothness));
+                        }
                       cutOffInfoVec[i].second = smoothness;
                     }
                   else

@@ -159,17 +159,18 @@ namespace dftefe
     template <typename ValueType>
     void
     DiscontiguousDataOperations<ValueType, utils::MemorySpace::DEVICE>::
-      copyFromDiscontiguousMemory(const ValueType *src,
-                                  ValueType *      dst,
-                                  const size_type *discontIds,
-                                  const size_type  N,
-                                  const size_type  blockSize)
+      copyFromDiscontiguousMemory(const ValueType *     src,
+                                  ValueType *           dst,
+                                  const size_type *     discontIds,
+                                  const size_type       N,
+                                  const size_type       blockSize,
+                                  utils::deviceStream_t streamId)
     {
       DFTEFE_LAUNCH_KERNEL(
         copyFromDiscontiguousMemoryDeviceKernel,
         (N * blockSize) / dftefe::utils::DEVICE_BLOCK_SIZE + 1,
         dftefe::utils::DEVICE_BLOCK_SIZE,
-        dftefe::utils::defaultStream,
+        streamId,
         N,
         blockSize,
         dftefe::utils::makeDataTypeDeviceCompatible(src),
@@ -180,17 +181,18 @@ namespace dftefe
     template <typename ValueType>
     void
     DiscontiguousDataOperations<ValueType, utils::MemorySpace::DEVICE>::
-      copyToDiscontiguousMemory(const ValueType *src,
-                                ValueType *      dst,
-                                const size_type *discontIds,
-                                const size_type  N,
-                                const size_type  blockSize)
+      copyToDiscontiguousMemory(const ValueType *     src,
+                                ValueType *           dst,
+                                const size_type *     discontIds,
+                                const size_type       N,
+                                const size_type       blockSize,
+                                utils::deviceStream_t streamId)
     {
       DFTEFE_LAUNCH_KERNEL(
         copyToDiscontiguousMemoryDeviceKernel,
         (N * blockSize) / dftefe::utils::DEVICE_BLOCK_SIZE + 1,
         dftefe::utils::DEVICE_BLOCK_SIZE,
-        dftefe::utils::defaultStream,
+        streamId,
         N,
         blockSize,
         dftefe::utils::makeDataTypeDeviceCompatible(src),
@@ -201,17 +203,18 @@ namespace dftefe
     template <typename ValueType>
     void
     DiscontiguousDataOperations<ValueType, utils::MemorySpace::DEVICE>::
-      addToDiscontiguousMemory(const ValueType *src,
-                               ValueType *      dst,
-                               const size_type *discontIds,
-                               const size_type  N,
-                               const size_type  blockSize)
+      addToDiscontiguousMemory(const ValueType *     src,
+                               ValueType *           dst,
+                               const size_type *     discontIds,
+                               const size_type       N,
+                               const size_type       blockSize,
+                               utils::deviceStream_t streamId)
     {
       DFTEFE_LAUNCH_KERNEL(
         addToDiscontiguousMemoryDeviceKernel,
         (N * blockSize) / dftefe::utils::DEVICE_BLOCK_SIZE + 1,
         dftefe::utils::DEVICE_BLOCK_SIZE,
-        dftefe::utils::defaultStream,
+        streamId,
         N,
         blockSize,
         dftefe::utils::makeDataTypeDeviceCompatible(src),

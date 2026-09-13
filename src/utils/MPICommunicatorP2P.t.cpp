@@ -38,9 +38,11 @@ namespace dftefe
       template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
       MPICommunicatorP2P<ValueType, memorySpace>::MPICommunicatorP2P(
         std::shared_ptr<const MPIPatternP2P<memorySpace>> mpiPatternP2P,
-        const size_type                                   blockSize)
+        const size_type                                   blockSize,
+        std::function<utils::deviceStream_t()>            getStream)
         : d_mpiPatternP2P(mpiPatternP2P)
         , d_blockSize(blockSize)
+        , d_getStream(getStream)
         , d_commPrecision(communicationPrecision::standard)
       {
         d_commProtocol    = communicationProtocol::mpiHost;
@@ -224,7 +226,8 @@ namespace dftefe
                                           d_targetDataBuffer.data(),
                                           ownedLocalIndicesForTargetProcsPtr,
                                           numTotalOwnedIndicesForTargetProcs,
-                                          d_blockSize);
+                                          d_blockSize,
+                                          d_getStream());
 
             // initiate non-blocking sends to target processors
             ValueType *sendArrayStartPtr = d_targetDataBuffer.begin();
@@ -355,7 +358,8 @@ namespace dftefe
                                         dataGhostPtr,
                                         ghostLocalIndicesForGhostProcsPtr,
                                         numGhostIndices,
-                                        d_blockSize);
+                                        d_blockSize,
+                                        d_getStream());
           }
         else
           {
@@ -466,7 +470,8 @@ namespace dftefe
                                           d_ghostDataBuffer.data(),
                                           ghostLocalIndicesForGhostProcsPtr,
                                           numGhostIndices,
-                                          d_blockSize);
+                                          d_blockSize,
+                                          d_getStream());
 
             // initiate non-blocking sends to ghost processors
             ValueType *sendArrayStartPtr = d_ghostDataBuffer.data();
@@ -594,7 +599,8 @@ namespace dftefe
                                        dataArray.data(),
                                        ownedLocalIndicesForTargetProcsPtr,
                                        numTotalOwnedIndicesForTargetProcs,
-                                       d_blockSize);
+                                       d_blockSize,
+                                       d_getStream());
           }
         else
           {

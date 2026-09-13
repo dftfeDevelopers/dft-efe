@@ -79,10 +79,10 @@ namespace dftefe
       if constexpr (memorySpace == utils::MemorySpace::DEVICE)
         {
           utils::deviceBlasStatus_t status;
-          d_opType = TensorOpDataType::FP32;
-          d_stream = utils::defaultStream;
-          status   = create(d_deviceBlasHandle);
-          status   = setBlasStream(d_deviceBlasHandle, d_stream);
+          d_opType        = TensorOpDataType::FP32;
+          d_defaultStream = utils::defaultStream;
+          status          = create(d_deviceBlasHandle);
+          status          = setBlasStream(d_deviceBlasHandle, d_defaultStream);
 
           d_streams.resize(d_numBlasStreams);
           d_deviceBlasHandles.resize(d_numBlasStreams);

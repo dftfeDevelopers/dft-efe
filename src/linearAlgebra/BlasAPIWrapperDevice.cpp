@@ -23,8 +23,13 @@
  * @author Avirup Sircar
  */
 #ifdef DFTEFE_WITH_DEVICE
-#  include "BlasAPIWrapper.h"
+// BlasLapackTemplates.h must be included before BlasAPIWrapper.h: the
+// latter transitively pulls in oneMKL's mkl_lapack.h (via LinAlgOpContext.h
+// -> utils/DeviceTypeConfig.h), and BlasLapackTemplates.h needs to pre-empt
+// that header's include guard before its conflicting declarations are
+// parsed (see the comment in BlasLapackTemplates.h).
 #  include "BlasLapackTemplates.h"
+#  include "BlasAPIWrapper.h"
 #  include <utils/DeviceUtils.h>
 #  include <utils/DeviceTypeConfig.h>
 #  include <utils/DeviceKernelLauncherHelpers.h>
@@ -747,7 +752,7 @@ namespace dftefe
                   cumulativeC += stridec[ibatch];
                 }
 
-              for (int s = 0; s < numStreams; ++s)
+              for (size_type s = 0; s < numStreams; ++s)
                 {
                   utils::deviceError_t err =
                     utils::deviceStreamSynchronize(streams[s]);
@@ -936,7 +941,7 @@ namespace dftefe
                   cumulativeC += stridec[ibatch];
                 }
 
-              for (int s = 0; s < numStreams; ++s)
+              for (size_type s = 0; s < numStreams; ++s)
                 {
                   utils::deviceError_t err =
                     utils::deviceStreamSynchronize(streams[s]);
@@ -1175,8 +1180,16 @@ namespace dftefe
 
           int result = 0; // cuBLAS uses int for the index
 
+#  ifdef DFTEFE_WITH_DEVICE_INTEL
+          // oneMKL keeps the classic BLAS "i" prefix as part of the
+          // (otherwise type-overloaded) routine name, unlike cuBLAS/hipBLAS
+          // where it's folded into the type-specific symbol name.
+          DEVICEBLAS_API_CHECK(oneapi::mkl::blas::column_major::iamax(
+            context.getDeviceBlasHandle(), nTmp, x, incxTmp, &result));
+#  else
           DEVICEBLAS_API_CHECK(DFTEFE_DEVICE_BLAS_INT(Is, amax)(
             context.getDeviceBlasHandle(), nTmp, x, incxTmp, &result));
+#  endif
 
           return static_cast<size_type>(result);
         }
@@ -1194,8 +1207,13 @@ namespace dftefe
 
           int result = 0; // cuBLAS uses int for the index
 
+#  ifdef DFTEFE_WITH_DEVICE_INTEL
+          DEVICEBLAS_API_CHECK(oneapi::mkl::blas::column_major::iamax(
+            context.getDeviceBlasHandle(), nTmp, x, incxTmp, &result));
+#  else
           DEVICEBLAS_API_CHECK(DFTEFE_DEVICE_BLAS_INT(Id, amax)(
             context.getDeviceBlasHandle(), nTmp, x, incxTmp, &result));
+#  endif
 
           return static_cast<size_type>(result);
         }
@@ -1213,6 +1231,14 @@ namespace dftefe
 
           int result = 0; // cuBLAS uses int for the index
 
+#  ifdef DFTEFE_WITH_DEVICE_INTEL
+          DEVICEBLAS_API_CHECK(oneapi::mkl::blas::column_major::iamax(
+            context.getDeviceBlasHandle(),
+            nTmp,
+            makeDataTypeDeviceBlasCompatible(x),
+            incxTmp,
+            &result));
+#  else
           DEVICEBLAS_API_CHECK(
             DFTEFE_DEVICE_BLAS_INT(Ic,
                                    amax)(context.getDeviceBlasHandle(),
@@ -1220,6 +1246,7 @@ namespace dftefe
                                          makeDataTypeDeviceBlasCompatible(x),
                                          incxTmp,
                                          &result));
+#  endif
 
           return static_cast<size_type>(result);
         }
@@ -1237,6 +1264,14 @@ namespace dftefe
 
           int result = 0; // cuBLAS uses int for the index
 
+#  ifdef DFTEFE_WITH_DEVICE_INTEL
+          DEVICEBLAS_API_CHECK(oneapi::mkl::blas::column_major::iamax(
+            context.getDeviceBlasHandle(),
+            nTmp,
+            makeDataTypeDeviceBlasCompatible(x),
+            incxTmp,
+            &result));
+#  else
           DEVICEBLAS_API_CHECK(
             DFTEFE_DEVICE_BLAS_INT(Iz,
                                    amax)(context.getDeviceBlasHandle(),
@@ -1244,6 +1279,7 @@ namespace dftefe
                                          makeDataTypeDeviceBlasCompatible(x),
                                          incxTmp,
                                          &result));
+#  endif
 
           return static_cast<size_type>(result);
         }
@@ -1323,7 +1359,7 @@ namespace dftefe
             sycl::malloc_device<float>(1, context.getDeviceBlasHandle());
           if (!dev_res)
             throw std::bad_alloc{};
-          deviceEvent_t event =
+          utils::deviceEvent_t event =
             DFTEFE_DEVICE_BLAS_INT(S, dot)(context.getDeviceBlasHandle(),
                                            nTmp,
                                            x,
@@ -1373,7 +1409,7 @@ namespace dftefe
             sycl::malloc_device<double>(1, context.getDeviceBlasHandle());
           if (!dev_res)
             throw std::bad_alloc{};
-          deviceEvent_t event =
+          utils::deviceEvent_t event =
             DFTEFE_DEVICE_BLAS_INT(D, dot)(context.getDeviceBlasHandle(),
                                            nTmp,
                                            x,

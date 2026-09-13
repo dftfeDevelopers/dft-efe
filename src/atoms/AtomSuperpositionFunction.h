@@ -67,14 +67,26 @@ namespace dftefe
                const AtomSuperpositionFuncType atomSupType,
                const double *                  t,
                double *                        q,
-               const double                    constant = 1.0) const
+               const double                    constant    = 1.0,
+               const std::vector<double> &     atomWeights = {}) const
       {
 #ifdef DFTEFE_WITH_DEVICE
         if (memorySpace == utils::MemorySpace::DEVICE)
-          evalDevice(numPoints, atomSupType, constant, t, q);
+          evalDevice(numPoints, atomSupType, constant, t, q, atomWeights);
         else
 #endif
-          evalHost(numPoints, atomSupType, constant, t, q);
+          evalHost(numPoints, atomSupType, constant, t, q, atomWeights);
+      }
+
+      void
+      evaluateHost(const size_type                 numPoints,
+                   const AtomSuperpositionFuncType atomSupType,
+                   const double *                  t,
+                   double *                        q,
+                   const double                    constant    = 1.0,
+                   const std::vector<double> &     atomWeights = {}) const
+      {
+        evalHost(numPoints, atomSupType, constant, t, q, atomWeights);
       }
 
     protected:
@@ -83,7 +95,8 @@ namespace dftefe
                const AtomSuperpositionFuncType atomSupType,
                const double                    constant,
                const double *                  t,
-               double *                        q) const;
+               double *                        q,
+               const std::vector<double> &     atomWeights = {}) const;
 
 #ifdef DFTEFE_WITH_DEVICE
       void
@@ -91,10 +104,11 @@ namespace dftefe
                  const AtomSuperpositionFuncType atomSupType,
                  const double                    constant,
                  const double *                  t,
-                 double *                        q) const;
+                 double *                        q,
+                 const std::vector<double> &     atomWeights = {}) const;
 #endif
 
-    private:
+    protected:
       const std::shared_ptr<const AtomSphericalDataContainer>
                                      d_atomSphericalDataContainer;
       const std::vector<std::string> d_atomSymbolVec;
@@ -104,6 +118,7 @@ namespace dftefe
       size_type                      d_dim;
 
       std::vector<std::shared_ptr<SphericalData>> d_sphericalDataVecAll;
+      std::vector<size_type>                      d_enrichmentToAtomId;
       size_type                                   d_numEnrichmentFuncTotal;
 
       linearAlgebra::LinAlgOpContext<memorySpace> *d_linAlgOpContext;

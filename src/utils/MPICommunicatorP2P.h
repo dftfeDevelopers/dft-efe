@@ -31,6 +31,8 @@
 #include <utils/MPIPatternP2P.h>
 #include <utils/TypeConfig.h>
 #include <utils/MemoryStorage.h>
+#include <utils/DeviceTypeConfig.h>
+#include <functional>
 
 
 namespace dftefe
@@ -54,9 +56,18 @@ namespace dftefe
       class MPICommunicatorP2P
       {
       public:
+        // NOTE: getStream is a type-erased callback (rather than, say, a
+        // LinAlgOpContext&) so that this utils-layer class never has to
+        // depend on linearAlgebra::LinAlgOpContext -- dft-efe-linalg links
+        // dft-efe-utils, not the reverse. Callers (Vector/MultiVector) pass
+        // a lambda that calls linAlgOpContext.getBlasStream(); it's invoked
+        // fresh on every communication call, so LinAlgOpContext's default-
+        // /non-default-stream exclusivity gating still triggers correctly,
+        // instead of being resolved once and going stale.
         MPICommunicatorP2P(
           std::shared_ptr<const MPIPatternP2P<memorySpace>> mpiPatternP2P,
-          const size_type                                   blockSize);
+          const size_type                                   blockSize,
+          std::function<utils::deviceStream_t()>            getStream);
 
         void
         updateGhostValues(MemoryStorage<ValueType, memorySpace> &dataArray,
@@ -97,6 +108,8 @@ namespace dftefe
         std::shared_ptr<const MPIPatternP2P<memorySpace>> d_mpiPatternP2P;
 
         size_type d_blockSize;
+
+        std::function<utils::deviceStream_t()> d_getStream;
 
         MemoryStorage<ValueType, memorySpace> d_targetDataBuffer;
 
