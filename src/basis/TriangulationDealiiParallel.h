@@ -53,6 +53,20 @@ namespace dftefe
       void
       createSingleCellTriangulation(
         const std::vector<utils::Point> &vertices) override;
+      /**
+       * \todo
+       * TODO:
+       * 1. Implement for periodic case
+       * 2. Check if the domainvectors argument is redundant (i.e., if they can
+       *  be fetched from the d_triangulationDealii)
+       *
+       * Item 1 is now done for dim = 3 via
+       * TriangulationDealiiUtils::markPeriodicFacesAndAddPeriodicity.
+       */
+      void
+      markPeriodicFaces(
+        const std::vector<bool> &        isPeriodicFlags,
+        const std::vector<utils::Point> &domainVectors) override;
       void
       shiftTriangulation(const utils::Point &origin) override;
       void
@@ -89,6 +103,14 @@ namespace dftefe
       beginLocal() const override;
       TriangulationBase::const_TriangulationCellIterator
       endLocal() const override;
+      TriangulationBase::TriangulationCellIterator
+      beginGhost() override;
+      TriangulationBase::TriangulationCellIterator
+      endGhost() override;
+      TriangulationBase::const_TriangulationCellIterator
+      beginGhost() const override;
+      TriangulationBase::const_TriangulationCellIterator
+      endGhost() const override;
       size_type
       getDim() const override;
       std::vector<bool>
@@ -107,22 +129,11 @@ namespace dftefe
       returnDealiiTria() const;
 
     private:
-      /**
-       * \todo
-       * TODO:
-       * 1. Implement for periodic case
-       * 2. Check if the domainvectors argument is redundant (i.e., if they can
-       *  be fetched from the d_triangulationDealii)
-       */
-      void
-      markPeriodicFaces(const std::vector<bool> &        isPeriodicFlags,
-                        const std::vector<utils::Point> &domainVectors);
-
-    private:
       bool                                                isInitialized;
       bool                                                isFinalized;
       dealii::parallel::distributed::Triangulation<dim>   d_triangulationDealii;
       std::vector<std::shared_ptr<TriangulationCellBase>> d_triaVectorCell;
+      std::vector<std::shared_ptr<TriangulationCellBase>> d_triaVectorGhostCell;
       std::vector<bool>                                   d_isPeriodicFlags;
       std::vector<utils::Point>                           d_domainVectors;
       double                                              d_maxElemLength;

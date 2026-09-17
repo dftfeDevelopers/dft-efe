@@ -83,6 +83,36 @@ namespace dftefe
     }
 
     template <size_type dim>
+    bool
+    TriangulationCellDealii<dim>::isLocallyOwned() const
+    {
+      return d_cellItr->is_locally_owned();
+    }
+
+    template <size_type dim>
+    bool
+    TriangulationCellDealii<dim>::isGhost() const
+    {
+      return d_cellItr->is_ghost();
+    }
+
+    template <size_type dim>
+    bool
+    TriangulationCellDealii<dim>::periodicNeighborIsCoarser(
+      const size_type i) const
+    {
+      return d_cellItr->periodic_neighbor_is_coarser(i);
+    }
+
+    template <size_type dim>
+    std::shared_ptr<TriangulationCellBase>
+    TriangulationCellDealii<dim>::getPeriodicNeighbor(const size_type i) const
+    {
+      return std::make_shared<TriangulationCellDealii<dim>>(
+        d_cellItr->periodic_neighbor(i));
+    }
+
+    template <size_type dim>
     size_type
     TriangulationCellDealii<dim>::getDim() const
     {
@@ -110,6 +140,13 @@ namespace dftefe
     TriangulationCellDealii<dim>::setRefineFlag()
     {
       d_cellItr->set_refine_flag();
+    }
+
+    template <size_type dim>
+    bool
+    TriangulationCellDealii<dim>::isRefineFlagSet() const
+    {
+      return d_cellItr->refine_flag_set();
     }
 
     template <size_type dim>

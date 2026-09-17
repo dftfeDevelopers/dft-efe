@@ -82,6 +82,25 @@ namespace dftefe
 
     }; // end of class GenerateMeshDefaults
 
+    class PeriodicImageAtomGeneratorDefaults
+    {
+    public:
+      //
+      // Envelope within which a periodic image is kept for the electrostatics
+      // consumers (VSelf, local pseudopotential, smeared nuclear charge, 1/r).
+      // dftfe's PSP CUTOFF IMAGE CHARGES.
+      //
+      static const double CUTOFF;
+
+      //
+      // Envelope for the compactly supported atom centered consumers (nonlocal
+      // projectors, core and initial densities, mesh generation, and the
+      // enrichment functions). dftfe's d_pspCutOffTrunc.
+      //
+      static const double CUTOFF_TRUNC;
+
+    }; // end of class PeriodicImageAtomGeneratorDefaults
+
     class ECIDefaults
     {
     public:

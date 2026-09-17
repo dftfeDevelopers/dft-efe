@@ -28,6 +28,9 @@
 
 #include <basis/BasisManager.h>
 #include <basis/FEBasisDofHandler.h>
+#include <basis/FEBasisDataStorage.h>
+#include <linearAlgebra/LinAlgOpContext.h>
+#include <utils/MPITypes.h>
 namespace dftefe
 {
   namespace basis
@@ -65,7 +68,7 @@ namespace dftefe
       void
       reinit(std::shared_ptr<const BasisDofHandler> basisDofHandler,
              std::shared_ptr<const utils::ScalarSpatialFunctionReal>
-               dirichletBoundaryCondition);
+               dirichletBoundaryCondition = nullptr);
 
       ~FEBasisManager() = default;
 
@@ -74,6 +77,28 @@ namespace dftefe
 
       const ConstraintsLocal<ValueTypeBasisCoeff, memorySpace> &
       getConstraints() const override;
+
+      /**
+       * @brief Adds the mean-value constraint to this manager's constraints,
+       * pinning the null space of the Poisson operator under full periodic
+       * boundary conditions. Assembles the basis integrals
+       * \f$w_i = \int_\Omega N_i \, d\Omega\f$ here, since that needs the
+       * basis-data type, and hands them to
+       * ConstraintsLocal::setMeanValueConstraint, which owns the rest.
+       *
+       * If this manager is still sharing the basis DofHandler's intrinsic
+       * constraints, it first takes a private copy of them, so that the added
+       * constraint is never seen by the other managers built on the same
+       * DofHandler.
+       */
+      void
+      enableMeanValueConstraint(
+        std::shared_ptr<
+          const FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+          feBasisDataStorage,
+        std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
+                                   linAlgOpContext,
+        const utils::mpi::MPIComm &mpiComm);
 
       std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
       getMPIPatternP2P() const override;
@@ -150,6 +175,11 @@ namespace dftefe
         d_feBDH;
       std::shared_ptr<const ConstraintsLocal<ValueTypeBasisCoeff, memorySpace>>
         d_constraintsLocal;
+      // The same object as d_constraintsLocal whenever this manager owns it
+      // rather than sharing the DofHandler's intrinsic one, and null otherwise.
+      // Only through this handle may the constraints be modified.
+      std::shared_ptr<ConstraintsLocal<ValueTypeBasisCoeff, memorySpace>>
+        d_constraintsLocalOwned;
       std::vector<std::pair<global_size_type, global_size_type>>
                              d_locallyOwnedRanges;
       std::vector<size_type> d_locallyOwnedCellStartIds;

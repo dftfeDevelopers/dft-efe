@@ -2,6 +2,7 @@
 #include <utils/MPIWrapper.h>
 #include <utils/MPITypes.h>
 #include "DealiiConversions.h"
+#include "TriangulationDealiiUtils.h"
 #include <deal.II/grid/grid_generator.h>
 #include <deal.II/grid/grid_tools.h>
 #include <deal.II/base/point.h>
@@ -53,6 +54,18 @@ namespace dftefe
       size_type iCell = 0;
       d_triaVectorCell.resize(nLocallyOwnedCells());
 
+      size_type nGhostCells = 0;
+      for (size_type iLevel = 0;
+           iLevel < d_triangulationDealii.n_global_levels();
+           iLevel++)
+        for (auto cellPtr = d_triangulationDealii.begin_active(iLevel);
+             cellPtr != d_triangulationDealii.end_active(iLevel);
+             cellPtr++)
+          if (cellPtr->is_ghost())
+            nGhostCells++;
+      d_triaVectorGhostCell.resize(nGhostCells);
+      size_type iGhostCell = 0;
+
       // for (size_type iLevel = 0; iLevel <
       // d_triangulationDealii.n_levels();
       //      iLevel++)
@@ -79,6 +92,12 @@ namespace dftefe
                   d_triaVectorCell[iCell] =
                     std::make_shared<TriangulationCellDealii<dim>>(cellPtr);
                   iCell++;
+                }
+              else if (cellPtr->is_ghost())
+                {
+                  d_triaVectorGhostCell[iGhostCell] =
+                    std::make_shared<TriangulationCellDealii<dim>>(cellPtr);
+                  iGhostCell++;
                 }
             }
           //          auto cellPtr = d_triangulationDealii.begin_active(iLevel);
@@ -124,7 +143,6 @@ namespace dftefe
 
       dealii::GridGenerator::subdivided_parallelepiped<dim>(
         d_triangulationDealii, dealiiSubdivisions, dealiiPoints);
-      markPeriodicFaces(isPeriodicFlags, domainVectors);
 
       d_isPeriodicFlags.resize(dim);
       d_isPeriodicFlags = isPeriodicFlags;
@@ -194,16 +212,8 @@ namespace dftefe
                            "Cannot mark periodic faces after refinement."
                            "This has to be done at the coarsest level");
 
-      for (size_type i = 0; i < dim; ++i)
-        {
-          if (isPeriodicFlags[i] == true)
-            {
-              utils::throwException<utils::InvalidArgument>(
-                false,
-                "The markPeriodicFaces has not yet been implemented for periodic problems."
-                "Please ask Vishal to implement it.");
-            }
-        }
+      TriangulationDealiiUtils::markPeriodicFacesAndAddPeriodicity<dim>(
+        d_triangulationDealii, isPeriodicFlags, domainVectors);
     }
 
     template <size_type dim>
@@ -368,6 +378,34 @@ namespace dftefe
     TriangulationDealiiParallel<dim>::endLocal() const
     {
       return d_triaVectorCell.end();
+    }
+
+    template <size_type dim>
+    TriangulationBase::TriangulationCellIterator
+    TriangulationDealiiParallel<dim>::beginGhost()
+    {
+      return d_triaVectorGhostCell.begin();
+    }
+
+    template <size_type dim>
+    TriangulationBase::TriangulationCellIterator
+    TriangulationDealiiParallel<dim>::endGhost()
+    {
+      return d_triaVectorGhostCell.end();
+    }
+
+    template <size_type dim>
+    TriangulationBase::const_TriangulationCellIterator
+    TriangulationDealiiParallel<dim>::beginGhost() const
+    {
+      return d_triaVectorGhostCell.begin();
+    }
+
+    template <size_type dim>
+    TriangulationBase::const_TriangulationCellIterator
+    TriangulationDealiiParallel<dim>::endGhost() const
+    {
+      return d_triaVectorGhostCell.end();
     }
 
     template <size_type dim>

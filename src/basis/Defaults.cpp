@@ -54,6 +54,8 @@ namespace dftefe
     template class L2ProjectionDefaults<utils::MemorySpace::HOST>;
     template class L2ProjectionDefaults<utils::MemorySpace::DEVICE>;
     const size_type GenerateMeshDefaults::MAX_REFINEMENT_STEPS = 40;
+    const double    PeriodicImageAtomGeneratorDefaults::CUTOFF       = 15.0;
+    const double    PeriodicImageAtomGeneratorDefaults::CUTOFF_TRUNC = 15.0;
     const size_type ECIDefaults::ENRICHMENT_BATCH_SIZE         = 400;
     const double    ECIDefaults::ENRICHMENT_ORTHO_COEFF_TOL    = 1e-8;
     template <>

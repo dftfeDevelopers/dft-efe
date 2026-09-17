@@ -4,6 +4,14 @@
 #include <basis/FECellBase.h>
 #include <memory>
 #include <basis/ConstraintsInternal.h>
+#include <utils/Defaults.h>
+#include <utils/DataTypeOverloads.h>
+#include <linearAlgebra/BlasLapack.h>
+#include <utils/MemoryTransfer.h>
+#include <utils/MPIWrapper.h>
+#include <utils/MPITypes.h>
+#include <set>
+#include <vector>
 
 
 namespace dftefe
@@ -19,6 +27,12 @@ namespace dftefe
                                 const dealii::IndexSet &locally_relevant_dofs)
       : d_isCleared(false)
       , d_isClosed(false)
+      , d_isMeanValueConstraintActive(false)
+      , d_meanValueConstraintNodeIdLocal(0)
+      , d_meanValueConstraintProcId(0)
+      , d_meanValueConstraintNodeIdGlobal(0)
+      , d_meanValueMpiComm(utils::mpi::MPICommSelf)
+      , d_meanValueMyRank(0)
     {
       d_locallyOwnedRanges.resize(0);
       d_ghostIndices.resize(0);
@@ -50,6 +64,12 @@ namespace dftefe
       , d_globalToLocalMap(globalToLocalMapLocalDofs)
       , d_isCleared(false)
       , d_isClosed(true)
+      , d_isMeanValueConstraintActive(false)
+      , d_meanValueConstraintNodeIdLocal(0)
+      , d_meanValueConstraintProcId(0)
+      , d_meanValueConstraintNodeIdGlobal(0)
+      , d_meanValueMpiComm(utils::mpi::MPICommSelf)
+      , d_meanValueMyRank(0)
     {
       copyConstraintsDataFromDealiiToDftefe();
     }
@@ -508,6 +528,310 @@ namespace dftefe
                                            *vectorData.getLinAlgOpContext());
     }
 
+
+    template <typename ValueTypeBasisCoeff,
+              utils::MemorySpace memorySpace,
+              size_type          dim>
+    void
+    CFEConstraintsLocalDealii<ValueTypeBasisCoeff, memorySpace, dim>::
+      applyMeanValueConstraintDistributeP2C(
+        linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
+          &       vectorData,
+        size_type blockSize) const
+    {
+      // Set the pinned dof from its masters, vec[o] = dot(a, vec), which is
+      // the slave-from-masters half of the mean value constraint. The dot runs
+      // over locally owned entries only and is then summed across processors,
+      // and only the processor owning o writes the result.
+      // dftfe analog: meanValueConstraintDistribute
+      // (poissonSolverProblem.cc:445-457)
+      if (!d_isMeanValueConstraintActive)
+        return;
+
+      {
+          std::vector<ValueTypeBasisCoeff> dotProd(blockSize);
+          for (size_type iVec = 0; iVec < blockSize; ++iVec)
+            dotProd[iVec] =
+              linearAlgebra::blasLapack::dot<ValueTypeBasisCoeff,
+                                             ValueTypeBasisCoeff,
+                                             memorySpace>(
+                d_meanValueConstraintVec.locallyOwnedSize(),
+                d_meanValueConstraintVec.data(),
+                1,
+                vectorData.data() + iVec,
+                blockSize,
+                *vectorData.getLinAlgOpContext());
+
+          utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
+            utils::mpi::MPIInPlace,
+            dotProd.data(),
+            (int)blockSize,
+            utils::mpi::Types<ValueTypeBasisCoeff>::getMPIDatatype(),
+            utils::mpi::MPISum,
+            d_meanValueMpiComm);
+
+          if (d_meanValueMyRank == (int)d_meanValueConstraintProcId)
+            utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
+              blockSize,
+              vectorData.data() + d_meanValueConstraintNodeIdLocal * blockSize,
+              dotProd.data());
+          vectorData.updateGhostValues();
+        }
+    }
+
+    template <typename ValueTypeBasisCoeff,
+              utils::MemorySpace memorySpace,
+              size_type          dim>
+    void
+    CFEConstraintsLocalDealii<ValueTypeBasisCoeff, memorySpace, dim>::
+      applyMeanValueConstraintDistributeC2P(
+        linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
+          &       vectorData,
+        size_type blockSize) const
+    {
+      // Transpose of the above: whatever has accumulated on the pinned dof is
+      // redistributed onto its masters as vec += vec[o] * a, after which the
+      // pinned entry is zeroed so it contributes nothing further. vec[o] is
+      // broadcast first, since only the processor owning o holds it.
+      // dftfe analog: meanValueConstraintDistributeSlaveToMaster
+      // (poissonSolverProblem.cc:461-482), with the zeroing step folded in as
+      // in the device variant at poissonSolverProblemDevice.cc:548
+      if (!d_isMeanValueConstraintActive)
+        return;
+
+      {
+          std::vector<ValueTypeBasisCoeff> valueAtNode(
+            blockSize, utils::Types<ValueTypeBasisCoeff>::zero);
+          if (d_meanValueMyRank == (int)d_meanValueConstraintProcId)
+            utils::MemoryTransfer<utils::MemorySpace::HOST, memorySpace>::copy(
+              blockSize,
+              valueAtNode.data(),
+              vectorData.data() +
+                d_meanValueConstraintNodeIdLocal * blockSize);
+
+          utils::mpi::MPIBcast<utils::MemorySpace::HOST>(
+            valueAtNode.data(),
+            (int)blockSize,
+            utils::mpi::Types<ValueTypeBasisCoeff>::getMPIDatatype(),
+            (int)d_meanValueConstraintProcId,
+            d_meanValueMpiComm);
+
+          for (size_type iVec = 0; iVec < blockSize; ++iVec)
+            linearAlgebra::blasLapack::axpby<ValueTypeBasisCoeff,
+                                             ValueTypeBasisCoeff,
+                                             memorySpace>(
+              d_meanValueConstraintVec.locallyOwnedSize(),
+              valueAtNode[iVec],
+              d_meanValueConstraintVec.data(),
+              (ValueTypeBasisCoeff)1.0,
+              vectorData.data() + iVec,
+              vectorData.data() + iVec,
+              *vectorData.getLinAlgOpContext());
+
+          if (d_meanValueMyRank == (int)d_meanValueConstraintProcId)
+            {
+              std::vector<ValueTypeBasisCoeff> zeros(
+                blockSize, utils::Types<ValueTypeBasisCoeff>::zero);
+              utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::
+                copy(blockSize,
+                     vectorData.data() +
+                       d_meanValueConstraintNodeIdLocal * blockSize,
+                     zeros.data());
+            }
+        }
+    }
+
+    template <typename ValueTypeBasisCoeff,
+              utils::MemorySpace memorySpace,
+              size_type          dim>
+    void
+    CFEConstraintsLocalDealii<ValueTypeBasisCoeff, memorySpace, dim>::
+      setMeanValueConstraint(
+        const linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
+          &                        basisIntegrals,
+        const utils::mpi::MPIComm &mpiComm)
+    {
+      d_meanValueMpiComm = mpiComm;
+      int nProcs         = 1;
+      utils::mpi::MPICommRank(mpiComm, &d_meanValueMyRank);
+      utils::mpi::MPICommSize(mpiComm, &nProcs);
+
+      d_meanValueConstraintVec = basisIntegrals;
+      const size_type localSize = d_meanValueConstraintVec.localSize();
+
+      // Fold the ghost-side contributions into the locally owned entries and
+      // apply the dealii constraints already held here (hanging + periodic +
+      // Dirichlet). The mean-value branch inside distributeChildToParent is
+      // still dead at this point, since d_isMeanValueConstraintActive is only
+      // set at the end of this function.
+      this->distributeChildToParent(d_meanValueConstraintVec, 1);
+      d_meanValueConstraintVec.accumulateAddLocallyOwned();
+      d_meanValueConstraintVec.updateGhostValues();
+
+      std::vector<ValueTypeBasisCoeff> wHost(localSize);
+      utils::MemoryTransfer<utils::MemorySpace::HOST, memorySpace>::copy(
+        localSize, wHost.data(), d_meanValueConstraintVec.data());
+
+      //
+      // Pick the pinned dof. Selection mirrors dftfe
+      // (poissonSolverProblem.cc:551-619): a candidate is a locally owned dof
+      // that appears in no constraint equation, neither as a slave nor as a
+      // master; the first processor holding any candidate owns the pinned dof
+      // and takes its first candidate.
+      //
+      std::set<global_size_type> indicesTouchedByConstraints;
+      const dealii::IndexSet     locallyRelevantElements =
+        d_dealiiAffineConstraintMatrix.get_local_lines();
+      for (auto it = locallyRelevantElements.begin();
+           it != locallyRelevantElements.end();
+           ++it)
+        {
+          if (d_dealiiAffineConstraintMatrix.is_constrained(*it))
+            {
+              indicesTouchedByConstraints.insert(*it);
+              const std::vector<
+                std::pair<global_size_type, ValueTypeBasisCoeff>> *rowData =
+                d_dealiiAffineConstraintMatrix.get_constraint_entries(*it);
+              for (size_type j = 0; j < rowData->size(); ++j)
+                indicesTouchedByConstraints.insert((*rowData)[j].first);
+            }
+        }
+
+      size_type numCandidates = 0;
+      for (size_type iRange = 0; iRange < d_locallyOwnedRanges.size(); ++iRange)
+        for (global_size_type g = d_locallyOwnedRanges[iRange].first;
+             g < d_locallyOwnedRanges[iRange].second;
+             ++g)
+          if (indicesTouchedByConstraints.count(g) == 0)
+            numCandidates++;
+
+      std::vector<global_size_type> candidates(numCandidates, 0);
+      size_type                     iCandidate = 0;
+      for (size_type iRange = 0; iRange < d_locallyOwnedRanges.size(); ++iRange)
+        for (global_size_type g = d_locallyOwnedRanges[iRange].first;
+             g < d_locallyOwnedRanges[iRange].second;
+             ++g)
+          if (indicesTouchedByConstraints.count(g) == 0)
+            candidates[iCandidate++] = g;
+
+      size_type              localNumCandidates = candidates.size();
+      std::vector<size_type> allNumCandidates(nProcs, 0);
+      utils::mpi::MPIAllgather<utils::MemorySpace::HOST>(
+        &localNumCandidates,
+        1,
+        utils::mpi::Types<size_type>::getMPIDatatype(),
+        allNumCandidates.data(),
+        1,
+        utils::mpi::Types<size_type>::getMPIDatatype(),
+        mpiComm);
+
+      bool foundCandidate         = false;
+      d_meanValueConstraintProcId = 0;
+      for (int iProc = 0; iProc < nProcs; ++iProc)
+        if (allNumCandidates[iProc] > 0)
+          {
+            d_meanValueConstraintProcId = (size_type)iProc;
+            foundCandidate              = true;
+            break;
+          }
+      utils::throwException(
+        foundCandidate,
+        "MeanValueConstraint: no unconstrained dof is available for pinning "
+        "the null space of the Poisson operator.");
+
+      ValueTypeBasisCoeff valueAtConstraintNode =
+        utils::Types<ValueTypeBasisCoeff>::zero;
+      if (d_meanValueMyRank == (int)d_meanValueConstraintProcId)
+        {
+          d_meanValueConstraintNodeIdGlobal = candidates[0];
+          d_meanValueConstraintNodeIdLocal =
+            globalToLocal(d_meanValueConstraintNodeIdGlobal);
+          valueAtConstraintNode = wHost[d_meanValueConstraintNodeIdLocal];
+        }
+
+      utils::mpi::MPIBcast<utils::MemorySpace::HOST>(
+        &d_meanValueConstraintNodeIdGlobal,
+        1,
+        utils::mpi::Types<global_size_type>::getMPIDatatype(),
+        (int)d_meanValueConstraintProcId,
+        mpiComm);
+      utils::mpi::MPIBcast<utils::MemorySpace::HOST>(
+        &valueAtConstraintNode,
+        1,
+        utils::mpi::Types<ValueTypeBasisCoeff>::getMPIDatatype(),
+        (int)d_meanValueConstraintProcId,
+        mpiComm);
+
+      utils::throwException(
+        utils::abs_(valueAtConstraintNode) > 1e-14,
+        "MeanValueConstraint: the pinned dof has a vanishing mass integral.");
+
+      //
+      // Rescale w -> a = -w / w_o and zero the pinned entry.
+      //
+      linearAlgebra::blasLapack::ascale<ValueTypeBasisCoeff,
+                                        ValueTypeBasisCoeff,
+                                        memorySpace>(
+        localSize,
+        (ValueTypeBasisCoeff)(-1.0) / valueAtConstraintNode,
+        d_meanValueConstraintVec.data(),
+        d_meanValueConstraintVec.data(),
+        *d_meanValueConstraintVec.getLinAlgOpContext());
+
+      if (d_meanValueMyRank == (int)d_meanValueConstraintProcId)
+        {
+          const ValueTypeBasisCoeff zero =
+            utils::Types<ValueTypeBasisCoeff>::zero;
+          utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
+            1,
+            d_meanValueConstraintVec.data() + d_meanValueConstraintNodeIdLocal,
+            &zero);
+        }
+      d_meanValueConstraintVec.updateGhostValues();
+
+      d_isMeanValueConstraintActive = true;
+    }
+
+    template <typename ValueTypeBasisCoeff,
+              utils::MemorySpace memorySpace,
+              size_type          dim>
+    bool
+    CFEConstraintsLocalDealii<ValueTypeBasisCoeff, memorySpace, dim>::
+      hasMeanValueConstraint() const
+    {
+      return d_isMeanValueConstraintActive;
+    }
+
+    template <typename ValueTypeBasisCoeff,
+              utils::MemorySpace memorySpace,
+              size_type          dim>
+    const linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace> &
+    CFEConstraintsLocalDealii<ValueTypeBasisCoeff, memorySpace, dim>::
+      getMeanValueConstraintVec() const
+    {
+      return d_meanValueConstraintVec;
+    }
+
+    template <typename ValueTypeBasisCoeff,
+              utils::MemorySpace memorySpace,
+              size_type          dim>
+    global_size_type
+    CFEConstraintsLocalDealii<ValueTypeBasisCoeff, memorySpace, dim>::
+      getMeanValueConstraintNodeIdGlobal() const
+    {
+      return d_meanValueConstraintNodeIdGlobal;
+    }
+
+    template <typename ValueTypeBasisCoeff,
+              utils::MemorySpace memorySpace,
+              size_type          dim>
+    size_type
+    CFEConstraintsLocalDealii<ValueTypeBasisCoeff, memorySpace, dim>::
+      getMeanValueConstraintProcId() const
+    {
+      return d_meanValueConstraintProcId;
+    }
+
     template <typename ValueTypeBasisCoeff,
               utils::MemorySpace memorySpace,
               size_type          dim>
@@ -544,6 +868,17 @@ namespace dftefe
                                              blockSize,
                                              d_rowConstraintsIdsLocal,
                                              *vectorData.getLinAlgOpContext());
+
+      if (d_isMeanValueConstraintActive &&
+          d_meanValueMyRank == (int)d_meanValueConstraintProcId)
+        {
+          std::vector<ValueTypeBasisCoeff> zeros(
+            blockSize, utils::Types<ValueTypeBasisCoeff>::zero);
+          utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
+            blockSize,
+            vectorData.data() + d_meanValueConstraintNodeIdLocal * blockSize,
+            zeros.data());
+        }
     }
 
     template <typename ValueTypeBasisCoeff,
@@ -562,6 +897,18 @@ namespace dftefe
                                        d_rowConstraintsIdsLocal,
                                        alpha,
                                        *vectorData.getLinAlgOpContext());
+
+      // Keeps the Jacobi preconditioner invertible at the pinned dof, which
+      // dftfe gets implicitly through distribute_local_to_global on d_diagonalA
+      if (d_isMeanValueConstraintActive &&
+          d_meanValueMyRank == (int)d_meanValueConstraintProcId)
+        {
+          std::vector<ValueTypeBasisCoeff> alphas(blockSize, alpha);
+          utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
+            blockSize,
+            vectorData.data() + d_meanValueConstraintNodeIdLocal * blockSize,
+            alphas.data());
+        }
     }
 
     template <typename ValueTypeBasisCoeff,

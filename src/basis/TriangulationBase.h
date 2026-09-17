@@ -33,6 +33,16 @@ namespace dftefe
       virtual void
       createSingleCellTriangulation(
         const std::vector<utils::Point> &vertices) = 0;
+      /**
+       * @brief Stamps the periodic boundary ids on the boundary faces and
+       * registers the matched face pairs on the triangulation. Must be called
+       * on the coarsest level, before any refinement, and after any
+       * shiftTriangulation (matching the dftfe call order in
+       * generateCoarseMesh). A no-op when no direction is flagged periodic.
+       */
+      virtual void
+      markPeriodicFaces(const std::vector<bool> &        isPeriodicFlags,
+                        const std::vector<utils::Point> &domainVectors) = 0;
       virtual void
       shiftTriangulation(const utils::Point &origin) = 0;
       virtual void
@@ -65,6 +75,20 @@ namespace dftefe
       beginLocal() const = 0;
       virtual const_TriangulationCellIterator
       endLocal() const = 0;
+      /**
+       * @brief Iterators over the ghost cells, i.e. the cells owned by another
+       * processor that touch this processor's subdomain. Empty for a serial
+       * triangulation. Complements beginLocal()/endLocal(), which cover the
+       * locally owned cells only.
+       */
+      virtual TriangulationCellIterator
+      beginGhost() = 0;
+      virtual TriangulationCellIterator
+      endGhost() = 0;
+      virtual const_TriangulationCellIterator
+      beginGhost() const = 0;
+      virtual const_TriangulationCellIterator
+      endGhost() const = 0;
       virtual size_type
       getDim() const = 0;
       virtual std::vector<bool>

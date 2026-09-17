@@ -24,6 +24,7 @@
  */
 
 #include <utils/Defaults.h>
+#include <algorithm>
 namespace dftefe
 {
   namespace electrostatics
@@ -186,12 +187,35 @@ namespace dftefe
         std::make_shared<utils::ScalarZeroFunctionReal>();
 
       d_p.registerStart("Initilization");
-      d_feBasisManagerHomo =
-        std::make_shared<basis::FEBasisManager<ValueTypeOperand,
-                                               ValueTypeOperator,
-                                               memorySpace,
-                                               dim>>(basisDofHandler,
-                                                     zeroFunction);
+      std::shared_ptr<basis::FEBasisManager<ValueTypeOperand,
+                                            ValueTypeOperator,
+                                            memorySpace,
+                                            dim>>
+        feBasisManagerHomo =
+          std::make_shared<basis::FEBasisManager<ValueTypeOperand,
+                                                 ValueTypeOperator,
+                                                 memorySpace,
+                                                 dim>>(basisDofHandler,
+                                                       zeroFunction);
+
+      // Under full periodicity there is no Dirichlet boundary left to fix
+      // the constant, so the Poisson operator is singular. Pin that null
+      // space with the mean value constraint \int_\Omega \phi d\Omega = 0.
+      const std::vector<bool> isPeriodicFlags =
+        basisDofHandler->getTriangulation()->getPeriodicFlags();
+      const bool isFullyPeriodic =
+        !isPeriodicFlags.empty() &&
+        std::all_of(isPeriodicFlags.begin(),
+                    isPeriodicFlags.end(),
+                    [](bool isPeriodic) { return isPeriodic; });
+
+      if (isFullyPeriodic)
+        feBasisManagerHomo->enableMeanValueConstraint(
+          feBasisDataStorageStiffnessMatrix,
+          linAlgOpContext,
+          feBasisManagerField->getMPIPatternP2P()->mpiCommunicator());
+
+      d_feBasisManagerHomo = feBasisManagerHomo;
 
       d_fieldInHomoDBCVec.updateGhostValues();
       feBasisManagerField->getConstraints().distributeParentToChild(
@@ -611,6 +635,13 @@ namespace dftefe
       //   }
 
       solution.updateGhostValues();
+
+      // Materialises the physical value at the pinned dof from its masters.
+      // Taken from the homogeneous manager, which is the one the mean value
+      // constraint was installed on; the field manager never carries it.
+      // dftfe analog: distributeX (poissonSolverProblem.cc:144-150)
+      d_feBasisManagerHomo->getConstraints()
+        .applyMeanValueConstraintDistributeP2C(solution, numComponents);
 
       d_feBasisManagerField->getConstraints().distributeParentToChild(
         solution, numComponents);

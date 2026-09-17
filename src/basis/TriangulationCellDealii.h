@@ -53,6 +53,18 @@ namespace dftefe
       bool
       hasPeriodicNeighbor(const size_type i) const override;
 
+      bool
+      isLocallyOwned() const override;
+
+      bool
+      isGhost() const override;
+
+      bool
+      periodicNeighborIsCoarser(const size_type i) const override;
+
+      std::shared_ptr<TriangulationCellBase>
+      getPeriodicNeighbor(const size_type i) const override;
+
       size_type
       getDim() const override;
 
@@ -64,6 +76,9 @@ namespace dftefe
 
       void
       setRefineFlag() override;
+
+      bool
+      isRefineFlagSet() const override;
       /*
        * \todo
        * TODO : Should implement the cellMapping before implementation

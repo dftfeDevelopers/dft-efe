@@ -39,6 +39,7 @@
 #include <utils/MPITypes.h>
 #include <utils/MPIWrapper.h>
 #include <map>
+#include <basis/PeriodicImageAtomGenerator.h>
 namespace dftefe
 {
   namespace basis
@@ -88,7 +89,9 @@ namespace dftefe
         const std::vector<utils::Point> &            globalDomainBoundVec,
         const std::vector<bool> &                    isPeriodicFlags,
         const std::vector<std::vector<utils::Point>> &cellVerticesVector,
-        const utils::mpi::MPIComm &                   comm);
+        const utils::mpi::MPIComm &                   comm,
+        std::shared_ptr<const PeriodicImageAtomGenerator> imageAtomGenerator =
+          nullptr);
 
       /**
        * @brief Destructor
@@ -153,6 +156,30 @@ namespace dftefe
       std::vector<size_type>
       cellsInLocalEIdVec() const;
 
+      /**
+       * @brief The extended atom ids whose ball actually reaches @p cellIdx for
+       * the enrichment sitting at position @p enrichIdInCell within
+       * overlappingEnrichmentIdsInCells()[cellIdx].
+       *
+       * An entry below d_nMasterAtoms is a master atom and indexes
+       * atomCoordinates; an entry at or above it is the periodic image
+       * d_nMasterAtoms + iImage of the truncated image list. Use
+       * getPositionOfAtomId to decode one without caring which.
+       *
+       * Without periodicity every list is the single master, which reproduces
+       * the non-periodic evaluation exactly.
+       */
+      std::vector<size_type>
+      getAtomIdsForCellEnrich(const size_type cellIdx,
+                              const size_type enrichIdInCell) const;
+
+      /**
+       * @brief Position of an extended atom id, hiding the master versus image
+       * branch from callers.
+       */
+      utils::Point
+      getPositionOfAtomId(const size_type extendedAtomId) const;
+
     private:
       std::vector<global_size_type> d_newAtomIdToEnrichmentIdOffset;
       std::vector<std::vector<global_size_type>>
@@ -177,6 +204,20 @@ namespace dftefe
       std::vector<size_type>        d_localToCellLocalEIdsVec;
       std::vector<global_size_type> d_localToGlobalEnrichmentIds;
       std::vector<size_type>        d_cellsInLocalEIdVec;
+
+      // Null when the system is non-periodic, in which case no image is ever
+      // considered and every list below holds just the master atom.
+      std::shared_ptr<const PeriodicImageAtomGenerator> d_imageAtomGenerator;
+      size_type                                         d_nMasterAtoms;
+      std::vector<utils::Point> d_atomCoordinates;
+
+      // [cellIdx][enrichIdInCell] -> start of that enrichment's extended atom
+      // ids within d_cellEnrichIdToAtomId[cellIdx]. Inner size is
+      // d_overlappingEnrichmentIdsInCells[cellIdx].size() + 1.
+      std::vector<std::vector<size_type>> d_cellEnrichIdToAtomIdOffset;
+      // [cellIdx] -> the extended atom ids of every enrichment in that cell,
+      // concatenated in enrichIdInCell order.
+      std::vector<std::vector<size_type>> d_cellEnrichIdToAtomId;
 
     }; // end of class EnrichmentIdsPartition
   }    // end of namespace basis

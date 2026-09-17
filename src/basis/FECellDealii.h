@@ -67,6 +67,12 @@ namespace dftefe
       virtual bool
       hasPeriodicNeighbor(const size_type i) const override;
 
+      bool
+      periodicNeighborIsCoarser(const size_type i) const override;
+
+      std::shared_ptr<TriangulationCellBase>
+      getPeriodicNeighbor(const size_type i) const override;
+
       double
       diameter() const override;
 
@@ -74,6 +80,9 @@ namespace dftefe
       center(dftefe::utils::Point &centerPoint) const override;
       void
       setRefineFlag() override;
+
+      bool
+      isRefineFlagSet() const override;
 
       void
       clearRefineFlag() override;

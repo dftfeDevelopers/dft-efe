@@ -24,6 +24,10 @@
  */
 #include <string>
 #include <utils/Exceptions.h>
+#include <utils/Defaults.h>
+#include <utils/MemoryTransfer.h>
+#include <utils/MPITypes.h>
+#include <vector>
 namespace dftefe
 {
   namespace basis
@@ -203,7 +207,8 @@ namespace dftefe
             }
           d_feBDH->createConstraintsEnd(constraintsLocalIntrinsic);
 
-          d_constraintsLocal = constraintsLocalIntrinsic;
+          d_constraintsLocal      = constraintsLocalIntrinsic;
+          d_constraintsLocalOwned = constraintsLocalIntrinsic;
         }
       else
         {
@@ -298,6 +303,83 @@ namespace dftefe
       getConstraints() const
     {
       return *(d_constraintsLocal);
+    }
+
+
+    template <typename ValueTypeBasisCoeff,
+              typename ValueTypeBasisData,
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
+    void
+    FEBasisManager<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace, dim>::
+      enableMeanValueConstraint(
+        std::shared_ptr<
+          const FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+          feBasisDataStorage,
+        std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
+                                   linAlgOpContext,
+        const utils::mpi::MPIComm &mpiComm)
+    {
+      if (d_constraintsLocalOwned == nullptr)
+        {
+          // Still sharing the basis DofHandler's intrinsic constraints with
+          // every other manager built on it, so take a private copy before
+          // adding the mean value constraint to it.
+          d_constraintsLocalOwned = d_feBDH->createConstraintsStart();
+          d_feBDH->createConstraintsEnd(d_constraintsLocalOwned);
+          d_constraintsLocal = d_constraintsLocalOwned;
+        }
+
+      //
+      // Assemble w_i = \int_\Omega N_i d\Omega. Assembled on the host
+      // irrespective of memorySpace and transferred once at the end, mirroring
+      // the device variant of dftfe (poissonSolverProblemDevice.cc:593-631).
+      //
+      linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
+        basisIntegrals(this->getMPIPatternP2P(),
+                       linAlgOpContext,
+                       1,
+                       utils::Types<ValueTypeBasisCoeff>::zero);
+
+      const size_type                  localSize = basisIntegrals.localSize();
+      std::vector<ValueTypeBasisCoeff> wHost(localSize,
+                                             utils::Types<
+                                               ValueTypeBasisCoeff>::zero);
+
+      auto quadRuleContainer = feBasisDataStorage->getQuadratureRuleContainer();
+      auto cellLocalIdsIter  = this->locallyOwnedCellLocalDofIdsBegin();
+      const size_type nCells = this->nLocallyOwnedCells();
+
+      for (size_type iCell = 0; iCell < nCells; ++iCell)
+        {
+          const size_type nCellDofs = this->nLocallyOwnedCellDofs(iCell);
+          const size_type nCellQuads =
+            quadRuleContainer->nCellQuadraturePoints(iCell);
+          const std::vector<double> cellJxW =
+            quadRuleContainer->getCellJxW(iCell);
+
+          auto cellBasis = feBasisDataStorage->getBasisDataInCell(iCell);
+          std::vector<ValueTypeBasisData> cellBasisHost(cellBasis.size());
+          utils::MemoryTransfer<utils::MemorySpace::HOST, memorySpace>::copy(
+            cellBasis.size(), cellBasisHost.data(), cellBasis.data());
+
+          // cellBasis layout is [nCellQuads x nCellDofs], quad slow and dof
+          // fast, the same layout consumed by
+          // LaplaceOperatorContextFEInternal::computeAxCellWiseLocal
+          for (size_type i = 0; i < nCellDofs; ++i)
+            {
+              ValueTypeBasisCoeff wi = utils::Types<ValueTypeBasisCoeff>::zero;
+              for (size_type q = 0; q < nCellQuads; ++q)
+                wi += cellBasisHost[q * nCellDofs + i] * cellJxW[q];
+              wHost[*(cellLocalIdsIter + i)] += wi;
+            }
+          cellLocalIdsIter += nCellDofs;
+        }
+
+      utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
+        localSize, basisIntegrals.data(), wHost.data());
+
+      d_constraintsLocalOwned->setMeanValueConstraint(basisIntegrals, mpiComm);
     }
 
     template <typename ValueTypeBasisCoeff,

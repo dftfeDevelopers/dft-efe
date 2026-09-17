@@ -24,6 +24,8 @@
  */
 #include <deal.II/base/index_set.h>
 #include <deal.II/dofs/dof_tools.h>
+#include <deal.II/grid/grid_tools.h>
+#include "TriangulationDealiiUtils.h"
 #include "TriangulationDealiiParallel.h"
 #include "TriangulationDealiiSerial.h"
 #include "FECellDealii.h"
@@ -349,6 +351,14 @@ namespace dftefe
         dealiiAffineConstraintMatrix;
 
       dealiiAffineConstraintMatrix.clear();
+      // NOTE: the periodic partner dofs land in this relevant set only
+      // because TriangulationBase::markPeriodicFaces called add_periodicity()
+      // on the triangulation, which glues the matching face pairs into
+      // topological neighbours and hence ghost cells here. Stamping the
+      // periodic boundary ids without that call would still let
+      // collect_periodic_faces below find the pairs, but their master dofs
+      // would stay outside this set and make_periodicity_constraints would
+      // silently break in parallel.
       // dealii::IndexSet locally_relevant_dofs;
       // locally_relevant_dofs.clear();
       // dealii::DoFTools::extract_locally_relevant_dofs(*(this->getDoFHandler()),
@@ -362,6 +372,31 @@ namespace dftefe
         *(this->getDoFHandler()), dealiiAffineConstraintMatrix);
 
       // dealiiAffineConstraintMatrix->makePeriodicConstriants();
+      // Acts on the classical dofs only; the enrichment dofs are localized and
+      // occupy their own index ranges, appended after the classical ones.
+      std::vector<dealii::Tensor<1, dim>> offsetVectors(0);
+      TriangulationDealiiUtils::computeOffsetVectors<dim>(
+        enrichmentClassicalInterface->getTriangulation()->getDomainVectors(), offsetVectors);
+      const std::vector<size_type> periodicDirections =
+        TriangulationDealiiUtils::getPeriodicDirections(
+          enrichmentClassicalInterface->getTriangulation()->getPeriodicFlags());
+
+      std::vector<dealii::GridTools::PeriodicFacePair<
+        typename dealii::DoFHandler<dim>::cell_iterator>>
+        periodicityVector;
+      for (size_type b = 0; b < periodicDirections.size(); ++b)
+        {
+          dealii::GridTools::collect_periodic_faces(
+            *(this->getDoFHandler()),
+            /*b_id1*/ 2 * b + 1,
+            /*b_id2*/ 2 * b + 2,
+            /*direction*/ periodicDirections[b],
+            periodicityVector,
+            offsetVectors[periodicDirections[b]]);
+        }
+      dealii::DoFTools::make_periodicity_constraints<dim, dim>(
+        periodicityVector, dealiiAffineConstraintMatrix);
+
       dealiiAffineConstraintMatrix.close();
 
       // Next one can further trim out the ghost set of the locally relevant set
@@ -683,6 +718,14 @@ namespace dftefe
         dealiiAffineConstraintMatrix;
 
       dealiiAffineConstraintMatrix.clear();
+      // NOTE: the periodic partner dofs land in this relevant set only
+      // because TriangulationBase::markPeriodicFaces called add_periodicity()
+      // on the triangulation, which glues the matching face pairs into
+      // topological neighbours and hence ghost cells here. Stamping the
+      // periodic boundary ids without that call would still let
+      // collect_periodic_faces below find the pairs, but their master dofs
+      // would stay outside this set and make_periodicity_constraints would
+      // silently break in parallel.
       dealii::IndexSet locally_relevant_dofs =
         dealii::DoFTools::extract_locally_relevant_dofs(
           *(this->getDoFHandler()));
@@ -692,6 +735,31 @@ namespace dftefe
         *(this->getDoFHandler()), dealiiAffineConstraintMatrix);
 
       // dealiiAffineConstraintMatrix->makePeriodicConstriants();
+      // Acts on the classical dofs only; the enrichment dofs are localized and
+      // occupy their own index ranges, appended after the classical ones.
+      std::vector<dealii::Tensor<1, dim>> offsetVectors(0);
+      TriangulationDealiiUtils::computeOffsetVectors<dim>(
+        enrichmentClassicalInterface->getTriangulation()->getDomainVectors(), offsetVectors);
+      const std::vector<size_type> periodicDirections =
+        TriangulationDealiiUtils::getPeriodicDirections(
+          enrichmentClassicalInterface->getTriangulation()->getPeriodicFlags());
+
+      std::vector<dealii::GridTools::PeriodicFacePair<
+        typename dealii::DoFHandler<dim>::cell_iterator>>
+        periodicityVector;
+      for (size_type b = 0; b < periodicDirections.size(); ++b)
+        {
+          dealii::GridTools::collect_periodic_faces(
+            *(this->getDoFHandler()),
+            /*b_id1*/ 2 * b + 1,
+            /*b_id2*/ 2 * b + 2,
+            /*direction*/ periodicDirections[b],
+            periodicityVector,
+            offsetVectors[periodicDirections[b]]);
+        }
+      dealii::DoFTools::make_periodicity_constraints<dim, dim>(
+        periodicityVector, dealiiAffineConstraintMatrix);
+
       dealiiAffineConstraintMatrix.close();
 
       // Next one can further trim out the ghost set of the locally relevant set

@@ -1,5 +1,6 @@
 #include <utils/Exceptions.h>
 #include "DealiiConversions.h"
+#include "TriangulationDealiiUtils.h"
 #include <deal.II/grid/grid_generator.h>
 #include <deal.II/grid/grid_tools.h>
 #include <deal.II/base/point.h>
@@ -94,7 +95,6 @@ namespace dftefe
 
       dealii::GridGenerator::subdivided_parallelepiped<dim>(
         d_triangulationDealii, dealiiSubdivisions, dealiiPoints);
-      markPeriodicFaces(isPeriodicFlags, domainVectors);
 
       d_isPeriodicFlags.resize(dim);
       d_isPeriodicFlags = isPeriodicFlags;
@@ -163,16 +163,8 @@ namespace dftefe
                            "Cannot mark periodic faces after refinement."
                            "This has to be done at the coarsest level");
 
-      for (size_type i = 0; i < dim; ++i)
-        {
-          if (isPeriodicFlags[i] == true)
-            {
-              utils::throwException<utils::InvalidArgument>(
-                false,
-                "The markPeriodicFaces has not yet been implemented for periodic problems."
-                "Please ask Vishal to implement it.");
-            }
-        }
+      TriangulationDealiiUtils::markPeriodicFacesAndAddPeriodicity<dim>(
+        d_triangulationDealii, isPeriodicFlags, domainVectors);
     }
 
     template <size_type dim>
@@ -317,6 +309,34 @@ namespace dftefe
     TriangulationDealiiSerial<dim>::endLocal() const
     {
       return d_triaVectorCell.end();
+    }
+
+    template <size_type dim>
+    TriangulationBase::TriangulationCellIterator
+    TriangulationDealiiSerial<dim>::beginGhost()
+    {
+      return d_triaVectorGhostCell.begin();
+    }
+
+    template <size_type dim>
+    TriangulationBase::TriangulationCellIterator
+    TriangulationDealiiSerial<dim>::endGhost()
+    {
+      return d_triaVectorGhostCell.end();
+    }
+
+    template <size_type dim>
+    TriangulationBase::const_TriangulationCellIterator
+    TriangulationDealiiSerial<dim>::beginGhost() const
+    {
+      return d_triaVectorGhostCell.begin();
+    }
+
+    template <size_type dim>
+    TriangulationBase::const_TriangulationCellIterator
+    TriangulationDealiiSerial<dim>::endGhost() const
+    {
+      return d_triaVectorGhostCell.end();
     }
 
     template <size_type dim>

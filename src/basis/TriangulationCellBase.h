@@ -41,6 +41,22 @@ namespace dftefe
       virtual bool
       hasPeriodicNeighbor(const size_type i) const = 0;
 
+      virtual bool
+      isLocallyOwned() const = 0;
+
+      virtual bool
+      isGhost() const = 0;
+
+      virtual bool
+      periodicNeighborIsCoarser(const size_type i) const = 0;
+
+      /**
+       * @brief Returns the cell on the other side of the periodic face \p i.
+       * Only meaningful when hasPeriodicNeighbor(i) is true.
+       */
+      virtual std::shared_ptr<TriangulationCellBase>
+      getPeriodicNeighbor(const size_type i) const = 0;
+
       virtual size_type
       getDim() const = 0;
 
@@ -52,6 +68,9 @@ namespace dftefe
 
       virtual void
       setRefineFlag() = 0;
+
+      virtual bool
+      isRefineFlagSet() const = 0;
 
       virtual void
       clearRefineFlag() = 0;

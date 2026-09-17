@@ -23,6 +23,7 @@ ENDIF()
 # Add source files here
 set(DFT-EFE-BASIS-SOURCES
 	TriangulationCellDealii.cpp
+	PeriodicImageAtomGenerator.cpp
 	TriangulationDealiiSerial.cpp
 	LinearCellMappingDealii.cpp
 	ParentToChildCellsManagerDealii.cpp

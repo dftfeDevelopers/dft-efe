@@ -27,6 +27,7 @@
 
 #include <basis/Defaults.h>
 #include <basis/GenerateMesh.h>
+#include <utils/Exceptions.h>
 #include <cmath>
 
 namespace dftefe
@@ -251,17 +252,15 @@ namespace dftefe
       for (auto &i : d_domainBoundingVectors)
         translation += 0.5 * i;
       triangulation.shiftTriangulation(-1.0 * translation);
-      triangulation.finalizeTriangulationConstruction();
 
-      /*
+      //
       // collect periodic faces of the first level mesh to set up periodic
       // boundary conditions later
       //
-      meshGenUtils::markPeriodicFacesNonOrthogonal(parallelTriangulation,
-                                                   d_domainBoundingVectors,
-                                                   d_mpiCommParent,
-                                                   d_dftParams);
-      */
+      triangulation.markPeriodicFaces(isPeriodicFlags,
+                                      d_domainBoundingVectors);
+
+      triangulation.finalizeTriangulationConstruction();
 
       d_rootCout << std::endl
                  << "Coarse triangulation number of elements: "

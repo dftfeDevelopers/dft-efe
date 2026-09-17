@@ -40,6 +40,7 @@
 #include <linearAlgebra/BlasLapack.h>
 #include <linearAlgebra/MultiVector.h>
 #include <linearAlgebra/Vector.h>
+#include <type_traits>
 #include <vector>
 #include <memory>
 #include <utils/Profiler.h>
@@ -96,6 +97,16 @@ namespace dftefe
       using ValueType =
         linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
                                                ValueTypeOperand>;
+
+      // The mean-value coefficients have to live in whichever vector type the
+      // AX of this memory space consumes: dealii's ghosted CPU vector on the
+      // host path, dftefe's device vector on the GPU path. dftfe keeps these
+      // as two separate classes selected by #ifdef (poissonSolverProblem and
+      // poissonSolverProblemDevice); here one alias covers both.
+      using MeanValueCoefficientVec = std::conditional_t<
+        memorySpace == utils::MemorySpace::DEVICE,
+        linearAlgebra::Vector<ValueTypeOperator, memorySpace>,
+        distributedCPUVec<ValueTypeOperator>>;
 
     public:
       /**
@@ -205,6 +216,33 @@ namespace dftefe
       void
       computeDiagonalA();
 
+      /**
+       * @brief Copies the mean-value constraint coefficients out of the
+       * homogeneous basis manager's constraints into this class's own storage.
+       * This solver path drives the dealii MatrixFree operator directly and so
+       * never goes through ConstraintsLocal's distribute methods, which is why
+       * the constraint has to be applied explicitly around every AX here.
+       */
+      void
+      setupMeanValueConstraint();
+
+      /**
+       * @brief Sets the pinned dof from its masters, vec[o] = dot(a, vec).
+       * No-op unless the mean-value constraint is active.
+       */
+      void
+      applyMeanValueConstraintDistributeP2C(
+        MeanValueCoefficientVec &vec) const;
+
+      /**
+       * @brief Transpose of the above: redistributes what has accumulated on
+       * the pinned dof onto its masters as vec += vec[o] * a, then zeroes the
+       * pinned entry. No-op unless the mean-value constraint is active.
+       */
+      void
+      applyMeanValueConstraintDistributeC2P(
+        MeanValueCoefficientVec &vec) const;
+
       void
       AX(const dealii::MatrixFree<dim, double> &matrixFreeData,
          distributedCPUVec<double> &            dst,
@@ -236,6 +274,17 @@ namespace dftefe
                                             utils::MemorySpace::DEVICE> &Ax,
                       linearAlgebra::Vector<ValueTypeOperator,
                                             utils::MemorySpace::DEVICE> &x);
+
+      // Mean-value constraint state; inactive unless setupMeanValueConstraint
+      // found one on the homogeneous basis manager, in which case every branch
+      // guarded on d_isMeanValueConstraintActive is dead and behaviour is
+      // unchanged. Naming follows dftfe's poissonSolverProblem{,Device}.
+      int                             d_thisMpiProcess;
+      bool                            d_isMeanValueConstraintActive;
+      MeanValueCoefficientVec         d_meanValueConstraintVec;
+      dealii::types::global_dof_index d_meanValueConstraintNodeIdGlobal;
+      size_type                       d_meanValueConstraintNodeIdLocal;
+      size_type                       d_meanValueConstraintProcId;
 
       size_type d_numComponents;
       std::shared_ptr<const basis::FEBasisManager<ValueTypeOperand,

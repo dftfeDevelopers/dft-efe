@@ -108,6 +108,21 @@ namespace dftefe
 
     template <size_type dim>
     bool
+    FECellDealii<dim>::periodicNeighborIsCoarser(const size_type i) const
+    {
+      return d_dealiiFECellIter->periodic_neighbor_is_coarser(i);
+    }
+
+    template <size_type dim>
+    std::shared_ptr<TriangulationCellBase>
+    FECellDealii<dim>::getPeriodicNeighbor(const size_type i) const
+    {
+      return std::make_shared<FECellDealii<dim>>(
+        d_dealiiFECellIter->periodic_neighbor(i));
+    }
+
+    template <size_type dim>
+    bool
     FECellDealii<dim>::isAtBoundary() const
     {
       return d_dealiiFECellIter->at_boundary();
@@ -128,6 +143,13 @@ namespace dftefe
       convertToDftefePoint<dim>(dealiiPoint, centerPoint);
     }
 
+
+    template <size_type dim>
+    bool
+    FECellDealii<dim>::isRefineFlagSet() const
+    {
+      return d_dealiiFECellIter->refine_flag_set();
+    }
 
     template <size_type dim>
     void

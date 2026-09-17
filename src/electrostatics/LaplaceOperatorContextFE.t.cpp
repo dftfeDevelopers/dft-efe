@@ -378,6 +378,12 @@ namespace dftefe
                                                ValueTypeOperand>,
         memorySpace> &constraintsY = d_feBasisManagerY->getConstraints();
 
+      // Sets the pinned dof from its masters before the halo exchange, so the
+      // single exchange below carries the new value out to the ghosts, as in
+      // dftfe's vmult (poissonSolverProblem.cc:733-735). A no-op unless a mean
+      // value constraint is active.
+      constraintsX.applyMeanValueConstraintDistributeP2C(X, numVecs);
+
       if (updateGhostX)
         X.updateGhostValues();
       // update the child nodes based on the parent nodes
@@ -410,6 +416,13 @@ namespace dftefe
       // Function to add the values to the local node from its corresponding
       // ghost nodes from other processors.
       Y.accumulateAddLocallyOwned();
+
+      // Must follow the accumulate: the pinned dof's masters span the whole
+      // domain, so its row is only complete once the ghost contributions have
+      // been summed into their owners. Matches dftfe, which applies this after
+      // Ax.compress (poissonSolverProblem.cc:742-744). A no-op unless a mean
+      // value constraint is active.
+      constraintsY.applyMeanValueConstraintDistributeC2P(Y, numVecs);
       if (updateGhostY)
         Y.updateGhostValues();
     }

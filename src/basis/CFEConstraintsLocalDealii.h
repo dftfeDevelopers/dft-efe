@@ -35,6 +35,8 @@
 #include <unordered_set>
 
 #include <linearAlgebra/Vector.h>
+#include <linearAlgebra/MultiVector.h>
+#include <utils/MPITypes.h>
 namespace dftefe
 {
   namespace basis
@@ -116,6 +118,56 @@ namespace dftefe
                           size_type                                blockSize,
                           ValueTypeBasisCoeff alpha) const override;
 
+
+      /**
+       * @brief Builds the mean-value constraint that pins the null space of the
+       * Poisson operator under full periodic boundary conditions, by enforcing
+       * \f$\int_\Omega \phi \, d\Omega = \sum_i w_i \phi_i = 0\f$ with
+       * \f$w_i = \int_\Omega N_i \, d\Omega\f$. One pinned dof \f$o\f$ is
+       * isolated so that \f$\phi_o = \sum_{i \neq o} a_i \phi_i\f$ with
+       * \f$a_i = -w_i / w_o\f$, which is a standard slave-from-masters
+       * constraint, but one whose masters are every other dof rather than the
+       * handful a hanging node or a periodic slave has. Eliminating it into
+       * the dealii AffineConstraints object the way those are would contribute
+       * a dense outer product a a^T to the operator, coupling every dof to
+       * every other one, so it is kept out of that object and folded into the
+       * four distribute methods instead, as a rank-1 operation costing O(N)
+       * work and only the coefficient vector in storage. Matches dftfe's
+       * treatment (poissonSolverProblem.cc:500-631).
+       *
+       * Once built, every distribute call on this object applies it, so the
+       * dftefe-native Poisson path needs no changes of its own.
+       */
+      void
+      applyMeanValueConstraintDistributeP2C(
+        linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
+          &       vectorData,
+        size_type blockSize) const override;
+
+      void
+      applyMeanValueConstraintDistributeC2P(
+        linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
+          &       vectorData,
+        size_type blockSize) const override;
+
+      void
+      setMeanValueConstraint(
+        const linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
+          &                        basisIntegrals,
+        const utils::mpi::MPIComm &mpiComm) override;
+
+      bool
+      hasMeanValueConstraint() const override;
+
+      const linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace> &
+      getMeanValueConstraintVec() const override;
+
+      global_size_type
+      getMeanValueConstraintNodeIdGlobal() const override;
+
+      size_type
+      getMeanValueConstraintProcId() const override;
+
       //
       // dealii function
       //
@@ -175,6 +227,18 @@ namespace dftefe
       std::vector<global_size_type>                   d_ghostIndices;
       std::unordered_set<global_size_type>            d_ghostIndicesSet;
       std::unordered_map<global_size_type, size_type> d_globalToLocalMap;
+
+      // Mean-value constraint state; inactive unless computeMeanValueConstraint
+      // has been called, in which case every branch guarded on
+      // d_isMeanValueConstraintActive below is dead and behaviour is unchanged.
+      bool d_isMeanValueConstraintActive;
+      linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
+                          d_meanValueConstraintVec;
+      size_type           d_meanValueConstraintNodeIdLocal;
+      size_type           d_meanValueConstraintProcId;
+      global_size_type    d_meanValueConstraintNodeIdGlobal;
+      utils::mpi::MPIComm d_meanValueMpiComm;
+      int                 d_meanValueMyRank;
     };
 
   } // namespace basis
