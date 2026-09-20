@@ -1773,19 +1773,32 @@ namespace dftefe
               tciSpSumBZZCorrBSmearDiffVZZCorrVSmear = it->second;
             }
 
+          // These are lattice sums: An image carries its master's symbol and charge.
+          std::vector<size_type> masterOfExtended(d_extendedAtomCoordinates.size(), 0);
+          for (size_type j = 0; j < atomCoordinates.size(); j++)
+            masterOfExtended[j] = j;
+          if (d_imageAtomGenerator != nullptr)
+            {
+              const std::vector<size_type> &imageIds = d_imageAtomGenerator->getImageIds();
+              for (size_type j = 0; j < imageIds.size(); j++)
+                masterOfExtended[atomCoordinates.size() + j] = imageIds[j];
+            }
+
           for (size_type iAtom = 0; iAtom < atomCoordinates.size(); iAtom++)
             {
-              for (size_type jAtom = 0; jAtom < atomCoordinates.size(); jAtom++)
+              for (size_type jAtom = 0; jAtom < d_extendedAtomCoordinates.size(); jAtom++)
                 {
-                  double r, theta, phi;
-                  atoms::convertCartesianToSpherical((atomCoordinates[iAtom] -
-                                                      atomCoordinates[jAtom]),
-                                                     r,
-                                                     theta,
-                                                     phi,
-                                                     1e-12);
+                  const size_type jMaster = masterOfExtended[jAtom];
+                  double          r, theta, phi;
+                  atoms::convertCartesianToSpherical(
+                    (atomCoordinates[iAtom] -
+                     d_extendedAtomCoordinates[jAtom]),
+                      r,
+                      theta,
+                      phi,
+                      1e-12);
                   std::string atomSymbolPair =
-                    d_atomSymbolVec[iAtom] + "-" + d_atomSymbolVec[jAtom];
+                    d_atomSymbolVec[iAtom] + "-" + d_atomSymbolVec[jMaster];
                   if (r < tciSpRhoAtPhiAt->maxRadialGrid())
                     {
                       d_intRhoAtPhiAt +=
@@ -1806,8 +1819,8 @@ namespace dftefe
                     {
                       d_integralPhiAtxbSmear +=
                         0.5 * std::abs(d_atomCharges[iAtom]) *
-                        (*tciSpBSmearPhiAt->getSpline(d_atomSymbolVec[jAtom],
-                                                      "S"))(r) *
+                        (*tciSpBSmearPhiAt->getSpline(
+                          d_atomSymbolVec[jMaster], "S"))(r) *
                         (1 / (ylm00 * ylm00));
                     }
                   if (useEZZCorr)
@@ -1817,7 +1830,7 @@ namespace dftefe
                         {
                           d_integralDiffVZZCorrVSmearxSumBZZCorrBSmear +=
                             0.5 * std::abs(d_atomCharges[iAtom]) *
-                            std::abs(d_atomCharges[jAtom]) *
+                            std::abs(d_atomCharges[jMaster]) *
                             (*tciSpSumBZZCorrBSmearDiffVZZCorrVSmear->getSpline(
                               "DefaultAtom", "S"))(r) *
                             (1 / (ylm00 * ylm00));
