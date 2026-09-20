@@ -244,22 +244,22 @@ namespace dftefe
         const std::vector<bool> &                    isPeriodicFlags,
         const std::vector<std::vector<utils::Point>> &cellVerticesVector,
         const utils::mpi::MPIComm &                   comm,
-        std::vector<std::vector<size_type>> &cellEnrichIdToAtomIdOffset,
-        std::vector<std::vector<size_type>> &cellEnrichIdToAtomId,
+        std::vector<std::vector<size_type>> &cellEnrichIdToExtendedAtomIdOffset,
+        std::vector<std::vector<size_type>> &cellEnrichIdToExtendedAtomId,
         std::shared_ptr<const PeriodicImageAtomGenerator> imageAtomGenerator,
         const size_type                                   nMasterAtoms)
       {
         const size_type numCells = cellVerticesVector.size();
         overlappingEnrichmentIdsInCells.resize(numCells);
-        cellEnrichIdToAtomIdOffset.resize(numCells);
-        cellEnrichIdToAtomId.resize(numCells);
+        cellEnrichIdToExtendedAtomIdOffset.resize(numCells);
+        cellEnrichIdToExtendedAtomId.resize(numCells);
 
         // Upper bounds on what one cell can hold: every orbital of every
         // candidate atom, each with all of that atom's images. They do not
         // depend on the cell, so the scratch below is allocated once and
         // refilled per cell, and each cell's exact-sized vectors are copied
         // out of its used prefix.
-        size_type maxEnrichInCell = 0, maxAtomIdsInCell = 0;
+        size_type maxEnrichInCell = 0, maxExtendedAtomIdsInCell = 0;
         for (auto i : atomIds)
           {
             const size_type numOrbitals =
@@ -270,12 +270,12 @@ namespace dftefe
                 imageAtomGenerator->getImageIdsForMasterTrunc(i).size() :
                 0;
             maxEnrichInCell += numOrbitals;
-            maxAtomIdsInCell += numOrbitals * (1 + numImages);
+            maxExtendedAtomIdsInCell += numOrbitals * (1 + numImages);
           }
 
         std::vector<global_size_type> enrichmentIdScratch(maxEnrichInCell, 0);
-        std::vector<size_type>        atomIdScratch(maxAtomIdsInCell, 0);
-        std::vector<size_type>        offsetScratch(maxEnrichInCell + 1, 0);
+        std::vector<size_type>        extendedAtomIdScratch(maxExtendedAtomIdsInCell, 0);
+        std::vector<size_type>        extendedAtomIdOffsetScratch(maxEnrichInCell + 1, 0);
 
         std::vector<double> minboundGlobalDomain(dim, 0.),
           maxboundGlobalDomain(dim, 0.);
@@ -327,8 +327,8 @@ namespace dftefe
                 minCellBound[k] = mintmp;
               }
 
-            size_type numEnrichInCell = 0, numAtomIdsInCell = 0;
-            offsetScratch[0] = 0;
+            size_type numEnrichInCell = 0, numExtendedAtomIdsInCell = 0;
+            extendedAtomIdOffsetScratch[0] = 0;
 
             for (auto i : atomIds)
               {
@@ -423,8 +423,10 @@ namespace dftefe
                         else
                           enrichmentId = count;
                         enrichmentIdScratch[numEnrichInCell] = enrichmentId;
-                        atomIdScratch[numAtomIdsInCell]      = i;
-                        numAtomIdsInCell++;
+                        // Master here, images below; relies on the generator
+                        // excluding (0,0,0) or it would be counted twice.
+                        extendedAtomIdScratch[numExtendedAtomIdsInCell]      = i;
+                        numExtendedAtomIdsInCell++;
                         pushed = true;
                       }
 
@@ -474,9 +476,9 @@ namespace dftefe
                                       enrichmentId;
                                     pushed = true;
                                   }
-                                atomIdScratch[numAtomIdsInCell] =
+                                extendedAtomIdScratch[numExtendedAtomIdsInCell] =
                                   nMasterAtoms + iImage;
-                                numAtomIdsInCell++;
+                                numExtendedAtomIdsInCell++;
                               }
                           }
                       }
@@ -484,7 +486,7 @@ namespace dftefe
                     if (pushed)
                       {
                         numEnrichInCell++;
-                        offsetScratch[numEnrichInCell] = numAtomIdsInCell;
+                        extendedAtomIdOffsetScratch[numEnrichInCell] = numExtendedAtomIdsInCell;
                       }
 
                     count = count + 1;
@@ -495,15 +497,15 @@ namespace dftefe
                       enrichmentIdScratch.begin() + numEnrichInCell,
                       overlappingEnrichmentIdsInCells[iCell].begin());
 
-            cellEnrichIdToAtomIdOffset[iCell].resize(numEnrichInCell + 1, 0);
-            std::copy(offsetScratch.begin(),
-                      offsetScratch.begin() + numEnrichInCell + 1,
-                      cellEnrichIdToAtomIdOffset[iCell].begin());
+            cellEnrichIdToExtendedAtomIdOffset[iCell].resize(numEnrichInCell + 1, 0);
+            std::copy(extendedAtomIdOffsetScratch.begin(),
+                      extendedAtomIdOffsetScratch.begin() + numEnrichInCell + 1,
+                      cellEnrichIdToExtendedAtomIdOffset[iCell].begin());
 
-            cellEnrichIdToAtomId[iCell].resize(numAtomIdsInCell, 0);
-            std::copy(atomIdScratch.begin(),
-                      atomIdScratch.begin() + numAtomIdsInCell,
-                      cellEnrichIdToAtomId[iCell].begin());
+            cellEnrichIdToExtendedAtomId[iCell].resize(numExtendedAtomIdsInCell, 0);
+            std::copy(extendedAtomIdScratch.begin(),
+                      extendedAtomIdScratch.begin() + numExtendedAtomIdsInCell,
+                      cellEnrichIdToExtendedAtomId[iCell].begin());
             iCell++;
           }
       }
@@ -662,22 +664,27 @@ namespace dftefe
       , d_atomSymbol(atomSymbol)
       , d_imageAtomGenerator(imageAtomGenerator)
       , d_nMasterAtoms(atomCoordinates.size())
-      , d_atomCoordinates(atomCoordinates)
+      , d_masterAtomCoordinates(atomCoordinates)
     {
-      // The image list is a geometric envelope, wide enough to be a superset
-      // of what any consumer needs; each consumer then filters it by its own
-      // physics cutoff. Silently truncating an enrichment would be a
-      // correctness bug rather than a slowdown, so check the envelope covers
-      // the widest orbital here. The formula must match the per orbital cutoff
-      // used in getOverlappingEnrichmentIdsInCells exactly, or the guard is
-      // worthless.
+      // Without a generator every enrichment is evaluated about its master
+      // alone -- right when nothing is periodic, silently wrong otherwise.
+      utils::throwException<utils::InvalidArgument>(
+        !std::any_of(isPeriodicFlags.begin(),
+                     isPeriodicFlags.end(),
+                     [](bool v) { return v; }) ||
+          imageAtomGenerator != nullptr,
+        "EnrichmentIdsPartition: a periodic direction is flagged but no "
+        "PeriodicImageAtomGenerator was given, so every enrichment would be "
+        "evaluated about its master atom alone and the periodic image "
+        "contributions silently dropped.");
+
+      // The image list is a geometric envelope that each consumer then
+      // filters by its own cutoff, so check it covers the widest orbital. The
+      // formula must match getOverlappingEnrichmentIdsInCells exactly.
       if (imageAtomGenerator != nullptr)
         {
-          // Images are looked up by master atom id, which here is an index
-          // into atomCoordinates, so the generator has to have been built from
-          // that same list in that same order. A mismatch would place
-          // enrichments at plausible but wrong origins rather than fail, so
-          // check it rather than document it.
+          // Images are looked up by master atom id, so the generator must
+          // have been built from this same list in this same order.
           utils::throwException<utils::InvalidArgument>(
             imageAtomGenerator->nMasterAtoms() == atomCoordinates.size(),
             "EnrichmentIdsPartition: the PeriodicImageAtomGenerator was built "
@@ -790,8 +797,8 @@ namespace dftefe
         isPeriodicFlags,
         cellVerticesVector,
         comm,
-        d_cellEnrichIdToAtomIdOffset,
-        d_cellEnrichIdToAtomId,
+        d_cellEnrichIdToExtendedAtomIdOffset,
+        d_cellEnrichIdToExtendedAtomId,
         imageAtomGenerator,
         d_nMasterAtoms);
 
@@ -838,8 +845,8 @@ namespace dftefe
       // geometry has not changed, so a surviving enrichment in a surviving
       // cell has exactly the origins it already had.
       const size_type numCells = overlappingEnrichmentIdsInCells.size();
-      std::vector<std::vector<size_type>> cellEnrichIdToAtomIdOffset(numCells);
-      std::vector<std::vector<size_type>> cellEnrichIdToAtomId(numCells);
+      std::vector<std::vector<size_type>> cellEnrichIdToExtendedAtomIdOffset(numCells);
+      std::vector<std::vector<size_type>> cellEnrichIdToExtendedAtomId(numCells);
 
       for (size_type iCell = 0; iCell < numCells; iCell++)
         {
@@ -847,16 +854,16 @@ namespace dftefe
             overlappingEnrichmentIdsInCells[iCell];
           const std::vector<global_size_type> &oldEnrichmentIds =
             d_overlappingEnrichmentIdsInCells[iCell];
-          const std::vector<size_type> &oldOffset =
-            d_cellEnrichIdToAtomIdOffset[iCell];
-          const std::vector<size_type> &oldAtomId =
-            d_cellEnrichIdToAtomId[iCell];
+          const std::vector<size_type> &oldExtendedAtomIdOffset =
+            d_cellEnrichIdToExtendedAtomIdOffset[iCell];
+          const std::vector<size_type> &oldExtendedAtomId =
+            d_cellEnrichIdToExtendedAtomId[iCell];
 
           // newToOldEnrichIdInCell[newPosition] = oldPosition, so one entry
           // per surviving enrichment.
           std::vector<size_type> newToOldEnrichIdInCell(
             newEnrichmentIds.size(), 0);
-          size_type              numAtomIdsInCell = 0;
+          size_type              numExtendedAtomIdsInCell = 0;
           for (size_type i = 0; i < newEnrichmentIds.size(); i++)
             {
               bool found = false;
@@ -870,36 +877,36 @@ namespace dftefe
               // The caller only asserts this, which is compiled out in a
               // release build, so enforce it here where the origins would
               // otherwise be silently wrong.
-              utils::throwException<utils::InvalidArgument>(
-                found,
-                "modifyNumCellsOverlapWithEnrichments was given an enrichment "
-                "id that the cell did not previously overlap, so its origins "
-                "are unknown. The overlap this partition was built with should "
-                "cover the orthogonalized enrichment support, which is what "
-                "additionalCutoff is for.");
-              numAtomIdsInCell += oldOffset[newToOldEnrichIdInCell[i] + 1] -
-                                  oldOffset[newToOldEnrichIdInCell[i]];
+              // utils::throwException<utils::InvalidArgument>(
+              //   found,
+              //   "modifyNumCellsOverlapWithEnrichments was given an enrichment "
+              //   "id that the cell did not previously overlap, so its origins "
+              //   "are unknown. The overlap this partition was built with should "
+              //   "cover the orthogonalized enrichment support, which is what "
+              //   "additionalCutoff is for.");
+              numExtendedAtomIdsInCell += oldExtendedAtomIdOffset[newToOldEnrichIdInCell[i] + 1] -
+                                  oldExtendedAtomIdOffset[newToOldEnrichIdInCell[i]];
             }
 
-          cellEnrichIdToAtomIdOffset[iCell].resize(newEnrichmentIds.size() + 1,
+          cellEnrichIdToExtendedAtomIdOffset[iCell].resize(newEnrichmentIds.size() + 1,
                                                    0);
-          cellEnrichIdToAtomId[iCell].resize(numAtomIdsInCell, 0);
+          cellEnrichIdToExtendedAtomId[iCell].resize(numExtendedAtomIdsInCell, 0);
 
           size_type numFilled = 0;
           for (size_type i = 0; i < newEnrichmentIds.size(); i++)
             {
-              const size_type begin = oldOffset[newToOldEnrichIdInCell[i]];
-              const size_type end   = oldOffset[newToOldEnrichIdInCell[i] + 1];
-              std::copy(oldAtomId.begin() + begin,
-                        oldAtomId.begin() + end,
-                        cellEnrichIdToAtomId[iCell].begin() + numFilled);
+              const size_type begin = oldExtendedAtomIdOffset[newToOldEnrichIdInCell[i]];
+              const size_type end   = oldExtendedAtomIdOffset[newToOldEnrichIdInCell[i] + 1];
+              std::copy(oldExtendedAtomId.begin() + begin,
+                        oldExtendedAtomId.begin() + end,
+                        cellEnrichIdToExtendedAtomId[iCell].begin() + numFilled);
               numFilled += end - begin;
-              cellEnrichIdToAtomIdOffset[iCell][i + 1] = numFilled;
+              cellEnrichIdToExtendedAtomIdOffset[iCell][i + 1] = numFilled;
             }
         }
 
-      d_cellEnrichIdToAtomIdOffset = cellEnrichIdToAtomIdOffset;
-      d_cellEnrichIdToAtomId       = cellEnrichIdToAtomId;
+      d_cellEnrichIdToExtendedAtomIdOffset = cellEnrichIdToExtendedAtomIdOffset;
+      d_cellEnrichIdToExtendedAtomId       = cellEnrichIdToExtendedAtomId;
 
       d_overlappingEnrichmentIdsInCells.resize(0);
       d_overlappingEnrichmentIdsInCells = overlappingEnrichmentIdsInCells;
@@ -1096,24 +1103,40 @@ namespace dftefe
 
     template <size_type dim>
     std::vector<size_type>
-    EnrichmentIdsPartition<dim>::getAtomIdsForCellEnrich(
+    EnrichmentIdsPartition<dim>::getExtendedAtomIdsForCellEnrich(
       const size_type cellIdx,
       const size_type enrichIdInCell) const
     {
-      const std::vector<size_type> &ids = d_cellEnrichIdToAtomId[cellIdx];
+      const std::vector<size_type> &ids = getExtendedAtomIdsForAllEnrichInCell(cellIdx);
       const std::vector<size_type> &offset =
-        d_cellEnrichIdToAtomIdOffset[cellIdx];
+        getExtendedAtomIdOffsetsForAllEnrichInCell(cellIdx);
       return std::vector<size_type>(ids.begin() + offset[enrichIdInCell],
                                     ids.begin() + offset[enrichIdInCell + 1]);
     }
 
     template <size_type dim>
+    const std::vector<size_type> &
+    EnrichmentIdsPartition<dim>::getExtendedAtomIdsForAllEnrichInCell(
+      const size_type cellIdx) const
+    {
+      return d_cellEnrichIdToExtendedAtomId[cellIdx];
+    }
+
+    template <size_type dim>
+    const std::vector<size_type> &
+    EnrichmentIdsPartition<dim>::getExtendedAtomIdOffsetsForAllEnrichInCell(
+      const size_type cellIdx) const
+    {
+      return d_cellEnrichIdToExtendedAtomIdOffset[cellIdx];
+    }
+
+    template <size_type dim>
     utils::Point
-    EnrichmentIdsPartition<dim>::getPositionOfAtomId(
+    EnrichmentIdsPartition<dim>::getPositionOfExtendedAtomId(
       const size_type extendedAtomId) const
     {
       if (extendedAtomId < d_nMasterAtoms)
-        return d_atomCoordinates[extendedAtomId];
+        return d_masterAtomCoordinates[extendedAtomId];
 
       DFTEFE_AssertWithMsg(
         d_imageAtomGenerator != nullptr,

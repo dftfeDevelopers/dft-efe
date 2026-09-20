@@ -67,6 +67,7 @@ namespace dftefe
       getEnrichmentValuesInCellRange(
         const double *                  quadPtsInAllCells,
         const double *                  originPtsInAllCells,
+        const size_type *               originOffsetPerCellEnrich,
         std::pair<size_type, size_type> cellRange,
         const std::vector<size_type>    numEnrichIdsInAllCells,
         const std::vector<size_type>    numQuadPtsInAllCells,
@@ -79,6 +80,7 @@ namespace dftefe
       getEnrichmentGradientsInCellRange(
         const double *                  quadPtsInAllCells,
         const double *                  originPtsInAllCells,
+        const size_type *               originOffsetPerCellEnrich,
         std::pair<size_type, size_type> cellRange,
         const std::vector<size_type>    numEnrichIdsInAllCells,
         const std::vector<size_type>    numQuadPtsInAllCells,
@@ -121,6 +123,7 @@ namespace dftefe
       getEnrichmentValuesInCellRange(
         const double *                  quadPtsInAllCells,
         const double *                  originPtsInAllCells,
+        const size_type *               originOffsetPerCellEnrich,
         std::pair<size_type, size_type> cellRange,
         const std::vector<size_type>    numEnrichIdsInAllCells,
         const std::vector<size_type>    numQuadPtsInAllCells,
@@ -134,6 +137,7 @@ namespace dftefe
       getEnrichmentGradientsInCellRange(
         const double *                  quadPtsInAllCells,
         const double *                  originPtsInAllCells,
+        const size_type *               originOffsetPerCellEnrich,
         std::pair<size_type, size_type> cellRange,
         const std::vector<size_type>    numEnrichIdsInAllCells,
         const std::vector<size_type>    numQuadPtsInAllCells,

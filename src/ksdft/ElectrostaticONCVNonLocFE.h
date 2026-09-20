@@ -39,6 +39,7 @@
 #include <utils/ConditionalOStream.h>
 #include <electrostatics/PoissonSolverDealiiMatrixFreeFE.h>
 #include <basis/AtomCenterNonLocalOpContextFE.h>
+#include <basis/PeriodicImageAtomGenerator.h>
 #include <atoms/AtomSevereFunction.h>
 #include <ksdft/ElectrostaticLocalFE.h>
 
@@ -118,7 +119,9 @@ namespace dftefe
         const size_type maxCellBlock,
         const size_type maxWaveFnBlock,
         const bool      useDealiiMatrixFreePoissonSolve = true,
-        SpinMode        spinMode = SpinMode::Unpolarized);
+        SpinMode        spinMode = SpinMode::Unpolarized,
+        std::shared_ptr<const basis::PeriodicImageAtomGenerator>
+          imageAtomGenerator = nullptr);
 
       // used if delta rho approach is taken with phi total from 1D KS solve
       // with analytical vself energy cancellation
@@ -166,7 +169,9 @@ namespace dftefe
                                  std::shared_ptr<atoms::AtomTCIASpline>>
                    fieldToTCIASplineMap            = {},
         const bool useDealiiMatrixFreePoissonSolve = true,
-        SpinMode   spinMode                        = SpinMode::Unpolarized);
+        SpinMode   spinMode                        = SpinMode::Unpolarized,
+        std::shared_ptr<const basis::PeriodicImageAtomGenerator>
+          imageAtomGenerator = nullptr);
 
       ~ElectrostaticONCVNonLocFE() = default;
 
@@ -196,7 +201,9 @@ namespace dftefe
           feBDHamiltonian,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeWaveFnBasis, memorySpace>>
-          feBDAtomCenterNonLocalOperator);
+          feBDAtomCenterNonLocalOperator,
+        std::shared_ptr<const basis::PeriodicImageAtomGenerator>
+          imageAtomGenerator = nullptr);
 
       // used if delta rho approach is taken with phi total from 1D KS solve
       // with analytical vself energy cancellation
@@ -229,7 +236,9 @@ namespace dftefe
           feBDHamiltonian,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeWaveFnBasis, memorySpace>>
-          feBDAtomCenterNonLocalOperator);
+          feBDAtomCenterNonLocalOperator,
+        std::shared_ptr<const basis::PeriodicImageAtomGenerator>
+          imageAtomGenerator = nullptr);
 
       void
       reinitField(
@@ -305,6 +314,8 @@ namespace dftefe
         d_mpiPatternP2P;
 
       const std::vector<double> d_atomCharges;
+      std::shared_ptr<const basis::PeriodicImageAtomGenerator>
+        d_imageAtomGenerator;
       const double              d_smearedChargeRadius;
 
     }; // end of class ElectrostaticONCVNonLocFE

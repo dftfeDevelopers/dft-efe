@@ -32,6 +32,40 @@ namespace dftefe
 {
   namespace ksdft
   {
+    namespace ElectrostaticONCVNonLocFEInternal
+    {
+      // vLocal is differenced against the smeared potential in
+      // ElectrostaticLocalFE, which spans images, so it must span them too.
+      inline void
+      buildExtendedAtomData(
+        const std::shared_ptr<const basis::PeriodicImageAtomGenerator>
+          &                              imageAtomGenerator,
+        const std::vector<utils::Point> &atomCoordinates,
+        const std::vector<std::string> & atomSymbolVec,
+        const std::vector<double> &      atomCharges,
+        std::vector<utils::Point> &      extendedCoordinates,
+        std::vector<std::string> &       extendedSymbolVec,
+        std::vector<double> &            extendedCharges)
+      {
+        extendedCoordinates = atomCoordinates;
+        extendedSymbolVec   = atomSymbolVec;
+        extendedCharges     = atomCharges;
+        if (imageAtomGenerator == nullptr)
+          return;
+
+        imageAtomGenerator->getExtendedAtoms(atomCoordinates,
+                                             extendedCoordinates,
+                                             extendedCharges);
+
+        const std::vector<size_type> &imageIds =
+          imageAtomGenerator->getImageIds();
+        extendedSymbolVec.resize(atomSymbolVec.size() + imageIds.size());
+        for (size_type i = 0; i < imageIds.size(); ++i)
+          extendedSymbolVec[atomSymbolVec.size() + i] =
+            atomSymbolVec[imageIds[i]];
+      }
+    } // namespace ElectrostaticONCVNonLocFEInternal
+
     template <typename ValueTypeBasisData,
               typename ValueTypeBasisCoeff,
               typename ValueTypeWaveFnBasis,
@@ -81,7 +115,9 @@ namespace dftefe
         const size_type maxCellBlock,
         const size_type maxWaveFnBlock,
         const bool      useDealiiMatrixFreePoissonSolve,
-        SpinMode        spinMode)
+        SpinMode        spinMode,
+        std::shared_ptr<const basis::PeriodicImageAtomGenerator>
+          imageAtomGenerator)
       : d_linAlgOpContext(linAlgOpContext)
       , d_numComponents(1)
       , d_rootCout(std::cout)
@@ -110,6 +146,8 @@ namespace dftefe
             }
         }
 
+      d_imageAtomGenerator = imageAtomGenerator;
+
       if (d_isNonLocPSP)
         {
           d_atomNonLocOpContext = std::make_shared<
@@ -126,15 +164,23 @@ namespace dftefe
             maxCellBlock,
             maxWaveFnBlock,
             linAlgOpContext,
-            d_mpiComm);
+            d_mpiComm,
+            d_imageAtomGenerator);
         }
+
+      std::vector<utils::Point> vLocCoordinates;
+      std::vector<std::string>  vLocSymbolVec;
+      std::vector<double>       vLocCharges;
+      ElectrostaticONCVNonLocFEInternal::buildExtendedAtomData(
+        d_imageAtomGenerator, atomCoordinates, atomSymbolVec, atomCharges,
+        vLocCoordinates, vLocSymbolVec, vLocCharges);
 
       d_atomVLocFunction =
         std::make_shared<const atoms::AtomSevereFunction<memorySpace>>(
           d_atomSphericalDataContainerPSP,
-          atomSymbolVec,
-          atomCoordinates,
-          atomCharges,
+          vLocSymbolVec,
+          vLocCoordinates,
+          vLocCharges,
           smearedChargeRadius,
           atoms::AtomSevereFuncType::PSP::vLocal,
           1.0,
@@ -159,7 +205,8 @@ namespace dftefe
           linAlgOpContext,
           maxCellBlock,
           useDealiiMatrixFreePoissonSolve,
-          spinMode);
+          spinMode,
+          d_imageAtomGenerator);
     }
 
     template <typename ValueTypeBasisData,
@@ -218,7 +265,9 @@ namespace dftefe
                                  std::shared_ptr<atoms::AtomTCIASpline>>
                    fieldToTCIASplineMap,
         const bool useDealiiMatrixFreePoissonSolve,
-        SpinMode   spinMode)
+        SpinMode   spinMode,
+        std::shared_ptr<const basis::PeriodicImageAtomGenerator>
+          imageAtomGenerator)
       : d_linAlgOpContext(linAlgOpContext)
       , d_numComponents(1)
       , d_rootCout(std::cout)
@@ -247,6 +296,8 @@ namespace dftefe
             }
         }
 
+      d_imageAtomGenerator = imageAtomGenerator;
+
       if (d_isNonLocPSP)
         {
           d_atomNonLocOpContext = std::make_shared<
@@ -263,15 +314,23 @@ namespace dftefe
             maxCellBlock,
             maxWaveFnBlock,
             linAlgOpContext,
-            d_mpiComm);
+            d_mpiComm,
+            d_imageAtomGenerator);
         }
+
+      std::vector<utils::Point> vLocCoordinates;
+      std::vector<std::string>  vLocSymbolVec;
+      std::vector<double>       vLocCharges;
+      ElectrostaticONCVNonLocFEInternal::buildExtendedAtomData(
+        d_imageAtomGenerator, atomCoordinates, atomSymbolVec, atomCharges,
+        vLocCoordinates, vLocSymbolVec, vLocCharges);
 
       d_atomVLocFunction =
         std::make_shared<const atoms::AtomSevereFunction<memorySpace>>(
           d_atomSphericalDataContainerPSP,
-          atomSymbolVec,
-          atomCoordinates,
-          atomCharges,
+          vLocSymbolVec,
+          vLocCoordinates,
+          vLocCharges,
           smearedChargeRadius,
           atoms::AtomSevereFuncType::PSP::vLocal,
           1.0,
@@ -310,7 +369,8 @@ namespace dftefe
           fieldToTCIASplineMap,
           useDealiiMatrixFreePoissonSolve,
           false,
-          spinMode);
+          spinMode,
+          d_imageAtomGenerator);
     }
 
     template <typename ValueTypeBasisData,
@@ -350,8 +410,12 @@ namespace dftefe
           feBDHamiltonian,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeWaveFnBasis, memorySpace>>
-          feBDAtomCenterNonLocalOperator)
+          feBDAtomCenterNonLocalOperator,
+        std::shared_ptr<const basis::PeriodicImageAtomGenerator>
+          imageAtomGenerator)
     {
+      d_imageAtomGenerator = imageAtomGenerator;
+
       if (d_isNonLocPSP)
         {
           d_atomNonLocOpContext = std::make_shared<
@@ -368,15 +432,23 @@ namespace dftefe
             d_maxCellBlock,
             d_maxWaveFnBlock,
             d_linAlgOpContext,
-            d_mpiComm);
+            d_mpiComm,
+            d_imageAtomGenerator);
         }
+
+      std::vector<utils::Point> vLocCoordinates;
+      std::vector<std::string>  vLocSymbolVec;
+      std::vector<double>       vLocCharges;
+      ElectrostaticONCVNonLocFEInternal::buildExtendedAtomData(
+        d_imageAtomGenerator, atomCoordinates, d_atomSymbolVec, d_atomCharges,
+        vLocCoordinates, vLocSymbolVec, vLocCharges);
 
       d_atomVLocFunction =
         std::make_shared<const atoms::AtomSevereFunction<memorySpace>>(
           d_atomSphericalDataContainerPSP,
-          d_atomSymbolVec,
-          atomCoordinates,
-          d_atomCharges,
+          vLocSymbolVec,
+          vLocCoordinates,
+          vLocCharges,
           d_smearedChargeRadius,
           atoms::AtomSevereFuncType::PSP::vLocal,
           1.0,
@@ -388,7 +460,8 @@ namespace dftefe
                                         feBDNuclearChargeRhs,
                                         feBDElectronicChargeRhs,
                                         feBDHamiltonian,
-                                        *d_atomVLocFunction);
+                                        *d_atomVLocFunction,
+                                        d_imageAtomGenerator);
     }
 
 
@@ -433,8 +506,12 @@ namespace dftefe
           feBDHamiltonian,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeWaveFnBasis, memorySpace>>
-          feBDAtomCenterNonLocalOperator)
+          feBDAtomCenterNonLocalOperator,
+        std::shared_ptr<const basis::PeriodicImageAtomGenerator>
+          imageAtomGenerator)
     {
+      d_imageAtomGenerator = imageAtomGenerator;
+
       if (d_isNonLocPSP)
         {
           d_atomNonLocOpContext = std::make_shared<
@@ -451,15 +528,23 @@ namespace dftefe
             d_maxCellBlock,
             d_maxWaveFnBlock,
             d_linAlgOpContext,
-            d_mpiComm);
+            d_mpiComm,
+            d_imageAtomGenerator);
         }
+
+      std::vector<utils::Point> vLocCoordinates;
+      std::vector<std::string>  vLocSymbolVec;
+      std::vector<double>       vLocCharges;
+      ElectrostaticONCVNonLocFEInternal::buildExtendedAtomData(
+        d_imageAtomGenerator, atomCoordinates, d_atomSymbolVec, d_atomCharges,
+        vLocCoordinates, vLocSymbolVec, vLocCharges);
 
       d_atomVLocFunction =
         std::make_shared<const atoms::AtomSevereFunction<memorySpace>>(
           d_atomSphericalDataContainerPSP,
-          d_atomSymbolVec,
-          atomCoordinates,
-          d_atomCharges,
+          vLocSymbolVec,
+          vLocCoordinates,
+          vLocCharges,
           d_smearedChargeRadius,
           atoms::AtomSevereFuncType::PSP::vLocal,
           1.0,
@@ -476,7 +561,8 @@ namespace dftefe
                                         feBDNuclearChargeRhs,
                                         feBDElectronicChargeRhs,
                                         feBDHamiltonian,
-                                        *d_atomVLocFunction);
+                                        *d_atomVLocFunction,
+                                        d_imageAtomGenerator);
     }
 
     template <typename ValueTypeBasisData,

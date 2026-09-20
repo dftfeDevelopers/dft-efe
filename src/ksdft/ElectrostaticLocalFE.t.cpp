@@ -178,7 +178,9 @@ namespace dftefe
                         linAlgOpContext,
         const size_type maxCellBlock,
         bool            useDealiiMatrixFreePoissonSolve,
-        SpinMode        spinMode)
+        SpinMode        spinMode,
+        std::shared_ptr<const basis::PeriodicImageAtomGenerator>
+          imageAtomGenerator)
       : d_atomCharges(atomCharges)
       , d_numAtoms(atomCoordinates.size())
       , d_smearedChargeRadius(smearedChargeRadius)
@@ -232,7 +234,8 @@ namespace dftefe
                   feBDNuclearChargeRhs,
                   feBDElectronicChargeRhs,
                   feBDHamiltonian,
-                  externalPotentialFunction);
+                  externalPotentialFunction,
+                  imageAtomGenerator);
 
       reinitField(electronChargeDensity);
     }
@@ -280,7 +283,9 @@ namespace dftefe
                         linAlgOpContext,
         const size_type maxCellBlock,
         bool            useDealiiMatrixFreePoissonSolve,
-        SpinMode        spinMode)
+        SpinMode        spinMode,
+        std::shared_ptr<const basis::PeriodicImageAtomGenerator>
+          imageAtomGenerator)
       : d_atomCharges(atomCharges)
       , d_numAtoms(atomCoordinates.size())
       , d_smearedChargeRadius(smearedChargeRadius)
@@ -334,7 +339,8 @@ namespace dftefe
                   feBDNuclChargeStiffnessMatrixNumSol,
                   feBDNuclChargeRhsNumSol,
                   feBDHamiltonian,
-                  externalPotentialFunction);
+                  externalPotentialFunction,
+                  imageAtomGenerator);
 
       reinitField(electronChargeDensity);
     }
@@ -385,7 +391,9 @@ namespace dftefe
                    fieldToTCIASplineMap,
         const bool useDealiiMatrixFreePoissonSolve,
         const bool calculateIntegralDeltaRho,
-        SpinMode   spinMode)
+        SpinMode   spinMode,
+        std::shared_ptr<const basis::PeriodicImageAtomGenerator>
+          imageAtomGenerator)
       : d_atomCoordinates(atomCoordinates)
       , d_atomCharges(atomCharges)
       , d_numAtoms(atomCoordinates.size())
@@ -431,7 +439,8 @@ namespace dftefe
                   feBDNuclearChargeRhs,
                   feBDElectronicChargeRhs,
                   feBDHamiltonian,
-                  externalPotentialFunction);
+                  externalPotentialFunction,
+                  imageAtomGenerator);
 
       reinitField(d_atomicElectronChargeDensity);
     }
@@ -548,7 +557,9 @@ namespace dftefe
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeWaveFnBasisData,
                                           memorySpace>> feBDHamiltonian,
-        const utils::ScalarSpatialFunctionReal &externalPotentialFunction
+        const utils::ScalarSpatialFunctionReal &externalPotentialFunction,
+        std::shared_ptr<const basis::PeriodicImageAtomGenerator>
+          imageAtomGenerator
         /*std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeBasisData,
                                           memorySpace>> feBDHamiltonianElec*/)
@@ -583,6 +594,13 @@ namespace dftefe
 
       d_isNumericalVSelfSolve          = true;
       d_atomCoordinates                = atomCoordinates;
+      d_imageAtomGenerator      = imageAtomGenerator;
+      d_extendedAtomCoordinates = d_atomCoordinates;
+      d_extendedAtomCharges     = d_atomCharges;
+      if (imageAtomGenerator != nullptr)
+        imageAtomGenerator->getExtendedAtoms(d_atomCoordinates,
+                                             d_extendedAtomCoordinates,
+                                             d_extendedAtomCharges);
       d_feBDNuclearChargeRhs           = feBDNuclearChargeRhs;
       d_feBDNuclChargeRhsNumSol        = feBDNuclChargeRhsNumSol;
       d_feBDElectronicChargeRhs        = feBDElectronicChargeRhs;
@@ -688,8 +706,10 @@ namespace dftefe
           quadRuleContainerNucl, d_numComponents);
 
       // --------TODO : use eval()-----
-      const utils::SmearChargeDensityFunction smfunc(d_atomCoordinates,
-                                                     d_atomCharges,
+      // Masters and their periodic images; equal to the master lists when
+      // nothing is periodic.
+      const utils::SmearChargeDensityFunction smfunc(d_extendedAtomCoordinates,
+                                                     d_extendedAtomCharges,
                                                      d_smearedChargeRadius);
 
       RealType d_totNuclearChargeQuad = 0;
@@ -893,7 +913,9 @@ namespace dftefe
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeWaveFnBasisData,
                                           memorySpace>> feBDHamiltonian,
-        const utils::ScalarSpatialFunctionReal &externalPotentialFunction)
+        const utils::ScalarSpatialFunctionReal &externalPotentialFunction,
+        std::shared_ptr<const basis::PeriodicImageAtomGenerator>
+          imageAtomGenerator)
     {
       deleteStorages();
       utils::throwException(
@@ -913,6 +935,13 @@ namespace dftefe
 
       d_isNumericalVSelfSolve          = false;
       d_atomCoordinates                = atomCoordinates;
+      d_imageAtomGenerator      = imageAtomGenerator;
+      d_extendedAtomCoordinates = d_atomCoordinates;
+      d_extendedAtomCharges     = d_atomCharges;
+      if (imageAtomGenerator != nullptr)
+        imageAtomGenerator->getExtendedAtoms(d_atomCoordinates,
+                                             d_extendedAtomCoordinates,
+                                             d_extendedAtomCharges);
       d_feBDNuclearChargeRhs           = feBDNuclearChargeRhs;
       d_feBDElectronicChargeRhs        = feBDElectronicChargeRhs;
       d_feBMTotalCharge                = feBMTotalCharge;
@@ -1018,8 +1047,10 @@ namespace dftefe
           d_numComponents);
 
       // --------TODO : use eval()-----
-      const utils::SmearChargeDensityFunction smfunc(d_atomCoordinates,
-                                                     d_atomCharges,
+      // Masters and their periodic images; equal to the master lists when
+      // nothing is periodic.
+      const utils::SmearChargeDensityFunction smfunc(d_extendedAtomCoordinates,
+                                                     d_extendedAtomCharges,
                                                      d_smearedChargeRadius);
 
       RealType d_totNuclearChargeQuad = 0;
@@ -1067,7 +1098,7 @@ namespace dftefe
       // create the correction quadValuesContainer for analytical solve
       // --------TODO : use eval()-----
       const utils::SmearChargePotentialFunction smfuncPot(
-        d_atomCoordinates, d_atomCharges, d_smearedChargeRadius);
+        d_extendedAtomCoordinates, d_extendedAtomCharges, d_smearedChargeRadius);
 
       for (size_type iCell = 0; iCell < quadRuleContainerHam->nCells(); iCell++)
         {
@@ -1184,7 +1215,9 @@ namespace dftefe
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeWaveFnBasisData,
                                           memorySpace>> feBDHamiltonian,
-        const utils::ScalarSpatialFunctionReal &externalPotentialFunction)
+        const utils::ScalarSpatialFunctionReal &externalPotentialFunction,
+        std::shared_ptr<const basis::PeriodicImageAtomGenerator>
+          imageAtomGenerator)
     {
       deleteStorages();
       utils::throwException(
@@ -1210,6 +1243,13 @@ namespace dftefe
 
       d_isNumericalVSelfSolve          = false;
       d_atomCoordinates                = atomCoordinates;
+      d_imageAtomGenerator      = imageAtomGenerator;
+      d_extendedAtomCoordinates = d_atomCoordinates;
+      d_extendedAtomCharges     = d_atomCharges;
+      if (imageAtomGenerator != nullptr)
+        imageAtomGenerator->getExtendedAtoms(d_atomCoordinates,
+                                             d_extendedAtomCoordinates,
+                                             d_extendedAtomCharges);
       d_feBDNuclearChargeRhs           = feBDNuclearChargeRhs;
       d_feBDElectronicChargeRhs        = feBDElectronicChargeRhs;
       d_feBMTotalCharge                = feBMTotalCharge;
@@ -1426,8 +1466,8 @@ namespace dftefe
                  << "\n";
 
       // --------TODO : use eval()-----
-      const utils::SmearChargeDensityFunction smfuncDens(d_atomCoordinates,
-                                                         d_atomCharges,
+      const utils::SmearChargeDensityFunction smfuncDens(d_extendedAtomCoordinates,
+                                                         d_extendedAtomCharges,
                                                          d_smearedChargeRadius);
 
       quadRuleContainerVal = feBDNuclearChargeRhs->getQuadratureRuleContainer();
@@ -1511,7 +1551,7 @@ namespace dftefe
 
       // --------TODO : use eval()-----
       const utils::SmearChargePotentialFunction smfuncPot(
-        d_atomCoordinates, d_atomCharges, d_smearedChargeRadius);
+        d_extendedAtomCoordinates, d_extendedAtomCharges, d_smearedChargeRadius);
 
       quadRuleContainerVal = quadRuleContainerHam;
 
@@ -1882,7 +1922,7 @@ namespace dftefe
 
           // d_rootCout << "Integral Rho: " << normValue << "\n";
 
-          d_electronChargeDensity = &electronChargeDensity;
+          d_electronChargeDensity = electronChargeDensity;
 
           // quadrature::QuadratureValuesContainer<RealType, memorySpaceHost>
           // electronChargeDensityScaled(
@@ -1893,7 +1933,7 @@ namespace dftefe
           //                   *d_linAlgOpContextHost);
 
           quadrature::add((RealType)1.0,
-                          *d_electronChargeDensity,
+                          d_electronChargeDensity,
                           (RealType)(-1.0),
                           d_atomicElectronChargeDensity,
                           *d_scratchDensRhoQuad,
@@ -1925,7 +1965,7 @@ namespace dftefe
                       quadId = quadId + 1;
                     }
                   d_electronChargeDensity
-                    ->template getCellValues<utils::MemorySpace::HOST>(
+                    .template getCellValues<utils::MemorySpace::HOST>(
                       iCell, a.data());
                   for (auto j : a)
                     {
@@ -2027,7 +2067,7 @@ namespace dftefe
         }
       else
         {
-          d_electronChargeDensity = &electronChargeDensity;
+          d_electronChargeDensity = electronChargeDensity;
 
           // Scale by 4\pi
           quadrature::scale((RealType)(4 * utils::mathConstants::pi),
@@ -2221,10 +2261,23 @@ namespace dftefe
       d_nuclearChargeQuad.resize(d_numAtoms, 0);
       for (size_type iAtom = 0; iAtom < d_numAtoms; iAtom++)
         {
+          // One nucleus means the master and its images -- an image is the
+          // same nucleus re-entering the domain. Seeded with the master, so a
+          // null generator needs no second branch.
+          std::vector<utils::Point> extendedAtomCoordinates(
+            1, d_atomCoordinates[iAtom]);
+          std::vector<double> extendedAtomCharges(1, d_atomCharges[iAtom]);
+          if (d_imageAtomGenerator != nullptr)
+            d_imageAtomGenerator->getExtendedAtomsForMaster(
+              d_atomCoordinates, iAtom, extendedAtomCoordinates,
+              extendedAtomCharges);
+
+          // Master only: the solved vself must be this nucleus's own field,
+          // otherwise image fields enter it through the boundary data.
           std::shared_ptr<const utils::ScalarSpatialFunctionReal> smfunc =
             std::make_shared<const utils::SmearChargePotentialFunction>(
-              d_atomCoordinates[iAtom],
-              d_atomCharges[iAtom],
+              std::vector<utils::Point>(1, d_atomCoordinates[iAtom]),
+              std::vector<double>(1, d_atomCharges[iAtom]),
               d_smearedChargeRadius);
 
           d_feBMNuclearCharge[iAtom] =
@@ -2236,8 +2289,8 @@ namespace dftefe
 
           // --------TODO : use eval()-----
           smfunc = std::make_shared<const utils::SmearChargeDensityFunction>(
-            d_atomCoordinates[iAtom],
-            d_atomCharges[iAtom],
+            extendedAtomCoordinates,
+            extendedAtomCharges,
             d_smearedChargeRadius);
 
           d_nuclearChargeQuad[iAtom] = 0;
@@ -2391,9 +2444,19 @@ namespace dftefe
 
           for (size_type iAtom = 0; iAtom < d_numAtoms; iAtom++)
             {
+              // One nucleus: the master atom and its periodic images.
+              std::vector<utils::Point> extendedAtomCoordinates(
+                1, d_atomCoordinates[iAtom]);
+              std::vector<double> extendedAtomCharges(1,
+                                                      d_atomCharges[iAtom]);
+              if (d_imageAtomGenerator != nullptr)
+                d_imageAtomGenerator->getExtendedAtomsForMaster(
+                  d_atomCoordinates, iAtom, extendedAtomCoordinates,
+                  extendedAtomCharges);
+
               const utils::SmearChargeDensityFunction smfunc(
-                d_atomCoordinates[iAtom],
-                d_atomCharges[iAtom],
+                extendedAtomCoordinates,
+                extendedAtomCharges,
                 d_smearedChargeRadius);
 
               for (size_type iCell = 0; iCell < quadRuleContainerNucl->nCells();
@@ -2506,16 +2569,28 @@ namespace dftefe
 
               for (size_type iAtom = 0; iAtom < d_numAtoms; iAtom++)
                 {
+                  // One nucleus: the master atom and its periodic images.
+                  std::vector<utils::Point> extendedAtomCoordinates(
+                    1, d_atomCoordinates[iAtom]);
+                  std::vector<double> extendedAtomCharges(
+                    1, d_atomCharges[iAtom]);
+                  if (d_imageAtomGenerator != nullptr)
+                    d_imageAtomGenerator->getExtendedAtomsForMaster(
+                      d_atomCoordinates, iAtom, extendedAtomCoordinates,
+                      extendedAtomCharges);
+
                   smfuncDens.push_back(
                     std::make_shared<utils::SmearChargeDensityFunction>(
-                      d_atomCoordinates[iAtom],
-                      d_atomCharges[iAtom],
+                      extendedAtomCoordinates,
+                      extendedAtomCharges,
                       d_smearedChargeRadius));
 
+                  // Master only: an image is a different nucleus, so its
+                  // field is real Madelung energy, not self energy.
                   smfuncPot.push_back(
                     std::make_shared<utils::SmearChargePotentialFunction>(
-                      d_atomCoordinates[iAtom],
-                      d_atomCharges[iAtom],
+                      std::vector<utils::Point>(1, d_atomCoordinates[iAtom]),
+                      std::vector<double>(1, d_atomCharges[iAtom]),
                       d_smearedChargeRadius));
                 }
 
@@ -2610,7 +2685,7 @@ namespace dftefe
               ValueTypeWaveFnBasisData,
               memorySpaceHost,
               dim>(*d_scratchPotRhoQuad,
-                   *d_electronChargeDensity,
+                   d_electronChargeDensity,
                    d_feBDElectronicChargeRhs->getJxWInAllCells(),
                    d_linAlgOpContextHost,
                    d_feBMTotalCharge->getMPIPatternP2P()->mpiCommunicator());
@@ -2656,7 +2731,7 @@ namespace dftefe
           //          d_feBMTotalCharge->getMPIPatternP2P()->mpiCommunicator());
 
           quadrature::add((ValueType)1.0,
-                          *d_electronChargeDensity,
+                          d_electronChargeDensity,
                           (ValueType)-1.0,
                           d_atomicElectronChargeDensity,
                           *d_scratchDensRhoQuad,
@@ -2700,13 +2775,6 @@ namespace dftefe
                          d_intRhoAtPhiAt + intRhoAtDelPhi + intDelRhoPhiTot +
                          d_integralDiffVZZCorrVSmearxSumBZZCorrBSmear) *
                         0.5;
-
-          // d_rootCout << "integralPhiAtxbSmear : " << d_integralPhiAtxbSmear
-          // << "\n"; d_rootCout << "integralDelPhixbSmear : " <<
-          // integralDelPhixbSmear << "\n"; d_rootCout << "intRhoAtPhiAt : " <<
-          // d_intRhoAtPhiAt << "\n"; d_rootCout << "intRhoAtDelPhi : " <<
-          // intRhoAtDelPhi << "\n"; d_rootCout << "intDelRhoPhiTot : " <<
-          // intDelRhoPhiTot << "\n";
         }
 
       // correction energy evaluation
@@ -2742,7 +2810,7 @@ namespace dftefe
               ValueTypeWaveFnBasisData,
               memorySpaceHost,
               dim>(*d_correctionPotRhoQuad,
-                   *d_electronChargeDensity,
+                   d_electronChargeDensity,
                    d_feBDElectronicChargeRhs->getJxWInAllCells(),
                    d_linAlgOpContextHost,
                    d_feBMTotalCharge->getMPIPatternP2P()->mpiCommunicator());

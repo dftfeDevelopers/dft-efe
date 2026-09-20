@@ -36,7 +36,7 @@
  *     image list, which enrichments overlap that cell and which origins --
  *     master atom and periodic images -- reach it, applying the same
  *     per orbital cutoff the class applies. The recomputed sequence must
- *     match overlappingEnrichmentIdsInCells() and getAtomIdsForCellEnrich()
+ *     match overlappingEnrichmentIdsInCells() and getExtendedAtomIdsForCellEnrich()
  *     entry by entry. This pins the extended atom id encoding, the offsets
  *     into the per cell origin list, the per orbital filtering and, in
  *     parallel, the case a serial run cannot reach: an atom that is only
@@ -585,7 +585,7 @@ main()
            enrichIdInCell++)
         {
           const std::vector<size_type> origins =
-            enrichmentIdsPartition->getAtomIdsForCellEnrich(iCell,
+            enrichmentIdsPartition->getExtendedAtomIdsForCellEnrich(iCell,
                                                             enrichIdInCell);
 
           if (origins != expectedOrigins[enrichIdInCell])
@@ -614,7 +614,7 @@ main()
                 isImage ? imagePositionsTrunc[extId - nAtoms] :
                           atomCoordinatesVec[extId];
               const Point gotPosition =
-                enrichmentIdsPartition->getPositionOfAtomId(extId);
+                enrichmentIdsPartition->getPositionOfExtendedAtomId(extId);
               for (size_type k = 0; k < dim; k++)
                 if (std::abs(gotPosition[k] - expectedPosition[k]) > 1e-12)
                   {
@@ -945,7 +945,7 @@ main()
            enrichIdInCell++)
         {
           const std::vector<size_type> origins =
-            enrichmentIdsPartitionNonPeriodic->getAtomIdsForCellEnrich(
+            enrichmentIdsPartitionNonPeriodic->getExtendedAtomIdsForCellEnrich(
               iCell, enrichIdInCell);
           const size_type master =
             enrichmentIdsPartitionNonPeriodic->getAtomId(

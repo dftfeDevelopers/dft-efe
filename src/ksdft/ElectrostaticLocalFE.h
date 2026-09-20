@@ -32,6 +32,7 @@
 #include <basis/FEBasisDataStorage.h>
 #include <quadrature/QuadratureValuesContainer.h>
 #include <basis/FEBasisManager.h>
+#include <basis/PeriodicImageAtomGenerator.h>
 #include <linearAlgebra/LinearSolverFunction.h>
 #include <electrostatics/PoissonLinearSolverFunctionFE.h>
 #include <linearAlgebra/LinearAlgebraProfiler.h>
@@ -109,7 +110,9 @@ namespace dftefe
                         linAlgOpContext,
         const size_type maxCellBlock,
         bool            useDealiiMatrixFreePoissonSolve = true,
-        SpinMode        spinMode = SpinMode::Unpolarized);
+        SpinMode        spinMode = SpinMode::Unpolarized,
+        std::shared_ptr<const basis::PeriodicImageAtomGenerator>
+          imageAtomGenerator = nullptr);
 
       // used if numerical poisson solve vself canellation route taken
       ElectrostaticLocalFE(
@@ -145,7 +148,9 @@ namespace dftefe
                         linAlgOpContext,
         const size_type maxCellBlock,
         bool            useDealiiMatrixFreePoissonSolve = true,
-        SpinMode        spinMode = SpinMode::Unpolarized);
+        SpinMode        spinMode = SpinMode::Unpolarized,
+        std::shared_ptr<const basis::PeriodicImageAtomGenerator>
+          imageAtomGenerator = nullptr);
 
       // used if delta rho approach is taken with phi total from 1D KS solve
       // with analytical vself energy cancellation
@@ -185,7 +190,9 @@ namespace dftefe
                    fieldToTCIASplineMap            = {},
         const bool useDealiiMatrixFreePoissonSolve = true,
         const bool calculateIntegralDeltaRho       = false,
-        SpinMode   spinMode                        = SpinMode::Unpolarized);
+        SpinMode   spinMode                        = SpinMode::Unpolarized,
+        std::shared_ptr<const basis::PeriodicImageAtomGenerator>
+          imageAtomGenerator = nullptr);
 
 
       ~ElectrostaticLocalFE();
@@ -210,7 +217,9 @@ namespace dftefe
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeWaveFnBasisData,
                                           memorySpace>> feBDHamiltonian,
-        const utils::ScalarSpatialFunctionReal &externalPotentialFunction);
+        const utils::ScalarSpatialFunctionReal &externalPotentialFunction,
+        std::shared_ptr<const basis::PeriodicImageAtomGenerator>
+          imageAtomGenerator = nullptr);
 
       // used if numerical poisson solve vself canellation route taken
       void
@@ -238,7 +247,9 @@ namespace dftefe
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeWaveFnBasisData,
                                           memorySpace>> feBDHamiltonian,
-        const utils::ScalarSpatialFunctionReal &externalPotentialFunction);
+        const utils::ScalarSpatialFunctionReal &externalPotentialFunction,
+        std::shared_ptr<const basis::PeriodicImageAtomGenerator>
+          imageAtomGenerator = nullptr);
 
       // used if delta rho approach is taken with phi total from 1D KS solve
       // with analytical vself energy cancellation
@@ -265,7 +276,9 @@ namespace dftefe
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeWaveFnBasisData,
                                           memorySpace>> feBDHamiltonian,
-        const utils::ScalarSpatialFunctionReal &externalPotentialFunction);
+        const utils::ScalarSpatialFunctionReal &externalPotentialFunction,
+        std::shared_ptr<const basis::PeriodicImageAtomGenerator>
+          imageAtomGenerator = nullptr);
 
       void
       reinitField(
@@ -325,6 +338,15 @@ namespace dftefe
       std::vector<utils::Point> d_atomCoordinates;
       const size_type           d_numAtoms;
       const std::vector<double> d_atomCharges;
+
+      /* Masters followed by their periodic images, built internally from the
+       * UNTRUNCATED image list. A null generator leaves these equal to the
+       * master lists, so a non periodic run is unchanged.
+       */
+      std::shared_ptr<const basis::PeriodicImageAtomGenerator>
+                                d_imageAtomGenerator;
+      std::vector<utils::Point> d_extendedAtomCoordinates;
+      std::vector<double>       d_extendedAtomCharges;
       const double              d_smearedChargeRadius;
       RealType                  d_energy;
       RealType                  d_nuclearSelfEnergy;
@@ -332,8 +354,8 @@ namespace dftefe
       // Causing memory errors: Change these to smart pointers
       quadrature::QuadratureValuesContainer<RealType, memorySpaceHost>
         *d_nuclearChargesDensity;
-      const quadrature::QuadratureValuesContainer<RealType, memorySpaceHost>
-        *d_electronChargeDensity;
+      quadrature::QuadratureValuesContainer<RealType, memorySpaceHost>
+        d_electronChargeDensity;
       quadrature::QuadratureValuesContainer<ValueTypeBasisCoeff,
                                             memorySpaceHost>
         *d_atomicTotalElecPotElectronicQuad;

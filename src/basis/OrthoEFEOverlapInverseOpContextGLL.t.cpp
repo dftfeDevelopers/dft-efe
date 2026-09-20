@@ -1605,11 +1605,17 @@ namespace dftefe
       // HX residual was not dropping below 1e-3 for non-conforming mesh.
       d_feBasisManager->getConstraints().distributeChildToParent(diagonal, 1);
 
-      d_feBasisManager->getConstraints().setConstrainedNodes(diagonal, 1, 1.0);
-
       // Function to add the values to the local node from its corresponding
       // ghost nodes from other processors.
+      //
+      // This precedes pinning the constrained nodes below. The other order
+      // reduces over that synthetic 1.0, so every rank ghosting a constrained
+      // dof adds another 1.0 to whoever owns it, leaving sum(M_ii) too large.
       diagonal.accumulateAddLocallyOwned();
+
+      // Keeps the reciprocal below finite at dofs whose mass was distributed
+      // away; these entries are zeroed out of d_diagonalInv afterwards.
+      d_feBasisManager->getConstraints().setConstrainedNodes(diagonal, 1, 1.0);
 
       diagonal.updateGhostValues();
 

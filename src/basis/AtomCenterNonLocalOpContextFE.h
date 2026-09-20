@@ -75,7 +75,9 @@ namespace dftefe
         const size_type                  maxFieldBlock,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
                                    linAlgOpContext,
-        const utils::mpi::MPIComm &comm);
+        const utils::mpi::MPIComm &comm,
+        std::shared_ptr<const PeriodicImageAtomGenerator> imageAtomGenerator =
+          nullptr);
 
       /**
        *@brief Default Destructor

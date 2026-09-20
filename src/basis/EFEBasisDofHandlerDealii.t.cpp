@@ -352,13 +352,8 @@ namespace dftefe
 
       dealiiAffineConstraintMatrix.clear();
       // NOTE: the periodic partner dofs land in this relevant set only
-      // because TriangulationBase::markPeriodicFaces called add_periodicity()
-      // on the triangulation, which glues the matching face pairs into
-      // topological neighbours and hence ghost cells here. Stamping the
-      // periodic boundary ids without that call would still let
-      // collect_periodic_faces below find the pairs, but their master dofs
-      // would stay outside this set and make_periodicity_constraints would
-      // silently break in parallel.
+      // because markPeriodicFaces called add_periodicity(), which makes the
+      // matched faces topological neighbours and hence ghost cells here.
       // dealii::IndexSet locally_relevant_dofs;
       // locally_relevant_dofs.clear();
       // dealii::DoFTools::extract_locally_relevant_dofs(*(this->getDoFHandler()),
@@ -719,13 +714,8 @@ namespace dftefe
 
       dealiiAffineConstraintMatrix.clear();
       // NOTE: the periodic partner dofs land in this relevant set only
-      // because TriangulationBase::markPeriodicFaces called add_periodicity()
-      // on the triangulation, which glues the matching face pairs into
-      // topological neighbours and hence ghost cells here. Stamping the
-      // periodic boundary ids without that call would still let
-      // collect_periodic_faces below find the pairs, but their master dofs
-      // would stay outside this set and make_periodicity_constraints would
-      // silently break in parallel.
+      // because markPeriodicFaces called add_periodicity(), which makes the
+      // matched faces topological neighbours and hence ghost cells here.
       dealii::IndexSet locally_relevant_dofs =
         dealii::DoFTools::extract_locally_relevant_dofs(
           *(this->getDoFHandler()));
@@ -1523,10 +1513,24 @@ namespace dftefe
       basis::EnrichmentIdAttribute eIdAttr =
         d_enrichmentIdsPartition->getEnrichmentIdAttribute(
           d_overlappingEnrichmentIdsInCells[cellId][cellLocalEnrichmentId]);
-      utils::Point origin(d_atomCoordinatesVec[eIdAttr.atomId]);
       auto sphericalData = d_atomSphericalDataContainer->getSphericalData(
         d_atomSymbolVec[eIdAttr.atomId], d_fieldName)[eIdAttr.localIdInAtom];
-      retValue = sphericalData->getValue(point, origin);
+
+      // Sum over this enrichment's origins: the master plus every image whose
+      // cutoff reaches this cell. Only the origin varies. By reference, since
+      // this runs once per quadrature point.
+      const std::vector<size_type> &extendedAtomIds =
+        d_enrichmentIdsPartition->getExtendedAtomIdsForAllEnrichInCell(cellId);
+      const std::vector<size_type> &extendedAtomIdOffsets =
+        d_enrichmentIdsPartition->getExtendedAtomIdOffsetsForAllEnrichInCell(cellId);
+
+      for (size_type iOrigin = extendedAtomIdOffsets[cellLocalEnrichmentId];
+           iOrigin < extendedAtomIdOffsets[cellLocalEnrichmentId + 1];
+           iOrigin++)
+        retValue += sphericalData->getValue(
+          point,
+          d_enrichmentIdsPartition->getPositionOfExtendedAtomId(
+            extendedAtomIds[iOrigin]));
       return retValue;
     }
 
@@ -1553,10 +1557,36 @@ namespace dftefe
       basis::EnrichmentIdAttribute eIdAttr =
         d_enrichmentIdsPartition->getEnrichmentIdAttribute(
           d_overlappingEnrichmentIdsInCells[cellId][cellLocalEnrichmentId]);
-      utils::Point origin(d_atomCoordinatesVec[eIdAttr.atomId]);
       auto sphericalData = d_atomSphericalDataContainer->getSphericalData(
         d_atomSymbolVec[eIdAttr.atomId], d_fieldName)[eIdAttr.localIdInAtom];
-      retValue = sphericalData->getGradientValue(point, origin);
+
+      // Sum over this enrichment's origins; see getEnrichmentValue above. The
+      // first origin sizes retValue so the component count stays the callee's
+      // to decide. Without periodicity there is exactly one and no loop runs.
+      const std::vector<size_type> &extendedAtomIds =
+        d_enrichmentIdsPartition->getExtendedAtomIdsForAllEnrichInCell(cellId);
+      const std::vector<size_type> &extendedAtomIdOffsets =
+        d_enrichmentIdsPartition->getExtendedAtomIdOffsetsForAllEnrichInCell(cellId);
+      const size_type oBegin = extendedAtomIdOffsets[cellLocalEnrichmentId];
+      const size_type oEnd = extendedAtomIdOffsets[cellLocalEnrichmentId + 1];
+      DFTEFE_AssertWithMsg(
+        oEnd > oBegin,
+        "An enrichment overlapping a cell must have at least one origin.");
+
+      retValue = sphericalData->getGradientValue(
+        point,
+        d_enrichmentIdsPartition->getPositionOfExtendedAtomId(
+          extendedAtomIds[oBegin]));
+      for (size_type iOrigin = oBegin + 1; iOrigin < oEnd; iOrigin++)
+        {
+          const std::vector<double> imageValue =
+            sphericalData->getGradientValue(
+              point,
+              d_enrichmentIdsPartition->getPositionOfExtendedAtomId(
+                extendedAtomIds[iOrigin]));
+          for (size_type i = 0; i < retValue.size(); i++)
+            retValue[i] += imageValue[i];
+        }
       return retValue;
     }
 
@@ -1583,10 +1613,35 @@ namespace dftefe
       basis::EnrichmentIdAttribute eIdAttr =
         d_enrichmentIdsPartition->getEnrichmentIdAttribute(
           d_overlappingEnrichmentIdsInCells[cellId][cellLocalEnrichmentId]);
-      utils::Point origin(d_atomCoordinatesVec[eIdAttr.atomId]);
       auto sphericalData = d_atomSphericalDataContainer->getSphericalData(
         d_atomSymbolVec[eIdAttr.atomId], d_fieldName)[eIdAttr.localIdInAtom];
-      retValue = sphericalData->getHessianValue(point, origin);
+
+      // Sum over this enrichment's origins; see getEnrichmentValue above. The
+      // first origin sizes retValue so the component count stays the callee's
+      // to decide. Without periodicity there is exactly one and no loop runs.
+      const std::vector<size_type> &extendedAtomIds =
+        d_enrichmentIdsPartition->getExtendedAtomIdsForAllEnrichInCell(cellId);
+      const std::vector<size_type> &extendedAtomIdOffsets =
+        d_enrichmentIdsPartition->getExtendedAtomIdOffsetsForAllEnrichInCell(cellId);
+      const size_type oBegin = extendedAtomIdOffsets[cellLocalEnrichmentId];
+      const size_type oEnd = extendedAtomIdOffsets[cellLocalEnrichmentId + 1];
+      DFTEFE_AssertWithMsg(
+        oEnd > oBegin,
+        "An enrichment overlapping a cell must have at least one origin.");
+
+      retValue = sphericalData->getHessianValue(
+        point,
+        d_enrichmentIdsPartition->getPositionOfExtendedAtomId(
+          extendedAtomIds[oBegin]));
+      for (size_type iOrigin = oBegin + 1; iOrigin < oEnd; iOrigin++)
+        {
+          const std::vector<double> imageValue = sphericalData->getHessianValue(
+            point,
+            d_enrichmentIdsPartition->getPositionOfExtendedAtomId(
+              extendedAtomIds[iOrigin]));
+          for (size_type i = 0; i < retValue.size(); i++)
+            retValue[i] += imageValue[i];
+        }
 
       // if (!d_overlappingEnrichmentIdsInCells[cellId].empty())
       //   {

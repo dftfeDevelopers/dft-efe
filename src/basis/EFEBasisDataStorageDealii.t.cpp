@@ -282,7 +282,7 @@ namespace dftefe
                          quadratureRuleContainer->nCellQuadraturePoints(cellId);
         // utils::mathFunctions::sizeTypePow(num1DQuadPoints, dim);
 
-        nQuadPointsInCell.resize(numLocallyOwnedCells, nQuadPointInCell);
+        nQuadPointsInCell.assign(numLocallyOwnedCells, nQuadPointInCell);
         utils::MemoryStorage<ValueTypeBasisData, utils::MemorySpace::HOST>
           basisQuadStorageTmp(0), basisGradientQuadStorageTmp(0),
           basisHessianQuadStorageTmp(0), basisOverlapTmp(0);

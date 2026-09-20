@@ -29,6 +29,7 @@
 #include <linearAlgebra/LinAlgOpContext.h>
 #include <basis/FECellWiseDataOperations.h>
 #include <utils/StringOperations.h>
+#include <algorithm>
 
 namespace dftefe
 {
@@ -282,7 +283,8 @@ namespace dftefe
         const size_type                  maxFieldBlock,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
                                    linAlgOpContext,
-        const utils::mpi::MPIComm &mpiComm)
+        const utils::mpi::MPIComm &mpiComm,
+        std::shared_ptr<const PeriodicImageAtomGenerator> imageAtomGenerator)
       : d_feBasisManager(&feBasisManager)
       , d_maxCellBlock(maxCellBlock)
       , d_maxWaveFnBatch(maxFieldBlock)
@@ -391,7 +393,8 @@ namespace dftefe
           triangulation->getDomainVectors(),
           triangulation->getPeriodicFlags(),
           cellVerticesVector,
-          mpiComm);
+          mpiComm,
+          imageAtomGenerator);
 
       d_overlappingProjectorIdsInCells =
         d_projectorIdsPartition->overlappingEnrichmentIdsInCells();
@@ -676,65 +679,135 @@ namespace dftefe
                            "The requested cell does not have any proj ids.");
       size_type numProjIdsSkipped = 0;
       int       l                 = 0;
-      size_type atomIdPrev        = std::numeric_limits<size_type>::max();
 
+      // Sum over each projector's origins, which belong to the
+      // (cell, projector) pair. By reference.
+      const std::vector<size_type> &extendedAtomIds =
+        d_projectorIdsPartition->getExtendedAtomIdsForAllEnrichInCell(cellId);
+      const std::vector<size_type> &extendedAtomIdOffsets =
+        d_projectorIdsPartition->getExtendedAtomIdOffsetsForAllEnrichInCell(cellId);
+
+      // Gather the radial projectors once: the 2l+1 stride makes them costly
+      // to re-walk per level, and the spherical data lookup is by symbol.
+      size_type numRadialProj = 0;
+      for (size_type iProj = 0; iProj < numProjIdsInCell;
+           iProj += numProjIdsSkipped)
+        {
+          basis::EnrichmentIdAttribute pIdAttr =
+            d_projectorIdsPartition->getEnrichmentIdAttribute(projIdVec[iProj]);
+          numProjIdsSkipped =
+            2 * (d_atomSphericalDataContainer->getQNumbers(
+                   d_atomSymbolVec[pIdAttr.atomId],
+                   d_fieldNameProjector)[pIdAttr.localIdInAtom][1]) + 1;
+          numRadialProj++;
+        }
+
+      std::vector<size_type> radialProjBeginInCell(numRadialProj, 0);
+      std::vector<size_type> radialProjLocalId(numRadialProj, 0);
+      std::vector<int>       radialProjL(numRadialProj, 0);
+      std::vector<const std::vector<std::shared_ptr<atoms::SphericalData>> *>
+                radialProjSphericalDataVec(numRadialProj, nullptr);
+      size_type maxOriginsInCell = 0;
+
+      numProjIdsSkipped   = 0;
+      size_type iRadialProj    = 0;
       for (size_type iProj = 0; iProj < numProjIdsInCell;
            iProj += numProjIdsSkipped)
         {
           basis::EnrichmentIdAttribute pIdAttr =
             d_projectorIdsPartition->getEnrichmentIdAttribute(projIdVec[iProj]);
 
-          size_type atomId  = pIdAttr.atomId;
-          size_type localId = pIdAttr.localIdInAtom;
+          radialProjBeginInCell[iRadialProj] = iProj;
+          radialProjLocalId[iRadialProj]   = pIdAttr.localIdInAtom;
+          radialProjSphericalDataVec[iRadialProj] =
+            &(d_atomSphericalDataContainer->getSphericalData(
+              d_atomSymbolVec[pIdAttr.atomId], d_fieldNameProjector));
+          radialProjL[iRadialProj] = d_atomSphericalDataContainer->getQNumbers(
+            d_atomSymbolVec[pIdAttr.atomId],
+            d_fieldNameProjector)[pIdAttr.localIdInAtom][1];
 
-          if (atomIdPrev != atomId)
+          maxOriginsInCell = std::max(maxOriginsInCell,
+                                      extendedAtomIdOffsets[iProj + 1] -
+                                        extendedAtomIdOffsets[iProj]);
+
+          numProjIdsSkipped = 2 * radialProjL[iRadialProj] + 1;
+          iRadialProj++;
+        }
+
+      // Swept level by level, not projector by projector, so that at level 0
+      // consecutive projectors of one atom share an origin and the transform
+      // cache below still hits. Without periodicity only level 0 exists.
+      size_type extendedAtomIdPrev = std::numeric_limits<size_type>::max();
+
+      for (size_type level = 0; level < maxOriginsInCell; level++)
+        {
+          for (iRadialProj = 0; iRadialProj < numRadialProj; iRadialProj++)
             {
-              utils::Point origin(d_atomCoordinatesVec[atomId]);
-              std::transform(points.begin(),
-                             points.end(),
-                             x.begin(),
-                             [origin](utils::Point p) { return p - origin; });
+              const size_type iProj = radialProjBeginInCell[iRadialProj];
 
-              for (size_type iPts = 0; iPts < points.size(); iPts++)
-                atoms::convertCartesianToSpherical(
-                  x[iPts],
-                  rVec[iPts],
-                  thetaVec[iPts],
-                  phiVec[iPts],
-                  atoms::SphericalDataDefaults::POL_ANG_TOL);
+              // This radial projector may have fewer origins than the
+              // cell's deepest one.
+              if (extendedAtomIdOffsets[iProj] + level >=
+                  extendedAtomIdOffsets[iProj + 1])
+                continue;
+              const size_type extendedAtomId =
+                extendedAtomIds[extendedAtomIdOffsets[iProj] + level];
+
+              // The 2l+1 m components share one radial function, hence one
+              // cutoff, hence one origin list; the first m stands for all of
+              // them, as radialValue below is computed once per projector.
+              DFTEFE_AssertWithMsg(
+                extendedAtomIdOffsets[iProj + 2 * radialProjL[iRadialProj] + 1] -
+                    extendedAtomIdOffsets[iProj + 2 * radialProjL[iRadialProj]] ==
+                  extendedAtomIdOffsets[iProj + 1] -
+                    extendedAtomIdOffsets[iProj],
+                "The m components of one radial projector disagree on how "
+                "many origins reach this cell.");
+
+              if (extendedAtomIdPrev != extendedAtomId)
+                {
+                  utils::Point origin(
+                    d_projectorIdsPartition->getPositionOfExtendedAtomId(
+                      extendedAtomId));
+                  std::transform(points.begin(),
+                                 points.end(),
+                                 x.begin(),
+                                 [origin](utils::Point p) {
+                                   return p - origin;
+                                 });
+
+                  for (size_type iPts = 0; iPts < points.size(); iPts++)
+                    atoms::convertCartesianToSpherical(
+                      x[iPts],
+                      rVec[iPts],
+                      thetaVec[iPts],
+                      phiVec[iPts],
+                      atoms::SphericalDataDefaults::POL_ANG_TOL);
+
+                  extendedAtomIdPrev = extendedAtomId;
+                }
+
+              const std::vector<std::shared_ptr<atoms::SphericalData>>
+                &sphericalDataVec = *(radialProjSphericalDataVec[iRadialProj]);
+              const size_type localId = radialProjLocalId[iRadialProj];
+              l                       = radialProjL[iRadialProj];
+
+              auto radialValue = sphericalDataVec[localId]->getRadialValue(rVec);
+
+              // assumption m is the fastest index
+              for (int mCount = 0; mCount < 2 * l + 1; mCount++)
+                {
+                  auto angularValue = (sphericalDataVec[localId + mCount])
+                                        ->getAngularValue(rVec, thetaVec, phiVec);
+
+                  // retValue is zero initialised, so every origin adds its
+                  // own radial x angular product into the same slot. Replaces
+                  // hadamardProduct, which assigns rather than accumulates.
+                  double *out = retValue.data() + (iProj + mCount) * numPoints;
+                  for (size_type iPts = 0; iPts < numPoints; iPts++)
+                    out[iPts] += radialValue[iPts] * angularValue[iPts];
+                }
             }
-
-          auto sphericalDataVec =
-            d_atomSphericalDataContainer->getSphericalData(
-              d_atomSymbolVec[atomId], d_fieldNameProjector);
-
-          auto quantumNoVec =
-            d_atomSphericalDataContainer->getQNumbers(d_atomSymbolVec[atomId],
-                                                      d_fieldNameProjector);
-
-          l = quantumNoVec[localId][1];
-
-          auto radialValue = sphericalDataVec[localId]->getRadialValue(rVec);
-
-          // assumption m is the fastest index
-          for (int mCount = 0; mCount < 2 * l + 1; mCount++)
-            {
-              auto angularValue = (sphericalDataVec[localId + mCount])
-                                    ->getAngularValue(rVec, thetaVec, phiVec);
-
-              linearAlgebra::blasLapack::hadamardProduct<
-                ValueTypeOperator,
-                ValueTypeOperator,
-                utils::MemorySpace::HOST>(
-                numPoints,
-                radialValue.data(),
-                angularValue.data(),
-                retValue.data() + (iProj + mCount) * numPoints,
-                *dftefe::linearAlgebra::LinAlgOpContextDefaults::
-                  LINALG_OP_CONTXT_HOST);
-            }
-          numProjIdsSkipped = (2 * l + 1);
-          atomIdPrev        = atomId;
         }
       return retValue;
     }

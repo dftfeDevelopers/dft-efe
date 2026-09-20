@@ -126,7 +126,9 @@ namespace dftefe
         const size_type            enrichmentBatchSize =
           ECIDefaults::ENRICHMENT_BATCH_SIZE,
         const size_type cellBlockSize =
-          BasisDataStorageDefaults<memorySpace>::CELL_BATCH_SIZE);
+          BasisDataStorageDefaults<memorySpace>::CELL_BATCH_SIZE,
+        std::shared_ptr<const PeriodicImageAtomGenerator> imageAtomGenerator =
+          nullptr);
 
       /**
        * @brief This Constructor for augmenting the EFE basis with classical FE basis.
@@ -145,7 +147,9 @@ namespace dftefe
         const std::vector<std::string> & atomSymbolVec,
         const std::vector<utils::Point> &atomCoordinatesVec,
         const std::string                fieldName,
-        const utils::mpi::MPIComm &      comm);
+        const utils::mpi::MPIComm &      comm,
+        std::shared_ptr<const PeriodicImageAtomGenerator> imageAtomGenerator =
+          nullptr);
 
       /**
        * @brief Destructor for the class
@@ -304,7 +308,11 @@ namespace dftefe
       size_type d_cellBlockSize;
 
       utils::MemoryStorage<double, memorySpace> d_originMemSpace;
-      std::vector<size_type>                    d_numEnrichInAllCells;
+      /* Start offsets into d_originMemSpace, one per (cell, enrichIdInCell)
+       * plus a trailing total. Without periodicity every enrichment has a
+       * single origin and these are simply 0,1,2,... */
+      utils::MemoryStorage<size_type, memorySpace> d_originOffsetPerCellEnrich;
+      std::vector<size_type>                       d_numEnrichInAllCells;
       atoms::SphericalDataNumerical::Func<memorySpace>
         *d_sphericalDataNumericalFuncPtrVec;
 

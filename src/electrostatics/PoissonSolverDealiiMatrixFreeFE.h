@@ -98,16 +98,6 @@ namespace dftefe
         linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
                                                ValueTypeOperand>;
 
-      // The mean-value coefficients have to live in whichever vector type the
-      // AX of this memory space consumes: dealii's ghosted CPU vector on the
-      // host path, dftefe's device vector on the GPU path. dftfe keeps these
-      // as two separate classes selected by #ifdef (poissonSolverProblem and
-      // poissonSolverProblemDevice); here one alias covers both.
-      using MeanValueCoefficientVec = std::conditional_t<
-        memorySpace == utils::MemorySpace::DEVICE,
-        linearAlgebra::Vector<ValueTypeOperator, memorySpace>,
-        distributedCPUVec<ValueTypeOperator>>;
-
     public:
       /**
        * @brief This constructor creates an instance of a base LinearSolverFunction called PoissonSolverDealiiMatrixFreeFE
@@ -229,10 +219,18 @@ namespace dftefe
       /**
        * @brief Sets the pinned dof from its masters, vec[o] = dot(a, vec).
        * No-op unless the mean-value constraint is active.
+       *
+       * Overloaded on the vector type, not the memory space, because a DEVICE
+       * build uses both: the rhs assembly and the dealii host CG run on
+       * distributedCPUVec, only the device CG on dftefe's device vector.
        */
       void
       applyMeanValueConstraintDistributeP2C(
-        MeanValueCoefficientVec &vec) const;
+        distributedCPUVec<ValueTypeOperator> &vec) const;
+
+      void
+      applyMeanValueConstraintDistributeP2C(
+        linearAlgebra::Vector<ValueTypeOperator, memorySpace> &vec) const;
 
       /**
        * @brief Transpose of the above: redistributes what has accumulated on
@@ -241,7 +239,11 @@ namespace dftefe
        */
       void
       applyMeanValueConstraintDistributeC2P(
-        MeanValueCoefficientVec &vec) const;
+        distributedCPUVec<ValueTypeOperator> &vec) const;
+
+      void
+      applyMeanValueConstraintDistributeC2P(
+        linearAlgebra::Vector<ValueTypeOperator, memorySpace> &vec) const;
 
       void
       AX(const dealii::MatrixFree<dim, double> &matrixFreeData,
@@ -279,9 +281,15 @@ namespace dftefe
       // found one on the homogeneous basis manager, in which case every branch
       // guarded on d_isMeanValueConstraintActive is dead and behaviour is
       // unchanged. Naming follows dftfe's poissonSolverProblem{,Device}.
-      int                             d_thisMpiProcess;
-      bool                            d_isMeanValueConstraintActive;
-      MeanValueCoefficientVec         d_meanValueConstraintVec;
+      int  d_thisMpiProcess;
+      bool d_isMeanValueConstraintActive;
+      // Held in both forms, since a DEVICE build drives the constraint from
+      // both the host and the device paths. The device copy is made once at
+      // setup, is read-only thereafter, and is null unless memorySpace is
+      // DEVICE.
+      distributedCPUVec<ValueTypeOperator> d_meanValueConstraintVec;
+      std::unique_ptr<linearAlgebra::Vector<ValueTypeOperator, memorySpace>>
+                                      d_meanValueConstraintVecDevice;
       dealii::types::global_dof_index d_meanValueConstraintNodeIdGlobal;
       size_type                       d_meanValueConstraintNodeIdLocal;
       size_type                       d_meanValueConstraintProcId;

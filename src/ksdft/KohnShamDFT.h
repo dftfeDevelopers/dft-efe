@@ -27,6 +27,7 @@
 #define dftefeKohnShamDFT_h
 
 #include <variant>
+#include <basis/PeriodicImageAtomGenerator.h>
 #include <ksdft/ElectrostaticLocalFE.h>
 #include <ksdft/ElectrostaticONCVNonLocFE.h>
 #include <ksdft/KineticFE.h>
@@ -170,7 +171,12 @@ namespace dftefe
          * value for the whole run. */
         const size_type chebyshevPolynomialDegree = 0,
         const double    spinMixingEnhancementFactor =
-          MixingDefaults::SPIN_MIXING_ENHANCEMENT_FACTOR);
+          MixingDefaults::SPIN_MIXING_ENHANCEMENT_FACTOR,
+        /* Built once by the caller and shared with the enrichment partition,
+         * so every consumer agrees on which periodic images exist. Null for a
+         * non periodic system. */
+        std::shared_ptr<const basis::PeriodicImageAtomGenerator>
+          imageAtomGenerator = nullptr);
 
 
       // used if numerical poisson solve vself canellation route taken
@@ -272,7 +278,12 @@ namespace dftefe
          * value for the whole run. */
         const size_type chebyshevPolynomialDegree = 0,
         const double    spinMixingEnhancementFactor =
-          MixingDefaults::SPIN_MIXING_ENHANCEMENT_FACTOR);
+          MixingDefaults::SPIN_MIXING_ENHANCEMENT_FACTOR,
+        /* Built once by the caller and shared with the enrichment partition,
+         * so every consumer agrees on which periodic images exist. Null for a
+         * non periodic system. */
+        std::shared_ptr<const basis::PeriodicImageAtomGenerator>
+          imageAtomGenerator = nullptr);
 
       // used if delta rho approach is taken with phi total from 1D KS solve
       // with analytical vself energy cancellation
@@ -370,7 +381,12 @@ namespace dftefe
          * value for the whole run. */
         const size_type chebyshevPolynomialDegree = 0,
         const double    spinMixingEnhancementFactor =
-          MixingDefaults::SPIN_MIXING_ENHANCEMENT_FACTOR);
+          MixingDefaults::SPIN_MIXING_ENHANCEMENT_FACTOR,
+        /* Built once by the caller and shared with the enrichment partition,
+         * so every consumer agrees on which periodic images exist. Null for a
+         * non periodic system. */
+        std::shared_ptr<const basis::PeriodicImageAtomGenerator>
+          imageAtomGenerator = nullptr);
 
       //// used if analytical vself canellation route taken with PSP
       KohnShamDFT(
@@ -465,7 +481,12 @@ namespace dftefe
          * value for the whole run. */
         const size_type chebyshevPolynomialDegree = 0,
         const double    spinMixingEnhancementFactor =
-          MixingDefaults::SPIN_MIXING_ENHANCEMENT_FACTOR);
+          MixingDefaults::SPIN_MIXING_ENHANCEMENT_FACTOR,
+        /* Built once by the caller and shared with the enrichment partition,
+         * so every consumer agrees on which periodic images exist. Null for a
+         * non periodic system. */
+        std::shared_ptr<const basis::PeriodicImageAtomGenerator>
+          imageAtomGenerator = nullptr);
 
 
       // used if delta rho with PSP approach is taken with phi total from 1D KS
@@ -565,7 +586,12 @@ namespace dftefe
          * value for the whole run. */
         const size_type chebyshevPolynomialDegree = 0,
         const double    spinMixingEnhancementFactor =
-          MixingDefaults::SPIN_MIXING_ENHANCEMENT_FACTOR);
+          MixingDefaults::SPIN_MIXING_ENHANCEMENT_FACTOR,
+        /* Built once by the caller and shared with the enrichment partition,
+         * so every consumer agrees on which periodic images exist. Null for a
+         * non periodic system. */
+        std::shared_ptr<const basis::PeriodicImageAtomGenerator>
+          imageAtomGenerator = nullptr);
 
       ~KohnShamDFT();
 
@@ -623,6 +649,11 @@ namespace dftefe
 
     private:
       SpinMode              d_spinMode;
+      /* Received from the caller, not built here: one generator is shared by
+       * the enrichment partition, the projector partition and the
+       * electrostatics, so they cannot disagree about which images exist. */
+      std::shared_ptr<const basis::PeriodicImageAtomGenerator>
+        d_imageAtomGenerator;
       const size_type       d_numWantedEigenvalues;
       const double          d_SCFTol;
       std::vector<RealType> d_jxwDataHost;

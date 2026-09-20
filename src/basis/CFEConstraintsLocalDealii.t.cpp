@@ -673,25 +673,45 @@ namespace dftefe
         localSize, wHost.data(), d_meanValueConstraintVec.data());
 
       //
-      // Pick the pinned dof. Selection mirrors dftfe
-      // (poissonSolverProblem.cc:551-619): a candidate is a locally owned dof
-      // that appears in no constraint equation, neither as a slave nor as a
-      // master; the first processor holding any candidate owns the pinned dof
-      // and takes its first candidate.
-      //
-      std::set<global_size_type> indicesTouchedByConstraints;
-      const dealii::IndexSet     locallyRelevantElements =
-        d_dealiiAffineConstraintMatrix.get_local_lines();
-      for (auto it = locallyRelevantElements.begin();
-           it != locallyRelevantElements.end();
-           ++it)
+      // Pick the pinned dof: a locally owned dof in no constraint equation,
+      // as in dftfe (poissonSolverProblem.cc:551-568). The relevant indices
+      // come from this class's own owned ranges plus ghosts, not from
+      // get_local_lines(), which clear() leaves empty here.
+      size_type numLocallyRelevant = d_ghostIndices.size();
+      for (size_type iRange = 0; iRange < d_locallyOwnedRanges.size(); ++iRange)
+        numLocallyRelevant += d_locallyOwnedRanges[iRange].second -
+                              d_locallyOwnedRanges[iRange].first;
+
+      std::vector<global_size_type> locallyRelevantElements(numLocallyRelevant,
+                                                            0);
+      size_type iRelevant = 0;
+      for (size_type iRange = 0; iRange < d_locallyOwnedRanges.size(); ++iRange)
+        for (global_size_type g = d_locallyOwnedRanges[iRange].first;
+             g < d_locallyOwnedRanges[iRange].second;
+             ++g)
+          {
+            locallyRelevantElements[iRelevant] = g;
+            iRelevant++;
+          }
+      for (size_type i = 0; i < d_ghostIndices.size(); ++i)
         {
-          if (d_dealiiAffineConstraintMatrix.is_constrained(*it))
+          locallyRelevantElements[iRelevant] = d_ghostIndices[i];
+          iRelevant++;
+        }
+
+      // A dof is excluded if it appears in any constraint equation, as the
+      // slave or as one of its masters, exactly as dftfe does
+      // (poissonSolverProblem.cc:551-568).
+      std::set<global_size_type> indicesTouchedByConstraints;
+      for (size_type i = 0; i < numLocallyRelevant; ++i)
+        {
+          const global_size_type lineDof = locallyRelevantElements[i];
+          if (d_dealiiAffineConstraintMatrix.is_constrained(lineDof))
             {
-              indicesTouchedByConstraints.insert(*it);
+              indicesTouchedByConstraints.insert(lineDof);
               const std::vector<
                 std::pair<global_size_type, ValueTypeBasisCoeff>> *rowData =
-                d_dealiiAffineConstraintMatrix.get_constraint_entries(*it);
+                d_dealiiAffineConstraintMatrix.get_constraint_entries(lineDof);
               for (size_type j = 0; j < rowData->size(); ++j)
                 indicesTouchedByConstraints.insert((*rowData)[j].first);
             }
@@ -714,36 +734,69 @@ namespace dftefe
           if (indicesTouchedByConstraints.count(g) == 0)
             candidates[iCandidate++] = g;
 
-      size_type              localNumCandidates = candidates.size();
-      std::vector<size_type> allNumCandidates(nProcs, 0);
-      utils::mpi::MPIAllgather<utils::MemorySpace::HOST>(
-        &localNumCandidates,
+      size_type localNumCandidates = candidates.size();
+
+      //
+      // Among the candidates, pin the one with the largest mass integral
+      // |w_i|: a = -w/w_o divides by it, and it puts the pinned dof in the
+      // interior where dealii would not make it a periodic master. 
+      //
+      double           localBestAbsW = -1.0;
+      global_size_type localBestId   = 0;
+      for (size_type i = 0; i < localNumCandidates; ++i)
+        {
+          const double absW =
+            (double)utils::abs_(wHost[globalToLocal(candidates[i])]);
+          if (absW > localBestAbsW)
+            {
+              localBestAbsW = absW;
+              localBestId   = candidates[i];
+            }
+        }
+
+      double globalBestAbsW = -1.0;
+      utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
+        &localBestAbsW,
+        &globalBestAbsW,
         1,
-        utils::mpi::Types<size_type>::getMPIDatatype(),
-        allNumCandidates.data(),
-        1,
-        utils::mpi::Types<size_type>::getMPIDatatype(),
+        utils::mpi::Types<double>::getMPIDatatype(),
+        utils::mpi::MPIMax,
         mpiComm);
 
-      bool foundCandidate         = false;
-      d_meanValueConstraintProcId = 0;
-      for (int iProc = 0; iProc < nProcs; ++iProc)
-        if (allNumCandidates[iProc] > 0)
-          {
-            d_meanValueConstraintProcId = (size_type)iProc;
-            foundCandidate              = true;
-            break;
-          }
       utils::throwException(
-        foundCandidate,
+        globalBestAbsW >= 0.0,
         "MeanValueConstraint: no unconstrained dof is available for pinning "
         "the null space of the Poisson operator.");
+
+      // nProcs stands for "no claim", so the minimum is the lowest ranked
+      // processor that holds the winning value and ties break deterministically.
+      int localClaim = (localBestAbsW == globalBestAbsW) ? d_meanValueMyRank :
+                                                           nProcs;
+      int winningProc = nProcs;
+      utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
+        &localClaim,
+        &winningProc,
+        1,
+        utils::mpi::Types<int>::getMPIDatatype(),
+        utils::mpi::MPIMin,
+        mpiComm);
+      d_meanValueConstraintProcId = (size_type)winningProc;
 
       ValueTypeBasisCoeff valueAtConstraintNode =
         utils::Types<ValueTypeBasisCoeff>::zero;
       if (d_meanValueMyRank == (int)d_meanValueConstraintProcId)
         {
-          d_meanValueConstraintNodeIdGlobal = candidates[0];
+          d_meanValueConstraintNodeIdGlobal = localBestId;
+          // dftfe asserts the same thing right after its election
+          // (poissonSolverProblem.cc:613-616). Kept as a throw: the one cheap
+          // check that the exclusion above actually excluded something.
+          utils::throwException<utils::InvalidArgument>(
+            !d_dealiiAffineConstraintMatrix.is_constrained(
+              d_meanValueConstraintNodeIdGlobal),
+            "MeanValueConstraint: the elected dof is itself constrained, so "
+            "the dealii distribute would overwrite the value the mean value "
+            "constraint puts there. The candidate exclusion did not see this "
+            "dof's constraint row.");
           d_meanValueConstraintNodeIdLocal =
             globalToLocal(d_meanValueConstraintNodeIdGlobal);
           valueAtConstraintNode = wHost[d_meanValueConstraintNodeIdLocal];

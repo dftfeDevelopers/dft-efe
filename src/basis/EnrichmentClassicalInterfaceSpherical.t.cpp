@@ -106,7 +106,8 @@ namespace dftefe
                                    linAlgOpContext,
         const utils::mpi::MPIComm &comm,
         const size_type            enrichmentBatchSize,
-        const size_type            cellBlockSize)
+        const size_type            cellBlockSize,
+        std::shared_ptr<const PeriodicImageAtomGenerator> imageAtomGenerator)
       : d_atomSphericalDataContainer(atomSphericalDataContainer)
       , d_enrichmentIdsPartition(nullptr)
       , d_atomIdsPartition(nullptr)
@@ -225,7 +226,8 @@ namespace dftefe
         d_triangulation->getDomainVectors(),
         d_triangulation->getPeriodicFlags(),
         cellVerticesVector,
-        comm);
+        comm,
+        imageAtomGenerator);
 
       d_overlappingEnrichmentIdsInCells =
         d_enrichmentIdsPartition->overlappingEnrichmentIdsInCells();
@@ -693,7 +695,8 @@ namespace dftefe
         const std::vector<std::string> & atomSymbolVec,
         const std::vector<utils::Point> &atomCoordinatesVec,
         const std::string                fieldName,
-        const utils::mpi::MPIComm &      comm)
+        const utils::mpi::MPIComm &      comm,
+        std::shared_ptr<const PeriodicImageAtomGenerator> imageAtomGenerator)
       : d_atomSphericalDataContainer(atomSphericalDataContainer)
       , d_enrichmentIdsPartition(nullptr)
       , d_atomIdsPartition(nullptr)
@@ -783,7 +786,8 @@ namespace dftefe
         triangulation->getDomainVectors(),
         d_triangulation->getPeriodicFlags(),
         cellVerticesVector,
-        comm);
+        comm,
+        imageAtomGenerator);
 
       d_overlappingEnrichmentIdsInCells =
         d_enrichmentIdsPartition->overlappingEnrichmentIdsInCells();
@@ -1411,62 +1415,93 @@ namespace dftefe
       // size_type numEnrichedIdsSkipped = 0;
       // size_type l                     = 0;
 
-      size_type atomIdPrev = std::numeric_limits<size_type>::max();
-      for (size_type iEnrich = 0; iEnrich < numEnrichIdsInCell;
-           iEnrich += 1 /*numEnrichedIdsSkipped*/)
+      // Sum over each enrichment's origins, swept level by level rather than
+      // enrichment by enrichment so that at level 0 consecutive enrichments of
+      // one atom share an origin and the transform cache still hits.
+      const std::vector<size_type> &extendedAtomIds =
+        d_enrichmentIdsPartition->getExtendedAtomIdsForAllEnrichInCell(cellId);
+      const std::vector<size_type> &extendedAtomIdOffsets =
+        d_enrichmentIdsPartition->getExtendedAtomIdOffsetsForAllEnrichInCell(cellId);
+
+      // The spherical data depends on the species and the quantum numbers, not
+      // on where the function is centred, so it is looked up once per
+      // enrichment here instead of once per (enrichment, origin) in the sweep.
+      std::vector<std::shared_ptr<atoms::SphericalData>>
+                sphericalDataPerEnrich(numEnrichIdsInCell);
+      size_type maxOriginsInCell = 0;
+      for (size_type iEnrich = 0; iEnrich < numEnrichIdsInCell; iEnrich++)
         {
           basis::EnrichmentIdAttribute eIdAttr =
             d_enrichmentIdsPartition->getEnrichmentIdAttribute(
               enrichIdVec[iEnrich]);
-
-          size_type atomId  = eIdAttr.atomId;
-          size_type localId = eIdAttr.localIdInAtom;
-
-          if (atomIdPrev != atomId)
-            {
-              utils::Point origin(d_atomCoordinatesVec[atomId]);
-              std::transform(points.begin(),
-                             points.end(),
-                             x.begin(),
-                             [origin](utils::Point p) { return p - origin; });
-
-              for (size_type iPts = 0; iPts < points.size(); iPts++)
-                atoms::convertCartesianToSpherical(
-                  x[iPts],
-                  rVec[iPts],
-                  thetaVec[iPts],
-                  phiVec[iPts],
-                  atoms::SphericalDataDefaults::POL_ANG_TOL);
-            }
-
-          auto sphericalDataVec =
+          sphericalDataPerEnrich[iEnrich] =
             d_atomSphericalDataContainer->getSphericalData(
-              d_atomSymbolVec[atomId], d_fieldName);
+              d_atomSymbolVec[eIdAttr.atomId],
+              d_fieldName)[eIdAttr.localIdInAtom];
+          maxOriginsInCell =
+            std::max(maxOriginsInCell,
+                     extendedAtomIdOffsets[iEnrich + 1] -
+                       extendedAtomIdOffsets[iEnrich]);
+        }
 
-          // auto quantumNoVec =
-          //   d_atomSphericalDataContainer->getQNumbers(d_atomSymbolVec[atomId],
-          //                                             d_fieldName);
+      size_type extendedAtomIdPrev = std::numeric_limits<size_type>::max();
+      for (size_type level = 0; level < maxOriginsInCell; level++)
+        {
+          for (size_type iEnrich = 0; iEnrich < numEnrichIdsInCell;
+               iEnrich += 1 /*numEnrichedIdsSkipped*/)
+            {
+              // Ragged: this enrichment may have fewer origins than the cell's
+              // deepest one.
+              if (extendedAtomIdOffsets[iEnrich] + level >=
+                  extendedAtomIdOffsets[iEnrich + 1])
+                continue;
+              const size_type extendedAtomId =
+                extendedAtomIds[extendedAtomIdOffsets[iEnrich] + level];
 
-          // l = quantumNoVec[localId][1];
+              if (extendedAtomIdPrev != extendedAtomId)
+                {
+                  utils::Point origin(
+                    d_enrichmentIdsPartition->getPositionOfExtendedAtomId(
+                      extendedAtomId));
+                  std::transform(points.begin(),
+                                 points.end(),
+                                 x.begin(),
+                                 [origin](utils::Point p) {
+                                   return p - origin;
+                                 });
 
-          auto radialValue = sphericalDataVec[localId]->getRadialValue(rVec);
+                  for (size_type iPts = 0; iPts < points.size(); iPts++)
+                    atoms::convertCartesianToSpherical(
+                      x[iPts],
+                      rVec[iPts],
+                      thetaVec[iPts],
+                      phiVec[iPts],
+                      atoms::SphericalDataDefaults::POL_ANG_TOL);
 
-          // for (size_type mCount = 0; mCount < 2 * l + 1; mCount++)
-          //   {
-          auto angularValue = (sphericalDataVec[localId /*+mCount*/])
-                                ->getAngularValue(rVec, thetaVec, phiVec);
+                  extendedAtomIdPrev = extendedAtomId;
+                }
 
-          linearAlgebra::blasLapack::hadamardProduct<ValueTypeBasisData,
-                                                     ValueTypeBasisData,
-                                                     utils::MemorySpace::HOST>(
-            numPoints,
-            radialValue.data(),
-            angularValue.data(),
-            retValue.data() + (iEnrich /*+mCount*/) * numPoints,
-            *linearAlgebra::LinAlgOpContextDefaults::LINALG_OP_CONTXT_HOST);
-          //   }
-          // numEnrichedIdsSkipped = (2 * l + 1);
-          atomIdPrev = atomId;
+              // auto quantumNoVec =
+              //   d_atomSphericalDataContainer->getQNumbers(d_atomSymbolVec[atomId],
+              //                                             d_fieldName);
+
+              // l = quantumNoVec[localId][1];
+
+              auto radialValue =
+                sphericalDataPerEnrich[iEnrich]->getRadialValue(rVec);
+
+              // for (size_type mCount = 0; mCount < 2 * l + 1; mCount++)
+              //   {
+              auto angularValue =
+                sphericalDataPerEnrich[iEnrich /*+mCount*/]->getAngularValue(
+                  rVec, thetaVec, phiVec);
+
+              double *out = retValue.data() + (iEnrich /*+mCount*/) * numPoints;
+              for (size_type iPts = 0; iPts < numPoints; iPts++)
+                out[iPts] += radialValue[iPts] * angularValue[iPts];
+              //   }
+              // numEnrichedIdsSkipped = (2 * l + 1);
+            }
         }
       return retValue;
     }
@@ -1495,21 +1530,59 @@ namespace dftefe
       // size_type numEnrichedIdsSkipped = 0;
       size_type l = 0;
 
-      size_type atomIdPrev = std::numeric_limits<size_type>::max();
+      // An enrichment is the sum over its origins; see getEnrichmentValue
+      // above for why the origins are swept level by level rather than
+      // enrichment by enrichment. Without periodicity only level 0 exists.
+      const std::vector<size_type> &extendedAtomIds =
+        d_enrichmentIdsPartition->getExtendedAtomIdsForAllEnrichInCell(cellId);
+      const std::vector<size_type> &extendedAtomIdOffsets =
+        d_enrichmentIdsPartition->getExtendedAtomIdOffsetsForAllEnrichInCell(cellId);
 
-      for (size_type iEnrich = 0; iEnrich < numEnrichIdsInCell;
-           iEnrich += 1 /*numEnrichedIdsSkipped*/)
+      // Species and quantum numbers do not vary with the origin, so these are
+      // looked up once per enrichment rather than once per (enrichment,
+      // origin) in the sweep.
+      std::vector<std::shared_ptr<atoms::SphericalData>>
+                             sphericalDataPerEnrich(numEnrichIdsInCell);
+      std::vector<size_type> lPerEnrich(numEnrichIdsInCell, 0);
+      size_type              maxOriginsInCell = 0;
+      for (size_type iEnrich = 0; iEnrich < numEnrichIdsInCell; iEnrich++)
         {
           basis::EnrichmentIdAttribute eIdAttr =
             d_enrichmentIdsPartition->getEnrichmentIdAttribute(
               enrichIdVec[iEnrich]);
+          sphericalDataPerEnrich[iEnrich] =
+            d_atomSphericalDataContainer->getSphericalData(
+              d_atomSymbolVec[eIdAttr.atomId],
+              d_fieldName)[eIdAttr.localIdInAtom];
+          lPerEnrich[iEnrich] =
+            d_atomSphericalDataContainer->getQNumbers(
+              d_atomSymbolVec[eIdAttr.atomId],
+              d_fieldName)[eIdAttr.localIdInAtom][1];
+          maxOriginsInCell =
+            std::max(maxOriginsInCell,
+                     extendedAtomIdOffsets[iEnrich + 1] -
+                       extendedAtomIdOffsets[iEnrich]);
+        }
 
-          size_type atomId  = eIdAttr.atomId;
-          size_type localId = eIdAttr.localIdInAtom;
+      size_type extendedAtomIdPrev = std::numeric_limits<size_type>::max();
 
-          if (atomIdPrev != atomId)
+      for (size_type level = 0; level < maxOriginsInCell; level++)
+        {
+        for (size_type iEnrich = 0; iEnrich < numEnrichIdsInCell;
+             iEnrich += 1 /*numEnrichedIdsSkipped*/)
+        {
+          // Ragged: this enrichment may have fewer origins than the cell's
+          // deepest one.
+          if (extendedAtomIdOffsets[iEnrich] + level >=
+              extendedAtomIdOffsets[iEnrich + 1])
+            continue;
+          const size_type extendedAtomId =
+            extendedAtomIds[extendedAtomIdOffsets[iEnrich] + level];
+
+          if (extendedAtomIdPrev != extendedAtomId)
             {
-              utils::Point origin(d_atomCoordinatesVec[atomId]);
+              utils::Point origin(
+                d_enrichmentIdsPartition->getPositionOfExtendedAtomId(extendedAtomId));
               std::transform(points.begin(),
                              points.end(),
                              x.begin(),
@@ -1522,29 +1595,25 @@ namespace dftefe
                   thetaVec[iPts],
                   phiVec[iPts],
                   atoms::SphericalDataDefaults::POL_ANG_TOL);
+
+              extendedAtomIdPrev = extendedAtomId;
             }
 
-          auto sphericalDataVec =
-            d_atomSphericalDataContainer->getSphericalData(
-              d_atomSymbolVec[atomId], d_fieldName);
+          l = lPerEnrich[iEnrich];
 
-          auto quantumNoVec =
-            d_atomSphericalDataContainer->getQNumbers(d_atomSymbolVec[atomId],
-                                                      d_fieldName);
-
-          l = quantumNoVec[localId][1];
-
-          auto radialValue = sphericalDataVec[localId]->getRadialValue(rVec);
+          auto radialValue =
+            sphericalDataPerEnrich[iEnrich]->getRadialValue(rVec);
           auto radialDerivative =
-            sphericalDataVec[localId]->getRadialDerivative(rVec);
+            sphericalDataPerEnrich[iEnrich]->getRadialDerivative(rVec);
 
           // for (size_type mCount = 0; mCount < 2 * l + 1; mCount++)
           //   {
-          auto angularValue = (sphericalDataVec[localId /*+mCount*/])
-                                ->getAngularValue(rVec, thetaVec, phiVec);
+          auto angularValue =
+            sphericalDataPerEnrich[iEnrich /*+mCount*/]->getAngularValue(
+              rVec, thetaVec, phiVec);
           auto angularDerivative =
-            (sphericalDataVec[localId /*+mCount*/])
-              ->getAngularDerivative(rVec, thetaVec, phiVec);
+            sphericalDataPerEnrich[iEnrich /*+mCount*/]->getAngularDerivative(
+              rVec, thetaVec, phiVec);
 
           for (size_type i = 0; i < numPoints; i++)
             {
@@ -1562,20 +1631,22 @@ namespace dftefe
                 }
               double theta = thetaVec[i], phi = phiVec[i];
 
-              retValue[(iEnrich /*+mCount*/) * numPoints * dim + i * dim + 0] =
+              // retValue is zero initialised, so each origin simply adds its
+              // own contribution -- no per-level branch or scratch needed.
+              retValue[(iEnrich /*+mCount*/) * numPoints * dim + i * dim + 0] +=
                 dValueDR * (sin(theta) * cos(phi)) +
                 dValueDThetaByr * (cos(theta) * cos(phi)) -
                 sin(phi) * dValueDPhiByrsinTheta;
-              retValue[(iEnrich /*+mCount*/) * numPoints * dim + i * dim + 1] =
+              retValue[(iEnrich /*+mCount*/) * numPoints * dim + i * dim + 1] +=
                 dValueDR * (sin(theta) * sin(phi)) +
                 dValueDThetaByr * (cos(theta) * sin(phi)) +
                 cos(phi) * dValueDPhiByrsinTheta;
-              retValue[(iEnrich /*+mCount*/) * numPoints * dim + i * dim + 2] =
+              retValue[(iEnrich /*+mCount*/) * numPoints * dim + i * dim + 2] +=
                 dValueDR * (cos(theta)) - dValueDThetaByr * (sin(theta));
             }
           //   }
           // numEnrichedIdsSkipped = (2 * l + 1);
-          atomIdPrev = atomId;
+        }
         }
       return retValue;
     }
@@ -1658,15 +1729,19 @@ namespace dftefe
           enrichCellCumOffset[iLocalEId] + cellsInLocalEId[iLocalEId];
 
       // --- sizing pass: find max scratch sizes across all blocks ---
-      const size_type maxNumEnrichInBatch =
-        std::min(enrichBlock, numLocalEnrichIds);
+      //
+      // The unit handed to the kernel is an ENRICHMENT-ORIGIN PAIR, covering
+      // every cell that origin reaches -- the pair's OVERLAP CELLS. Without
+      // periodicity there is one pair per enrichment and nothing changes.
       size_type maxTotalQuadPtsForBlock = 0;
+      size_type maxEnrichOriginPairsInBatch        = 0;
       for (size_type enrichBlockStart = 0; enrichBlockStart < numLocalEnrichIds;
            enrichBlockStart += enrichBlock)
         {
           const size_type enrichBlockEnd =
             std::min(enrichBlockStart + enrichBlock, numLocalEnrichIds);
           size_type totalQuadPtsThisBlock = 0;
+          size_type totalEnrichOriginPairsThisBlock  = 0;
           for (size_type iLocalEId = enrichBlockStart;
                iLocalEId < enrichBlockEnd;
                iLocalEId++)
@@ -1674,27 +1749,80 @@ namespace dftefe
               const size_type *cellsPtr =
                 overlappingCellsWithLocalEnrichmentIds.data() +
                 enrichCellCumOffset[iLocalEId];
+              const size_type *localToCellPtr =
+                localToCellLocalEIds.data() + enrichCellCumOffset[iLocalEId];
               for (size_type iCell = 0; iCell < cellsInLocalEId[iLocalEId];
                    iCell++)
-                totalQuadPtsThisBlock +=
-                  quadRuleContainer.nCellQuadraturePoints(cellsPtr[iCell]);
+                {
+                  const size_type cellId       = cellsPtr[iCell];
+                  const size_type enrichInCell = localToCellPtr[iCell];
+
+                  // localToCellLocalEIds and overlappingEnrichmentIdsInCells
+                  // are two views of one relation; a drift between them would
+                  // silently pair an enrichment with another one's origins.
+                  DFTEFE_AssertWithMsg(
+                    d_overlappingEnrichmentIdsInCells[cellId][enrichInCell] ==
+                      localToGlobalEnrichmentIds[iLocalEId],
+                    "localToCellLocalEIds does not index this enrichment "
+                    "within the cell's overlap list.");
+
+                  const std::vector<size_type> &originOffsets =
+                    d_enrichmentIdsPartition
+                      ->getExtendedAtomIdOffsetsForAllEnrichInCell(cellId);
+                  const size_type nOrigins = originOffsets[enrichInCell + 1] -
+                                             originOffsets[enrichInCell];
+
+                  totalEnrichOriginPairsThisBlock += nOrigins;
+                  totalQuadPtsThisBlock +=
+                    nOrigins * quadRuleContainer.nCellQuadraturePoints(cellId);
+                }
             }
           maxTotalQuadPtsForBlock =
             std::max(maxTotalQuadPtsForBlock, totalQuadPtsThisBlock);
+          maxEnrichOriginPairsInBatch = std::max(maxEnrichOriginPairsInBatch, totalEnrichOriginPairsThisBlock);
         }
+
+      // Output offset of each cell, precomputed. The transpose below needs it
+      // once per overlap cell, so the running std::accumulate it used to do
+      // would now be repeated more often than before.
+      std::vector<size_type> quadxEnrichCumulative(numLocallyOwnedCells + 1, 0);
+      for (size_type iCell = 0; iCell < numLocallyOwnedCells; iCell++)
+        quadxEnrichCumulative[iCell + 1] =
+          quadxEnrichCumulative[iCell] + quadxEnrichPerCell[iCell];
+
+      // A cell reached by several origins appears as an overlap cell once per
+      // origin, so the transpose accumulates instead of assigning and the
+      // output has to start from zero.
+      if (storeValues)
+        std::fill(basisEnrichQuadStorageStartPtr,
+                  basisEnrichQuadStorageStartPtr +
+                    quadxEnrichCumulative[numLocallyOwnedCells],
+                  0.0);
+      if (storeGradients)
+        std::fill(basisGradientEnrichQuadStorageStartPtr,
+                  basisGradientEnrichQuadStorageStartPtr +
+                    quadxEnrichCumulative[numLocallyOwnedCells] * dim,
+                  0.0);
       // profiler.registerEnd("setup");
 
       // profiler.registerStart("scratchAlloc");
       // --- allocate scratch buffers once at max size ---
-      std::vector<std::shared_ptr<atoms::SphericalData>> sphericalDataVecBlock;
-      sphericalDataVecBlock.reserve(maxNumEnrichInBatch);
-      std::vector<size_type> quadInLocalEIdBlock(maxNumEnrichInBatch, 0);
-      std::vector<double>    originBlock(maxNumEnrichInBatch * dim, 0);
+      std::vector<std::shared_ptr<atoms::SphericalData>> sphericalDataVecBlock(
+        maxEnrichOriginPairsInBatch);
+      std::vector<size_type> quadInEnrichOriginPairBlock(maxEnrichOriginPairsInBatch, 0);
+      std::vector<double>    originBlock(maxEnrichOriginPairsInBatch * dim, 0);
+
+      // The distinct origins of one enrichment, and the (cell, position within
+      // that cell) of every overlap cell in the order the quadrature points
+      // are laid out -- which is the order the transposes walk them back in.
+      std::vector<size_type> distinctOrigins(maxEnrichOriginPairsInBatch, 0);
+      std::vector<size_type> overlapCellId(maxEnrichOriginPairsInBatch, 0);
+      std::vector<size_type> overlapCellEnrichPos(maxEnrichOriginPairsInBatch, 0);
 
       utils::MemoryStorage<double, memorySpace> quadPtsBlockMemSpace(
         maxTotalQuadPtsForBlock * dim);
       utils::MemoryStorage<double, memorySpace> originMemspaceBlock(
-        maxNumEnrichInBatch * dim);
+        maxEnrichOriginPairsInBatch * dim);
 
       utils::MemoryStorage<double, memorySpace> valuesBlockMemSpace(0);
       std::vector<double>                       valuesBlockHost(0);
@@ -1719,69 +1847,122 @@ namespace dftefe
         {
           const size_type enrichBlockEnd =
             std::min(enrichBlockStart + enrichBlock, numLocalEnrichIds);
-          const size_type numEnrichInBatch = enrichBlockEnd - enrichBlockStart;
-
-          // reset per-block bookkeeping (reuse existing allocations)
-          sphericalDataVecBlock.clear();
-          std::fill(quadInLocalEIdBlock.begin(),
-                    quadInLocalEIdBlock.begin() + numEnrichInBatch,
-                    (size_type)0);
-
-          // count total quad pts for this block
-          size_type totalQuadPtsForBlock = 0;
-          for (size_type iLocalEId = enrichBlockStart;
-               iLocalEId < enrichBlockEnd;
-               iLocalEId++)
-            {
-              const size_type *cellsPtr =
-                overlappingCellsWithLocalEnrichmentIds.data() +
-                enrichCellCumOffset[iLocalEId];
-              for (size_type iCell = 0; iCell < cellsInLocalEId[iLocalEId];
-                   iCell++)
-                totalQuadPtsForBlock +=
-                  quadRuleContainer.nCellQuadraturePoints(cellsPtr[iCell]);
-            }
 
           // profiler.registerStart("fillQuadPtsAndOrigins");
-          // fill origins, spherical data, and quad points for this block
+          // Build this block's enrichment-origin pairs and lay out their
+          // quadrature points.
+          size_type numEnrichOriginPairsInBatch                  = 0;
+          size_type numOverlapCellsInBatch                 = 0;
+          size_type totalQuadPtsForBlock              = 0;
           size_type cumulativeQuadInCellPerBlockEnrich = 0;
           for (size_type iLocalEId = enrichBlockStart;
                iLocalEId < enrichBlockEnd;
                iLocalEId++)
             {
-              const size_type iBlock = iLocalEId - enrichBlockStart;
-
               basis::EnrichmentIdAttribute eIdAttr =
                 d_enrichmentIdsPartition->getEnrichmentIdAttribute(
                   localToGlobalEnrichmentIds[iLocalEId]);
               const size_type atomId  = eIdAttr.atomId;
               const size_type localId = eIdAttr.localIdInAtom;
 
-              std::memcpy(originBlock.data() + iBlock * dim,
-                          d_atomCoordinatesVec[atomId].data(),
-                          dim * sizeof(double));
-              sphericalDataVecBlock.push_back(
-                d_atomSphericalDataContainer->getSphericalData(
-                  d_atomSymbolVec[atomId], d_fieldName)[localId]);
-
               const size_type *cellsPtr =
                 overlappingCellsWithLocalEnrichmentIds.data() +
                 enrichCellCumOffset[iLocalEId];
-              for (size_type iCell = 0; iCell < cellsInLocalEId[iLocalEId];
-                   iCell++)
+              const size_type *localToCellPtr =
+                localToCellLocalEIds.data() + enrichCellCumOffset[iLocalEId];
+              const size_type nCellsInEId = cellsInLocalEId[iLocalEId];
+
+              // The origins that reach this enrichment anywhere, deduplicated.
+              // Counts are tiny -- exactly one without periodicity -- so a
+              // linear scan beats any ordered container.
+              size_type numDistinctOrigins = 0;
+              for (size_type iCell = 0; iCell < nCellsInEId; iCell++)
                 {
-                  const size_type cellId = cellsPtr[iCell];
-                  const size_type nCellQuadPoints =
-                    quadRuleContainer.nCellQuadraturePoints(cellId);
-                  quadInLocalEIdBlock[iBlock] += nCellQuadPoints;
-                  linearAlgebra::blasLapack::copyValueType1ArrToValueType2Arr(
-                    nCellQuadPoints * dim,
-                    quadRuleContainer.template getRealPointsPtr<memorySpace>() +
-                      quadRuleContainer.getCellQuadStartId(cellId) * dim,
-                    quadPtsBlockMemSpace.data() +
-                      cumulativeQuadInCellPerBlockEnrich,
-                    linAlgOpContext);
-                  cumulativeQuadInCellPerBlockEnrich += nCellQuadPoints * dim;
+                  const std::vector<size_type> &ids =
+                    d_enrichmentIdsPartition->getExtendedAtomIdsForAllEnrichInCell(
+                      cellsPtr[iCell]);
+                  const std::vector<size_type> &offsets =
+                    d_enrichmentIdsPartition
+                      ->getExtendedAtomIdOffsetsForAllEnrichInCell(cellsPtr[iCell]);
+                  for (size_type o = offsets[localToCellPtr[iCell]];
+                       o < offsets[localToCellPtr[iCell] + 1];
+                       o++)
+                    {
+                      bool alreadySeen = false;
+                      for (size_type k = 0; k < numDistinctOrigins; k++)
+                        if (distinctOrigins[k] == ids[o])
+                          {
+                            alreadySeen = true;
+                            break;
+                          }
+                      if (!alreadySeen)
+                        distinctOrigins[numDistinctOrigins++] = ids[o];
+                    }
+                }
+
+              // One pair per distinct origin, holding every cell that origin
+              // reaches, their quadrature points laid out back to back.
+              for (size_type iDistinct = 0; iDistinct < numDistinctOrigins;
+                   iDistinct++)
+                {
+                  const size_type    extendedAtomId = distinctOrigins[iDistinct];
+                  const utils::Point origin =
+                    d_enrichmentIdsPartition->getPositionOfExtendedAtomId(
+                      extendedAtomId);
+                  std::memcpy(originBlock.data() + numEnrichOriginPairsInBatch * dim,
+                              origin.data(),
+                              dim * sizeof(double));
+                  sphericalDataVecBlock[numEnrichOriginPairsInBatch] =
+                    d_atomSphericalDataContainer->getSphericalData(
+                      d_atomSymbolVec[atomId], d_fieldName)[localId];
+
+                  size_type quadPtsInEnrichOriginPair = 0;
+                  for (size_type iCell = 0; iCell < nCellsInEId; iCell++)
+                    {
+                      const size_type cellId       = cellsPtr[iCell];
+                      const size_type enrichInCell = localToCellPtr[iCell];
+                      const std::vector<size_type> &ids =
+                        d_enrichmentIdsPartition->getExtendedAtomIdsForAllEnrichInCell(
+                          cellId);
+                      const std::vector<size_type> &offsets =
+                        d_enrichmentIdsPartition
+                          ->getExtendedAtomIdOffsetsForAllEnrichInCell(cellId);
+
+                      bool reachesThisCell = false;
+                      for (size_type o = offsets[enrichInCell];
+                           o < offsets[enrichInCell + 1];
+                           o++)
+                        if (ids[o] == extendedAtomId)
+                          {
+                            reachesThisCell = true;
+                            break;
+                          }
+                      if (!reachesThisCell)
+                        continue;
+
+                      const size_type nCellQuadPoints =
+                        quadRuleContainer.nCellQuadraturePoints(cellId);
+                      overlapCellId[numOverlapCellsInBatch]       = cellId;
+                      overlapCellEnrichPos[numOverlapCellsInBatch] = enrichInCell;
+                      numOverlapCellsInBatch++;
+
+                      linearAlgebra::blasLapack::
+                        copyValueType1ArrToValueType2Arr(
+                          nCellQuadPoints * dim,
+                          quadRuleContainer
+                              .template getRealPointsPtr<memorySpace>() +
+                            quadRuleContainer.getCellQuadStartId(cellId) * dim,
+                          quadPtsBlockMemSpace.data() +
+                            cumulativeQuadInCellPerBlockEnrich,
+                          linAlgOpContext);
+                      cumulativeQuadInCellPerBlockEnrich +=
+                        nCellQuadPoints * dim;
+                      quadPtsInEnrichOriginPair += nCellQuadPoints;
+                    }
+
+                  quadInEnrichOriginPairBlock[numEnrichOriginPairsInBatch] = quadPtsInEnrichOriginPair;
+                  totalQuadPtsForBlock += quadPtsInEnrichOriginPair;
+                  numEnrichOriginPairsInBatch++;
                 }
             }
           // profiler.registerEnd("fillQuadPtsAndOrigins");
@@ -1789,7 +1970,7 @@ namespace dftefe
           // profiler.registerStart("originH2D");
           // copy only the used portion of origins to device
           utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
-            numEnrichInBatch * dim,
+            numEnrichOriginPairsInBatch * dim,
             originMemspaceBlock.data(),
             originBlock.data());
           // profiler.registerEnd("originH2D");
@@ -1798,8 +1979,8 @@ namespace dftefe
             {
               // profiler.registerStart("getEnrichmentValues");
               EnrichmentDataEvalKernels<memorySpace>::getEnrichmentValues(
-                numEnrichInBatch,
-                quadInLocalEIdBlock,
+                numEnrichOriginPairsInBatch,
+                quadInEnrichOriginPairBlock,
                 sphericalDataVecBlock,
                 quadPtsBlockMemSpace.data(),
                 originMemspaceBlock.data(),
@@ -1817,43 +1998,30 @@ namespace dftefe
               // profiler.registerEnd("valuesD2H");
 
               // profiler.registerStart("transposeValues");
-              // transpose: enrich->cell->quad (block-local) →
-              // cell->quad->enrich (output)
+              // transpose: enrichOriginPair->cell->quad (block-local) →
+              // cell->quad->enrich (output), overlap cells in layout order.
               size_type cumuLativeQuadPerCellInLocalEnrich = 0;
-              for (size_type iLocalEId = enrichBlockStart;
-                   iLocalEId < enrichBlockEnd;
-                   iLocalEId++)
+              for (size_type iOverlapCell = 0; iOverlapCell < numOverlapCellsInBatch;
+                   iOverlapCell++)
                 {
-                  const size_type *cellsPtr =
-                    overlappingCellsWithLocalEnrichmentIds.data() +
-                    enrichCellCumOffset[iLocalEId];
-                  const size_type *localToCellPtr =
-                    localToCellLocalEIds.data() +
-                    enrichCellCumOffset[iLocalEId];
-                  for (size_type iCell = 0; iCell < cellsInLocalEId[iLocalEId];
-                       iCell++)
+                  const size_type cellId = overlapCellId[iOverlapCell];
+                  const size_type numQuadInCell =
+                    quadRuleContainer.nCellQuadraturePoints(cellId);
+                  const size_type numEnrichInCell =
+                    d_overlappingEnrichmentIdsInCells[cellId].size();
+                  const size_type cumulativeQuadxEnrichInCell =
+                    quadxEnrichCumulative[cellId];
+                  const size_type enrichIndexInCell =
+                    overlapCellEnrichPos[iOverlapCell];
+                  for (size_type qPoint = 0; qPoint < numQuadInCell; qPoint++)
                     {
-                      const size_type cellId = cellsPtr[iCell];
-                      const size_type numQuadInCell =
-                        quadRuleContainer.nCellQuadraturePoints(cellId);
-                      const size_type numEnrichInCell =
-                        d_overlappingEnrichmentIdsInCells[cellId].size();
-                      const size_type cumulativeQuadxEnrichInCell =
-                        std::accumulate(quadxEnrichPerCell.begin(),
-                                        quadxEnrichPerCell.begin() + cellId,
-                                        (size_type)0);
-                      const size_type enrichIndexInCell = localToCellPtr[iCell];
-                      for (size_type qPoint = 0; qPoint < numQuadInCell;
-                           qPoint++)
-                        {
-                          *(basisEnrichQuadStorageStartPtr +
-                            cumulativeQuadxEnrichInCell +
-                            qPoint * numEnrichInCell + enrichIndexInCell) =
-                            *(valuesBlockHost.data() +
-                              cumuLativeQuadPerCellInLocalEnrich + qPoint);
-                        }
-                      cumuLativeQuadPerCellInLocalEnrich += numQuadInCell;
+                      *(basisEnrichQuadStorageStartPtr +
+                        cumulativeQuadxEnrichInCell +
+                        qPoint * numEnrichInCell + enrichIndexInCell) +=
+                        *(valuesBlockHost.data() +
+                          cumuLativeQuadPerCellInLocalEnrich + qPoint);
                     }
+                  cumuLativeQuadPerCellInLocalEnrich += numQuadInCell;
                 }
               // profiler.registerEnd("transposeValues");
             }
@@ -1862,8 +2030,8 @@ namespace dftefe
             {
               // profiler.registerStart("getEnrichmentGradients");
               EnrichmentDataEvalKernels<memorySpace>::getEnrichmentGradients(
-                numEnrichInBatch,
-                quadInLocalEIdBlock,
+                numEnrichOriginPairsInBatch,
+                quadInEnrichOriginPairBlock,
                 sphericalDataVecBlock,
                 quadPtsBlockMemSpace.data(),
                 originMemspaceBlock.data(),
@@ -1872,7 +2040,6 @@ namespace dftefe
               // profiler.registerEnd("getEnrichmentGradients");
 
               // profiler.registerStart("gradientsD2H");
-              // copy only the used portion back to host
               utils::MemoryTransfer<utils::MemorySpace::HOST, memorySpace>::
                 copy(totalQuadPtsForBlock * dim,
                      gradientsBlockHost.data(),
@@ -1880,50 +2047,36 @@ namespace dftefe
               // profiler.registerEnd("gradientsD2H");
 
               // profiler.registerStart("transposeGradients");
-              // transpose: enrich->cell->quad (block-local) →
+              // transpose: enrichOriginPair->cell->quad (block-local) →
               // cell->quad->dim->enrich (output)
               size_type cumuLativeQuadPerCellInLocalEnrich = 0;
-              for (size_type iLocalEId = enrichBlockStart;
-                   iLocalEId < enrichBlockEnd;
-                   iLocalEId++)
+              for (size_type iOverlapCell = 0; iOverlapCell < numOverlapCellsInBatch;
+                   iOverlapCell++)
                 {
-                  const size_type *cellsPtr =
-                    overlappingCellsWithLocalEnrichmentIds.data() +
-                    enrichCellCumOffset[iLocalEId];
-                  const size_type *localToCellPtr =
-                    localToCellLocalEIds.data() +
-                    enrichCellCumOffset[iLocalEId];
-                  for (size_type iCell = 0; iCell < cellsInLocalEId[iLocalEId];
-                       iCell++)
+                  const size_type cellId = overlapCellId[iOverlapCell];
+                  const size_type numQuadInCell =
+                    quadRuleContainer.nCellQuadraturePoints(cellId);
+                  const size_type numEnrichInCell =
+                    d_overlappingEnrichmentIdsInCells[cellId].size();
+                  const size_type cumulativeQuadxEnrichInCell =
+                    quadxEnrichCumulative[cellId];
+                  const size_type enrichIndexInCell =
+                    overlapCellEnrichPos[iOverlapCell];
+                  for (size_type qPoint = 0; qPoint < numQuadInCell; qPoint++)
                     {
-                      const size_type cellId = cellsPtr[iCell];
-                      const size_type numQuadInCell =
-                        quadRuleContainer.nCellQuadraturePoints(cellId);
-                      const size_type numEnrichInCell =
-                        d_overlappingEnrichmentIdsInCells[cellId].size();
-                      const size_type cumulativeQuadxEnrichInCell =
-                        std::accumulate(quadxEnrichPerCell.begin(),
-                                        quadxEnrichPerCell.begin() + cellId,
-                                        (size_type)0);
-                      const size_type enrichIndexInCell = localToCellPtr[iCell];
-                      for (size_type qPoint = 0; qPoint < numQuadInCell;
-                           qPoint++)
+                      for (size_type iDim = 0; iDim < dim; iDim++)
                         {
-                          for (size_type iDim = 0; iDim < dim; iDim++)
-                            {
-                              *(basisGradientEnrichQuadStorageStartPtr +
-                                cumulativeQuadxEnrichInCell * dim +
-                                qPoint * numEnrichInCell * dim +
-                                iDim * numEnrichInCell + enrichIndexInCell) =
-                                *(gradientsBlockHost.data() +
-                                  (cumuLativeQuadPerCellInLocalEnrich +
-                                   qPoint) *
-                                    dim +
-                                  iDim);
-                            }
+                          *(basisGradientEnrichQuadStorageStartPtr +
+                            cumulativeQuadxEnrichInCell * dim +
+                            qPoint * numEnrichInCell * dim +
+                            iDim * numEnrichInCell + enrichIndexInCell) +=
+                            *(gradientsBlockHost.data() +
+                              (cumuLativeQuadPerCellInLocalEnrich + qPoint) *
+                                dim +
+                              iDim);
                         }
-                      cumuLativeQuadPerCellInLocalEnrich += numQuadInCell;
                     }
+                  cumuLativeQuadPerCellInLocalEnrich += numQuadInCell;
                 }
               // profiler.registerEnd("transposeGradients");
             }
@@ -1958,9 +2111,27 @@ namespace dftefe
           totalEnrich += d_numEnrichInAllCells[iCell];
         }
 
+      // Each enrichment is a sum over its origins -- the master atom plus
+      // every image whose cutoff reaches this cell -- so count them before
+      // sizing the flat origin array. Without periodicity the count is one.
+      std::vector<size_type> originOffsetHost(totalEnrich + 1, 0);
+      size_type              enrichCount = 0;
+      for (size_type iCell = 0; iCell < numCells; iCell++)
+        for (size_type iEnrich = 0;
+             iEnrich < d_overlappingEnrichmentIdsInCells[iCell].size();
+             iEnrich++)
+          {
+            originOffsetHost[enrichCount + 1] =
+              originOffsetHost[enrichCount] +
+              d_enrichmentIdsPartition->getExtendedAtomIdsForCellEnrich(iCell, iEnrich)
+                .size();
+            enrichCount++;
+          }
+      const size_type totalOrigins = originOffsetHost[totalEnrich];
+
       std::vector<atoms::SphericalDataNumerical::Func<memorySpace>> funcVecHost(
         totalEnrich);
-      std::vector<double> originHost(totalEnrich * dim);
+      std::vector<double> originHost(totalOrigins * dim);
 
       size_type enrichOffset = 0;
       for (size_type iCell = 0; iCell < numCells; iCell++)
@@ -1983,11 +2154,27 @@ namespace dftefe
                 numericalData != nullptr,
                 " For getEnrichmentDataInCellRangeAtQuadPts: enrichment data must be SphericalDataNumerical.");
 
+              // One Func per (cell, enrichment): it depends on the species and
+              // the quantum numbers, not on where the function is centred, so
+              // the images reuse it and only add origins.
               funcVecHost[enrichOffset + iEnrich] =
                 numericalData->getFunc<memorySpace>();
-              std::memcpy(originHost.data() + (enrichOffset + iEnrich) * dim,
-                          d_atomCoordinatesVec[atomId].data(),
-                          dim * sizeof(double));
+
+              // getPositionOfExtendedAtomId resolves the master/image encoding here,
+              // on the host; the device only ever sees plain coordinates.
+              size_type iOrigin = originOffsetHost[enrichOffset + iEnrich];
+              for (auto extendedAtomId :
+                   d_enrichmentIdsPartition->getExtendedAtomIdsForCellEnrich(iCell,
+                                                                     iEnrich))
+                {
+                  const utils::Point origin =
+                    d_enrichmentIdsPartition->getPositionOfExtendedAtomId(
+                      extendedAtomId);
+                  std::memcpy(originHost.data() + iOrigin * dim,
+                              origin.data(),
+                              dim * sizeof(double));
+                  iOrigin++;
+                }
             }
           enrichOffset += enrichIds.size();
         }
@@ -1999,9 +2186,15 @@ namespace dftefe
       utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
         totalEnrich, d_sphericalDataNumericalFuncPtrVec, funcVecHost.data());
 
-      d_originMemSpace.resize(totalEnrich * dim);
+      d_originMemSpace.resize(totalOrigins * dim);
       utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
-        totalEnrich * dim, d_originMemSpace.data(), originHost.data());
+        totalOrigins * dim, d_originMemSpace.data(), originHost.data());
+
+      d_originOffsetPerCellEnrich.resize(totalEnrich + 1);
+      utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
+        totalEnrich + 1,
+        d_originOffsetPerCellEnrich.data(),
+        originOffsetHost.data());
     }
 
     template <typename ValueTypeBasisData,
@@ -2031,6 +2224,7 @@ namespace dftefe
       EnrichmentDataEvalKernels<memorySpace>::getEnrichmentValuesInCellRange(
         quadRuleContainer.template getRealPointsPtr<memorySpace>(),
         d_originMemSpace.data(),
+        d_originOffsetPerCellEnrich.data(),
         cellRange,
         d_numEnrichInAllCells,
         numQuadInAllCells,
@@ -2069,6 +2263,7 @@ namespace dftefe
       EnrichmentDataEvalKernels<memorySpace>::getEnrichmentGradientsInCellRange(
         quadRuleContainer.template getRealPointsPtr<memorySpace>(),
         d_originMemSpace.data(),
+        d_originOffsetPerCellEnrich.data(),
         cellRange,
         d_numEnrichInAllCells,
         numQuadInAllCells,

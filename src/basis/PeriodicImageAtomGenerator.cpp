@@ -41,12 +41,36 @@ namespace dftefe
       }
 
       //
-      // Clamps a fractional coordinate into the cell, which is what turns the
-      // nearest point on an unbounded plane into the nearest point on the
-      // bounded face of the cell.
+      // The lattice matrix and the centred-frame to cell-frame translation.
+      // GenerateMesh centres the mesh on the origin by -0.5*sum(a_i), so atom
+      // coordinates arrive centred and must be shifted into the cell frame
+      // before realToFrac and back after fracToReal (dftfe's "shift").
+      //
+      void
+      buildCellFrame(const std::vector<utils::Point> &domainBoundingVectors,
+                     std::vector<double> &            latticeVectors,
+                     double *                         shift)
+      {
+        latticeVectors.resize(dim * dim, 0.0);
+        for (size_type i = 0; i < dim; ++i)
+          for (size_type j = 0; j < dim; ++j)
+            latticeVectors[dim * i + j] = domainBoundingVectors[i][j];
+
+        for (size_type i = 0; i < dim; ++i)
+          {
+            shift[i] = 0.0;
+            for (size_type j = 0; j < dim; ++j)
+              shift[i] += domainBoundingVectors[j][i] / 2.0;
+          }
+      }
+
+      //
+      // Clamps a fractional coordinate into the domain, which is what turns
+      // the nearest point on an unbounded plane into the nearest point on the
+      // bounded face of the domain.
       //
       double
-      roundToCell(const double frac)
+      roundToDomain(const double frac)
       {
         if (frac < 0.0)
           return 0.0;
@@ -119,7 +143,7 @@ namespace dftefe
       }
 
       //
-      // Fractional coordinates of the point on the cell face through xred2
+      // Fractional coordinates of the point on the domain face through xred2
       // with the given normal that is closest to xred1.
       //
       void
@@ -150,16 +174,16 @@ namespace dftefe
 
         realToFrac(latticeVectors, nearestReal, nearestFrac);
         for (size_type i = 0; i < dim; ++i)
-          nearestFrac[i] = roundToCell(nearestFrac[i]);
+          nearestFrac[i] = roundToDomain(nearestFrac[i]);
       }
 
       //
-      // Distance from a point given in fractional coordinates to the nearest
-      // of the six cell faces, or zero if the point is inside the cell.
+      // Shortest distance to the periodic domain -- the parallelepiped spanned
+      // by the lattice vectors, NOT a triangulation cell. Zero when inside.
       //
       double
-      getMinDistanceFromImageToCell(const std::vector<double> &latticeVectors,
-                                    const double *             xreduced)
+      getMinDistanceFromImageToDomain(const std::vector<double> &latticeVectors,
+                                      const double *             xreduced)
       {
         bool isInside = true;
         for (size_type i = 0; i < dim; ++i)
@@ -246,6 +270,8 @@ namespace dftefe
           isPeriodicFlags.size() == PeriodicImageAtomGeneratorInternal::dim,
         "PeriodicImageAtomGenerator is implemented only for dim = 3.");
 
+      throwIfAtomsOutsideCell();
+
       generateImageCharges(d_cutOff,
                            d_imageIds,
                            d_imageCharges,
@@ -280,10 +306,9 @@ namespace dftefe
       if (periodic[0] == 0 && periodic[1] == 0 && periodic[2] == 0)
         return;
 
-      std::vector<double> latticeVectors(dim * dim, 0.0);
-      for (size_type i = 0; i < dim; ++i)
-        for (size_type j = 0; j < dim; ++j)
-          latticeVectors[dim * i + j] = d_domainBoundingVectors[i][j];
+      std::vector<double> latticeVectors(0);
+      double              shift[dim];
+      buildCellFrame(d_domainBoundingVectors, latticeVectors, shift);
 
       double minMagnitude = 0.0;
       for (size_type i = 0; i < dim; ++i)
@@ -319,7 +344,7 @@ namespace dftefe
         {
           double atomReal[dim], atomFrac[dim];
           for (size_type i = 0; i < dim; ++i)
-            atomReal[i] = d_atomCoordinates[iAtom][i];
+            atomReal[i] = d_atomCoordinates[iAtom][i] + shift[i];
           realToFrac(latticeVectors, atomReal, atomFrac);
 
           for (int iz = -numberLayers; iz <= numberLayers; ++iz)
@@ -343,12 +368,14 @@ namespace dftefe
                                                      atomFrac[1] + iy,
                                                      atomFrac[2] + iz};
 
-                      if (getMinDistanceFromImageToCell(latticeVectors,
+                      if (getMinDistanceFromImageToDomain(latticeVectors,
                                                         imageFrac) >= cutOff)
                         continue;
 
                       double imageReal[dim];
                       fracToReal(latticeVectors, imageFrac, imageReal);
+                      for (size_type i = 0; i < dim; ++i)
+                        imageReal[i] -= shift[i];
 
                       if (iPass == 1)
                         {
@@ -441,6 +468,187 @@ namespace dftefe
       if (masterAtomId >= d_imageIdsPerMasterTrunc.size())
         return d_emptyImageIds;
       return d_imageIdsPerMasterTrunc[masterAtomId];
+    }
+
+    void
+    PeriodicImageAtomGenerator::throwIfAtomsOutsideCell() const
+    {
+      using namespace PeriodicImageAtomGeneratorInternal;
+
+      // Nothing periodic means no cell frame is implied by the input, so there
+      // is nothing to be outside of.
+      if (!std::any_of(d_isPeriodicFlags.begin(),
+                       d_isPeriodicFlags.end(),
+                       [](bool v) { return v; }))
+        return;
+
+      std::vector<double> latticeVectors(0);
+      double              shift[dim];
+      buildCellFrame(d_domainBoundingVectors, latticeVectors, shift);
+
+      const double tol = 1e-6;
+      for (size_type iAtom = 0; iAtom < d_nMasterAtoms; ++iAtom)
+        {
+          double atomReal[dim], atomFrac[dim];
+          for (size_type i = 0; i < dim; ++i)
+            atomReal[i] = d_atomCoordinates[iAtom][i] + shift[i];
+          realToFrac(latticeVectors, atomReal, atomFrac);
+
+          for (size_type i = 0; i < dim; ++i)
+            {
+              const bool inside =
+                d_isPeriodicFlags[i] ?
+                  (atomFrac[i] > -tol && atomFrac[i] < 1.0 + tol) :
+                  (atomFrac[i] > tol && atomFrac[i] < 1.0 - tol);
+
+              utils::throwException<utils::InvalidArgument>(
+                inside,
+                "PeriodicImageAtomGenerator: atom " + std::to_string(iAtom) +
+                  " lies outside the simulation domain along direction " +
+                  std::to_string(i) + ". Centred Cartesian position (" +
+                  std::to_string(d_atomCoordinates[iAtom][0]) + ", " +
+                  std::to_string(d_atomCoordinates[iAtom][1]) + ", " +
+                  std::to_string(d_atomCoordinates[iAtom][2]) +
+                  "), fractional (" + std::to_string(atomFrac[0]) + ", " +
+                  std::to_string(atomFrac[1]) + ", " +
+                  std::to_string(atomFrac[2]) +
+                  "). A periodic direction admits [0,1]; a non periodic one "
+                  "requires a strict interior.");
+            }
+        }
+    }
+
+    void
+    PeriodicImageAtomGenerator::throwIfAtomCoordinatesDiffer(
+      const std::vector<utils::Point> &atomCoordinates) const
+    {
+      using namespace PeriodicImageAtomGeneratorInternal;
+
+      utils::throwException<utils::InvalidArgument>(
+        atomCoordinates.size() == d_nMasterAtoms,
+        "PeriodicImageAtomGenerator: this generator was built from " +
+          std::to_string(d_nMasterAtoms) + " master atoms but is being used "
+          "with " + std::to_string(atomCoordinates.size()) +
+          ", so its images belong to a different system.");
+
+      for (size_type iAtom = 0; iAtom < d_nMasterAtoms; ++iAtom)
+        for (size_type j = 0; j < (size_type)dim; ++j)
+          utils::throwException<utils::InvalidArgument>(
+            std::abs(d_atomCoordinates[iAtom][j] - atomCoordinates[iAtom][j]) <
+              1e-12,
+            "PeriodicImageAtomGenerator: the master atoms have moved since "
+            "this generator was built, so its images are at stale positions. "
+            "Rebuild the generator alongside the new coordinates.");
+    }
+
+    void
+    PeriodicImageAtomGenerator::fillExtendedAtoms(
+      const std::vector<utils::Point> &imagePositions,
+      const std::vector<double> &      imageCharges,
+      std::vector<utils::Point> &      coordinates,
+      std::vector<double> &            charges) const
+    {
+      using namespace PeriodicImageAtomGeneratorInternal;
+
+      coordinates.resize(d_nMasterAtoms + imagePositions.size(),
+                         utils::Point((size_type)dim, 0.0));
+      charges.resize(d_nMasterAtoms + imageCharges.size(), 0.0);
+
+      std::copy(d_atomCoordinates.begin(),
+                d_atomCoordinates.end(),
+                coordinates.begin());
+      std::copy(d_atomCharges.begin(), d_atomCharges.end(), charges.begin());
+
+      std::copy(imagePositions.begin(),
+                imagePositions.end(),
+                coordinates.begin() + d_nMasterAtoms);
+      std::copy(imageCharges.begin(),
+                imageCharges.end(),
+                charges.begin() + d_nMasterAtoms);
+    }
+
+    void
+    PeriodicImageAtomGenerator::fillExtendedAtomsForMaster(
+      const size_type                  masterAtomId,
+      const std::vector<size_type> &   imageIds,
+      const std::vector<utils::Point> &imagePositions,
+      const std::vector<double> &      imageCharges,
+      std::vector<utils::Point> &      coordinates,
+      std::vector<double> &            charges) const
+    {
+      using namespace PeriodicImageAtomGeneratorInternal;
+
+      utils::throwException<utils::InvalidArgument>(
+        masterAtomId < d_nMasterAtoms,
+        "PeriodicImageAtomGenerator: master atom id out of range.");
+
+      coordinates.resize(1 + imageIds.size(),
+                         utils::Point((size_type)dim, 0.0));
+      charges.resize(1 + imageIds.size(), 0.0);
+
+      coordinates[0] = d_atomCoordinates[masterAtomId];
+      charges[0]     = d_atomCharges[masterAtomId];
+
+      for (size_type i = 0; i < imageIds.size(); ++i)
+        {
+          coordinates[1 + i] = imagePositions[imageIds[i]];
+          charges[1 + i]     = imageCharges[imageIds[i]];
+        }
+    }
+
+    void
+    PeriodicImageAtomGenerator::getExtendedAtoms(
+      const std::vector<utils::Point> &atomCoordinates,
+      std::vector<utils::Point> &      coordinates,
+      std::vector<double> &            charges) const
+    {
+      throwIfAtomCoordinatesDiffer(atomCoordinates);
+      fillExtendedAtoms(d_imagePositions, d_imageCharges, coordinates, charges);
+    }
+
+    void
+    PeriodicImageAtomGenerator::getExtendedAtomsTrunc(
+      const std::vector<utils::Point> &atomCoordinates,
+      std::vector<utils::Point> &      coordinates,
+      std::vector<double> &            charges) const
+    {
+      throwIfAtomCoordinatesDiffer(atomCoordinates);
+      fillExtendedAtoms(d_imagePositionsTrunc,
+                        d_imageChargesTrunc,
+                        coordinates,
+                        charges);
+    }
+
+    void
+    PeriodicImageAtomGenerator::getExtendedAtomsForMaster(
+      const std::vector<utils::Point> &atomCoordinates,
+      const size_type                  masterAtomId,
+      std::vector<utils::Point> &      coordinates,
+      std::vector<double> &            charges) const
+    {
+      throwIfAtomCoordinatesDiffer(atomCoordinates);
+      fillExtendedAtomsForMaster(masterAtomId,
+                                 getImageIdsForMaster(masterAtomId),
+                                 d_imagePositions,
+                                 d_imageCharges,
+                                 coordinates,
+                                 charges);
+    }
+
+    void
+    PeriodicImageAtomGenerator::getExtendedAtomsForMasterTrunc(
+      const std::vector<utils::Point> &atomCoordinates,
+      const size_type                  masterAtomId,
+      std::vector<utils::Point> &      coordinates,
+      std::vector<double> &            charges) const
+    {
+      throwIfAtomCoordinatesDiffer(atomCoordinates);
+      fillExtendedAtomsForMaster(masterAtomId,
+                                 getImageIdsForMasterTrunc(masterAtomId),
+                                 d_imagePositionsTrunc,
+                                 d_imageChargesTrunc,
+                                 coordinates,
+                                 charges);
     }
 
     double

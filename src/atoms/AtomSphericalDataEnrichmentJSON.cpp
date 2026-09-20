@@ -516,7 +516,22 @@ namespace dftefe
               cutOffInfoVec[i] = {1e6, 1e6};
             }
         }
-      if (fieldName == "vtotal" || fieldName == "density")
+      if (fieldName == "density")
+        {
+          for (int i = 0; i < qNumVec.size(); i++)
+            {
+              for (int j = radialPoints.size() - 1; j > 0; j--)
+                {
+                  if (std::abs(radialValuesVec[i][j]) > 1e-10)
+                    {
+                      cutOffInfoVec[i].first  = radialPoints[j];
+                      cutOffInfoVec[i].second = 1e6;
+                      break;
+                    }
+                }
+            }
+        }
+      if (fieldName == "vtotal")
         {
           for (int i = 0; i < qNumVec.size(); i++)
             {

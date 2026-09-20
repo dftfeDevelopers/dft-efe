@@ -401,7 +401,7 @@ namespace dftefe
 
         const size_type nDimSqxNumQuad = dim * dim * nQuadPointInCell;
 
-        nQuadPointsInCell.resize(numLocallyOwnedCells, nQuadPointInCell);
+        nQuadPointsInCell.assign(numLocallyOwnedCells, nQuadPointInCell);
         const std::vector<size_type> classDofsInCell(numLocallyOwnedCells,
                                                      classicalDofsPerCell);
         utils::MemoryStorage<ValueTypeBasisData, utils::MemorySpace::HOST>
@@ -1096,7 +1096,7 @@ namespace dftefe
 
         const size_type nDimSqxNumQuad = dim * dim * nQuadPointInCell;
 
-        nQuadPointsInCell.resize(numLocallyOwnedCells, nQuadPointInCell);
+        nQuadPointsInCell.assign(numLocallyOwnedCells, nQuadPointInCell);
         const std::vector<size_type> classDofsInCell(numLocallyOwnedCells,
                                                      classicalDofsPerCell);
         utils::MemoryStorage<ValueTypeBasisData, utils::MemorySpace::HOST>
@@ -2565,7 +2565,41 @@ namespace dftefe
       //     cumulativeOffsetEnrichQuad += nEnriched * nQuad;
       // }
 
-      const size_type        numBatch = cellRange.second - cellRange.first;
+      const size_type numBatch = cellRange.second - cellRange.first;
+
+      DFTEFE_AssertWithMsg(
+        d_dofsInCell.size() >= cellRange.second &&
+          d_nQuadPointsIncell.size() >= cellRange.second,
+        "getBasisDataInCellRange in EFEBDSOnTheFlyComputeDealii was asked for "
+        "cells [" +
+          std::to_string(cellRange.first) + ", " +
+          std::to_string(cellRange.second) + ") but d_dofsInCell holds " +
+          std::to_string(d_dofsInCell.size()) +
+          " entries and d_nQuadPointsIncell holds " +
+          std::to_string(d_nQuadPointsIncell.size()) +
+          ". One of them was not filled for this quadrature.");
+
+      size_type basisDataSizeNeeded = 0;
+      for (size_type cellId = cellRange.first; cellId < cellRange.second;
+           cellId++)
+        basisDataSizeNeeded +=
+          d_dofsInCell[cellId] * d_nQuadPointsIncell[cellId];
+
+      DFTEFE_AssertWithMsg(
+        basisData.size() >= basisDataSizeNeeded,
+        "getBasisDataInCellRange in EFEBDSOnTheFlyComputeDealii was given a "
+        "buffer of " +
+          std::to_string(basisData.size()) + " for cells [" +
+          std::to_string(cellRange.first) + ", " +
+          std::to_string(cellRange.second) + "), which needs " +
+          std::to_string(basisDataSizeNeeded) +
+          " (dofsInCell[" + std::to_string(cellRange.first) + "]=" +
+          std::to_string(d_dofsInCell[cellRange.first]) +
+          ", nQuadPointsIncell[" + std::to_string(cellRange.first) + "]=" +
+          std::to_string(d_nQuadPointsIncell[cellRange.first]) +
+          "). The caller sized it from its own dofs-per-cell and quadrature "
+          "counts, so those disagree with this basis data storage.");
+
       std::vector<size_type> batchStrideSrcClass(numBatch, 0);
       std::vector<size_type> batchStrideDst(numBatch);
       std::vector<size_type> batchVecSize(numBatch);
@@ -2627,6 +2661,16 @@ namespace dftefe
         }
       else
         {
+          size_type maxEnrich = 0;
+          for (size_type cellId = cellRange.first; cellId < cellRange.second;
+               cellId++)
+            maxEnrich = std::max(maxEnrich,
+                                 d_dofsInCell[cellId] - d_classialDofsInCell);
+          const size_type enrichScratchSizeNeeded =
+            maxEnrich * d_nQuadPointsIncell[0] * numBatch;
+          if (d_basisEnrichScratch->size() < enrichScratchSizeNeeded)
+            d_basisEnrichScratch->resize(enrichScratchSizeNeeded);
+
           d_efeBDH->getEnrichmentClassicalInterface()
             ->getEnrichmentValuesInCellRangeAtQuadPts(
               *d_quadratureRuleContainer,
@@ -2638,9 +2682,18 @@ namespace dftefe
             {
               size_type cumulativeCoeffsOffset = 0;
               for (size_type c = 0; c < cellRange.first; c++)
-                cumulativeCoeffsOffset +=
-                  (d_dofsInCell[c] - d_classialDofsInCell) *
-                  d_classialDofsInCell;
+                {
+                  DFTEFE_AssertWithMsg(
+                    d_dofsInCell[c] >= d_classialDofsInCell,
+                    "[EFEBDS] cell " + std::to_string(c) + " has " +
+                      std::to_string(d_dofsInCell[c]) +
+                      " dofs, below the classical count " +
+                      std::to_string(d_classialDofsInCell) +
+                      ", so the enrichment count underflows.");
+                  cumulativeCoeffsOffset +=
+                    (d_dofsInCell[c] - d_classialDofsInCell) *
+                    d_classialDofsInCell;
+                }
 
               std::vector<size_type> mSizes(numBatch, 0);
               std::vector<size_type> nSizes(numBatch, 0);
@@ -2669,6 +2722,21 @@ namespace dftefe
                   strideC[iCell]          = nEnrich * nQuad;
                 }
 
+              DFTEFE_AssertWithMsg(
+                d_coeffsInAllCells.size() >= cumulativeCoeffsOffset,
+                "[EFEBDS gemm] coeffs offset " +
+                  std::to_string(cumulativeCoeffsOffset) +
+                  " is past the end of d_coeffsInAllCells (" +
+                  std::to_string(d_coeffsInAllCells.size()) + ").");
+              DFTEFE_AssertWithMsg(
+                d_basisEnrichScratch != nullptr &&
+                  d_basisParaCellClassQuadStorage != nullptr,
+                "[EFEBDS gemm] a gemm operand storage is null: "
+                "basisEnrichScratch=" +
+                  std::to_string(d_basisEnrichScratch != nullptr) +
+                  " basisParaCellClassQuadStorage=" +
+                  std::to_string(d_basisParaCellClassQuadStorage != nullptr) +
+                  ".");
               linearAlgebra::blasLapack::gemmStridedVarBatched<
                 ValueTypeBasisData,
                 ValueTypeBasisData,
@@ -3057,9 +3125,18 @@ namespace dftefe
             {
               size_type cumulativeCoeffsOffset = 0;
               for (size_type c = 0; c < cellRange.first; c++)
-                cumulativeCoeffsOffset +=
-                  (d_dofsInCell[c] - d_classialDofsInCell) *
-                  d_classialDofsInCell;
+                {
+                  DFTEFE_AssertWithMsg(
+                    d_dofsInCell[c] >= d_classialDofsInCell,
+                    "[EFEBDS] cell " + std::to_string(c) + " has " +
+                      std::to_string(d_dofsInCell[c]) +
+                      " dofs, below the classical count " +
+                      std::to_string(d_classialDofsInCell) +
+                      ", so the enrichment count underflows.");
+                  cumulativeCoeffsOffset +=
+                    (d_dofsInCell[c] - d_classialDofsInCell) *
+                    d_classialDofsInCell;
+                }
 
               std::vector<size_type> mSizes(numBatchEnrichGrad, 0);
               std::vector<size_type> nSizes(numBatchEnrichGrad, 0);

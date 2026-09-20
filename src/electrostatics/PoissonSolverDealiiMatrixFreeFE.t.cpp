@@ -892,33 +892,41 @@ namespace dftefe
       const linearAlgebra::MultiVector<ValueTypeOperand, memorySpaceHost>
         &srcCoefficientVec = constraints.getMeanValueConstraintVec();
 
+      // The host copy is built in every memory space, not just on the host
+      // path: the rhs assembly and the dealii CG operate on distributedCPUVec
+      // whatever this solver's memory space is.
+      d_meanValueConstraintVec.reinit(d_x);
+      std::copy(srcCoefficientVec.data(),
+                srcCoefficientVec.data() + srcCoefficientVec.locallyOwnedSize(),
+                d_meanValueConstraintVec.begin());
+      d_meanValueConstraintVec.compress(dealii::VectorOperation::insert);
+      d_meanValueConstraintVec.update_ghost_values();
+      // The dealii vector is addressed by global index, so the host path needs
+      // no separate local index.
+      d_meanValueConstraintNodeIdLocal = 0;
+
       if constexpr (memorySpace == utils::MemorySpace::DEVICE)
         {
 #ifdef DFTEFE_WITH_DEVICE
-          d_meanValueConstraintVec =
-            linearAlgebra::Vector<ValueTypeOperator, memorySpace>(
-              d_mpiPatternP2PDevice, d_linAlgOpContext);
+          // The device CG needs the same coefficients in a device vector,
+          // copied once here rather than per solve. The length comes from
+          // srcCoefficientVec, not d_xLocalDof, which is not assigned until
+          // CGsolveDevice runs, long after this constructor-time call.
+          d_meanValueConstraintVecDevice = std::make_unique<
+            linearAlgebra::Vector<ValueTypeOperator, memorySpace>>(
+            d_mpiPatternP2PDevice, d_linAlgOpContext);
           utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
-            d_xLocalDof,
-            d_meanValueConstraintVec.data(),
+            srcCoefficientVec.locallyOwnedSize(),
+            d_meanValueConstraintVecDevice->data(),
             srcCoefficientVec.data());
-          d_meanValueConstraintNodeIdLocal =
-            d_mpiPatternP2PDevice->globalToLocal(
-              d_meanValueConstraintNodeIdGlobal);
+          // Only the owner of the pinned dof can translate its global index;
+          // globalToLocal throws elsewhere. Every use of the local index below
+          // sits behind the same ownership test, so the others keep the 0.
+          if (d_thisMpiProcess == (int)d_meanValueConstraintProcId)
+            d_meanValueConstraintNodeIdLocal =
+              d_mpiPatternP2PDevice->globalToLocal(
+                d_meanValueConstraintNodeIdGlobal);
 #endif
-        }
-      else
-        {
-          d_meanValueConstraintVec.reinit(d_x);
-          std::copy(srcCoefficientVec.data(),
-                    srcCoefficientVec.data() +
-                      srcCoefficientVec.locallyOwnedSize(),
-                    d_meanValueConstraintVec.begin());
-          d_meanValueConstraintVec.compress(dealii::VectorOperation::insert);
-          d_meanValueConstraintVec.update_ghost_values();
-          // On the host path the dealii vector is addressed by global index,
-          // so no separate local index is needed.
-          d_meanValueConstraintNodeIdLocal = 0;
         }
     }
 
@@ -931,7 +939,8 @@ namespace dftefe
                                     ValueTypeOperand,
                                     memorySpace,
                                     dim>::
-      applyMeanValueConstraintDistributeP2C(MeanValueCoefficientVec &vec) const
+      applyMeanValueConstraintDistributeP2C(
+        distributedCPUVec<ValueTypeOperator> &vec) const
     {
       if (!d_isMeanValueConstraintActive)
         return;
@@ -939,41 +948,12 @@ namespace dftefe
       // Set the pinned dof from its masters, vec[o] = dot(a, vec), which is
       // the slave-from-masters half of the mean value constraint.
       // dftfe analog: meanValueConstraintDistribute
-      // (poissonSolverProblem.cc:445-457, poissonSolverProblemDevice.cc:484-506)
-      if constexpr (memorySpace == utils::MemorySpace::DEVICE)
-        {
-#ifdef DFTEFE_WITH_DEVICE
-          ValueTypeOperator dotProd =
-            linearAlgebra::blasLapack::dot<ValueTypeOperator,
-                                           ValueTypeOperator,
-                                           memorySpace>(
-              d_xLocalDof,
-              d_meanValueConstraintVec.data(),
-              1,
-              vec.data(),
-              1,
-              *d_linAlgOpContext);
-
-          utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
-            utils::mpi::MPIInPlace,
-            &dotProd,
-            1,
-            utils::mpi::Types<ValueTypeOperator>::getMPIDatatype(),
-            utils::mpi::MPISum,
-            this->getMPIComm());
-
-          if (d_thisMpiProcess == d_meanValueConstraintProcId)
-            utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
-              1, vec.data() + d_meanValueConstraintNodeIdLocal, &dotProd);
-#endif
-        }
-      else
-        {
-          // dealii's operator* is already reduced across the communicator
-          const ValueTypeOperator dotProd = d_meanValueConstraintVec * vec;
-          if (d_thisMpiProcess == d_meanValueConstraintProcId)
-            vec[d_meanValueConstraintNodeIdGlobal] = dotProd;
-        }
+      // (poissonSolverProblem.cc:445-457)
+      //
+      // dealii's operator* is already reduced across the communicator
+      const ValueTypeOperator dotProd = d_meanValueConstraintVec * vec;
+      if (d_thisMpiProcess == d_meanValueConstraintProcId)
+        vec[d_meanValueConstraintNodeIdGlobal] = dotProd;
     }
 
     template <typename ValueTypeOperator,
@@ -985,70 +965,136 @@ namespace dftefe
                                     ValueTypeOperand,
                                     memorySpace,
                                     dim>::
-      applyMeanValueConstraintDistributeC2P(MeanValueCoefficientVec &vec) const
+      applyMeanValueConstraintDistributeP2C(
+        linearAlgebra::Vector<ValueTypeOperator, memorySpace> &vec) const
     {
       if (!d_isMeanValueConstraintActive)
         return;
 
-      // Transpose of the above: whatever has accumulated on the pinned dof is
-      // redistributed onto its masters as vec += vec[o] * a, after which the
-      // pinned entry is zeroed. vec[o] is broadcast first, since only the
-      // processor owning o holds it.
+      // Device counterpart of the above.
+      // dftfe analog: poissonSolverProblemDevice.cc:484-506
+#ifdef DFTEFE_WITH_DEVICE
+      ValueTypeOperator dotProd =
+        linearAlgebra::blasLapack::dot<ValueTypeOperator,
+                                       ValueTypeOperator,
+                                       memorySpace>(
+          d_xLocalDof,
+          d_meanValueConstraintVecDevice->data(),
+          1,
+          vec.data(),
+          1,
+          *d_linAlgOpContext);
+
+      utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
+        utils::mpi::MPIInPlace,
+        &dotProd,
+        1,
+        utils::mpi::Types<ValueTypeOperator>::getMPIDatatype(),
+        utils::mpi::MPISum,
+        this->getMPIComm());
+
+      if (d_thisMpiProcess == d_meanValueConstraintProcId)
+        utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
+          1, vec.data() + d_meanValueConstraintNodeIdLocal, &dotProd);
+#else
+      utils::throwException(
+        false,
+        "The device mean value constraint requires compilation with "
+        "DFTEFE_WITH_DEVICE.");
+#endif
+    }
+
+    template <typename ValueTypeOperator,
+              typename ValueTypeOperand,
+              utils::MemorySpace memorySpace,
+              size_type          dim>
+    void
+    PoissonSolverDealiiMatrixFreeFE<ValueTypeOperator,
+                                    ValueTypeOperand,
+                                    memorySpace,
+                                    dim>::
+      applyMeanValueConstraintDistributeC2P(
+        distributedCPUVec<ValueTypeOperator> &vec) const
+    {
+      if (!d_isMeanValueConstraintActive)
+        return;
+
+      // Transpose of the above: what has accumulated on the pinned dof is
+      // redistributed onto its masters as vec += vec[o] * a, then the pinned
+      // entry is zeroed. vec[o] is broadcast first, only its owner holds it.
       // dftfe analog: meanValueConstraintDistributeSlaveToMaster
-      // (poissonSolverProblem.cc:461-482, poissonSolverProblemDevice.cc:510-550)
+      // (poissonSolverProblem.cc:461-482)
       ValueTypeOperator valueAtNode = 0.0;
 
-      if constexpr (memorySpace == utils::MemorySpace::DEVICE)
-        {
+      if (d_thisMpiProcess == d_meanValueConstraintProcId)
+        valueAtNode = vec[d_meanValueConstraintNodeIdGlobal];
+
+      utils::mpi::MPIBcast<utils::MemorySpace::HOST>(
+        &valueAtNode,
+        1,
+        utils::mpi::Types<ValueTypeOperator>::getMPIDatatype(),
+        (int)d_meanValueConstraintProcId,
+        this->getMPIComm());
+
+      vec.add(valueAtNode, d_meanValueConstraintVec);
+      if (d_thisMpiProcess == d_meanValueConstraintProcId)
+        vec[d_meanValueConstraintNodeIdGlobal] = 0.0;
+    }
+
+    template <typename ValueTypeOperator,
+              typename ValueTypeOperand,
+              utils::MemorySpace memorySpace,
+              size_type          dim>
+    void
+    PoissonSolverDealiiMatrixFreeFE<ValueTypeOperator,
+                                    ValueTypeOperand,
+                                    memorySpace,
+                                    dim>::
+      applyMeanValueConstraintDistributeC2P(
+        linearAlgebra::Vector<ValueTypeOperator, memorySpace> &vec) const
+    {
+      if (!d_isMeanValueConstraintActive)
+        return;
+
+      // Device counterpart of the above.
+      // dftfe analog: poissonSolverProblemDevice.cc:510-550
 #ifdef DFTEFE_WITH_DEVICE
-          if (d_thisMpiProcess == d_meanValueConstraintProcId)
-            utils::MemoryTransfer<utils::MemorySpace::HOST, memorySpace>::copy(
-              1, &valueAtNode, vec.data() + d_meanValueConstraintNodeIdLocal);
+      ValueTypeOperator valueAtNode = 0.0;
 
-          utils::mpi::MPIBcast<utils::MemorySpace::HOST>(
-            &valueAtNode,
-            1,
-            utils::mpi::Types<ValueTypeOperator>::getMPIDatatype(),
-            (int)d_meanValueConstraintProcId,
-            this->getMPIComm());
+      if (d_thisMpiProcess == d_meanValueConstraintProcId)
+        utils::MemoryTransfer<utils::MemorySpace::HOST, memorySpace>::copy(
+          1, &valueAtNode, vec.data() + d_meanValueConstraintNodeIdLocal);
 
-          linearAlgebra::blasLapack::axpby<ValueTypeOperator,
-                                           ValueTypeOperator,
-                                           memorySpace>(
-            d_xLocalDof,
-            valueAtNode,
-            d_meanValueConstraintVec.data(),
-            (ValueTypeOperator)1.0,
-            vec.data(),
-            vec.data(),
-            *d_linAlgOpContext);
+      utils::mpi::MPIBcast<utils::MemorySpace::HOST>(
+        &valueAtNode,
+        1,
+        utils::mpi::Types<ValueTypeOperator>::getMPIDatatype(),
+        (int)d_meanValueConstraintProcId,
+        this->getMPIComm());
 
-          if (d_thisMpiProcess == d_meanValueConstraintProcId)
-            {
-              const ValueTypeOperator zero = 0.0;
-              utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::
-                copy(1,
-                     vec.data() + d_meanValueConstraintNodeIdLocal,
-                     &zero);
-            }
-#endif
-        }
-      else
+      linearAlgebra::blasLapack::axpby<ValueTypeOperator,
+                                       ValueTypeOperator,
+                                       memorySpace>(
+        d_xLocalDof,
+        valueAtNode,
+        d_meanValueConstraintVecDevice->data(),
+        (ValueTypeOperator)1.0,
+        vec.data(),
+        vec.data(),
+        *d_linAlgOpContext);
+
+      if (d_thisMpiProcess == d_meanValueConstraintProcId)
         {
-          if (d_thisMpiProcess == d_meanValueConstraintProcId)
-            valueAtNode = vec[d_meanValueConstraintNodeIdGlobal];
-
-          utils::mpi::MPIBcast<utils::MemorySpace::HOST>(
-            &valueAtNode,
-            1,
-            utils::mpi::Types<ValueTypeOperator>::getMPIDatatype(),
-            (int)d_meanValueConstraintProcId,
-            this->getMPIComm());
-
-          vec.add(valueAtNode, d_meanValueConstraintVec);
-          if (d_thisMpiProcess == d_meanValueConstraintProcId)
-            vec[d_meanValueConstraintNodeIdGlobal] = 0.0;
+          const ValueTypeOperator zero = 0.0;
+          utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
+            1, vec.data() + d_meanValueConstraintNodeIdLocal, &zero);
         }
+#else
+      utils::throwException(
+        false,
+        "The device mean value constraint requires compilation with "
+        "DFTEFE_WITH_DEVICE.");
+#endif
     }
 
     template <typename ValueTypeOperator,

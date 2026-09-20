@@ -41,18 +41,29 @@ namespace dftefe
                iThread < numEnrichInCell * numQuadInCell;
                iThread += nThreadsPerBlock * nThreadBlock)
             {
-              size_type enrichId = iThread % numEnrichInCell;
-              size_type quadId   = iThread / numEnrichInCell;
+              // quadId is the fast index so that enrichId, and with it the
+              // origin loop bounds below, are uniform across a warp. The
+              // stored layout is unchanged: quadId (slow) x enrichId (fast).
+              size_type quadId   = iThread % numQuadInCell;
+              size_type enrichId = iThread / numQuadInCell;
 
-              output[iThread] =
-                sphericalDataFunc[enrichId].getValue(quadPtsInCell + quadId * 3,
-                                                     origin + enrichId * 3);
+              // Without periodicity every enrichment has exactly one origin,
+              // so the offsets are 0,1,2,... and this loop runs once.
+              double value = 0.0;
+              for (size_type iOrigin = originOffsetPerEnrich[enrichId];
+                   iOrigin < originOffsetPerEnrich[enrichId + 1];
+                   iOrigin++)
+                value += sphericalDataFunc[enrichId].getValue(
+                  quadPtsInCell + quadId * 3, origin + iOrigin * 3);
+
+              output[quadId * numEnrichInCell + enrichId] = value;
             }
         },
-        const double *  quadPtsInCell,
-        const double *  origin,
-        const size_type numEnrichInCell,
-        const size_type numQuadInCell,
+        const double *   quadPtsInCell,
+        const double *   origin,
+        const size_type *originOffsetPerEnrich,
+        const size_type  numEnrichInCell,
+        const size_type  numQuadInCell,
         const atoms::SphericalDataNumerical::Func<utils::MemorySpace::DEVICE>
           *     sphericalDataFunc,
         double *output);
@@ -65,12 +76,30 @@ namespace dftefe
                iThread += nThreadsPerBlock * nThreadBlock)
             {
               // layout: quadId (slow) x dim x enrichId (fast)
-              size_type enrichId = iThread % numEnrichInCell;
-              size_type quadId   = iThread / numEnrichInCell;
+              // quadId is the fast thread index so that enrichId, and with it
+              // the origin loop bounds below, are uniform across a warp.
+              size_type quadId   = iThread % numQuadInCell;
+              size_type enrichId = iThread / numQuadInCell;
 
+              // Without periodicity every enrichment has exactly one origin,
+              // so the offsets are 0,1,2,... and this loop runs once.
               double grad[3];
-              sphericalDataFunc[enrichId].getGradientValue(
-                quadPtsInCell + quadId * 3, origin + enrichId * 3, grad);
+              grad[0] = 0.0;
+              grad[1] = 0.0;
+              grad[2] = 0.0;
+              for (size_type iOrigin = originOffsetPerEnrich[enrichId];
+                   iOrigin < originOffsetPerEnrich[enrichId + 1];
+                   iOrigin++)
+                {
+                  double originGrad[3];
+                  sphericalDataFunc[enrichId].getGradientValue(
+                    quadPtsInCell + quadId * 3,
+                    origin + iOrigin * 3,
+                    originGrad);
+                  grad[0] += originGrad[0];
+                  grad[1] += originGrad[1];
+                  grad[2] += originGrad[2];
+                }
               output[quadId * 3 * numEnrichInCell + 0 * numEnrichInCell +
                      enrichId] = grad[0];
               output[quadId * 3 * numEnrichInCell + 1 * numEnrichInCell +
@@ -79,10 +108,11 @@ namespace dftefe
                      enrichId] = grad[2];
             }
         },
-        const double *  quadPtsInCell,
-        const double *  origin,
-        const size_type numEnrichInCell,
-        const size_type numQuadInCell,
+        const double *   quadPtsInCell,
+        const double *   origin,
+        const size_type *originOffsetPerEnrich,
+        const size_type  numEnrichInCell,
+        const size_type  numQuadInCell,
         const atoms::SphericalDataNumerical::Func<utils::MemorySpace::DEVICE>
           *     sphericalDataFunc,
         double *output);
@@ -93,6 +123,7 @@ namespace dftefe
       getEnrichmentValuesInCellRange(
         const double *                  quadPtsInAllCells,
         const double *                  originPtsInAllCells,
+        const size_type *               originOffsetPerCellEnrich,
         std::pair<size_type, size_type> cellRange,
         const std::vector<size_type>    numEnrichIdsInAllCells,
         const std::vector<size_type>    numQuadPtsInAllCells,
@@ -138,7 +169,10 @@ namespace dftefe
                 blockSize,
                 streams[sid],
                 quadPtsInAllCells + cumulativeQuadPtsInCellRange * dim,
-                originPtsInAllCells + cumulativeEnrichInCellRange * dim,
+                // Origin offsets hold absolute indices, so the origin array is
+                // passed whole and only the offsets are sliced to this cell.
+                originPtsInAllCells,
+                originOffsetPerCellEnrich + cumulativeEnrichInCellRange,
                 numEnrichInCell,
                 numQuadInCell,
                 sphericalDataFuncInAllCells + cumulativeEnrichInCellRange,
@@ -163,6 +197,7 @@ namespace dftefe
       getEnrichmentGradientsInCellRange(
         const double *                  quadPtsInAllCells,
         const double *                  originPtsInAllCells,
+        const size_type *               originOffsetPerCellEnrich,
         std::pair<size_type, size_type> cellRange,
         const std::vector<size_type>    numEnrichIdsInAllCells,
         const std::vector<size_type>    numQuadPtsInAllCells,
@@ -208,7 +243,10 @@ namespace dftefe
                 blockSize,
                 streams[sid],
                 quadPtsInAllCells + cumulativeQuadPtsInCellRange * dim,
-                originPtsInAllCells + cumulativeEnrichInCellRange * dim,
+                // Origin offsets hold absolute indices, so the origin array is
+                // passed whole and only the offsets are sliced to this cell.
+                originPtsInAllCells,
+                originOffsetPerCellEnrich + cumulativeEnrichInCellRange,
                 numEnrichInCell,
                 numQuadInCell,
                 sphericalDataFuncInAllCells + cumulativeEnrichInCellRange,

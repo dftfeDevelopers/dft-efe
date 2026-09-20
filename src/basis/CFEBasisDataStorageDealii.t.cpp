@@ -182,7 +182,7 @@ namespace dftefe
           dim * dim * dofsPerCell * nQuadPointsPerCell;
         const size_type DofsPerCellxNumQuad = dofsPerCell * nQuadPointsPerCell;
 
-        nQuadPointsInCell.resize(numLocallyOwnedCells, nQuadPointsPerCell);
+        nQuadPointsInCell.assign(numLocallyOwnedCells, nQuadPointsPerCell);
         std::vector<ValueTypeBasisData> basisQuadStorageTmp(0);
         std::vector<ValueTypeBasisData> basisGradientQuadStorageTmp(0);
         std::vector<ValueTypeBasisData> basisHessianQuadStorageTmp(0);

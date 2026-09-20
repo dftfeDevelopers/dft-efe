@@ -1,3 +1,5 @@
+#include <algorithm>
+#include <basis/PeriodicImageAtomGenerator.h>
 #include <basis/TriangulationBase.h>
 #include <basis/TriangulationDealiiParallel.h>
 #include <basis/CellMappingBase.h>
@@ -437,12 +439,44 @@ int main(int argc, char** argv)
   // Set up Triangulation
     std::shared_ptr<basis::TriangulationBase> triangulationBase =
         std::make_shared<basis::TriangulationDealiiParallel<dim>>(comm);
-  std::vector<bool>                 isPeriodicFlags(dim, false);
+  const int periodicX = readParameter<int>(
+    parameterInputFileName, "periodicX", rootCout, true, false, 1);
+  const int periodicY = readParameter<int>(
+    parameterInputFileName, "periodicY", rootCout, true, false, 1);
+  const int periodicZ = readParameter<int>(
+    parameterInputFileName, "periodicZ", rootCout, true, false, 1);
+
+  std::vector<bool> isPeriodicFlags(dim, true);
+  isPeriodicFlags[0] = (periodicX != 0);
+  isPeriodicFlags[1] = (periodicY != 0);
+  isPeriodicFlags[2] = (periodicZ != 0);
+
   std::vector<utils::Point> domainVectors(dim, utils::Point(dim, 0.0));
 
   domainVectors[0][0] = xmax;
   domainVectors[1][1] = ymax;
   domainVectors[2][2] = zmax;
+
+  const bool anyDirectionPeriodic = std::any_of(isPeriodicFlags.begin(),
+                                                isPeriodicFlags.end(),
+                                                [](bool v) { return v; });
+
+  // dftfe asserts right-handedness at the domain read (dft.cc:533-547).
+  // dftefe's own check sits in markPeriodicFaces, which returns early when
+  // nothing is periodic, so assert it here too, where the vectors are built.
+  {
+    const utils::Point &a1 = domainVectors[0];
+    const utils::Point &a2 = domainVectors[1];
+    const utils::Point &a3 = domainVectors[2];
+    const double        handedness =
+      (a1[1] * a2[2] - a1[2] * a2[1]) * a3[0] +
+      (a1[2] * a2[0] - a1[0] * a2[2]) * a3[1] +
+      (a1[0] * a2[1] - a1[1] * a2[0]) * a3[2];
+    utils::throwException(
+      handedness > 0.0,
+      "The domain bounding vectors must form a right-handed system, i.e. "
+      "(a1 x a2).a3 > 0.");
+  }
 
   // //Uniform mesh creation
   // std::vector<dftefe::size_type>         subdivisions = {10, 10, 10};
@@ -528,6 +562,25 @@ int main(int argc, char** argv)
       double magMoment = 0.0;
       ss >> magMoment;
       atomMagMomentsVec.push_back(magMoment);
+
+      // dftfe reads FRACTIONAL coordinates whenever any direction is periodic
+      // and converts to centred Cartesian before meshing (dft.cc:405-490,
+      // :290). A fully non periodic file is Cartesian already, so left alone.
+      if (anyDirectionPeriodic)
+        {
+          utils::Point cartesian(dim, 0.0);
+          for (dftefe::size_type c = 0; c < dim; c++)
+            {
+              double value = 0.0;
+              for (dftefe::size_type j = 0; j < dim; j++)
+                value += coordinates[j] * domainVectors[j][c] -
+                         0.5 * domainVectors[j][c];
+              cartesian[c] = value;
+            }
+          for (dftefe::size_type c = 0; c < dim; c++)
+            coordinates[c] = cartesian[c];
+        }
+
       atomCoordinatesVec.push_back(coordinates);
       atomSymbolVec.push_back(symbol);
       if(atomSymbolToPSPFileName.find(symbol) == atomSymbolToPSPFileName.end())
@@ -544,6 +597,36 @@ int main(int argc, char** argv)
   }
   utils::mpi::MPIBarrier(comm);
   fstream.close();
+
+  // One PeriodicImageAtomGenerator for the whole run, built here as the only
+  // place upstream of both the enrichment partition and KohnShamDFT. Null when
+  // nothing is periodic, which every consumer treats as "master atoms only".
+  std::shared_ptr<const basis::PeriodicImageAtomGenerator> imageAtomGenerator =
+    nullptr;
+  if (anyDirectionPeriodic)
+    imageAtomGenerator =
+      std::make_shared<const basis::PeriodicImageAtomGenerator>(
+        atomCoordinatesVec, atomChargesVec, domainVectors, isPeriodicFlags);
+
+  // AtomSuperpositionFunction is built here, not in the library, so its atom
+  // list is this caller's responsibility: rho_at and phi_at need the extended
+  // lists, full and not truncated, being the electrostatic envelope.
+  std::vector<utils::Point> extendedAtomCoordinatesVec = atomCoordinatesVec;
+  std::vector<std::string>  extendedAtomSymbolVec      = atomSymbolVec;
+  if (imageAtomGenerator != nullptr)
+    {
+      std::vector<double> extendedAtomChargesVec(0);
+      imageAtomGenerator->getExtendedAtoms(atomCoordinatesVec,
+                                           extendedAtomCoordinatesVec,
+                                           extendedAtomChargesVec);
+
+      const std::vector<dftefe::size_type> &imageIds =
+        imageAtomGenerator->getImageIds();
+      extendedAtomSymbolVec.resize(atomSymbolVec.size() + imageIds.size());
+      for (dftefe::size_type j = 0; j < imageIds.size(); j++)
+        extendedAtomSymbolVec[atomSymbolVec.size() + j] =
+          atomSymbolVec[imageIds[j]];
+    }
 
   // atomChargesVec[i] = -valanceNumber, so n_val = -atomChargesVec[i]
   // atomMagZFactors is empty when no magnetic moments are specified
@@ -820,7 +903,10 @@ int main(int argc, char** argv)
                           atomCoordinatesVec,
                           "orbital",
                           linAlgOpContext,
-                          comm);
+                          comm,
+                          basis::ECIDefaults::ENRICHMENT_BATCH_SIZE,
+                          basis::BasisDataStorageDefaults<memorySpace>::CELL_BATCH_SIZE,
+                          imageAtomGenerator);
   p.registerEnd("Orbital partitioning and orthogonalization");
   // std::vector<double> quadValuesInAllCellsEnrichment, quadGradientsInAllCellsEnrichment;
   // enrichClassIntfceOrbital->getEnrichmentDataInAllCellsAtQuadPts(
@@ -962,7 +1048,10 @@ int main(int argc, char** argv)
                         atomCoordinatesVec,
                         "vtotal",
                         linAlgOpContextHost,
-                        comm);
+                        comm,
+                        basis::ECIDefaults::ENRICHMENT_BATCH_SIZE,
+                        basis::BasisDataStorageDefaults<Host>::CELL_BATCH_SIZE,
+                        imageAtomGenerator);
      basisDofHandlerTotalPot =  
       std::make_shared<basis::EFEBasisDofHandlerDealii<double, double,Host,dim>>(
         enrichClassIntfceTotalPot, comm);
@@ -1001,7 +1090,7 @@ int main(int argc, char** argv)
 
   p.registerStart("Electrostatics basis grad datastorage eval");
 
-  basisAttrMap[basis::BasisStorageAttributes::StoreValues] = false;
+  basisAttrMap[basis::BasisStorageAttributes::StoreValues] = true;
   basisAttrMap[basis::BasisStorageAttributes::StoreGradient] = true;
   basisAttrMap[basis::BasisStorageAttributes::StoreHessian] = false;
   basisAttrMap[basis::BasisStorageAttributes::StoreOverlap] = false;
@@ -1234,8 +1323,8 @@ int main(int argc, char** argv)
   std::shared_ptr<atoms::AtomSuperpositionFunction<memorySpace>> elecChargeDens = 
         std::make_shared<atoms::AtomSuperpositionFunction<memorySpace>>(
           atomSphericalDataContainer,
-          atomSymbolVec,
-          atomCoordinatesVec,
+          extendedAtomSymbolVec,
+          extendedAtomCoordinatesVec,
           "density",
           linAlgOpContext.get());   
 
@@ -1288,15 +1377,18 @@ int main(int argc, char** argv)
                                           *MInvContext,
                                           true,
                                           atomMagZFactors,
-                                          spinMode);
+                                          spinMode,
+                                          0,
+                                          ksdft::MixingDefaults::SPIN_MIXING_ENHANCEMENT_FACTOR,
+                                          imageAtomGenerator);
   }
   else if (!isNumericalNuclearSolve && isDeltaRhoPoissonSolve)
   {
     std::shared_ptr<atoms::AtomSuperpositionFunction<memorySpace>> smfuncAtTotPot = 
         std::make_shared<atoms::AtomSuperpositionFunction<memorySpace>>(
           atomSphericalDataContainer,
-          atomSymbolVec,
-          atomCoordinatesVec,
+          extendedAtomSymbolVec,
+          extendedAtomCoordinatesVec,
           "vtotal",
           linAlgOpContext.get());             
 
@@ -1345,7 +1437,10 @@ int main(int argc, char** argv)
                                           true,
                                           tciaparams,
                                           atomMagZFactors,
-                                          spinMode);
+                                          spinMode,
+                                          0,
+                                          ksdft::MixingDefaults::SPIN_MIXING_ENHANCEMENT_FACTOR,
+                                          imageAtomGenerator);
   }
   else
   {

@@ -285,6 +285,61 @@ namespace dftefe
           }
         return descrMap;
       }
+
+      template <typename ValueTypeBasisCoeff,
+                utils::MemorySpace memorySpace,
+                size_type          dim>
+      void
+      printAtomInfo(const std::vector<utils::Point> &atomCoordinates,
+                    const basis::BasisDofHandler &   basisDofHandler,
+                    utils::ConditionalOStream &      rootCout)
+      {
+        const basis::FEBasisDofHandler<ValueTypeBasisCoeff, memorySpace, dim>
+          *feBDH =
+            dynamic_cast<const basis::FEBasisDofHandler<ValueTypeBasisCoeff,
+                                                        memorySpace,
+                                                        dim> *>(
+              &basisDofHandler);
+
+        // A non FE basis carries no triangulation, so the domain is skipped
+        // rather than throwing; the coordinates below are printed regardless.
+        if (feBDH != nullptr)
+          {
+            std::shared_ptr<const basis::TriangulationBase> triangulation =
+              feBDH->getTriangulation();
+            const std::vector<utils::Point> domainVectors =
+              triangulation->getDomainVectors();
+            const std::vector<bool> isPeriodicFlags =
+              triangulation->getPeriodicFlags();
+
+            rootCout
+              << "----------Simulation domain bounding vectors----------\n";
+            for (size_type i = 0; i < domainVectors.size(); i++)
+              {
+                rootCout << "v" << i + 1 << " : ";
+                for (size_type j = 0; j < dim; j++)
+                  rootCout << domainVectors[i][j] << " ";
+                rootCout << "\n";
+              }
+            rootCout << "periodicity : ";
+            for (const bool flag : isPeriodicFlags)
+              rootCout << flag << " ";
+            rootCout << "\n";
+          }
+
+        rootCout << "----------Atom coordinates in use (origin at domain "
+                    "centre)----------\n";
+        for (size_type i = 0; i < atomCoordinates.size(); i++)
+          {
+            rootCout << "AtomId " << i << " : ";
+            for (size_type j = 0; j < dim; j++)
+              rootCout << atomCoordinates[i][j] << " ";
+            rootCout << "\n";
+          }
+        rootCout << "------------------------------------------------------"
+                 << std::endl;
+      }
+
     } // namespace KohnShamDFTInternal
 
     // used if analytical vself canellation route taken
@@ -375,7 +430,9 @@ namespace dftefe
         bool                                 isGHEP,
         linearAlgebra::OrthogonalizationType orthoType,
         const size_type                      chebyshevPolynomialDegree,
-        const double                         spinMixingEnhancementFactor)
+        const double                         spinMixingEnhancementFactor,
+        std::shared_ptr<const basis::PeriodicImageAtomGenerator>
+          imageAtomGenerator)
       : d_feBMWaveFn(feBMWaveFn)
       , d_evaluateEnergyEverySCF(evaluateEnergyEverySCF)
       , d_numMaxSCFIter(maxSCFIter)
@@ -399,6 +456,7 @@ namespace dftefe
       , d_p(feBMWaveFn->getMPIPatternP2P()->mpiCommunicator(), "Kohn Sham DFT")
       , d_isResidualChebyshevFilter(isResidualChebyshevFilter)
       , d_spinMode(spinMode)
+      , d_imageAtomGenerator(imageAtomGenerator)
       , d_isONCVNonLocPSP(false)
       , d_isNlcc(false)
       , d_pTotal(feBMWaveFn->getMPIPatternP2P()->mpiCommunicator(),
@@ -490,6 +548,12 @@ namespace dftefe
       int rank;
       utils::mpi::MPICommRank(d_mpiCommDomain, &rank);
       d_rootCout.setCondition(rank == 0);
+
+      KohnShamDFTInternal::printAtomInfo<ValueTypeWaveFunctionCoeff,
+                                         memorySpace,
+                                         dim>(atomCoordinates,
+                                              d_feBMWaveFn->getBasisDofHandler(),
+                                              d_rootCout);
 
       //************* CHANGE THIS **********************
       d_jxwDataHost = quadRuleContainerRho->getJxW();
@@ -642,7 +706,8 @@ namespace dftefe
           linAlgOpContext,
           KSDFTDefaults<memorySpace>::CELL_BATCH_SIZE,
           true,
-          spinMode);
+          spinMode,
+          d_imageAtomGenerator);
 
       d_rdm1Spectral->setDescriptors(
         KohnShamDFTInternal::buildDescrMap(initDescrMap, d_spinMode), {});
@@ -896,7 +961,9 @@ namespace dftefe
         bool                                 isGHEP,
         linearAlgebra::OrthogonalizationType orthoType,
         const size_type                      chebyshevPolynomialDegree,
-        const double                         spinMixingEnhancementFactor)
+        const double                         spinMixingEnhancementFactor,
+        std::shared_ptr<const basis::PeriodicImageAtomGenerator>
+          imageAtomGenerator)
       : d_feBMWaveFn(feBMWaveFn)
       , d_evaluateEnergyEverySCF(evaluateEnergyEverySCF)
       , d_numMaxSCFIter(maxSCFIter)
@@ -920,6 +987,7 @@ namespace dftefe
       , d_p(feBMWaveFn->getMPIPatternP2P()->mpiCommunicator(), "Kohn Sham DFT")
       , d_isResidualChebyshevFilter(isResidualChebyshevFilter)
       , d_spinMode(spinMode)
+      , d_imageAtomGenerator(imageAtomGenerator)
       , d_isONCVNonLocPSP(false)
       , d_isNlcc(false)
       , d_pTotal(feBMWaveFn->getMPIPatternP2P()->mpiCommunicator(),
@@ -1006,6 +1074,12 @@ namespace dftefe
       int rank;
       utils::mpi::MPICommRank(d_mpiCommDomain, &rank);
       d_rootCout.setCondition(rank == 0);
+
+      KohnShamDFTInternal::printAtomInfo<ValueTypeWaveFunctionCoeff,
+                                         memorySpace,
+                                         dim>(atomCoordinates,
+                                              d_feBMWaveFn->getBasisDofHandler(),
+                                              d_rootCout);
 
       //************* CHANGE THIS **********************
       d_jxwDataHost = quadRuleContainerRho->getJxW();
@@ -1160,7 +1234,8 @@ namespace dftefe
           linAlgOpContext,
           KSDFTDefaults<memorySpace>::CELL_BATCH_SIZE,
           true,
-          spinMode);
+          spinMode,
+          d_imageAtomGenerator);
 
       d_rdm1Spectral->setDescriptors(
         KohnShamDFTInternal::buildDescrMap(initDescrMap, d_spinMode), {});
@@ -1415,7 +1490,9 @@ namespace dftefe
         bool                                 isGHEP,
         linearAlgebra::OrthogonalizationType orthoType,
         const size_type                      chebyshevPolynomialDegree,
-        const double                         spinMixingEnhancementFactor)
+        const double                         spinMixingEnhancementFactor,
+        std::shared_ptr<const basis::PeriodicImageAtomGenerator>
+          imageAtomGenerator)
       : d_feBMWaveFn(feBMWaveFn)
       , d_evaluateEnergyEverySCF(evaluateEnergyEverySCF)
       // , d_densityInQuadValues(electronChargeDensityInput)
@@ -1441,6 +1518,7 @@ namespace dftefe
       , d_p(feBMWaveFn->getMPIPatternP2P()->mpiCommunicator(), "Kohn Sham DFT")
       , d_isResidualChebyshevFilter(isResidualChebyshevFilter)
       , d_spinMode(spinMode)
+      , d_imageAtomGenerator(imageAtomGenerator)
       , d_isONCVNonLocPSP(false)
       , d_isNlcc(false)
       , d_pTotal(feBMWaveFn->getMPIPatternP2P()->mpiCommunicator(),
@@ -1526,6 +1604,12 @@ namespace dftefe
       int rank;
       utils::mpi::MPICommRank(d_mpiCommDomain, &rank);
       d_rootCout.setCondition(rank == 0);
+
+      KohnShamDFTInternal::printAtomInfo<ValueTypeWaveFunctionCoeff,
+                                         memorySpace,
+                                         dim>(atomCoordinates,
+                                              d_feBMWaveFn->getBasisDofHandler(),
+                                              d_rootCout);
 
       //************* CHANGE THIS **********************
       d_jxwDataHost = quadRuleContainerRho->getJxW();
@@ -1747,7 +1831,8 @@ namespace dftefe
           fieldToTCIASplineMap,
           true,
           false,
-          spinMode);
+          spinMode,
+          d_imageAtomGenerator);
 
       d_rdm1Spectral->setDescriptors(
         KohnShamDFTInternal::buildDescrMap(initDescrMap, d_spinMode), {});
@@ -1998,7 +2083,9 @@ namespace dftefe
         const std::vector<double> &atomMagZFactors,
         SpinMode                   spinMode,
         const size_type            chebyshevPolynomialDegree,
-        const double               spinMixingEnhancementFactor)
+        const double               spinMixingEnhancementFactor,
+        std::shared_ptr<const basis::PeriodicImageAtomGenerator>
+          imageAtomGenerator)
       : d_feBMWaveFn(feBMWaveFn)
       , d_evaluateEnergyEverySCF(evaluateEnergyEverySCF)
       , d_numMaxSCFIter(maxSCFIter)
@@ -2022,6 +2109,7 @@ namespace dftefe
       , d_p(feBMWaveFn->getMPIPatternP2P()->mpiCommunicator(), "Kohn Sham DFT")
       , d_isResidualChebyshevFilter(isResidualChebyshevFilter)
       , d_spinMode(spinMode)
+      , d_imageAtomGenerator(imageAtomGenerator)
       , d_pTotal(feBMWaveFn->getMPIPatternP2P()->mpiCommunicator(),
                  "Kohn Sham DFT Solve time")
       , d_xcType(xcType)
@@ -2173,6 +2261,12 @@ namespace dftefe
       int rank;
       utils::mpi::MPICommRank(d_mpiCommDomain, &rank);
       d_rootCout.setCondition(rank == 0);
+
+      KohnShamDFTInternal::printAtomInfo<ValueTypeWaveFunctionCoeff,
+                                         memorySpace,
+                                         dim>(atomCoordinates,
+                                              d_feBMWaveFn->getBasisDofHandler(),
+                                              d_rootCout);
 
       // --------TODO : use eval()-----
       std::shared_ptr<const quadrature::QuadratureRuleContainer>
@@ -2337,7 +2431,8 @@ namespace dftefe
           KSDFTDefaults<memorySpace>::CELL_BATCH_SIZE,
           waveFnBatch,
           true,
-          spinMode);
+          spinMode,
+          d_imageAtomGenerator);
 
       d_rdm1Spectral->setDescriptors(
         KohnShamDFTInternal::buildDescrMap(initDescrMap, d_spinMode), {});
@@ -2599,7 +2694,9 @@ namespace dftefe
         const std::vector<double> &  atomMagZFactors,
         SpinMode                     spinMode,
         const size_type              chebyshevPolynomialDegree,
-        const double                 spinMixingEnhancementFactor)
+        const double                 spinMixingEnhancementFactor,
+        std::shared_ptr<const basis::PeriodicImageAtomGenerator>
+          imageAtomGenerator)
       : d_feBMWaveFn(feBMWaveFn)
       , d_evaluateEnergyEverySCF(evaluateEnergyEverySCF)
       , d_numMaxSCFIter(maxSCFIter)
@@ -2623,6 +2720,7 @@ namespace dftefe
       , d_p(feBMWaveFn->getMPIPatternP2P()->mpiCommunicator(), "Kohn Sham DFT")
       , d_isResidualChebyshevFilter(isResidualChebyshevFilter)
       , d_spinMode(spinMode)
+      , d_imageAtomGenerator(imageAtomGenerator)
       , d_pTotal(feBMWaveFn->getMPIPatternP2P()->mpiCommunicator(),
                  "Kohn Sham DFT Solve time")
       , d_xcType(xcType)
@@ -2779,6 +2877,12 @@ namespace dftefe
       int rank;
       utils::mpi::MPICommRank(d_mpiCommDomain, &rank);
       d_rootCout.setCondition(rank == 0);
+
+      KohnShamDFTInternal::printAtomInfo<ValueTypeWaveFunctionCoeff,
+                                         memorySpace,
+                                         dim>(atomCoordinates,
+                                              d_feBMWaveFn->getBasisDofHandler(),
+                                              d_rootCout);
 
       // --------TODO : use eval()-----
 
@@ -3077,7 +3181,8 @@ namespace dftefe
           waveFnBatch,
           fieldToTCIASplineMap,
           true,
-          spinMode);
+          spinMode,
+          d_imageAtomGenerator);
       d_p.registerEnd("Hamiltonian Components Initilization Electrostatic Op");
       utils::printCurrentMemoryUsage<memorySpace>(d_mpiCommDomain,
                                                   "After Elec Init");
@@ -3309,6 +3414,7 @@ namespace dftefe
       RealType elecEnergy = d_hamitonianElec->getEnergy();
       d_rootCout << "Electrostatic energy with guess density: " << elecEnergy
                  << "\n";
+
 
       //
       // Begin SCF iteration
