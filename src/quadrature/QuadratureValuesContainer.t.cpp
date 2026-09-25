@@ -461,7 +461,10 @@ namespace dftefe
         u.nEntries() == w.nEntries(),
         "Mismatch in sizes of input and output QuadratureValuesContainer passed"
         " for addition");
-      linearAlgebra::blasLapack::axpby<ValueType1, ValueType2, memorySpace>(
+      linearAlgebra::blasLapack::axpby<
+        linearAlgebra::blasLapack::scalar_type<ValueType1, ValueType2>,
+        ValueType1,
+        memorySpace>(
         u.nEntries(), a, u.begin(), b, v.begin(), w.begin(), linAlgOpContext);
     }
 

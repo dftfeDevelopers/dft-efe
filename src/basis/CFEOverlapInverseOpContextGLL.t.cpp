@@ -281,20 +281,20 @@ namespace dftefe
               JxWxNCellConj.data(),
               *linearAlgebra::LinAlgOpContextDefaults::LINALG_OP_CONTXT_HOST);
 
-            linearAlgebra::blasLapack::gemm<ValueTypeOperand,
-                                            ValueTypeOperand,
+            linearAlgebra::blasLapack::gemm<ValueTypeOperator,
+                                            ValueTypeOperator,
                                             utils::MemorySpace::HOST>(
               'N',
               'T',
               dofsPerCell,
               dofsPerCell,
               nQuadPointInCellClassicalBlock,
-              (ValueTypeOperand)1.0,
+              (ValueTypeOperator)1.0,
               JxWxNCellConj.data(),
               dofsPerCell,
               basisDataInAllCellsHost.data() + cumulativeDofQuadPointsOffset,
               dofsPerCell,
-              (ValueTypeOperand)0.0,
+              (ValueTypeOperator)0.0,
               basisOverlapTmp.data() + cumulativeBasisOverlapId,
               dofsPerCell,
               *linearAlgebra::LinAlgOpContextDefaults::LINALG_OP_CONTXT_HOST);
@@ -421,7 +421,11 @@ namespace dftefe
         numLocallyOwnedCells);
       locallyOwnedCellsNumDoFs.copyFrom(locallyOwnedCellsNumDoFsSTL);
 
-      linearAlgebra::Vector<ValueTypeOperator, memorySpace> diagonal(
+      linearAlgebra::Vector<ValueType, memorySpace> diagonal(
+        d_feBasisManager->getMPIPatternP2P(), linAlgOpContext);
+
+      // NiNj is operator-typed, so gather the diagonal real and widen it
+      linearAlgebra::Vector<ValueTypeOperator, memorySpace> diagonalOperator(
         d_feBasisManager->getMPIPatternP2P(), linAlgOpContext);
 
       const size_type numCumulativeDofsCells =
@@ -434,8 +438,17 @@ namespace dftefe
                                            itCellLocalIdsBegin,
                                            locallyOwnedCellsNumDoFs,
                                            numCumulativeDofsCells,
-                                           diagonal.data(),
+                                           diagonalOperator.data(),
                                            *linAlgOpContext);
+
+      linearAlgebra::blasLapack::
+        copyValueType1ArrToValueType2Arr<ValueTypeOperator,
+                                         ValueType,
+                                         memorySpace>(diagonalOperator
+                                                        .localSize(),
+                                                      diagonalOperator.data(),
+                                                      diagonal.data(),
+                                                      *linAlgOpContext);
 
       // function to do a static condensation to send the constraint nodes to
       // its parent nodes
@@ -460,7 +473,7 @@ namespace dftefe
       diagonal.updateGhostValues();
 
       linearAlgebra::blasLapack::reciprocalX(diagonal.localSize(),
-                                             1.0,
+                                             (ValueType)1.0,
                                              diagonal.data(),
                                              d_diagonalInv.data(),
                                              *(diagonal.getLinAlgOpContext()));

@@ -219,10 +219,10 @@ namespace dftefe
         std::make_shared<linearAlgebra::MultiVector<ValueType, memorySpace>>(
           mpiPatternP2P, linAlgOpContext, eigenVecBatchSize, ValueType());
 
-      d_kohnShamEnergiesMemspace = utils::MemoryStorage<ValueType, memorySpace>(
-        d_S * d_numWantedEigenvalues, (ValueType)0),
-      d_nOnes = utils::MemoryStorage<ValueType, memorySpace>(
-        d_S * d_numWantedEigenvalues, (ValueType)-1.0);
+      d_kohnShamEnergiesMemspace = utils::MemoryStorage<RealType, memorySpace>(
+        d_S * d_numWantedEigenvalues, (RealType)0),
+      d_nOnes = utils::MemoryStorage<RealType, memorySpace>(
+        d_S * d_numWantedEigenvalues, (RealType)-1.0);
 
       d_chfsi = std::make_shared<
         linearAlgebra::ChebyshevFilteredEigenSolver<ValueTypeOperator,
@@ -950,7 +950,7 @@ namespace dftefe
           M.apply(*XBatch, *MXBatch, true, true);
 
           linearAlgebra::blasLapack::
-            axpbyBlocked<ValueType, ValueType, memorySpace>(
+            axpbyBlocked<RealType, ValueType, memorySpace>(
               eigenVecLocalSize,
               numEigVecInBatchTotal,
               1,

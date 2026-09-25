@@ -29,6 +29,7 @@
 #include <utils/TypeConfig.h>
 #include <utils/MemorySpaceType.h>
 #include <quadrature/QuadratureRuleContainer.h>
+#include <linearAlgebra/BlasLapackTypedef.h>
 #include <quadrature/QuadratureAttributes.h>
 #include <basis/BasisDofHandler.h>
 #include <memory>
@@ -63,6 +64,9 @@ namespace dftefe
       //
       using Storage =
         dftefe::utils::MemoryStorage<ValueTypeBasisData, memorySpace>;
+      using StorageReal = dftefe::utils::MemoryStorage<
+        linearAlgebra::blasLapack::real_type<ValueTypeBasisData>,
+        memorySpace>;
       using pointer                   = typename Storage::pointer;
       using reference                 = typename Storage::reference;
       using const_reference           = typename Storage::const_reference;

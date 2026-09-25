@@ -43,6 +43,7 @@ namespace dftefe
       : public Hamiltonian<
           linearAlgebra::blasLapack::scalar_type<ValueTypeElectrostaticsBasis,
                                                  ValueTypeWaveFunctionBasis>,
+          ValueTypeWaveFunctionCoeff,
           memorySpace>,
         public Energy<linearAlgebra::blasLapack::real_type<
           linearAlgebra::blasLapack::scalar_type<
@@ -61,7 +62,7 @@ namespace dftefe
                                                ValueTypeWaveFunctionCoeff>;
       using ValueType =
         linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
-                                               ValueTypeOperator>;
+                                               ValueTypeOperand>;
       using RealType = linearAlgebra::blasLapack::real_type<ValueType>;
 
       using Storage = utils::MemoryStorage<ValueType, memorySpace>;
@@ -74,6 +75,7 @@ namespace dftefe
         std::shared_ptr<const ElectrostaticFE<ValueTypeElectrostaticsBasis,
                                               ValueTypeElectrostaticsCoeff,
                                               ValueTypeWaveFunctionBasis,
+                                              ValueTypeWaveFunctionCoeff,
                                               memorySpace,
                                               dim>>       electroHamiltonian,
         std::shared_ptr<const ExchangeCorrelationFE<ValueTypeWaveFunctionBasis,
@@ -88,6 +90,7 @@ namespace dftefe
         std::shared_ptr<const ElectrostaticFE<ValueTypeElectrostaticsBasis,
                                               ValueTypeElectrostaticsCoeff,
                                               ValueTypeWaveFunctionBasis,
+                                              ValueTypeWaveFunctionCoeff,
                                               memorySpace,
                                               dim>>       electroHamiltonian,
         std::shared_ptr<const ExchangeCorrelationFE<ValueTypeWaveFunctionBasis,
@@ -117,6 +120,7 @@ namespace dftefe
       std::shared_ptr<const ElectrostaticFE<ValueTypeElectrostaticsBasis,
                                             ValueTypeElectrostaticsCoeff,
                                             ValueTypeWaveFunctionBasis,
+                                            ValueTypeWaveFunctionCoeff,
                                             memorySpace,
                                             dim>>
       getElectrostaticFE() const;
@@ -131,6 +135,7 @@ namespace dftefe
       std::shared_ptr<const ElectrostaticFE<ValueTypeElectrostaticsBasis,
                                             ValueTypeElectrostaticsCoeff,
                                             ValueTypeWaveFunctionBasis,
+                                            ValueTypeWaveFunctionCoeff,
                                             memorySpace,
                                             dim>>
         d_electroHamiltonian;

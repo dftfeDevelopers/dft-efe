@@ -83,6 +83,10 @@ namespace dftefe
                                                     ValueTypeBasisData,
                                                     memorySpace>::StorageBasis;
 
+      // JxW is real whatever the basis value type is
+      using RealTypeBasisData =
+        linearAlgebra::blasLapack::real_type<ValueTypeBasisData>;
+
       FEBasisOperations(
         std::shared_ptr<const BasisDataStorage<ValueTypeBasisData, memorySpace>>
                         basisDataStorage,
@@ -147,12 +151,13 @@ namespace dftefe
 
       /* FE functions for local kernel computations*/
       /* \integral (L1 op1 N1) f (L2 op2 N2) dx */
+      template <typename ValueTypeF>
       void
       computeFEMatrices(
         realspace::LinearLocalOp L1,
         realspace::VectorMathOp  Op1,
         const std::vector<
-          quadrature::QuadratureValuesContainer<ValueTypeUnion, memorySpace>>
+          quadrature::QuadratureValuesContainer<ValueTypeF, memorySpace>>
           &                                          fVec,
         realspace::VectorMathOp                      L2,
         realspace::LinearLocalOp                     Op2,
@@ -161,10 +166,11 @@ namespace dftefe
 
       /* FE functions for local kernel computations*/
       /* \integral f L12 op12 (N1.N2) dx */
+      template <typename ValueTypeF>
       void
       computeFEMatrices(
         const std::vector<
-          quadrature::QuadratureValuesContainer<ValueTypeUnion, memorySpace>>
+          quadrature::QuadratureValuesContainer<ValueTypeF, memorySpace>>
           &                                          fVec,
         realspace::VectorMathOp                      Op12,
         realspace::LinearLocalOp                     L12,
@@ -178,7 +184,7 @@ namespace dftefe
         realspace::LinearLocalOp                     L1,
         realspace::VectorMathOp                      Op1,
         realspace::LinearLocalOp                     L2,
-        StorageBasis &                               cellWiseFEData,
+        StorageUnion &                               cellWiseFEData,
         linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext) const;
 
     private:
@@ -188,9 +194,12 @@ namespace dftefe
       size_type d_maxFieldBlock;
 
       /**---temporary scratch spaces----- */
-      mutable StorageBasis d_basisDataInCellRange,
-        d_basisGradientDataInCellRange, d_JxWxNBlock, d_JxWxGradNBlock;
-      mutable StorageUnion                    d_fieldCellValues, d_fxJxWxNBlock;
+      // The basis-typed blocks are only what the data storage fetches into;
+      // the gemms read the union-typed ones
+      mutable StorageBasis d_basisDataInCellRangeBasisType,
+        d_basisGradientDataInCellRangeBasisType;
+      mutable StorageUnion d_fieldCellValues, d_fxJxWxNBlock, d_JxWxNBlock,
+        d_basisDataInCellRange, d_basisGradientDataInCellRange;
       mutable std::pair<size_type, size_type> d_cellRangeForBasisDataCache;
       mutable bool                            d_isBasisDataCellRangeCached;
       mutable std::pair<size_type, size_type>
@@ -212,12 +221,13 @@ namespace dftefe
       void
       deleteScratch() const;
 
+      template <typename ValueTypeF>
       void
       BasisWeakFormKernelWithField(
         realspace::LinearLocalOp L1,
         realspace::VectorMathOp  Op1,
         const std::vector<
-          quadrature::QuadratureValuesContainer<ValueTypeUnion, memorySpace>>
+          quadrature::QuadratureValuesContainer<ValueTypeF, memorySpace>>
           &                      fVec,
         realspace::VectorMathOp  Op2,
         realspace::LinearLocalOp L2,
@@ -228,10 +238,11 @@ namespace dftefe
         StorageUnion &                               cellWiseFEData,
         linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext) const;
 
+      template <typename ValueTypeF>
       void
       BasisWeakFormKernelWithField(
         const std::vector<
-          quadrature::QuadratureValuesContainer<ValueTypeUnion, memorySpace>>
+          quadrature::QuadratureValuesContainer<ValueTypeF, memorySpace>>
           &                      fVec,
         realspace::VectorMathOp  Op12,
         realspace::LinearLocalOp L12,
@@ -251,7 +262,7 @@ namespace dftefe
           const FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
                                                      feBasisDataStorage,
         const size_type                              cellBlockSize,
-        StorageBasis &                               cellWiseFEData,
+        StorageUnion &                               cellWiseFEData,
         linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext) const;
 
     }; // end of FEBasisOperations

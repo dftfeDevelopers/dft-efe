@@ -107,8 +107,10 @@ namespace dftefe
                                ValueTypeOperator,
                                memorySpace,
                                dim> *d_efebasisDofHandler;
-      linearAlgebra::Vector<ValueTypeOperator, memorySpace> d_diagonalInv;
-      std::shared_ptr<utils::MemoryStorage<ValueTypeOperator, memorySpace>>
+      // union-typed: the diagonal passes through the operand-typed constraints
+      // and the enrichment block multiplies the operand in a gemm
+      linearAlgebra::Vector<ValueType, memorySpace> d_diagonalInv;
+      std::shared_ptr<utils::MemoryStorage<ValueType, memorySpace>>
                 d_basisOverlapEnrichmentBlock;
       size_type d_nglobalEnrichmentIds;
       std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>

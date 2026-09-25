@@ -500,9 +500,15 @@ int main(int argc, char** argv)
   // 3. Make EFEBasisDataStorage with input as quadratureContainer.
 
   std::shared_ptr<dftefe::basis::EnrichmentClassicalInterfaceSpherical
-                          <double, dftefe::utils::MemorySpace::HOST, dim>>
+                          <double,
+                                                                       double,
+                                                                       dftefe::utils::MemorySpace::HOST,
+                                                                       dim>>
                           enrichClassIntfce = std::make_shared<dftefe::basis::EnrichmentClassicalInterfaceSpherical
-                          <double, dftefe::utils::MemorySpace::HOST, dim>>(triangulationBase,
+                          <double,
+                                                                                                                    double,
+                                                                                                                    dftefe::utils::MemorySpace::HOST,
+                                                                                                                    dim>>(triangulationBase,
                           atomSphericalDataContainer,
                           atomPartitionTolerance,
                           atomSymbolVec,

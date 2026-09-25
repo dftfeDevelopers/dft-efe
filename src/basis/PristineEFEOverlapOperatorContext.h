@@ -76,8 +76,9 @@ namespace dftefe
         linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
                                                ValueTypeOperand>;
 
-      using Storage =
-        dftefe::utils::MemoryStorage<ValueTypeOperator, memorySpace>;
+      // the cell overlap is multiplied against the operand in apply, and BLAS
+      // has no mixed real-times-complex gemm, so it is stored in the union type
+      using Storage = dftefe::utils::MemoryStorage<ValueType, memorySpace>;
 
     public:
       /**

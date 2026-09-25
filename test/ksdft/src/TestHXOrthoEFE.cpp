@@ -402,9 +402,15 @@ int main()
 
     // Create the enrichmentClassicalInterface object for vtotal
       std::shared_ptr<basis::EnrichmentClassicalInterfaceSpherical
-                          <double, Host, dim>>
+                          <double,
+                                                                   double,
+                                                                   Host,
+                                                                   dim>>
         enrichClassIntfceTotalPot = std::make_shared<basis::EnrichmentClassicalInterfaceSpherical
-                          <double, Host, dim>>
+                          <double,
+                                                                                                  double,
+                                                                                                  Host,
+                                                                                                  dim>>
                           (cfeBasisDataStorageGLL,
                           cfeBasisDataStorageAdaptive,
                           atomSphericalDataContainer,
@@ -417,9 +423,15 @@ int main()
 
     // Create the enrichmentClassicalInterface object for wavefn
   std::shared_ptr<basis::EnrichmentClassicalInterfaceSpherical
-                          <double, Host, dim>>
+                          <double,
+                                                               double,
+                                                               Host,
+                                                               dim>>
     enrichClassIntfceOrbital = std::make_shared<basis::EnrichmentClassicalInterfaceSpherical
-                          <double, Host, dim>>
+                          <double,
+                                                                                             double,
+                                                                                             Host,
+                                                                                             dim>>
                           (cfeBasisDataStorageGLL,
                           cfeBasisDataStorageAdaptive,
                           atomSphericalDataContainer,
@@ -663,15 +675,17 @@ int main()
                 50);
 
     std::shared_ptr<ksdft::ElectrostaticLocalFE<double,
-                                        double,
-                                        double,
-                                        Host,
-                                        dim>>  hamitonianElec =
+                                                double,
+                                                double,
+                                                double,
+                                                Host,
+                                                dim>>  hamitonianElec =
     std::make_shared<ksdft::ElectrostaticLocalFE<double,
-                                          double,
-                                          double,
-                                          Host,
-                                          dim>>(
+                                                 double,
+                                                 double,
+                                                 double,
+                                                 Host,
+                                                 dim>>(
       atomCoordinatesVec,
       atomChargesVec,
       smearedChargeRadiusVec,
@@ -697,10 +711,10 @@ int main()
                                                   50);
 
   using HamiltonianPtrVariant =
-    std::variant<ksdft::Hamiltonian<float, Host> *,
-                  ksdft::Hamiltonian<double, Host> *,
-                  ksdft::Hamiltonian<std::complex<float>, Host> *,
-                  ksdft::Hamiltonian<std::complex<double>, Host> *>;
+    std::variant<ksdft::Hamiltonian<float, double, Host> *,
+                  ksdft::Hamiltonian<double, double, Host> *,
+                  ksdft::Hamiltonian<std::complex<float>, double, Host> *,
+                  ksdft::Hamiltonian<std::complex<double>, double, Host> *>;
                                                                     
   std::vector<HamiltonianPtrVariant> hamiltonianComponentsVec{
     /*hamitonianKin.get(),*/ hamitonianElec.get()/*, hamitonianXC.get()*/};

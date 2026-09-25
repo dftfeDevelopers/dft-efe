@@ -792,10 +792,14 @@ namespace dftefe
               typename ValueType2,
               utils::MemorySpace memorySpace>
     void
-    add(const std::vector<blasLapack::scalar_type<ValueType1, ValueType2>> &a,
-        const MultiVector<ValueType1, memorySpace> &                        u,
-        const std::vector<blasLapack::scalar_type<ValueType1, ValueType2>> &b,
-        const MultiVector<ValueType2, memorySpace> &                        v,
+    add(const std::vector<
+          blasLapack::real_type<blasLapack::scalar_type<ValueType1, ValueType2>>>
+          &                                         a,
+        const MultiVector<ValueType1, memorySpace> &u,
+        const std::vector<
+          blasLapack::real_type<blasLapack::scalar_type<ValueType1, ValueType2>>>
+          &                                         b,
+        const MultiVector<ValueType2, memorySpace> &v,
         MultiVector<blasLapack::scalar_type<ValueType1, ValueType2>,
                     memorySpace> &                                          w)
     {
@@ -809,8 +813,9 @@ namespace dftefe
         u.getNumberComponents() == a.size() && a.size() == b.size(),
         "The coefficients are not comptible with the vector local size");
 
-      utils::MemoryStorage<blasLapack::scalar_type<ValueType1, ValueType2>,
-                           memorySpace>
+      utils::MemoryStorage<
+        blasLapack::real_type<blasLapack::scalar_type<ValueType1, ValueType2>>,
+        memorySpace>
         aMemSpace(a.size()), bMemSpace(b.size());
 
       utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
@@ -818,12 +823,14 @@ namespace dftefe
       utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
         b.size(), bMemSpace.data(), b.data());
 
+      using ValueTypeCoeff =
+        blasLapack::real_type<blasLapack::scalar_type<ValueType1, ValueType2>>;
       blasLapack::axpbyBlocked(u.localSize(),
                                nv,
-                               1,
+                               (ValueTypeCoeff)1.0,
                                aMemSpace.data(),
                                u.data(),
-                               1,
+                               (ValueTypeCoeff)1.0,
                                bMemSpace.data(),
                                v.data(),
                                w.data(),

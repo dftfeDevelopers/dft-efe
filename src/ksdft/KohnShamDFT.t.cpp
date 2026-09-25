@@ -691,6 +691,7 @@ namespace dftefe
         std::make_shared<ElectrostaticLocalFE<ValueTypeElectrostaticsBasis,
                                               ValueTypeElectrostaticsCoeff,
                                               ValueTypeWaveFunctionBasis,
+                                              ValueTypeWaveFunctionCoeff,
                                               memorySpace,
                                               dim>>(
           atomCoordinates,
@@ -1217,6 +1218,7 @@ namespace dftefe
         std::make_shared<ElectrostaticLocalFE<ValueTypeElectrostaticsBasis,
                                               ValueTypeElectrostaticsCoeff,
                                               ValueTypeWaveFunctionBasis,
+                                              ValueTypeWaveFunctionCoeff,
                                               memorySpace,
                                               dim>>(
           atomCoordinates,
@@ -1809,6 +1811,7 @@ namespace dftefe
         std::make_shared<ElectrostaticLocalFE<ValueTypeElectrostaticsBasis,
                                               ValueTypeElectrostaticsCoeff,
                                               ValueTypeWaveFunctionBasis,
+                                              ValueTypeWaveFunctionCoeff,
                                               memorySpace,
                                               dim>>(
           atomCoordinates,
@@ -3395,6 +3398,7 @@ namespace dftefe
             ElectrostaticLocalFE<ValueTypeElectrostaticsBasis,
                                  ValueTypeElectrostaticsCoeff,
                                  ValueTypeWaveFunctionBasis,
+                                 ValueTypeWaveFunctionCoeff,
                                  memorySpace,
                                  dim>>(d_hamitonianElec))
         {
@@ -3476,6 +3480,7 @@ namespace dftefe
                     ElectrostaticLocalFE<ValueTypeElectrostaticsBasis,
                                          ValueTypeElectrostaticsCoeff,
                                          ValueTypeWaveFunctionBasis,
+                                         ValueTypeWaveFunctionCoeff,
                                          memorySpace,
                                          dim>>(d_hamitonianElec))
                 {
@@ -3540,6 +3545,11 @@ namespace dftefe
                                 true,
                                 *d_MContext,
                                 *d_MInvContext);
+          // the eigensolver's error was previously discarded, which hid a
+          // failed solve behind a zero density
+          if (!err.isSuccess)
+            d_rootCout << "Kohn-Sham eigensolve FAILED: " << err.msg << "\n";
+
           s.occupancies = d_ksEigSolve->getFractionalOccupancy();
           acc.returnBack();
 
@@ -3655,6 +3665,7 @@ namespace dftefe
                     ElectrostaticLocalFE<ValueTypeElectrostaticsBasis,
                                          ValueTypeElectrostaticsCoeff,
                                          ValueTypeWaveFunctionBasis,
+                                         ValueTypeWaveFunctionCoeff,
                                          memorySpace,
                                          dim>>(d_hamitonianElec))
                 {
@@ -3683,6 +3694,7 @@ namespace dftefe
                     ElectrostaticLocalFE<ValueTypeElectrostaticsBasis,
                                          ValueTypeElectrostaticsCoeff,
                                          ValueTypeWaveFunctionBasis,
+                                         ValueTypeWaveFunctionCoeff,
                                          memorySpace,
                                          dim>>(d_hamitonianElec))
                 {
@@ -3796,6 +3808,7 @@ namespace dftefe
                 ElectrostaticLocalFE<ValueTypeElectrostaticsBasis,
                                      ValueTypeElectrostaticsCoeff,
                                      ValueTypeWaveFunctionBasis,
+                                     ValueTypeWaveFunctionCoeff,
                                      memorySpace,
                                      dim>>(d_hamitonianElec))
             {
@@ -3823,6 +3836,7 @@ namespace dftefe
                 ElectrostaticLocalFE<ValueTypeElectrostaticsBasis,
                                      ValueTypeElectrostaticsCoeff,
                                      ValueTypeWaveFunctionBasis,
+                                     ValueTypeWaveFunctionCoeff,
                                      memorySpace,
                                      dim>>(d_hamitonianElec))
             {

@@ -24,23 +24,31 @@
  */
 
 #include <basis/EnrichmentDataEvalKernels.h>
+#include <complex>
 
 namespace dftefe
 {
   namespace basis
   {
-    template <utils::MemorySpace memorySpace>
+    template <typename ValueType, utils::MemorySpace memorySpace>
     void
-    EnrichmentDataEvalKernels<memorySpace>::getEnrichmentValues(
+    EnrichmentDataEvalKernels<ValueType, memorySpace>::getEnrichmentValues(
       const size_type               numEnrichmentFunc,
       const std::vector<size_type> &pointsPerEnrichId,
       const std::vector<std::shared_ptr<atoms::SphericalData>>
         &                                          sphericalDataVec,
       const double *                               points,
       const double *                               origin,
-      double *                                     values,
+      ValueType *                         values,
       linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext)
     {
+      // SphericalData evaluates into a real buffer, whereas the k-point phase
+      // makes the enrichment complex, so widen on the way out
+      size_type numValues = 0;
+      for (int i = 0; i < numEnrichmentFunc; i++)
+        numValues += pointsPerEnrichId[i];
+      utils::MemoryStorage<double, memorySpace> valuesReal(numValues, 0.0);
+
       size_type cumulativeValuesOffset = 0;
       size_type cumulativeCoordsOffset = 0;
       for (int i = 0; i < numEnrichmentFunc; i++)
@@ -48,24 +56,36 @@ namespace dftefe
           sphericalDataVec[i]->getValue(pointsPerEnrichId[i],
                                         points + cumulativeCoordsOffset,
                                         origin + i * 3,
-                                        values + cumulativeValuesOffset);
+                                        valuesReal.data() +
+                                          cumulativeValuesOffset);
           cumulativeValuesOffset += pointsPerEnrichId[i];
           cumulativeCoordsOffset += pointsPerEnrichId[i] * 3;
         }
+
+      linearAlgebra::blasLapack::
+        copyValueType1ArrToValueType2Arr<double, ValueType, memorySpace>(
+          numValues, valuesReal.data(), values, linAlgOpContext);
     }
 
-    template <utils::MemorySpace memorySpace>
+    template <typename ValueType, utils::MemorySpace memorySpace>
     void
-    EnrichmentDataEvalKernels<memorySpace>::getEnrichmentGradients(
+    EnrichmentDataEvalKernels<ValueType, memorySpace>::getEnrichmentGradients(
       const size_type               numEnrichmentFunc,
       const std::vector<size_type> &pointsPerEnrichId,
       const std::vector<std::shared_ptr<atoms::SphericalData>>
         &                                          sphericalDataVec,
       const double *                               points,
       const double *                               origin,
-      double *                                     values,
+      ValueType *                         values,
       linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext)
     {
+      // SphericalData evaluates into a real buffer, whereas the k-point phase
+      // makes the enrichment complex, so widen on the way out
+      size_type numValues = 0;
+      for (int i = 0; i < numEnrichmentFunc; i++)
+        numValues += pointsPerEnrichId[i] * 3;
+      utils::MemoryStorage<double, memorySpace> valuesReal(numValues, 0.0);
+
       size_type cumulativeValuesOffset = 0;
       size_type cumulativeCoordsOffset = 0;
       for (int i = 0; i < numEnrichmentFunc; i++)
@@ -73,16 +93,20 @@ namespace dftefe
           sphericalDataVec[i]->getGradientValue(pointsPerEnrichId[i],
                                                 points + cumulativeCoordsOffset,
                                                 origin + i * 3,
-                                                values +
+                                                valuesReal.data() +
                                                   cumulativeValuesOffset);
           cumulativeValuesOffset += pointsPerEnrichId[i] * 3;
           cumulativeCoordsOffset += pointsPerEnrichId[i] * 3;
         }
+
+      linearAlgebra::blasLapack::
+        copyValueType1ArrToValueType2Arr<double, ValueType, memorySpace>(
+          numValues, valuesReal.data(), values, linAlgOpContext);
     }
 
-    template <utils::MemorySpace memorySpace>
+    template <typename ValueType, utils::MemorySpace memorySpace>
     void
-    EnrichmentDataEvalKernels<memorySpace>::getEnrichmentValuesInCellRange(
+    EnrichmentDataEvalKernels<ValueType, memorySpace>::getEnrichmentValuesInCellRange(
       const double *                  quadPtsInAllCells,
       const double *                  originPtsInAllCells,
       const size_type *               originOffsetPerCellEnrich,
@@ -91,7 +115,7 @@ namespace dftefe
       const std::vector<size_type>    numQuadPtsInAllCells,
       const atoms::SphericalDataNumerical::Func<memorySpace>
         *                                          sphericalDataFuncInAllCells,
-      double *                                     output,
+      ValueType *                         output,
       linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext)
     {
       const size_type dim = 3;
@@ -139,9 +163,9 @@ namespace dftefe
         }
     }
 
-    template <utils::MemorySpace memorySpace>
+    template <typename ValueType, utils::MemorySpace memorySpace>
     void
-    EnrichmentDataEvalKernels<memorySpace>::getEnrichmentGradientsInCellRange(
+    EnrichmentDataEvalKernels<ValueType, memorySpace>::getEnrichmentGradientsInCellRange(
       const double *                  quadPtsInAllCells,
       const double *                  originPtsInAllCells,
       const size_type *               originOffsetPerCellEnrich,
@@ -150,7 +174,7 @@ namespace dftefe
       const std::vector<size_type>    numQuadPtsInAllCells,
       const atoms::SphericalDataNumerical::Func<memorySpace>
         *                                          sphericalDataFuncInAllCells,
-      double *                                     output,
+      ValueType *                         output,
       linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext)
     {
       const size_type dim = 3;
@@ -210,6 +234,8 @@ namespace dftefe
         }
     }
 
-    template class EnrichmentDataEvalKernels<utils::MemorySpace::HOST>;
+    template class EnrichmentDataEvalKernels<double, utils::MemorySpace::HOST>;
+    template class EnrichmentDataEvalKernels<std::complex<double>,
+                                             utils::MemorySpace::HOST>;
   } // end of namespace basis
 } // end of namespace dftefe

@@ -866,17 +866,12 @@ namespace dftefe
                                   {
                                     overlapMatParVec[s].local_el(j, i) *=
                                       ValueType(0.5);
-                                    orthoErrValueType +=
-                                      (overlapMatParVec[s].local_el(j, i) -
-                                       (ValueType)1.0) *
-                                      utils::conjugate<ValueType>(
-                                        overlapMatParVec[s].local_el(j, i) -
-                                        (ValueType)1.0);
+                                    orthoErrValueType += utils::absSq(
+                                      overlapMatParVec[s].local_el(j, i) -
+                                      (ValueType)1.0);
                                   }
-                                orthoErrValueType +=
-                                  (overlapMatParVec[s].local_el(j, i)) *
-                                  utils::conjugate<ValueType>(
-                                    overlapMatParVec[s].local_el(j, i));
+                                orthoErrValueType += utils::absSq(
+                                  overlapMatParVec[s].local_el(j, i));
                               }
                           }
                     }
@@ -1121,17 +1116,12 @@ namespace dftefe
                             if (glob_i == glob_j)
                               {
                                 overlapMatPar.local_el(j, i) *= ValueType(0.5);
-                                orthoErrValueType +=
-                                  (overlapMatPar.local_el(j, i) -
-                                   (ValueType)1.0) *
-                                  utils::conjugate<ValueType>(
-                                    overlapMatPar.local_el(j, i) -
-                                    (ValueType)1.0);
+                                orthoErrValueType += utils::absSq(
+                                  overlapMatPar.local_el(j, i) -
+                                  (ValueType)1.0);
                               }
                             orthoErrValueType +=
-                              (overlapMatPar.local_el(j, i)) *
-                              utils::conjugate<ValueType>(
-                                overlapMatPar.local_el(j, i));
+                              utils::absSq(overlapMatPar.local_el(j, i));
                           }
                       }
 

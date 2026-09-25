@@ -249,16 +249,18 @@ namespace dftefe
 
           // temp.setValue((ValueType)0.0);
           A.apply(q, temp, true, false);
-          BInv.apply(temp, v, false, false);
 
-          // get \alpha = q_i^TAq_i
-
+          // get \alpha = q_i^TAq_i. This has to be taken before BInv.apply,
+          // which distributes the constraints onto its input and so would
+          // leave temp holding something other than A q_i.
           dot<ValueType, ValueType, memorySpace>(
             q,
             temp,
             alpha,
             blasLapack::ScalarOp::Conj,
             blasLapack::ScalarOp::Identity);
+
+          BInv.apply(temp, v, false, false);
 
           {
             ValueType totalAlpha = (ValueType)0;

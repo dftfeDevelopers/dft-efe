@@ -34,12 +34,12 @@ namespace dftefe
   {
     namespace FEBasisManagerInternal
     {
-      template <typename ValueTypeBasisData,
+      template <typename ValueType,
                 dftefe::utils::MemorySpace memorySpace,
                 size_type                  dim>
       size_type
       getLocallyOwnedCellsCumulativeDofs(
-        const basis::FEBasisDofHandler<ValueTypeBasisData, memorySpace, dim>
+        const basis::FEBasisDofHandler<ValueType, memorySpace, dim>
           *feBDH)
       {
         size_type returnValue          = 0;
@@ -50,12 +50,12 @@ namespace dftefe
         return returnValue;
       }
 
-      template <typename ValueTypeBasisData,
+      template <typename ValueType,
                 dftefe::utils::MemorySpace memorySpace,
                 size_type                  dim>
       void
       getNumLocallyOwnedCellDofs(
-        const basis::FEBasisDofHandler<ValueTypeBasisData, memorySpace, dim>
+        const basis::FEBasisDofHandler<ValueType, memorySpace, dim>
           *                     feBDH,
         std::vector<size_type> &locallyOwnedCellDofs)
       {
@@ -65,12 +65,12 @@ namespace dftefe
           locallyOwnedCellDofs[iCell] = feBDH->nCellDofs(iCell);
       }
 
-      template <typename ValueTypeBasisData,
+      template <typename ValueType,
                 dftefe::utils::MemorySpace memorySpace,
                 size_type                  dim>
       void
       getLocallyOwnedCellStartIds(
-        const basis::FEBasisDofHandler<ValueTypeBasisData, memorySpace, dim>
+        const basis::FEBasisDofHandler<ValueType, memorySpace, dim>
           *                     feBDH,
         std::vector<size_type> &locallyOwnedCellStartIds)
       {
@@ -90,12 +90,12 @@ namespace dftefe
           }
       }
 
-      template <typename ValueTypeBasisData,
+      template <typename ValueType,
                 dftefe::utils::MemorySpace memorySpace,
                 size_type                  dim>
       void
       getLocallyOwnedCellGlobalIndices(
-        const basis::FEBasisDofHandler<ValueTypeBasisData, memorySpace, dim>
+        const basis::FEBasisDofHandler<ValueType, memorySpace, dim>
           *                            feBDH,
         std::vector<global_size_type> &locallyOwnedCellGlobalIndices)
       {
@@ -114,13 +114,12 @@ namespace dftefe
           }
       }
 
-      template <typename ValueTypeBasisCoeff,
-                typename ValueTypeBasisData,
+      template <typename ValueType,
                 dftefe::utils::MemorySpace memorySpace,
                 size_type                  dim>
       void
       getLocallyOwnedCellLocalIndices(
-        const basis::FEBasisDofHandler<ValueTypeBasisData, memorySpace, dim>
+        const basis::FEBasisDofHandler<ValueType, memorySpace, dim>
           *                                           feBDH,
         const utils::mpi::MPIPatternP2P<memorySpace> *mpiPatternP2P,
         const std::vector<global_size_type> &locallyOwnedCellGlobalIndices,
@@ -219,11 +218,11 @@ namespace dftefe
 
       size_type numLocallyOwnedCells = d_feBDH->nLocallyOwnedCells();
       FEBasisManagerInternal::
-        getNumLocallyOwnedCellDofs<ValueTypeBasisData, memorySpace, dim>(
+        getNumLocallyOwnedCellDofs<ValueTypeBasisCoeff, memorySpace, dim>(
           d_feBDH.get(), d_numLocallyOwnedCellDofs);
       const size_type cumulativeCellDofs =
         FEBasisManagerInternal::getLocallyOwnedCellsCumulativeDofs<
-          ValueTypeBasisData,
+          ValueTypeBasisCoeff,
           memorySpace,
           dim>(d_feBDH.get());
 
@@ -232,7 +231,7 @@ namespace dftefe
       //
       d_locallyOwnedCellStartIds.resize(numLocallyOwnedCells, 0);
       FEBasisManagerInternal::
-        getLocallyOwnedCellStartIds<ValueTypeBasisData, memorySpace, dim>(
+        getLocallyOwnedCellStartIds<ValueTypeBasisCoeff, memorySpace, dim>(
           d_feBDH.get(), d_locallyOwnedCellStartIds);
 
       //
@@ -242,7 +241,7 @@ namespace dftefe
         cumulativeCellDofs, 0);
       d_locallyOwnedCellGlobalIndices.resize(cumulativeCellDofs);
       FEBasisManagerInternal::
-        getLocallyOwnedCellGlobalIndices<ValueTypeBasisData, memorySpace, dim>(
+        getLocallyOwnedCellGlobalIndices<ValueTypeBasisCoeff, memorySpace, dim>(
           d_feBDH.get(), locallyOwnedCellGlobalIndicesTmp);
       utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
         cumulativeCellDofs,
@@ -276,7 +275,6 @@ namespace dftefe
                                                              0);
       FEBasisManagerInternal::getLocallyOwnedCellLocalIndices<
         ValueTypeBasisCoeff,
-        ValueTypeBasisData,
         memorySpace,
         dim>(d_feBDH.get(),
              d_mpiPatternP2P.get(),

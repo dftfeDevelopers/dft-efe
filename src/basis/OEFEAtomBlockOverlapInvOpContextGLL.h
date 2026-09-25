@@ -92,13 +92,15 @@ namespace dftefe
                                ValueTypeOperator,
                                memorySpace,
                                dim> *d_efebasisDofHandler;
-      linearAlgebra::Vector<ValueTypeOperator, memorySpace> d_diagonalInv;
+      // union-typed: it passes through the operand-typed constraints
+      linearAlgebra::Vector<ValueType, memorySpace> d_diagonalInv;
       global_size_type d_nglobalEnrichmentIds;
       std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
                        d_linAlgOpContext;
       global_size_type d_nglobalIds;
 
-      utils::MemoryStorage<ValueTypeOperator, memorySpace>
+      // union-typed: it multiplies the operand in a gemm
+      utils::MemoryStorage<ValueType, memorySpace>
         d_atomBlockEnrichmentOverlapInv;
       /*utils::MemoryStorage<ValueTypeOperator, memorySpace>
         d_residualEnrichOverlapInvEigenVec,

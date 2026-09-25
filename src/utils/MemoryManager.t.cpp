@@ -76,7 +76,7 @@ namespace dftefe
                                                          ValueType *ptr)
     {
       if (size != 0)
-        std::memset(ptr, (ValueType)0, size * sizeof(ValueType));
+        std::fill(ptr, ptr + size, (ValueType)0);
     }
 
 #ifdef DFTEFE_WITH_DEVICE
@@ -129,7 +129,7 @@ namespace dftefe
                                                                 ValueType *ptr)
     {
       if (size > 0)
-        std::memset(ptr, (ValueType)0, size * sizeof(ValueType));
+        std::fill(ptr, ptr + size, (ValueType)0);
     }
 
     template <typename ValueType>

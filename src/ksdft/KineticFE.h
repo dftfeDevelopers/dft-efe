@@ -45,7 +45,7 @@ namespace dftefe
               utils::MemorySpace memorySpace,
               size_type          dim>
     class KineticFE
-      : public Hamiltonian<ValueTypeBasisData, memorySpace>,
+      : public Hamiltonian<ValueTypeBasisData, ValueTypeBasisCoeff, memorySpace>,
         public Energy<linearAlgebra::blasLapack::real_type<
           linearAlgebra::blasLapack::scalar_type<ValueTypeBasisData,
                                                  ValueTypeBasisCoeff>>>
@@ -57,7 +57,9 @@ namespace dftefe
 
       using RealType = linearAlgebra::blasLapack::real_type<ValueType>;
 
-      using Storage = utils::MemoryStorage<ValueTypeBasisData, memorySpace>;
+      // the assembled cell matrix is handed to the operator context, which
+      // multiplies it against the coefficients, so it carries the union type
+      using Storage = utils::MemoryStorage<ValueType, memorySpace>;
 
     public:
       /**

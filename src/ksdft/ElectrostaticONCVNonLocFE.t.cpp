@@ -190,6 +190,7 @@ namespace dftefe
         std::make_shared<ElectrostaticLocalFE<ValueTypeBasisData,
                                               ValueTypeBasisCoeff,
                                               ValueTypeWaveFnBasis,
+                                              ValueTypeWaveFnCoeff,
                                               memorySpace,
                                               dim>>(
           atomCoordinates,
@@ -346,6 +347,7 @@ namespace dftefe
         std::make_shared<ElectrostaticLocalFE<ValueTypeBasisData,
                                               ValueTypeBasisCoeff,
                                               ValueTypeWaveFnBasis,
+                                              ValueTypeWaveFnCoeff,
                                               memorySpace,
                                               dim>>(
           atomCoordinates,
@@ -706,13 +708,13 @@ namespace dftefe
             {
               d_mpiPatternP2P = X.getMPIPatternP2P();
               d_psiBatch      = std::make_shared<
-                linearAlgebra::MultiVector<ValueType, memorySpace>>(
+                linearAlgebra::MultiVector<ValueTypeWaveFnCoeff, memorySpace>>(
                 d_mpiPatternP2P,
                 X.getLinAlgOpContext(),
                 d_maxWaveFnBlock,
                 ValueTypeWaveFnCoeff());
               d_YBatch = std::make_shared<
-                linearAlgebra::MultiVector<ValueType, memorySpace>>(
+                linearAlgebra::MultiVector<ValueTypeWaveFnCoeff, memorySpace>>(
                 d_mpiPatternP2P,
                 X.getLinAlgOpContext(),
                 d_maxWaveFnBlock,
@@ -727,13 +729,13 @@ namespace dftefe
                   d_psiBatchSmall->getNumberComponents() != smallTotal)
                 {
                   d_psiBatchSmall = std::make_shared<
-                    linearAlgebra::MultiVector<ValueType, memorySpace>>(
+                    linearAlgebra::MultiVector<ValueTypeWaveFnCoeff, memorySpace>>(
                     d_mpiPatternP2P,
                     X.getLinAlgOpContext(),
                     smallTotal,
                     ValueTypeWaveFnCoeff());
                   d_YBatchSmall = std::make_shared<
-                    linearAlgebra::MultiVector<ValueType, memorySpace>>(
+                    linearAlgebra::MultiVector<ValueTypeWaveFnCoeff, memorySpace>>(
                     d_mpiPatternP2P,
                     X.getLinAlgOpContext(),
                     smallTotal,
@@ -804,7 +806,8 @@ namespace dftefe
                 }
 
               for (size_type i = 0; i < numPsiInBatchTotal; ++i)
-                nonLocEnergy += dotProds[i] * spinFactor * occupationInBatch[i];
+                nonLocEnergy += utils::realPart(dotProds[i]) *
+                                spinFactor * occupationInBatch[i];
             }
         }
       d_rootCout << "\nNonLocal PSP Energy: " << nonLocEnergy << "\n\n";
@@ -820,6 +823,7 @@ namespace dftefe
     typename ElectrostaticFE<ValueTypeBasisData,
                              ValueTypeBasisCoeff,
                              ValueTypeWaveFnBasis,
+                             ValueTypeWaveFnCoeff,
                              memorySpace,
                              dim>::RealType
     ElectrostaticONCVNonLocFE<ValueTypeBasisData,
@@ -842,6 +846,7 @@ namespace dftefe
       typename ElectrostaticFE<ValueTypeBasisData,
                                ValueTypeBasisCoeff,
                                ValueTypeWaveFnBasis,
+                               ValueTypeWaveFnCoeff,
                                memorySpace,
                                dim>::ValueType,
       memorySpace>>

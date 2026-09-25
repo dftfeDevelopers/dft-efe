@@ -131,11 +131,10 @@ namespace dftefe
       getLocal(Storage &cellWiseStorage) const
     {
       // Zero-init spin-blocked output: S² × basisOverlapSize
-      cellWiseStorage.resize(d_S * d_S * d_basisOverlapSize,
-                             (ValueTypeBasisData)0);
+      cellWiseStorage.resize(d_S * d_S * d_basisOverlapSize, (ValueType)0);
 
       // Broadcast the scalar kinetic matrix to both diagonal spin blocks
-      HamiltonianSpinBlockCopyKernels<ValueTypeBasisData, memorySpace>::
+      HamiltonianSpinBlockCopyKernels<ValueType, memorySpace>::
         copyIntoBlock(*d_cellWiseStorageKineticEnergy,
                       cellWiseStorage,
                       d_S,
@@ -144,7 +143,7 @@ namespace dftefe
                       d_numCellDofs,
                       *d_linAlgOpContext);
       if (d_S > 1)
-        HamiltonianSpinBlockCopyKernels<ValueTypeBasisData, memorySpace>::
+        HamiltonianSpinBlockCopyKernels<ValueType, memorySpace>::
           copyIntoBlock(*d_cellWiseStorageKineticEnergy,
                         cellWiseStorage,
                         d_S,
@@ -253,7 +252,7 @@ namespace dftefe
                         numPsiInBatch,
                       occupationInBatch.begin() + s * numPsiInBatch);
 
-          std::vector<RealType> dotProds(numPsiInBatchTotal);
+          std::vector<ValueType> dotProds(numPsiInBatchTotal);
 
           if (numPsiInBatch < batchPerSpin)
             {
@@ -289,8 +288,8 @@ namespace dftefe
             }
 
           for (size_type i = 0; i < numPsiInBatchTotal; ++i)
-            d_energy +=
-              (RealType)(dotProds[i] * spinFactor * occupationInBatch[i]);
+            d_energy += utils::realPart(dotProds[i]) * spinFactor *
+                        occupationInBatch[i];
         }
 
       // for (size_type psiStartId = 0;

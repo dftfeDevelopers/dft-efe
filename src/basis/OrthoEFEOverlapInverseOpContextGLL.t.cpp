@@ -36,6 +36,9 @@ namespace dftefe
   {
     namespace OrthoEFEOverlapInverseOpContextGLLInternal
     {
+      template <typename T>
+      using RealType = linearAlgebra::blasLapack::real_type<T>;
+
       template <typename ValueTypeOperator,
                 typename ValueTypeOperand,
                 utils::MemorySpace memorySpace,
@@ -247,7 +250,8 @@ namespace dftefe
           "in OrthoEFEOverlapOperatorContext for the Classical data storage of enrichment dof blocks.");
 
         std::shared_ptr<
-          const EnrichmentClassicalInterfaceSpherical<ValueTypeOperator,
+          const EnrichmentClassicalInterfaceSpherical<ValueTypeOperand,
+                                                      ValueTypeOperator,
                                                       memorySpace,
                                                       dim>>
           eci = eefeBDH->getEnrichmentClassicalInterface();
@@ -361,7 +365,7 @@ namespace dftefe
         basisDataInAllCellsEnrichmentBlockEnrichmentHost.copyFrom(
           basisDataInAllCellsEnrichmentBlockEnrichment);
 
-        utils::MemoryStorage<double, memorySpace>
+        utils::MemoryStorage<ValueTypeOperator, memorySpace>
           quadValuesInAllCellsEnrichmentMemSpace(
             numCumulativeEnrichDofsxQuadEFEInAllCells);
         eefeBDH->getEnrichmentClassicalInterface()
@@ -371,7 +375,7 @@ namespace dftefe
             quadValuesInAllCellsEnrichmentMemSpace.data(),
             *eefeBDH->getEnrichmentClassicalInterface()->getLinAlgOpContext(),
             std::make_pair((size_type)0, numLocallyOwnedCells));
-        std::vector<double> quadValuesInAllCellsEnrichment(
+        std::vector<ValueTypeOperator> quadValuesInAllCellsEnrichment(
           numCumulativeEnrichDofsxQuadEFEInAllCells);
         utils::MemoryTransfer<utils::MemorySpace::HOST, memorySpace>::copy(
           numCumulativeEnrichDofsxQuadEFEInAllCells,
@@ -830,7 +834,7 @@ namespace dftefe
 
         size_type cellIndex = 0;
 
-        utils::MemoryStorage<double, memorySpace>
+        utils::MemoryStorage<ValueTypeOperator, memorySpace>
           quadValuesInAllCellsEnrichment(
             numCumulativeEnrichDofsxQuadEFEInAllCells);
         eefeBDH->getEnrichmentClassicalInterface()
@@ -1091,7 +1095,7 @@ namespace dftefe
             utils::MemoryStorage<ValueTypeOperator, memorySpace> JxWxNCell(
               JxWxNCellSize);
 
-            linearAlgebra::blasLapack::scaleStridedVarBatched<ValueTypeOperator,
+            linearAlgebra::blasLapack::scaleStridedVarBatched<RealType<ValueTypeOperator>,
                                                               ValueTypeOperator,
                                                               memorySpace>(
               numCellsInBlock,
@@ -1165,7 +1169,7 @@ namespace dftefe
               }
             JxWxNCell.resize(JxWxNCellSize, 0);
 
-            linearAlgebra::blasLapack::scaleStridedVarBatched<ValueTypeOperator,
+            linearAlgebra::blasLapack::scaleStridedVarBatched<RealType<ValueTypeOperator>,
                                                               ValueTypeOperator,
                                                               memorySpace>(
               numCellsInBlock,
@@ -1243,7 +1247,7 @@ namespace dftefe
               }
             JxWxNCell.resize(JxWxNCellSize, 0);
 
-            linearAlgebra::blasLapack::scaleStridedVarBatched<ValueTypeOperator,
+            linearAlgebra::blasLapack::scaleStridedVarBatched<RealType<ValueTypeOperator>,
                                                               ValueTypeOperator,
                                                               memorySpace>(
               numCellsInBlock,
@@ -1320,7 +1324,7 @@ namespace dftefe
               }
             JxWxNCell.resize(JxWxNCellSize, 0);
 
-            linearAlgebra::blasLapack::scaleStridedVarBatched<ValueTypeOperator,
+            linearAlgebra::blasLapack::scaleStridedVarBatched<RealType<ValueTypeOperator>,
                                                               ValueTypeOperator,
                                                               memorySpace>(
               numCellsInBlock,
@@ -1579,7 +1583,11 @@ namespace dftefe
         numLocallyOwnedCells);
       locallyOwnedCellsNumDoFs.copyFrom(locallyOwnedCellsNumDoFsSTL);
 
-      linearAlgebra::Vector<ValueTypeOperator, memorySpace> diagonal(
+      linearAlgebra::Vector<ValueType, memorySpace> diagonal(
+        d_feBasisManager->getMPIPatternP2P(), linAlgOpContext);
+
+      // NiNj is operator-typed, so gather the diagonal real and widen it
+      linearAlgebra::Vector<ValueTypeOperator, memorySpace> diagonalOperator(
         d_feBasisManager->getMPIPatternP2P(), linAlgOpContext);
 
       const size_type numCumulativeDofsCells =
@@ -1594,8 +1602,17 @@ namespace dftefe
                                            itCellLocalIdsBegin,
                                            locallyOwnedCellsNumDoFs,
                                            numCumulativeDofsCells,
-                                           diagonal.data(),
+                                           diagonalOperator.data(),
                                            *linAlgOpContext);
+
+      linearAlgebra::blasLapack::
+        copyValueType1ArrToValueType2Arr<ValueTypeOperator,
+                                         ValueType,
+                                         memorySpace>(diagonalOperator
+                                                        .localSize(),
+                                                      diagonalOperator.data(),
+                                                      diagonal.data(),
+                                                      *linAlgOpContext);
 
       // function to do a static condensation to send the constraint nodes to
       // its parent nodes
@@ -1623,8 +1640,10 @@ namespace dftefe
         NiNjInAllCellsHost(NiNjInAllCells.size());
       NiNjInAllCellsHost.template copyFrom<memorySpace>(NiNjInAllCells.data());
 
+      // keep both operands in one type: a real-over-complex division goes
+      // through the mixed overload, which real-valued data does not need
       linearAlgebra::blasLapack::reciprocalX(diagonal.localSize(),
-                                             1.0,
+                                             (ValueType)1.0,
                                              diagonal.data(),
                                              d_diagonalInv.data(),
                                              *(diagonal.getLinAlgOpContext()));
@@ -1634,10 +1653,10 @@ namespace dftefe
 
       // Now form the enrichment block matrix.
       d_basisOverlapEnrichmentBlock =
-        std::make_shared<utils::MemoryStorage<ValueTypeOperator, memorySpace>>(
+        std::make_shared<utils::MemoryStorage<ValueType, memorySpace>>(
           d_nglobalEnrichmentIds * d_nglobalEnrichmentIds);
 
-      std::vector<ValueTypeOperator> basisOverlapEnrichmentBlockSTL(
+      std::vector<ValueType> basisOverlapEnrichmentBlockSTL(
         d_nglobalEnrichmentIds * d_nglobalEnrichmentIds, 0),
         basisOverlapEnrichmentBlockSTLTmp(d_nglobalEnrichmentIds *
                                             d_nglobalEnrichmentIds,
@@ -1672,7 +1691,7 @@ namespace dftefe
         basisOverlapEnrichmentBlockSTLTmp.data(),
         basisOverlapEnrichmentBlockSTL.data(),
         basisOverlapEnrichmentBlockSTLTmp.size(),
-        utils::mpi::Types<ValueTypeOperator>::getMPIDatatype(),
+        utils::mpi::Types<ValueType>::getMPIDatatype(),
         utils::mpi::MPISum,
         d_feBasisManager->getMPIPatternP2P()->mpiCommunicator());
       std::pair<bool, std::string> mpiIsSuccessAndMsg =
@@ -1717,7 +1736,7 @@ namespace dftefe
             }
         }
 
-      linearAlgebra::blasLapack::inverse<ValueTypeOperator,
+      linearAlgebra::blasLapack::inverse<ValueType,
                                          utils::MemorySpace::HOST>(
         d_nglobalEnrichmentIds,
         basisOverlapEnrichmentBlockSTL.data(),
@@ -1884,7 +1903,7 @@ namespace dftefe
           ValueType beta  = 0.0;
 
           linearAlgebra::blasLapack::
-            gemm<ValueTypeOperator, ValueTypeOperand, memorySpace>(
+            gemm<ValueType, ValueType, memorySpace>(
               'N',
               'T',
               numComponents,

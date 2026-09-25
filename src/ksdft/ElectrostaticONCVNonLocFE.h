@@ -57,6 +57,7 @@ namespace dftefe
       : public ElectrostaticFE<ValueTypeBasisData,
                                ValueTypeBasisCoeff,
                                ValueTypeWaveFnBasis,
+                               ValueTypeWaveFnCoeff,
                                memorySpace,
                                dim>
     {
@@ -64,18 +65,21 @@ namespace dftefe
       using ValueType = typename ElectrostaticFE<ValueTypeBasisData,
                                                  ValueTypeBasisCoeff,
                                                  ValueTypeWaveFnBasis,
+                                                 ValueTypeWaveFnCoeff,
                                                  memorySpace,
                                                  dim>::ValueType;
       using Storage   = typename ElectrostaticFE<ValueTypeBasisData,
-                                               ValueTypeBasisCoeff,
-                                               ValueTypeWaveFnBasis,
-                                               memorySpace,
-                                               dim>::Storage;
+                                                 ValueTypeBasisCoeff,
+                                                 ValueTypeWaveFnBasis,
+                                                 ValueTypeWaveFnCoeff,
+                                                 memorySpace,
+                                                 dim>::Storage;
       using RealType  = typename ElectrostaticFE<ValueTypeBasisData,
-                                                ValueTypeBasisCoeff,
-                                                ValueTypeWaveFnBasis,
-                                                memorySpace,
-                                                dim>::RealType;
+                                                 ValueTypeBasisCoeff,
+                                                 ValueTypeWaveFnBasis,
+                                                 ValueTypeWaveFnCoeff,
+                                                 memorySpace,
+                                                 dim>::RealType;
 
     public:
       /**
@@ -295,6 +299,7 @@ namespace dftefe
       std::shared_ptr<ElectrostaticLocalFE<ValueTypeBasisData,
                                            ValueTypeBasisCoeff,
                                            ValueTypeWaveFnBasis,
+                                           ValueTypeWaveFnCoeff,
                                            memorySpace,
                                            dim>>
                                      d_electrostaticLocal;
@@ -308,7 +313,8 @@ namespace dftefe
       bool                           d_isNonLocPSP;
       SpinMode                       d_spinMode;
 
-      std::shared_ptr<linearAlgebra::MultiVector<ValueType, memorySpace>>
+      std::shared_ptr<
+        linearAlgebra::MultiVector<ValueTypeWaveFnCoeff, memorySpace>>
         d_psiBatchSmall, d_psiBatch, d_YBatch, d_YBatchSmall;
       std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
         d_mpiPatternP2P;

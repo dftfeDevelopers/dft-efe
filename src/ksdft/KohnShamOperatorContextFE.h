@@ -88,13 +88,22 @@ namespace dftefe
         linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
                                                ValueTypeOperand>;
 
-      using Storage = utils::MemoryStorage<ValueTypeOperator, memorySpace>;
+      // the accumulated cell Hamiltonian is multiplied against the operand,
+      // and BLAS has no mixed real-times-complex gemm
+      using Storage = utils::MemoryStorage<ValueType, memorySpace>;
 
+      // all components act on the same operand, only the operator differs
       using HamiltonianPtrVariant = std::variant<
-        std::shared_ptr<Hamiltonian<float, memorySpace>>,
-        std::shared_ptr<Hamiltonian<double, memorySpace>>,
-        std::shared_ptr<Hamiltonian<std::complex<float>, memorySpace>>,
-        std::shared_ptr<Hamiltonian<std::complex<double>, memorySpace>>>;
+        std::shared_ptr<
+          Hamiltonian<float, ValueTypeWaveFunctionCoeff, memorySpace>>,
+        std::shared_ptr<
+          Hamiltonian<double, ValueTypeWaveFunctionCoeff, memorySpace>>,
+        std::shared_ptr<Hamiltonian<std::complex<float>,
+                                    ValueTypeWaveFunctionCoeff,
+                                    memorySpace>>,
+        std::shared_ptr<Hamiltonian<std::complex<double>,
+                                    ValueTypeWaveFunctionCoeff,
+                                    memorySpace>>>;
 
     public:
       /**
@@ -146,7 +155,7 @@ namespace dftefe
                                          d_linAlgOpContext;
       std::vector<HamiltonianPtrVariant> d_hamiltonianComponentsVec;
 
-      mutable linearAlgebra::MultiVector<ValueTypeOperator, memorySpace>
+      mutable linearAlgebra::MultiVector<ValueTypeOperand, memorySpace>
         d_scratchNonLocPSPApply;
 
       const bool      d_useOptimizedImplement;

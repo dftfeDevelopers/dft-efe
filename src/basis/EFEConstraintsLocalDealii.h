@@ -48,6 +48,10 @@ namespace dftefe
       : public ConstraintsLocal<ValueTypeBasisCoeff, memorySpace>
     {
     public:
+      // constraint coefficients, inhomogeneities and the dealii
+      // constraint matrix are geometric data, hence real
+      using RealTypeBasisCoeff =
+        linearAlgebra::blasLapack::real_type<ValueTypeBasisCoeff>;
       using GlobalSizeTypeVector =
         utils::MemoryStorage<global_size_type, memorySpace>;
       using SizeTypeVector = utils::MemoryStorage<size_type, memorySpace>;
@@ -56,7 +60,7 @@ namespace dftefe
                                 const dealii::IndexSet &locally_relevant_dofs);
 
       EFEConstraintsLocalDealii(
-        dealii::AffineConstraints<ValueTypeBasisCoeff>
+        dealii::AffineConstraints<RealTypeBasisCoeff>
           &dealiiAffineConstraintMatrix,
         std::vector<std::pair<global_size_type, global_size_type>>
           &                            locallyOwnedRanges,
@@ -90,7 +94,7 @@ namespace dftefe
       setInhomogeneity(global_size_type    basisId,
                        ValueTypeBasisCoeff constraintValue) override;
 
-      const std::vector<std::pair<global_size_type, ValueTypeBasisCoeff>> *
+      const std::vector<std::pair<global_size_type, RealTypeBasisCoeff>> *
       getConstraintEntries(const global_size_type lineDof) const override;
 
       bool
@@ -175,7 +179,7 @@ namespace dftefe
       //
       // dealii function
       //
-      const dealii::AffineConstraints<ValueTypeBasisCoeff> &
+      const dealii::AffineConstraints<RealTypeBasisCoeff> &
       getAffineConstraints() const;
 
       //
@@ -185,7 +189,7 @@ namespace dftefe
       void
       addEntries(
         const global_size_type constrainedDofIndex,
-        const std::vector<std::pair<global_size_type, ValueTypeBasisCoeff>>
+        const std::vector<std::pair<global_size_type, RealTypeBasisCoeff>>
           &colWeightPairs);
 
       void
@@ -209,7 +213,7 @@ namespace dftefe
       globalToLocal(const global_size_type globalId) const;
 
 
-      dealii::AffineConstraints<ValueTypeBasisCoeff>
+      dealii::AffineConstraints<RealTypeBasisCoeff>
            d_dealiiAffineConstraintMatrix;
       bool d_isCleared;
       bool d_isClosed;
@@ -221,7 +225,7 @@ namespace dftefe
       GlobalSizeTypeVector d_columnConstraintsIdsGlobal;
 
       utils::MemoryStorage<double, memorySpace> d_columnConstraintsValues;
-      utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>
+      utils::MemoryStorage<RealTypeBasisCoeff, memorySpace>
         d_constraintsInhomogenities;
 
       SizeTypeVector d_rowConstraintsSizes;

@@ -76,6 +76,7 @@ namespace dftefe
 
       using ValueType =
         blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>;
+      using RealType = blasLapack::real_type<ValueType>;
 
       const MultiVector<ValueType, memorySpace> &b =
         linearSolverFunction.getRhs();
@@ -131,12 +132,12 @@ namespace dftefe
       convergeFlag.resize(numComponents, false);
       bool                   divergeFlag  = false;
       bool                   allConverged = false;
-      std::vector<ValueType> ones(0);
-      ones.resize(numComponents, (ValueType)1.0);
-      std::vector<ValueType> nOnes(0);
-      nOnes.resize(numComponents, (ValueType)-1.0);
-      std::vector<ValueType> alpha(numComponents, (ValueType)0),
-        nAlpha(numComponents, (ValueType)0), beta(numComponents, (ValueType)0);
+      std::vector<RealType> ones(0);
+      ones.resize(numComponents, (RealType)1.0);
+      std::vector<RealType> nOnes(0);
+      nOnes.resize(numComponents, (RealType)-1.0);
+      std::vector<RealType> alpha(numComponents, (RealType)0),
+        nAlpha(numComponents, (RealType)0), beta(numComponents, (RealType)0);
 
       //
       // @note: w is meant for storing Ap (p = search direction).
@@ -260,8 +261,8 @@ namespace dftefe
           // ValueType alpha = zDotr / pDotw;
           for (size_type i = 0; i < numComponents; i++)
             {
-              alpha[i]  = (zDotr[i] / pDotw[i]);
-              nAlpha[i] = (-zDotr[i] / pDotw[i]);
+              alpha[i]  = utils::realPart(zDotr[i] / pDotw[i]);
+              nAlpha[i] = -alpha[i];
             }
 
           // x = x + alpha*p
@@ -284,7 +285,7 @@ namespace dftefe
           // ValueType beta = zDotrNew / zDotr;
           for (size_type i = 0; i < numComponents; i++)
             {
-              beta[i] = (zDotrNew[i] / zDotr[i]);
+              beta[i] = utils::realPart(zDotrNew[i] / zDotr[i]);
             }
           // p = z + beta*p
           add(ones, z, beta, p, p);

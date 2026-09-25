@@ -51,6 +51,7 @@ namespace dftefe
     template <typename ValueTypeBasisData,
               typename ValueTypeBasisCoeff,
               typename ValueTypeWaveFnBasisData,
+              typename ValueTypeWaveFnCoeff,
               utils::MemorySpace memorySpace,
               size_type          dim>
     class ElectrostaticFE
@@ -59,6 +60,7 @@ namespace dftefe
             linearAlgebra::blasLapack::scalar_type<ValueTypeBasisData,
                                                    ValueTypeWaveFnBasisData>,
             ValueTypeBasisCoeff>,
+          ValueTypeWaveFnCoeff,
           memorySpace>,
         public Energy<linearAlgebra::blasLapack::real_type<
           linearAlgebra::blasLapack::scalar_type<ValueTypeBasisData,
@@ -68,11 +70,16 @@ namespace dftefe
       using ValueType =
         linearAlgebra::blasLapack::scalar_type<ValueTypeBasisData,
                                                ValueTypeBasisCoeff>;
+      // the cell matrix is multiplied against the wavefunction coefficients,
+      // so it follows the base's union type
       using Storage = utils::MemoryStorage<
-        linearAlgebra::blasLapack::scalar_type<
-          linearAlgebra::blasLapack::scalar_type<ValueTypeBasisData,
-                                                 ValueTypeWaveFnBasisData>,
-          ValueTypeBasisCoeff>,
+        typename Hamiltonian<
+          linearAlgebra::blasLapack::scalar_type<
+            linearAlgebra::blasLapack::scalar_type<ValueTypeBasisData,
+                                                   ValueTypeWaveFnBasisData>,
+            ValueTypeBasisCoeff>,
+          ValueTypeWaveFnCoeff,
+          memorySpace>::ValueType,
         memorySpace>;
       using RealType = linearAlgebra::blasLapack::real_type<ValueType>;
 
@@ -85,11 +92,6 @@ namespace dftefe
       virtual std::vector<
         quadrature::QuadratureValuesContainer<ValueType, memorySpace>>
       getFunctionalDerivative() const = 0;
-      virtual void
-      applyNonLocal(linearAlgebra::MultiVector<ValueType, memorySpace> &X,
-                    linearAlgebra::MultiVector<ValueType, memorySpace> &Y,
-                    bool updateGhostX,
-                    bool updateGhostY) const = 0;
       virtual bool
       hasLocalComponent() const = 0;
       virtual bool

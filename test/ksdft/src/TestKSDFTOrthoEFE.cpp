@@ -355,8 +355,14 @@ int main()
 
     // Create the enrichmentClassicalInterface object for vtotal
     std::shared_ptr<basis::EnrichmentClassicalInterfaceSpherical
-                    <double, Host, dim>> enrichClassIntfceTotalPot = std::make_shared<basis::EnrichmentClassicalInterfaceSpherical
-                          <double, Host, dim>>
+                    <double,
+                                                                 double,
+                                                                 Host,
+                                                                 dim>> enrichClassIntfceTotalPot = std::make_shared<basis::EnrichmentClassicalInterfaceSpherical
+                          <double,
+                                                                                                                                   double,
+                                                                                                                                   Host,
+                                                                                                                                   dim>>
                           (cfeBasisDataStorageGLL,
                           cfeBasisDataStorageAdaptive,
                           atomSphericalDataContainer,
@@ -369,9 +375,15 @@ int main()
 
     // Create the enrichmentClassicalInterface object for wavefn
       std::shared_ptr<basis::EnrichmentClassicalInterfaceSpherical
-                          <double, Host, dim>>
+                          <double,
+                                                                   double,
+                                                                   Host,
+                                                                   dim>>
                           enrichClassIntfceOrbital = std::make_shared<basis::EnrichmentClassicalInterfaceSpherical
-                          <double, Host, dim>>
+                          <double,
+                                                                                                                   double,
+                                                                                                                   Host,
+                                                                                                                   dim>>
                           (cfeBasisDataStorageGLL,
                           cfeBasisDataStorageAdaptive,
                           atomSphericalDataContainer,

@@ -289,9 +289,15 @@ int main()
 
   unsigned int feOrder = 3;
   std::shared_ptr<dftefe::basis::EnrichmentClassicalInterfaceSpherical
-                          <double, dftefe::utils::MemorySpace::HOST, dim>>
+                          <double,
+                                                                       double,
+                                                                       dftefe::utils::MemorySpace::HOST,
+                                                                       dim>>
                           enrichClassIntfce = std::make_shared<dftefe::basis::EnrichmentClassicalInterfaceSpherical
-                          <double, dftefe::utils::MemorySpace::HOST, dim>>(triangulationBase,
+                          <double,
+                                                                                                                    double,
+                                                                                                                    dftefe::utils::MemorySpace::HOST,
+                                                                                                                    dim>>(triangulationBase,
                           atomSphericalDataContainer,
                           atomPartitionTolerance,
                           atomSymbolVec,
@@ -380,7 +386,10 @@ int main()
 
     // Create the enrichmentClassicalInterface object
     enrichClassIntfce = std::make_shared<dftefe::basis::EnrichmentClassicalInterfaceSpherical
-                          <double, dftefe::utils::MemorySpace::HOST, dim>>
+                          <double,
+                                                                                              double,
+                                                                                              dftefe::utils::MemorySpace::HOST,
+                                                                                              dim>>
                           (cfeBasisDataStorageOverlapMatrix,
                           cfeBasisDataStorageRhs,
                           atomSphericalDataContainer,

@@ -50,7 +50,7 @@ namespace dftefe
               utils::MemorySpace memorySpace,
               size_type          dim>
     class ExchangeCorrelationFE
-      : public Hamiltonian<ValueTypeBasisData, memorySpace>,
+      : public Hamiltonian<ValueTypeBasisData, ValueTypeBasisCoeff, memorySpace>,
         public Energy<linearAlgebra::blasLapack::real_type<
           linearAlgebra::blasLapack::scalar_type<ValueTypeBasisData,
                                                  ValueTypeBasisCoeff>>>

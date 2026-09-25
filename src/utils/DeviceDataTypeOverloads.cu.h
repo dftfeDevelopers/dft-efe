@@ -552,40 +552,43 @@ namespace dftefe
     //
     // div for real-complex heterogeneous types e.g. (double, cuFloatComplex)
     //
+    // Division by a complex is not elementwise: a/b = a*conj(b)/|b|^2. Only
+    // division *by* a real stays elementwise.
     __forceinline__ __device__ cuDoubleComplex
     div(double a, cuDoubleComplex b)
     {
-      return make_cuDoubleComplex(a / b.x, a / b.y);
+      return cuCdiv(make_cuDoubleComplex(a, 0.0), b);
     }
 
     __forceinline__ __device__ cuDoubleComplex
     div(cuDoubleComplex a, double b)
     {
-      return make_cuDoubleComplex(b / a.x, b / a.y);
+      return make_cuDoubleComplex(a.x / b, a.y / b);
     }
 
     __forceinline__ __device__ cuFloatComplex
     div(float a, cuFloatComplex b)
     {
-      return make_cuFloatComplex(a / b.x, a / b.y);
+      return cuCdivf(make_cuFloatComplex(a, 0.0f), b);
     }
 
     __forceinline__ __device__ cuFloatComplex
     div(cuFloatComplex a, float b)
     {
-      return make_cuFloatComplex(b / a.x, b / a.y);
+      return make_cuFloatComplex(a.x / b, a.y / b);
     }
 
     __forceinline__ __device__ cuDoubleComplex
     div(double a, cuFloatComplex b)
     {
-      return make_cuDoubleComplex(a / b.x, a / b.y);
+      return cuCdiv(make_cuDoubleComplex(a, 0.0),
+                    make_cuDoubleComplex(b.x, b.y));
     }
 
     __forceinline__ __device__ cuDoubleComplex
     div(cuFloatComplex a, double b)
     {
-      return make_cuDoubleComplex(b / a.x, b / a.y);
+      return make_cuDoubleComplex(a.x / b, a.y / b);
     }
 
     ////

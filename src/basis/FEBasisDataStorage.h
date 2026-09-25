@@ -57,6 +57,8 @@ namespace dftefe
       using QuadratureRuleAttributes  = quadrature::QuadratureRuleAttributes;
       using Storage =
         typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage;
+      using StorageReal =
+        typename BasisDataStorage<ValueTypeBasisData, memorySpace>::StorageReal;
 
 
       virtual std::shared_ptr<const BasisDofHandler>
@@ -136,7 +138,7 @@ namespace dftefe
       virtual Storage
       getBasisHessianDataInCell(const size_type cellId) const = 0;
 
-      virtual Storage
+      virtual StorageReal
       getJxWInCell(const size_type cellId) const = 0;
 
       // functions to get data for all basis functions on all quad points in all
@@ -148,7 +150,7 @@ namespace dftefe
       virtual const Storage &
       getBasisHessianDataInAllCells() const = 0;
 
-      virtual const Storage &
+      virtual const StorageReal &
       getJxWInAllCells() const = 0;
 
       // get overlap of two basis functions in a cell

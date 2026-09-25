@@ -723,14 +723,14 @@ namespace dftefe
             ->second)
         {
           std::shared_ptr<
-            typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage>
+            typename BasisDataStorage<ValueTypeBasisData, memorySpace>::StorageReal>
             jxwQuadStorage;
 
           const std::vector<double> &jxwVec =
             d_quadratureRuleContainer->getJxW();
           jxwQuadStorage =
             std::make_shared<typename BasisDataStorage<ValueTypeBasisData,
-                                                       memorySpace>::Storage>(
+                                                       memorySpace>::StorageReal>(
               jxwVec.size());
 
           utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
@@ -889,14 +889,14 @@ namespace dftefe
             ->second)
         {
           std::shared_ptr<
-            typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage>
+            typename BasisDataStorage<ValueTypeBasisData, memorySpace>::StorageReal>
             jxwQuadStorage;
 
           const std::vector<double> &jxwVec =
             d_quadratureRuleContainer->getJxW();
           jxwQuadStorage =
             std::make_shared<typename BasisDataStorage<ValueTypeBasisData,
-                                                       memorySpace>::Storage>(
+                                                       memorySpace>::StorageReal>(
               jxwVec.size());
 
           utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
@@ -1023,7 +1023,7 @@ namespace dftefe
               typename ValueTypeBasisData,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
-    const typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage &
+    const typename BasisDataStorage<ValueTypeBasisData, memorySpace>::StorageReal &
     CFEBDSOnTheFlyComputeDealii<ValueTypeBasisCoeff,
                                 ValueTypeBasisData,
                                 memorySpace,
@@ -1349,7 +1349,7 @@ namespace dftefe
               typename ValueTypeBasisData,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
-    typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage
+    typename BasisDataStorage<ValueTypeBasisData, memorySpace>::StorageReal
     CFEBDSOnTheFlyComputeDealii<ValueTypeBasisCoeff,
                                 ValueTypeBasisData,
                                 memorySpace,
@@ -1364,12 +1364,12 @@ namespace dftefe
           ->second,
         "JxW values are not evaluated for the given QuadratureRuleAttributes");
       std::shared_ptr<
-        typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage>
+        typename BasisDataStorage<ValueTypeBasisData, memorySpace>::StorageReal>
         jxwQuadStorage = d_JxWStorage;
 
       const std::vector<size_type> &nQuadPointsInCell = d_nQuadPointsIncell;
       const size_type               sizeToCopy = nQuadPointsInCell[cellId];
-      typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage
+      typename BasisDataStorage<ValueTypeBasisData, memorySpace>::StorageReal
         returnValue(sizeToCopy);
       utils::MemoryTransfer<memorySpace, memorySpace>::copy(
         sizeToCopy,

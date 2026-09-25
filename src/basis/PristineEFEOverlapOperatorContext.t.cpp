@@ -45,8 +45,10 @@ namespace dftefe
       computeBasisOverlapMatrix(
         const FEBasisDataStorage<ValueTypeOperator, memorySpace>
           &feBasisDataStorage,
-        std::shared_ptr<utils::MemoryStorage<ValueTypeOperator, memorySpace>>
-          &                     basisOverlap,
+        std::shared_ptr<utils::MemoryStorage<
+          linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
+                                                 ValueTypeOperand>,
+          memorySpace>> &       basisOverlap,
         std::vector<size_type> &cellStartIdsBasisOverlap,
         std::vector<size_type> &dofsInCellVec)
       {
@@ -93,7 +95,10 @@ namespace dftefe
         std::vector<ValueTypeOperator> basisOverlapTmp(0);
 
         basisOverlap = std::make_shared<
-          utils::MemoryStorage<ValueTypeOperator, memorySpace>>(
+          utils::MemoryStorage<
+            linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
+                                                 ValueTypeOperand>,
+            memorySpace>>(
           basisOverlapSize);
         basisOverlapTmp.resize(basisOverlapSize, ValueTypeOperator(0));
 
@@ -150,8 +155,28 @@ namespace dftefe
             cumulativeDofQuadPointsOffset += nQuadPointInCell * dofsPerCell;
           }
 
+        // the overlap is assembled real; widen once here so that apply never
+        // has to copy
+        utils::MemoryStorage<
+          linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
+                                                 ValueTypeOperand>,
+          utils::MemorySpace::HOST>
+          basisOverlapUnionTmp(basisOverlapTmp.size());
+
+        linearAlgebra::blasLapack::copyValueType1ArrToValueType2Arr<
+          ValueTypeOperator,
+          linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
+                                                 ValueTypeOperand>,
+          utils::MemorySpace::HOST>(
+          basisOverlapTmp.size(),
+          basisOverlapTmp.data(),
+          basisOverlapUnionTmp.data(),
+          *linearAlgebra::LinAlgOpContextDefaults::LINALG_OP_CONTXT_HOST);
+
         utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
-          basisOverlapTmp.size(), basisOverlap->data(), basisOverlapTmp.data());
+          basisOverlapUnionTmp.size(),
+          basisOverlap->data(),
+          basisOverlapUnionTmp.data());
       }
 
       template <typename ValueTypeOperator,
@@ -164,8 +189,10 @@ namespace dftefe
           &cfeBasisDataStorage,
         const FEBasisDataStorage<ValueTypeOperator, memorySpace>
           &efeBasisDataStorage,
-        std::shared_ptr<utils::MemoryStorage<ValueTypeOperator, memorySpace>>
-          &                     basisOverlap,
+        std::shared_ptr<utils::MemoryStorage<
+          linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
+                                                 ValueTypeOperand>,
+          memorySpace>> &       basisOverlap,
         std::vector<size_type> &cellStartIdsBasisOverlap,
         std::vector<size_type> &dofsInCellVec)
       {
@@ -240,7 +267,10 @@ namespace dftefe
         std::vector<ValueTypeOperator> basisOverlapTmp(0);
 
         basisOverlap = std::make_shared<
-          utils::MemoryStorage<ValueTypeOperator, memorySpace>>(
+          utils::MemoryStorage<
+            linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
+                                                 ValueTypeOperand>,
+            memorySpace>>(
           basisOverlapSize);
         basisOverlapTmp.resize(basisOverlapSize, ValueTypeOperator(0));
 
@@ -329,8 +359,28 @@ namespace dftefe
               nQuadPointInCellEFE * dofsPerCell;
           }
 
+        // the overlap is assembled real; widen once here so that apply never
+        // has to copy
+        utils::MemoryStorage<
+          linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
+                                                 ValueTypeOperand>,
+          utils::MemorySpace::HOST>
+          basisOverlapUnionTmp(basisOverlapTmp.size());
+
+        linearAlgebra::blasLapack::copyValueType1ArrToValueType2Arr<
+          ValueTypeOperator,
+          linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
+                                                 ValueTypeOperand>,
+          utils::MemorySpace::HOST>(
+          basisOverlapTmp.size(),
+          basisOverlapTmp.data(),
+          basisOverlapUnionTmp.data(),
+          *linearAlgebra::LinAlgOpContextDefaults::LINALG_OP_CONTXT_HOST);
+
         utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
-          basisOverlapTmp.size(), basisOverlap->data(), basisOverlapTmp.data());
+          basisOverlapUnionTmp.size(),
+          basisOverlap->data(),
+          basisOverlapUnionTmp.data());
       }
 
       template <typename ValueTypeOperator,
@@ -338,8 +388,10 @@ namespace dftefe
                 utils::MemorySpace memorySpace>
       void
       computeAxCellWiseLocal(
-        const utils::MemoryStorage<ValueTypeOperator, memorySpace>
-          &                     basisOverlapInAllCells,
+        const utils::MemoryStorage<
+          linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
+                                                 ValueTypeOperand>,
+          memorySpace> &        basisOverlapInAllCells,
         const ValueTypeOperand *x,
         linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
                                                ValueTypeOperand> *y,
@@ -351,6 +403,9 @@ namespace dftefe
         const size_type                              cellBlockSize,
         linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext)
       {
+        using ValueType =
+          linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
+                                                 ValueTypeOperand>;
         //
         // Perform ye = Ae * xe, where
         // Ae is the discrete Overlap operator for the e-th cell.
@@ -450,13 +505,11 @@ namespace dftefe
                                                    ValueTypeOperand>
               beta = 0.0;
 
-            const ValueTypeOperator *B =
+            const ValueType *B =
               basisOverlapInAllCells.data() + BStartOffset;
-            linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
-                                                   ValueTypeOperand> *C =
-              yCellValues.begin();
-            linearAlgebra::blasLapack::gemmStridedVarBatched<ValueTypeOperator,
-                                                             ValueTypeOperand,
+            ValueType *C = yCellValues.begin();
+            linearAlgebra::blasLapack::gemmStridedVarBatched<ValueType,
+                                                             ValueType,
                                                              memorySpace>(
               numCellsInBlock,
               transA.data(),
@@ -534,8 +587,7 @@ namespace dftefe
           &(feBasisManagerY.getBasisDofHandler()),
         "feBasisManager of X and Y vectors are not from same basisDofhandler");
 
-      std::shared_ptr<utils::MemoryStorage<ValueTypeOperator, memorySpace>>
-        basisOverlap;
+      std::shared_ptr<Storage> basisOverlap;
       PristineEFEOverlapOperatorContextInternal::computeBasisOverlapMatrix<
         ValueTypeOperator,
         ValueTypeOperand,
@@ -581,8 +633,7 @@ namespace dftefe
           &(feBasisManagerY.getBasisDofHandler()),
         "feBasisManager of X and Y vectors are not from same basisDofhandler");
 
-      std::shared_ptr<utils::MemoryStorage<ValueTypeOperator, memorySpace>>
-        basisOverlap;
+      std::shared_ptr<Storage> basisOverlap;
       PristineEFEOverlapOperatorContextInternal::computeBasisOverlapMatrix<
         ValueTypeOperator,
         ValueTypeOperand,
@@ -643,8 +694,10 @@ namespace dftefe
       constraintsX.distributeParentToChild(X, numVecs);
 
       // access cell-wise discrete Overlap operator
-      const utils::MemoryStorage<ValueTypeOperator, memorySpace>
-        &basisOverlapInAllCells = *d_basisOverlap;
+      const utils::MemoryStorage<
+        linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
+                                               ValueTypeOperand>,
+        memorySpace> &basisOverlapInAllCells = *d_basisOverlap;
 
       const size_type cellBlockSize =
         (d_maxCellBlock * d_maxFieldBlock) / numVecs;
@@ -654,7 +707,10 @@ namespace dftefe
       // perform Ax on the local part of A and x
       // (A = discrete Overlap operator)
       //
-      PristineEFEOverlapOperatorContextInternal::computeAxCellWiseLocal(
+      PristineEFEOverlapOperatorContextInternal::computeAxCellWiseLocal<
+        ValueTypeOperator,
+        ValueTypeOperand,
+        memorySpace>(
         basisOverlapInAllCells,
         X.begin(),
         Y.begin(),
@@ -681,7 +737,10 @@ namespace dftefe
               typename ValueTypeOperand,
               utils::MemorySpace memorySpace,
               size_type          dim>
-    const utils::MemoryStorage<ValueTypeOperator, memorySpace> &
+    const utils::MemoryStorage<
+      linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
+                                             ValueTypeOperand>,
+      memorySpace> &
     PristineEFEOverlapOperatorContext<ValueTypeOperator,
                                       ValueTypeOperand,
                                       memorySpace,
@@ -694,18 +753,19 @@ namespace dftefe
               typename ValueTypeOperand,
               utils::MemorySpace memorySpace,
               size_type          dim>
-    utils::MemoryStorage<ValueTypeOperator, memorySpace>
+    utils::MemoryStorage<
+      linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
+                                             ValueTypeOperand>,
+      memorySpace>
     PristineEFEOverlapOperatorContext<
       ValueTypeOperator,
       ValueTypeOperand,
       memorySpace,
       dim>::getBasisOverlapInCell(const size_type cellId) const
     {
-      std::shared_ptr<utils::MemoryStorage<ValueTypeOperator, memorySpace>>
-                      basisOverlapStorage = d_basisOverlap;
+      std::shared_ptr<Storage> basisOverlapStorage = d_basisOverlap;
       const size_type sizeToCopy = d_dofsInCell[cellId] * d_dofsInCell[cellId];
-      utils::MemoryStorage<ValueTypeOperator, memorySpace> returnValue(
-        sizeToCopy);
+      Storage returnValue(sizeToCopy);
       utils::MemoryTransfer<memorySpace, memorySpace>::copy(
         sizeToCopy,
         returnValue.data(),
@@ -717,7 +777,10 @@ namespace dftefe
               typename ValueTypeOperand,
               utils::MemorySpace memorySpace,
               size_type          dim>
-    utils::MemoryStorage<ValueTypeOperator, memorySpace>
+    utils::MemoryStorage<
+      linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
+                                             ValueTypeOperand>,
+      memorySpace>
     PristineEFEOverlapOperatorContext<
       ValueTypeOperator,
       ValueTypeOperand,
@@ -726,9 +789,8 @@ namespace dftefe
                             const size_type basisId1,
                             const size_type basisId2) const
     {
-      std::shared_ptr<utils::MemoryStorage<ValueTypeOperator, memorySpace>>
-        basisOverlapStorage = d_basisOverlap;
-      utils::MemoryStorage<ValueTypeOperator, memorySpace> returnValue(1);
+      std::shared_ptr<Storage> basisOverlapStorage = d_basisOverlap;
+      Storage returnValue(1);
       const size_type sizeToCopy = d_dofsInCell[cellId] * d_dofsInCell[cellId];
       utils::MemoryTransfer<memorySpace, memorySpace>::copy(
         sizeToCopy,

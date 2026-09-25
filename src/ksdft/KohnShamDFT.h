@@ -58,11 +58,18 @@ namespace dftefe
     class KohnShamDFT
     {
     public:
+      // all components act on the same operand, only the operator differs
       using HamiltonianPtrVariant = std::variant<
-        std::shared_ptr<Hamiltonian<float, memorySpace>>,
-        std::shared_ptr<Hamiltonian<double, memorySpace>>,
-        std::shared_ptr<Hamiltonian<std::complex<float>, memorySpace>>,
-        std::shared_ptr<Hamiltonian<std::complex<double>, memorySpace>>>;
+        std::shared_ptr<
+          Hamiltonian<float, ValueTypeWaveFunctionCoeff, memorySpace>>,
+        std::shared_ptr<
+          Hamiltonian<double, ValueTypeWaveFunctionCoeff, memorySpace>>,
+        std::shared_ptr<Hamiltonian<std::complex<float>,
+                                    ValueTypeWaveFunctionCoeff,
+                                    memorySpace>>,
+        std::shared_ptr<Hamiltonian<std::complex<double>,
+                                    ValueTypeWaveFunctionCoeff,
+                                    memorySpace>>>;
 
       using ValueTypeOperator =
         linearAlgebra::blasLapack::scalar_type<ValueTypeElectrostaticsBasis,
@@ -631,6 +638,7 @@ namespace dftefe
       const std::shared_ptr<ElectrostaticFE<ValueTypeElectrostaticsBasis,
                                             ValueTypeElectrostaticsCoeff,
                                             ValueTypeWaveFunctionBasis,
+                                            ValueTypeWaveFunctionCoeff,
                                             memorySpace,
                                             dim>> &
       getHamitonianElec() const
@@ -685,6 +693,7 @@ namespace dftefe
       std::shared_ptr<ElectrostaticFE<ValueTypeElectrostaticsBasis,
                                       ValueTypeElectrostaticsCoeff,
                                       ValueTypeWaveFunctionBasis,
+                                      ValueTypeWaveFunctionCoeff,
                                       memorySpace,
                                       dim>>
         d_hamitonianElec;

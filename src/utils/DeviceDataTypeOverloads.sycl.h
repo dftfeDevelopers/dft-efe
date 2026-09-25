@@ -560,40 +560,43 @@ namespace dftefe
     // div for real-complex heterogeneous types e.g. (double,
     // std::complex<float>)
     //
+    // Division by a complex is not elementwise: a/b = a*conj(b)/|b|^2. Only
+    // division *by* a real stays elementwise.
     inline std::complex<double>
     div(double a, std::complex<double> b)
     {
-      return std::complex<double>(a / b.real(), a / b.imag());
+      return std::complex<double>(a, 0.0) / b;
     }
 
     inline std::complex<double>
     div(std::complex<double> a, double b)
     {
-      return std::complex<double>(b / a.real(), b / a.imag());
+      return std::complex<double>(a.real() / b, a.imag() / b);
     }
 
     inline std::complex<float>
     div(float a, std::complex<float> b)
     {
-      return std::complex<float>(a / b.real(), a / b.imag());
+      return std::complex<float>(a, 0.0f) / b;
     }
 
     inline std::complex<float>
     div(std::complex<float> a, float b)
     {
-      return std::complex<float>(b / a.real(), b / a.imag());
+      return std::complex<float>(a.real() / b, a.imag() / b);
     }
 
     inline std::complex<double>
     div(double a, std::complex<float> b)
     {
-      return std::complex<double>(a / b.real(), a / b.imag());
+      return std::complex<double>(a, 0.0) /
+             std::complex<double>(b.real(), b.imag());
     }
 
     inline std::complex<double>
     div(std::complex<float> a, double b)
     {
-      return std::complex<double>(b / a.real(), b / a.imag());
+      return std::complex<double>(a.real() / b, a.imag() / b);
     }
 
     ////

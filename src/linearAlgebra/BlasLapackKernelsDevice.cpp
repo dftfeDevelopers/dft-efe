@@ -164,9 +164,9 @@ namespace dftefe
               }
           },
           const size_type   size,
-          const ValueType3  alpha,
-          const ValueType1 *x,
-          const ValueType3  beta,
+          const ValueType1  alpha,
+          const ValueType2 *x,
+          const ValueType1  beta,
           const ValueType2 *y,
           ValueType3 *      z);
 
@@ -197,8 +197,8 @@ namespace dftefe
                  index += nThreadsPerBlock * nThreadBlock)
               {
                 size_type        sizeId = index % blockSize;
-                const ValueType3 coeff1 = utils::mult(alpha1, alpha[sizeId]);
-                const ValueType3 coeff2 = utils::mult(beta1, beta[sizeId]);
+                const ValueType1 coeff1 = utils::mult(alpha1, alpha[sizeId]);
+                const ValueType1 coeff2 = utils::mult(beta1, beta[sizeId]);
                 dftefe::utils::copyValue(
                   z + index,
                   utils::add(utils::mult(coeff1, x[index]),
@@ -207,11 +207,11 @@ namespace dftefe
           },
           const size_type   size,      // vecsize
           const size_type   blockSize, // numvec
-          const ValueType3  alpha1,
-          const ValueType3 *alpha,
-          const ValueType1 *x,
-          const ValueType3  beta1,
-          const ValueType3 *beta,
+          const ValueType1  alpha1,
+          const ValueType1 *alpha,
+          const ValueType2 *x,
+          const ValueType1  beta1,
+          const ValueType1 *beta,
           const ValueType2 *y,
           ValueType3 *      z);
 
@@ -936,11 +936,11 @@ namespace dftefe
         axpbyBlocked(
           const size_type                            size,      // vecsize
           const size_type                            blockSize, // numvec
-          const scalar_type<ValueType1, ValueType2>  alpha1,
-          const scalar_type<ValueType1, ValueType2> *alpha,
-          const ValueType1 *                         x,
-          const scalar_type<ValueType1, ValueType2>  beta1,
-          const scalar_type<ValueType1, ValueType2> *beta,
+          const ValueType1 alpha1,
+          const ValueType1 *alpha,
+          const ValueType2 *                         x,
+          const ValueType1 beta1,
+          const ValueType1 *beta,
           const ValueType2 *                         y,
           scalar_type<ValueType1, ValueType2> *      z,
           LinAlgOpContext<dftefe::utils::MemorySpace::DEVICE> &context)
@@ -1024,9 +1024,9 @@ namespace dftefe
       void
       KernelsTwoValueTypes<ValueType1, ValueType2, utils::MemorySpace::DEVICE>::
         axpby(const size_type                              size,
-              const scalar_type<ValueType1, ValueType2>    alpha,
-              const ValueType1 *                           x,
-              const scalar_type<ValueType1, ValueType2>    beta,
+              const ValueType1                             alpha,
+              const ValueType2 *                           x,
+              const ValueType1                             beta,
               const ValueType2 *                           y,
               scalar_type<ValueType1, ValueType2> *        z,
               LinAlgOpContext<utils::MemorySpace::DEVICE> &context)
@@ -1290,6 +1290,43 @@ namespace dftefe
       EXPLICITLY_INSTANTIATE_COPY_2T(std::complex<double>,
                                      std::complex<double>,
                                      dftefe::utils::MemorySpace::DEVICE);
+
+      template void
+      CopyKernelTwoValueTypes<float, double, dftefe::utils::MemorySpace::DEVICE>::
+        copyValueType1ArrToValueType2Arr(const size_type size,
+                                         const float *      valueType1Arr,
+                                         double *            valueType2Arr,
+                                         LinAlgOpContext<dftefe::utils::MemorySpace::DEVICE> &context);
+      template void
+      CopyKernelTwoValueTypes<double, std::complex<float>, dftefe::utils::MemorySpace::DEVICE>::
+        copyValueType1ArrToValueType2Arr(const size_type size,
+                                         const double *      valueType1Arr,
+                                         std::complex<float> *            valueType2Arr,
+                                         LinAlgOpContext<dftefe::utils::MemorySpace::DEVICE> &context);
+      template void
+      CopyKernelTwoValueTypes<float, std::complex<float>, dftefe::utils::MemorySpace::DEVICE>::
+        copyValueType1ArrToValueType2Arr(const size_type size,
+                                         const float *      valueType1Arr,
+                                         std::complex<float> *            valueType2Arr,
+                                         LinAlgOpContext<dftefe::utils::MemorySpace::DEVICE> &context);
+      template void
+      CopyKernelTwoValueTypes<double, std::complex<double>, dftefe::utils::MemorySpace::DEVICE>::
+        copyValueType1ArrToValueType2Arr(const size_type size,
+                                         const double *      valueType1Arr,
+                                         std::complex<double> *            valueType2Arr,
+                                         LinAlgOpContext<dftefe::utils::MemorySpace::DEVICE> &context);
+      template void
+      CopyKernelTwoValueTypes<float, std::complex<double>, dftefe::utils::MemorySpace::DEVICE>::
+        copyValueType1ArrToValueType2Arr(const size_type size,
+                                         const float *      valueType1Arr,
+                                         std::complex<double> *            valueType2Arr,
+                                         LinAlgOpContext<dftefe::utils::MemorySpace::DEVICE> &context);
+      template void
+      CopyKernelTwoValueTypes<std::complex<float>, std::complex<double>, dftefe::utils::MemorySpace::DEVICE>::
+        copyValueType1ArrToValueType2Arr(const size_type size,
+                                         const std::complex<float> *      valueType1Arr,
+                                         std::complex<double> *            valueType2Arr,
+                                         LinAlgOpContext<dftefe::utils::MemorySpace::DEVICE> &context);
 
       EXPLICITLY_INSTANTIATE_COPY_1T(float, utils::MemorySpace::DEVICE);
       EXPLICITLY_INSTANTIATE_COPY_1T(double, utils::MemorySpace::DEVICE);

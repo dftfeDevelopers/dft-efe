@@ -1,6 +1,5 @@
 
 #include <deal.II/dofs/dof_tools.h>
-#include <utils/NumberUtils.h>
 #include <basis/FECellBase.h>
 #include <memory>
 #include <basis/ConstraintsInternal.h>
@@ -50,7 +49,7 @@ namespace dftefe
               size_type          dim>
     EFEConstraintsLocalDealii<ValueTypeBasisCoeff, memorySpace, dim>::
       EFEConstraintsLocalDealii(
-        dealii::AffineConstraints<ValueTypeBasisCoeff>
+        dealii::AffineConstraints<RealTypeBasisCoeff>
           &dealiiAffineConstraintMatrix,
         std::vector<std::pair<global_size_type, global_size_type>>
           &                            locallyOwnedRanges,
@@ -141,8 +140,8 @@ namespace dftefe
       // If condition is removed
       // add_line does not do anything if the basisId already exists.
       addLine(basisId);
-      d_dealiiAffineConstraintMatrix.set_inhomogeneity(basisId,
-                                                       constraintValue);
+      d_dealiiAffineConstraintMatrix.set_inhomogeneity(
+        basisId, utils::realPart(constraintValue));
     }
 
     template <typename ValueTypeBasisCoeff,
@@ -168,7 +167,10 @@ namespace dftefe
     template <typename ValueTypeBasisCoeff,
               utils::MemorySpace memorySpace,
               size_type          dim>
-    const dealii::AffineConstraints<ValueTypeBasisCoeff> &
+    const dealii::AffineConstraints<
+      typename EFEConstraintsLocalDealii<ValueTypeBasisCoeff,
+                                         memorySpace,
+                                         dim>::RealTypeBasisCoeff> &
     EFEConstraintsLocalDealii<ValueTypeBasisCoeff, memorySpace, dim>::
       getAffineConstraints() const
     {
@@ -178,7 +180,11 @@ namespace dftefe
     template <typename ValueTypeBasisCoeff,
               utils::MemorySpace memorySpace,
               size_type          dim>
-    const std::vector<std::pair<global_size_type, ValueTypeBasisCoeff>> *
+    const std::vector<std::pair<
+      global_size_type,
+      typename EFEConstraintsLocalDealii<ValueTypeBasisCoeff,
+                                         memorySpace,
+                                         dim>::RealTypeBasisCoeff>> *
     EFEConstraintsLocalDealii<ValueTypeBasisCoeff, memorySpace, dim>::
       getConstraintEntries(const global_size_type lineDof) const
     {
@@ -237,7 +243,7 @@ namespace dftefe
                     lineDof, constraintsDataIn.getInhomogeneity(lineDof));
                 }
               const std::vector<
-                std::pair<global_size_type, ValueTypeBasisCoeff>> *rowData =
+                std::pair<global_size_type, RealTypeBasisCoeff>> *rowData =
                 constraintsDataIn.getConstraintEntries(lineDof);
 
               bool isConstraintRhsExpandingOutOfIndexSet = false;
@@ -276,7 +282,7 @@ namespace dftefe
                     lineDof, constraintsDataIn.getInhomogeneity(lineDof));
                 }
               const std::vector<
-                std::pair<global_size_type, ValueTypeBasisCoeff>> *rowData =
+                std::pair<global_size_type, RealTypeBasisCoeff>> *rowData =
                 constraintsDataIn.getConstraintEntries(lineDof);
 
               bool isConstraintRhsExpandingOutOfIndexSet = false;
@@ -320,8 +326,8 @@ namespace dftefe
       std::vector<size_type>        constraintRowSizesAccumulatedTmp(0);
       std::vector<global_size_type> columnConstraintsIdsGlobalTmp(0);
 
-      std::vector<double>              columnConstraintsValuesTmp(0);
-      std::vector<ValueTypeBasisCoeff> constraintsInhomogenitiesTmp(0);
+      std::vector<RealTypeBasisCoeff>              columnConstraintsValuesTmp(0);
+      std::vector<RealTypeBasisCoeff> constraintsInhomogenitiesTmp(0);
 
       std::vector<size_type> rowConstraintsSizesTmp(0);
 
@@ -340,7 +346,7 @@ namespace dftefe
             {
               const global_size_type lineDof = locallyOwnedId;
               const std::vector<
-                std::pair<global_size_type, ValueTypeBasisCoeff>> *rowData =
+                std::pair<global_size_type, RealTypeBasisCoeff>> *rowData =
                 this->getConstraintEntries(lineDof);
 
               bool isConstraintRhsExpandingOutOfIndexSet = false;
@@ -362,14 +368,15 @@ namespace dftefe
 
               rowConstraintsIdsLocalTmp.push_back(globalToLocal(lineDof));
               rowConstraintsIdsGlobalTmp.push_back(lineDof);
-              constraintsInhomogenitiesTmp.push_back(getInhomogeneity(lineDof));
+              constraintsInhomogenitiesTmp.push_back(
+                utils::realPart(getInhomogeneity(lineDof)));
               rowConstraintsSizesTmp.push_back(rowData->size());
               for (size_type j = 0; j < rowData->size(); ++j)
                 {
                   columnConstraintsIdsGlobalTmp.push_back((*rowData)[j].first);
                   columnConstraintsIdsLocalTmp.push_back(
                     globalToLocal((*rowData)[j].first));
-                  double realPart = utils::getRealPart((*rowData)[j].second);
+                  RealTypeBasisCoeff realPart = utils::realPart((*rowData)[j].second);
                   columnConstraintsValuesTmp.push_back(realPart);
                 }
 
@@ -389,7 +396,7 @@ namespace dftefe
               const global_size_type lineDof = *ghostIter;
 
               const std::vector<
-                std::pair<global_size_type, ValueTypeBasisCoeff>> *rowData =
+                std::pair<global_size_type, RealTypeBasisCoeff>> *rowData =
                 this->getConstraintEntries(lineDof);
 
               bool isConstraintRhsExpandingOutOfIndexSet = false;
@@ -409,14 +416,15 @@ namespace dftefe
 
               rowConstraintsIdsLocalTmp.push_back(globalToLocal(lineDof));
               rowConstraintsIdsGlobalTmp.push_back(lineDof);
-              constraintsInhomogenitiesTmp.push_back(getInhomogeneity(lineDof));
+              constraintsInhomogenitiesTmp.push_back(
+                utils::realPart(getInhomogeneity(lineDof)));
               rowConstraintsSizesTmp.push_back(rowData->size());
               for (size_type j = 0; j < rowData->size(); ++j)
                 {
                   columnConstraintsIdsGlobalTmp.push_back((*rowData)[j].first);
                   columnConstraintsIdsLocalTmp.push_back(
                     globalToLocal((*rowData)[j].first));
-                  double realPart = utils::getRealPart((*rowData)[j].second);
+                  RealTypeBasisCoeff realPart = utils::realPart((*rowData)[j].second);
                   columnConstraintsValuesTmp.push_back(realPart);
                 }
               constraintRowSizesAccumulatedTmp.push_back(columnIdStart);
@@ -489,7 +497,7 @@ namespace dftefe
     EFEConstraintsLocalDealii<ValueTypeBasisCoeff, memorySpace, dim>::
       addEntries(
         const global_size_type constrainedDofIndex,
-        const std::vector<std::pair<global_size_type, ValueTypeBasisCoeff>>
+        const std::vector<std::pair<global_size_type, RealTypeBasisCoeff>>
           &colWeightPairs)
     {
       d_dealiiAffineConstraintMatrix.add_entries(constrainedDofIndex,
@@ -690,7 +698,7 @@ namespace dftefe
             {
               indicesTouchedByConstraints.insert(*it);
               const std::vector<
-                std::pair<global_size_type, ValueTypeBasisCoeff>> *rowData =
+                std::pair<global_size_type, RealTypeBasisCoeff>> *rowData =
                 d_dealiiAffineConstraintMatrix.get_constraint_entries(*it);
               for (size_type j = 0; j < rowData->size(); ++j)
                 indicesTouchedByConstraints.insert((*rowData)[j].first);

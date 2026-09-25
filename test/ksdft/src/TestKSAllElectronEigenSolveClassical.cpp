@@ -349,16 +349,18 @@ int main()
     utils::PointChargePotentialFunction(atomCoordinatesVec, atomChargesVec);
 
   std::shared_ptr<ksdft::ElectrostaticLocalFE<double,
-                                                  double,
-                                                  double,
-                                                  Host,
-                                                  dim>> 
+                                              double,
+                                              double,
+                                              double,
+                                              Host,
+                                              dim>> 
                                             hamitonianElec =
     std::make_shared<ksdft::ElectrostaticLocalFE<double,
-                                                  double,
-                                                  double,
-                                                  Host,
-                                                  dim>>
+                                                 double,
+                                                 double,
+                                                 double,
+                                                 Host,
+                                                 dim>>
                                                   (atomCoordinatesVec,
                                                   atomChargesVec,
                                                   smearedChargeRadiusVec,
@@ -375,10 +377,10 @@ int main()
                                                   
 
     using HamiltonianPtrVariant =
-      std::variant<ksdft::Hamiltonian<float, Host> *,
-                    ksdft::Hamiltonian<double, Host> *,
-                    ksdft::Hamiltonian<std::complex<float>, Host> *,
-                    ksdft::Hamiltonian<std::complex<double>, Host> *>;
+      std::variant<ksdft::Hamiltonian<float, double, Host> *,
+                    ksdft::Hamiltonian<double, double, Host> *,
+                    ksdft::Hamiltonian<std::complex<float>, double, Host> *,
+                    ksdft::Hamiltonian<std::complex<double>, double, Host> *>;
 
   std::vector<HamiltonianPtrVariant> hamiltonianComponentsVec{hamitonianKin.get(), hamitonianElec.get()};
   // form the kohn sham operator

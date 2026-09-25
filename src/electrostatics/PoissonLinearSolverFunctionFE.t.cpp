@@ -172,10 +172,12 @@ namespace dftefe
          &feBasisManagerField->getBasisDofHandler()),
         "The BasisDofHandler of the dataStorages and basisManager should be same in PoissonLinearSolverFunctionFE.");
 
+      // the dof handler is keyed by the coefficient type, since that is what
+      // its constraints act on
       std::shared_ptr<
-        const basis::FEBasisDofHandler<ValueTypeOperator, memorySpace, dim>>
+        const basis::FEBasisDofHandler<ValueTypeOperand, memorySpace, dim>>
         basisDofHandler = std::dynamic_pointer_cast<
-          const basis::FEBasisDofHandler<ValueTypeOperator, memorySpace, dim>>(
+          const basis::FEBasisDofHandler<ValueTypeOperand, memorySpace, dim>>(
           feBasisDataStorageStiffnessMatrix->getBasisDofHandler());
       utils::throwException(
         basisDofHandler != nullptr,
@@ -421,10 +423,11 @@ namespace dftefe
 
       // Compute RHS
 
-      std::vector<ValueType> ones(0);
-      ones.resize(d_numComponents, (ValueType)1.0);
-      std::vector<ValueType> nOnes(0);
-      nOnes.resize(d_numComponents, (ValueType)-1.0);
+      using RealType = linearAlgebra::blasLapack::real_type<ValueType>;
+      std::vector<RealType> ones(0);
+      ones.resize(d_numComponents, 1.0);
+      std::vector<RealType> nOnes(0);
+      nOnes.resize(d_numComponents, -1.0);
 
       d_b.setValue(0.0);
       linearAlgebra::MultiVector<ValueTypeOperand, memorySpace> b1(d_b, 0.0),

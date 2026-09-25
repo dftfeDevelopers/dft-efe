@@ -40,11 +40,13 @@ namespace dftefe
       template <typename ValueTypeBasisData,
                 typename ValueTypeBasisCoeff,
                 typename ValueTypeWaveFnBasisData,
+                typename ValueTypeWaveFnCoeff,
                 utils::MemorySpace memorySpace,
                 size_type          dim>
       typename ElectrostaticFE<ValueTypeBasisData,
                                ValueTypeBasisCoeff,
                                ValueTypeWaveFnBasisData,
+                               ValueTypeWaveFnCoeff,
                                memorySpace,
                                dim>::RealType
       getIntegralFieldTimesRho(
@@ -52,6 +54,7 @@ namespace dftefe
           typename ElectrostaticFE<ValueTypeBasisData,
                                    ValueTypeBasisCoeff,
                                    ValueTypeWaveFnBasisData,
+                                   ValueTypeWaveFnCoeff,
                                    memorySpace,
                                    dim>::RealType,
           memorySpaceHost> &field,
@@ -59,11 +62,13 @@ namespace dftefe
           typename ElectrostaticFE<ValueTypeBasisData,
                                    ValueTypeBasisCoeff,
                                    ValueTypeWaveFnBasisData,
+                                   ValueTypeWaveFnCoeff,
                                    memorySpace,
                                    dim>::RealType,
           memorySpaceHost> &rho,
-        const utils::MemoryStorage<ValueTypeBasisData, memorySpaceHost>
-          &jxwStorage,
+        const utils::MemoryStorage<
+          linearAlgebra::blasLapack::real_type<ValueTypeBasisData>,
+          memorySpaceHost> &jxwStorage,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
                                    linAlgOpContext,
         const utils::mpi::MPIComm &comm)
@@ -71,6 +76,7 @@ namespace dftefe
         using RealType = typename ElectrostaticFE<ValueTypeBasisData,
                                                   ValueTypeBasisCoeff,
                                                   ValueTypeWaveFnBasisData,
+                                                  ValueTypeWaveFnCoeff,
                                                   memorySpace,
                                                   dim>::RealType;
 
@@ -144,11 +150,13 @@ namespace dftefe
     template <typename ValueTypeBasisData,
               typename ValueTypeBasisCoeff,
               typename ValueTypeWaveFnBasisData,
+              typename ValueTypeWaveFnCoeff,
               utils::MemorySpace memorySpace,
               size_type          dim>
     ElectrostaticLocalFE<ValueTypeBasisData,
                          ValueTypeBasisCoeff,
                          ValueTypeWaveFnBasisData,
+                         ValueTypeWaveFnCoeff,
                          memorySpace,
                          dim>::
       ElectrostaticLocalFE(
@@ -243,11 +251,13 @@ namespace dftefe
     template <typename ValueTypeBasisData,
               typename ValueTypeBasisCoeff,
               typename ValueTypeWaveFnBasisData,
+              typename ValueTypeWaveFnCoeff,
               utils::MemorySpace memorySpace,
               size_type          dim>
     ElectrostaticLocalFE<ValueTypeBasisData,
                          ValueTypeBasisCoeff,
                          ValueTypeWaveFnBasisData,
+                         ValueTypeWaveFnCoeff,
                          memorySpace,
                          dim>::
       ElectrostaticLocalFE(
@@ -348,11 +358,13 @@ namespace dftefe
     template <typename ValueTypeBasisData,
               typename ValueTypeBasisCoeff,
               typename ValueTypeWaveFnBasisData,
+              typename ValueTypeWaveFnCoeff,
               utils::MemorySpace memorySpace,
               size_type          dim>
     ElectrostaticLocalFE<ValueTypeBasisData,
                          ValueTypeBasisCoeff,
                          ValueTypeWaveFnBasisData,
+                         ValueTypeWaveFnCoeff,
                          memorySpace,
                          dim>::
       ElectrostaticLocalFE(
@@ -448,11 +460,13 @@ namespace dftefe
     template <typename ValueTypeBasisData,
               typename ValueTypeBasisCoeff,
               typename ValueTypeWaveFnBasisData,
+              typename ValueTypeWaveFnCoeff,
               utils::MemorySpace memorySpace,
               size_type          dim>
     ElectrostaticLocalFE<ValueTypeBasisData,
                          ValueTypeBasisCoeff,
                          ValueTypeWaveFnBasisData,
+                         ValueTypeWaveFnCoeff,
                          memorySpace,
                          dim>::~ElectrostaticLocalFE()
     {
@@ -462,12 +476,14 @@ namespace dftefe
     template <typename ValueTypeBasisData,
               typename ValueTypeBasisCoeff,
               typename ValueTypeWaveFnBasisData,
+              typename ValueTypeWaveFnCoeff,
               utils::MemorySpace memorySpace,
               size_type          dim>
     void
     ElectrostaticLocalFE<ValueTypeBasisData,
                          ValueTypeBasisCoeff,
                          ValueTypeWaveFnBasisData,
+                         ValueTypeWaveFnCoeff,
                          memorySpace,
                          dim>::deleteStorages()
     {
@@ -525,12 +541,14 @@ namespace dftefe
     template <typename ValueTypeBasisData,
               typename ValueTypeBasisCoeff,
               typename ValueTypeWaveFnBasisData,
+              typename ValueTypeWaveFnCoeff,
               utils::MemorySpace memorySpace,
               size_type          dim>
     void
     ElectrostaticLocalFE<ValueTypeBasisData,
                          ValueTypeBasisCoeff,
                          ValueTypeWaveFnBasisData,
+                         ValueTypeWaveFnCoeff,
                          memorySpace,
                          dim>::
       reinitBasis(
@@ -621,7 +639,7 @@ namespace dftefe
           d_feBDElectronicChargeRhs, d_maxCellBlock, d_numComponents);
 
       d_feBasisOpHamiltonian =
-        std::make_shared<basis::FEBasisOperations<ValueTypeBasisCoeff,
+        std::make_shared<basis::FEBasisOperations<ValueTypeWaveFnCoeff,
                                                   ValueTypeWaveFnBasisData,
                                                   memorySpace,
                                                   dim>>(feBDHamiltonian,
@@ -629,9 +647,11 @@ namespace dftefe
                                                         d_numComponents);
 
       {
+        // feBDHamiltonian is the wavefunction-side storage, so its handler
+        // is keyed by the wavefunction coefficient
         auto feBDH = std::dynamic_pointer_cast<
           const basis::
-            FEBasisDofHandler<ValueTypeBasisCoeff, memorySpace, dim>>(
+            FEBasisDofHandler<ValueTypeWaveFnCoeff, memorySpace, dim>>(
           feBDHamiltonian->getBasisDofHandler());
         utils::throwException(
           feBDH != nullptr,
@@ -887,12 +907,14 @@ namespace dftefe
     template <typename ValueTypeBasisData,
               typename ValueTypeBasisCoeff,
               typename ValueTypeWaveFnBasisData,
+              typename ValueTypeWaveFnCoeff,
               utils::MemorySpace memorySpace,
               size_type          dim>
     void
     ElectrostaticLocalFE<ValueTypeBasisData,
                          ValueTypeBasisCoeff,
                          ValueTypeWaveFnBasisData,
+                         ValueTypeWaveFnCoeff,
                          memorySpace,
                          dim>::
       reinitBasis(
@@ -961,7 +983,7 @@ namespace dftefe
           d_feBDElectronicChargeRhs, d_maxCellBlock, d_numComponents);
 
       d_feBasisOpHamiltonian =
-        std::make_shared<basis::FEBasisOperations<ValueTypeBasisCoeff,
+        std::make_shared<basis::FEBasisOperations<ValueTypeWaveFnCoeff,
                                                   ValueTypeWaveFnBasisData,
                                                   memorySpace,
                                                   dim>>(feBDHamiltonian,
@@ -969,9 +991,11 @@ namespace dftefe
                                                         d_numComponents);
 
       {
+        // feBDHamiltonian is the wavefunction-side storage, so its handler
+        // is keyed by the wavefunction coefficient
         auto feBDH = std::dynamic_pointer_cast<
           const basis::
-            FEBasisDofHandler<ValueTypeBasisCoeff, memorySpace, dim>>(
+            FEBasisDofHandler<ValueTypeWaveFnCoeff, memorySpace, dim>>(
           feBDHamiltonian->getBasisDofHandler());
         utils::throwException(
           feBDH != nullptr,
@@ -1185,12 +1209,14 @@ namespace dftefe
     template <typename ValueTypeBasisData,
               typename ValueTypeBasisCoeff,
               typename ValueTypeWaveFnBasisData,
+              typename ValueTypeWaveFnCoeff,
               utils::MemorySpace memorySpace,
               size_type          dim>
     void
     ElectrostaticLocalFE<ValueTypeBasisData,
                          ValueTypeBasisCoeff,
                          ValueTypeWaveFnBasisData,
+                         ValueTypeWaveFnCoeff,
                          memorySpace,
                          dim>::
       reinitBasis(
@@ -1269,7 +1295,7 @@ namespace dftefe
           d_feBDElectronicChargeRhs, d_maxCellBlock, d_numComponents);
 
       d_feBasisOpHamiltonian =
-        std::make_shared<basis::FEBasisOperations<ValueTypeBasisCoeff,
+        std::make_shared<basis::FEBasisOperations<ValueTypeWaveFnCoeff,
                                                   ValueTypeWaveFnBasisData,
                                                   memorySpace,
                                                   dim>>(feBDHamiltonian,
@@ -1277,9 +1303,11 @@ namespace dftefe
                                                         d_numComponents);
 
       {
+        // feBDHamiltonian is the wavefunction-side storage, so its handler
+        // is keyed by the wavefunction coefficient
         auto feBDH = std::dynamic_pointer_cast<
           const basis::
-            FEBasisDofHandler<ValueTypeBasisCoeff, memorySpace, dim>>(
+            FEBasisDofHandler<ValueTypeWaveFnCoeff, memorySpace, dim>>(
           feBDHamiltonian->getBasisDofHandler());
         utils::throwException(
           feBDH != nullptr,
@@ -1891,12 +1919,14 @@ namespace dftefe
     template <typename ValueTypeBasisData,
               typename ValueTypeBasisCoeff,
               typename ValueTypeWaveFnBasisData,
+              typename ValueTypeWaveFnCoeff,
               utils::MemorySpace memorySpace,
               size_type          dim>
     void
     ElectrostaticLocalFE<ValueTypeBasisData,
                          ValueTypeBasisCoeff,
                          ValueTypeWaveFnBasisData,
+                         ValueTypeWaveFnCoeff,
                          memorySpace,
                          dim>::
       reinitField(
@@ -2151,12 +2181,14 @@ namespace dftefe
     template <typename ValueTypeBasisData,
               typename ValueTypeBasisCoeff,
               typename ValueTypeWaveFnBasisData,
+              typename ValueTypeWaveFnCoeff,
               utils::MemorySpace memorySpace,
               size_type          dim>
     void
     ElectrostaticLocalFE<ValueTypeBasisData,
                          ValueTypeBasisCoeff,
                          ValueTypeWaveFnBasisData,
+                         ValueTypeWaveFnCoeff,
                          memorySpace,
                          dim>::getLocal(Storage &cellWiseStorage) const
     {
@@ -2223,12 +2255,14 @@ namespace dftefe
     template <typename ValueTypeBasisData,
               typename ValueTypeBasisCoeff,
               typename ValueTypeWaveFnBasisData,
+              typename ValueTypeWaveFnCoeff,
               utils::MemorySpace memorySpace,
               size_type          dim>
     void
     ElectrostaticLocalFE<ValueTypeBasisData,
                          ValueTypeBasisCoeff,
                          ValueTypeWaveFnBasisData,
+                         ValueTypeWaveFnCoeff,
                          memorySpace,
                          dim>::
       nuclearPotentialSolve(
@@ -2435,12 +2469,14 @@ namespace dftefe
     template <typename ValueTypeBasisData,
               typename ValueTypeBasisCoeff,
               typename ValueTypeWaveFnBasisData,
+              typename ValueTypeWaveFnCoeff,
               utils::MemorySpace memorySpace,
               size_type          dim>
     void
     ElectrostaticLocalFE<ValueTypeBasisData,
                          ValueTypeBasisCoeff,
                          ValueTypeWaveFnBasisData,
+                         ValueTypeWaveFnCoeff,
                          memorySpace,
                          dim>::computeNuclearSelfEnergy()
     {
@@ -2513,12 +2549,12 @@ namespace dftefe
                                     *d_scratchPotNuclearQuad);
 
               RealType selfEnergyAtom =
-                ElectrostaticLocalFEInternal::getIntegralFieldTimesRho<
-                  ValueTypeBasisData,
-                  ValueTypeBasisCoeff,
-                  ValueTypeWaveFnBasisData,
-                  memorySpaceHost,
-                  dim>(*d_scratchPotNuclearQuad,
+                ElectrostaticLocalFEInternal::getIntegralFieldTimesRho<ValueTypeBasisData,
+                                                                       ValueTypeBasisCoeff,
+                                                                       ValueTypeWaveFnBasisData,
+                                                                       ValueTypeWaveFnCoeff,
+                                                                       memorySpaceHost,
+                                                                       dim>(*d_scratchPotNuclearQuad,
                        *d_scratchDensNuclearQuad,
                        jxwStorageNucl,
                        d_linAlgOpContextHost,
@@ -2668,12 +2704,14 @@ namespace dftefe
     template <typename ValueTypeBasisData,
               typename ValueTypeBasisCoeff,
               typename ValueTypeWaveFnBasisData,
+              typename ValueTypeWaveFnCoeff,
               utils::MemorySpace memorySpace,
               size_type          dim>
     void
     ElectrostaticLocalFE<ValueTypeBasisData,
                          ValueTypeBasisCoeff,
                          ValueTypeWaveFnBasisData,
+                         ValueTypeWaveFnCoeff,
                          memorySpace,
                          dim>::evalEnergy()
     {
@@ -2692,24 +2730,24 @@ namespace dftefe
                                              *d_scratchPotRhoQuad);
 
           RealType integralPhixRho =
-            ElectrostaticLocalFEInternal::getIntegralFieldTimesRho<
-              ValueTypeBasisData,
-              ValueTypeBasisCoeff,
-              ValueTypeWaveFnBasisData,
-              memorySpaceHost,
-              dim>(*d_scratchPotRhoQuad,
+            ElectrostaticLocalFEInternal::getIntegralFieldTimesRho<ValueTypeBasisData,
+                                                                   ValueTypeBasisCoeff,
+                                                                   ValueTypeWaveFnBasisData,
+                                                                   ValueTypeWaveFnCoeff,
+                                                                   memorySpaceHost,
+                                                                   dim>(*d_scratchPotRhoQuad,
                    d_electronChargeDensity,
                    d_feBDElectronicChargeRhs->getJxWInAllCells(),
                    d_linAlgOpContextHost,
                    d_feBMTotalCharge->getMPIPatternP2P()->mpiCommunicator());
 
           RealType integralPhixbSmear =
-            ElectrostaticLocalFEInternal::getIntegralFieldTimesRho<
-              ValueTypeBasisData,
-              ValueTypeBasisCoeff,
-              ValueTypeWaveFnBasisData,
-              memorySpaceHost,
-              dim>(*d_scratchPotNuclearQuad,
+            ElectrostaticLocalFEInternal::getIntegralFieldTimesRho<ValueTypeBasisData,
+                                                                   ValueTypeBasisCoeff,
+                                                                   ValueTypeWaveFnBasisData,
+                                                                   ValueTypeWaveFnCoeff,
+                                                                   memorySpaceHost,
+                                                                   dim>(*d_scratchPotNuclearQuad,
                    *d_nuclearChargesDensity,
                    d_feBDNuclearChargeRhs->getJxWInAllCells(),
                    d_linAlgOpContextHost,
@@ -2720,12 +2758,12 @@ namespace dftefe
       else
         {
           RealType integralDelPhixbSmear =
-            ElectrostaticLocalFEInternal::getIntegralFieldTimesRho<
-              ValueTypeBasisData,
-              ValueTypeBasisCoeff,
-              ValueTypeWaveFnBasisData,
-              memorySpaceHost,
-              dim>(*d_scratchPotNuclearQuad,
+            ElectrostaticLocalFEInternal::getIntegralFieldTimesRho<ValueTypeBasisData,
+                                                                   ValueTypeBasisCoeff,
+                                                                   ValueTypeWaveFnBasisData,
+                                                                   ValueTypeWaveFnCoeff,
+                                                                   memorySpaceHost,
+                                                                   dim>(*d_scratchPotNuclearQuad,
                    *d_nuclearChargesDensity,
                    d_feBDNuclearChargeRhs->getJxWInAllCells(),
                    d_linAlgOpContextHost,
@@ -2736,6 +2774,7 @@ namespace dftefe
           //     ValueTypeBasisData,
           //     ValueTypeBasisCoeff,
           //     ValueTypeWaveFnBasisData,
+          //     ValueTypeWaveFnCoeff,
           //     memorySpace,
           //     dim>(*d_scratchPotNuclearQuad,
           //          d_atomicElectronChargeDensityNucQuad,
@@ -2755,12 +2794,12 @@ namespace dftefe
                                              *d_scratchPotRhoQuad);
 
           RealType intRhoAtDelPhi =
-            ElectrostaticLocalFEInternal::getIntegralFieldTimesRho<
-              ValueTypeBasisData,
-              ValueTypeBasisCoeff,
-              ValueTypeWaveFnBasisData,
-              memorySpaceHost,
-              dim>(*d_scratchPotRhoQuad,
+            ElectrostaticLocalFEInternal::getIntegralFieldTimesRho<ValueTypeBasisData,
+                                                                   ValueTypeBasisCoeff,
+                                                                   ValueTypeWaveFnBasisData,
+                                                                   ValueTypeWaveFnCoeff,
+                                                                   memorySpaceHost,
+                                                                   dim>(*d_scratchPotRhoQuad,
                    d_atomicElectronChargeDensity,
                    d_feBDElectronicChargeRhs->getJxWInAllCells(),
                    d_linAlgOpContextHost,
@@ -2773,12 +2812,12 @@ namespace dftefe
                           *d_linAlgOpContextHost);
 
           RealType intDelRhoPhiTot =
-            ElectrostaticLocalFEInternal::getIntegralFieldTimesRho<
-              ValueTypeBasisData,
-              ValueTypeBasisCoeff,
-              ValueTypeWaveFnBasisData,
-              memorySpaceHost,
-              dim>(*d_scratchPotRhoQuad,
+            ElectrostaticLocalFEInternal::getIntegralFieldTimesRho<ValueTypeBasisData,
+                                                                   ValueTypeBasisCoeff,
+                                                                   ValueTypeWaveFnBasisData,
+                                                                   ValueTypeWaveFnCoeff,
+                                                                   memorySpaceHost,
+                                                                   dim>(*d_scratchPotRhoQuad,
                    *d_scratchDensRhoQuad,
                    d_feBDElectronicChargeRhs->getJxWInAllCells(),
                    d_linAlgOpContextHost,
@@ -2797,12 +2836,12 @@ namespace dftefe
       if (d_isDeltaRhoSolve)
         {
           RealType correctionEnergyDelta =
-            ElectrostaticLocalFEInternal::getIntegralFieldTimesRho<
-              ValueTypeBasisData,
-              ValueTypeBasisCoeff,
-              ValueTypeWaveFnBasisData,
-              memorySpaceHost,
-              dim>(*d_correctionPotRhoQuad,
+            ElectrostaticLocalFEInternal::getIntegralFieldTimesRho<ValueTypeBasisData,
+                                                                   ValueTypeBasisCoeff,
+                                                                   ValueTypeWaveFnBasisData,
+                                                                   ValueTypeWaveFnCoeff,
+                                                                   memorySpaceHost,
+                                                                   dim>(*d_correctionPotRhoQuad,
                    *d_scratchDensRhoQuad, // delRho from above
                    d_feBDElectronicChargeRhs->getJxWInAllCells(),
                    d_linAlgOpContextHost,
@@ -2817,12 +2856,12 @@ namespace dftefe
       else
         {
           correctionEnergy =
-            ElectrostaticLocalFEInternal::getIntegralFieldTimesRho<
-              ValueTypeBasisData,
-              ValueTypeBasisCoeff,
-              ValueTypeWaveFnBasisData,
-              memorySpaceHost,
-              dim>(*d_correctionPotRhoQuad,
+            ElectrostaticLocalFEInternal::getIntegralFieldTimesRho<ValueTypeBasisData,
+                                                                   ValueTypeBasisCoeff,
+                                                                   ValueTypeWaveFnBasisData,
+                                                                   ValueTypeWaveFnCoeff,
+                                                                   memorySpaceHost,
+                                                                   dim>(*d_correctionPotRhoQuad,
                    d_electronChargeDensity,
                    d_feBDElectronicChargeRhs->getJxWInAllCells(),
                    d_linAlgOpContextHost,
@@ -2835,16 +2874,19 @@ namespace dftefe
     template <typename ValueTypeBasisData,
               typename ValueTypeBasisCoeff,
               typename ValueTypeWaveFnBasisData,
+              typename ValueTypeWaveFnCoeff,
               utils::MemorySpace memorySpace,
               size_type          dim>
     typename ElectrostaticFE<ValueTypeBasisData,
                              ValueTypeBasisCoeff,
                              ValueTypeWaveFnBasisData,
+                             ValueTypeWaveFnCoeff,
                              memorySpace,
                              dim>::RealType
     ElectrostaticLocalFE<ValueTypeBasisData,
                          ValueTypeBasisCoeff,
                          ValueTypeWaveFnBasisData,
+                         ValueTypeWaveFnCoeff,
                          memorySpace,
                          dim>::getEnergy() const
     {
@@ -2854,18 +2896,21 @@ namespace dftefe
     template <typename ValueTypeBasisData,
               typename ValueTypeBasisCoeff,
               typename ValueTypeWaveFnBasisData,
+              typename ValueTypeWaveFnCoeff,
               utils::MemorySpace memorySpace,
               size_type          dim>
     std::vector<quadrature::QuadratureValuesContainer<
       typename ElectrostaticFE<ValueTypeBasisData,
                                ValueTypeBasisCoeff,
                                ValueTypeWaveFnBasisData,
+                               ValueTypeWaveFnCoeff,
                                memorySpace,
                                dim>::ValueType,
       memorySpace>>
     ElectrostaticLocalFE<ValueTypeBasisData,
                          ValueTypeBasisCoeff,
                          ValueTypeWaveFnBasisData,
+                         ValueTypeWaveFnCoeff,
                          memorySpace,
                          dim>::getFunctionalDerivative() const
     {
@@ -2899,17 +2944,19 @@ namespace dftefe
     template <typename ValueTypeBasisData,
               typename ValueTypeBasisCoeff,
               typename ValueTypeWaveFnBasisData,
+              typename ValueTypeWaveFnCoeff,
               utils::MemorySpace memorySpace,
               size_type          dim>
     void
     ElectrostaticLocalFE<ValueTypeBasisData,
                          ValueTypeBasisCoeff,
                          ValueTypeWaveFnBasisData,
+                         ValueTypeWaveFnCoeff,
                          memorySpace,
                          dim>::
       applyNonLocal(
-        linearAlgebra::MultiVector<ValueTypeWaveFnBasisData, memorySpace> &X,
-        linearAlgebra::MultiVector<ValueTypeWaveFnBasisData, memorySpace> &Y,
+        linearAlgebra::MultiVector<ValueTypeWaveFnCoeff, memorySpace> &X,
+        linearAlgebra::MultiVector<ValueTypeWaveFnCoeff, memorySpace> &Y,
         bool updateGhostX,
         bool updateGhostY) const
     {
@@ -2921,12 +2968,14 @@ namespace dftefe
     template <typename ValueTypeBasisData,
               typename ValueTypeBasisCoeff,
               typename ValueTypeWaveFnBasisData,
+              typename ValueTypeWaveFnCoeff,
               utils::MemorySpace memorySpace,
               size_type          dim>
     bool
     ElectrostaticLocalFE<ValueTypeBasisData,
                          ValueTypeBasisCoeff,
                          ValueTypeWaveFnBasisData,
+                         ValueTypeWaveFnCoeff,
                          memorySpace,
                          dim>::hasLocalComponent() const
     {
@@ -2936,12 +2985,14 @@ namespace dftefe
     template <typename ValueTypeBasisData,
               typename ValueTypeBasisCoeff,
               typename ValueTypeWaveFnBasisData,
+              typename ValueTypeWaveFnCoeff,
               utils::MemorySpace memorySpace,
               size_type          dim>
     bool
     ElectrostaticLocalFE<ValueTypeBasisData,
                          ValueTypeBasisCoeff,
                          ValueTypeWaveFnBasisData,
+                         ValueTypeWaveFnCoeff,
                          memorySpace,
                          dim>::hasNonLocalComponent() const
     {

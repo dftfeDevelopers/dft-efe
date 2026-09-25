@@ -55,15 +55,18 @@ namespace dftefe
   {
     namespace EFEBasisDofHandlerInternal
     {
+      template <typename T>
+      using RealType = linearAlgebra::blasLapack::real_type<T>;
+
       template <typename ValueTypeBasisCoeff,
                 dftefe::utils::MemorySpace memorySpace,
                 size_type                  dim>
       void
       setDealiiMatrixFreeLight(
         dealii::DoFHandler<dim> &dealiiDofHandler,
-        dealii::AffineConstraints<ValueTypeBasisCoeff>
+        dealii::AffineConstraints<RealType<ValueTypeBasisCoeff>>
           &dealiiAffineConstraintMatrix,
-        dealii::MatrixFree<dim, ValueTypeBasisCoeff> &dealiiMatrixFree)
+        dealii::MatrixFree<dim, RealType<ValueTypeBasisCoeff>> &dealiiMatrixFree)
       {
         typename dealii::MatrixFree<dim>::AdditionalData dealiiAdditionalData;
         dealiiAdditionalData.tasks_parallel_scheme =
@@ -86,7 +89,7 @@ namespace dftefe
       void
       getGhostIndices(
         std::vector<global_size_type> &ghostEnrichmentGlobalIds,
-        const dealii::MatrixFree<dim, ValueTypeBasisCoeff> &dealiiMatrixFree,
+        const dealii::MatrixFree<dim, RealType<ValueTypeBasisCoeff>> &dealiiMatrixFree,
         std::vector<global_size_type> &                     ghostIndices)
       {
         const dealii::Utilities::MPI::Partitioner &dealiiPartitioner =
@@ -121,10 +124,10 @@ namespace dftefe
                              memorySpace,
                              dim>::
       EFEBasisDofHandlerDealii(
-        std::shared_ptr<const EnrichmentClassicalInterfaceSpherical<
-          ValueTypeBasisData,
-          memorySpace,
-          dim>>                    EnrichmentClassicalInterface,
+        std::shared_ptr<const EnrichmentClassicalInterfaceSpherical<ValueTypeBasisCoeff,
+                                                                    ValueTypeBasisData,
+                                                                    memorySpace,
+                                                                    dim>>                    EnrichmentClassicalInterface,
         const utils::mpi::MPIComm &mpiComm)
       : d_isVariableDofsPerCell(true)
       , d_totalRanges(2) // Classical and Enriched
@@ -150,7 +153,8 @@ namespace dftefe
                              dim>::
       EFEBasisDofHandlerDealii(
         std::shared_ptr<
-          const EnrichmentClassicalInterfaceSpherical<ValueTypeBasisData,
+          const EnrichmentClassicalInterfaceSpherical<ValueTypeBasisCoeff,
+                                                      ValueTypeBasisData,
                                                       memorySpace,
                                                       dim>>
           EnrichmentClassicalInterface)
@@ -177,10 +181,10 @@ namespace dftefe
                              ValueTypeBasisData,
                              memorySpace,
                              dim>::
-      reinit(std::shared_ptr<const EnrichmentClassicalInterfaceSpherical<
-               ValueTypeBasisData,
-               memorySpace,
-               dim>>                    enrichmentClassicalInterface,
+      reinit(std::shared_ptr<const EnrichmentClassicalInterfaceSpherical<ValueTypeBasisCoeff,
+                                                                         ValueTypeBasisData,
+                                                                         memorySpace,
+                                                                         dim>>                    enrichmentClassicalInterface,
              const utils::mpi::MPIComm &mpiComm)
     {
       d_isDistributed = true;
@@ -347,7 +351,7 @@ namespace dftefe
       // nature of the finite elemnt mesh. One needs dof_handler for this
       // part as the constriant matrix needs to trim out the locally
 
-      dealii::AffineConstraints<ValueTypeBasisCoeff>
+      dealii::AffineConstraints<EFEBasisDofHandlerInternal::RealType<ValueTypeBasisCoeff>>
         dealiiAffineConstraintMatrix;
 
       dealiiAffineConstraintMatrix.clear();
@@ -425,7 +429,7 @@ namespace dftefe
       // reduced a nd trimmed with only those remain which are required for
       // satisfying hanging and periodic for the current processor.
 
-      dealii::MatrixFree<dim, ValueTypeBasisCoeff> dealiiMatrixFree;
+      dealii::MatrixFree<dim, EFEBasisDofHandlerInternal::RealType<ValueTypeBasisCoeff>> dealiiMatrixFree;
 
       EFEBasisDofHandlerInternal::
         setDealiiMatrixFreeLight<ValueTypeBasisCoeff, memorySpace, dim>(
@@ -537,10 +541,10 @@ namespace dftefe
                              ValueTypeBasisData,
                              memorySpace,
                              dim>::
-      reinit(std::shared_ptr<const EnrichmentClassicalInterfaceSpherical<
-               ValueTypeBasisData,
-               memorySpace,
-               dim>> enrichmentClassicalInterface)
+      reinit(std::shared_ptr<const EnrichmentClassicalInterfaceSpherical<ValueTypeBasisCoeff,
+                                                                         ValueTypeBasisData,
+                                                                         memorySpace,
+                                                                         dim>> enrichmentClassicalInterface)
     {
       d_isDistributed = false;
       // Create Classical FE dof_handler
@@ -709,7 +713,7 @@ namespace dftefe
       // nature of the finite elemnt mesh. One needs dof_handler for this
       // part as the constriant matrix needs to trim out the locally
 
-      dealii::AffineConstraints<ValueTypeBasisCoeff>
+      dealii::AffineConstraints<EFEBasisDofHandlerInternal::RealType<ValueTypeBasisCoeff>>
         dealiiAffineConstraintMatrix;
 
       dealiiAffineConstraintMatrix.clear();
@@ -783,7 +787,7 @@ namespace dftefe
       // reduced a nd trimmed with only those remain which are required for
       // satisfying hanging and periodic for the current processor.
 
-      dealii::MatrixFree<dim, ValueTypeBasisCoeff> dealiiMatrixFree;
+      dealii::MatrixFree<dim, EFEBasisDofHandlerInternal::RealType<ValueTypeBasisCoeff>> dealiiMatrixFree;
 
       EFEBasisDofHandlerInternal::
         setDealiiMatrixFreeLight<ValueTypeBasisCoeff, memorySpace, dim>(
@@ -1778,7 +1782,8 @@ namespace dftefe
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
     std::shared_ptr<
-      const EnrichmentClassicalInterfaceSpherical<ValueTypeBasisData,
+      const EnrichmentClassicalInterfaceSpherical<ValueTypeBasisCoeff,
+                                                  ValueTypeBasisData,
                                                   memorySpace,
                                                   dim>>
     EFEBasisDofHandlerDealii<ValueTypeBasisCoeff,

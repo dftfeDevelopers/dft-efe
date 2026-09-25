@@ -43,7 +43,10 @@ namespace dftefe
       void
       cellWiseGEMM(
         std::pair<size_type, size_type>                             cellRange,
-        const utils::MemoryStorage<ValueTypeOperator, memorySpace> &cellWiseC,
+        const utils::MemoryStorage<
+          linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
+                                                 ValueTypeOperand>,
+          memorySpace> &                                            cellWiseC,
         bool                          isCConjTransX,
         const size_type               numVecs,
         const std::vector<size_type> &numCellXLocalIds,
@@ -99,16 +102,14 @@ namespace dftefe
             strideC[iCell]  = mSizes[iCell] * nSizes[iCell];
           }
 
-        const ValueTypeOperator *A = xCellValues;
+        const ValueType *A = xCellValues;
 
-        const ValueTypeOperator *B = cellWiseC.data() + cellWiseCStartOffset;
+        const ValueType *B = cellWiseC.data() + cellWiseCStartOffset;
 
-        linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
-                                               ValueTypeOperand> *C =
-          yCellValues;
+        ValueType *C = yCellValues;
 
-        linearAlgebra::blasLapack::gemmStridedVarBatched<ValueTypeOperator,
-                                                         ValueTypeOperand,
+        linearAlgebra::blasLapack::gemmStridedVarBatched<ValueType,
+                                                         ValueType,
                                                          memorySpace>(
           numCellsInBlock,
           transA.data(),
@@ -137,7 +138,10 @@ namespace dftefe
                 utils::MemorySpace memorySpace>
       void
       computeCXCellWiseLocal(
-        const utils::MemoryStorage<ValueTypeOperator, memorySpace> &cellWiseC,
+        const utils::MemoryStorage<
+          linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
+                                                 ValueTypeOperand>,
+          memorySpace> &                                            cellWiseC,
         const ValueTypeOperand *                                    x,
         linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
                                                ValueTypeOperand> *  y,
@@ -227,8 +231,9 @@ namespace dftefe
                                       xCellValues,
                                       linAlgOpContext);
 
-            cellWiseGEMM(std::make_pair(cellStartId, cellEndId),
-                         cellWiseC,
+            cellWiseGEMM<ValueTypeOperator, ValueTypeOperand, memorySpace>(
+              std::make_pair(cellStartId, cellEndId),
+              cellWiseC,
                          isCConjTransX,
                          numVecs,
                          numCellXLocalIds,
@@ -313,10 +318,12 @@ namespace dftefe
         utils::throwException(
           false, "Dimension should be 3 for Spherical Projector Dofs.");
 
+      // the dof handler is keyed by the coefficient type, since that is what
+      // its constraints act on
       std::shared_ptr<
-        const FEBasisDofHandler<ValueTypeOperator, memorySpace, dim>>
+        const FEBasisDofHandler<ValueTypeOperand, memorySpace, dim>>
         feBasisDofHandler = std::dynamic_pointer_cast<
-          const FEBasisDofHandler<ValueTypeOperator, memorySpace, dim>>(
+          const FEBasisDofHandler<ValueTypeOperand, memorySpace, dim>>(
           feBasisDataStorage.getBasisDofHandler());
       utils::throwException(
         feBasisDofHandler.get() != nullptr,
@@ -422,7 +429,7 @@ namespace dftefe
           cellIndex++;
         }
       d_cellWiseC.resize(cellWiseCSize);
-      dftefe::utils::MemoryStorage<ValueTypeOperator, utils::MemorySpace::HOST>
+      dftefe::utils::MemoryStorage<ValueType, utils::MemorySpace::HOST>
         cellWiseCHost(cellWiseCSize);
 
       d_maxProjInCell =
@@ -452,7 +459,7 @@ namespace dftefe
               std::vector<utils::Point> quadRealPointsVec =
                 quadratureRuleContainer.getCellRealPoints(cellIndex);
 
-              std::vector<double> projectorQuadStorageJxW =
+              std::vector<ValueType> projectorQuadStorageJxW =
                 getProjectorValues(cellIndex, quadRealPointsVec);
 
               for (size_type iProj = 0; iProj < numProjsInCell; iProj++)
@@ -485,20 +492,34 @@ namespace dftefe
                                   basisDataHost.data(),
                                   basisData.data());
 
-              linearAlgebra::blasLapack::gemm<ValueTypeOperator,
-                                              ValueTypeOperator,
+              // the basis is real and the projector complex; the gemm takes
+              // one type, so the basis widens to meet it
+              dftefe::utils::MemoryStorage<ValueType, utils::MemorySpace::HOST>
+                basisDataHostUnion(numDofsInCell * nQuadsInCell);
+              linearAlgebra::blasLapack::
+                copyValueType1ArrToValueType2Arr<ValueTypeOperator,
+                                                 ValueType,
+                                                 utils::MemorySpace::HOST>(
+                  basisDataHost.size(),
+                  basisDataHost.data(),
+                  basisDataHostUnion.data(),
+                  *dftefe::linearAlgebra::LinAlgOpContextDefaults::
+                    LINALG_OP_CONTXT_HOST);
+
+              linearAlgebra::blasLapack::gemm<ValueType,
+                                              ValueType,
                                               utils::MemorySpace::HOST>(
                 'T',
                 'T',
                 numProjsInCell,
                 numDofsInCell,
                 nQuadsInCell,
-                (ValueTypeOperator)1.0,
+                (ValueType)1.0,
                 projectorQuadStorageJxW.data(),
                 nQuadsInCell,
-                basisDataHost.data(),
+                basisDataHostUnion.data(),
                 numDofsInCell,
-                (ValueTypeOperator)0.0,
+                (ValueType)0.0,
                 cellWiseCHost.data() + cumulativeDofxProj,
                 numProjsInCell,
                 *dftefe::linearAlgebra::LinAlgOpContextDefaults::
@@ -659,7 +680,9 @@ namespace dftefe
               typename ValueTypeOperand,
               utils::MemorySpace memorySpace,
               size_type          dim>
-    std::vector<double>
+    std::vector<
+      linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
+                                             ValueTypeOperand>>
     AtomCenterNonLocalOpContextFE<ValueTypeOperator,
                                   ValueTypeOperand,
                                   memorySpace,
@@ -672,8 +695,9 @@ namespace dftefe
         d_overlappingProjectorIdsInCells[cellId];
       size_type           numProjIdsInCell = projIdVec.size();
       size_type           numPoints        = points.size();
-      std::vector<double> retValue(numPoints * numProjIdsInCell, 0),
-        rVec(numPoints, 0), thetaVec(numPoints, 0), phiVec(numPoints, 0);
+      std::vector<ValueType> retValue(numPoints * numProjIdsInCell, 0);
+      std::vector<double> rVec(numPoints, 0), thetaVec(numPoints, 0),
+        phiVec(numPoints, 0);
       std::vector<dftefe::utils::Point> x(numPoints, utils::Point(dim));
       DFTEFE_AssertWithMsg(!projIdVec.empty(),
                            "The requested cell does not have any proj ids.");
@@ -803,7 +827,8 @@ namespace dftefe
                   // retValue is zero initialised, so every origin adds its
                   // own radial x angular product into the same slot. Replaces
                   // hadamardProduct, which assigns rather than accumulates.
-                  double *out = retValue.data() + (iProj + mCount) * numPoints;
+                  ValueType *out =
+                    retValue.data() + (iProj + mCount) * numPoints;
                   for (size_type iPts = 0; iPts < numPoints; iPts++)
                     out[iPts] += radialValue[iPts] * angularValue[iPts];
                 }
@@ -863,7 +888,10 @@ namespace dftefe
 
       auto itCellLocalIdsBeginY = d_locallyOwnedCellLocalProjectorIds.begin();
 
-      AtomCenterNonLocalOpContextFEInternal::computeCXCellWiseLocal(
+      AtomCenterNonLocalOpContextFEInternal::computeCXCellWiseLocal<
+        ValueTypeOperator,
+        ValueTypeOperand,
+        memorySpace>(
         d_cellWiseC,
         X.begin(),
         d_CX->begin(),
@@ -887,7 +915,7 @@ namespace dftefe
       size_type m = 1, n = numVecs, k = d_CX->localSize();
 
       linearAlgebra::blasLapack::scaleStridedVarBatched<ValueTypeOperator,
-                                                        ValueTypeOperator,
+                                                        ValueType,
                                                         memorySpace>(
         1,
         linearAlgebra::blasLapack::Layout::ColMajor,
@@ -928,7 +956,10 @@ namespace dftefe
       //   << "\t" ;
       // }
 
-      AtomCenterNonLocalOpContextFEInternal::computeCXCellWiseLocal(
+      AtomCenterNonLocalOpContextFEInternal::computeCXCellWiseLocal<
+        ValueTypeOperator,
+        ValueTypeOperand,
+        memorySpace>(
         d_cellWiseC,
         d_CX->begin(),
         Y.begin(),
@@ -996,7 +1027,10 @@ namespace dftefe
       if (numCellsInBlock <=
           (d_maxCellBlock * d_maxWaveFnBatch) / d_CX->getNumberComponents())
         {
-          AtomCenterNonLocalOpContextFEInternal::cellWiseGEMM(
+          AtomCenterNonLocalOpContextFEInternal::cellWiseGEMM<
+            ValueTypeOperator,
+            ValueTypeOperand,
+            memorySpace>(
             cellRange,
             d_cellWiseC,
             true,
@@ -1076,7 +1110,7 @@ namespace dftefe
       size_type m = 1, n = d_CX->getNumberComponents(), k = d_CX->localSize();
 
       linearAlgebra::blasLapack::scaleStridedVarBatched<ValueTypeOperator,
-                                                        ValueTypeOperator,
+                                                        ValueType,
                                                         memorySpace>(
         1,
         linearAlgebra::blasLapack::Layout::ColMajor,
@@ -1140,7 +1174,10 @@ namespace dftefe
               d_CXCellValues,
               *d_linAlgOpContext);
 
-          AtomCenterNonLocalOpContextFEInternal::cellWiseGEMM(
+          AtomCenterNonLocalOpContextFEInternal::cellWiseGEMM<
+            ValueTypeOperator,
+            ValueTypeOperand,
+            memorySpace>(
             cellRange,
             d_cellWiseC,
             false,

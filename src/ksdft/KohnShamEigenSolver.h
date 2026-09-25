@@ -242,7 +242,7 @@ namespace dftefe
       std::shared_ptr<linearAlgebra::MultiVector<ValueType, memorySpace>>
         d_waveFnBatch, d_HXBatch, d_MXBatch, d_waveFnBatchSmall, d_HXBatchSmall,
         d_MXBatchSmall;
-      utils::MemoryStorage<ValueType, memorySpace> d_kohnShamEnergiesMemspace,
+      utils::MemoryStorage<RealType, memorySpace> d_kohnShamEnergiesMemspace,
         d_nOnes;
 
       linearAlgebra::OrthogonalizationType       d_orthoType;

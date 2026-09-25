@@ -76,8 +76,9 @@ namespace dftefe
         linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
                                                ValueTypeOperand>;
 
-      using Storage =
-        dftefe::utils::MemoryStorage<ValueTypeOperator, memorySpace>;
+      // the cell overlap is multiplied against the operand in apply, and BLAS
+      // has no mixed real-times-complex gemm, so it is stored in the union type
+      using Storage = dftefe::utils::MemoryStorage<ValueType, memorySpace>;
 
     public:
       /**
@@ -224,9 +225,10 @@ namespace dftefe
       const size_type            d_maxFieldBlock;
 
       bool d_isMassLumping;
-      std::shared_ptr<linearAlgebra::Vector<ValueTypeOperator, memorySpace>>
-        d_diagonal;
-      std::shared_ptr<utils::MemoryStorage<ValueTypeOperator, memorySpace>>
+      // held in the union type: the diagonal passes through the operand-typed
+      // constraints, and the enrichment block multiplies the operand in a gemm
+      std::shared_ptr<linearAlgebra::Vector<ValueType, memorySpace>> d_diagonal;
+      std::shared_ptr<utils::MemoryStorage<ValueType, memorySpace>>
                                      d_basisOverlapEnrichmentBlock;
       const EFEBasisDofHandler<ValueTypeOperand,
                                ValueTypeOperator,
@@ -234,7 +236,7 @@ namespace dftefe
                                dim> *d_efebasisDofHandler;
       global_size_type               d_nglobalEnrichmentIds;
       bool                           d_isEnrichAtomBlockDiagonalApprox;
-      utils::MemoryStorage<ValueTypeOperator, memorySpace>
+      utils::MemoryStorage<ValueType, memorySpace>
         d_atomBlockEnrichmentOverlap;
 
     }; // end of class OrthoEFEOverlapOperatorContext

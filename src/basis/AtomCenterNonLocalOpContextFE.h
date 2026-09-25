@@ -115,7 +115,9 @@ namespace dftefe
       // gets the projector values with quad pts as fastest index
       // and proj Id as second index in a cell. Assumption:
       //  m values ar consecutive for all l,p pairs.
-      std::vector<double>
+      // The Bloch phase e^{-ik.(x-L_r)} rides on the projector, so these are
+      // complex whenever the wavefunctions are, whatever the basis type is.
+      std::vector<ValueType>
       getProjectorValues(const size_type                          cellId,
                          const std::vector<dftefe::utils::Point> &points) const;
 
@@ -123,8 +125,7 @@ namespace dftefe
       // utils::MemoryStorage<ValueTypeOperator, utils::memorySpace::HOST>
       //   d_projectorQuadStorage; // cell->quad->proj
 
-      // size is proj x nDofs accumulated over cells
-      utils::MemoryStorage<ValueTypeOperator, memorySpace>
+      utils::MemoryStorage<ValueType, memorySpace>
         d_cellWiseC; // cell->dofs->kpt->proj
 
       // size is localProjNum(numDofs partiitoned) x numVec(numComp)

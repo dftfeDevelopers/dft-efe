@@ -95,7 +95,8 @@ namespace dftefe
                            ValueTypeOperator,
                            memorySpace,
                            dim> *                           d_feBasisManager;
-      linearAlgebra::Vector<ValueTypeOperator, memorySpace> d_diagonalInv;
+
+      linearAlgebra::Vector<ValueType, memorySpace> d_diagonalInv;
       const std::string                                     d_constraints;
 
       bool d_isCGSolved;

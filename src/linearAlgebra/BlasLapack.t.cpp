@@ -206,9 +206,9 @@ namespace dftefe
                 dftefe::utils::MemorySpace memorySpace>
       void
       axpby(const size_type                           n,
-            const scalar_type<ValueType1, ValueType2> alpha,
-            const ValueType1 *                        x,
-            const scalar_type<ValueType1, ValueType2> beta,
+            const ValueType1                          alpha,
+            const ValueType2 *                        x,
+            const ValueType1                          beta,
             const ValueType2 *                        y,
             scalar_type<ValueType1, ValueType2> *     z,
             LinAlgOpContext<memorySpace> &            context)
@@ -223,11 +223,11 @@ namespace dftefe
       void
       axpbyBlocked(const size_type                            n,
                    const size_type                            blockSize,
-                   const scalar_type<ValueType1, ValueType2>  alpha1,
-                   const scalar_type<ValueType1, ValueType2> *alpha,
-                   const ValueType1 *                         x,
-                   const scalar_type<ValueType1, ValueType2>  beta1,
-                   const scalar_type<ValueType1, ValueType2> *beta,
+                   const ValueType1 alpha1,
+                   const ValueType1 *alpha,
+                   const ValueType2 *                         x,
+                   const ValueType1 beta1,
+                   const ValueType1 *beta,
                    const ValueType2 *                         y,
                    scalar_type<ValueType1, ValueType2> *      z,
                    LinAlgOpContext<memorySpace> &             context)

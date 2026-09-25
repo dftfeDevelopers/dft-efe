@@ -66,7 +66,8 @@ namespace dftefe
      * 4. For periodic BC, there will be contributions to enrichment set from
      * periodic images.
      */
-    template <typename ValueTypeBasisData,
+    template <typename ValueTypeBasisCoeff,
+              typename ValueTypeBasisData,
               utils::MemorySpace memorySpace,
               size_type          dim>
     class EnrichmentClassicalInterfaceSpherical
@@ -171,7 +172,7 @@ namespace dftefe
       std::shared_ptr<const AtomIdsPartition<dim>>
       getAtomIdsPartition() const;
 
-      std::shared_ptr<const BasisManager<ValueTypeBasisData, memorySpace>>
+      std::shared_ptr<const BasisManager<ValueTypeBasisCoeff, memorySpace>>
       getCFEBasisManager() const;
 
       std::vector<ValueTypeBasisData>
@@ -245,14 +246,14 @@ namespace dftefe
       void
       getEnrichmentValuesInCellRangeAtQuadPts(
         const quadrature::QuadratureRuleContainer &  quadRuleContainer,
-        double *                                     basisEnrichQuadStoragePtr,
+        ValueTypeBasisData *                         basisEnrichQuadStoragePtr,
         linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext,
         const std::pair<size_type, size_type>        cellRange) const;
 
       void
       getEnrichmentGradientsInCellRangeAtQuadPts(
         const quadrature::QuadratureRuleContainer &quadRuleContainer,
-        double *basisGradientEnrichQuadStoragePtr,
+        ValueTypeBasisData *basisGradientEnrichQuadStoragePtr,
         linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext,
         const std::pair<size_type, size_type>        cellRange) const;
 
@@ -277,10 +278,12 @@ namespace dftefe
                                                d_atomSphericalDataContainer;
       std::shared_ptr<const TriangulationBase> d_triangulation;
       bool                                     d_isOrthogonalized;
+      // the dof handler and its manager are keyed by the coefficient type,
+      // since that is what their constraints act on
       std::shared_ptr<
-        const FEBasisDofHandler<ValueTypeBasisData, memorySpace, dim>>
+        const FEBasisDofHandler<ValueTypeBasisCoeff, memorySpace, dim>>
         d_cfeBasisDofHandler;
-      std::shared_ptr<const FEBasisManager<ValueTypeBasisData,
+      std::shared_ptr<const FEBasisManager<ValueTypeBasisCoeff,
                                            ValueTypeBasisData,
                                            memorySpace,
                                            dim>>

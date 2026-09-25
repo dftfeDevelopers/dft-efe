@@ -139,14 +139,14 @@ namespace dftefe
     inline RealType<float>::Type
     imagPart(const float &x)
     {
-      return x;
+      return 0;
     }
 
     template <>
     inline RealType<double>::Type
     imagPart(const double &x)
     {
-      return x;
+      return 0;
     }
 
     template <>

@@ -83,10 +83,12 @@ namespace dftefe
           }
       }
     } // namespace
-    template <typename ValueTypeBasisData,
+    template <typename ValueTypeBasisCoeff,
+              typename ValueTypeBasisData,
               utils::MemorySpace memorySpace,
               size_type          dim>
-    EnrichmentClassicalInterfaceSpherical<ValueTypeBasisData,
+    EnrichmentClassicalInterfaceSpherical<ValueTypeBasisCoeff,
+                                          ValueTypeBasisData,
                                           memorySpace,
                                           dim>::
       EnrichmentClassicalInterfaceSpherical(
@@ -146,7 +148,7 @@ namespace dftefe
         "The BasisDofHandler of the dataStorage and basisOverlapOperator should be same in EnrichmentClassicalInterfaceSpherical ");
 
       d_cfeBasisDofHandler = std::dynamic_pointer_cast<
-        const FEBasisDofHandler<ValueTypeBasisData, memorySpace, dim>>(
+        const FEBasisDofHandler<ValueTypeBasisCoeff, memorySpace, dim>>(
         cfeBasisDataStorageRhs->getBasisDofHandler());
       utils::throwException(
         d_cfeBasisDofHandler != nullptr,
@@ -258,7 +260,7 @@ namespace dftefe
 
       // // Set up BasisManager
       d_cfeBasisManager =
-        std::make_shared<dftefe::basis::FEBasisManager<ValueTypeBasisData,
+        std::make_shared<dftefe::basis::FEBasisManager<ValueTypeBasisCoeff,
                                                        ValueTypeBasisData,
                                                        memorySpace,
                                                        dim>>(
@@ -297,12 +299,12 @@ namespace dftefe
 
       double scratchGB =
         static_cast<double>((maxScratchSize > 0 ? maxScratchSize : 1)) *
-        sizeof(double) / (1024.0 * 1024.0 * 1024.0);
+        sizeof(ValueTypeBasisData) / (1024.0 * 1024.0 * 1024.0);
       rootCout << "MaxScratchSize = "
                << (maxScratchSize > 0 ? maxScratchSize : 1) << " elements ("
                << scratchGB << " GB)\n";
 
-      utils::MemoryStorage<double, memorySpace> scratch(
+      utils::MemoryStorage<ValueTypeBasisData, memorySpace> scratch(
         maxScratchSize > 0 ? maxScratchSize : 1);
       utils::printCurrentMemoryUsage<memorySpace>(
         mpiComm, "ECI : After orthogonalization scratch alloc");
@@ -390,12 +392,12 @@ namespace dftefe
           // Create OperatorContext for CFEBasisoverlap
           std::shared_ptr<
             const dftefe::basis::CFEOverlapOperatorContext<ValueTypeBasisData,
-                                                           ValueTypeBasisData,
+                                                           ValueTypeBasisCoeff,
                                                            memorySpace,
                                                            dim>>
             cfeBasisOverlapOperator = std::make_shared<
               dftefe::basis::CFEOverlapOperatorContext<ValueTypeBasisData,
-                                                       ValueTypeBasisData,
+                                                       ValueTypeBasisCoeff,
                                                        memorySpace,
                                                        dim>>(
               *d_cfeBasisManager,
@@ -406,11 +408,11 @@ namespace dftefe
 
           std::shared_ptr<
             linearAlgebra::LinearSolverFunction<ValueTypeBasisData,
-                                                ValueTypeBasisData,
+                                                ValueTypeBasisCoeff,
                                                 memorySpace>>
             linearSolverFunction = std::make_shared<
               L2ProjectionLinearSolverFunction<ValueTypeBasisData,
-                                               ValueTypeBasisData,
+                                               ValueTypeBasisCoeff,
                                                memorySpace,
                                                dim>>(
               d_cfeBasisManager,
@@ -425,11 +427,11 @@ namespace dftefe
           linearAlgebra::LinearAlgebraProfiler profiler1;
 
           std::shared_ptr<linearAlgebra::LinearSolverImpl<ValueTypeBasisData,
-                                                          ValueTypeBasisData,
+                                                          ValueTypeBasisCoeff,
                                                           memorySpace>>
             CGSolve =
               std::make_shared<linearAlgebra::CGLinearSolver<ValueTypeBasisData,
-                                                             ValueTypeBasisData,
+                                                             ValueTypeBasisCoeff,
                                                              memorySpace>>(
                 L2ProjectionDefaults<memorySpace>::MAX_ITER,
                 L2ProjectionDefaults<memorySpace>::ABSOLUTE_TOL,
@@ -680,10 +682,12 @@ namespace dftefe
       profiler.print();
     }
 
-    template <typename ValueTypeBasisData,
+    template <typename ValueTypeBasisCoeff,
+              typename ValueTypeBasisData,
               utils::MemorySpace memorySpace,
               size_type          dim>
-    EnrichmentClassicalInterfaceSpherical<ValueTypeBasisData,
+    EnrichmentClassicalInterfaceSpherical<ValueTypeBasisCoeff,
+                                          ValueTypeBasisData,
                                           memorySpace,
                                           dim>::
       EnrichmentClassicalInterfaceSpherical(
@@ -870,10 +874,12 @@ namespace dftefe
                                       d_overlappingEnrichmentIdsInCells);
     }
 
-    template <typename ValueTypeBasisData,
+    template <typename ValueTypeBasisCoeff,
+              typename ValueTypeBasisData,
               utils::MemorySpace memorySpace,
               size_type          dim>
     EnrichmentClassicalInterfaceSpherical<
+      ValueTypeBasisCoeff,
       ValueTypeBasisData,
       memorySpace,
       dim>::~EnrichmentClassicalInterfaceSpherical()
@@ -887,11 +893,13 @@ namespace dftefe
         }
     }
 
-    template <typename ValueTypeBasisData,
+    template <typename ValueTypeBasisCoeff,
+              typename ValueTypeBasisData,
               utils::MemorySpace memorySpace,
               size_type          dim>
     std::shared_ptr<const atoms::AtomSphericalDataContainer>
-    EnrichmentClassicalInterfaceSpherical<ValueTypeBasisData,
+    EnrichmentClassicalInterfaceSpherical<ValueTypeBasisCoeff,
+                                          ValueTypeBasisData,
                                           memorySpace,
                                           dim>::getAtomSphericalDataContainer()
       const
@@ -899,11 +907,13 @@ namespace dftefe
       return d_atomSphericalDataContainer;
     }
 
-    template <typename ValueTypeBasisData,
+    template <typename ValueTypeBasisCoeff,
+              typename ValueTypeBasisData,
               utils::MemorySpace memorySpace,
               size_type          dim>
     std::shared_ptr<const EnrichmentIdsPartition<dim>>
-    EnrichmentClassicalInterfaceSpherical<ValueTypeBasisData,
+    EnrichmentClassicalInterfaceSpherical<ValueTypeBasisCoeff,
+                                          ValueTypeBasisData,
                                           memorySpace,
                                           dim>::getEnrichmentIdsPartition()
       const
@@ -911,22 +921,26 @@ namespace dftefe
       return d_enrichmentIdsPartition;
     }
 
-    template <typename ValueTypeBasisData,
+    template <typename ValueTypeBasisCoeff,
+              typename ValueTypeBasisData,
               utils::MemorySpace memorySpace,
               size_type          dim>
     std::shared_ptr<const AtomIdsPartition<dim>>
-    EnrichmentClassicalInterfaceSpherical<ValueTypeBasisData,
+    EnrichmentClassicalInterfaceSpherical<ValueTypeBasisCoeff,
+                                          ValueTypeBasisData,
                                           memorySpace,
                                           dim>::getAtomIdsPartition() const
     {
       return d_atomIdsPartition;
     }
 
-    template <typename ValueTypeBasisData,
+    template <typename ValueTypeBasisCoeff,
+              typename ValueTypeBasisData,
               utils::MemorySpace memorySpace,
               size_type          dim>
-    std::shared_ptr<const BasisManager<ValueTypeBasisData, memorySpace>>
-    EnrichmentClassicalInterfaceSpherical<ValueTypeBasisData,
+    std::shared_ptr<const BasisManager<ValueTypeBasisCoeff, memorySpace>>
+    EnrichmentClassicalInterfaceSpherical<ValueTypeBasisCoeff,
+                                          ValueTypeBasisData,
                                           memorySpace,
                                           dim>::getCFEBasisManager() const
     {
@@ -938,11 +952,13 @@ namespace dftefe
       return d_cfeBasisManager;
     }
 
-    template <typename ValueTypeBasisData,
+    template <typename ValueTypeBasisCoeff,
+              typename ValueTypeBasisData,
               utils::MemorySpace memorySpace,
               size_type          dim>
     std::shared_ptr<const BasisDofHandler>
-    EnrichmentClassicalInterfaceSpherical<ValueTypeBasisData,
+    EnrichmentClassicalInterfaceSpherical<ValueTypeBasisCoeff,
+                                          ValueTypeBasisData,
                                           memorySpace,
                                           dim>::getCFEBasisDofHandler() const
     {
@@ -954,12 +970,14 @@ namespace dftefe
       return d_cfeBasisDofHandler;
     }
 
-    template <typename ValueTypeBasisData,
+    template <typename ValueTypeBasisCoeff,
+              typename ValueTypeBasisData,
               utils::MemorySpace memorySpace,
               size_type          dim>
     const std::unordered_map<global_size_type,
                              utils::OptimizedIndexSet<size_type>> &
     EnrichmentClassicalInterfaceSpherical<
+      ValueTypeBasisCoeff,
       ValueTypeBasisData,
       memorySpace,
       dim>::getClassicalComponentLocalIdsMap() const
@@ -972,12 +990,14 @@ namespace dftefe
       return d_enrichmentIdToClassicalLocalIdMap;
     }
 
-    template <typename ValueTypeBasisData,
+    template <typename ValueTypeBasisCoeff,
+              typename ValueTypeBasisData,
               utils::MemorySpace memorySpace,
               size_type          dim>
     const std::unordered_map<global_size_type,
                              std::vector<ValueTypeBasisData>> &
-    EnrichmentClassicalInterfaceSpherical<ValueTypeBasisData,
+    EnrichmentClassicalInterfaceSpherical<ValueTypeBasisCoeff,
+                                          ValueTypeBasisData,
                                           memorySpace,
                                           dim>::getClassicalComponentCoeffMap()
       const
@@ -990,11 +1010,13 @@ namespace dftefe
       return d_enrichmentIdToInterfaceCoeffMap;
     }
 
-    template <typename ValueTypeBasisData,
+    template <typename ValueTypeBasisCoeff,
+              typename ValueTypeBasisData,
               utils::MemorySpace memorySpace,
               size_type          dim>
     std::vector<ValueTypeBasisData>
-    EnrichmentClassicalInterfaceSpherical<ValueTypeBasisData,
+    EnrichmentClassicalInterfaceSpherical<ValueTypeBasisCoeff,
+                                          ValueTypeBasisData,
                                           memorySpace,
                                           dim>::
       getClassicalComponentCoeffsInCellOEFE(const size_type cellIndex) const
@@ -1010,14 +1032,14 @@ namespace dftefe
       const std::unordered_map<global_size_type,
                                std::vector<ValueTypeBasisData>>
         *enrichmentIdToInterfaceCoeffMap = nullptr;
-      std::shared_ptr<const FEBasisManager<ValueTypeBasisData,
+      std::shared_ptr<const FEBasisManager<ValueTypeBasisCoeff,
                                            ValueTypeBasisData,
                                            memorySpace,
                                            dim>>
         cfeBasisManager = nullptr;
 
       cfeBasisManager =
-        std::dynamic_pointer_cast<const FEBasisManager<ValueTypeBasisData,
+        std::dynamic_pointer_cast<const FEBasisManager<ValueTypeBasisCoeff,
                                                        ValueTypeBasisData,
                                                        memorySpace,
                                                        dim>>(
@@ -1076,11 +1098,13 @@ namespace dftefe
     }
 
 
-    template <typename ValueTypeBasisData,
+    template <typename ValueTypeBasisCoeff,
+              typename ValueTypeBasisData,
               utils::MemorySpace memorySpace,
               size_type          dim>
     std::vector<ValueTypeBasisData>
     EnrichmentClassicalInterfaceSpherical<
+      ValueTypeBasisCoeff,
       ValueTypeBasisData,
       memorySpace,
       dim>::getClassicalComponentCoeffsInAllCellsOEFE() const
@@ -1096,14 +1120,14 @@ namespace dftefe
       const std::unordered_map<global_size_type,
                                std::vector<ValueTypeBasisData>>
         *enrichmentIdToInterfaceCoeffMap = nullptr;
-      std::shared_ptr<const FEBasisManager<ValueTypeBasisData,
+      std::shared_ptr<const FEBasisManager<ValueTypeBasisCoeff,
                                            ValueTypeBasisData,
                                            memorySpace,
                                            dim>>
         cfeBasisManager = nullptr;
 
       cfeBasisManager =
-        std::dynamic_pointer_cast<const FEBasisManager<ValueTypeBasisData,
+        std::dynamic_pointer_cast<const FEBasisManager<ValueTypeBasisCoeff,
                                                        ValueTypeBasisData,
                                                        memorySpace,
                                                        dim>>(
@@ -1178,11 +1202,13 @@ namespace dftefe
       return coeffsInAllCells;
     }
 
-    template <typename ValueTypeBasisData,
+    template <typename ValueTypeBasisCoeff,
+              typename ValueTypeBasisData,
               utils::MemorySpace memorySpace,
               size_type          dim>
     std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
-    EnrichmentClassicalInterfaceSpherical<ValueTypeBasisData,
+    EnrichmentClassicalInterfaceSpherical<ValueTypeBasisCoeff,
+                                          ValueTypeBasisData,
                                           memorySpace,
                                           dim>::getLinAlgOpContext() const
     {
@@ -1194,77 +1220,91 @@ namespace dftefe
       return d_linAlgOpContext;
     }
 
-    template <typename ValueTypeBasisData,
+    template <typename ValueTypeBasisCoeff,
+              typename ValueTypeBasisData,
               utils::MemorySpace memorySpace,
               size_type          dim>
     bool
-    EnrichmentClassicalInterfaceSpherical<ValueTypeBasisData,
+    EnrichmentClassicalInterfaceSpherical<ValueTypeBasisCoeff,
+                                          ValueTypeBasisData,
                                           memorySpace,
                                           dim>::isOrthogonalized() const
     {
       return d_isOrthogonalized;
     }
 
-    template <typename ValueTypeBasisData,
+    template <typename ValueTypeBasisCoeff,
+              typename ValueTypeBasisData,
               utils::MemorySpace memorySpace,
               size_type          dim>
     std::vector<std::string>
-    EnrichmentClassicalInterfaceSpherical<ValueTypeBasisData,
+    EnrichmentClassicalInterfaceSpherical<ValueTypeBasisCoeff,
+                                          ValueTypeBasisData,
                                           memorySpace,
                                           dim>::getAtomSymbolVec() const
     {
       return d_atomSymbolVec;
     }
 
-    template <typename ValueTypeBasisData,
+    template <typename ValueTypeBasisCoeff,
+              typename ValueTypeBasisData,
               utils::MemorySpace memorySpace,
               size_type          dim>
     std::vector<utils::Point>
-    EnrichmentClassicalInterfaceSpherical<ValueTypeBasisData,
+    EnrichmentClassicalInterfaceSpherical<ValueTypeBasisCoeff,
+                                          ValueTypeBasisData,
                                           memorySpace,
                                           dim>::getAtomCoordinatesVec() const
     {
       return d_atomCoordinatesVec;
     }
 
-    template <typename ValueTypeBasisData,
+    template <typename ValueTypeBasisCoeff,
+              typename ValueTypeBasisData,
               utils::MemorySpace memorySpace,
               size_type          dim>
     std::string
-    EnrichmentClassicalInterfaceSpherical<ValueTypeBasisData,
+    EnrichmentClassicalInterfaceSpherical<ValueTypeBasisCoeff,
+                                          ValueTypeBasisData,
                                           memorySpace,
                                           dim>::getFieldName() const
     {
       return d_fieldName;
     }
 
-    template <typename ValueTypeBasisData,
+    template <typename ValueTypeBasisCoeff,
+              typename ValueTypeBasisData,
               utils::MemorySpace memorySpace,
               size_type          dim>
     std::shared_ptr<const TriangulationBase>
-    EnrichmentClassicalInterfaceSpherical<ValueTypeBasisData,
+    EnrichmentClassicalInterfaceSpherical<ValueTypeBasisCoeff,
+                                          ValueTypeBasisData,
                                           memorySpace,
                                           dim>::getTriangulation() const
     {
       return d_triangulation;
     }
 
-    template <typename ValueTypeBasisData,
+    template <typename ValueTypeBasisCoeff,
+              typename ValueTypeBasisData,
               utils::MemorySpace memorySpace,
               size_type          dim>
     size_type
-    EnrichmentClassicalInterfaceSpherical<ValueTypeBasisData,
+    EnrichmentClassicalInterfaceSpherical<ValueTypeBasisCoeff,
+                                          ValueTypeBasisData,
                                           memorySpace,
                                           dim>::getFEOrder() const
     {
       return d_feOrder;
     }
 
-    template <typename ValueTypeBasisData,
+    template <typename ValueTypeBasisCoeff,
+              typename ValueTypeBasisData,
               utils::MemorySpace memorySpace,
               size_type          dim>
     global_size_type
     EnrichmentClassicalInterfaceSpherical<
+      ValueTypeBasisCoeff,
       ValueTypeBasisData,
       memorySpace,
       dim>::getEnrichmentId(size_type cellId,
@@ -1297,11 +1337,13 @@ namespace dftefe
       return enrichmentId;
     }
 
-    template <typename ValueTypeBasisData,
+    template <typename ValueTypeBasisCoeff,
+              typename ValueTypeBasisData,
               utils::MemorySpace memorySpace,
               size_type          dim>
     size_type
     EnrichmentClassicalInterfaceSpherical<
+      ValueTypeBasisCoeff,
       ValueTypeBasisData,
       memorySpace,
       dim>::getEnrichmentLocalId(size_type cellId,
@@ -1336,11 +1378,13 @@ namespace dftefe
       return enrichmentLocalId;
     }
 
-    template <typename ValueTypeBasisData,
+    template <typename ValueTypeBasisCoeff,
+              typename ValueTypeBasisData,
               utils::MemorySpace memorySpace,
               size_type          dim>
     size_type
     EnrichmentClassicalInterfaceSpherical<
+      ValueTypeBasisCoeff,
       ValueTypeBasisData,
       memorySpace,
       dim>::getEnrichmentLocalId(global_size_type enrichmentId) const
@@ -1392,11 +1436,13 @@ namespace dftefe
 
     // Enrichment functions with dealii mesh. The enrichedid is the cell local
     // id.
-    template <typename ValueTypeBasisData,
+    template <typename ValueTypeBasisCoeff,
+              typename ValueTypeBasisData,
               utils::MemorySpace memorySpace,
               size_type          dim>
     std::vector<double>
-    EnrichmentClassicalInterfaceSpherical<ValueTypeBasisData,
+    EnrichmentClassicalInterfaceSpherical<ValueTypeBasisCoeff,
+                                          ValueTypeBasisData,
                                           memorySpace,
                                           dim>::
       getEnrichmentValue(const size_type                          cellId,
@@ -1506,11 +1552,13 @@ namespace dftefe
       return retValue;
     }
 
-    template <typename ValueTypeBasisData,
+    template <typename ValueTypeBasisCoeff,
+              typename ValueTypeBasisData,
               utils::MemorySpace memorySpace,
               size_type          dim>
     std::vector<double>
     EnrichmentClassicalInterfaceSpherical<
+      ValueTypeBasisCoeff,
       ValueTypeBasisData,
       memorySpace,
       dim>::getEnrichmentDerivative(const size_type cellId,
@@ -1651,11 +1699,13 @@ namespace dftefe
       return retValue;
     }
 
-    template <typename ValueTypeBasisData,
+    template <typename ValueTypeBasisCoeff,
+              typename ValueTypeBasisData,
               utils::MemorySpace memorySpace,
               size_type          dim>
     std::vector<double>
     EnrichmentClassicalInterfaceSpherical<
+      ValueTypeBasisCoeff,
       ValueTypeBasisData,
       memorySpace,
       dim>::getEnrichmentHessian(const size_type cellId,
@@ -1671,11 +1721,13 @@ namespace dftefe
     // gpu/cpu kernel for calculating the enrichment id values at
     // all cells in all quad points
     // for variable quad points
-    template <typename ValueTypeBasisData,
+    template <typename ValueTypeBasisCoeff,
+              typename ValueTypeBasisData,
               utils::MemorySpace memorySpace,
               size_type          dim>
     void
-    EnrichmentClassicalInterfaceSpherical<ValueTypeBasisData,
+    EnrichmentClassicalInterfaceSpherical<ValueTypeBasisCoeff,
+                                          ValueTypeBasisData,
                                           memorySpace,
                                           dim>::
       getEnrichmentDataInAllCellsAtQuadPts(
@@ -1978,7 +2030,7 @@ namespace dftefe
           if (storeValues)
             {
               // profiler.registerStart("getEnrichmentValues");
-              EnrichmentDataEvalKernels<memorySpace>::getEnrichmentValues(
+              EnrichmentDataEvalKernels<ValueTypeBasisData, memorySpace>::getEnrichmentValues(
                 numEnrichOriginPairsInBatch,
                 quadInEnrichOriginPairBlock,
                 sphericalDataVecBlock,
@@ -2029,7 +2081,7 @@ namespace dftefe
           if (storeGradients)
             {
               // profiler.registerStart("getEnrichmentGradients");
-              EnrichmentDataEvalKernels<memorySpace>::getEnrichmentGradients(
+              EnrichmentDataEvalKernels<ValueTypeBasisData, memorySpace>::getEnrichmentGradients(
                 numEnrichOriginPairsInBatch,
                 quadInEnrichOriginPairBlock,
                 sphericalDataVecBlock,
@@ -2085,11 +2137,13 @@ namespace dftefe
       // profiler.print();
     }
 
-    template <typename ValueTypeBasisData,
+    template <typename ValueTypeBasisCoeff,
+              typename ValueTypeBasisData,
               utils::MemorySpace memorySpace,
               size_type          dim>
     void
     EnrichmentClassicalInterfaceSpherical<
+      ValueTypeBasisCoeff,
       ValueTypeBasisData,
       memorySpace,
       dim>::getOverlappingEnrichmentInCellsAdditionalData()
@@ -2197,16 +2251,18 @@ namespace dftefe
         originOffsetHost.data());
     }
 
-    template <typename ValueTypeBasisData,
+    template <typename ValueTypeBasisCoeff,
+              typename ValueTypeBasisData,
               utils::MemorySpace memorySpace,
               size_type          dim>
     void
-    EnrichmentClassicalInterfaceSpherical<ValueTypeBasisData,
+    EnrichmentClassicalInterfaceSpherical<ValueTypeBasisCoeff,
+                                          ValueTypeBasisData,
                                           memorySpace,
                                           dim>::
       getEnrichmentValuesInCellRangeAtQuadPts(
         const quadrature::QuadratureRuleContainer &  quadRuleContainer,
-        double *                                     basisEnrichQuadStoragePtr,
+        ValueTypeBasisData *                         basisEnrichQuadStoragePtr,
         linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext,
         const std::pair<size_type, size_type>        cellRange) const
     {
@@ -2221,7 +2277,8 @@ namespace dftefe
         }
 
       // profiler.registerStart("timing");
-      EnrichmentDataEvalKernels<memorySpace>::getEnrichmentValuesInCellRange(
+      EnrichmentDataEvalKernels<ValueTypeBasisData, memorySpace>::
+        getEnrichmentValuesInCellRange(
         quadRuleContainer.template getRealPointsPtr<memorySpace>(),
         d_originMemSpace.data(),
         d_originOffsetPerCellEnrich.data(),
@@ -2236,16 +2293,18 @@ namespace dftefe
       // profiler.print();
     }
 
-    template <typename ValueTypeBasisData,
+    template <typename ValueTypeBasisCoeff,
+              typename ValueTypeBasisData,
               utils::MemorySpace memorySpace,
               size_type          dim>
     void
-    EnrichmentClassicalInterfaceSpherical<ValueTypeBasisData,
+    EnrichmentClassicalInterfaceSpherical<ValueTypeBasisCoeff,
+                                          ValueTypeBasisData,
                                           memorySpace,
                                           dim>::
       getEnrichmentGradientsInCellRangeAtQuadPts(
         const quadrature::QuadratureRuleContainer &quadRuleContainer,
-        double *basisGradientEnrichQuadStoragePtr,
+        ValueTypeBasisData *basisGradientEnrichQuadStoragePtr,
         linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext,
         const std::pair<size_type, size_type>        cellRange) const
     {
@@ -2260,7 +2319,8 @@ namespace dftefe
         }
 
       // profiler.registerStart("timing");
-      EnrichmentDataEvalKernels<memorySpace>::getEnrichmentGradientsInCellRange(
+      EnrichmentDataEvalKernels<ValueTypeBasisData, memorySpace>::
+        getEnrichmentGradientsInCellRange(
         quadRuleContainer.template getRealPointsPtr<memorySpace>(),
         d_originMemSpace.data(),
         d_originOffsetPerCellEnrich.data(),

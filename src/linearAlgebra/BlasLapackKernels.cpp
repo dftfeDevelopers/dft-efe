@@ -372,9 +372,9 @@ namespace dftefe
       void
       KernelsTwoValueTypes<ValueType1, ValueType2, memorySpace>::axpby(
         const size_type                           size,
-        const scalar_type<ValueType1, ValueType2> alpha,
-        const ValueType1 *                        x,
-        const scalar_type<ValueType1, ValueType2> beta,
+        const ValueType1                          alpha,
+        const ValueType2 *                        x,
+        const ValueType1                          beta,
         const ValueType2 *                        y,
         scalar_type<ValueType1, ValueType2> *     z,
         LinAlgOpContext<memorySpace> &            context)
@@ -395,11 +395,11 @@ namespace dftefe
       KernelsTwoValueTypes<ValueType1, ValueType2, memorySpace>::axpbyBlocked(
         const size_type                            size,
         const size_type                            blockSize,
-        const scalar_type<ValueType1, ValueType2>  alpha1,
-        const scalar_type<ValueType1, ValueType2> *alpha,
-        const ValueType1 *                         x,
-        const scalar_type<ValueType1, ValueType2>  beta1,
-        const scalar_type<ValueType1, ValueType2> *beta,
+        const ValueType1 alpha1,
+        const ValueType1 *alpha,
+        const ValueType2 *                         x,
+        const ValueType1 beta1,
+        const ValueType1 *beta,
         const ValueType2 *                         y,
         scalar_type<ValueType1, ValueType2> *      z,
         LinAlgOpContext<memorySpace> &             context)
@@ -692,6 +692,43 @@ namespace dftefe
       EXPLICITLY_INSTANTIATE_COPY_2T(std::complex<double>,
                                      std::complex<double>,
                                      dftefe::utils::MemorySpace::HOST);
+
+      template void
+      CopyKernelTwoValueTypes<float, double, dftefe::utils::MemorySpace::HOST>::
+        copyValueType1ArrToValueType2Arr(const size_type size,
+                                         const float *      valueType1Arr,
+                                         double *            valueType2Arr,
+                                         LinAlgOpContext<dftefe::utils::MemorySpace::HOST> &context);
+      template void
+      CopyKernelTwoValueTypes<double, std::complex<float>, dftefe::utils::MemorySpace::HOST>::
+        copyValueType1ArrToValueType2Arr(const size_type size,
+                                         const double *      valueType1Arr,
+                                         std::complex<float> *            valueType2Arr,
+                                         LinAlgOpContext<dftefe::utils::MemorySpace::HOST> &context);
+      template void
+      CopyKernelTwoValueTypes<float, std::complex<float>, dftefe::utils::MemorySpace::HOST>::
+        copyValueType1ArrToValueType2Arr(const size_type size,
+                                         const float *      valueType1Arr,
+                                         std::complex<float> *            valueType2Arr,
+                                         LinAlgOpContext<dftefe::utils::MemorySpace::HOST> &context);
+      template void
+      CopyKernelTwoValueTypes<double, std::complex<double>, dftefe::utils::MemorySpace::HOST>::
+        copyValueType1ArrToValueType2Arr(const size_type size,
+                                         const double *      valueType1Arr,
+                                         std::complex<double> *            valueType2Arr,
+                                         LinAlgOpContext<dftefe::utils::MemorySpace::HOST> &context);
+      template void
+      CopyKernelTwoValueTypes<float, std::complex<double>, dftefe::utils::MemorySpace::HOST>::
+        copyValueType1ArrToValueType2Arr(const size_type size,
+                                         const float *      valueType1Arr,
+                                         std::complex<double> *            valueType2Arr,
+                                         LinAlgOpContext<dftefe::utils::MemorySpace::HOST> &context);
+      template void
+      CopyKernelTwoValueTypes<std::complex<float>, std::complex<double>, dftefe::utils::MemorySpace::HOST>::
+        copyValueType1ArrToValueType2Arr(const size_type size,
+                                         const std::complex<float> *      valueType1Arr,
+                                         std::complex<double> *            valueType2Arr,
+                                         LinAlgOpContext<dftefe::utils::MemorySpace::HOST> &context);
 
       EXPLICITLY_INSTANTIATE_COPY_1T(float, dftefe::utils::MemorySpace::HOST);
       EXPLICITLY_INSTANTIATE_COPY_1T(double, dftefe::utils::MemorySpace::HOST);

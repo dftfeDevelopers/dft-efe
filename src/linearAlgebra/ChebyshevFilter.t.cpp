@@ -59,6 +59,7 @@ namespace dftefe
 
       using ValueType =
         blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>;
+      using RealType = blasLapack::real_type<ValueType>;
 
       const size_type locallyOwnedMultivecSize =
         eigenSubspaceGuess.locallyOwnedSize() *
@@ -109,7 +110,7 @@ namespace dftefe
 
       // filteredSubspace = (\sigma1/e)(B^-1A eigenSubspaceGuess - c
       // eigenSubspaceGuess)
-      blasLapack::axpby<ValueType, ValueTypeOperand, memorySpace>(
+      blasLapack::axpby<RealType, ValueType, memorySpace>(
         locallyOwnedMultivecSize,
         sigma1 / e,
         scratch2.data(),
@@ -127,7 +128,7 @@ namespace dftefe
           BInv.apply(scratch1, scratch2, false, false);
 
           // temp = (2\sigma2/e)(B^-1A filteredSubspace - c filteredSubspace)
-          blasLapack::axpby<ValueType, ValueType, memorySpace>(
+          blasLapack::axpby<RealType, ValueType, memorySpace>(
             locallyOwnedMultivecSize,
             2.0 * sigma2 / e,
             scratch2.data(),
@@ -138,9 +139,9 @@ namespace dftefe
 
           // filteredSubspaceNew = temp - \sigma*\sigma2*eigenSubspaceGuess
           // Note: works if axpby is capable of z being same as either of x or y
-          blasLapack::axpby<ValueType, ValueTypeOperand, memorySpace>(
+          blasLapack::axpby<RealType, ValueType, memorySpace>(
             locallyOwnedMultivecSize,
-            (ValueType)1.0,
+            (RealType)1.0,
             scratch1.data(),
             -sigma * sigma2,
             eigenSubspaceGuess.data(),
@@ -183,6 +184,7 @@ namespace dftefe
     {
       using ValueType =
         blasLapack::scalar_type<ValueTypeOperator, ValueTypeOperand>;
+      using RealType = blasLapack::real_type<ValueType>;
 
       const size_type locallyOwnedMultivecSize =
         eigenSubspaceGuess.locallyOwnedSize() *
@@ -210,7 +212,7 @@ namespace dftefe
 
       // eigenSubspaceGuess = (\sigma1/e)(AB^-1 filteredSubspace - c
       // filteredSubspace)
-      blasLapack::axpby<ValueType, ValueTypeOperand, memorySpace>(
+      blasLapack::axpby<RealType, ValueType, memorySpace>(
         locallyOwnedMultivecSize,
         sigma1 / e,
         scratch2.data(),
@@ -229,7 +231,7 @@ namespace dftefe
           A.apply(scratch1, scratch2, true, false);
 
           // temp = (2\sigma2/e)(AB^-1 filteredSubspace - c filteredSubspace)
-          blasLapack::axpby<ValueType, ValueType, memorySpace>(
+          blasLapack::axpby<RealType, ValueType, memorySpace>(
             locallyOwnedMultivecSize,
             2.0 * sigma2 / e,
             scratch2.data(),
@@ -239,9 +241,9 @@ namespace dftefe
             *eigenSubspaceGuess.getLinAlgOpContext());
 
           // Note: works if axpby is capable of z being same as either of x or y
-          blasLapack::axpby<ValueType, ValueTypeOperand, memorySpace>(
+          blasLapack::axpby<RealType, ValueType, memorySpace>(
             locallyOwnedMultivecSize,
-            (ValueType)1.0,
+            (RealType)1.0,
             scratch1.data(),
             -sigma * sigma2,
             eigenSubspaceGuess.data(),
@@ -329,7 +331,7 @@ namespace dftefe
       B.apply(X, Y, true, false);
       A.apply(X, scratch1, false, false); // true, false initially
       linearAlgebra::blasLapack::
-        axpbyBlocked<ValueType, ValueType, memorySpace>(
+        axpbyBlocked<RealType, ValueType, memorySpace>(
           X.locallyOwnedSize(),
           X.getNumberComponents(),
           1,
@@ -356,7 +358,7 @@ namespace dftefe
       // eigenValuesFiltered2 = eigenValuesFiltered2 + alpha1 *
       // eigenValuesFiltered1 * eigenValuesFiltered
       linearAlgebra::blasLapack::
-        axpbyBlocked<ValueType, ValueType, memorySpace>(
+        axpbyBlocked<RealType, RealType, memorySpace>(
           1,
           eigenValuesFiltered2.size(),
           1,
@@ -393,7 +395,7 @@ namespace dftefe
           BInv.apply(ResidualNew, scratch1, true, false);
           A.apply(scratch1, scratch2, false, false);
 
-          blasLapack::axpby<ValueType, ValueType, memorySpace>(
+          blasLapack::axpby<RealType, ValueType, memorySpace>(
             X.locallyOwnedSize() * X.getNumberComponents(),
             alpha1,
             scratch2.data(),
@@ -402,9 +404,9 @@ namespace dftefe
             scratch1.data(),
             linAlgOpContext);
 
-          blasLapack::axpby<ValueType, ValueTypeOperand, memorySpace>(
+          blasLapack::axpby<RealType, ValueType, memorySpace>(
             X.locallyOwnedSize() * X.getNumberComponents(),
-            (ValueType)1.0,
+            (RealType)1.0,
             scratch1.data(),
             alpha2,
             Residual.data(),
@@ -416,7 +418,7 @@ namespace dftefe
 
           // Residual = Residual + alpha1 * Y * eigenValuesFiltered2
           linearAlgebra::blasLapack::
-            axpbyBlocked<ValueType, ValueType, memorySpace>(
+            axpbyBlocked<RealType, ValueType, memorySpace>(
               X.locallyOwnedSize(),
               X.getNumberComponents(),
               1,
@@ -443,7 +445,7 @@ namespace dftefe
           // eigenValuesFiltered1 = eigenValuesFiltered1 + alpha1 *
           // eigenValuesFiltered2 * eigenValuesFiltered
           linearAlgebra::blasLapack::
-            axpbyBlocked<ValueType, ValueType, memorySpace>(
+            axpbyBlocked<RealType, RealType, memorySpace>(
               1,
               eigenValuesFiltered1.size(),
               1,
@@ -466,7 +468,7 @@ namespace dftefe
       BInv.apply(ResidualNew, Residual, false, false); // Both true initilly
 
       linearAlgebra::blasLapack::
-        axpbyBlocked<ValueType, ValueType, memorySpace>(
+        axpbyBlocked<RealType, ValueType, memorySpace>(
           X.locallyOwnedSize(),
           X.numVectors(),
           1,

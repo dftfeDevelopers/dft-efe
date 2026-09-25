@@ -193,7 +193,10 @@ int main()
 
   unsigned int feOrder = 3;
   std::shared_ptr<dftefe::basis::EnrichmentClassicalInterfaceSpherical
-                          <double, dftefe::utils::MemorySpace::HOST, dim>>
+                          <double,
+                                                                       double,
+                                                                       dftefe::utils::MemorySpace::HOST,
+                                                                       dim>>
                           enrichClassIntfce = nullptr;
 
     // Set up the vector of scalarSpatialRealFunctions for adaptive quadrature
@@ -284,7 +287,10 @@ int main()
 
     // Create the enrichmentClassicalInterface object
     enrichClassIntfce = std::make_shared<dftefe::basis::EnrichmentClassicalInterfaceSpherical
-                          <double, dftefe::utils::MemorySpace::HOST, dim>>
+                          <double,
+                                                                                              double,
+                                                                                              dftefe::utils::MemorySpace::HOST,
+                                                                                              dim>>
                           (cfeBasisDataStorageOverlapMatrix,
                           cfeBasisDataStorageRhs,
                           atomSphericalDataContainer,

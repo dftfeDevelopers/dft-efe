@@ -60,6 +60,8 @@ namespace dftefe
       using QuadratureRuleAttributes  = quadrature::QuadratureRuleAttributes;
       using Storage =
         typename BasisDataStorage<ValueTypeBasisData, memorySpace>::Storage;
+      using StorageReal =
+        typename BasisDataStorage<ValueTypeBasisData, memorySpace>::StorageReal;
 
       CFEBDSOnTheFlyComputeDealii(
         std::shared_ptr<const BasisDofHandler>      feBDH,
@@ -160,7 +162,7 @@ namespace dftefe
       Storage
       getBasisHessianDataInCell(const size_type cellId) const override;
 
-      Storage
+      StorageReal
       getJxWInCell(const size_type cellId) const override;
 
       // functions to get data for all basis functions on all quad points in all
@@ -172,7 +174,7 @@ namespace dftefe
       const Storage &
       getBasisHessianDataInAllCells() const override;
 
-      const Storage &
+      const StorageReal &
       getJxWInAllCells() const override;
 
       // get overlap of two basis functions in a cell
@@ -226,7 +228,7 @@ namespace dftefe
       QuadratureRuleAttributes      d_quadratureRuleAttributes;
       BasisStorageAttributesBoolMap d_basisStorageAttributesBoolMap;
       std::shared_ptr<Storage>      d_basisQuadStorage;
-      std::shared_ptr<Storage>      d_JxWStorage;
+      std::shared_ptr<StorageReal>  d_JxWStorage;
       std::shared_ptr<Storage>      d_basisGradientParaCellQuadStorage;
       std::shared_ptr<Storage>      d_basisJacobianInvQuadStorage;
       std::shared_ptr<Storage>      d_basisHessianQuadStorage;

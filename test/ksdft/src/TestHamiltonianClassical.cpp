@@ -572,16 +572,18 @@ int main()
   const dftefe::utils::ScalarSpatialFunctionReal *externalPotentialFunction = new 
     dftefe::utils::ScalarZeroFunctionReal();
   std::shared_ptr<dftefe::ksdft::ElectrostaticLocalFE<double,
-                                                  double,
-                                                  double,
-                                                  dftefe::utils::MemorySpace::HOST,
-                                                  dim>> 
+                                                      double,
+                                                      double,
+                                                      double,
+                                                      dftefe::utils::MemorySpace::HOST,
+                                                      dim>> 
                                             hamitonianElec =
     std::make_shared<dftefe::ksdft::ElectrostaticLocalFE<double,
-                                                  double,
-                                                  double,
-                                                  dftefe::utils::MemorySpace::HOST,
-                                                  dim>>
+                                                         double,
+                                                         double,
+                                                         double,
+                                                         dftefe::utils::MemorySpace::HOST,
+                                                         dim>>
                                                   (atomCoordinatesVec,
                                                   atomChargesVec,
                                                   smearedChargeRadiusVec,

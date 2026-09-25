@@ -38,6 +38,9 @@ namespace dftefe
   {
     namespace OEFEAtomBlockOverlapInvOpContextGLLInternal
     {
+      template <typename T>
+      using RealType = linearAlgebra::blasLapack::real_type<T>;
+
       // Use this for data storage of orthogonalized EFE only
       template <typename ValueTypeOperator,
                 typename ValueTypeOperand,
@@ -74,7 +77,8 @@ namespace dftefe
           "in OrthoEFEOverlapOperatorContext for the Classical data storage of enrichment dof blocks.");
 
         std::shared_ptr<
-          const EnrichmentClassicalInterfaceSpherical<ValueTypeOperator,
+          const EnrichmentClassicalInterfaceSpherical<ValueTypeOperand,
+                                                      ValueTypeOperator,
                                                       memorySpace,
                                                       dim>>
           eci = eefeBDH->getEnrichmentClassicalInterface();
@@ -188,7 +192,7 @@ namespace dftefe
         basisDataInAllCellsEnrichmentBlockEnrichmentHost.copyFrom(
           basisDataInAllCellsEnrichmentBlockEnrichment);
 
-        utils::MemoryStorage<double, memorySpace>
+        utils::MemoryStorage<ValueTypeOperator, memorySpace>
           quadValuesInAllCellsEnrichmentMemSpace(
             numCumulativeEnrichDofsxQuadEFEInAllCells);
         eefeBDH->getEnrichmentClassicalInterface()
@@ -198,7 +202,7 @@ namespace dftefe
             quadValuesInAllCellsEnrichmentMemSpace.data(),
             *eefeBDH->getEnrichmentClassicalInterface()->getLinAlgOpContext(),
             std::make_pair((size_type)0, numLocallyOwnedCells));
-        std::vector<double> quadValuesInAllCellsEnrichment(
+        std::vector<ValueTypeOperator> quadValuesInAllCellsEnrichment(
           numCumulativeEnrichDofsxQuadEFEInAllCells);
         utils::MemoryTransfer<utils::MemorySpace::HOST, memorySpace>::copy(
           numCumulativeEnrichDofsxQuadEFEInAllCells,
@@ -658,7 +662,7 @@ namespace dftefe
 
         size_type cellIndex = 0;
 
-        utils::MemoryStorage<double, memorySpace>
+        utils::MemoryStorage<ValueTypeOperator, memorySpace>
           quadValuesInAllCellsEnrichment(
             numCumulativeEnrichDofsxQuadEFEInAllCells);
         eefeBDH->getEnrichmentClassicalInterface()
@@ -920,7 +924,7 @@ namespace dftefe
             utils::MemoryStorage<ValueTypeOperator, memorySpace> JxWxNCell(
               JxWxNCellSize);
 
-            linearAlgebra::blasLapack::scaleStridedVarBatched<ValueTypeOperator,
+            linearAlgebra::blasLapack::scaleStridedVarBatched<RealType<ValueTypeOperator>,
                                                               ValueTypeOperator,
                                                               memorySpace>(
               numCellsInBlock,
@@ -954,8 +958,8 @@ namespace dftefe
                 strideC[iCell]  = strideC_full[iCell];
               }
 
-            linearAlgebra::blasLapack::gemmStridedVarBatched<ValueTypeOperand,
-                                                             ValueTypeOperand,
+            linearAlgebra::blasLapack::gemmStridedVarBatched<ValueTypeOperator,
+                                                             ValueTypeOperator,
                                                              memorySpace>(
               numCellsInBlock,
               transA.data(),
@@ -966,12 +970,12 @@ namespace dftefe
               mSizes.data(),
               nSizes.data(),
               kSizes.data(),
-              (ValueTypeOperand)1.0,
+              (ValueTypeOperator)1.0,
               JxWxNCell.data(),
               ldaSizes.data(),
               basisDataInCellRangeClassicalBlock.data(),
               ldbSizes.data(),
-              (ValueTypeOperand)0.0,
+              (ValueTypeOperator)0.0,
               basisOverlapStartPtrInCellBlock,
               ldcSizes.data(),
               linAlgOpContext);
@@ -994,7 +998,7 @@ namespace dftefe
               }
             JxWxNCell.resize(JxWxNCellSize, 0);
 
-            linearAlgebra::blasLapack::scaleStridedVarBatched<ValueTypeOperator,
+            linearAlgebra::blasLapack::scaleStridedVarBatched<RealType<ValueTypeOperator>,
                                                               ValueTypeOperator,
                                                               memorySpace>(
               numCellsInBlock,
@@ -1031,8 +1035,8 @@ namespace dftefe
                 strideC[iCell]  = strideC_colOffset[iCell];
               }
 
-            linearAlgebra::blasLapack::gemmStridedVarBatched<ValueTypeOperand,
-                                                             ValueTypeOperand,
+            linearAlgebra::blasLapack::gemmStridedVarBatched<ValueTypeOperator,
+                                                             ValueTypeOperator,
                                                              memorySpace>(
               numCellsInBlock,
               transA.data(),
@@ -1043,13 +1047,13 @@ namespace dftefe
               mSizes.data(),
               nSizes.data(),
               kSizes.data(),
-              (ValueTypeOperand)1.0,
+              (ValueTypeOperator)1.0,
               JxWxNCell.data(),
               ldaSizes.data(),
               quadValuesInAllCellsEnrichment.data() +
                 cumulativeQuadEnrichBlockEnrichxenrichInCell,
               ldbSizes.data(),
-              (ValueTypeOperand)0.0,
+              (ValueTypeOperator)0.0,
               basisOverlapStartPtrInCellBlock +
                 dofsPerCellInCellBlock[0] * dofsPerCellCFE + dofsPerCellCFE,
               ldcSizes.data(),
@@ -1072,7 +1076,7 @@ namespace dftefe
               }
             JxWxNCell.resize(JxWxNCellSize, 0);
 
-            linearAlgebra::blasLapack::scaleStridedVarBatched<ValueTypeOperator,
+            linearAlgebra::blasLapack::scaleStridedVarBatched<RealType<ValueTypeOperator>,
                                                               ValueTypeOperator,
                                                               memorySpace>(
               numCellsInBlock,
@@ -1109,7 +1113,7 @@ namespace dftefe
                 strideC[iCell]  = strideC_colOffset[iCell];
               }
 
-            linearAlgebra::blasLapack::gemmStridedVarBatched<ValueTypeOperand,
+            linearAlgebra::blasLapack::gemmStridedVarBatched<ValueTypeOperator,
                                                              ValueTypeOperator,
                                                              memorySpace>(
               numCellsInBlock,
@@ -1121,7 +1125,7 @@ namespace dftefe
               mSizes.data(),
               nSizes.data(),
               kSizes.data(),
-              (ValueTypeOperand)1.0,
+              (ValueTypeOperator)1.0,
               JxWxNCell.data(),
               ldaSizes.data(),
               classicalComponentInQuadValuesEC.data(),
@@ -1149,7 +1153,7 @@ namespace dftefe
               }
             JxWxNCell.resize(JxWxNCellSize, 0);
 
-            linearAlgebra::blasLapack::scaleStridedVarBatched<ValueTypeOperator,
+            linearAlgebra::blasLapack::scaleStridedVarBatched<RealType<ValueTypeOperator>,
                                                               ValueTypeOperator,
                                                               memorySpace>(
               numCellsInBlock,
@@ -1186,7 +1190,7 @@ namespace dftefe
                 strideC[iCell]  = strideC_colOffset[iCell];
               }
 
-            linearAlgebra::blasLapack::gemmStridedVarBatched<ValueTypeOperand,
+            linearAlgebra::blasLapack::gemmStridedVarBatched<ValueTypeOperator,
                                                              ValueTypeOperator,
                                                              memorySpace>(
               numCellsInBlock,
@@ -1198,7 +1202,7 @@ namespace dftefe
               mSizes.data(),
               nSizes.data(),
               kSizes.data(),
-              (ValueTypeOperand)-1.0,
+              (ValueTypeOperator)-1.0,
               classicalComponentInQuadValuesEE.data(),
               ldaSizes.data(),
               JxWxNCell.data(),
@@ -1226,7 +1230,7 @@ namespace dftefe
                 strideC[iCell]  = strideC_colOffset[iCell];
               }
 
-            linearAlgebra::blasLapack::gemmStridedVarBatched<ValueTypeOperand,
+            linearAlgebra::blasLapack::gemmStridedVarBatched<ValueTypeOperator,
                                                              ValueTypeOperator,
                                                              memorySpace>(
               numCellsInBlock,
@@ -1238,7 +1242,7 @@ namespace dftefe
               mSizes.data(),
               nSizes.data(),
               kSizes.data(),
-              (ValueTypeOperand)-1.0,
+              (ValueTypeOperator)-1.0,
               JxWxNCell.data(),
               ldaSizes.data(),
               classicalComponentInQuadValuesEE.data(),
@@ -1414,18 +1418,31 @@ namespace dftefe
                         locallyOwnedCellsNumDoFsSTL.end(),
                         0);
 
-      linearAlgebra::Vector<ValueTypeOperator, memorySpace> diagonal(
+      linearAlgebra::Vector<ValueType, memorySpace> diagonal(
         d_feBasisManager->getMPIPatternP2P(), linAlgOpContext);
 
       // Create the diagonal of the classical block matrix which is diagonal for
-      // GLL with spectral quadrature
+      // GLL with spectral quadrature. NiNj is operator-typed, so it is gathered
+      // real and widened into the union-typed diagonal
+      linearAlgebra::Vector<ValueTypeOperator, memorySpace> diagonalOperator(
+        d_feBasisManager->getMPIPatternP2P(), linAlgOpContext);
+
       FECellWiseDataOperations<ValueTypeOperator, memorySpace>::
         addCellWiseBasisDataToDiagonalData(NiNjInAllCells.data(),
                                            itCellLocalIdsBegin,
                                            locallyOwnedCellsNumDoFs,
                                            numCumulativeDofsCells,
-                                           diagonal.data(),
+                                           diagonalOperator.data(),
                                            *linAlgOpContext);
+
+      linearAlgebra::blasLapack::
+        copyValueType1ArrToValueType2Arr<ValueTypeOperator,
+                                         ValueType,
+                                         memorySpace>(diagonalOperator
+                                                        .localSize(),
+                                                      diagonalOperator.data(),
+                                                      diagonal.data(),
+                                                      *linAlgOpContext);
 
       // function to do a static condensation to send the constraint nodes to
       // its parent nodes
@@ -1449,8 +1466,10 @@ namespace dftefe
 
       diagonal.updateGhostValues();
 
+      // keep both operands in one type: a real-over-complex division goes
+      // through the mixed overload, which real-valued data does not need
       linearAlgebra::blasLapack::reciprocalX(diagonal.localSize(),
-                                             1.0,
+                                             (ValueType)1.0,
                                              diagonal.data(),
                                              d_diagonalInv.data(),
                                              *(diagonal.getLinAlgOpContext()));
@@ -1493,7 +1512,7 @@ namespace dftefe
       d_atomBlockEnrichmentOverlapInv.resize(nlocallyOwnedEnrichmentIds *
                                              nlocallyOwnedEnrichmentIds);
 
-      utils::MemoryStorage<ValueTypeOperator, utils::MemorySpace::HOST>
+      utils::MemoryStorage<ValueType, utils::MemorySpace::HOST>
         atomBlockEnrichmentOverlapInvHost(nlocallyOwnedEnrichmentIds *
                                           nlocallyOwnedEnrichmentIds);
 
@@ -1506,7 +1525,7 @@ namespace dftefe
             std::min(enrichStartId + enrichBatchSize, d_nglobalEnrichmentIds);
           const size_type numEnrichInBatch = enrichEndId - enrichStartId;
 
-          linearAlgebra::MultiVector<ValueType, utils::MemorySpace::HOST>
+          linearAlgebra::MultiVector<ValueTypeOperator, utils::MemorySpace::HOST>
             basisOverlapEnrichmentBlock(
               mpiPatternP2P,
               linearAlgebra::LinAlgOpContextDefaults::LINALG_OP_CONTXT_HOST,
@@ -1577,7 +1596,7 @@ namespace dftefe
 
       if (nlocallyOwnedEnrichmentIds > 0)
         linearAlgebra::LapackError ret =
-          linearAlgebra::blasLapack::inverse<ValueTypeOperator,
+          linearAlgebra::blasLapack::inverse<ValueType,
                                              utils::MemorySpace::HOST>(
             nlocallyOwnedEnrichmentIds,
             atomBlockEnrichmentOverlapInvHost.data(),
@@ -1756,7 +1775,7 @@ namespace dftefe
 
       if (nlocallyOwnedEnrichmentIds > 0)
         linearAlgebra::blasLapack::
-          gemm<ValueTypeOperator, ValueTypeOperand, memorySpace>(
+          gemm<ValueType, ValueType, memorySpace>(
             'N',
             'N',
             numComponents,

@@ -47,15 +47,20 @@ namespace dftefe
   {
     namespace CFEBasisDofHandlerInternal
     {
+      // the dealii constraint and matrix-free objects are real
+      // whatever the field type is
+      template <typename T>
+      using RealType = linearAlgebra::blasLapack::real_type<T>;
+
       template <typename ValueTypeBasisCoeff,
                 utils::MemorySpace memorySpace,
                 size_type          dim>
       void
       setDealiiMatrixFreeLight(
         dealii::DoFHandler<dim> &dealiiDofHandler,
-        dealii::AffineConstraints<ValueTypeBasisCoeff>
+        dealii::AffineConstraints<RealType<ValueTypeBasisCoeff>>
           &dealiiAffineConstraintMatrix,
-        dealii::MatrixFree<dim, ValueTypeBasisCoeff> &dealiiMatrixFree)
+        dealii::MatrixFree<dim, RealType<ValueTypeBasisCoeff>> &dealiiMatrixFree)
       {
         typename dealii::MatrixFree<dim>::AdditionalData dealiiAdditionalData;
         dealiiAdditionalData.tasks_parallel_scheme =
@@ -77,7 +82,7 @@ namespace dftefe
                 size_type          dim>
       void
       getGhostIndices(
-        const dealii::MatrixFree<dim, ValueTypeBasisCoeff> &dealiiMatrixFree,
+        const dealii::MatrixFree<dim, RealType<ValueTypeBasisCoeff>> &dealiiMatrixFree,
         std::vector<global_size_type> &                     ghostIndices)
       {
         const dealii::Utilities::MPI::Partitioner &dealiiPartitioner =
@@ -217,7 +222,7 @@ namespace dftefe
       // nature of the finite elemnt mesh. One needs dof_handler for this
       // part as the constriant matrix needs to trim out the locally
 
-      dealii::AffineConstraints<ValueTypeBasisCoeff>
+      dealii::AffineConstraints<CFEBasisDofHandlerInternal::RealType<ValueTypeBasisCoeff>>
         dealiiAffineConstraintMatrix;
 
       dealiiAffineConstraintMatrix.clear();
@@ -300,7 +305,7 @@ namespace dftefe
       // reduced a nd trimmed with only those remain which are required for
       // satisfying hanging and periodic for the current processor.
 
-      dealii::MatrixFree<dim, ValueTypeBasisCoeff> dealiiMatrixFree;
+      dealii::MatrixFree<dim, CFEBasisDofHandlerInternal::RealType<ValueTypeBasisCoeff>> dealiiMatrixFree;
 
       CFEBasisDofHandlerInternal::
         setDealiiMatrixFreeLight<ValueTypeBasisCoeff, memorySpace, dim>(
@@ -532,7 +537,7 @@ namespace dftefe
       // nature of the finite elemnt mesh. One needs dof_handler for this
       // part as the constriant matrix needs to trim out the locally
 
-      dealii::AffineConstraints<ValueTypeBasisCoeff>
+      dealii::AffineConstraints<CFEBasisDofHandlerInternal::RealType<ValueTypeBasisCoeff>>
         dealiiAffineConstraintMatrix;
 
       dealiiAffineConstraintMatrix.clear();
@@ -611,7 +616,7 @@ namespace dftefe
       // reduced a nd trimmed with only those remain which are required for
       // satisfying hanging and periodic for the current processor.
 
-      dealii::MatrixFree<dim, ValueTypeBasisCoeff> dealiiMatrixFree;
+      dealii::MatrixFree<dim, CFEBasisDofHandlerInternal::RealType<ValueTypeBasisCoeff>> dealiiMatrixFree;
 
       CFEBasisDofHandlerInternal::
         setDealiiMatrixFreeLight<ValueTypeBasisCoeff, memorySpace, dim>(

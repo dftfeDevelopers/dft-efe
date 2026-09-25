@@ -61,15 +61,16 @@ namespace dftefe
     {
     public:
       EFEBasisDofHandlerDealii(
-        std::shared_ptr<const EnrichmentClassicalInterfaceSpherical<
-          ValueTypeBasisData,
-          memorySpace,
-          dim>>                    enrichmentClassicalInterface,
+        std::shared_ptr<const EnrichmentClassicalInterfaceSpherical<ValueTypeBasisCoeff,
+                                                                    ValueTypeBasisData,
+                                                                    memorySpace,
+                                                                    dim>>                    enrichmentClassicalInterface,
         const utils::mpi::MPIComm &mpiComm);
 
       EFEBasisDofHandlerDealii(
         std::shared_ptr<
-          const EnrichmentClassicalInterfaceSpherical<ValueTypeBasisData,
+          const EnrichmentClassicalInterfaceSpherical<ValueTypeBasisCoeff,
+                                                      ValueTypeBasisData,
                                                       memorySpace,
                                                       dim>>
           enrichmentClassicalInterface);
@@ -87,17 +88,17 @@ namespace dftefe
 
       ////// FE specific  member functions /////
       void
-      reinit(std::shared_ptr<const EnrichmentClassicalInterfaceSpherical<
-               ValueTypeBasisData,
-               memorySpace,
-               dim>>                    enrichmentClassicalInterface,
+      reinit(std::shared_ptr<const EnrichmentClassicalInterfaceSpherical<ValueTypeBasisCoeff,
+                                                                         ValueTypeBasisData,
+                                                                         memorySpace,
+                                                                         dim>>                    enrichmentClassicalInterface,
              const utils::mpi::MPIComm &mpiComm);
 
       void
-      reinit(std::shared_ptr<const EnrichmentClassicalInterfaceSpherical<
-               ValueTypeBasisData,
-               memorySpace,
-               dim>> enrichmentClassicalInterface);
+      reinit(std::shared_ptr<const EnrichmentClassicalInterfaceSpherical<ValueTypeBasisCoeff,
+                                                                         ValueTypeBasisData,
+                                                                         memorySpace,
+                                                                         dim>> enrichmentClassicalInterface);
 
       std::shared_ptr<const TriangulationBase>
       getTriangulation() const override;
@@ -263,7 +264,8 @@ namespace dftefe
       getEnrichmentIdsPartition() const override;
 
       std::shared_ptr<
-        const EnrichmentClassicalInterfaceSpherical<ValueTypeBasisData,
+        const EnrichmentClassicalInterfaceSpherical<ValueTypeBasisCoeff,
+                                                    ValueTypeBasisData,
                                                     memorySpace,
                                                     dim>>
       getEnrichmentClassicalInterface() const override;
@@ -298,7 +300,8 @@ namespace dftefe
       std::string               d_fieldName;
       bool                      d_isOrthogonalized;
       std::shared_ptr<
-        const EnrichmentClassicalInterfaceSpherical<ValueTypeBasisData,
+        const EnrichmentClassicalInterfaceSpherical<ValueTypeBasisCoeff,
+                                                    ValueTypeBasisData,
                                                     memorySpace,
                                                     dim>>
         d_enrichClassIntfce;

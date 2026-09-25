@@ -43,6 +43,11 @@ namespace dftefe
     class ConstraintsLocal
     {
     public:
+      // constraint coefficients, inhomogeneities and the dealii
+      // constraint matrix are geometric data, hence real
+      using RealTypeBasisCoeff =
+        linearAlgebra::blasLapack::real_type<ValueTypeBasisCoeff>;
+
       virtual ~ConstraintsLocal() = default;
 
       //
@@ -65,7 +70,7 @@ namespace dftefe
       isConstrained(global_size_type basisId) const = 0;
 
       virtual const std::vector<
-        std::pair<global_size_type, ValueTypeBasisCoeff>> *
+        std::pair<global_size_type, RealTypeBasisCoeff>> *
       getConstraintEntries(const global_size_type lineDof) const = 0;
 
       virtual bool

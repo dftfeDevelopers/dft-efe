@@ -802,9 +802,15 @@ int main(int argc, char** argv)
 
     // Create the enrichmentClassicalInterface object for vtotal
       std::shared_ptr<basis::EnrichmentClassicalInterfaceSpherical
-                          <double, Host, dim>>
+                          <double,
+                                                                   double,
+                                                                   Host,
+                                                                   dim>>
         enrichClassIntfceTotalPot = std::make_shared<basis::EnrichmentClassicalInterfaceSpherical
-                          <double, Host, dim>>
+                          <double,
+                                                                                                  double,
+                                                                                                  Host,
+                                                                                                  dim>>
                           (cfeBasisDataStorageGLLElec,
                           cfeBasisDataStorageAdaptiveElec,
                           atomSphericalDataContainer,
@@ -817,9 +823,15 @@ int main(int argc, char** argv)
 
     // Create the enrichmentClassicalInterface object for wavefn
   std::shared_ptr<basis::EnrichmentClassicalInterfaceSpherical
-                          <double, Host, dim>>
+                          <double,
+                                                               double,
+                                                               Host,
+                                                               dim>>
     enrichClassIntfceOrbital = std::make_shared<basis::EnrichmentClassicalInterfaceSpherical
-                          <double, Host, dim>>
+                          <double,
+                                                                                             double,
+                                                                                             Host,
+                                                                                             dim>>
                           (cfeBasisDataStorageGLLEigen,
                           cfeBasisDataStorageAdaptiveOrbital,
                           atomSphericalDataContainer,
@@ -1111,9 +1123,15 @@ int main(int argc, char** argv)
 
       // Create the enrichmentClassicalInterface object for vnuclear
           std::shared_ptr<basis::EnrichmentClassicalInterfaceSpherical
-                            <double, Host, dim>>
+                            <double,
+                                                                       double,
+                                                                       Host,
+                                                                       dim>>
             enrichClassIntfceNucPot = std::make_shared<basis::EnrichmentClassicalInterfaceSpherical
-                            <double, Host, dim>>
+                            <double,
+                                                                                                    double,
+                                                                                                    Host,
+                                                                                                    dim>>
                             (cfeBasisDataStorageGLLElec,
                             cfeBasisDataStorageAdaptiveElec,
                             atomSphericalDataContainer,

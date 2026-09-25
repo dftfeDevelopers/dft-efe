@@ -26,22 +26,40 @@
 #ifndef dftefeHamiltonian_h
 #define dftefeHamiltonian_h
 
+#include <utils/MemoryStorage.h>
+#include <linearAlgebra/MultiVector.h>
+#include <linearAlgebra/BlasLapackTypedef.h>
+
 namespace dftefe
 {
   namespace ksdft
   {
-    template <typename ValueTypeOperator, utils::MemorySpace memorySpace>
+    /*
+     * The cell-wise Hamiltonian and the wavefunctions it is applied to are
+     * different quantities: the first follows the basis, the second the
+     * wavefunction coefficients. They coincide at Gamma with a real basis but
+     * not when only the coefficients are complex.
+     */
+    template <typename ValueTypeOperator,
+              typename ValueTypeOperand,
+              utils::MemorySpace memorySpace>
     class Hamiltonian
     {
     public:
+      // the assembled cell matrix is multiplied against the operand, and BLAS
+      // has no mixed real-times-complex gemm, so it carries the union type
+      using ValueType =
+        linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
+                                               ValueTypeOperand>;
+
       virtual ~Hamiltonian() = default;
       virtual void
-      getLocal(utils::MemoryStorage<ValueTypeOperator, memorySpace>
-                 &cellWiseStorage) const = 0;
+      getLocal(
+        utils::MemoryStorage<ValueType, memorySpace> &cellWiseStorage) const = 0;
       virtual void
       applyNonLocal(
-        linearAlgebra::MultiVector<ValueTypeOperator, memorySpace> &X,
-        linearAlgebra::MultiVector<ValueTypeOperator, memorySpace> &Y,
+        linearAlgebra::MultiVector<ValueTypeOperand, memorySpace> &X,
+        linearAlgebra::MultiVector<ValueTypeOperand, memorySpace> &Y,
         bool updateGhostX,
         bool updateGhostY) const = 0;
       virtual bool

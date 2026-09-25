@@ -137,9 +137,15 @@ int main()
   // 5. Make EFEBasisDataStorage with input as quadratureContainer.
 
   std::shared_ptr<dftefe::basis::EnrichmentClassicalInterfaceSpherical
-                          <double, dftefe::utils::MemorySpace::HOST, dim>>
+                          <double,
+                                                                       double,
+                                                                       dftefe::utils::MemorySpace::HOST,
+                                                                       dim>>
                           enrichClassIntfce = std::make_shared<dftefe::basis::EnrichmentClassicalInterfaceSpherical
-                          <double, dftefe::utils::MemorySpace::HOST, dim>>(triangulationBase,
+                          <double,
+                                                                                                                    double,
+                                                                                                                    dftefe::utils::MemorySpace::HOST,
+                                                                                                                    dim>>(triangulationBase,
                           atomSphericalDataContainer,
                           atomPartitionTolerance,
                           atomSymbolVec,
@@ -227,7 +233,10 @@ int main()
   cfeBasisDataStorageRhs->evaluateBasisData(quadAttrAdaptive, quadRuleContainerAdaptive, basisAttrMap);
 
     enrichClassIntfce = std::make_shared<dftefe::basis::EnrichmentClassicalInterfaceSpherical
-                          <double, dftefe::utils::MemorySpace::HOST, dim>>
+                          <double,
+                                                                                              double,
+                                                                                              dftefe::utils::MemorySpace::HOST,
+                                                                                              dim>>
                           (cfeBasisDataStorageOverlapMatrix,
                           cfeBasisDataStorageRhs,
                           atomSphericalDataContainer,

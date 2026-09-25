@@ -552,40 +552,43 @@ namespace dftefe
     //
     // div for real-complex heterogeneous types e.g. (double, hipFloatComplex)
     //
+    // Division by a complex is not elementwise: a/b = a*conj(b)/|b|^2. Only
+    // division *by* a real stays elementwise.
     __forceinline__ __device__ hipDoubleComplex
     div(double a, hipDoubleComplex b)
     {
-      return make_hipDoubleComplex(a / b.x, a / b.y);
+      return hipCdiv(make_hipDoubleComplex(a, 0.0), b);
     }
 
     __forceinline__ __device__ hipDoubleComplex
     div(hipDoubleComplex a, double b)
     {
-      return make_hipDoubleComplex(b / a.x, b / a.y);
+      return make_hipDoubleComplex(a.x / b, a.y / b);
     }
 
     __forceinline__ __device__ hipFloatComplex
     div(float a, hipFloatComplex b)
     {
-      return make_hipFloatComplex(a / b.x, a / b.y);
+      return hipCdivf(make_hipFloatComplex(a, 0.0f), b);
     }
 
     __forceinline__ __device__ hipFloatComplex
     div(hipFloatComplex a, float b)
     {
-      return make_hipFloatComplex(b / a.x, b / a.y);
+      return make_hipFloatComplex(a.x / b, a.y / b);
     }
 
     __forceinline__ __device__ hipDoubleComplex
     div(double a, hipFloatComplex b)
     {
-      return make_hipDoubleComplex(a / b.x, a / b.y);
+      return hipCdiv(make_hipDoubleComplex(a, 0.0),
+                     make_hipDoubleComplex(b.x, b.y));
     }
 
     __forceinline__ __device__ hipDoubleComplex
     div(hipFloatComplex a, double b)
     {
-      return make_hipDoubleComplex(b / a.x, b / a.y);
+      return make_hipDoubleComplex(a.x / b, a.y / b);
     }
 
     ////

@@ -198,7 +198,8 @@ namespace dftefe
       getEnrichmentIdsPartition() const = 0;
 
       virtual std::shared_ptr<
-        const EnrichmentClassicalInterfaceSpherical<ValueTypeBasisData,
+        const EnrichmentClassicalInterfaceSpherical<ValueTypeBasisCoeff,
+                                                    ValueTypeBasisData,
                                                     memorySpace,
                                                     dim>>
       getEnrichmentClassicalInterface() const = 0;

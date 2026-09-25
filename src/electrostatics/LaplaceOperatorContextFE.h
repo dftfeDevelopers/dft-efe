@@ -98,7 +98,7 @@ namespace dftefe
         const basis::
           FEBasisManager<ValueTypeOperand, ValueTypeOperator, memorySpace, dim>
             &feBasisManagerY,
-        std::shared_ptr<utils::MemoryStorage<ValueTypeOperator, memorySpace>>
+        std::shared_ptr<utils::MemoryStorage<ValueType, memorySpace>>
                         gradNiGradNjInAllCells,
         const size_type maxCellBlock,
         const size_type maxFieldBlock);
@@ -126,7 +126,7 @@ namespace dftefe
             bool updateGhostY = false) const override;
 
       // get overlap of all the basis functions in all cells
-      std::shared_ptr<utils::MemoryStorage<ValueTypeOperator, memorySpace>>
+      std::shared_ptr<utils::MemoryStorage<ValueType, memorySpace>>
       getBasisGradNiGradNjInAllCells() const;
 
     private:
@@ -139,7 +139,7 @@ namespace dftefe
       std::shared_ptr<
         const basis::FEBasisDataStorage<ValueTypeOperator, memorySpace>>
         d_feBasisDataStorage;
-      std::shared_ptr<utils::MemoryStorage<ValueTypeOperator, memorySpace>>
+      std::shared_ptr<utils::MemoryStorage<ValueType, memorySpace>>
                 d_gradNiGradNjInAllCells;
       size_type d_maxFieldBlock, d_maxCellBlock;
       bool      d_isGradNiNjPreCalculated;

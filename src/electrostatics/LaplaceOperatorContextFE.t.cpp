@@ -38,8 +38,10 @@ namespace dftefe
                 utils::MemorySpace memorySpace>
       void
       computeAxCellWiseLocal(
-        const utils::MemoryStorage<ValueTypeOperator, memorySpace>
-          &                     gradNiGradNjInAllCells,
+        const utils::MemoryStorage<
+          linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
+                                                 ValueTypeOperand>,
+          memorySpace> &        gradNiGradNjInAllCells,
         const ValueTypeOperand *x,
         linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
                                                ValueTypeOperand> *y,
@@ -51,6 +53,9 @@ namespace dftefe
         const size_type                              cellBlockSize,
         linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext)
       {
+        using ValueType =
+          linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
+                                                 ValueTypeOperand>;
         //
         // Perform ye = Ae * xe, where
         // Ae is the discrete Laplace operator for the e-th cell.
@@ -150,13 +155,11 @@ namespace dftefe
                                                    ValueTypeOperand>
               beta = 0.0;
 
-            const ValueTypeOperator *B =
+            const ValueType *B =
               gradNiGradNjInAllCells.data() + BStartOffset;
-            linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
-                                                   ValueTypeOperand> *C =
-              yCellValues.begin();
-            linearAlgebra::blasLapack::gemmStridedVarBatched<ValueTypeOperator,
-                                                             ValueTypeOperand,
+            ValueType *C = yCellValues.begin();
+            linearAlgebra::blasLapack::gemmStridedVarBatched<ValueType,
+                                                             ValueType,
                                                              memorySpace>(
               numCellsInBlock,
               transA.data(),
@@ -258,8 +261,8 @@ namespace dftefe
         }
 
       d_gradNiGradNjInAllCells =
-        std::make_shared<utils::MemoryStorage<ValueTypeOperator, memorySpace>>(
-          cellWiseDataSize, (ValueTypeOperator)0);
+        std::make_shared<utils::MemoryStorage<ValueType, memorySpace>>(
+          cellWiseDataSize, (ValueType)0);
 
       feBasisOp.computeFEMatrices(basis::realspace::LinearLocalOp::GRAD,
                                   basis::realspace::VectorMathOp::DOT,
@@ -283,7 +286,7 @@ namespace dftefe
         const basis::
           FEBasisManager<ValueTypeOperand, ValueTypeOperator, memorySpace, dim>
             &feBasisManagerY,
-        std::shared_ptr<utils::MemoryStorage<ValueTypeOperator, memorySpace>>
+        std::shared_ptr<utils::MemoryStorage<ValueType, memorySpace>>
                         gradNiGradNjInAllCells,
         const size_type maxCellBlock,
         const size_type maxFieldBlock)
@@ -397,7 +400,9 @@ namespace dftefe
       // perform Ax on the local part of A and x
       // (A = discrete Laplace operator)
       //
-      LaplaceOperatorContextFEInternal::computeAxCellWiseLocal(
+      LaplaceOperatorContextFEInternal::computeAxCellWiseLocal<ValueTypeOperator,
+                                                                ValueTypeOperand,
+                                                                memorySpace>(
         *d_gradNiGradNjInAllCells,
         X.begin(),
         Y.begin(),
@@ -431,7 +436,10 @@ namespace dftefe
               typename ValueTypeOperand,
               utils::MemorySpace memorySpace,
               size_type          dim>
-    std::shared_ptr<utils::MemoryStorage<ValueTypeOperator, memorySpace>>
+    std::shared_ptr<utils::MemoryStorage<
+      linearAlgebra::blasLapack::scalar_type<ValueTypeOperator,
+                                             ValueTypeOperand>,
+      memorySpace>>
     LaplaceOperatorContextFE<ValueTypeOperator,
                              ValueTypeOperand,
                              memorySpace,

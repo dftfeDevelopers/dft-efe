@@ -52,12 +52,14 @@ namespace dftefe
     template <typename ValueTypeBasisData,
               typename ValueTypeBasisCoeff,
               typename ValueTypeWaveFnBasisData,
+              typename ValueTypeWaveFnCoeff,
               utils::MemorySpace memorySpace,
               size_type          dim>
     class ElectrostaticLocalFE
       : public ElectrostaticFE<ValueTypeBasisData,
                                ValueTypeBasisCoeff,
                                ValueTypeWaveFnBasisData,
+                               ValueTypeWaveFnCoeff,
                                memorySpace,
                                dim>
     {
@@ -65,18 +67,21 @@ namespace dftefe
       using ValueType = typename ElectrostaticFE<ValueTypeBasisData,
                                                  ValueTypeBasisCoeff,
                                                  ValueTypeWaveFnBasisData,
+                                                 ValueTypeWaveFnCoeff,
                                                  memorySpace,
                                                  dim>::ValueType;
       using Storage   = typename ElectrostaticFE<ValueTypeBasisData,
-                                               ValueTypeBasisCoeff,
-                                               ValueTypeWaveFnBasisData,
-                                               memorySpace,
-                                               dim>::Storage;
+                                                 ValueTypeBasisCoeff,
+                                                 ValueTypeWaveFnBasisData,
+                                                 ValueTypeWaveFnCoeff,
+                                                 memorySpace,
+                                                 dim>::Storage;
       using RealType  = typename ElectrostaticFE<ValueTypeBasisData,
-                                                ValueTypeBasisCoeff,
-                                                ValueTypeWaveFnBasisData,
-                                                memorySpace,
-                                                dim>::RealType;
+                                                 ValueTypeBasisCoeff,
+                                                 ValueTypeWaveFnBasisData,
+                                                 ValueTypeWaveFnCoeff,
+                                                 memorySpace,
+                                                 dim>::RealType;
 
     public:
       /**
@@ -299,8 +304,8 @@ namespace dftefe
 
       void
       applyNonLocal(
-        linearAlgebra::MultiVector<ValueTypeWaveFnBasisData, memorySpace> &X,
-        linearAlgebra::MultiVector<ValueTypeWaveFnBasisData, memorySpace> &Y,
+        linearAlgebra::MultiVector<ValueTypeWaveFnCoeff, memorySpace> &X,
+        linearAlgebra::MultiVector<ValueTypeWaveFnCoeff, memorySpace> &Y,
         bool updateGhostX,
         bool updateGhostY) const override;
 
@@ -401,7 +406,7 @@ namespace dftefe
                                                      memorySpaceHost,
                                                      dim>>
         d_feBasisOpElectronic;
-      std::shared_ptr<const basis::FEBasisOperations<ValueTypeBasisCoeff,
+      std::shared_ptr<const basis::FEBasisOperations<ValueTypeWaveFnCoeff,
                                                      ValueTypeWaveFnBasisData,
                                                      memorySpace,
                                                      dim>>

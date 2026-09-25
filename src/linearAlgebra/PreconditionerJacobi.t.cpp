@@ -42,7 +42,7 @@ namespace dftefe
 
     {
       blasLapack::reciprocalX(diagonal.localSize(),
-                              1.0,
+                              (ValueTypeOperator)1.0,
                               diagonal.data(),
                               d_diagonalInv.data(),
                               *(diagonal.getLinAlgOpContext()));

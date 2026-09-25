@@ -37,7 +37,7 @@ namespace dftefe
 {
   namespace basis
   {
-    template <utils::MemorySpace memorySpace>
+    template <typename ValueType, utils::MemorySpace memorySpace>
     class EnrichmentDataEvalKernels
     {
     public:
@@ -49,7 +49,7 @@ namespace dftefe
           &                                          sphericalDataVec,
         const double *                               points,
         const double *                               origin,
-        double *                                     values,
+        ValueType *                         values,
         linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext);
 
       static void
@@ -60,7 +60,7 @@ namespace dftefe
           &                                          sphericalDataVec,
         const double *                               points,
         const double *                               origin,
-        double *                                     values,
+        ValueType *                         values,
         linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext);
 
       static void
@@ -73,7 +73,7 @@ namespace dftefe
         const std::vector<size_type>    numQuadPtsInAllCells,
         const atoms::SphericalDataNumerical::Func<memorySpace>
           *     sphericalDataFuncInAllCells,
-        double *output,
+        ValueType *output,
         linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext);
 
       static void
@@ -86,13 +86,14 @@ namespace dftefe
         const std::vector<size_type>    numQuadPtsInAllCells,
         const atoms::SphericalDataNumerical::Func<memorySpace>
           *     sphericalDataFuncInAllCells,
-        double *output,
+        ValueType *output,
         linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext);
     }; // end of class EnrichmentDataEvalKernels
 
 #ifdef DFTEFE_WITH_DEVICE
-    template <>
-    class EnrichmentDataEvalKernels<dftefe::utils::MemorySpace::DEVICE>
+    template <typename ValueType>
+    class EnrichmentDataEvalKernels<ValueType,
+                                    dftefe::utils::MemorySpace::DEVICE>
     {
     public:
       static void
@@ -103,7 +104,7 @@ namespace dftefe
           &           sphericalDataVec,
         const double *points,
         const double *origin,
-        double *      values,
+        ValueType *values,
         linearAlgebra::LinAlgOpContext<dftefe::utils::MemorySpace::DEVICE>
           &linAlgOpContext);
 
@@ -115,7 +116,7 @@ namespace dftefe
           &           sphericalDataVec,
         const double *points,
         const double *origin,
-        double *      values,
+        ValueType *values,
         linearAlgebra::LinAlgOpContext<dftefe::utils::MemorySpace::DEVICE>
           &linAlgOpContext);
 
@@ -129,7 +130,7 @@ namespace dftefe
         const std::vector<size_type>    numQuadPtsInAllCells,
         const atoms::SphericalDataNumerical::Func<
           dftefe::utils::MemorySpace::DEVICE> *sphericalDataFuncInAllCells,
-        double *                               output,
+        ValueType *                   output,
         linearAlgebra::LinAlgOpContext<dftefe::utils::MemorySpace::DEVICE>
           &linAlgOpContext);
 
@@ -143,7 +144,7 @@ namespace dftefe
         const std::vector<size_type>    numQuadPtsInAllCells,
         const atoms::SphericalDataNumerical::Func<
           dftefe::utils::MemorySpace::DEVICE> *sphericalDataFuncInAllCells,
-        double *                               output,
+        ValueType *                   output,
         linearAlgebra::LinAlgOpContext<dftefe::utils::MemorySpace::DEVICE>
           &linAlgOpContext);
     }; // end of class EnrichmentDataEvalKernels

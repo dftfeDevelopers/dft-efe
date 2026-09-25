@@ -47,6 +47,7 @@ namespace dftefe
         std::shared_ptr<const ElectrostaticFE<ValueTypeElectrostaticsBasis,
                                               ValueTypeElectrostaticsCoeff,
                                               ValueTypeWaveFunctionBasis,
+                                              ValueTypeWaveFunctionCoeff,
                                               memorySpace,
                                               dim>>       electroHamiltonian,
         std::shared_ptr<const ExchangeCorrelationFE<ValueTypeWaveFunctionBasis,
@@ -75,6 +76,7 @@ namespace dftefe
         std::shared_ptr<const ElectrostaticFE<ValueTypeElectrostaticsBasis,
                                               ValueTypeElectrostaticsCoeff,
                                               ValueTypeWaveFunctionBasis,
+                                              ValueTypeWaveFunctionCoeff,
                                               memorySpace,
                                               dim>>       electroHamiltonian,
         std::shared_ptr<const ExchangeCorrelationFE<ValueTypeWaveFunctionBasis,
@@ -237,6 +239,7 @@ namespace dftefe
     std::shared_ptr<const ElectrostaticFE<ValueTypeElectrostaticsBasis,
                                           ValueTypeElectrostaticsCoeff,
                                           ValueTypeWaveFunctionBasis,
+                                          ValueTypeWaveFunctionCoeff,
                                           memorySpace,
                                           dim>>
     ElectrostaticExcFE<ValueTypeElectrostaticsCoeff,

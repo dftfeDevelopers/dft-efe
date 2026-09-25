@@ -324,9 +324,15 @@ int main()
     std::cout << "Total wall time(in secs) : " << durationTotal.count()/1e6 << std::endl;
 
     // Create the enrichmentClassicalInterface object
-      std::shared_ptr<basis::EnrichmentClassicalInterfaceSpherical<double, utils::MemorySpace::HOST, dim>>
+      std::shared_ptr<basis::EnrichmentClassicalInterfaceSpherical<double,
+                                                                   double,
+                                                                   utils::MemorySpace::HOST,
+                                                                   dim>>
         enrichClassIntfce = std::make_shared<basis::EnrichmentClassicalInterfaceSpherical
-                          <double, utils::MemorySpace::HOST, dim>>
+                          <double,
+                                                                                          double,
+                                                                                          utils::MemorySpace::HOST,
+                                                                                          dim>>
                           (cfeBasisDataStorageUniformQuad,
                           cfeBasisDataStorageUniformQuad,
                           atomSphericalDataContainer,
