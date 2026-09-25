@@ -146,7 +146,9 @@ namespace dftefe
       const std::vector<std::string> &         metadataNames,
       const SphericalHarmonicFunctions &       sphericalHarmonicFunc,
       const std::map<std::string, std::string> additionalParams)
-      : d_fileName(fileName)
+      : d_vTotCutOffSmoothness(0.0, 0.0)
+      , d_isVTotCutOffSmoothnessSet(false)
+      , d_fileName(fileName)
       , d_fieldNames(fieldNames)
       , d_metadataNames(metadataNames)
     {
@@ -236,6 +238,26 @@ namespace dftefe
               utils::throwException(
                 false,
                 "rcsmear not found in additionalParams. Required for vtotal field");
+            }
+          // optional "cutoff,smoothness"; the scanned default pairs a hard
+          // 1e6 smoothness with a radius that can push the enrichment reach
+          // past the periodic image envelope
+          iter = additionalParams.find("vTotCutOffSmoothness");
+          if (iter != additionalParams.end())
+            {
+              const std::string &value = iter->second;
+              const auto         comma = value.find(',');
+              utils::throwException(
+                comma != std::string::npos,
+                "vTotCutOffSmoothness in additionalParams must be given as "
+                "\"cutoff,smoothness\".");
+              d_vTotCutOffSmoothness = {std::stod(value.substr(0, comma)),
+                                        std::stod(value.substr(comma + 1))};
+              utils::throwException(
+                d_vTotCutOffSmoothness.first > 0.0 &&
+                  d_vTotCutOffSmoothness.second > 0.0,
+                "vTotCutOffSmoothness in additionalParams must be positive.");
+              d_isVTotCutOffSmoothnessSet = true;
             }
         }
 
@@ -535,6 +557,11 @@ namespace dftefe
         {
           for (int i = 0; i < qNumVec.size(); i++)
             {
+              if (d_isVTotCutOffSmoothnessSet)
+                {
+                  cutOffInfoVec[i] = d_vTotCutOffSmoothness;
+                  continue;
+                }
               for (int j = radialPoints.size() - 1; j > 0; j--)
                 {
                   if (std::abs(radialValuesVec[i][j]) > 1e-10)

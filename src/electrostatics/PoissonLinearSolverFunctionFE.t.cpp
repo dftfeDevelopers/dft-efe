@@ -512,6 +512,10 @@ namespace dftefe
       d_AxContextNHDB->apply(d_fieldInHomoDBCVec, rhsNHDB, true, true);
 
       linearAlgebra::add(ones, b, nOnes, rhsNHDB, d_b);
+
+      d_feBasisManagerHomo->getConstraints()
+        .applyMeanValueConstraintDistributeC2P(d_b, d_numComponents);
+
       d_p.registerEnd("Rhs Computation");
       d_p.print();
 

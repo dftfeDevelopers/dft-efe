@@ -120,6 +120,10 @@ namespace dftefe
       double      d_atomCharge;
       double      d_smearedCharge;
       std::string d_PSPorAE;
+      // {cutoff, smoothness} given through
+      // additionalParams["vTotCutOffSmoothness"], replacing the tail scan
+      std::pair<double, double> d_vTotCutOffSmoothness;
+      bool                      d_isVTotCutOffSmoothnessSet;
 
       std::string              d_fileName;
       std::vector<std::string> d_fieldNames;

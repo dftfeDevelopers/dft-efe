@@ -678,13 +678,17 @@ int main(int argc, char** argv)
 
   std::vector<std::string> fieldNames{"orbital","vtotal","density"};
   std::vector<std::string> metadataNames{ "symbol", "Z", "charge", "NR" };
-  std::shared_ptr<atoms::AtomSphericalDataContainer>  atomSphericalDataContainer = 
+  std::map<std::string, std::string> enrichmentAdditionalParams({{"rcsmear", std::to_string(rc)}, {"PSP/AE", "PSP"}});
+  // the long vtotal tail is only needed by the delta-rho solve
+  if (!isDeltaRhoPoissonSolve)
+    enrichmentAdditionalParams["vTotCutOffSmoothness"] = "3.01,0.5";
+  std::shared_ptr<atoms::AtomSphericalDataContainer>  atomSphericalDataContainer =
       std::make_shared<atoms::AtomSphericalDataContainer>(
                                                       atoms::AtomSphericalDataType::ENRICHMENT,
                                                       atomSymbolToBasisFileName,
                                                       fieldNames,
                                                       metadataNames,
-                                                      std::map<std::string, std::string>({{"rcsmear", std::to_string(rc)}, {"PSP/AE", "PSP"}}));
+                                                      enrichmentAdditionalParams);
                                                     
   for (auto i:atomSymbolToBasisFileName )
   {

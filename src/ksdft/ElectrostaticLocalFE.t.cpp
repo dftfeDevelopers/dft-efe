@@ -30,6 +30,8 @@
 #include <utils/ConditionalOStream.h>
 #include <atoms/SphericalHarmonicFunctions.h>
 #include <basis/EFEBasisDofHandler.h>
+#include <cmath>
+#include <limits>
 namespace dftefe
 {
   namespace ksdft
@@ -144,6 +146,50 @@ namespace dftefe
           comm);
 
         return value;
+      }
+
+      // The smeared charge has compact support rc, so its external potential
+      // is -Z/r only while no two supports overlap. Routes that do not compute
+      // the overlap correction must refuse the input, not return a wrong
+      // energy.
+      inline void
+      throwIfSmearedChargesOverlap(
+        const std::vector<utils::Point> &atomCoordinates,
+        const std::vector<utils::Point> &extendedAtomCoordinates,
+        const double                     smearedChargeRadius)
+      {
+        double    minDistance = std::numeric_limits<double>::max();
+        size_type numAtoms    = atomCoordinates.size();
+        for (size_type iAtom = 0; iAtom < numAtoms; iAtom++)
+          for (size_type jAtom = 0; jAtom < extendedAtomCoordinates.size();
+               jAtom++)
+            {
+              // an image of iAtom is a different charge, so only the master
+              // itself is skipped
+              if (jAtom == iAtom)
+                continue;
+              double distSq = 0.0;
+              for (size_type iDim = 0; iDim < atomCoordinates[iAtom].size();
+                   iDim++)
+                distSq += std::pow(atomCoordinates[iAtom][iDim] -
+                                     extendedAtomCoordinates[jAtom][iDim],
+                                   2);
+              minDistance = std::min(minDistance, std::sqrt(distSq));
+            }
+
+        utils::throwException<utils::InvalidArgument>(
+          minDistance >= 2 * smearedChargeRadius,
+          "Smeared nuclear charges overlap: the closest pair of nuclei, "
+          "counting periodic images, is " +
+            std::to_string(minDistance) +
+            " bohr apart while the smeared charge radius rc = " +
+            std::to_string(smearedChargeRadius) +
+            " bohr needs at least " +
+            std::to_string(2 * smearedChargeRadius) +
+            " bohr. Outside that regime the smeared nuclear interaction is not "
+            "the point-nucleus one, and the correction that repairs it is only "
+            "computed on the delta rho route. Use rc < " +
+            std::to_string(0.5 * minDistance) + " bohr.");
       }
     } // namespace ElectrostaticLocalFEInternal
 
@@ -619,6 +665,11 @@ namespace dftefe
         imageAtomGenerator->getExtendedAtoms(d_atomCoordinates,
                                              d_extendedAtomCoordinates,
                                              d_extendedAtomCharges);
+
+      // this route has no overlap correction, so overlapping smeared charges
+      // would silently give a wrong nuclear interaction energy
+      ElectrostaticLocalFEInternal::throwIfSmearedChargesOverlap(
+        d_atomCoordinates, d_extendedAtomCoordinates, d_smearedChargeRadius);
       d_feBDNuclearChargeRhs           = feBDNuclearChargeRhs;
       d_feBDNuclChargeRhsNumSol        = feBDNuclChargeRhsNumSol;
       d_feBDElectronicChargeRhs        = feBDElectronicChargeRhs;
@@ -964,6 +1015,11 @@ namespace dftefe
         imageAtomGenerator->getExtendedAtoms(d_atomCoordinates,
                                              d_extendedAtomCoordinates,
                                              d_extendedAtomCharges);
+
+      // this route has no overlap correction, so overlapping smeared charges
+      // would silently give a wrong nuclear interaction energy
+      ElectrostaticLocalFEInternal::throwIfSmearedChargesOverlap(
+        d_atomCoordinates, d_extendedAtomCoordinates, d_smearedChargeRadius);
       d_feBDNuclearChargeRhs           = feBDNuclearChargeRhs;
       d_feBDElectronicChargeRhs        = feBDElectronicChargeRhs;
       d_feBMTotalCharge                = feBMTotalCharge;
