@@ -32,6 +32,7 @@
 #include <numeric>
 // #include <mkl.h>
 #include <utils/ConditionalOStream.h>
+#include <utils/DataTypeOverloads.h>
 namespace dftefe
 {
   namespace basis
@@ -552,9 +553,11 @@ namespace dftefe
                           *(basisOverlapEEBlock3.data() +
                             (iNode - dofsPerCellCFE) * numEnrichmentIdsInCell +
                             (jNode - dofsPerCellCFE)) -
-                          *(basisOverlapEEBlock3.data() +
-                            (jNode - dofsPerCellCFE) * numEnrichmentIdsInCell +
-                            (iNode - dofsPerCellCFE));
+                          utils::conjugate(
+                            *(basisOverlapEEBlock3.data() +
+                              (jNode - dofsPerCellCFE) *
+                                numEnrichmentIdsInCell +
+                              (iNode - dofsPerCellCFE)));
                       }
                     basisOverlapTmpIter++;
                   }
@@ -1214,7 +1217,7 @@ namespace dftefe
               linAlgOpContext);
 
             std::fill(transA.begin(), transA.end(), 'N');
-            std::fill(transB.begin(), transB.end(), 'T');
+            std::fill(transB.begin(), transB.end(), 'C');
 
             for (size_type iCell = 0; iCell < numCellsInBlock; ++iCell)
               {
@@ -1595,12 +1598,23 @@ namespace dftefe
         }
 
       if (nlocallyOwnedEnrichmentIds > 0)
-        linearAlgebra::LapackError ret =
-          linearAlgebra::blasLapack::inverse<ValueType,
-                                             utils::MemorySpace::HOST>(
-            nlocallyOwnedEnrichmentIds,
-            atomBlockEnrichmentOverlapInvHost.data(),
-            *(linearAlgebra::LinAlgOpContextDefaults::LINALG_OP_CONTXT_HOST));
+        {
+          linearAlgebra::LapackError ret =
+            linearAlgebra::blasLapack::inverse<ValueType,
+                                               utils::MemorySpace::HOST>(
+              nlocallyOwnedEnrichmentIds,
+              atomBlockEnrichmentOverlapInvHost.data(),
+              *(linearAlgebra::LinAlgOpContextDefaults::LINALG_OP_CONTXT_HOST));
+
+          utils::throwException<utils::InvalidArgument>(
+            ret.isSuccess,
+            "Inverting the atom block of the enrichment overlap failed: " +
+              ret.msg + " The block is " +
+              std::to_string(nlocallyOwnedEnrichmentIds) + " by " +
+              std::to_string(nlocallyOwnedEnrichmentIds) +
+              ", so its enrichment functions are likely linearly dependent, "
+              "the quadrature is too loose to keep it positive definite or some other error.");
+        }
 
       d_atomBlockEnrichmentOverlapInv
         .template copyFrom<utils::MemorySpace::HOST>(

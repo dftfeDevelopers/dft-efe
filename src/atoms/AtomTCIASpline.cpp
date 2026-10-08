@@ -118,8 +118,18 @@ namespace dftefe
       std::string                jsonfile = d_tciaparams.folderName + "/" +
                              d_tciaparams.outFilePrefix + "." +
                              atomCombination + ".json";
-      simdjson::padded_string json = simdjson::padded_string::load(jsonfile);
-      simdjson::ondemand::document doc = parser.iterate(json);
+      auto jsonRes = simdjson::padded_string::load(jsonfile);
+      if (jsonRes.error())
+        {
+          utils::throwException(
+            false,
+            "Failed to load JSON file: '" + jsonfile + "' (" +
+              simdjson::error_message(jsonRes.error()) +
+              "). It is built from folderName='" + d_tciaparams.folderName +
+              "' and outFilePrefix='" + d_tciaparams.outFilePrefix +
+              "', i.e. parameters tciaFolder and tciaOutFilePrefix.");
+        }
+      simdjson::ondemand::document doc = parser.iterate(jsonRes);
 
       simdjson::ondemand::object fieldObj = doc[d_fieldName];
       values.clear();
@@ -219,11 +229,14 @@ namespace dftefe
 
           if (jsonRes.error())
             {
-              utils::throwException(false,
-                                    "Failed to load JSON file: " + jsonfile +
-                                      " (" +
-                                      simdjson::error_message(jsonRes.error()) +
-                                      ") from the input JSON data folder.");
+              utils::throwException(
+                false,
+                "Failed to load JSON file: '" + jsonfile + "' (" +
+                  simdjson::error_message(jsonRes.error()) +
+                  ") from the input JSON data folder. It is built from "
+                  "folderName='" + d_tciaparams.folderName +
+                  "' and outFilePrefix='" + d_tciaparams.outFilePrefix +
+                  "', i.e. parameters tciaFolder and tciaOutFilePrefix.");
             }
           simdjson::ondemand::document doc = parser.iterate(jsonRes);
 

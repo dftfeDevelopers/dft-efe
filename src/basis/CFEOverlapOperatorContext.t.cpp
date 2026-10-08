@@ -118,8 +118,8 @@ namespace dftefe
               feBasisDataStorage.getQuadratureRuleContainer()->getCellJxW(
                 cellIndex);
 
-            std::vector<ValueTypeOperator> JxWxNCellConj(dofsPerCell *
-                                                         nQuadPointInCell);
+            std::vector<ValueTypeOperator> JxWxNCell(dofsPerCell *
+                                                     nQuadPointInCell);
 
             size_type stride = 0;
             size_type m = 1, n = dofsPerCell, k = nQuadPointInCell;
@@ -131,7 +131,7 @@ namespace dftefe
               1,
               linearAlgebra::blasLapack::Layout::ColMajor,
               linearAlgebra::blasLapack::ScalarOp::Identity,
-              linearAlgebra::blasLapack::ScalarOp::Conj,
+              linearAlgebra::blasLapack::ScalarOp::Identity,
               &stride,
               &stride,
               &stride,
@@ -140,19 +140,19 @@ namespace dftefe
               &k,
               cellJxWValues.data(),
               basisDataInAllCellsHost.data() + cumulativeDofQuadPointsOffset,
-              JxWxNCellConj.data(),
+              JxWxNCell.data(),
               *linearAlgebra::LinAlgOpContextDefaults::LINALG_OP_CONTXT_HOST);
 
             linearAlgebra::blasLapack::gemm<ValueTypeOperator,
                                             ValueTypeOperator,
                                             utils::MemorySpace::HOST>(
               'N',
-              'T',
+              'C',
               dofsPerCell,
               dofsPerCell,
               nQuadPointInCell,
               (ValueTypeOperator)1.0,
-              JxWxNCellConj.data(),
+              JxWxNCell.data(),
               dofsPerCell,
               basisDataInAllCellsHost.data() + cumulativeDofQuadPointsOffset,
               dofsPerCell,

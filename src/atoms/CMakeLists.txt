@@ -26,6 +26,7 @@ set(DFT-EFE-ATOMS-SOURCES
     AtomSphericalDataPSP.cpp
     SphericalDataMixed.cpp
     AtomSuperpositionFunction.cpp
+    AtomSuperpositionFunctionEvalKernels.cpp
     SphericalDataAnalytical.cpp
     AtomSphericalDataAnalytical.cpp
     AtomTCIASpline.cpp
@@ -38,6 +39,7 @@ IF (ENABLE_GPU)
         SphericalDataNumericalDeviceKernels.cpp
         SphericalDataMixedDeviceKernels.cpp
         AtomSuperpositionFunctionDeviceKernels.cpp
+        AtomSuperpositionFunctionEvalDeviceKernels.cpp
         AtomSevereFunctionDeviceKernels.cpp
         )
     IF ("${GPU_LANG}" STREQUAL "cuda")

@@ -36,6 +36,7 @@
 
 #include <utils/MemoryStorage.h>
 #include <utils/TypeConfig.h>
+#include <utils/Point.h>
 #include <ksdft/KSAttributes.h>
 #include <linearAlgebra/MultiVector.h>
 #include <quadrature/QuadratureValuesContainer.h>
@@ -97,7 +98,7 @@ namespace dftefe
       virtual size_type
       getnKSOrbs() const = 0;
 
-      virtual std::vector<double>
+      virtual std::vector<utils::Point>
       getkPointCoords() const = 0;
 
       virtual std::vector<double>

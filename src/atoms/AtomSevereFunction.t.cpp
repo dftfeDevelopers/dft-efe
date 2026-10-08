@@ -25,6 +25,7 @@
 
 #include <utils/SmearChargeDensityFunction.h>
 #include <utils/PointChargePotentialFunction.h>
+#include <utils/SmearChargePotentialFunction.h>
 #include <atoms/SphericalHarmonics.h>
 #include <type_traits>
 
@@ -48,10 +49,12 @@ namespace dftefe
               {
                 case AtomSevereFuncType::Atomic::density:
                   return "density";
-                case AtomSevereFuncType::Atomic::vNuclearSq:
-                case AtomSevereFuncType::Atomic::gradVNuclearSq:
-                case AtomSevereFuncType::Atomic::bTimesVNuclear:
-                  return "vnuclear";
+                  // these use no spherical data; the base class still needs
+                  // a field that exists, so density is named.
+                case AtomSevereFuncType::Atomic::vSmearSq:
+                case AtomSevereFuncType::Atomic::gradVSmearSq:
+                case AtomSevereFuncType::Atomic::bTimesVSmear:
+                  return "density";
                 case AtomSevereFuncType::Atomic::vTotalSq:
                 case AtomSevereFuncType::Atomic::gradVTotalSq:
                 case AtomSevereFuncType::Atomic::bPlusRhoTimesVTotal:
@@ -80,7 +83,6 @@ namespace dftefe
               {
                 case AtomSevereFuncType::Atomic::density:
                   return AtomSuperpositionFuncType::Identity;
-                case AtomSevereFuncType::Atomic::gradVNuclearSq:
                 case AtomSevereFuncType::Atomic::gradVTotalSq:
                 case AtomSevereFuncType::Atomic::gradOrbitalSq:
                   return AtomSuperpositionFuncType::GradDotGradSq;
@@ -98,7 +100,9 @@ namespace dftefe
           return false;
         else
           return (type == AtomSevereFuncType::Atomic::bPlusRhoTimesVTotal ||
-                  type == AtomSevereFuncType::Atomic::bTimesVNuclear ||
+                  type == AtomSevereFuncType::Atomic::bTimesVSmear ||
+                  type == AtomSevereFuncType::Atomic::vSmearSq ||
+                  type == AtomSevereFuncType::Atomic::gradVSmearSq ||
                   type == AtomSevereFuncType::Atomic::vExtTimesOrbitalSq);
       }
 
@@ -140,10 +144,22 @@ namespace dftefe
           if constexpr (std::is_same_v<FuncType, AtomSevereFuncType::Atomic>)
             {
               if (type == AtomSevereFuncType::Atomic::bPlusRhoTimesVTotal ||
-                  type == AtomSevereFuncType::Atomic::bTimesVNuclear)
+                  type == AtomSevereFuncType::Atomic::bTimesVSmear)
                 {
                   d_b = std::make_shared<utils::SmearChargeDensityFunction>(
                     atomCoordinates, atomCharges, smearedChargeRadius);
+                }
+              if (type == AtomSevereFuncType::Atomic::bTimesVSmear ||
+                  type == AtomSevereFuncType::Atomic::vSmearSq)
+                {
+                  const size_type nAtoms = atomCoordinates.size();
+                  d_vsmearPerAtom.resize(nAtoms);
+                  for (size_type iAtom = 0; iAtom < nAtoms; ++iAtom)
+                    d_vsmearPerAtom[iAtom] =
+                      std::make_shared<utils::SmearChargePotentialFunction>(
+                        atomCoordinates[iAtom],
+                        atomCharges[iAtom],
+                        smearedChargeRadius);
                 }
               if (type == AtomSevereFuncType::Atomic::bPlusRhoTimesVTotal)
                 {
@@ -231,20 +247,38 @@ namespace dftefe
                 }
             }
         }
-      else if (d_atomicType == AtomSevereFuncType::Atomic::bTimesVNuclear)
+      else if (d_atomicType == AtomSevereFuncType::Atomic::bTimesVSmear)
         {
-          auto bVals = (*d_b)(points);
-          for (size_type e = 0; e < this->d_numEnrichmentFuncTotal; ++e)
+          // the nuclear self energy integrand: no spherical factor, so this
+          // branch does not loop over the enrichment functions
+          auto                bVals = (*d_b)(points);
+          std::vector<double> vsmVals(numPoints, 0.0);
+          for (size_type iAtom = 0; iAtom < d_vsmearPerAtom.size(); ++iAtom)
             {
-              utils::Point origin(
-                this->d_atomCoordinatesVec[this->d_enrichmentToAtomId[e]]);
+              auto vals = (*d_vsmearPerAtom[iAtom])(points);
               for (size_type i = 0; i < numPoints; ++i)
-                {
-                  double val =
-                    this->d_sphericalDataVecAll[e]->getValue(points[i], origin);
-                  q[i] += std::fabs(val * bVals[i]);
-                }
+                vsmVals[i] += vals[i];
             }
+          for (size_type i = 0; i < numPoints; ++i)
+            q[i] += std::fabs(bVals[i] * vsmVals[i]);
+        }
+      else if (d_atomicType == AtomSevereFuncType::Atomic::vSmearSq)
+        {
+          // sum of the squares of the individual atomic smeared potentials,
+          // matching the IdentitySq convention of the other square criteria
+          for (size_type iAtom = 0; iAtom < d_vsmearPerAtom.size(); ++iAtom)
+            {
+              auto vals = (*d_vsmearPerAtom[iAtom])(points);
+              for (size_type i = 0; i < numPoints; ++i)
+                q[i] += vals[i] * vals[i];
+            }
+        }
+      else if (d_atomicType == AtomSevereFuncType::Atomic::gradVSmearSq)
+        {
+          utils::throwException(
+            false,
+            "AtomSevereFunction: gradVSmearSq cannot be evaluated because "
+            "utils::SmearChargePotentialFunction provides no gradient.");
         }
       else if (d_atomicType == AtomSevereFuncType::Atomic::vExtTimesOrbitalSq)
         {

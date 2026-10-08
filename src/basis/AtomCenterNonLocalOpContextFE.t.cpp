@@ -28,6 +28,7 @@
 #include <linearAlgebra/BlasLapackTypedef.h>
 #include <linearAlgebra/LinAlgOpContext.h>
 #include <basis/FECellWiseDataOperations.h>
+#include <basis/EnrichmentDataEvalKernels.h>
 #include <utils/StringOperations.h>
 #include <algorithm>
 
@@ -289,8 +290,10 @@ namespace dftefe
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
                                    linAlgOpContext,
         const utils::mpi::MPIComm &mpiComm,
-        std::shared_ptr<const PeriodicImageAtomGenerator> imageAtomGenerator)
-      : d_feBasisManager(&feBasisManager)
+        std::shared_ptr<const PeriodicImageAtomGenerator> imageAtomGenerator,
+        const utils::Point &                              kPointCoord)
+      : d_kPointCoord(kPointCoord)
+      , d_feBasisManager(&feBasisManager)
       , d_maxCellBlock(maxCellBlock)
       , d_maxWaveFnBatch(maxFieldBlock)
       , d_atomSphericalDataContainer(atomSphericalDataContainer)
@@ -428,7 +431,11 @@ namespace dftefe
           cellWiseCSize += d_numProjsInCells[cellIndex] * nDofsInCell;
           cellIndex++;
         }
-      d_cellWiseC.resize(cellWiseCSize);
+      utils::throwException<utils::InvalidArgument>(
+        kPointCoord.size() == dim,
+        "AtomCenterNonLocalOpContextFE: kPointCoord must have one cartesian "
+        "component per dimension.");
+
       dftefe::utils::MemoryStorage<ValueType, utils::MemorySpace::HOST>
         cellWiseCHost(cellWiseCSize);
 
@@ -438,10 +445,34 @@ namespace dftefe
                                         d_numProjsInCells.end(),
                                         (size_type)0);
 
-      cellIndex                                                     = 0;
-      size_type                                  cumulativeDofxProj = 0;
       const quadrature::QuadratureRuleContainer &quadratureRuleContainer =
         *feBasisDataStorage.getQuadratureRuleContainer();
+
+      utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>
+        memoryTransfer;
+
+      bool isGammaPoint = true;
+      for (size_type iDim = 0; iDim < dim; iDim++)
+        if (d_kPointCoord[iDim] != 0.0)
+          isGammaPoint = false;
+      utils::throwException<utils::InvalidArgument>(
+        isGammaPoint ||
+          !std::is_same<ValueType,
+                        linearAlgebra::blasLapack::real_type<ValueType>>::value,
+        "AtomCenterNonLocalOpContextFE: a non-zero k needs a complex value "
+        "type, since the projector carries e^{-ik.x}.");
+
+      // without images the phase is a spurious factor on an isolated atom
+      utils::throwException<utils::InvalidArgument>(
+        isGammaPoint || imageAtomGenerator != nullptr,
+        "AtomCenterNonLocalOpContextFE: a non-zero k needs a "
+        "PeriodicImageAtomGenerator, since the Bloch phase only means "
+        "something summed over lattice images.");
+      // always valid: at Gamma it points at (0,0,0) and the phase is one
+      const double *kPointCoordPtr = d_kPointCoord.data();
+
+      cellIndex                                                     = 0;
+      size_type                                  cumulativeDofxProj = 0;
       locallyOwnedCellIter = feBasisDofHandler->beginLocallyOwnedCells();
       for (; locallyOwnedCellIter != feBasisDofHandler->endLocallyOwnedCells();
            ++locallyOwnedCellIter)
@@ -460,7 +491,9 @@ namespace dftefe
                 quadratureRuleContainer.getCellRealPoints(cellIndex);
 
               std::vector<ValueType> projectorQuadStorageJxW =
-                getProjectorValues(cellIndex, quadRealPointsVec);
+                getProjectorValues(cellIndex,
+                                   quadRealPointsVec,
+                                   kPointCoordPtr);
 
               for (size_type iProj = 0; iProj < numProjsInCell; iProj++)
                 {
@@ -480,7 +513,7 @@ namespace dftefe
                 numDofsInCell * nQuadsInCell);
 
               feBasisDataStorage.getBasisDataInCellRange(
-                std::make_pair(cellIndex, cellIndex + 1), basisData);
+                  std::make_pair(cellIndex, cellIndex + 1), basisData);
 
               dftefe::utils::MemoryStorage<ValueTypeOperator,
                                            utils::MemorySpace::HOST>
@@ -492,8 +525,8 @@ namespace dftefe
                                   basisDataHost.data(),
                                   basisData.data());
 
-              // the basis is real and the projector complex; the gemm takes
-              // one type, so the basis widens to meet it
+              // the gemm takes one type, so the basis widens to the
+              // projector's
               dftefe::utils::MemoryStorage<ValueType, utils::MemorySpace::HOST>
                 basisDataHostUnion(numDofsInCell * nQuadsInCell);
               linearAlgebra::blasLapack::
@@ -506,11 +539,13 @@ namespace dftefe
                   *dftefe::linearAlgebra::LinAlgOpContextDefaults::
                     LINALG_OP_CONTXT_HOST);
 
+              // C holds \int p conj(N), the form apply wants: it contracts
+              // conj(C) with X and then C with V*CX
               linearAlgebra::blasLapack::gemm<ValueType,
                                               ValueType,
                                               utils::MemorySpace::HOST>(
                 'T',
-                'T',
+                'C',
                 numProjsInCell,
                 numDofsInCell,
                 nQuadsInCell,
@@ -534,8 +569,7 @@ namespace dftefe
           cellIndex++;
         }
 
-      utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>
-        memoryTransfer;
+      d_cellWiseC.resize(cellWiseCSize);
       memoryTransfer.copy(d_cellWiseC.size(),
                           d_cellWiseC.data(),
                           cellWiseCHost.data());
@@ -667,7 +701,8 @@ namespace dftefe
       d_numCellDofs.resize(d_numLocallyOwnedCells, 0);
       for (size_type iCell = 0; iCell < d_numLocallyOwnedCells; ++iCell)
         {
-          d_numCellDofs[iCell] = d_feBasisManager->nLocallyOwnedCellDofs(iCell);
+          d_numCellDofs[iCell] =
+            d_feBasisManager->nLocallyOwnedCellDofs(iCell);
         }
 
       size_type maxProjInCell =
@@ -688,7 +723,8 @@ namespace dftefe
                                   memorySpace,
                                   dim>::
       getProjectorValues(const size_type                          cellId,
-                         const std::vector<dftefe::utils::Point> &points) const
+                         const std::vector<dftefe::utils::Point> &points,
+                         const double *kPointCoord) const
     {
       // Assumption for each l,p pair the m values are consecutive
       std::vector<global_size_type> projIdVec =
@@ -699,6 +735,8 @@ namespace dftefe
       std::vector<double> rVec(numPoints, 0), thetaVec(numPoints, 0),
         phiVec(numPoints, 0);
       std::vector<dftefe::utils::Point> x(numPoints, utils::Point(dim));
+      // one per point, refreshed with x below since it depends only on x
+      std::vector<ValueType> phaseVec(numPoints, (ValueType)1.0);
       DFTEFE_AssertWithMsg(!projIdVec.empty(),
                            "The requested cell does not have any proj ids.");
       size_type numProjIdsSkipped = 0;
@@ -808,6 +846,10 @@ namespace dftefe
                       phiVec[iPts],
                       atoms::SphericalDataDefaults::POL_ANG_TOL);
 
+                  for (size_type iPts = 0; iPts < numPoints; iPts++)
+                    EnrichmentDataEvalBlochKernels::getBlochPhase(
+                      &phaseVec[iPts], kPointCoord, x[iPts]);
+
                   extendedAtomIdPrev = extendedAtomId;
                 }
 
@@ -830,7 +872,8 @@ namespace dftefe
                   ValueType *out =
                     retValue.data() + (iProj + mCount) * numPoints;
                   for (size_type iPts = 0; iPts < numPoints; iPts++)
-                    out[iPts] += radialValue[iPts] * angularValue[iPts];
+                    out[iPts] +=
+                      phaseVec[iPts] * radialValue[iPts] * angularValue[iPts];
                 }
             }
         }

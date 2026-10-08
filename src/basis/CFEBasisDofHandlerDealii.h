@@ -201,6 +201,10 @@ namespace dftefe
       bool
       isDistributed() const override;
 
+      void
+      getLocallyActiveDofIds(
+        std::vector<global_size_type> &locallyActiveDofIds) const override;
+
 
       //
       // dealii specific functions

@@ -172,6 +172,11 @@ namespace dftefe
       size_type
       getMeanValueConstraintProcId() const override;
 
+      bool
+      isConsistentInParallel(
+        const std::vector<global_size_type> &locallyActiveDofIds,
+        const utils::mpi::MPIComm &          mpiComm) const override;
+
       //
       // dealii function
       //

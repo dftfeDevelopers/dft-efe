@@ -58,6 +58,9 @@ T readParameter(const std::string &ParamFile,
   T t = defaultValue;
   std::string line;
   std::fstream fstream(ParamFile, std::fstream::in);
+  utils::throwException(fstream.is_open(),
+                        "Could not open the parameter file '" +
+                          ParamFile + "'.");
   bool found = false;
 
   while (std::getline(fstream, line))
@@ -77,6 +80,12 @@ T readParameter(const std::string &ParamFile,
       value.erase(value.begin(),
                   std::find_if(value.begin(), value.end(),
                                [](unsigned char ch){ return !std::isspace(ch); }));
+      // the leading trim has no trailing counterpart, so a trailing space
+      // or CR in the parameter file used to be kept and broke file paths
+      value.erase(std::find_if(value.rbegin(), value.rend(),
+                               [](unsigned char ch){ return !std::isspace(ch); })
+                    .base(),
+                  value.end());
 
       if (value.empty()) {
         if (throwIfEmpty) {
@@ -441,7 +450,9 @@ int main(int argc, char** argv)
   std::vector<std::string> matchString(0);
   fstream.open(basisDataFile, std::fstream::in);
   if (!fstream.is_open()) {
-      utils::throwException(false, "Error: Could not open a parameter input file '");
+      utils::throwException(false,
+                            "Parameter 'basisDataFile' names a file that could "
+                            "not be opened: '" + basisDataFile + "'");
   }
   while (std::getline(fstream, line)){
       std::stringstream ss(line);
@@ -460,7 +471,9 @@ int main(int argc, char** argv)
   matchString.clear();
   fstream.open(PSPDataFile, std::fstream::in);
   if (!fstream.is_open()) {
-      utils::throwException(false, "Error: Could not open a parameter input file '");
+      utils::throwException(false,
+                            "Parameter 'PSPDataFile' names a file that could "
+                            "not be opened: '" + PSPDataFile + "'");
   }
   while (std::getline(fstream, line)){
       std::stringstream ss(line);
@@ -477,7 +490,9 @@ int main(int argc, char** argv)
 
   fstream.open(coordinatesDataFile, std::fstream::in);
   if (!fstream.is_open()) {
-      utils::throwException(false, "Error: Could not open a parameter input file '");
+      utils::throwException(false,
+                            "Parameter 'coordinatesDataFile' names a file that could "
+                            "not be opened: '" + coordinatesDataFile + "'");
   }
   while (std::getline(fstream, line)){
       std::stringstream ss(line);

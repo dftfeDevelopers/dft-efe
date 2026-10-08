@@ -43,14 +43,14 @@ namespace dftefe
       enum class Atomic
       {
         density,
-        vNuclearSq,
-        gradVNuclearSq,
+        vSmearSq,
+        gradVSmearSq,
         vTotalSq,
         gradVTotalSq,
         orbitalSq,
         gradOrbitalSq,
         bPlusRhoTimesVTotal,
-        bTimesVNuclear,
+        bTimesVSmear,
         vExtTimesOrbitalSq
       };
     };
@@ -97,6 +97,9 @@ namespace dftefe
       std::shared_ptr<utils::ScalarSpatialFunctionReal> d_b;
       std::shared_ptr<utils::ScalarSpatialFunctionReal> d_vext;
       std::shared_ptr<utils::ScalarSpatialFunctionReal> d_rho;
+      // one smeared-charge potential per atom
+      std::vector<std::shared_ptr<utils::ScalarSpatialFunctionReal>>
+        d_vsmearPerAtom;
     };
 
   } // namespace atoms

@@ -721,7 +721,8 @@ namespace dftefe
           xcType,
           *d_rdm1Spectral,
           linAlgOpContext,
-          KSDFTDefaults<memorySpace>::CELL_BATCH_SIZE);
+          KSDFTDefaults<memorySpace>::CELL_BATCH_SIZE,
+          feBDEXCHamiltonian);
       d_p.registerEnd("Hamiltonian Components Initilization");
 
       // d_hamiltonianElectroExc =
@@ -1250,7 +1251,8 @@ namespace dftefe
           xcType,
           *d_rdm1Spectral,
           linAlgOpContext,
-          KSDFTDefaults<memorySpace>::CELL_BATCH_SIZE);
+          KSDFTDefaults<memorySpace>::CELL_BATCH_SIZE,
+          feBDEXCHamiltonian);
 
       d_p.registerEnd("Hamiltonian Components Initilization");
 
@@ -1848,7 +1850,8 @@ namespace dftefe
           xcType,
           *d_rdm1Spectral,
           linAlgOpContext,
-          KSDFTDefaults<memorySpace>::CELL_BATCH_SIZE);
+          KSDFTDefaults<memorySpace>::CELL_BATCH_SIZE,
+          feBDEXCHamiltonian);
 
       d_p.registerEnd("Hamiltonian Components Initilization");
 
@@ -2450,6 +2453,7 @@ namespace dftefe
             *d_rdm1Spectral,
             linAlgOpContext,
             KSDFTDefaults<memorySpace>::CELL_BATCH_SIZE,
+            feBDEXCHamiltonian,
             d_atomSphericalDataContainerPSP,
             atomSymbolVec,
             atomCoordinates);
@@ -2462,7 +2466,8 @@ namespace dftefe
             xcType,
             *d_rdm1Spectral,
             linAlgOpContext,
-            KSDFTDefaults<memorySpace>::CELL_BATCH_SIZE);
+            KSDFTDefaults<memorySpace>::CELL_BATCH_SIZE,
+            feBDEXCHamiltonian);
 
       d_p.registerEnd("Hamiltonian Components Initilization");
 
@@ -3204,6 +3209,7 @@ namespace dftefe
             *d_rdm1Spectral,
             linAlgOpContext,
             KSDFTDefaults<memorySpace>::CELL_BATCH_SIZE,
+            feBDEXCHamiltonian,
             d_atomSphericalDataContainerPSP,
             atomSymbolVec,
             atomCoordinates);
@@ -3216,7 +3222,8 @@ namespace dftefe
             xcType,
             *d_rdm1Spectral,
             linAlgOpContext,
-            KSDFTDefaults<memorySpace>::CELL_BATCH_SIZE);
+            KSDFTDefaults<memorySpace>::CELL_BATCH_SIZE,
+            feBDEXCHamiltonian);
 
       // d_hamiltonianElectroExc =
       //   std::make_shared<ElectrostaticExcFE<ValueTypeElectrostaticsCoeff,
@@ -3545,10 +3552,19 @@ namespace dftefe
                                 true,
                                 *d_MContext,
                                 *d_MInvContext);
-          // the eigensolver's error was previously discarded, which hid a
-          // failed solve behind a zero density
+          // A failed solve leaves no usable eigenvectors, so the density
+          // comes out zero and every later energy is meaningless. Exhausting
+          // the Chebyshev passes still leaves usable vectors, so only warn.
           if (!err.isSuccess)
             d_rootCout << "Kohn-Sham eigensolve FAILED: " << err.msg << "\n";
+          utils::throwException<utils::InvalidArgument>(
+            err.isSuccess ||
+              err.err == linearAlgebra::EigenSolverErrorCode::KS_MAX_PASS_ERROR,
+            "The Kohn-Sham eigensolve failed and produced no usable "
+            "eigenvectors: " +
+              err.msg +
+              " Continuing would mix a zero density into the SCF and report a "
+              "total energy built from the nuclear term alone.");
 
           s.occupancies = d_ksEigSolve->getFractionalOccupancy();
           acc.returnBack();

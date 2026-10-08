@@ -1279,5 +1279,18 @@ namespace dftefe
       return d_isDistributed;
     }
 
+    template <typename ValueTypeBasisCoeff,
+              utils::MemorySpace memorySpace,
+              size_type          dim>
+    void
+    CFEBasisDofHandlerDealii<ValueTypeBasisCoeff, memorySpace, dim>::
+      getLocallyActiveDofIds(
+        std::vector<global_size_type> &locallyActiveDofIds) const
+    {
+      locallyActiveDofIds =
+        dealii::DoFTools::extract_locally_active_dofs(*d_dofHandler)
+          .get_index_vector();
+    }
+
   } // namespace basis
 } // namespace dftefe

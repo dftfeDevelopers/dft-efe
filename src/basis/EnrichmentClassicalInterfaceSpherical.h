@@ -129,7 +129,8 @@ namespace dftefe
         const size_type cellBlockSize =
           BasisDataStorageDefaults<memorySpace>::CELL_BATCH_SIZE,
         std::shared_ptr<const PeriodicImageAtomGenerator> imageAtomGenerator =
-          nullptr);
+          nullptr,
+        const utils::Point &kPointCoord = utils::Point(dim, 0.0));
 
       /**
        * @brief This Constructor for augmenting the EFE basis with classical FE basis.
@@ -150,7 +151,8 @@ namespace dftefe
         const std::string                fieldName,
         const utils::mpi::MPIComm &      comm,
         std::shared_ptr<const PeriodicImageAtomGenerator> imageAtomGenerator =
-          nullptr);
+          nullptr,
+        const utils::Point &kPointCoord = utils::Point(dim, 0.0));
 
       /**
        * @brief Destructor for the class
@@ -219,16 +221,16 @@ namespace dftefe
       getEnrichmentLocalId(size_type cellId,
                            size_type enrichmentCellLocalId) const;
 
-      std::vector<double>
+      std::vector<ValueTypeBasisData>
       getEnrichmentValue(const size_type                          cellId,
                          const std::vector<dftefe::utils::Point> &points) const;
 
-      std::vector<double>
+      std::vector<ValueTypeBasisData>
       getEnrichmentDerivative(
         const size_type                          cellId,
         const std::vector<dftefe::utils::Point> &points) const;
 
-      std::vector<double>
+      std::vector<ValueTypeBasisData>
       getEnrichmentHessian(
         const size_type                          cellId,
         const std::vector<dftefe::utils::Point> &points) const;
@@ -238,8 +240,8 @@ namespace dftefe
         bool                                       storeValues,
         bool                                       storeGradients,
         const quadrature::QuadratureRuleContainer &quadRuleContainer,
-        double *basisEnrichQuadStorageStartPtr,
-        double *basisGradientEnrichQuadStorageStartPtr,
+        ValueTypeBasisData *basisEnrichQuadStorageStartPtr,
+        ValueTypeBasisData *basisGradientEnrichQuadStorageStartPtr,
         linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext,
         const size_type                              enrichBlock = 500) const;
 
@@ -256,6 +258,12 @@ namespace dftefe
         ValueTypeBasisData *basisGradientEnrichQuadStoragePtr,
         linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext,
         const std::pair<size_type, size_type>        cellRange) const;
+
+      /**
+       * @brief Cartesian k of this instance
+       */
+      const utils::Point &
+      getKPointCoord() const;
 
     private:
       const std::unordered_map<global_size_type,
@@ -318,6 +326,11 @@ namespace dftefe
       std::vector<size_type>                       d_numEnrichInAllCells;
       atoms::SphericalDataNumerical::Func<memorySpace>
         *d_sphericalDataNumericalFuncPtrVec;
+
+      // cartesian k of this instance; at Gamma it is (0,0,0), phase one
+      utils::Point                              d_kPointCoord;
+      // the same k where this instance's own kernels run
+      utils::MemoryStorage<double, memorySpace> d_kPointCoordMemSpace;
 
     }; // end of class
   }    // end of namespace basis

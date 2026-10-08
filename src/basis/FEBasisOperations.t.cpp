@@ -1970,8 +1970,10 @@ namespace dftefe
             linAlgOpContext);
 
           // TODO check if these are right ?? Why is the B Transposed
+          // B is JxW x N laid out [quad][dof], so the transpose contracts over
+          // quad; 'C' because this is the adjoint of interpolate, \int conj(N) f
           std::vector<char>      transA(numCellsInBlock, 'N');
-          std::vector<char>      transB(numCellsInBlock, 'T');
+          std::vector<char>      transB(numCellsInBlock, 'C');
           std::vector<size_type> mSizes(numCellsInBlock, 0);
           std::vector<size_type> nSizes(numCellsInBlock, 0);
           std::vector<size_type> kSizes(numCellsInBlock, 0);

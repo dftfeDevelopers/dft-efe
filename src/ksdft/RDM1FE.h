@@ -35,6 +35,7 @@
 #include <ksdft/RDM1Spectral.h>
 #include <ksdft/DensityCalculator.h>
 #include <basis/FEBasisDataStorage.h>
+#include <utils/Point.h>
 #include <basis/FEBasisManager.h>
 #include <linearAlgebra/LinAlgOpContext.h>
 
@@ -80,7 +81,7 @@ namespace dftefe
              const size_type            waveFuncBatchSize,
              const SpinMode             spinMode      = SpinMode::Unpolarized,
              const bool                 isSOC         = false,
-             const std::vector<double> &kPointCoords  = std::vector<double>{},
+             const std::vector<utils::Point> &kPointCoords = {},
              const std::vector<double> &kPointWeights = std::vector<double>{});
 
       void
@@ -123,7 +124,7 @@ namespace dftefe
       size_type
       getnKSOrbs() const;
 
-      std::vector<double>
+      std::vector<utils::Point>
       getkPointCoords() const;
 
       std::vector<double>
@@ -158,7 +159,7 @@ namespace dftefe
                                         dim>>
         d_densCalc;
 
-      std::vector<double>                               d_kPointCoords;
+      std::vector<utils::Point>                         d_kPointCoords;
       std::vector<double>                               d_kPointWeights;
       SpinMode                                          d_spinMode;
       bool                                              d_isSOC;

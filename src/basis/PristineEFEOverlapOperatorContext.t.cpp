@@ -30,6 +30,7 @@
 #include <unordered_map>
 #include <vector>
 #include <basis/EnrichmentClassicalInterfaceSpherical.h>
+#include <utils/DataTypeOverloads.h>
 
 namespace dftefe
 {
@@ -134,10 +135,11 @@ namespace dftefe
                          qPoint++)
                       {
                         *basisOverlapTmpIter +=
-                          *(cumulativeDofQuadPoints +
-                            dofsPerCell * qPoint + iNode
+                          utils::conjugate(
+                            *(cumulativeDofQuadPoints +
+                              dofsPerCell * qPoint + iNode
                           /*nQuadPointInCell * iNode +
-                            qPoint*/) *
+                            qPoint*/)) *
                           *(cumulativeDofQuadPoints +
                           dofsPerCell * qPoint + jNode
                           /*nQuadPointInCell * jNode +
@@ -321,9 +323,10 @@ namespace dftefe
                              qPoint++)
                           {
                             *basisOverlapTmpIter +=
-                              *(cumulativeCFEDofQuadPoints +
-                                dofsPerCellCFE * qPoint + iNode
-                                /*nQuadPointInCellCFE * iNode + qPoint*/) *
+                              utils::conjugate(
+                                *(cumulativeCFEDofQuadPoints +
+                                  dofsPerCellCFE * qPoint + iNode
+                                  /*nQuadPointInCellCFE * iNode + qPoint*/)) *
                               *(cumulativeCFEDofQuadPoints +
                                 dofsPerCellCFE * qPoint + jNode
                                 /*nQuadPointInCellCFE * jNode + qPoint*/) *
@@ -336,9 +339,10 @@ namespace dftefe
                              qPoint++)
                           {
                             *basisOverlapTmpIter +=
-                              *(cumulativeEFEDofQuadPoints +
-                                dofsPerCell * qPoint + iNode
-                                /*nQuadPointInCellEFE * iNode + qPoint*/) *
+                              utils::conjugate(
+                                *(cumulativeEFEDofQuadPoints +
+                                  dofsPerCell * qPoint + iNode
+                                  /*nQuadPointInCellEFE * iNode + qPoint*/)) *
                               *(cumulativeEFEDofQuadPoints +
                                 dofsPerCell * qPoint + jNode
                                 /*nQuadPointInCellEFE * jNode + qPoint*/) *

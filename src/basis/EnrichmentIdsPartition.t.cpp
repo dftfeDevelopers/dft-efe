@@ -877,13 +877,13 @@ namespace dftefe
               // The caller only asserts this, which is compiled out in a
               // release build, so enforce it here where the origins would
               // otherwise be silently wrong.
-              // utils::throwException<utils::InvalidArgument>(
-              //   found,
-              //   "modifyNumCellsOverlapWithEnrichments was given an enrichment "
-              //   "id that the cell did not previously overlap, so its origins "
-              //   "are unknown. The overlap this partition was built with should "
-              //   "cover the orthogonalized enrichment support, which is what "
-              //   "additionalCutoff is for.");
+              utils::throwException<utils::InvalidArgument>(
+                found,
+                "modifyNumCellsOverlapWithEnrichments was given an enrichment "
+                "id that the cell did not previously overlap, so its origins "
+                "are unknown. The overlap this partition was built with should "
+                "cover the orthogonalized enrichment support, which is what "
+                "additionalCutoff is for.");
               numExtendedAtomIdsInCell += oldExtendedAtomIdOffset[newToOldEnrichIdInCell[i] + 1] -
                                   oldExtendedAtomIdOffset[newToOldEnrichIdInCell[i]];
             }

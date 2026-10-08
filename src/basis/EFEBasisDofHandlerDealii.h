@@ -213,6 +213,10 @@ namespace dftefe
       bool
       isDistributed() const override;
 
+      void
+      getLocallyActiveDofIds(
+        std::vector<global_size_type> &locallyActiveDofIds) const override;
+
       //
       // dealii specific functions
       //
@@ -224,32 +228,32 @@ namespace dftefe
 
       // Enrichment functions with dealii mesh. The enrichedid is the cell local
       // id.
-      double
+      ValueTypeBasisData
       getEnrichmentValue(const size_type             cellId,
                          const size_type             cellLocalEnrichmentId,
                          const dftefe::utils::Point &point) const override;
 
-      std::vector<double>
+      std::vector<ValueTypeBasisData>
       getEnrichmentDerivative(const size_type             cellId,
                               const size_type             cellLocalEnrichmentId,
                               const dftefe::utils::Point &point) const override;
 
-      std::vector<double>
+      std::vector<ValueTypeBasisData>
       getEnrichmentHessian(const size_type             cellId,
                            const size_type             cellLocalEnrichmentId,
                            const dftefe::utils::Point &point) const override;
 
-      std::vector<double>
+      std::vector<ValueTypeBasisData>
       getEnrichmentValue(
         const size_type                          cellId,
         const std::vector<dftefe::utils::Point> &points) const override;
 
-      std::vector<double>
+      std::vector<ValueTypeBasisData>
       getEnrichmentDerivative(
         const size_type                          cellId,
         const std::vector<dftefe::utils::Point> &points) const override;
 
-      std::vector<double>
+      std::vector<ValueTypeBasisData>
       getEnrichmentHessian(
         const size_type                          cellId,
         const std::vector<dftefe::utils::Point> &points) const override;
@@ -299,6 +303,7 @@ namespace dftefe
       std::vector<utils::Point> d_atomCoordinatesVec;
       std::string               d_fieldName;
       bool                      d_isOrthogonalized;
+      utils::Point              d_kPointCoord;
       std::shared_ptr<
         const EnrichmentClassicalInterfaceSpherical<ValueTypeBasisCoeff,
                                                     ValueTypeBasisData,

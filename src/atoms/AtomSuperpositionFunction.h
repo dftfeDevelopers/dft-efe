@@ -32,7 +32,7 @@
 #include <utils/MemorySpaceType.h>
 #include <utils/MemoryStorage.h>
 #include <linearAlgebra/LinAlgOpContext.h>
-#include <basis/EnrichmentDataEvalKernels.h>
+#include <atoms/AtomSuperpositionFunctionEvalKernels.h>
 #include <memory>
 #include <basis/AtomIdsPartition.h>
 #include <atoms/AtomSphericalDataContainer.h>

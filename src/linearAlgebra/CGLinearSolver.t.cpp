@@ -261,7 +261,11 @@ namespace dftefe
           // ValueType alpha = zDotr / pDotw;
           for (size_type i = 0; i < numComponents; i++)
             {
-              alpha[i]  = utils::realPart(zDotr[i] / pDotw[i]);
+              // A converged component has r ~ roundoff, so zDotr/pDotw is 0/0
+              // garbage. Freeze it instead, else it trips the divergence test.
+              alpha[i]  = convergeFlag[i] ?
+                            (RealType)0 :
+                            utils::realPart(zDotr[i] / pDotw[i]);
               nAlpha[i] = -alpha[i];
             }
 
@@ -285,7 +289,9 @@ namespace dftefe
           // ValueType beta = zDotrNew / zDotr;
           for (size_type i = 0; i < numComponents; i++)
             {
-              beta[i] = utils::realPart(zDotrNew[i] / zDotr[i]);
+              beta[i] = convergeFlag[i] ?
+                          (RealType)0 :
+                          utils::realPart(zDotrNew[i] / zDotr[i]);
             }
           // p = z + beta*p
           add(ones, z, beta, p, p);

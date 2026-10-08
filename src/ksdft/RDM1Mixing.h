@@ -35,6 +35,7 @@
 #include <ksdft/RDM1.h>
 #include <ksdft/MixingScheme.h>
 #include <utils/MemoryStorage.h>
+#include <utils/Point.h>
 #include <linearAlgebra/LinAlgOpContext.h>
 #include <linearAlgebra/BlasLapack.h>
 
@@ -156,7 +157,7 @@ namespace dftefe
       isSOC() const override;
       size_type
       getnKSOrbs() const override;
-      std::vector<double>
+      std::vector<utils::Point>
       getkPointCoords() const override;
       std::vector<double>
       getkPointWeights() const override;

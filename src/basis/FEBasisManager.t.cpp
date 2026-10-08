@@ -253,6 +253,17 @@ namespace dftefe
       //
       d_mpiPatternP2P = d_feBDH->getMPIPatternP2P();
 
+      // Every rank must hold the same constraint equations for the dofs it
+      // shares, else the constrained operator is not symmetric.
+      std::vector<global_size_type> locallyActiveDofIds(0);
+      d_feBDH->getLocallyActiveDofIds(locallyActiveDofIds);
+      utils::throwException<utils::InvalidArgument>(
+        d_constraintsLocal->isConsistentInParallel(
+          locallyActiveDofIds, d_mpiPatternP2P->mpiCommunicator()),
+        "The ranks disagree on the constraint equations in FEBasisManager. "
+        "dealii AffineConstraints::is_consistent_in_parallel failed on the "
+        "intrinsic (hanging node, periodic and Dirichlet) constraints.");
+
       //
       // populate d_ghostIndices
       //
@@ -378,6 +389,15 @@ namespace dftefe
         localSize, basisIntegrals.data(), wHost.data());
 
       d_constraintsLocalOwned->setMeanValueConstraint(basisIntegrals, mpiComm);
+
+      std::vector<global_size_type> locallyActiveDofIds(0);
+      d_feBDH->getLocallyActiveDofIds(locallyActiveDofIds);
+      utils::throwException<utils::InvalidArgument>(
+        d_constraintsLocalOwned->isConsistentInParallel(locallyActiveDofIds,
+                                                        mpiComm),
+        "The ranks disagree on the constraint equations in FEBasisManager "
+        "after adding the mean value constraint. dealii "
+        "AffineConstraints::is_consistent_in_parallel failed.");
     }
 
     template <typename ValueTypeBasisCoeff,

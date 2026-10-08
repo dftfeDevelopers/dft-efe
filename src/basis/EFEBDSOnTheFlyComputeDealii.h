@@ -75,6 +75,23 @@ namespace dftefe
         /*In gpu an extra scratch for grad helps in cuda strided gemm */
         /* instead of varStrided gemm which is optimal*/);
 
+      /**
+       * @brief The classical half is served by @p cfeBasisDataStorage and is not
+       * built here, so several k points can use one classical block, jacobian
+       * inverse included, while each holds only its own enrichment.
+       */
+      EFEBDSOnTheFlyComputeDealii(
+        std::shared_ptr<const BasisDofHandler>      feBDH,
+        const quadrature::QuadratureRuleAttributes &quadratureRuleAttributes,
+        const BasisStorageAttributesBoolMap basisStorageAttributesBoolMap,
+        const size_type                     maxCellBlock,
+        linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext,
+        std::shared_ptr<
+          const FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+                   cfeBasisDataStorage,
+        const bool calculateEnrichmentDataOnTheFly = true,
+        const bool useMemOptGradScratchSpace       = false);
+
       ~EFEBDSOnTheFlyComputeDealii() = default;
 
       std::shared_ptr<const BasisDofHandler>
@@ -229,7 +246,7 @@ namespace dftefe
                                     d_quadratureRuleContainer;
       QuadratureRuleAttributes      d_quadratureRuleAttributes;
       BasisStorageAttributesBoolMap d_basisStorageAttributesBoolMap;
-      std::shared_ptr<Storage>      d_basisParaCellClassQuadStorage;
+      mutable std::shared_ptr<Storage> d_basisParaCellClassQuadStorage;
       std::shared_ptr<StorageReal>  d_JxWStorage;
       std::shared_ptr<Storage>      d_basisGradientParaCellClassQuadStorage;
       std::shared_ptr<Storage>      d_basisJacobianInvQuadStorage;
@@ -239,7 +256,8 @@ namespace dftefe
       std::vector<size_type>        d_cellStartIdsBasisJacobianInvQuadStorage;
       std::vector<size_type>        d_cellStartIdsBasisHessianQuadStorage;
       size_type                     d_maxCellBlock;
-      std::shared_ptr<Storage> d_tmpGradientBlock, d_basisGradientDataClass;
+      std::shared_ptr<Storage>         d_tmpGradientBlock;
+      mutable std::shared_ptr<Storage> d_basisGradientDataClass;
       linearAlgebra::LinAlgOpContext<memorySpace> &d_linAlgOpContext;
       size_type                                    d_classialDofsInCell;
       std::shared_ptr<Storage> d_basisGradientEnrichQuadStorage,
@@ -249,6 +267,9 @@ namespace dftefe
       std::shared_ptr<Storage> d_basisEnrichScratch;
       std::shared_ptr<Storage> d_basisGradientEnrichScratch;
       utils::MemoryStorage<ValueTypeBasisData, memorySpace> d_coeffsInAllCells;
+
+      std::shared_ptr<const FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+                                    d_cfeBasisDataStorage;
 
     }; // end of EFEBDSOnTheFlyComputeDealii
   }    // end of namespace basis

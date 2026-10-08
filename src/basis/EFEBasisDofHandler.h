@@ -157,33 +157,33 @@ namespace dftefe
       getDim() const = 0;
 
       // Enrichment specific functions.
-      virtual double
+      virtual ValueTypeBasisData
       getEnrichmentValue(const size_type             cellId,
                          const size_type             cellLocalEnrichmentId,
                          const dftefe::utils::Point &point) const = 0;
 
-      virtual std::vector<double>
+      virtual std::vector<ValueTypeBasisData>
       getEnrichmentDerivative(const size_type             cellId,
                               const size_type             cellLocalEnrichmentId,
                               const dftefe::utils::Point &point) const = 0;
 
-      virtual std::vector<double>
+      virtual std::vector<ValueTypeBasisData>
       getEnrichmentHessian(const size_type             cellId,
                            const size_type             cellLocalEnrichmentId,
                            const dftefe::utils::Point &point) const = 0;
 
       // Enrichment specific functions.
-      virtual std::vector<double>
+      virtual std::vector<ValueTypeBasisData>
       getEnrichmentValue(
         const size_type                          cellId,
         const std::vector<dftefe::utils::Point> &points) const = 0;
 
-      virtual std::vector<double>
+      virtual std::vector<ValueTypeBasisData>
       getEnrichmentDerivative(
         const size_type                          cellId,
         const std::vector<dftefe::utils::Point> &points) const = 0;
 
-      virtual std::vector<double>
+      virtual std::vector<ValueTypeBasisData>
       getEnrichmentHessian(
         const size_type                          cellId,
         const std::vector<dftefe::utils::Point> &points) const = 0;

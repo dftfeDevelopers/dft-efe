@@ -176,6 +176,15 @@ namespace dftefe
       virtual bool
       isDistributed() const = 0;
 
+      /**
+       * @brief The locally active dofs, i.e. those on the locally owned cells.
+       * Needed to check the constraints for parallel consistency; dealii
+       * permits them to differ on relevant but not active dofs.
+       */
+      virtual void
+      getLocallyActiveDofIds(
+        std::vector<global_size_type> &locallyActiveDofIds) const = 0;
+
     }; // end of FEBasisDofHandler
   }    // end of namespace basis
 } // end of namespace dftefe

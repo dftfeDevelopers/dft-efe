@@ -27,6 +27,7 @@
 #include <utils/SmearChargePotentialFunction.h>
 #include <utils/Exceptions.h>
 #include <utils/StringOperations.h>
+#include <utils/MathConstants.h>
 #include <sstream>
 #include <algorithm>
 #include <set>
@@ -100,6 +101,23 @@ namespace dftefe
                     f[j] * f[j] * x[j] * x[j]) *
                    (x[j + 1] - x[j]);
             res.push_back(sum);
+          }
+      }
+
+      // Cumulative radial quadrature of x^2 f(x) on the grid's own weights;
+      // the grid is strongly non uniform, so a trapezoid rule is not enough.
+      void
+      integralxSqf(const std::vector<double> &x,
+                   const std::vector<double> &w,
+                   const std::vector<double> &f,
+                   std::vector<double> &      res)
+      {
+        res.clear();
+        res.resize(f.size(), 0.0);
+        res[0] = w[0] * x[0] * x[0] * f[0];
+        for (size_type j = 1; j < f.size(); j++)
+          {
+            res[j] = res[j - 1] + w[j] * x[j] * x[j] * f[j];
           }
       }
 
@@ -336,6 +354,17 @@ namespace dftefe
           utils::throwException(false, "Not found rQpts grid in JSON file.");
         }
 
+      std::vector<double> radialWeights(0);
+      for (double v : doc["rWts"])
+        {
+          radialWeights.push_back(v);
+        }
+      if (radialWeights.size() != radialPoints.size())
+        {
+          utils::throwException(
+            false, "Not found rWts radial quadrature weights in JSON file.");
+        }
+
       d_metadata["NR"] = radialPoints.size();
 
       //
@@ -426,6 +455,7 @@ namespace dftefe
                      radialValuesVec,
                      qNumVec,
                      radialPoints,
+                     radialWeights,
                      fieldName,
                      fileName,
                      nlPairs);
@@ -525,6 +555,7 @@ namespace dftefe
       std::vector<std::vector<double>> &      radialValuesVec,
       std::vector<std::vector<int>> &         qNumVec,
       const std::vector<double> &             radialPoints,
+      const std::vector<double> &             radialWeights,
       const std::string &                     fieldName,
       const std::string &                     fileName,
       std::vector<std::pair<int, int>> &      nlPairs)
@@ -540,14 +571,26 @@ namespace dftefe
         }
       if (fieldName == "density")
         {
+          // Cut off once all but 1e-4 of the atom's electrons are inside;
+          // rhoQuad is the 3D radial density, so the count carries 4 pi.
+          const double fourPi = 4.0 * utils::mathConstants::pi;
           for (int i = 0; i < qNumVec.size(); i++)
             {
-              for (int j = radialPoints.size() - 1; j > 0; j--)
+              std::vector<double> numElectrons(0);
+              integralxSqf(radialPoints,
+                           radialWeights,
+                           radialValuesVec[i],
+                           numElectrons);
+              const double numElectronsTotal =
+                fourPi * numElectrons[numElectrons.size() - 1];
+
+              cutOffInfoVec[i].first  = radialPoints[radialPoints.size() - 1];
+              cutOffInfoVec[i].second = 1e6;
+              for (int j = 0; j < radialPoints.size(); j++)
                 {
-                  if (std::abs(radialValuesVec[i][j]) > 1e-10)
+                  if (std::abs(numElectronsTotal - fourPi * numElectrons[j]) <= 1e-4)
                     {
-                      cutOffInfoVec[i].first  = radialPoints[j];
-                      cutOffInfoVec[i].second = 1e6;
+                      cutOffInfoVec[i].first = radialPoints[j];
                       break;
                     }
                 }

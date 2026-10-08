@@ -117,7 +117,7 @@ namespace dftefe
                   atomWeights[d_enrichmentToAtomId[e]];
               const std::vector<std::shared_ptr<atoms::SphericalData>>
                 singleVec = {d_sphericalDataVecAll[e]};
-              basis::EnrichmentDataEvalKernels<double, utils::MemorySpace::DEVICE>::
+              AtomSuperpositionFunctionEvalKernels<utils::MemorySpace::DEVICE>::
                 getEnrichmentValues(1,
                                     pointsPerEnrich,
                                     singleVec,
@@ -153,7 +153,7 @@ namespace dftefe
             {
               const std::vector<std::shared_ptr<atoms::SphericalData>>
                 singleVec = {d_sphericalDataVecAll[e]};
-              basis::EnrichmentDataEvalKernels<double, utils::MemorySpace::DEVICE>::
+              AtomSuperpositionFunctionEvalKernels<utils::MemorySpace::DEVICE>::
                 getEnrichmentGradients(1,
                                        pointsPerEnrich,
                                        singleVec,
@@ -192,7 +192,7 @@ namespace dftefe
                                   atomWeights[d_enrichmentToAtomId[e]];
               const std::vector<std::shared_ptr<atoms::SphericalData>>
                 singleVec = {d_sphericalDataVecAll[e]};
-              basis::EnrichmentDataEvalKernels<double, utils::MemorySpace::DEVICE>::
+              AtomSuperpositionFunctionEvalKernels<utils::MemorySpace::DEVICE>::
                 getEnrichmentGradients(1,
                                        pointsPerEnrich,
                                        singleVec,

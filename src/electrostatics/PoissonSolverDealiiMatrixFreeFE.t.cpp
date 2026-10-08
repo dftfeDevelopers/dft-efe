@@ -1316,7 +1316,6 @@ namespace dftefe
 
       // MPI operation to sync data
       rhs.compress(dealii::VectorOperation::add);
-      applyMeanValueConstraintDistributeC2P(rhs);
 
       //  if (d_isReuseSmearedChargeRhs)
       //    rhs += d_rhsSmearedCharge;
@@ -1325,6 +1324,10 @@ namespace dftefe
         {
           rhs += a;
         }
+
+      // Must see the complete rhs, non tensor structured pieces included,
+      // else the pinned dof keeps an entry that no CG direction can reduce.
+      applyMeanValueConstraintDistributeC2P(rhs);
 
       //  if (d_isStoreSmearedChargeRhs)
       //    d_rhsSmearedCharge.compress(dealii::VectorOperation::add);

@@ -51,7 +51,7 @@ namespace dftefe
       const size_type            waveFuncBatchSize,
       const SpinMode             spinMode /*= SpinMode::Unpolarized*/,
       const bool                 isSOC /*= false*/,
-      const std::vector<double> &kPointCoords /*= std::vector<double>{}*/,
+      const std::vector<utils::Point> &kPointCoords /*= {}*/,
       const std::vector<double> &kPointWeights /*= std::vector<double>{}*/)
       : d_feBasisDataStorage(feBasisDataStorage)
       , d_feBMPsiPtr(&feBMPsi)
@@ -70,11 +70,12 @@ namespace dftefe
       d_densCalc = std::make_shared<DensityCalculator<ValueTypeBasisData,
                                                       ValueTypeBasisCoeff,
                                                       memorySpace,
-                                                      dim>>(feBasisDataStorage,
-                                                            feBMPsi,
-                                                            linAlgOpContext,
-                                                            cellBlockSize,
-                                                            waveFuncBatchSize);
+                                                      dim>>(
+        feBasisDataStorage,
+        feBMPsi,
+        linAlgOpContext,
+        cellBlockSize,
+        waveFuncBatchSize);
     }
 
     template <typename ValueTypeBasisData,
@@ -133,7 +134,7 @@ namespace dftefe
               typename ValueTypeBasisCoeff,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
-    std::vector<double>
+    std::vector<utils::Point>
     RDM1FE<ValueTypeBasisData, ValueTypeBasisCoeff, memorySpace, dim>::
       getkPointCoords() const
     {

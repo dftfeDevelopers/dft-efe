@@ -175,6 +175,16 @@ namespace dftefe
 
       virtual size_type
       getMeanValueConstraintProcId() const = 0;
+
+      /**
+       * @brief Do all ranks agree on the constraint equations they hold for the
+       * dofs they share? Takes the locally active dofs, since dealii permits
+       * the constraints to differ on relevant but not active dofs.
+       */
+      virtual bool
+      isConsistentInParallel(
+        const std::vector<global_size_type> &locallyActiveDofIds,
+        const utils::mpi::MPIComm &          mpiComm) const = 0;
     };
 
   } // namespace basis

@@ -46,8 +46,12 @@ namespace dftefe
         RDM1<ValueType, memorySpace> &rdm1,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
                         linAlgOpContext,
-        const size_type cellBlockSize)
-      : d_cellBlockSize(cellBlockSize)
+        const size_type cellBlockSize,
+        std::shared_ptr<
+          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+          feBasisDataStorage)
+      : d_feBasisDataStorage(feBasisDataStorage)
+      , d_cellBlockSize(cellBlockSize)
       , d_linAlgOpContext(linAlgOpContext)
     {
       d_excManager.init(xcType);
@@ -69,11 +73,15 @@ namespace dftefe
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
                         linAlgOpContext,
         const size_type cellBlockSize,
+        std::shared_ptr<
+          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+          feBasisDataStorage,
         std::shared_ptr<const atoms::AtomSphericalDataContainer>
                                          atomSphericalDataContainerPSP,
         const std::vector<std::string> & atomSymbolVec,
         const std::vector<utils::Point> &atomCoordinates)
-      : d_cellBlockSize(cellBlockSize)
+      : d_feBasisDataStorage(feBasisDataStorage)
+      , d_cellBlockSize(cellBlockSize)
       , d_linAlgOpContext(linAlgOpContext)
     {
       d_excManager.init(xcType);
@@ -177,8 +185,12 @@ namespace dftefe
         "ExchangeCorrelationFE::reinitBasis: could not resolve RDM1 to RDM1FE. "
         "Pass an RDM1FE or an RDM1Mixing wrapping one.");
 
-      auto feBasisDataStorage = rdm1FEPtr->getFEBasisDataStorage();
-      d_feBasisDataStorage    = feBasisDataStorage;
+      // the ctor fixed which storage this instance projects onto; the RDM1 must
+      // agree, or V_xc would be assembled on a different basis than the density
+      utils::throwException<utils::InvalidArgument>(
+        rdm1FEPtr->getFEBasisDataStorage() == d_feBasisDataStorage,
+        "ExchangeCorrelationFE::reinitBasis: the RDM1's FEBasisDataStorage is not "
+        "the one this ExchangeCorrelationFE was constructed with.");
 
       d_spinMode = rdm1.spinMode();
       d_S        = (d_spinMode == SpinMode::Unpolarized) ? 1 : 2;
@@ -209,7 +221,7 @@ namespace dftefe
       for (size_type k = 0; k < K; ++k)
         d_xcPotentialQuadMemspace[k] =
           quadrature::QuadratureValuesContainer<RealType, memorySpace>(
-            feBasisDataStorage->getQuadratureRuleContainer(), 1);
+            d_feBasisDataStorage->getQuadratureRuleContainer(), 1);
 
       const bool isGGA =
         (d_excManager.getExcSSDFunctionalObj()->getExcFamilyType() ==
@@ -220,17 +232,17 @@ namespace dftefe
           for (size_type k = 0; k < K; ++k)
             d_derExcWithSigmaTimesGradRhoQuadMemspace[k] =
               quadrature::QuadratureValuesContainer<RealType, memorySpace>(
-                feBasisDataStorage->getQuadratureRuleContainer(), dim);
+                d_feBasisDataStorage->getQuadratureRuleContainer(), dim);
         }
       d_feBasisOp =
         std::make_shared<const basis::FEBasisOperations<ValueTypeBasisCoeff,
                                                         ValueTypeBasisData,
                                                         memorySpace,
                                                         dim>>(
-          feBasisDataStorage, d_cellBlockSize, K);
+          d_feBasisDataStorage, d_cellBlockSize, K);
 
       std::shared_ptr<const basis::BasisDofHandler> basisDofHandlerData =
-        feBasisDataStorage->getBasisDofHandler();
+        d_feBasisDataStorage->getBasisDofHandler();
       d_feBasisDofHandler = std::dynamic_pointer_cast<
         const basis::FEBasisDofHandler<ValueTypeBasisCoeff, memorySpace, dim>>(
         basisDofHandlerData);

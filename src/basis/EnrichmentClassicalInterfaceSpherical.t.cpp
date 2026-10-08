@@ -27,6 +27,7 @@
 #include <atoms/SphericalDataNumerical.h>
 #include <utils/MemoryStorage.h>
 #include <utils/MemoryTransfer.h>
+#include <utils/DataTypeOverloads.h>
 #include <quadrature/QuadratureValuesContainer.h>
 #include <basis/CFEOverlapInverseOpContextGLL.h>
 #include <utils/ScalarSpatialFunction.h>
@@ -34,6 +35,7 @@
 #include <linearAlgebra/LinearAlgebraTypes.h>
 #include <algorithm>
 #include <basis/EnrichmentDataEvalKernels.h>
+#include <atoms/AtomSuperpositionFunctionEvalKernels.h>
 #include <set>
 #include <string>
 #include <utils/Profiler.h>
@@ -109,7 +111,8 @@ namespace dftefe
         const utils::mpi::MPIComm &comm,
         const size_type            enrichmentBatchSize,
         const size_type            cellBlockSize,
-        std::shared_ptr<const PeriodicImageAtomGenerator> imageAtomGenerator)
+        std::shared_ptr<const PeriodicImageAtomGenerator> imageAtomGenerator,
+        const utils::Point &                              kPointCoord)
       : d_atomSphericalDataContainer(atomSphericalDataContainer)
       , d_enrichmentIdsPartition(nullptr)
       , d_atomIdsPartition(nullptr)
@@ -122,7 +125,39 @@ namespace dftefe
       , d_enrichBatchSize(enrichmentBatchSize)
       , d_cellBlockSize(cellBlockSize)
       , d_sphericalDataNumericalFuncPtrVec(nullptr)
+      , d_kPointCoord(kPointCoord)
     {
+      // one instance serves one k; the coefficients below depend on it
+      utils::throwException<utils::InvalidArgument>(
+        kPointCoord.size() == dim,
+        "EnrichmentClassicalInterfaceSpherical: kPointCoord must have one "
+        "cartesian component per dimension.");
+
+      bool isGammaPoint = true;
+      for (size_type iDim = 0; iDim < dim; iDim++)
+        if (kPointCoord[iDim] != 0.0)
+          isGammaPoint = false;
+
+      utils::throwException<utils::InvalidArgument>(
+        isGammaPoint ||
+          !std::is_same<ValueTypeBasisData,
+                        linearAlgebra::blasLapack::real_type<
+                          ValueTypeBasisData>>::value,
+        "EnrichmentClassicalInterfaceSpherical: a non-zero k needs a complex "
+        "ValueTypeBasisData, since the enrichment carries e^{-ik.x}.");
+
+      // without images the phase is a spurious factor on an isolated atom
+      utils::throwException<utils::InvalidArgument>(
+        isGammaPoint || imageAtomGenerator != nullptr,
+        "EnrichmentClassicalInterfaceSpherical: a non-zero k needs a "
+        "PeriodicImageAtomGenerator, since the Bloch phase only means "
+        "something summed over lattice images.");
+
+      // host master set in the init list, plus a copy where the kernels run
+      d_kPointCoordMemSpace.resize(dim, 0.0);
+      utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
+        dim, d_kPointCoordMemSpace.data(), d_kPointCoord.data());
+
       d_isOrthogonalized = true;
 
       int rank;
@@ -224,7 +259,8 @@ namespace dftefe
         fieldName,
         minbound,
         maxbound,
-        d_triangulation->maxElementLength(),
+        // the ball must cover the orthogonalized reach, or origins are lost
+        3 * d_triangulation->maxElementLength(),
         d_triangulation->getDomainVectors(),
         d_triangulation->getPeriodicFlags(),
         cellVerticesVector,
@@ -233,9 +269,6 @@ namespace dftefe
 
       d_overlappingEnrichmentIdsInCells =
         d_enrichmentIdsPartition->overlappingEnrichmentIdsInCells();
-
-      checkEnrichmentsSpillToBoundary(d_triangulation,
-                                      d_overlappingEnrichmentIdsInCells);
 
       getOverlappingEnrichmentInCellsAdditionalData();
 
@@ -268,6 +301,10 @@ namespace dftefe
 
       global_size_type nTotalEnrichmentIds =
         d_enrichmentIdsPartition->nTotalEnrichmentIds();
+
+      // No point carrying columns past the last enrichment id.
+      d_enrichBatchSize =
+        std::min((global_size_type)d_enrichBatchSize, nTotalEnrichmentIds);
 
       d_enrichmentIdToClassicalLocalIdMap.clear();
       d_enrichmentIdToInterfaceCoeffMap.clear();
@@ -604,6 +641,10 @@ namespace dftefe
       d_overlappingEnrichmentIdsInCells =
         d_enrichmentIdsPartition->overlappingEnrichmentIdsInCells();
 
+      // checked after narrowing: the wider ball fires spuriously here
+      checkEnrichmentsSpillToBoundary(d_triangulation,
+                                      d_overlappingEnrichmentIdsInCells);
+
       getOverlappingEnrichmentInCellsAdditionalData();
 
       global_size_type maxEnrich = 0;
@@ -700,7 +741,8 @@ namespace dftefe
         const std::vector<utils::Point> &atomCoordinatesVec,
         const std::string                fieldName,
         const utils::mpi::MPIComm &      comm,
-        std::shared_ptr<const PeriodicImageAtomGenerator> imageAtomGenerator)
+        std::shared_ptr<const PeriodicImageAtomGenerator> imageAtomGenerator,
+        const utils::Point &                              kPointCoord)
       : d_atomSphericalDataContainer(atomSphericalDataContainer)
       , d_enrichmentIdsPartition(nullptr)
       , d_atomIdsPartition(nullptr)
@@ -713,7 +755,39 @@ namespace dftefe
       , d_feOrder(feOrder)
       , d_comm(comm)
       , d_sphericalDataNumericalFuncPtrVec(nullptr)
+      , d_kPointCoord(kPointCoord)
     {
+      // one instance serves one k; the coefficients below depend on it
+      utils::throwException<utils::InvalidArgument>(
+        kPointCoord.size() == dim,
+        "EnrichmentClassicalInterfaceSpherical: kPointCoord must have one "
+        "cartesian component per dimension.");
+
+      bool isGammaPoint = true;
+      for (size_type iDim = 0; iDim < dim; iDim++)
+        if (kPointCoord[iDim] != 0.0)
+          isGammaPoint = false;
+
+      utils::throwException<utils::InvalidArgument>(
+        isGammaPoint ||
+          !std::is_same<ValueTypeBasisData,
+                        linearAlgebra::blasLapack::real_type<
+                          ValueTypeBasisData>>::value,
+        "EnrichmentClassicalInterfaceSpherical: a non-zero k needs a complex "
+        "ValueTypeBasisData, since the enrichment carries e^{-ik.x}.");
+
+      // without images the phase is a spurious factor on an isolated atom
+      utils::throwException<utils::InvalidArgument>(
+        isGammaPoint || imageAtomGenerator != nullptr,
+        "EnrichmentClassicalInterfaceSpherical: a non-zero k needs a "
+        "PeriodicImageAtomGenerator, since the Bloch phase only means "
+        "something summed over lattice images.");
+
+      // host master set in the init list, plus a copy where the kernels run
+      d_kPointCoordMemSpace.resize(dim, 0.0);
+      utils::MemoryTransfer<memorySpace, utils::MemorySpace::HOST>::copy(
+        dim, d_kPointCoordMemSpace.data(), d_kPointCoord.data());
+
       d_isOrthogonalized = false;
 
       int rank;
@@ -1440,7 +1514,7 @@ namespace dftefe
               typename ValueTypeBasisData,
               utils::MemorySpace memorySpace,
               size_type          dim>
-    std::vector<double>
+    std::vector<ValueTypeBasisData>
     EnrichmentClassicalInterfaceSpherical<ValueTypeBasisCoeff,
                                           ValueTypeBasisData,
                                           memorySpace,
@@ -1452,9 +1526,14 @@ namespace dftefe
         d_overlappingEnrichmentIdsInCells[cellId];
       size_type           numEnrichIdsInCell = enrichIdVec.size();
       size_type           numPoints          = points.size();
-      std::vector<double> retValue(numPoints * numEnrichIdsInCell, 0),
-        rVec(numPoints, 0), thetaVec(numPoints, 0), phiVec(numPoints, 0);
+      std::vector<ValueTypeBasisData> retValue(numPoints * numEnrichIdsInCell,
+                                               0);
+      std::vector<double> rVec(numPoints, 0), thetaVec(numPoints, 0),
+        phiVec(numPoints, 0);
       std::vector<dftefe::utils::Point> x(numPoints, utils::Point(dim));
+      // refreshed with x below, since it depends only on x
+      std::vector<ValueTypeBasisData> phaseVec(numPoints,
+                                               (ValueTypeBasisData)1.0);
       DFTEFE_AssertWithMsg(
         !enrichIdVec.empty(),
         "The requested cell does not have any enrichment ids.");
@@ -1524,6 +1603,11 @@ namespace dftefe
                       phiVec[iPts],
                       atoms::SphericalDataDefaults::POL_ANG_TOL);
 
+                  for (size_type iPts = 0; iPts < numPoints; iPts++)
+                    EnrichmentDataEvalBlochKernels::getBlochPhase(&phaseVec[iPts],
+                                  d_kPointCoord.data(),
+                                  x[iPts]);
+
                   extendedAtomIdPrev = extendedAtomId;
                 }
 
@@ -1542,9 +1626,11 @@ namespace dftefe
                 sphericalDataPerEnrich[iEnrich /*+mCount*/]->getAngularValue(
                   rVec, thetaVec, phiVec);
 
-              double *out = retValue.data() + (iEnrich /*+mCount*/) * numPoints;
+              ValueTypeBasisData *out =
+                retValue.data() + (iEnrich /*+mCount*/) * numPoints;
               for (size_type iPts = 0; iPts < numPoints; iPts++)
-                out[iPts] += radialValue[iPts] * angularValue[iPts];
+                out[iPts] +=
+                  phaseVec[iPts] * radialValue[iPts] * angularValue[iPts];
               //   }
               // numEnrichedIdsSkipped = (2 * l + 1);
             }
@@ -1556,7 +1642,7 @@ namespace dftefe
               typename ValueTypeBasisData,
               utils::MemorySpace memorySpace,
               size_type          dim>
-    std::vector<double>
+    std::vector<ValueTypeBasisData>
     EnrichmentClassicalInterfaceSpherical<
       ValueTypeBasisCoeff,
       ValueTypeBasisData,
@@ -1569,9 +1655,15 @@ namespace dftefe
         d_overlappingEnrichmentIdsInCells[cellId];
       size_type           numEnrichIdsInCell = enrichIdVec.size();
       size_type           numPoints          = points.size();
-      std::vector<double> retValue(dim * numPoints * numEnrichIdsInCell, 0),
-        rVec(numPoints, 0), thetaVec(numPoints, 0), phiVec(numPoints, 0);
+      std::vector<ValueTypeBasisData> retValue(dim * numPoints *
+                                                 numEnrichIdsInCell,
+                                               0);
+      std::vector<double> rVec(numPoints, 0), thetaVec(numPoints, 0),
+        phiVec(numPoints, 0);
       std::vector<dftefe::utils::Point> x(numPoints, utils::Point(dim));
+      // refreshed with x below, since it depends only on x
+      std::vector<ValueTypeBasisData> phaseVec(numPoints,
+                                               (ValueTypeBasisData)1.0);
       DFTEFE_AssertWithMsg(
         !enrichIdVec.empty(),
         "The requested cell does not have any enrichment ids.");
@@ -1644,6 +1736,10 @@ namespace dftefe
                   phiVec[iPts],
                   atoms::SphericalDataDefaults::POL_ANG_TOL);
 
+              for (size_type iPts = 0; iPts < numPoints; iPts++)
+                EnrichmentDataEvalBlochKernels::getBlochPhase(
+                  &phaseVec[iPts], d_kPointCoord.data(), x[iPts]);
+
               extendedAtomIdPrev = extendedAtomId;
             }
 
@@ -1681,16 +1777,27 @@ namespace dftefe
 
               // retValue is zero initialised, so each origin simply adds its
               // own contribution -- no per-level branch or scratch needed.
-              retValue[(iEnrich /*+mCount*/) * numPoints * dim + i * dim + 0] +=
+              // the product rule needs psi alongside grad psi
+              const double psi         = radialValue[i] * angularValue[i];
+              const double gradCart[3] = {
                 dValueDR * (sin(theta) * cos(phi)) +
-                dValueDThetaByr * (cos(theta) * cos(phi)) -
-                sin(phi) * dValueDPhiByrsinTheta;
-              retValue[(iEnrich /*+mCount*/) * numPoints * dim + i * dim + 1] +=
+                  dValueDThetaByr * (cos(theta) * cos(phi)) -
+                  sin(phi) * dValueDPhiByrsinTheta,
                 dValueDR * (sin(theta) * sin(phi)) +
-                dValueDThetaByr * (cos(theta) * sin(phi)) +
-                cos(phi) * dValueDPhiByrsinTheta;
-              retValue[(iEnrich /*+mCount*/) * numPoints * dim + i * dim + 2] +=
-                dValueDR * (cos(theta)) - dValueDThetaByr * (sin(theta));
+                  dValueDThetaByr * (cos(theta) * sin(phi)) +
+                  cos(phi) * dValueDPhiByrsinTheta,
+                dValueDR * (cos(theta)) - dValueDThetaByr * (sin(theta))};
+              for (size_type iDim = 0; iDim < dim; iDim++)
+                {
+                  ValueTypeBasisData blochGradientTerm;
+                  EnrichmentDataEvalBlochKernels::getBlochGradientTerm(&blochGradientTerm,
+                                       d_kPointCoord.data(),
+                                       iDim,
+                                       psi,
+                                       gradCart[iDim]);
+                  retValue[(iEnrich /*+mCount*/) * numPoints * dim + i * dim +
+                           iDim] += phaseVec[i] * blochGradientTerm;
+                }
             }
           //   }
           // numEnrichedIdsSkipped = (2 * l + 1);
@@ -1703,7 +1810,7 @@ namespace dftefe
               typename ValueTypeBasisData,
               utils::MemorySpace memorySpace,
               size_type          dim>
-    std::vector<double>
+    std::vector<ValueTypeBasisData>
     EnrichmentClassicalInterfaceSpherical<
       ValueTypeBasisCoeff,
       ValueTypeBasisData,
@@ -1715,7 +1822,7 @@ namespace dftefe
       utils::throwException(
         false,
         "getEnrichmentHessian() in EFEBasisDofHandlerDealii is not yet implemented.");
-      return std::vector<double>(0);
+      return std::vector<ValueTypeBasisData>(0);
     }
 
     // gpu/cpu kernel for calculating the enrichment id values at
@@ -1734,8 +1841,8 @@ namespace dftefe
         bool                                       storeValues,
         bool                                       storeGradients,
         const quadrature::QuadratureRuleContainer &quadRuleContainer,
-        double *basisEnrichQuadStorageStartPtr,
-        double *basisGradientEnrichQuadStorageStartPtr,
+        ValueTypeBasisData *basisEnrichQuadStorageStartPtr,
+        ValueTypeBasisData *basisGradientEnrichQuadStorageStartPtr,
         linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext,
         const size_type                              enrichBlock) const
     {
@@ -1849,12 +1956,12 @@ namespace dftefe
         std::fill(basisEnrichQuadStorageStartPtr,
                   basisEnrichQuadStorageStartPtr +
                     quadxEnrichCumulative[numLocallyOwnedCells],
-                  0.0);
+                  ValueTypeBasisData(0));
       if (storeGradients)
         std::fill(basisGradientEnrichQuadStorageStartPtr,
                   basisGradientEnrichQuadStorageStartPtr +
                     quadxEnrichCumulative[numLocallyOwnedCells] * dim,
-                  0.0);
+                  ValueTypeBasisData(0));
       // profiler.registerEnd("setup");
 
       // profiler.registerStart("scratchAlloc");
@@ -1876,20 +1983,29 @@ namespace dftefe
       utils::MemoryStorage<double, memorySpace> originMemspaceBlock(
         maxEnrichOriginPairsInBatch * dim);
 
-      utils::MemoryStorage<double, memorySpace> valuesBlockMemSpace(0);
-      std::vector<double>                       valuesBlockHost(0);
-      utils::MemoryStorage<double, memorySpace> gradientsBlockMemSpace(0);
-      std::vector<double>                       gradientsBlockHost(0);
+      utils::MemoryStorage<ValueTypeBasisData, memorySpace>
+                                      valuesBlockMemSpace(0);
+      std::vector<ValueTypeBasisData> valuesBlockHost(0);
+      utils::MemoryStorage<ValueTypeBasisData, memorySpace>
+                                      gradientsBlockMemSpace(0);
+      std::vector<ValueTypeBasisData> gradientsBlockHost(0);
+      // SphericalData is real valued; the kernels return the basis value type
+      utils::MemoryStorage<double, memorySpace> valuesRealBlockMemSpace(0);
+      utils::MemoryStorage<double, memorySpace> gradientsRealBlockMemSpace(0);
 
       if (storeValues)
         {
           valuesBlockMemSpace.resize(maxTotalQuadPtsForBlock);
           valuesBlockHost.resize(maxTotalQuadPtsForBlock);
+          valuesRealBlockMemSpace.resize(maxTotalQuadPtsForBlock);
         }
       if (storeGradients)
         {
           gradientsBlockMemSpace.resize(maxTotalQuadPtsForBlock * dim);
           gradientsBlockHost.resize(maxTotalQuadPtsForBlock * dim);
+          // grad psi (3N) then psi (N), which the product rule needs
+          gradientsRealBlockMemSpace.resize(maxTotalQuadPtsForBlock *
+                                            (dim + 1));
         }
       // profiler.registerEnd("scratchAlloc");
 
@@ -2030,14 +2146,17 @@ namespace dftefe
           if (storeValues)
             {
               // profiler.registerStart("getEnrichmentValues");
-              EnrichmentDataEvalKernels<ValueTypeBasisData, memorySpace>::getEnrichmentValues(
+              EnrichmentDataEvalKernels<ValueTypeBasisData, memorySpace>::
+                getEnrichmentValues(
                 numEnrichOriginPairsInBatch,
                 quadInEnrichOriginPairBlock,
                 sphericalDataVecBlock,
                 quadPtsBlockMemSpace.data(),
                 originMemspaceBlock.data(),
                 valuesBlockMemSpace.data(),
-                linAlgOpContext);
+                valuesRealBlockMemSpace.data(),
+                linAlgOpContext,
+                d_kPointCoordMemSpace.data());
               // profiler.registerEnd("getEnrichmentValues");
 
               // profiler.registerStart("valuesD2H");
@@ -2081,14 +2200,17 @@ namespace dftefe
           if (storeGradients)
             {
               // profiler.registerStart("getEnrichmentGradients");
-              EnrichmentDataEvalKernels<ValueTypeBasisData, memorySpace>::getEnrichmentGradients(
+              EnrichmentDataEvalKernels<ValueTypeBasisData, memorySpace>::
+                getEnrichmentGradients(
                 numEnrichOriginPairsInBatch,
                 quadInEnrichOriginPairBlock,
                 sphericalDataVecBlock,
                 quadPtsBlockMemSpace.data(),
                 originMemspaceBlock.data(),
                 gradientsBlockMemSpace.data(),
-                linAlgOpContext);
+                gradientsRealBlockMemSpace.data(),
+                linAlgOpContext,
+                d_kPointCoordMemSpace.data());
               // profiler.registerEnd("getEnrichmentGradients");
 
               // profiler.registerStart("gradientsD2H");
@@ -2135,6 +2257,19 @@ namespace dftefe
         } // end enrichBlock loop
 
       // profiler.print();
+    }
+
+    template <typename ValueTypeBasisCoeff,
+              typename ValueTypeBasisData,
+              utils::MemorySpace memorySpace,
+              size_type          dim>
+    const utils::Point &
+    EnrichmentClassicalInterfaceSpherical<ValueTypeBasisCoeff,
+                                          ValueTypeBasisData,
+                                          memorySpace,
+                                          dim>::getKPointCoord() const
+    {
+      return d_kPointCoord;
     }
 
     template <typename ValueTypeBasisCoeff,
@@ -2287,7 +2422,8 @@ namespace dftefe
         numQuadInAllCells,
         d_sphericalDataNumericalFuncPtrVec,
         basisEnrichQuadStoragePtr,
-        linAlgOpContext);
+        linAlgOpContext,
+        d_kPointCoordMemSpace.data());
 
       // profiler.registerEnd("timing");
       // profiler.print();
@@ -2329,7 +2465,8 @@ namespace dftefe
         numQuadInAllCells,
         d_sphericalDataNumericalFuncPtrVec,
         basisGradientEnrichQuadStoragePtr,
-        linAlgOpContext);
+        linAlgOpContext,
+        d_kPointCoordMemSpace.data());
 
       // profiler.registerEnd("timing");
       // profiler.print();

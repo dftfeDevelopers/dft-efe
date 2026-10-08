@@ -31,6 +31,7 @@
 #include <linearAlgebra/Defaults.h>
 #include <vector>
 #include <basis/EnrichmentClassicalInterfaceSpherical.h>
+#include <utils/DataTypeOverloads.h>
 
 namespace dftefe
 {
@@ -200,9 +201,10 @@ namespace dftefe
                              qPoint++)
                           {
                             *basisOverlapTmpIter +=
-                              *(cumulativeCFEDofQuadPoints +
-                                dofsPerCellCFE * qPoint + iNode
-                                /*nQuadPointInCellCFE * iNode + qPoint*/) *
+                              utils::conjugate(
+                                *(cumulativeCFEDofQuadPoints +
+                                  dofsPerCellCFE * qPoint + iNode
+                                  /*nQuadPointInCellCFE * iNode + qPoint*/)) *
                               *(cumulativeCFEDofQuadPoints +
                                 dofsPerCellCFE * qPoint + jNode
                                 /*nQuadPointInCellCFE * jNode + qPoint*/) *
@@ -220,9 +222,10 @@ namespace dftefe
                              qPoint++)
                           {
                             *basisOverlapTmpIter +=
-                              *(cumulativeEFEDofQuadPoints +
-                                dofsPerCell * qPoint + iNode
-                                /*nQuadPointInCellEFE * iNode + qPoint*/) *
+                              utils::conjugate(
+                                *(cumulativeEFEDofQuadPoints +
+                                  dofsPerCell * qPoint + iNode
+                                  /*nQuadPointInCellEFE * iNode + qPoint*/)) *
                               *(cumulativeEFEDofQuadPoints +
                                 dofsPerCell * qPoint + jNode
                                 /*nQuadPointInCellEFE * jNode + qPoint*/) *
@@ -948,10 +951,12 @@ namespace dftefe
                              jNode >= dofsPerCellCFE && calculateWings)
                       {
                         *basisOverlapTmpIter =
-                          *(basisOverlapECBlockEnrich.data() +
-                            (jNode - dofsPerCellCFE) * dofsPerCell + iNode) -
-                          *(basisOverlapECBlockClass.data() +
-                            (jNode - dofsPerCellCFE) * dofsPerCellCFE + iNode);
+                          utils::conjugate(
+                            *(basisOverlapECBlockEnrich.data() +
+                              (jNode - dofsPerCellCFE) * dofsPerCell + iNode) -
+                            *(basisOverlapECBlockClass.data() +
+                              (jNode - dofsPerCellCFE) * dofsPerCellCFE +
+                              iNode));
                       }
                     else if (iNode >= dofsPerCellCFE && jNode >= dofsPerCellCFE)
                       {
@@ -965,9 +970,11 @@ namespace dftefe
                           *(basisOverlapEEBlock3.data() +
                             (iNode - dofsPerCellCFE) * numEnrichmentIdsInCell +
                             (jNode - dofsPerCellCFE)) -
-                          *(basisOverlapEEBlock3.data() +
-                            (jNode - dofsPerCellCFE) * numEnrichmentIdsInCell +
-                            (iNode - dofsPerCellCFE));
+                          utils::conjugate(
+                            *(basisOverlapEEBlock3.data() +
+                              (jNode - dofsPerCellCFE) *
+                                numEnrichmentIdsInCell +
+                              (iNode - dofsPerCellCFE)));
                       }
                     basisOverlapTmpIter++;
                   }
@@ -1539,7 +1546,7 @@ namespace dftefe
 
                 // EC block
                 std::fill(transA.begin(), transA.end(), 'N');
-                std::fill(transB.begin(), transB.end(), 'T');
+                std::fill(transB.begin(), transB.end(), 'C');
 
                 for (size_type iCell = 0; iCell < numCellsInBlock; ++iCell)
                   {
@@ -1658,7 +1665,7 @@ namespace dftefe
 
                 // EC block
                 std::fill(transA.begin(), transA.end(), 'N');
-                std::fill(transB.begin(), transB.end(), 'T');
+                std::fill(transB.begin(), transB.end(), 'C');
 
                 for (size_type iCell = 0; iCell < numCellsInBlock; ++iCell)
                   {
@@ -1931,7 +1938,7 @@ namespace dftefe
               linAlgOpContext);
 
             std::fill(transA.begin(), transA.end(), 'N');
-            std::fill(transB.begin(), transB.end(), 'T');
+            std::fill(transB.begin(), transB.end(), 'C');
 
             for (size_type iCell = 0; iCell < numCellsInBlock; ++iCell)
               {
@@ -3185,7 +3192,7 @@ namespace dftefe
               linearAlgebra::blasLapack::
                 gemm<ValueType, ValueType, memorySpace>(
                   'N',
-                  'T',
+                  'N',
                   numComponents,
                   d_nglobalEnrichmentIds,
                   d_nglobalEnrichmentIds,

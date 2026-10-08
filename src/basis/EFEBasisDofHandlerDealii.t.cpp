@@ -33,6 +33,7 @@
 #include <utils/PointImpl.h>
 #include <quadrature/QuadratureRuleContainer.h>
 #include <quadrature/QuadratureAttributes.h>
+#include <basis/EnrichmentDataEvalKernels.h>
 #include "CFEBasisDofHandlerDealii.h"
 #include "EFEConstraintsLocalDealii.h"
 #include "CFEBasisDataStorageDealii.h"
@@ -136,6 +137,7 @@ namespace dftefe
       , d_globalRanges(0)
       , d_ghostEnrichmentGlobalIds(0)
       , d_enrichmentIdsPartition(nullptr)
+      , d_kPointCoord(dim, 0.0)
       , d_boundaryIds(0)
     {
       d_dofHandler = std::make_shared<dealii::DoFHandler<dim>>();
@@ -165,6 +167,7 @@ namespace dftefe
       , d_globalRanges(0)
       , d_ghostEnrichmentGlobalIds(0)
       , d_enrichmentIdsPartition(nullptr)
+      , d_kPointCoord(dim, 0.0)
       , d_boundaryIds(0)
     {
       d_dofHandler = std::make_shared<dealii::DoFHandler<dim>>();
@@ -190,6 +193,7 @@ namespace dftefe
       d_isDistributed = true;
       // Create Classical FE dof_handler
       d_enrichClassIntfce = enrichmentClassicalInterface;
+      d_kPointCoord       = d_enrichClassIntfce->getKPointCoord();
       d_isOrthogonalized  = enrichmentClassicalInterface->isOrthogonalized();
       d_atomSphericalDataContainer =
         enrichmentClassicalInterface->getAtomSphericalDataContainer();
@@ -549,6 +553,7 @@ namespace dftefe
       d_isDistributed = false;
       // Create Classical FE dof_handler
       d_enrichClassIntfce = enrichmentClassicalInterface;
+      d_kPointCoord       = d_enrichClassIntfce->getKPointCoord();
       d_isOrthogonalized  = enrichmentClassicalInterface->isOrthgonalized();
       d_atomSphericalDataContainer =
         enrichmentClassicalInterface->getAtomSphericalDataContainer();
@@ -1498,7 +1503,7 @@ namespace dftefe
               typename ValueTypeBasisData,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
-    double
+    ValueTypeBasisData
     EFEBasisDofHandlerDealii<
       ValueTypeBasisCoeff,
       ValueTypeBasisData,
@@ -1507,7 +1512,7 @@ namespace dftefe
                                const size_type cellLocalEnrichmentId,
                                const dftefe::utils::Point &point) const
     {
-      double retValue = 0;
+      ValueTypeBasisData retValue = 0;
       DFTEFE_AssertWithMsg(
         !d_overlappingEnrichmentIdsInCells[cellId].empty() &&
           d_overlappingEnrichmentIdsInCells[cellId].size() >
@@ -1531,65 +1536,14 @@ namespace dftefe
       for (size_type iOrigin = extendedAtomIdOffsets[cellLocalEnrichmentId];
            iOrigin < extendedAtomIdOffsets[cellLocalEnrichmentId + 1];
            iOrigin++)
-        retValue += sphericalData->getValue(
-          point,
-          d_enrichmentIdsPartition->getPositionOfExtendedAtomId(
-            extendedAtomIds[iOrigin]));
-      return retValue;
-    }
-
-    template <typename ValueTypeBasisCoeff,
-              typename ValueTypeBasisData,
-              dftefe::utils::MemorySpace memorySpace,
-              size_type                  dim>
-    std::vector<double>
-    EFEBasisDofHandlerDealii<
-      ValueTypeBasisCoeff,
-      ValueTypeBasisData,
-      memorySpace,
-      dim>::getEnrichmentDerivative(const size_type cellId,
-                                    const size_type cellLocalEnrichmentId,
-                                    const dftefe::utils::Point &point) const
-    {
-      std::vector<double> retValue(0);
-      DFTEFE_AssertWithMsg(
-        !d_overlappingEnrichmentIdsInCells[cellId].empty() &&
-          d_overlappingEnrichmentIdsInCells[cellId].size() >
-            cellLocalEnrichmentId,
-        "The requested cell local enrichment id does not exist or The requested cell does not have any enrichment ids overlapping with it.");
-
-      basis::EnrichmentIdAttribute eIdAttr =
-        d_enrichmentIdsPartition->getEnrichmentIdAttribute(
-          d_overlappingEnrichmentIdsInCells[cellId][cellLocalEnrichmentId]);
-      auto sphericalData = d_atomSphericalDataContainer->getSphericalData(
-        d_atomSymbolVec[eIdAttr.atomId], d_fieldName)[eIdAttr.localIdInAtom];
-
-      // Sum over this enrichment's origins; see getEnrichmentValue above. The
-      // first origin sizes retValue so the component count stays the callee's
-      // to decide. Without periodicity there is exactly one and no loop runs.
-      const std::vector<size_type> &extendedAtomIds =
-        d_enrichmentIdsPartition->getExtendedAtomIdsForAllEnrichInCell(cellId);
-      const std::vector<size_type> &extendedAtomIdOffsets =
-        d_enrichmentIdsPartition->getExtendedAtomIdOffsetsForAllEnrichInCell(cellId);
-      const size_type oBegin = extendedAtomIdOffsets[cellLocalEnrichmentId];
-      const size_type oEnd = extendedAtomIdOffsets[cellLocalEnrichmentId + 1];
-      DFTEFE_AssertWithMsg(
-        oEnd > oBegin,
-        "An enrichment overlapping a cell must have at least one origin.");
-
-      retValue = sphericalData->getGradientValue(
-        point,
-        d_enrichmentIdsPartition->getPositionOfExtendedAtomId(
-          extendedAtomIds[oBegin]));
-      for (size_type iOrigin = oBegin + 1; iOrigin < oEnd; iOrigin++)
         {
-          const std::vector<double> imageValue =
-            sphericalData->getGradientValue(
-              point,
-              d_enrichmentIdsPartition->getPositionOfExtendedAtomId(
-                extendedAtomIds[iOrigin]));
-          for (size_type i = 0; i < retValue.size(); i++)
-            retValue[i] += imageValue[i];
+          const utils::Point origin(
+            d_enrichmentIdsPartition->getPositionOfExtendedAtomId(
+              extendedAtomIds[iOrigin]));
+          ValueTypeBasisData phase;
+          EnrichmentDataEvalBlochKernels::getBlochPhase(
+            &phase, d_kPointCoord.data(), point - origin);
+          retValue += phase * sphericalData->getValue(point, origin);
         }
       return retValue;
     }
@@ -1598,16 +1552,16 @@ namespace dftefe
               typename ValueTypeBasisData,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
-    std::vector<double>
+    std::vector<ValueTypeBasisData>
     EFEBasisDofHandlerDealii<
       ValueTypeBasisCoeff,
       ValueTypeBasisData,
       memorySpace,
-      dim>::getEnrichmentHessian(const size_type cellId,
-                                 const size_type cellLocalEnrichmentId,
-                                 const dftefe::utils::Point &point) const
+      dim>::getEnrichmentDerivative(const size_type cellId,
+                                    const size_type cellLocalEnrichmentId,
+                                    const dftefe::utils::Point &point) const
     {
-      std::vector<double> retValue(0);
+      std::vector<ValueTypeBasisData> retValue(0);
       DFTEFE_AssertWithMsg(
         !d_overlappingEnrichmentIdsInCells[cellId].empty() &&
           d_overlappingEnrichmentIdsInCells[cellId].size() >
@@ -1633,10 +1587,92 @@ namespace dftefe
         oEnd > oBegin,
         "An enrichment overlapping a cell must have at least one origin.");
 
-      retValue = sphericalData->getHessianValue(
+      // the first origin sizes retValue; the product rule needs psi too
+      retValue.resize(sphericalData
+                        ->getGradientValue(
+                          point,
+                          d_enrichmentIdsPartition->getPositionOfExtendedAtomId(
+                            extendedAtomIds[oBegin]))
+                        .size(),
+                      0);
+      for (size_type iOrigin = oBegin; iOrigin < oEnd; iOrigin++)
+        {
+          const utils::Point origin(
+            d_enrichmentIdsPartition->getPositionOfExtendedAtomId(
+              extendedAtomIds[iOrigin]));
+          const std::vector<double> imageValue =
+            sphericalData->getGradientValue(point, origin);
+          const double psi = sphericalData->getValue(point, origin);
+          ValueTypeBasisData phase;
+          EnrichmentDataEvalBlochKernels::getBlochPhase(
+            &phase, d_kPointCoord.data(), point - origin);
+          for (size_type i = 0; i < retValue.size(); i++)
+            {
+              ValueTypeBasisData blochGradientTerm;
+              EnrichmentDataEvalBlochKernels::getBlochGradientTerm(&blochGradientTerm,
+                                   d_kPointCoord.data(),
+                                   i,
+                                   psi,
+                                   imageValue[i]);
+              retValue[i] += phase * blochGradientTerm;
+            }
+        }
+      return retValue;
+    }
+
+    template <typename ValueTypeBasisCoeff,
+              typename ValueTypeBasisData,
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
+    std::vector<ValueTypeBasisData>
+    EFEBasisDofHandlerDealii<
+      ValueTypeBasisCoeff,
+      ValueTypeBasisData,
+      memorySpace,
+      dim>::getEnrichmentHessian(const size_type cellId,
+                                 const size_type cellLocalEnrichmentId,
+                                 const dftefe::utils::Point &point) const
+    {
+      // no phase is applied here, so a non zero k would be returned unphased
+      for (size_type iDim = 0; iDim < dim; iDim++)
+        utils::throwException<utils::InvalidArgument>(
+          d_kPointCoord[iDim] == 0.0,
+          "getEnrichmentHessian() does not carry the Bloch phase, so it "
+          "cannot be used at a non-zero k point.");
+      std::vector<ValueTypeBasisData> retValue(0);
+      DFTEFE_AssertWithMsg(
+        !d_overlappingEnrichmentIdsInCells[cellId].empty() &&
+          d_overlappingEnrichmentIdsInCells[cellId].size() >
+            cellLocalEnrichmentId,
+        "The requested cell local enrichment id does not exist or The requested cell does not have any enrichment ids overlapping with it.");
+
+      basis::EnrichmentIdAttribute eIdAttr =
+        d_enrichmentIdsPartition->getEnrichmentIdAttribute(
+          d_overlappingEnrichmentIdsInCells[cellId][cellLocalEnrichmentId]);
+      auto sphericalData = d_atomSphericalDataContainer->getSphericalData(
+        d_atomSymbolVec[eIdAttr.atomId], d_fieldName)[eIdAttr.localIdInAtom];
+
+      // Sum over this enrichment's origins; see getEnrichmentValue above. The
+      // first origin sizes retValue so the component count stays the callee's
+      // to decide. Without periodicity there is exactly one and no loop runs.
+      const std::vector<size_type> &extendedAtomIds =
+        d_enrichmentIdsPartition->getExtendedAtomIdsForAllEnrichInCell(cellId);
+      const std::vector<size_type> &extendedAtomIdOffsets =
+        d_enrichmentIdsPartition->getExtendedAtomIdOffsetsForAllEnrichInCell(cellId);
+      const size_type oBegin = extendedAtomIdOffsets[cellLocalEnrichmentId];
+      const size_type oEnd = extendedAtomIdOffsets[cellLocalEnrichmentId + 1];
+      DFTEFE_AssertWithMsg(
+        oEnd > oBegin,
+        "An enrichment overlapping a cell must have at least one origin.");
+
+      // the radial data is real; widen it into the operator type
+      const std::vector<double> originValue = sphericalData->getHessianValue(
         point,
         d_enrichmentIdsPartition->getPositionOfExtendedAtomId(
           extendedAtomIds[oBegin]));
+      retValue.resize(originValue.size());
+      for (size_type i = 0; i < originValue.size(); i++)
+        retValue[i] = originValue[i];
       for (size_type iOrigin = oBegin + 1; iOrigin < oEnd; iOrigin++)
         {
           const std::vector<double> imageValue = sphericalData->getHessianValue(
@@ -1695,7 +1731,7 @@ namespace dftefe
               typename ValueTypeBasisData,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
-    std::vector<double>
+    std::vector<ValueTypeBasisData>
     EFEBasisDofHandlerDealii<ValueTypeBasisCoeff,
                              ValueTypeBasisData,
                              memorySpace,
@@ -1710,7 +1746,7 @@ namespace dftefe
               typename ValueTypeBasisData,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
-    std::vector<double>
+    std::vector<ValueTypeBasisData>
     EFEBasisDofHandlerDealii<
       ValueTypeBasisCoeff,
       ValueTypeBasisData,
@@ -1726,7 +1762,7 @@ namespace dftefe
               typename ValueTypeBasisData,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
-    std::vector<double>
+    std::vector<ValueTypeBasisData>
     EFEBasisDofHandlerDealii<
       ValueTypeBasisCoeff,
       ValueTypeBasisData,
@@ -1900,6 +1936,24 @@ namespace dftefe
                              dim>::isDistributed() const
     {
       return d_isDistributed;
+    }
+
+    template <typename ValueTypeBasisCoeff,
+              typename ValueTypeBasisData,
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
+    void
+    EFEBasisDofHandlerDealii<ValueTypeBasisCoeff,
+                             ValueTypeBasisData,
+                             memorySpace,
+                             dim>::getLocallyActiveDofIds(
+      std::vector<global_size_type> &locallyActiveDofIds) const
+    {
+      // the classical dofs carry the dealii numbering and are globally
+      // contiguous ahead of the enrichment ids, so these need no shifting
+      locallyActiveDofIds =
+        dealii::DoFTools::extract_locally_active_dofs(*d_dofHandler)
+          .get_index_vector();
     }
 
   } // namespace basis

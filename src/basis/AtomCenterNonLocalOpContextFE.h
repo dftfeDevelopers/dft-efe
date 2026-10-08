@@ -33,6 +33,7 @@
 #include <linearAlgebra/OperatorContext.h>
 #include <atoms/AtomSphericalDataContainer.h>
 #include <basis/EnrichmentIdsPartition.h>
+#include <utils/Point.h>
 #include <vector>
 #include <memory>
 
@@ -77,7 +78,9 @@ namespace dftefe
                                    linAlgOpContext,
         const utils::mpi::MPIComm &comm,
         std::shared_ptr<const PeriodicImageAtomGenerator> imageAtomGenerator =
-          nullptr);
+          nullptr,
+        // one instance serves one k
+        const utils::Point &kPointCoord = utils::Point(dim, 0.0));
 
       /**
        *@brief Default Destructor
@@ -119,14 +122,16 @@ namespace dftefe
       // complex whenever the wavefunctions are, whatever the basis type is.
       std::vector<ValueType>
       getProjectorValues(const size_type                          cellId,
-                         const std::vector<dftefe::utils::Point> &points) const;
+                         const std::vector<dftefe::utils::Point> &points,
+                         const double *kPointCoord) const;
 
       // // size is  proj x nProj accumulated overcells
       // utils::MemoryStorage<ValueTypeOperator, utils::memorySpace::HOST>
       //   d_projectorQuadStorage; // cell->quad->proj
 
       utils::MemoryStorage<ValueType, memorySpace>
-        d_cellWiseC; // cell->dofs->kpt->proj
+                   d_cellWiseC; // cell->dofs->proj
+      utils::Point d_kPointCoord;
 
       // size is localProjNum(numDofs partiitoned) x numVec(numComp)
       // mutable so that it can be reinited inside apply if block size changes
@@ -151,7 +156,8 @@ namespace dftefe
       const FEBasisManager<ValueTypeOperand,
                            ValueTypeOperator,
                            memorySpace,
-                           dim> *d_feBasisManager;
+                           dim> *
+        d_feBasisManager;
       const size_type            d_maxCellBlock;
       const size_type            d_maxWaveFnBatch;
       std::shared_ptr<const EnrichmentIdsPartition<dim>>

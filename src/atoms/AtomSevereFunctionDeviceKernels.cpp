@@ -56,19 +56,48 @@ namespace dftefe
 
       DFTEFE_CREATE_KERNEL(
         void,
-        absBTimesVNuclearKernel,
+        absBTimesVSmearKernel,
         {
           for (size_type iPoint = globalThreadId; iPoint < numPoints;
                iPoint += nThreadsPerBlock * nThreadBlock)
             {
               dftefe::utils::atomicAddWrapper(&q[iPoint],
-                                              fabs(vnuclear[iPoint] *
+                                              fabs(vsmear[iPoint] *
                                                    b[iPoint]));
             }
         },
         const size_type numPoints,
-        const double *  vnuclear,
+        const double *  vsmear,
         const double *  b,
+        double *        q);
+
+      DFTEFE_CREATE_KERNEL(
+        void,
+        accumulateKernel,
+        {
+          for (size_type iPoint = globalThreadId; iPoint < numPoints;
+               iPoint += nThreadsPerBlock * nThreadBlock)
+            {
+              dftefe::utils::atomicAddWrapper(&dst[iPoint], src[iPoint]);
+            }
+        },
+        const size_type numPoints,
+        const double *  src,
+        double *        dst);
+
+      DFTEFE_CREATE_KERNEL(
+        void,
+        vSmearSqKernel,
+        {
+          for (size_type iPoint = globalThreadId; iPoint < numPoints;
+               iPoint += nThreadsPerBlock * nThreadBlock)
+            {
+              dftefe::utils::atomicAddWrapper(&q[iPoint],
+                                              vsmear[iPoint] * vsmear[iPoint]);
+            }
+        },
+        const size_type numPoints,
+        const double *  vsmear,
         double *        q);
 
       DFTEFE_CREATE_KERNEL(
@@ -160,31 +189,67 @@ namespace dftefe
                                    q);
             }
         }
-      else if (d_atomicType == AtomSevereFuncType::Atomic::bTimesVNuclear)
+      else if (d_atomicType == AtomSevereFuncType::Atomic::bTimesVSmear)
         {
+          // the nuclear self energy integrand: no spherical factor, so this
+          // branch loops over the atoms rather than over the enrichments
           utils::MemoryStorage<double, utils::MemorySpace::DEVICE> bStorage(
-            numPoints);
+            numPoints),
+            vsmearStorage(numPoints), atomStorage(numPoints);
 
           d_b->template eval<utils::MemorySpace::DEVICE>(numPoints,
                                                          t,
                                                          bStorage.data());
 
-          for (size_type e = 0; e < E; ++e)
+          utils::deviceSetValue(vsmearStorage.data(), 0.0, numPoints);
+          for (size_type iAtom = 0; iAtom < d_vsmearPerAtom.size(); ++iAtom)
             {
-              this->d_sphericalDataVecAll[e]->getValueDevice(
-                numPoints,
-                t,
-                this->d_originsFlat.data() + e * this->d_dim,
-                sphericalStorage.data());
-              DFTEFE_LAUNCH_KERNEL(absBTimesVNuclearKernel,
+              d_vsmearPerAtom[iAtom]->template eval<utils::MemorySpace::DEVICE>(
+                numPoints, t, atomStorage.data());
+              DFTEFE_LAUNCH_KERNEL(accumulateKernel,
                                    grid,
                                    blockSize,
                                    0,
                                    numPoints,
-                                   sphericalStorage.data(),
-                                   bStorage.data(),
+                                   atomStorage.data(),
+                                   vsmearStorage.data());
+            }
+
+          DFTEFE_LAUNCH_KERNEL(absBTimesVSmearKernel,
+                               grid,
+                               blockSize,
+                               0,
+                               numPoints,
+                               vsmearStorage.data(),
+                               bStorage.data(),
+                               q);
+        }
+      else if (d_atomicType == AtomSevereFuncType::Atomic::vSmearSq)
+        {
+          // sum of the squares of the individual atomic smeared potentials,
+          // so this branch loops over the atoms instead of the enrichments
+          utils::MemoryStorage<double, utils::MemorySpace::DEVICE>
+            vsmearStorage(numPoints);
+
+          for (size_type iAtom = 0; iAtom < d_vsmearPerAtom.size(); ++iAtom)
+            {
+              d_vsmearPerAtom[iAtom]->template eval<utils::MemorySpace::DEVICE>(
+                numPoints, t, vsmearStorage.data());
+              DFTEFE_LAUNCH_KERNEL(vSmearSqKernel,
+                                   grid,
+                                   blockSize,
+                                   0,
+                                   numPoints,
+                                   vsmearStorage.data(),
                                    q);
             }
+        }
+      else if (d_atomicType == AtomSevereFuncType::Atomic::gradVSmearSq)
+        {
+          utils::throwException(
+            false,
+            "AtomSevereFunction: gradVSmearSq cannot be evaluated because "
+            "utils::SmearChargePotentialFunction provides no gradient.");
         }
       else if (d_atomicType == AtomSevereFuncType::Atomic::vExtTimesOrbitalSq)
         {

@@ -324,7 +324,7 @@ namespace dftefe
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    std::vector<double>
+    std::vector<utils::Point>
     RDM1Mixing<ValueType, memorySpace>::getkPointCoords() const
     {
       auto rdm1 = d_rdm1Ptr.lock();

@@ -110,6 +110,7 @@ namespace dftefe
                  std::vector<std::vector<double>> &      radialValuesVec,
                  std::vector<std::vector<int>> &         qNumVec,
                  const std::vector<double> &             radialPoints,
+                 const std::vector<double> &             radialWeights,
                  const std::string &                     fieldName,
                  const std::string &                     fileName,
                  std::vector<std::pair<int, int>> &      nlPairs);

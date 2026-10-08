@@ -1868,6 +1868,12 @@ namespace dftefe
                 masterOfExtended[atomCoordinates.size() + j] = imageIds[j];
             }
 
+          // A pair beyond the tabulated range contributes zero, so an image
+          // envelope wider than the table silently truncates the lattice sum.
+          // Count what falls outside so it cannot pass unnoticed.
+          size_type nTciaPairs = 0, nTciaSkipped = 0;
+          double    rMaxTciaPair = 0.0;
+
           for (size_type iAtom = 0; iAtom < atomCoordinates.size(); iAtom++)
             {
               for (size_type jAtom = 0; jAtom < d_extendedAtomCoordinates.size(); jAtom++)
@@ -1883,6 +1889,14 @@ namespace dftefe
                       1e-12);
                   std::string atomSymbolPair =
                     d_atomSymbolVec[iAtom] + "-" + d_atomSymbolVec[jMaster];
+
+                  nTciaPairs++;
+                  rMaxTciaPair = std::max(rMaxTciaPair, r);
+                  if (r >= tciSpRhoAtPhiAt->maxRadialGrid() ||
+                      r >= tciSpRhoAtPhiCorr->maxRadialGrid() ||
+                      r >= tciSpBSmearPhiAt->maxRadialGrid())
+                    nTciaSkipped++;
+
                   if (r < tciSpRhoAtPhiAt->maxRadialGrid())
                     {
                       d_intRhoAtPhiAt +=
@@ -1922,6 +1936,26 @@ namespace dftefe
                     }
                 }
             }
+
+          d_rootCout << "TCIA pair lattice sum: " << nTciaPairs
+                     << " pairs, largest separation " << rMaxTciaPair
+                     << " bohr, table reaches "
+                     << tciSpRhoAtPhiAt->maxRadialGrid() << " bohr\n";
+
+          utils::throwException<utils::InvalidArgument>(
+            nTciaSkipped == 0,
+            "The TCIA tables do not span the periodic image envelope: " +
+              std::to_string(nTciaSkipped) + " of " +
+              std::to_string(nTciaPairs) +
+              " atom pairs lie beyond the tabulated range, where they "
+              "contribute zero instead of their actual value, so the atomic "
+              "lattice sums are truncated. The largest pair separation is " +
+              std::to_string(rMaxTciaPair) +
+              " bohr while the tables reach only " +
+              std::to_string(tciSpRhoAtPhiAt->maxRadialGrid()) +
+              " bohr. Regenerate the TCIA data with dMax at least that large, "
+              "or shorten the image envelope by using a shorter ranged atomic "
+              "reference.");
         }
 
       d_rootCout << "Atomic Energies delta rho: " << d_intRhoAtPhiAt << "\t"

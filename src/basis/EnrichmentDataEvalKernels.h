@@ -32,15 +32,65 @@
 #include <atoms/SphericalData.h>
 #include <atoms/SphericalDataNumerical.h>
 #include <linearAlgebra/BlasLapack.h>
+#include <utils/Point.h>
+#include <complex>
 
 namespace dftefe
 {
   namespace basis
   {
+    // One definition for every consumer: the .t.cpp files are included into
+    // headers, so a per-file copy collides inside a single translation unit.
+    // A class, so the host/device kernel .cpp files keep their own overloads.
+    class EnrichmentDataEvalBlochKernels
+    {
+    public:
+      // real and complex differ only in how the phase is built
+      static void
+      getBlochPhase(double *out, const double *, const utils::Point &)
+      {
+        *out = 1.0;
+      }
+
+      static void
+      getBlochPhase(std::complex<double> *out,
+                    const double *        kPointCoord,
+                    const utils::Point &  xMinusOrigin)
+      {
+        double kDotR = 0.0;
+        for (size_type iDim = 0; iDim < xMinusOrigin.size(); iDim++)
+          kDotR += kPointCoord[iDim] * xMinusOrigin[iDim];
+        *out = std::complex<double>(std::cos(kDotR), -std::sin(kDotR));
+      }
+
+      // the (grad psi - i k psi) bracket of the product rule
+      static void
+      getBlochGradientTerm(double *        out,
+                           const double *,
+                           const size_type,
+                           const double,
+                           const double gradientValue)
+      {
+        *out = gradientValue;
+      }
+
+      static void
+      getBlochGradientTerm(std::complex<double> *out,
+                           const double *        kPointCoord,
+                           const size_type       iDim,
+                           const double          enrichmentValue,
+                           const double          gradientValue)
+      {
+        *out = std::complex<double>(gradientValue,
+                                    -kPointCoord[iDim] * enrichmentValue);
+      }
+    }; // end of class EnrichmentDataEvalBlochKernels
+
     template <typename ValueType, utils::MemorySpace memorySpace>
     class EnrichmentDataEvalKernels
     {
     public:
+      // Bloch phase over the real evaluation; scratchReal holds it, N or 4N
       static void
       getEnrichmentValues(
         const size_type               numEnrichmentFunc,
@@ -49,8 +99,10 @@ namespace dftefe
           &                                          sphericalDataVec,
         const double *                               points,
         const double *                               origin,
-        ValueType *                         values,
-        linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext);
+        ValueType *                                  values,
+        double *                                     scratchReal,
+        linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext,
+        const double *                               kPointCoord = nullptr);
 
       static void
       getEnrichmentGradients(
@@ -60,8 +112,10 @@ namespace dftefe
           &                                          sphericalDataVec,
         const double *                               points,
         const double *                               origin,
-        ValueType *                         values,
-        linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext);
+        ValueType *                                  values,
+        double *                                     scratchReal,
+        linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext,
+        const double *                               kPointCoord = nullptr);
 
       static void
       getEnrichmentValuesInCellRange(
@@ -74,7 +128,8 @@ namespace dftefe
         const atoms::SphericalDataNumerical::Func<memorySpace>
           *     sphericalDataFuncInAllCells,
         ValueType *output,
-        linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext);
+        linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext,
+        const double *                               kPointCoord = nullptr);
 
       static void
       getEnrichmentGradientsInCellRange(
@@ -87,7 +142,8 @@ namespace dftefe
         const atoms::SphericalDataNumerical::Func<memorySpace>
           *     sphericalDataFuncInAllCells,
         ValueType *output,
-        linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext);
+        linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext,
+        const double *                               kPointCoord = nullptr);
     }; // end of class EnrichmentDataEvalKernels
 
 #ifdef DFTEFE_WITH_DEVICE
@@ -96,6 +152,7 @@ namespace dftefe
                                     dftefe::utils::MemorySpace::DEVICE>
     {
     public:
+      // Bloch phase over the real evaluation; scratchReal holds it, N or 4N
       static void
       getEnrichmentValues(
         const size_type               numEnrichmentFunc,
@@ -104,9 +161,11 @@ namespace dftefe
           &           sphericalDataVec,
         const double *points,
         const double *origin,
-        ValueType *values,
+        ValueType *   values,
+        double *      scratchReal,
         linearAlgebra::LinAlgOpContext<dftefe::utils::MemorySpace::DEVICE>
-          &linAlgOpContext);
+          &           linAlgOpContext,
+        const double *kPointCoord = nullptr);
 
       static void
       getEnrichmentGradients(
@@ -116,9 +175,11 @@ namespace dftefe
           &           sphericalDataVec,
         const double *points,
         const double *origin,
-        ValueType *values,
+        ValueType *   values,
+        double *      scratchReal,
         linearAlgebra::LinAlgOpContext<dftefe::utils::MemorySpace::DEVICE>
-          &linAlgOpContext);
+          &           linAlgOpContext,
+        const double *kPointCoord = nullptr);
 
       static void
       getEnrichmentValuesInCellRange(
@@ -132,7 +193,8 @@ namespace dftefe
           dftefe::utils::MemorySpace::DEVICE> *sphericalDataFuncInAllCells,
         ValueType *                   output,
         linearAlgebra::LinAlgOpContext<dftefe::utils::MemorySpace::DEVICE>
-          &linAlgOpContext);
+          &           linAlgOpContext,
+        const double *kPointCoord = nullptr);
 
       static void
       getEnrichmentGradientsInCellRange(
@@ -146,7 +208,8 @@ namespace dftefe
           dftefe::utils::MemorySpace::DEVICE> *sphericalDataFuncInAllCells,
         ValueType *                   output,
         linearAlgebra::LinAlgOpContext<dftefe::utils::MemorySpace::DEVICE>
-          &linAlgOpContext);
+          &           linAlgOpContext,
+        const double *kPointCoord = nullptr);
     }; // end of class EnrichmentDataEvalKernels
 #endif
   } // end of namespace basis

@@ -1,5 +1,6 @@
 
 #include <deal.II/dofs/dof_tools.h>
+#include <deal.II/base/mpi.h>
 #include <basis/FECellBase.h>
 #include <memory>
 #include <basis/ConstraintsInternal.h>
@@ -888,6 +889,49 @@ namespace dftefe
       getMeanValueConstraintProcId() const
     {
       return d_meanValueConstraintProcId;
+    }
+
+    template <typename ValueTypeBasisCoeff,
+              utils::MemorySpace memorySpace,
+              size_type          dim>
+    bool
+    EFEConstraintsLocalDealii<ValueTypeBasisCoeff, memorySpace, dim>::
+      isConsistentInParallel(
+        const std::vector<global_size_type> &locallyActiveDofIds,
+        const utils::mpi::MPIComm &          mpiComm) const
+    {
+#ifdef DFTEFE_WITH_MPI
+      // only the pre-copyFrom object built by createConstraintsStart has no
+      // partitioning, and nothing observes it in that state
+      if (d_locallyOwnedRanges.empty())
+        return true;
+
+      const size_type indexSpaceSize =
+        d_dealiiAffineConstraintMatrix.get_local_lines().size();
+
+      // the dealii matrix spans the classical dofs, which are globally
+      // contiguous and are range 0; any later range holds enrichment ids
+      const auto &     owned0 = d_locallyOwnedRanges[0];
+      dealii::IndexSet owned(indexSpaceSize);
+      if (owned0.second > owned0.first)
+        owned.add_range(owned0.first, owned0.second);
+      owned.compress();
+
+      // dealii compares only the active dofs; handing it the relevant set
+      // flags rows it explicitly allows to differ
+      dealii::IndexSet active(indexSpaceSize);
+      active.add_indices(locallyActiveDofIds.begin(),
+                         locallyActiveDofIds.end());
+      active.compress();
+
+      return d_dealiiAffineConstraintMatrix.is_consistent_in_parallel(
+        dealii::Utilities::MPI::all_gather(mpiComm, owned),
+        active,
+        mpiComm,
+        false);
+#else
+      return true;
+#endif // DFTEFE_WITH_MPI
     }
 
     template <typename ValueTypeBasisCoeff,

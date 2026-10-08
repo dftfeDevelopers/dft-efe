@@ -71,7 +71,10 @@ namespace dftefe
         RDM1<ValueType, memorySpace> &rdm1,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
                         linAlgOpContext,
-        const size_type cellBlockSize);
+        const size_type cellBlockSize,
+        std::shared_ptr<
+          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+          feBasisDataStorage);
 
       // With NLCC. Core correction is added internally before every libxc call.
       ExchangeCorrelationFE(
@@ -80,6 +83,9 @@ namespace dftefe
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
                         linAlgOpContext,
         const size_type cellBlockSize,
+        std::shared_ptr<
+          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+          feBasisDataStorage,
         std::shared_ptr<const atoms::AtomSphericalDataContainer>
                                          atomSphericalDataContainerPSP,
         const std::vector<std::string> & atomSymbolVec,

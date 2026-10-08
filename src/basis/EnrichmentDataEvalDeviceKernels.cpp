@@ -24,9 +24,11 @@
  */
 
 #include <basis/EnrichmentDataEvalKernels.h>
+#include <atoms/AtomSuperpositionFunctionEvalKernels.h>
 #include <atoms/SphericalDataNumerical.h>
 #include <utils/Exceptions.h>
 #include <complex>
+#include <cmath>
 
 namespace dftefe
 {
@@ -34,6 +36,62 @@ namespace dftefe
   {
     namespace
     {
+      // separated here, not in the kernels, whose BODY is one macro argument
+      DFTEFE_FORCEINLINE DFTEFE_DEVICE void
+      getZero(double *out)
+      {
+        *out = 0.0;
+      }
+
+      DFTEFE_FORCEINLINE DFTEFE_DEVICE void
+      getZero(utils::deviceDoubleComplex *out)
+      {
+        *out = utils::makeComplex(0.0, 0.0);
+      }
+
+      DFTEFE_FORCEINLINE DFTEFE_DEVICE void
+      getBlochPhase(double *out,
+                    const double *kPointCoord,
+                    const double *point,
+                    const double *origin)
+      {
+        *out = 1.0;
+      }
+
+      DFTEFE_FORCEINLINE DFTEFE_DEVICE void
+      getBlochPhase(utils::deviceDoubleComplex *out,
+                    const double *             kPointCoord,
+                    const double *             point,
+                    const double *             origin)
+      {
+        double kDotR = 0.0;
+        for (size_type iDim = 0; iDim < 3; iDim++)
+          kDotR += kPointCoord[iDim] * (point[iDim] - origin[iDim]);
+        *out = utils::makeComplex(cos(kDotR), -sin(kDotR));
+      }
+
+      // the (grad psi - i k psi) bracket; utils::add has no mixed overload
+      DFTEFE_FORCEINLINE DFTEFE_DEVICE void
+      getBlochGradientTerm(double *        out,
+                           const double *  kPointCoord,
+                           const size_type iDim,
+                           const double    enrichmentValue,
+                           const double    gradientValue)
+      {
+        *out = gradientValue;
+      }
+
+      DFTEFE_FORCEINLINE DFTEFE_DEVICE void
+      getBlochGradientTerm(utils::deviceDoubleComplex *out,
+                           const double *              kPointCoord,
+                           const size_type             iDim,
+                           const double                enrichmentValue,
+                           const double                gradientValue)
+      {
+        *out = utils::makeComplex(gradientValue,
+                                  -kPointCoord[iDim] * enrichmentValue);
+      }
+
       template <typename ValueType>
       DFTEFE_CREATE_KERNEL(
         void,
@@ -51,12 +109,25 @@ namespace dftefe
 
               // Without periodicity every enrichment has exactly one origin,
               // so the offsets are 0,1,2,... and this loop runs once.
-              double value = 0.0;
+              // the origin loop is the lattice sum, one phase per image
+              ValueType value;
+              getZero(&value);
               for (size_type iOrigin = originOffsetPerEnrich[enrichId];
                    iOrigin < originOffsetPerEnrich[enrichId + 1];
                    iOrigin++)
-                value += sphericalDataFunc[enrichId].getValue(
-                  quadPtsInCell + quadId * 3, origin + iOrigin * 3);
+                {
+                  ValueType phase;
+                  getBlochPhase(&phase,
+                                kPointCoord,
+                                quadPtsInCell + quadId * 3,
+                                origin + iOrigin * 3);
+                  value = utils::add(
+                    value,
+                    utils::mult(phase,
+                                sphericalDataFunc[enrichId].getValue(
+                                  quadPtsInCell + quadId * 3,
+                                  origin + iOrigin * 3)));
+                }
 
               utils::copyValue(output + quadId * numEnrichInCell + enrichId,
                                value);
@@ -69,7 +140,8 @@ namespace dftefe
         const size_type  numQuadInCell,
         const atoms::SphericalDataNumerical::Func<utils::MemorySpace::DEVICE>
           *                   sphericalDataFunc,
-        ValueType *output);
+        ValueType *output,
+        const double *kPointCoord);
 
       template <typename ValueType>
       DFTEFE_CREATE_KERNEL(
@@ -88,10 +160,10 @@ namespace dftefe
 
               // Without periodicity every enrichment has exactly one origin,
               // so the offsets are 0,1,2,... and this loop runs once.
-              double grad[3];
-              grad[0] = 0.0;
-              grad[1] = 0.0;
-              grad[2] = 0.0;
+              ValueType grad[3];
+              getZero(&grad[0]);
+              getZero(&grad[1]);
+              getZero(&grad[2]);
               for (size_type iOrigin = originOffsetPerEnrich[enrichId];
                    iOrigin < originOffsetPerEnrich[enrichId + 1];
                    iOrigin++)
@@ -101,9 +173,37 @@ namespace dftefe
                     quadPtsInCell + quadId * 3,
                     origin + iOrigin * 3,
                     originGrad);
-                  grad[0] += originGrad[0];
-                  grad[1] += originGrad[1];
-                  grad[2] += originGrad[2];
+                  // the product rule needs psi, evaluated a second time
+                  ValueType phase;
+                  getBlochPhase(&phase,
+                                kPointCoord,
+                                quadPtsInCell + quadId * 3,
+                                origin + iOrigin * 3);
+                  const double enrichmentValue =
+                    sphericalDataFunc[enrichId].getValue(
+                      quadPtsInCell + quadId * 3, origin + iOrigin * 3);
+                  ValueType blochGradientTerm;
+                  getBlochGradientTerm(&blochGradientTerm,
+                                       kPointCoord,
+                                       0,
+                                       enrichmentValue,
+                                       originGrad[0]);
+                  grad[0] =
+                    utils::add(grad[0], utils::mult(phase, blochGradientTerm));
+                  getBlochGradientTerm(&blochGradientTerm,
+                                       kPointCoord,
+                                       1,
+                                       enrichmentValue,
+                                       originGrad[1]);
+                  grad[1] =
+                    utils::add(grad[1], utils::mult(phase, blochGradientTerm));
+                  getBlochGradientTerm(&blochGradientTerm,
+                                       kPointCoord,
+                                       2,
+                                       enrichmentValue,
+                                       originGrad[2]);
+                  grad[2] =
+                    utils::add(grad[2], utils::mult(phase, blochGradientTerm));
                 }
               for (size_type iDim = 0; iDim < 3; iDim++)
                 utils::copyValue(output + quadId * 3 * numEnrichInCell +
@@ -118,7 +218,62 @@ namespace dftefe
         const size_type  numQuadInCell,
         const atoms::SphericalDataNumerical::Func<utils::MemorySpace::DEVICE>
           *                   sphericalDataFunc,
-        ValueType *output);
+        ValueType *output,
+        const double *kPointCoord);
+
+
+      // widens the real evaluation into ValueType and applies the phase
+      template <typename ValueType>
+      DFTEFE_CREATE_KERNEL(
+        void,
+        applyBlochPhaseToEnrichment,
+        {
+          for (size_type iThread = globalThreadId; iThread < numPoints;
+               iThread += nThreadsPerBlock * nThreadBlock)
+            {
+              ValueType phase;
+              getBlochPhase(&phase, kPointCoord, points + iThread * 3, origin);
+              utils::copyValue(output + iThread,
+                               utils::mult(phase, enrichmentValues[iThread]));
+            }
+        },
+        const double *  enrichmentValues,
+        const double *  points,
+        const double *  origin,
+        const size_type numPoints,
+        ValueType *     output,
+        const double *  kPointCoord);
+
+      template <typename ValueType>
+      DFTEFE_CREATE_KERNEL(
+        void,
+        applyBlochPhaseToEnrichmentGradient,
+        {
+          for (size_type iThread = globalThreadId; iThread < numPoints;
+               iThread += nThreadsPerBlock * nThreadBlock)
+            {
+              ValueType phase;
+              getBlochPhase(&phase, kPointCoord, points + iThread * 3, origin);
+              for (size_type iDim = 0; iDim < 3; iDim++)
+                {
+                  ValueType blochGradientTerm;
+                  getBlochGradientTerm(&blochGradientTerm,
+                                       kPointCoord,
+                                       iDim,
+                                       enrichmentValues[iThread],
+                                       gradientValues[iThread * 3 + iDim]);
+                  utils::copyValue(output + iThread * 3 + iDim,
+                                   utils::mult(phase, blochGradientTerm));
+                }
+            }
+        },
+        const double *  gradientValues,
+        const double *  enrichmentValues,
+        const double *  points,
+        const double *  origin,
+        const size_type numPoints,
+        ValueType *     output,
+        const double *  kPointCoord);
     } // namespace
 
     template <typename ValueType>
@@ -136,7 +291,8 @@ namespace dftefe
           *     sphericalDataFuncInAllCells,
         ValueType *output,
         linearAlgebra::LinAlgOpContext<utils::MemorySpace::DEVICE>
-          &linAlgOpContext)
+          &linAlgOpContext,
+        const double *kPointCoord)
     {
       const size_type numStreams = linAlgOpContext.numBlasStreams();
       auto *          streams    = linAlgOpContext.getBlasStreamsVec();
@@ -181,7 +337,8 @@ namespace dftefe
                 numEnrichInCell,
                 numQuadInCell,
                 sphericalDataFuncInAllCells + cumulativeEnrichInCellRange,
-                utils::makeDataTypeDeviceCompatible(output + cumulativeQuadxEnrichInCellRange));
+                utils::makeDataTypeDeviceCompatible(output + cumulativeQuadxEnrichInCellRange),
+                kPointCoord);
 
               cumulativeCellWithNonZeroNumEnrich += 1;
             }
@@ -212,7 +369,8 @@ namespace dftefe
           *     sphericalDataFuncInAllCells,
         ValueType *output,
         linearAlgebra::LinAlgOpContext<utils::MemorySpace::DEVICE>
-          &linAlgOpContext)
+          &linAlgOpContext,
+        const double *kPointCoord)
     {
       const size_type numStreams = linAlgOpContext.numBlasStreams();
       auto *          streams    = linAlgOpContext.getBlasStreamsVec();
@@ -257,7 +415,8 @@ namespace dftefe
                 numEnrichInCell,
                 numQuadInCell,
                 sphericalDataFuncInAllCells + cumulativeEnrichInCellRange,
-                utils::makeDataTypeDeviceCompatible(output + cumulativeQuadxEnrichxDimInCellRange));
+                utils::makeDataTypeDeviceCompatible(output + cumulativeQuadxEnrichxDimInCellRange),
+                kPointCoord);
 
               cumulativeCellWithNonZeroNumEnrich += 1;
             }
@@ -274,6 +433,7 @@ namespace dftefe
         }
     }
 
+
     template <typename ValueType>
     void
     EnrichmentDataEvalKernels<ValueType,
@@ -284,32 +444,44 @@ namespace dftefe
         &           sphericalDataVec,
       const double *points,
       const double *origin,
-      ValueType *values,
+      ValueType *   values,
+      double *      scratchReal,
       linearAlgebra::LinAlgOpContext<utils::MemorySpace::DEVICE>
-        &linAlgOpContext)
+        &           linAlgOpContext,
+      const double *kPointCoord)
     {
       const size_type numStreams = linAlgOpContext.numBlasStreams();
       auto *          streams    = linAlgOpContext.getBlasStreamsVec();
 
-      // SphericalData evaluates into a real buffer, whereas the k-point phase
-      // makes the enrichment complex, so widen on the way out
-      size_type numValues = 0;
-      for (int i = 0; i < numEnrichmentFunc; i++)
-        numValues += pointsPerEnrichId[i];
-      utils::MemoryStorage<double, utils::MemorySpace::DEVICE> valuesReal(
-        numValues, 0.0);
+      atoms::AtomSuperpositionFunctionEvalKernels<utils::MemorySpace::DEVICE>::
+        getEnrichmentValues(numEnrichmentFunc,
+                            pointsPerEnrichId,
+                            sphericalDataVec,
+                            points,
+                            origin,
+                            scratchReal,
+                            linAlgOpContext);
 
       size_type cumulativeValuesOffset = 0;
       size_type cumulativeCoordsOffset = 0;
       for (int i = 0; i < numEnrichmentFunc; i++)
         {
-          size_type sid = i % numStreams;
-          sphericalDataVec[i]->getValueDevice(pointsPerEnrichId[i],
-                                              points + cumulativeCoordsOffset,
-                                              origin + i * 3,
-                                              valuesReal.data() +
-                                                cumulativeValuesOffset,
-                                              streams[sid]);
+          const size_type sid       = i % numStreams;
+          const size_type blockSize = utils::DEVICE_BLOCK_SIZE;
+          const size_type grid =
+            (pointsPerEnrichId[i] + blockSize - 1) / blockSize;
+          DFTEFE_LAUNCH_KERNEL(
+            applyBlochPhaseToEnrichment,
+            grid,
+            blockSize,
+            streams[sid],
+            scratchReal + cumulativeValuesOffset,
+            points + cumulativeCoordsOffset,
+            origin + i * 3,
+            pointsPerEnrichId[i],
+            utils::makeDataTypeDeviceCompatible(values +
+                                                cumulativeValuesOffset),
+            kPointCoord);
           cumulativeValuesOffset += pointsPerEnrichId[i];
           cumulativeCoordsOffset += pointsPerEnrichId[i] * 3;
         }
@@ -318,20 +490,11 @@ namespace dftefe
           utils::deviceError_t err = utils::deviceStreamSynchronize(streams[s]);
           DEVICE_API_CHECK(err);
         }
-
-      linearAlgebra::blasLapack::copyValueType1ArrToValueType2Arr<
-        double,
-        ValueType,
-        utils::MemorySpace::DEVICE>(numValues,
-                                    valuesReal.data(),
-                                    values,
-                                    linAlgOpContext);
     }
 
     template <typename ValueType>
     void
-    EnrichmentDataEvalKernels<ValueType,
-                              utils::MemorySpace::DEVICE>::
+    EnrichmentDataEvalKernels<ValueType, utils::MemorySpace::DEVICE>::
       getEnrichmentGradients(
         const size_type               numEnrichmentFunc,
         const std::vector<size_type> &pointsPerEnrichId,
@@ -339,51 +502,74 @@ namespace dftefe
           &           sphericalDataVec,
         const double *points,
         const double *origin,
-        ValueType *values,
+        ValueType *   values,
+        double *      scratchReal,
         linearAlgebra::LinAlgOpContext<utils::MemorySpace::DEVICE>
-          &linAlgOpContext)
+          &           linAlgOpContext,
+        const double *kPointCoord)
     {
       const size_type numStreams = linAlgOpContext.numBlasStreams();
       auto *          streams    = linAlgOpContext.getBlasStreamsVec();
 
-      // SphericalData evaluates into a real buffer, whereas the k-point phase
-      // makes the enrichment complex, so widen on the way out
       size_type numValues = 0;
       for (int i = 0; i < numEnrichmentFunc; i++)
         numValues += pointsPerEnrichId[i] * 3;
-      utils::MemoryStorage<double, utils::MemorySpace::DEVICE> valuesReal(
-        numValues, 0.0);
 
-      size_type cumulativeValuesOffset = 0;
-      size_type cumulativeCoordsOffset = 0;
+      atoms::AtomSuperpositionFunctionEvalKernels<utils::MemorySpace::DEVICE>::
+        getEnrichmentGradients(numEnrichmentFunc,
+                               pointsPerEnrichId,
+                               sphericalDataVec,
+                               points,
+                               origin,
+                               scratchReal,
+                               linAlgOpContext);
+
+      // the -i k psi term needs a complex ValueType, so a real run skips psi
+      double *enrichmentValues = scratchReal + numValues;
+      if (!std::is_same<ValueType,
+                        linearAlgebra::blasLapack::real_type<ValueType>>::value)
+        atoms::AtomSuperpositionFunctionEvalKernels<
+          utils::MemorySpace::DEVICE>::getEnrichmentValues(numEnrichmentFunc,
+                                                           pointsPerEnrichId,
+                                                           sphericalDataVec,
+                                                           points,
+                                                           origin,
+                                                           enrichmentValues,
+                                                           linAlgOpContext);
+
+      size_type cumulativeValuesOffset     = 0;
+      size_type cumulativeCoordsOffset     = 0;
+      size_type cumulativeEnrichmentOffset = 0;
       for (int i = 0; i < numEnrichmentFunc; i++)
         {
-          size_type sid = i % numStreams;
-          sphericalDataVec[i]->getGradientValueDevice(pointsPerEnrichId[i],
-                                                      points +
-                                                        cumulativeCoordsOffset,
-                                                      origin + i * 3,
-                                                      valuesReal.data() +
-                                                        cumulativeValuesOffset,
-                                                      streams[sid]);
+          const size_type sid       = i % numStreams;
+          const size_type blockSize = utils::DEVICE_BLOCK_SIZE;
+          const size_type grid =
+            (pointsPerEnrichId[i] + blockSize - 1) / blockSize;
+          DFTEFE_LAUNCH_KERNEL(
+            applyBlochPhaseToEnrichmentGradient,
+            grid,
+            blockSize,
+            streams[sid],
+            scratchReal + cumulativeValuesOffset,
+            enrichmentValues + cumulativeEnrichmentOffset,
+            points + cumulativeCoordsOffset,
+            origin + i * 3,
+            pointsPerEnrichId[i],
+            utils::makeDataTypeDeviceCompatible(values +
+                                                cumulativeValuesOffset),
+            kPointCoord);
           cumulativeValuesOffset += pointsPerEnrichId[i] * 3;
           cumulativeCoordsOffset += pointsPerEnrichId[i] * 3;
+          cumulativeEnrichmentOffset += pointsPerEnrichId[i];
         }
       for (int s = 0; s < numStreams; ++s)
         {
           utils::deviceError_t err = utils::deviceStreamSynchronize(streams[s]);
           DEVICE_API_CHECK(err);
         }
-
-      linearAlgebra::blasLapack::copyValueType1ArrToValueType2Arr<
-        double,
-        ValueType,
-        utils::MemorySpace::DEVICE>(numValues,
-                                    valuesReal.data(),
-                                    values,
-                                    linAlgOpContext);
     }
-
+    
     template class EnrichmentDataEvalKernels<double,
                                              utils::MemorySpace::DEVICE>;
     template class EnrichmentDataEvalKernels<std::complex<double>,

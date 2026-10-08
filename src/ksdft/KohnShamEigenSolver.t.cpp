@@ -404,10 +404,12 @@ namespace dftefe
             {
               d_chebyshevPolynomialDegree =
                 d_calculationType == CalculationType::AE ?
-                  getChebyPolynomialDegreeAllElectron(
-                    d_wantedSpectrumLowerBound,
-                    d_wantedSpectrumUpperBound,
-                    eigenValuesLanczos[1] + residual) :
+                  std::min(
+                    getChebyPolynomialDegree(eigenValuesLanczos[1] + residual),
+                    getChebyPolynomialDegreeAllElectron(
+                      d_wantedSpectrumLowerBound,
+                      d_wantedSpectrumUpperBound,
+                      eigenValuesLanczos[1] + residual)) :
                   getChebyPolynomialDegree(eigenValuesLanczos[1] + residual);
 
               d_chebyshevPolynomialDegree =
