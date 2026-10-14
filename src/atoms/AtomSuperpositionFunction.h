@@ -62,6 +62,12 @@ namespace dftefe
         const std::string                            fieldName,
         linearAlgebra::LinAlgOpContext<memorySpace> *linAlgOpContext = nullptr);
 
+      // superposes no spherical data, so no container and no atom symbols
+      AtomSuperpositionFunction(
+        const std::vector<utils::Point> &            atomCoordinates,
+        const std::string                            fieldName,
+        linearAlgebra::LinAlgOpContext<memorySpace> *linAlgOpContext = nullptr);
+
       void
       evaluate(const size_type                 numPoints,
                const AtomSuperpositionFuncType atomSupType,
@@ -76,17 +82,6 @@ namespace dftefe
         else
 #endif
           evalHost(numPoints, atomSupType, constant, t, q, atomWeights);
-      }
-
-      void
-      evaluateHost(const size_type                 numPoints,
-                   const AtomSuperpositionFuncType atomSupType,
-                   const double *                  t,
-                   double *                        q,
-                   const double                    constant    = 1.0,
-                   const std::vector<double> &     atomWeights = {}) const
-      {
-        evalHost(numPoints, atomSupType, constant, t, q, atomWeights);
       }
 
     protected:

@@ -49,12 +49,12 @@ namespace dftefe
               {
                 case AtomSevereFuncType::Atomic::density:
                   return "density";
-                  // these use no spherical data; the base class still needs
-                  // a field that exists, so density is named.
                 case AtomSevereFuncType::Atomic::vSmearSq:
+                  return "vSmearSq";
                 case AtomSevereFuncType::Atomic::gradVSmearSq:
+                  return "gradVSmearSq";
                 case AtomSevereFuncType::Atomic::bTimesVSmear:
-                  return "density";
+                  return "bTimesVSmear";
                 case AtomSevereFuncType::Atomic::vTotalSq:
                 case AtomSevereFuncType::Atomic::gradVTotalSq:
                 case AtomSevereFuncType::Atomic::bPlusRhoTimesVTotal:
@@ -106,6 +106,14 @@ namespace dftefe
                   type == AtomSevereFuncType::Atomic::vExtTimesOrbitalSq);
       }
 
+      bool
+      isNoSphericalData(AtomSevereFuncType::Atomic type)
+      {
+        return (type == AtomSevereFuncType::Atomic::vSmearSq ||
+                type == AtomSevereFuncType::Atomic::gradVSmearSq ||
+                type == AtomSevereFuncType::Atomic::bTimesVSmear);
+      }
+
       template <typename FuncType>
       AtomSevereFuncType::Atomic
       getAtomicType(FuncType type)
@@ -143,35 +151,22 @@ namespace dftefe
         {
           if constexpr (std::is_same_v<FuncType, AtomSevereFuncType::Atomic>)
             {
-              if (type == AtomSevereFuncType::Atomic::bPlusRhoTimesVTotal ||
-                  type == AtomSevereFuncType::Atomic::bTimesVSmear)
+              utils::throwException(
+                !isNoSphericalData(type),
+                "AtomSevereFunction: " + getFieldName(type) +
+                  " reads no spherical data, use the constructor that takes no "
+                  "AtomSphericalDataContainer.");
+              if (type == AtomSevereFuncType::Atomic::bPlusRhoTimesVTotal)
                 {
                   d_b = std::make_shared<utils::SmearChargeDensityFunction>(
                     atomCoordinates, atomCharges, smearedChargeRadius);
-                }
-              if (type == AtomSevereFuncType::Atomic::bTimesVSmear ||
-                  type == AtomSevereFuncType::Atomic::vSmearSq)
-                {
-                  const size_type nAtoms = atomCoordinates.size();
-                  d_vsmearPerAtom.resize(nAtoms);
-                  for (size_type iAtom = 0; iAtom < nAtoms; ++iAtom)
-                    d_vsmearPerAtom[iAtom] =
-                      std::make_shared<utils::SmearChargePotentialFunction>(
-                        atomCoordinates[iAtom],
-                        atomCharges[iAtom],
-                        smearedChargeRadius);
-                }
-              if (type == AtomSevereFuncType::Atomic::bPlusRhoTimesVTotal)
-                {
-                  d_rho = std::make_shared<AtomSevereFunction<memorySpace>>(
-                    atomSphericalDataContainer,
-                    atomSymbol,
-                    atomCoordinates,
-                    atomCharges,
-                    smearedChargeRadius,
-                    AtomSevereFuncType::Atomic::density,
-                    1.0 / (Clm(0, 0) * Dm(0) * Qm(0, 0)),
-                    linAlgOpContext);
+                  d_rho =
+                    std::make_shared<AtomSuperpositionFunction<memorySpace>>(
+                      atomSphericalDataContainer,
+                      atomSymbol,
+                      atomCoordinates,
+                      "density",
+                      linAlgOpContext);
                 }
               if (type == AtomSevereFuncType::Atomic::vExtTimesOrbitalSq)
                 {
@@ -181,6 +176,55 @@ namespace dftefe
                 }
             }
         }
+    }
+
+    template <utils::MemorySpace memorySpace>
+    template <typename FuncType>
+    AtomSevereFunction<memorySpace>::AtomSevereFunction(
+      const std::vector<utils::Point> &            atomCoordinates,
+      const std::vector<double> &                  atomCharges,
+      double                                       smearedChargeRadius,
+      FuncType                                     type,
+      double                                       constant,
+      linearAlgebra::LinAlgOpContext<memorySpace> *linAlgOpContext)
+      : AtomSuperpositionFunction<memorySpace>(atomCoordinates,
+                                               getFieldName(type),
+                                               linAlgOpContext)
+      , d_atomSupType(getAtomSupType(type))
+      , d_constant(constant)
+      , d_isComposite(getIsComposite(type))
+      , d_atomicType(getAtomicType(type))
+    {
+      if constexpr (std::is_same_v<FuncType, AtomSevereFuncType::Atomic>)
+        {
+          utils::throwException(
+            isNoSphericalData(type),
+            "AtomSevereFunction: " + getFieldName(type) +
+              " reads spherical data, use the constructor that takes an "
+              "AtomSphericalDataContainer.");
+          if (type == AtomSevereFuncType::Atomic::bTimesVSmear)
+            {
+              d_b = std::make_shared<utils::SmearChargeDensityFunction>(
+                atomCoordinates, atomCharges, smearedChargeRadius);
+            }
+          if (type == AtomSevereFuncType::Atomic::bTimesVSmear ||
+              type == AtomSevereFuncType::Atomic::vSmearSq)
+            {
+              const size_type nAtoms = atomCoordinates.size();
+              d_vsmearPerAtom.resize(nAtoms);
+              for (size_type iAtom = 0; iAtom < nAtoms; ++iAtom)
+                d_vsmearPerAtom[iAtom] =
+                  std::make_shared<utils::SmearChargePotentialFunction>(
+                    atomCoordinates[iAtom],
+                    atomCharges[iAtom],
+                    smearedChargeRadius);
+            }
+        }
+      else
+        utils::throwException(
+          false,
+          "AtomSevereFunction: the PSP type reads spherical data, use the "
+          "constructor that takes an AtomSphericalDataContainer.");
     }
 
     template <utils::MemorySpace memorySpace>
@@ -216,6 +260,10 @@ namespace dftefe
                                               const double *t,
                                               double *      q) const
     {
+      if constexpr (memorySpace == utils::MemorySpace::DEVICE)
+        utils::throwException(
+          false, "AtomSevereFunction<DEVICE>::evalHost should not be called.");
+
       if (!d_isComposite)
         {
           AtomSuperpositionFunction<memorySpace>::evalHost(
@@ -233,8 +281,13 @@ namespace dftefe
 
       if (d_atomicType == AtomSevereFuncType::Atomic::bPlusRhoTimesVTotal)
         {
-          auto bVals   = (*d_b)(points);
-          auto rhoVals = (*d_rho)(points);
+          auto                bVals = (*d_b)(points);
+          std::vector<double> rhoVals(numPoints, 0.0);
+          d_rho->evaluate(numPoints,
+                          AtomSuperpositionFuncType::Identity,
+                          t,
+                          rhoVals.data(),
+                          1.0 / (Clm(0, 0) * Dm(0) * Qm(0, 0)));
           for (size_type e = 0; e < this->d_numEnrichmentFuncTotal; ++e)
             {
               utils::Point origin(

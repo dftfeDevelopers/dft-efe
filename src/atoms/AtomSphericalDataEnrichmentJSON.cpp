@@ -571,30 +571,42 @@ namespace dftefe
         }
       if (fieldName == "density")
         {
-          // Cut off once all but 1e-4 of the atom's electrons are inside;
-          // rhoQuad is the 3D radial density, so the count carries 4 pi.
-          const double fourPi = 4.0 * utils::mathConstants::pi;
           for (int i = 0; i < qNumVec.size(); i++)
             {
-              std::vector<double> numElectrons(0);
-              integralxSqf(radialPoints,
-                           radialWeights,
-                           radialValuesVec[i],
-                           numElectrons);
-              const double numElectronsTotal =
-                fourPi * numElectrons[numElectrons.size() - 1];
-
-              cutOffInfoVec[i].first  = radialPoints[radialPoints.size() - 1];
-              cutOffInfoVec[i].second = 1e6;
-              for (int j = 0; j < radialPoints.size(); j++)
+              for (int j = radialPoints.size() - 1; j > 0; j--)
                 {
-                  if (std::abs(numElectronsTotal - fourPi * numElectrons[j]) <= 1e-4)
+                  if (std::abs(radialValuesVec[i][j]) > 1e-10)
                     {
-                      cutOffInfoVec[i].first = radialPoints[j];
+                      cutOffInfoVec[i].first  = radialPoints[j];
+                      cutOffInfoVec[i].second = 1e6;
                       break;
                     }
                 }
             }
+          // // Cut off once all but 1e-4 of the atom's electrons are inside;
+          // // rhoQuad is the 3D radial density, so the count carries 4 pi.
+          // const double fourPi = 4.0 * utils::mathConstants::pi;
+          // for (int i = 0; i < qNumVec.size(); i++)
+          //   {
+          //     std::vector<double> numElectrons(0);
+          //     integralxSqf(radialPoints,
+          //                  radialWeights,
+          //                  radialValuesVec[i],
+          //                  numElectrons);
+          //     const double numElectronsTotal =
+          //       fourPi * numElectrons[numElectrons.size() - 1];
+
+          //     cutOffInfoVec[i].first  = radialPoints[radialPoints.size() - 1];
+          //     cutOffInfoVec[i].second = 1e6;
+          //     for (int j = 0; j < radialPoints.size(); j++)
+          //       {
+          //         if (std::abs(numElectronsTotal - fourPi * numElectrons[j]) <= 1e-4)
+          //           {
+          //             cutOffInfoVec[i].first = radialPoints[j];
+          //             break;
+          //           }
+          //       }
+          //   }
         }
       if (fieldName == "vtotal")
         {

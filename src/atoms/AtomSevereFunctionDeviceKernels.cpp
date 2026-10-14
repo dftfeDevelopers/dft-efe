@@ -28,6 +28,7 @@
 #  include <utils/DeviceAPICalls.h>
 #  include <utils/DeviceDataTypeOverloads.h>
 #  include <atoms/AtomSevereFunction.h>
+#  include <atoms/SphericalHarmonics.h>
 #  include <cmath>
 
 namespace dftefe
@@ -167,9 +168,11 @@ namespace dftefe
           d_b->template eval<utils::MemorySpace::DEVICE>(numPoints,
                                                          t,
                                                          bStorage.data());
-          d_rho->template eval<utils::MemorySpace::DEVICE>(numPoints,
-                                                           t,
-                                                           rhoStorage.data());
+          d_rho->evaluate(numPoints,
+                          AtomSuperpositionFuncType::Identity,
+                          t,
+                          rhoStorage.data(),
+                          1.0 / (Clm(0, 0) * Dm(0) * Qm(0, 0)));
 
           for (size_type e = 0; e < E; ++e)
             {

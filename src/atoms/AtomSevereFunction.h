@@ -72,6 +72,16 @@ namespace dftefe
         double                                       constant        = 1.0,
         linearAlgebra::LinAlgOpContext<memorySpace> *linAlgOpContext = nullptr);
 
+      // for the types that read no spherical data
+      template <typename FuncType>
+      AtomSevereFunction(
+        const std::vector<utils::Point> &            atomCoordinates,
+        const std::vector<double> &                  atomCharges,
+        double                                       smearedChargeRadius,
+        FuncType                                     type,
+        double                                       constant        = 1.0,
+        linearAlgebra::LinAlgOpContext<memorySpace> *linAlgOpContext = nullptr);
+
       double
       operator()(const utils::Point &point) const override;
 
@@ -96,7 +106,7 @@ namespace dftefe
       AtomSevereFuncType::Atomic                        d_atomicType;
       std::shared_ptr<utils::ScalarSpatialFunctionReal> d_b;
       std::shared_ptr<utils::ScalarSpatialFunctionReal> d_vext;
-      std::shared_ptr<utils::ScalarSpatialFunctionReal> d_rho;
+      std::shared_ptr<AtomSuperpositionFunction<memorySpace>> d_rho;
       // one smeared-charge potential per atom
       std::vector<std::shared_ptr<utils::ScalarSpatialFunctionReal>>
         d_vsmearPerAtom;

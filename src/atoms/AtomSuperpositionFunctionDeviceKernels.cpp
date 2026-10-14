@@ -86,6 +86,11 @@ namespace dftefe
       const std::vector<double> &     atomWeights) const
     {
       utils::throwException(
+        d_atomSphericalDataContainer != nullptr,
+        "AtomSuperpositionFunction \"" + d_fieldName +
+          "\" holds no spherical data, so it cannot be superposed.");
+
+      utils::throwException(
         d_linAlgOpContext != nullptr,
         "AtomSuperpositionFunction::evalDevice requires a non-null LinAlgOpContext.");
 

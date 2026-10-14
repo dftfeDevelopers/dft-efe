@@ -65,6 +65,21 @@ namespace dftefe
     }
 
     template <utils::MemorySpace memorySpace>
+    AtomSuperpositionFunction<memorySpace>::AtomSuperpositionFunction(
+      const std::vector<utils::Point> &            atomCoordinates,
+      const std::string                            fieldName,
+      linearAlgebra::LinAlgOpContext<memorySpace> *linAlgOpContext)
+      : d_atomSphericalDataContainer(nullptr)
+      , d_atomSymbolVec(0)
+      , d_atomCoordinatesVec(atomCoordinates)
+      , d_fieldName(fieldName)
+      , d_numAtoms(atomCoordinates.size())
+      , d_dim(atomCoordinates[0].size())
+      , d_numEnrichmentFuncTotal(0)
+      , d_linAlgOpContext(linAlgOpContext)
+    {}
+
+    template <utils::MemorySpace memorySpace>
     void
     AtomSuperpositionFunction<memorySpace>::evalHost(
       size_type                       numPoints,
@@ -74,6 +89,11 @@ namespace dftefe
       double *                        q,
       const std::vector<double> &     atomWeights) const
     {
+      utils::throwException(
+        d_atomSphericalDataContainer != nullptr,
+        "AtomSuperpositionFunction \"" + d_fieldName +
+          "\" holds no spherical data, so it cannot be superposed.");
+
       utils::Point              p(d_dim);
       std::vector<utils::Point> points(numPoints, p);
       for (size_type iPoint = 0; iPoint < numPoints; ++iPoint)

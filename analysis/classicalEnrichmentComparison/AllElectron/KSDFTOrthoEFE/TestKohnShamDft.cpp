@@ -398,6 +398,9 @@ int main(int argc, char** argv)
 
   std::string coordinatesDataFile = readParameter<std::string>(parameterInputFileName, "coordinatesDataFile", rootCout , false , false);
   std::string basisDataFile = readParameter<std::string>(parameterInputFileName, "basisDataFile", rootCout , false , false);
+  // optional: read density and vtotal (rho_at, phi_at) from a different
+  // atomic reference. Empty means take them from basisDataFile.
+  std::string basisDataFileRhoVtot = readParameter<std::string>(parameterInputFileName, "basisDataFileRhoVtot", rootCout , false , false, std::string(""));
 
  std::string tciaFolder = readParameter<std::string>(parameterInputFileName, "tciaFolder", rootCout , false , false);
   std::string tciaOutFilePrefix = readParameter<std::string>(parameterInputFileName, "tciaOutFilePrefix", rootCout , false , false);
@@ -498,6 +501,39 @@ int main(int argc, char** argv)
   utils::mpi::MPIBarrier(comm);
   fstream.close();
 
+  // same "symbol path" format as basisDataFile; stays empty when the field
+  // data is taken from basisDataFile itself
+  std::map<std::string, std::string> atomSymbolToBasisFileNameRhoVtot;
+  if (!basisDataFileRhoVtot.empty())
+  {
+    fstream.open(basisDataFileRhoVtot, std::fstream::in);
+    utils::throwException(fstream.is_open(),
+                          "Parameter 'basisDataFileRhoVtot' names a file that "
+                          "could not be opened: '" + basisDataFileRhoVtot + "'");
+    while (std::getline(fstream, line))
+    {
+      std::stringstream ss(line);
+      symbol.clear();
+      basisFilePath.clear();
+      ss >> symbol;
+      ss >> basisFilePath;
+      if (symbol.empty())
+        continue;
+      utils::throwException(!basisFilePath.empty(),
+                            "Parameter 'basisDataFileRhoVtot' has no path for "
+                            "atom symbol '" + symbol + "'.");
+      atomSymbolToBasisFileNameRhoVtot[symbol] = basisFilePath;
+    }
+    utils::mpi::MPIBarrier(comm);
+    fstream.close();
+
+    for (auto &i : atomSymbolToBasisFileName)
+      utils::throwException(
+        atomSymbolToBasisFileNameRhoVtot.count(i.first) == 1,
+        "The file named by 'basisDataFileRhoVtot' has no entry for atom "
+        "symbol '" + i.first + "', which is needed for rho_at and phi_at.");
+  }
+
   fstream.open(coordinatesDataFile, std::fstream::in);
   if (!fstream.is_open()) {
       utils::throwException(false,
@@ -584,19 +620,56 @@ int main(int argc, char** argv)
     rootCout << " Setting the number of Kohn-Sham wave functions to be " << numWantedEigenvalues << std::endl;
   }
 
-  std::vector<std::string> fieldNames{"orbital","vtotal","density"};
+  // orbital always. vtotal and density are read here too unless they were
+  // given their own file; vtotal stays regardless outside the delta-rho
+  // route, where the total potential enrichment basis reads it from here.
+  const bool rhoVtotFromOwnFile = !basisDataFileRhoVtot.empty();
+  const bool vtotalFromThisFile = !rhoVtotFromOwnFile || !isDeltaRhoPoissonSolve;
+  std::vector<std::string> fieldNames(1 + (vtotalFromThisFile ? 1 : 0) +
+                                      (rhoVtotFromOwnFile ? 0 : 1));
+  {
+    dftefe::size_type iField = 0;
+    fieldNames[iField++]     = "orbital";
+    if (vtotalFromThisFile)
+      fieldNames[iField++] = "vtotal";
+    if (!rhoVtotFromOwnFile)
+      fieldNames[iField++] = "density";
+  }
   std::vector<std::string> metadataNames{ "symbol", "Z", "charge", "NR" };
   std::map<std::string, std::string> enrichmentAdditionalParams({{"rcsmear", std::to_string(rc)}, {"PSP/AE", "AE"}});
-  // the long vtotal tail is only needed by the delta-rho solve
+  // vtotal specific, so it belongs to whichever container carries vtotal; the
+  // long tail is only needed by the delta-rho solve
+  std::map<std::string, std::string> enrichmentAdditionalParamsVtot =
+    enrichmentAdditionalParams;
   if (!isDeltaRhoPoissonSolve)
-    enrichmentAdditionalParams["vTotCutOffSmoothness"] = "3.01,0.5";
-  std::shared_ptr<atoms::AtomSphericalDataContainer>  atomSphericalDataContainer = 
+    enrichmentAdditionalParamsVtot["vTotCutOffSmoothness"] = "3.01,0.5";
+  std::shared_ptr<atoms::AtomSphericalDataContainer>  atomSphericalDataContainer =
       std::make_shared<atoms::AtomSphericalDataContainer>(
                                                       atoms::AtomSphericalDataType::ENRICHMENT,
                                                       atomSymbolToBasisFileName,
                                                       fieldNames,
                                                       metadataNames,
-                                                      enrichmentAdditionalParams);
+                                                      vtotalFromThisFile ?
+                                                        enrichmentAdditionalParamsVtot :
+                                                        enrichmentAdditionalParams);
+
+  // rho_at and phi_at may come from their own atomic reference. A high
+  // temperature reference leaves fractional occupancy in diffuse states, so
+  // its rho_at carries charge far past any usable enrichment cutoff.
+  std::vector<std::string> fieldNamesRhoVtot{"vtotal", "density"};
+
+  // every rho_at / phi_at consumer goes through this one handle; without the
+  // optional file it is the container built from basisDataFile
+  std::shared_ptr<atoms::AtomSphericalDataContainer>
+    atomSphericalDataContainerRhoVtot = atomSphericalDataContainer;
+  if (!atomSymbolToBasisFileNameRhoVtot.empty())
+    atomSphericalDataContainerRhoVtot =
+      std::make_shared<atoms::AtomSphericalDataContainer>(
+        atoms::AtomSphericalDataType::ENRICHMENT,
+        atomSymbolToBasisFileNameRhoVtot,
+        fieldNamesRhoVtot,
+        metadataNames,
+        enrichmentAdditionalParamsVtot);
 
   for (auto i:atomSymbolToBasisFileName )
   {
@@ -617,19 +690,41 @@ int main(int argc, char** argv)
     {
       utils::throwException(false, "The input basis file Z does not match with that given in input.");       
   }
+    if (!atomSymbolToBasisFileNameRhoVtot.empty())
+    {
+      rootCout << "Reading rho_at/phi_at basis file: "
+               << atomSymbolToBasisFileNameRhoVtot[i.first] << std::endl;
+      for (auto j : fieldNamesRhoVtot)
+      {
+        rootCout << " for " << j << " : ";
+        for (auto &enrichmentObjId :
+             atomSphericalDataContainerRhoVtot->getSphericalData(i.first, j))
+          rootCout << enrichmentObjId->getCutoff() << ","
+                   << enrichmentObjId->getSmoothness() << "\t";
+        rootCout << std::endl;
+      }
+      utils::throwException<utils::InvalidArgument>(
+        std::abs(
+          std::stod(
+            atomSphericalDataContainerRhoVtot->getMetadata(i.first, "Z")) -
+          std::stod(atomSphericalDataContainer->getMetadata(i.first, "Z"))) <
+          1e-12,
+        "The rho_at/phi_at basis file for '" + i.first + "' has a different Z "
+        "than the orbital basis file; they must describe the same atom.");
+    }
   }
   p.registerEnd("Reading Other Input data");
 
-  // The image envelope has to cover the longest reaching field. density and
-  // vtotal are the electrostatic envelope and can reach far past the default,
-  // so grow the full cutoff to them; the enrichments keep the truncated one.
+  // Two envelopes are enough, and the generator provides exactly two. The
+  // truncated one stays at the default and serves the orbital enrichments;
+  // the full one covers the longest reaching field of any kind.
   double imageCutOff      = basis::PeriodicImageAtomGeneratorDefaults::CUTOFF;
   double imageCutOffTrunc = basis::PeriodicImageAtomGeneratorDefaults::CUTOFF_TRUNC;
+  double needOrbital = 0.0, needRhoVtot = 0.0, cellCentreToCorner = 0.0;
   if (anyDirectionPeriodic)
     {
       // an image is admitted on its centre distance, so a field of reach R
       // must be admitted out to R plus the cell centre to corner distance
-      double cellCentreToCorner = 0.0;
       for (int sx = -1; sx <= 1; sx += 2)
         for (int sy = -1; sy <= 1; sy += 2)
           for (int sz = -1; sz <= 1; sz += 2)
@@ -645,27 +740,35 @@ int main(int argc, char** argv)
               cellCentreToCorner = std::max(cellCentreToCorner, std::sqrt(nrm));
             }
 
-      double needFull = 0.0, needTrunc = 0.0;
+      // an enrichment is exactly zero past cutoff + cutoff/smoothness
+      auto reachOf = [](const auto &sd) {
+        return sd->getCutoff() + sd->getCutoff() / sd->getSmoothness();
+      };
+
       for (auto &i : atomSymbolToBasisFileName)
         {
-          for (auto &j : fieldNames)
-            for (auto &enrichmentObjId :
-                 atomSphericalDataContainer->getSphericalData(i.first, j))
-              {
-                if (j == "orbital")
-                  needTrunc = std::max(needTrunc, enrichmentObjId->getCutoff());
-                else
-                  needFull = std::max(needFull, enrichmentObjId->getCutoff());
-              }
-        }
-      imageCutOff = std::max(imageCutOff, needFull + cellCentreToCorner);
-      imageCutOffTrunc =
-        std::max(imageCutOffTrunc, needTrunc + cellCentreToCorner);
+          for (auto &enrichmentObjId :
+               atomSphericalDataContainer->getSphericalData(i.first, "orbital"))
+            needOrbital = std::max(needOrbital, reachOf(enrichmentObjId));
 
-      rootCout << "Image cutoff: full " << imageCutOff << " (density/vtotal "
-               << "reach " << needFull << " + corner " << cellCentreToCorner
-               << "), truncated " << imageCutOffTrunc << " (orbital reach "
-               << needTrunc << ")\n";
+          for (auto &j : fieldNamesRhoVtot)
+            for (auto &enrichmentObjId :
+                 atomSphericalDataContainerRhoVtot->getSphericalData(i.first,
+                                                                     j))
+              needRhoVtot = std::max(needRhoVtot, reachOf(enrichmentObjId));
+        }
+
+      imageCutOff = std::max(imageCutOff,
+                             std::max(needOrbital, needRhoVtot) +
+                               cellCentreToCorner);
+
+      rootCout << "Image cutoff: full " << imageCutOff << " (max field reach "
+               << std::max(needOrbital, needRhoVtot) << " + corner "
+               << cellCentreToCorner << ", floored at "
+               << basis::PeriodicImageAtomGeneratorDefaults::CUTOFF
+               << "), truncated " << imageCutOffTrunc
+               << "; reaches: orbital " << needOrbital << ", rho_at/phi_at "
+               << needRhoVtot << "\n";
     }
 
   std::shared_ptr<const basis::PeriodicImageAtomGenerator> imageAtomGenerator =
@@ -681,18 +784,31 @@ int main(int argc, char** argv)
         imageCutOffTrunc);
 
   // AtomSuperpositionFunction is built here, not in the library, so its atom
-  // list is this caller's responsibility: rho_at and phi_at need the extended
-  // lists, full and not truncated, being the electrostatic envelope.
+  // list is this caller's responsibility. rho_at, phi_at and V_ext must use
+  // this full list: ElectrostaticLocalFE builds its own from getExtendedAtoms
+  // and V_ext - V_smear only cancels when both run over the same images.
   std::vector<utils::Point> extendedAtomCoordinatesVec = atomCoordinatesVec;
   std::vector<std::string>  extendedAtomSymbolVec      = atomSymbolVec;
   std::vector<double>       extendedAtomChargesVec     = atomChargesVec;
-  // The orbital driven quadrature criteria reach only as far as an orbital, so
-  // they take the truncated list; the full one would cost them the whole
-  // electrostatic envelope for no gain.
+  // the truncated envelope, which EnrichmentIdsPartition also works from
   std::vector<utils::Point> extendedAtomCoordinatesTruncVec =
     atomCoordinatesVec;
   std::vector<std::string> extendedAtomSymbolTruncVec  = atomSymbolVec;
   std::vector<double>      extendedAtomChargesTruncVec = atomChargesVec;
+  // The criteria only have to reach as far as an orbital, so they take the
+  // smaller envelope that still covers that reach. Nothing downstream depends
+  // on which one they got, which is why the choice is free here and not for
+  // rho_at / phi_at.
+  const bool orbitalFitsTrunc =
+    (needOrbital + cellCentreToCorner) <= imageCutOffTrunc;
+  const std::vector<utils::Point> &extendedAtomCoordinatesCriteriaVec =
+    orbitalFitsTrunc ? extendedAtomCoordinatesTruncVec :
+                       extendedAtomCoordinatesVec;
+  const std::vector<std::string> &extendedAtomSymbolCriteriaVec =
+    orbitalFitsTrunc ? extendedAtomSymbolTruncVec : extendedAtomSymbolVec;
+  const std::vector<double> &extendedAtomChargesCriteriaVec =
+    orbitalFitsTrunc ? extendedAtomChargesTruncVec : extendedAtomChargesVec;
+
   if (imageAtomGenerator != nullptr)
     {
       imageAtomGenerator->getExtendedAtoms(atomCoordinatesVec,
@@ -726,24 +842,33 @@ int main(int argc, char** argv)
       // Which consumer reads which list, so the assignment is visible in the
       // output instead of having to be traced through the source.
       rootCout << "Image list per consumer:\n";
-      rootCout << "  extendedAtom*TruncVec (cutOffTrunc = " << imageCutOffTrunc
-               << ", " << extendedAtomCoordinatesTruncVec.size()
-               << " atoms): orbitalSq, gradOrbitalSq, vExtTimesOrbitalSq"
-               << "; EnrichmentIdsPartition uses getImagePositionsTrunc\n";
-      rootCout << "  extendedAtom*Vec (cutOff = " << imageCutOff << ", "
-               << extendedAtomCoordinatesVec.size()
-               << " atoms): elecChargeDens(rho_at), PointChargePotentialFunction"
-               << ", bTimesVSmear";
+      rootCout << "  criteria list (" << (orbitalFitsTrunc ? "truncated, " :
+                                                             "full, ")
+               << extendedAtomCoordinatesCriteriaVec.size()
+               << " atoms): every adaptive quadrature criterion -- orbitalSq, "
+               << "gradOrbitalSq, vExtTimesOrbitalSq, bTimesVSmear";
       if (!isDeltaRhoPoissonSolve)
         rootCout << ", vTotalSq, gradVTotalSq";
-      if (isDeltaRhoPoissonSolve)
-        rootCout << ", smfuncAtTotPot(phi_at)";
       if (isDeltaRhoPoissonSolve && (tciaFolder == "" || tciaOutFilePrefix == ""))
         rootCout << ", bPlusRhoTimesVTotal";
       if (isNumericalNuclearSolve)
         rootCout << ", vSmearSq, gradVSmearSq";
-      rootCout << "; ElectrostaticLocalFE and the TCIA lattice sum use "
-               << "getExtendedAtoms\n";
+      rootCout << "\n";
+
+      rootCout << "  extendedAtom*TruncVec (cutOffTrunc = " << imageCutOffTrunc
+               << ", " << extendedAtomCoordinatesTruncVec.size()
+               << " atoms): EnrichmentIdsPartition, via "
+               << "getImagePositionsTrunc\n";
+
+      rootCout << "  extendedAtom*Vec (cutOff = " << imageCutOff << ", "
+               << extendedAtomCoordinatesVec.size()
+               << " atoms): elecChargeDens(rho_at)";
+      if (isDeltaRhoPoissonSolve)
+        rootCout << ", smfuncAtTotPot(phi_at)";
+      rootCout << ", externalPotentialFunction(point charges)";
+      rootCout << "; the electrostatics operator reads getExtendedAtoms, so b, "
+               << "V_smear, V_ext, rho_at and the TCIA lattice sum all share "
+               << "this envelope\n";
     }
 
   // Generate mesh
@@ -775,34 +900,32 @@ int main(int argc, char** argv)
 
     functionsVec.push_back(std::make_shared<atoms::AtomSevereFunction<memorySpace>>(
         atomSphericalDataContainer,
-        extendedAtomSymbolTruncVec,
-        extendedAtomCoordinatesTruncVec,
-        extendedAtomChargesTruncVec,
+        extendedAtomSymbolCriteriaVec,
+        extendedAtomCoordinatesCriteriaVec,
+        extendedAtomChargesCriteriaVec,
         rc,
         atoms::AtomSevereFuncType::Atomic::orbitalSq,
         1.0,
         linAlgOpContext.get()));
     functionsVec.push_back(std::make_shared<atoms::AtomSevereFunction<memorySpace>>(
         atomSphericalDataContainer,
-        extendedAtomSymbolTruncVec,
-        extendedAtomCoordinatesTruncVec,
-        extendedAtomChargesTruncVec,
+        extendedAtomSymbolCriteriaVec,
+        extendedAtomCoordinatesCriteriaVec,
+        extendedAtomChargesCriteriaVec,
         rc,
         atoms::AtomSevereFuncType::Atomic::gradOrbitalSq,
         1.0,
         linAlgOpContext.get()));
     functionsVec.push_back(std::make_shared<atoms::AtomSevereFunction<memorySpace>>(
         atomSphericalDataContainer,
-        extendedAtomSymbolTruncVec,
-        extendedAtomCoordinatesTruncVec,
-        extendedAtomChargesTruncVec,
+        extendedAtomSymbolCriteriaVec,
+        extendedAtomCoordinatesCriteriaVec,
+        extendedAtomChargesCriteriaVec,
         rc,
         atoms::AtomSevereFuncType::Atomic::vExtTimesOrbitalSq));
     // drives the grid to resolve b * V_smear, the nuclear self energy
     // integrand; nothing else in this list targets it
     functionsVec.push_back(std::make_shared<atoms::AtomSevereFunction<memorySpace>>(
-        atomSphericalDataContainer,
-        extendedAtomSymbolTruncVec,
         extendedAtomCoordinatesTruncVec,
         extendedAtomChargesTruncVec,
         rc,
@@ -811,19 +934,19 @@ int main(int argc, char** argv)
     if(!isDeltaRhoPoissonSolve)
     {
       functionsVec.push_back(std::make_shared<atoms::AtomSevereFunction<memorySpace>>(
-          atomSphericalDataContainer,
-          extendedAtomSymbolTruncVec,
-          extendedAtomCoordinatesTruncVec,
-          extendedAtomChargesTruncVec,
+          atomSphericalDataContainerRhoVtot,
+          extendedAtomSymbolCriteriaVec,
+          extendedAtomCoordinatesCriteriaVec,
+          extendedAtomChargesCriteriaVec,
           0.0,
           atoms::AtomSevereFuncType::Atomic::vTotalSq,
           1.0,
           linAlgOpContext.get()));
       functionsVec.push_back(std::make_shared<atoms::AtomSevereFunction<memorySpace>>(
-          atomSphericalDataContainer,
-          extendedAtomSymbolTruncVec,
-          extendedAtomCoordinatesTruncVec,
-          extendedAtomChargesTruncVec,
+          atomSphericalDataContainerRhoVtot,
+          extendedAtomSymbolCriteriaVec,
+          extendedAtomCoordinatesCriteriaVec,
+          extendedAtomChargesCriteriaVec,
           0.0,
           atoms::AtomSevereFuncType::Atomic::gradVTotalSq,
           1.0,
@@ -832,10 +955,10 @@ int main(int argc, char** argv)
     if(isDeltaRhoPoissonSolve && (tciaFolder == "" || tciaOutFilePrefix == ""))
     {
       functionsVec.push_back(std::make_shared<atoms::AtomSevereFunction<memorySpace>>(
-        atomSphericalDataContainer,
-        extendedAtomSymbolTruncVec,
-        extendedAtomCoordinatesTruncVec,
-        extendedAtomChargesTruncVec,
+        atomSphericalDataContainerRhoVtot,
+        extendedAtomSymbolCriteriaVec,
+        extendedAtomCoordinatesCriteriaVec,
+        extendedAtomChargesCriteriaVec,
         rc,
         atoms::AtomSevereFuncType::Atomic::bPlusRhoTimesVTotal,
         1.0,
@@ -847,19 +970,15 @@ int main(int argc, char** argv)
     if(isNumericalNuclearSolve)
     {
       functionsVec.push_back(std::make_shared<atoms::AtomSevereFunction<memorySpace>>(
-          atomSphericalDataContainer,
-          extendedAtomSymbolTruncVec,
-          extendedAtomCoordinatesTruncVec,
-          extendedAtomChargesTruncVec,
+          extendedAtomCoordinatesCriteriaVec,
+          extendedAtomChargesCriteriaVec,
           rc,
           atoms::AtomSevereFuncType::Atomic::vSmearSq,
           1.0,
           linAlgOpContext.get()));
       functionsVec.push_back(std::make_shared<atoms::AtomSevereFunction<memorySpace>>(
-          atomSphericalDataContainer,
-          extendedAtomSymbolTruncVec,
-          extendedAtomCoordinatesTruncVec,
-          extendedAtomChargesTruncVec,
+          extendedAtomCoordinatesCriteriaVec,
+          extendedAtomChargesCriteriaVec,
           rc,
           atoms::AtomSevereFuncType::Atomic::gradVSmearSq,
           1.0,
@@ -1298,7 +1417,7 @@ int main(int argc, char** argv)
 
   std::shared_ptr<atoms::AtomSuperpositionFunction<memorySpace>> elecChargeDens =
     std::make_shared<atoms::AtomSuperpositionFunction<memorySpace>>(
-      atomSphericalDataContainer,
+      atomSphericalDataContainerRhoVtot,
       extendedAtomSymbolVec,
       extendedAtomCoordinatesVec,
       "density",
@@ -1403,7 +1522,10 @@ int main(int argc, char** argv)
   utils::printCurrentMemoryUsage<memorySpace>(comm, "Hamiltonian Basis overlap and inv");
 
   // ElectrostaticLocalFE pairs this against a smeared charge potential built
-  // from its own extended atom list, so both must span the same atom set.
+  // from its own extended atom list, so both must span the same atom set:
+  // their difference is zero outside rc only when the two sums run over the
+  // same images. The operator builds that list with getExtendedAtoms, so this
+  // must be the full list.
   const utils::ScalarSpatialFunctionReal *externalPotentialFunction = new 
     utils::PointChargePotentialFunction(extendedAtomCoordinatesVec,
                                         extendedAtomChargesVec);
@@ -1526,7 +1648,7 @@ int main(int argc, char** argv)
   {
     std::shared_ptr<atoms::AtomSuperpositionFunction<memorySpace>> smfuncAtTotPot =
       std::make_shared<atoms::AtomSuperpositionFunction<memorySpace>>(
-        atomSphericalDataContainer,
+        atomSphericalDataContainerRhoVtot,
         extendedAtomSymbolVec,
         extendedAtomCoordinatesVec,
         "vtotal",
@@ -1580,6 +1702,9 @@ int main(int argc, char** argv)
                                   orthoType,
                                   chebyshevPolynomialDegree,
                                   ksdft::MixingDefaults::SPIN_MIXING_ENHANCEMENT_FACTOR,
+                                  // the electrostatics operator is this
+                                  // generator's only consumer; b, V_smear,
+                                  // V_ext and rho_at share one envelope
                                   imageAtomGenerator);
   }
   else

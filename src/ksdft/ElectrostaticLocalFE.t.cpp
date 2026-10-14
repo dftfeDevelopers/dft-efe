@@ -32,6 +32,8 @@
 #include <basis/EFEBasisDofHandler.h>
 #include <cmath>
 #include <limits>
+#include <iomanip>
+#include <sstream>
 namespace dftefe
 {
   namespace ksdft
@@ -846,24 +848,43 @@ namespace dftefe
                           *d_linAlgOpContextHost);
         }
 
-      // --------TODO : use eval()-----
+      utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>
+        externalPotentialFunctionQuadMemspace(
+          quadRuleContainerHam->nQuadraturePoints());
+
+      externalPotentialFunction.template eval<memorySpace>(
+        quadRuleContainerHam->nQuadraturePoints(),
+        quadRuleContainerHam->template getRealPointsPtr<memorySpace>(),
+        externalPotentialFunctionQuadMemspace.data());
+
+      std::vector<ValueTypeBasisCoeff> externalPotentialFunctionQuadHost(
+        quadRuleContainerHam->nQuadraturePoints(), 0.0);
+      utils::MemoryTransfer<memorySpaceHost, memorySpace> memTrans;
+      memTrans.copy(externalPotentialFunctionQuadMemspace.size(),
+                    externalPotentialFunctionQuadHost.data(),
+                    externalPotentialFunctionQuadMemspace.data());
+
+      size_type cumulativeQuadInCell = 0;
       for (size_type iCell = 0; iCell < quadRuleContainerHam->nCells(); iCell++)
         {
-          size_type quadId = 0;
-          for (auto j : quadRuleContainerHam->getCellRealPoints(iCell))
+          size_type numQuadInCell =
+            quadRuleContainerHam->nCellQuadraturePoints(iCell);
+          for (size_type quadId = 0; quadId < numQuadInCell; quadId++)
             {
               std::vector<RealType> a(d_numComponents);
               for (size_type iComp = 0; iComp < d_numComponents; iComp++)
                 {
-                  a[iComp] = (ValueType)(externalPotentialFunction)(j);
+                  a[iComp] =
+                    (ValueType)externalPotentialFunctionQuadHost
+                      [cumulativeQuadInCell + quadId];
                 }
               RealType *b = a.data();
               d_scratchPotHamQuad
                 ->template setCellQuadValues<utils::MemorySpace::HOST>(iCell,
                                                                        quadId,
                                                                        b);
-              quadId = quadId + 1;
             }
+          cumulativeQuadInCell += numQuadInCell;
         }
 
       quadrature::add((ValueType)-1.0,
@@ -1180,24 +1201,46 @@ namespace dftefe
       const utils::SmearChargePotentialFunction smfuncPot(
         d_extendedAtomCoordinates, d_extendedAtomCharges, d_smearedChargeRadius);
 
+      utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>
+        externalPotentialFunctionQuadMemspace(
+          quadRuleContainerHam->nQuadraturePoints());
+
+      externalPotentialFunction.template eval<memorySpace>(
+        quadRuleContainerHam->nQuadraturePoints(),
+        quadRuleContainerHam->template getRealPointsPtr<memorySpace>(),
+        externalPotentialFunctionQuadMemspace.data());
+
+      std::vector<ValueTypeBasisCoeff> externalPotentialFunctionQuadHost(
+        quadRuleContainerHam->nQuadraturePoints(), 0.0);
+      utils::MemoryTransfer<memorySpaceHost, memorySpace> memTrans;
+      memTrans.copy(externalPotentialFunctionQuadMemspace.size(),
+                    externalPotentialFunctionQuadHost.data(),
+                    externalPotentialFunctionQuadMemspace.data());
+
+      size_type cumulativeQuadInCell = 0;
       for (size_type iCell = 0; iCell < quadRuleContainerHam->nCells(); iCell++)
         {
-          size_type quadId = 0;
-          for (auto j : quadRuleContainerHam->getCellRealPoints(iCell))
+          size_type numQuadInCell =
+            quadRuleContainerHam->nCellQuadraturePoints(iCell);
+          std::vector<utils::Point> cellQuadPoints =
+            quadRuleContainerHam->getCellRealPoints(iCell);
+          for (size_type quadId = 0; quadId < numQuadInCell; quadId++)
             {
               std::vector<RealType> a(d_numComponents);
               for (size_type iComp = 0; iComp < d_numComponents; iComp++)
                 {
-                  a[iComp] = (ValueType)(externalPotentialFunction)(j) -
-                             (ValueType)(smfuncPot)(j);
+                  a[iComp] =
+                    (ValueType)externalPotentialFunctionQuadHost
+                      [cumulativeQuadInCell + quadId] -
+                    (ValueType)(smfuncPot)(cellQuadPoints[quadId]);
                 }
               RealType *b = a.data();
               d_correctionPotHamQuad
                 ->template setCellQuadValues<utils::MemorySpace::HOST>(iCell,
                                                                        quadId,
                                                                        b);
-              quadId = quadId + 1;
             }
+          cumulativeQuadInCell += numQuadInCell;
         }
       /*
             for (size_type iCell = 0; iCell < quadRuleContainerElec->nCells();
@@ -1702,6 +1745,41 @@ namespace dftefe
       d_correctionEnergyAtomic                     = 0;
       d_integralDiffVZZCorrVSmearxSumBZZCorrBSmear = 0;
 
+      // The smeared nucleus-nucleus interaction equals the point charge one
+      // only while the spheres stay apart; past that it needs the ZZ
+      // correction, which only the TCIA lattice sum supplies.
+      {
+        const bool hasEZZCorr =
+          d_fieldToTCIASplineMap.find("sumBZZCorrBSmear-diffVZZCorrVSmear") !=
+          d_fieldToTCIASplineMap.end();
+
+        double minSeparation = std::numeric_limits<double>::max();
+        for (size_type iAtom = 0; iAtom < d_numAtoms; iAtom++)
+          for (size_type jAtom = 0; jAtom < d_extendedAtomCoordinates.size();
+               jAtom++)
+            {
+              double separationSq = 0.0;
+              for (size_type iDim = 0; iDim < dim; iDim++)
+                {
+                  const double delta = d_atomCoordinates[iAtom][iDim] -
+                                       d_extendedAtomCoordinates[jAtom][iDim];
+                  separationSq += delta * delta;
+                }
+              if (separationSq > 1e-12)
+                minSeparation =
+                  std::min(minSeparation, std::sqrt(separationSq));
+            }
+
+        utils::throwException(
+          hasEZZCorr || minSeparation >= 2.0 * d_smearedChargeRadius,
+          "Smeared nuclear charges overlap: minimum internuclear separation " +
+            std::to_string(minSeparation) + " is below 2*rc = " +
+            std::to_string(2.0 * d_smearedChargeRadius) +
+            ", so the nucleus-nucleus interaction is no longer the point "
+            "charge one. Supply TCIA data containing "
+            "sumBZZCorrBSmear-diffVZZCorrVSmear, or reduce rc.");
+      }
+
       if (!d_isTCIEnabled)
         {
           auto jxwStorageNucl = d_feBDNuclearChargeRhs->getJxWInAllCells();
@@ -1747,15 +1825,27 @@ namespace dftefe
                         atomicTotalElecPotElectronicQuadHost.begin(),
                         atomicTotalElecPotElectronicQuadMemspace.data());
 
-          // --------TODO : use eval()-----
+          utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>
+            externalPotentialFunctionQuadMemspace(
+              quadRuleContainerNucl->nQuadraturePoints());
+
+          externalPotentialFunction.template eval<memorySpace>(
+            quadRuleContainerNucl->nQuadraturePoints(),
+            quadRuleContainerNucl->template getRealPointsPtr<memorySpace>(),
+            externalPotentialFunctionQuadMemspace.data());
+
+          std::vector<ValueTypeBasisCoeff> externalPotentialFunctionQuadHost(
+            quadRuleContainerNucl->nQuadraturePoints(), 0.0);
+          memTrans.copy(externalPotentialFunctionQuadMemspace.size(),
+                        externalPotentialFunctionQuadHost.data(),
+                        externalPotentialFunctionQuadMemspace.data());
+
           for (size_type iCell = 0; iCell < quadRuleContainerNucl->nCells();
                iCell++)
             {
               size_type numQuadInCell =
                 quadRuleContainerNucl->nCellQuadraturePoints(iCell);
 
-              std::vector<RealType> vext = (externalPotentialFunction)(
-                quadRuleContainerNucl->getCellRealPoints(iCell));
               std::vector<RealType> vsmear =
                 (smfuncPot)(quadRuleContainerNucl->getCellRealPoints(iCell));
 
@@ -1775,7 +1865,9 @@ namespace dftefe
                   d_correctionEnergyAtomic +=
                     atomicElectronChargeDensityHost[cumulativeQuadInCell +
                                                     iQuad] *
-                    (vext[iQuad] - vsmear[iQuad]) *
+                    ((RealType)externalPotentialFunctionQuadHost
+                       [cumulativeQuadInCell + iQuad] -
+                     vsmear[iQuad]) *
                     jxwStorageIter[cumulativeQuadInCell + iQuad];
                 }
               cumulativeQuadInCell += numQuadInCell;
@@ -2394,6 +2486,21 @@ namespace dftefe
                                                         dim>>
         poissonSolverDealiiMatFree = nullptr;
 
+      // A periodic domain has no Dirichlet boundary to carry the smeared
+      // potential, so this route needs a bin solve: pin the dofs outside a
+      // ball of radius > rc around every charge, masters and images alike, to
+      // the analytic potential of their nearest charge and solve only inside
+      // the balls. The pinning is interior, so periodicity never enters, and
+      // an image ball replaces whatever a master ball loses through a face.
+      utils::throwException(
+        d_imageAtomGenerator == nullptr,
+        "Numerical vSelf solve is not supported for a periodic system: the "
+        "per atom Poisson problem is pinned only through getBoundaryIds(), "
+        "which is empty here because opposite faces are tied by the periodic "
+        "constraints, so the boundary data is dropped and the solve is left "
+        "singular. It needs a bin solve that pins interior dofs outside balls "
+        "around every charge instead. Use the analytic smeared charge route.");
+
       d_nuclearChargeQuad.clear();
       d_nuclearChargeQuad.resize(d_numAtoms, 0);
       for (size_type iAtom = 0; iAtom < d_numAtoms; iAtom++)
@@ -2692,6 +2799,12 @@ namespace dftefe
               //   }
               // selfEnergy *= -1;
 
+              // The self energy belongs to one isolated nucleus, so both b
+              // and vSelf are the master's. Its sphere can cross a periodic
+              // face, so the integrand is also evaluated at the quadrature
+              // points shifted by each lattice translation: that folds the
+              // slice which left the cell back in, carrying its own near
+              // field. Summed over translations this is the whole sphere.
               std::vector<std::shared_ptr<utils::SmearChargeDensityFunction>>
                 smfuncDens(0);
               std::vector<std::shared_ptr<utils::SmearChargePotentialFunction>>
@@ -2706,31 +2819,93 @@ namespace dftefe
               std::vector<RealType> selfEnergyAtom(d_numAtoms, 0),
                 atomNuclearChargeQuad(d_numAtoms, 0);
 
+              // Bounding box of this rank's quadrature points; a translation
+              // farther than rc from it contributes nothing here.
+              std::vector<double> quadBoxLo(dim,
+                                            std::numeric_limits<double>::max());
+              std::vector<double> quadBoxHi(
+                dim, -std::numeric_limits<double>::max());
+              for (size_type iCell = 0; iCell < quadRuleContainerNucl->nCells();
+                   iCell++)
+                for (const auto &quadPoint :
+                     quadRuleContainerNucl->getCellRealPoints(iCell))
+                  for (size_type iDim = 0; iDim < dim; iDim++)
+                    {
+                      quadBoxLo[iDim] =
+                        std::min(quadBoxLo[iDim], quadPoint[iDim]);
+                      quadBoxHi[iDim] =
+                        std::max(quadBoxHi[iDim], quadPoint[iDim]);
+                    }
+
+              smfuncDens.resize(d_numAtoms);
+              smfuncPot.resize(d_numAtoms);
               for (size_type iAtom = 0; iAtom < d_numAtoms; iAtom++)
                 {
-                  // One nucleus: the master atom and its periodic images.
-                  std::vector<utils::Point> extendedAtomCoordinates(
-                    1, d_atomCoordinates[iAtom]);
-                  std::vector<double> extendedAtomCharges(
-                    1, d_atomCharges[iAtom]);
-                  if (d_imageAtomGenerator != nullptr)
-                    d_imageAtomGenerator->getExtendedAtomsForMaster(
-                      d_atomCoordinates, iAtom, extendedAtomCoordinates,
-                      extendedAtomCharges);
-
-                  smfuncDens.push_back(
+                  smfuncDens[iAtom] =
                     std::make_shared<utils::SmearChargeDensityFunction>(
-                      extendedAtomCoordinates,
-                      extendedAtomCharges,
-                      d_smearedChargeRadius));
+                      std::vector<utils::Point>(1, d_atomCoordinates[iAtom]),
+                      std::vector<double>(1, d_atomCharges[iAtom]),
+                      d_smearedChargeRadius);
 
-                  // Master only: an image is a different nucleus, so its
-                  // field is real Madelung energy, not self energy.
-                  smfuncPot.push_back(
+                  smfuncPot[iAtom] =
                     std::make_shared<utils::SmearChargePotentialFunction>(
                       std::vector<utils::Point>(1, d_atomCoordinates[iAtom]),
                       std::vector<double>(1, d_atomCharges[iAtom]),
-                      d_smearedChargeRadius));
+                      d_smearedChargeRadius);
+                }
+
+              // Lattice translations whose shifted sphere still reaches this
+              // rank's cells, the zero translation always among them.
+              std::vector<std::vector<utils::Point>> latticeShifts(
+                d_numAtoms, std::vector<utils::Point>());
+              for (size_type iAtom = 0; iAtom < d_numAtoms; iAtom++)
+                {
+                  const size_type numImages =
+                    (d_imageAtomGenerator != nullptr) ?
+                      d_imageAtomGenerator->getImageIdsForMaster(iAtom).size() :
+                      0;
+
+                  // candidates[0] is the zero translation, the master itself
+                  std::vector<utils::Point> candidates(
+                    1 + numImages, utils::Point((size_type)dim, 0.0));
+                  if (d_imageAtomGenerator != nullptr)
+                    {
+                      const std::vector<size_type> &imageIds =
+                        d_imageAtomGenerator->getImageIdsForMaster(iAtom);
+                      const std::vector<utils::Point> &imagePositions =
+                        d_imageAtomGenerator->getImagePositions();
+                      for (size_type j = 0; j < numImages; j++)
+                        for (size_type iDim = 0; iDim < dim; iDim++)
+                          candidates[1 + j][iDim] =
+                            imagePositions[imageIds[j]][iDim] -
+                            d_atomCoordinates[iAtom][iDim];
+                    }
+
+                  latticeShifts[iAtom].resize(candidates.size(),
+                                              utils::Point((size_type)dim,
+                                                           0.0));
+                  size_type numKeptShifts = 0;
+                  for (size_type j = 0; j < candidates.size(); j++)
+                    {
+                      double distSqToBox = 0.0;
+                      for (size_type iDim = 0; iDim < dim; iDim++)
+                        {
+                          const double center =
+                            d_atomCoordinates[iAtom][iDim] +
+                            candidates[j][iDim];
+                          const double excess =
+                            std::max(quadBoxLo[iDim] - center,
+                                     center - quadBoxHi[iDim]);
+                          if (excess > 0.0)
+                            distSqToBox += excess * excess;
+                        }
+                      if (distSqToBox <
+                          d_smearedChargeRadius * d_smearedChargeRadius)
+                        latticeShifts[iAtom][numKeptShifts++] = candidates[j];
+                    }
+                  latticeShifts[iAtom].resize(numKeptShifts,
+                                              utils::Point((size_type)dim,
+                                                           0.0));
                 }
 
               RealType        value                = 0;
@@ -2742,23 +2917,33 @@ namespace dftefe
                 {
                   size_type numQuadInCell =
                     quadRuleContainerNucl->nCellQuadraturePoints(iCell);
-                  for (size_type iAtom = 0; iAtom < d_numAtoms; iAtom++)
-                    {
-                      std::vector<RealType> chargeDens = (*smfuncDens[iAtom])(
-                        quadRuleContainerNucl->getCellRealPoints(iCell));
-                      std::vector<RealType> chargePot = (*smfuncPot[iAtom])(
-                        quadRuleContainerNucl->getCellRealPoints(iCell));
+                  const std::vector<utils::Point> &cellQuadPoints =
+                    quadRuleContainerNucl->getCellRealPoints(iCell);
 
-                      for (size_type iQuad = 0; iQuad < numQuadInCell; iQuad++)
-                        {
-                          selfEnergyAtom[iAtom] +=
-                            chargeDens[iQuad] * chargePot[iQuad] *
-                            jxwStorageIter[cumulativeQuadInCell + iQuad];
-                          atomNuclearChargeQuad[iAtom] +=
-                            chargeDens[iQuad] *
-                            jxwStorageIter[cumulativeQuadInCell + iQuad];
-                        }
-                    }
+                  for (size_type iAtom = 0; iAtom < d_numAtoms; iAtom++)
+                    for (const auto &shift : latticeShifts[iAtom])
+                      {
+                        std::vector<utils::Point> shiftedPoints(cellQuadPoints);
+                        for (auto &shiftedPoint : shiftedPoints)
+                          for (size_type iDim = 0; iDim < dim; iDim++)
+                            shiftedPoint[iDim] -= shift[iDim];
+
+                        std::vector<RealType> chargeDens =
+                          (*smfuncDens[iAtom])(shiftedPoints);
+                        std::vector<RealType> chargePot =
+                          (*smfuncPot[iAtom])(shiftedPoints);
+
+                        for (size_type iQuad = 0; iQuad < numQuadInCell;
+                             iQuad++)
+                          {
+                            selfEnergyAtom[iAtom] +=
+                              chargeDens[iQuad] * chargePot[iQuad] *
+                              jxwStorageIter[cumulativeQuadInCell + iQuad];
+                            atomNuclearChargeQuad[iAtom] +=
+                              chargeDens[iQuad] *
+                              jxwStorageIter[cumulativeQuadInCell + iQuad];
+                          }
+                      }
                   cumulativeQuadInCell += numQuadInCell;
                 }
 
@@ -2788,6 +2973,23 @@ namespace dftefe
               selfEnergy *= 0.5;
             }
         }
+
+      //   const double ig = 10976. / (17875 * d_smearedChargeRadius);
+      //   RealType     selfEnergyRef = 0;
+      //   for (size_type iAtom = 0; iAtom < d_numAtoms; iAtom++)
+      //     selfEnergyRef -=
+      //       (RealType)(0.5 * std::pow(d_atomCharges[iAtom], 2) *
+      //                  (ig - 12. / (5 * d_smearedChargeRadius)));
+
+      //   std::ostringstream msg;
+      //   msg << std::setprecision(12) << "Nuclear self energy: computed "
+      //       << selfEnergy << ", closed form " << selfEnergyRef
+      //       << ", difference " << (selfEnergy - selfEnergyRef)
+      //       << " (rc = " << d_smearedChargeRadius
+      //       << ", numericalVSelf = " << d_isNumericalVSelfSolve
+      //       << ", TCI = " << d_isTCIEnabled << ")";
+      //   d_rootCout << msg.str() << "\n";
+
       d_nuclearSelfEnergy = selfEnergy;
     }
 

@@ -636,35 +636,48 @@ namespace dftefe
           {
             auto &spinDensVal       = initMixDescrMap[DensityDescrAttr::Val];
             const size_type numQuad = spinDensVal[0].nQuadraturePoints();
-            const double *  quadRealPointsHost =
+            const double *  quadRealPointsMemspace =
               spinDensVal[0]
                 .getQuadratureRuleContainer()
-                ->template getRealPointsPtr<utils::MemorySpace::HOST>();
+                ->template getRealPointsPtr<memorySpace>();
             const double densNormFactor =
               std::abs(static_cast<double>(numElectrons) /
                        static_cast<double>(totalDensityInQuad));
-            std::vector<double> magZInQuadValues(numQuad, 0.0);
-            atomicElectronicChargeDensityFunction.evaluateHost(
+            std::vector<double>                       magZInQuadValues(numQuad,
+                                                                         0.0);
+            utils::MemoryStorage<double, memorySpace> magZInQuadValuesMemspace(
+              numQuad);
+            atomicElectronicChargeDensityFunction.evaluate(
               numQuad,
               atoms::AtomSuperpositionFuncType::Identity,
-              quadRealPointsHost,
-              magZInQuadValues.data(),
+              quadRealPointsMemspace,
+              magZInQuadValuesMemspace.data(),
               densNormFactor /
                 (atoms::Clm(0, 0) * atoms::Dm(0) * atoms::Qm(0, 0)),
               atomMagZFactors);
+            utils::MemoryTransfer<memorySpaceHost, memorySpace>::copy(
+              numQuad,
+              magZInQuadValues.data(),
+              magZInQuadValuesMemspace.data());
             for (size_type i = 0; i < numQuad; ++i)
               spinDensVal[1].data()[i] = magZInQuadValues[i];
             if (xcType.rfind("GGA", 0) == 0)
               {
                 auto &spinDensGrad = initMixDescrMap[DensityDescrAttr::Grad];
                 std::vector<double> magZGradInQuadValues(numQuad * dim, 0.0);
-                atomicElectronicChargeDensityFunction.evaluateHost(
+                utils::MemoryStorage<double, memorySpace>
+                  magZGradInQuadValuesMemspace(numQuad * dim);
+                atomicElectronicChargeDensityFunction.evaluate(
                   numQuad,
                   atoms::AtomSuperpositionFuncType::Grad,
-                  quadRealPointsHost,
-                  magZGradInQuadValues.data(),
+                  quadRealPointsMemspace,
+                  magZGradInQuadValuesMemspace.data(),
                   1.0 / (atoms::Clm(0, 0) * atoms::Dm(0) * atoms::Qm(0, 0)),
                   atomMagZFactors);
+                utils::MemoryTransfer<memorySpaceHost, memorySpace>::copy(
+                  numQuad * dim,
+                  magZGradInQuadValues.data(),
+                  magZGradInQuadValuesMemspace.data());
                 for (size_type i = 0; i < numQuad * dim; ++i)
                   spinDensGrad[1].data()[i] = magZGradInQuadValues[i];
               }
@@ -1164,35 +1177,48 @@ namespace dftefe
           {
             auto &spinDensVal       = initMixDescrMap[DensityDescrAttr::Val];
             const size_type numQuad = spinDensVal[0].nQuadraturePoints();
-            const double *  quadRealPointsHost =
+            const double *  quadRealPointsMemspace =
               spinDensVal[0]
                 .getQuadratureRuleContainer()
-                ->template getRealPointsPtr<utils::MemorySpace::HOST>();
+                ->template getRealPointsPtr<memorySpace>();
             const double densNormFactor =
               std::abs(static_cast<double>(numElectrons) /
                        static_cast<double>(totalDensityInQuad));
-            std::vector<double> magZInQuadValues(numQuad, 0.0);
-            atomicElectronicChargeDensityFunction.evaluateHost(
+            std::vector<double>                       magZInQuadValues(numQuad,
+                                                                         0.0);
+            utils::MemoryStorage<double, memorySpace> magZInQuadValuesMemspace(
+              numQuad);
+            atomicElectronicChargeDensityFunction.evaluate(
               numQuad,
               atoms::AtomSuperpositionFuncType::Identity,
-              quadRealPointsHost,
-              magZInQuadValues.data(),
+              quadRealPointsMemspace,
+              magZInQuadValuesMemspace.data(),
               densNormFactor /
                 (atoms::Clm(0, 0) * atoms::Dm(0) * atoms::Qm(0, 0)),
               atomMagZFactors);
+            utils::MemoryTransfer<memorySpaceHost, memorySpace>::copy(
+              numQuad,
+              magZInQuadValues.data(),
+              magZInQuadValuesMemspace.data());
             for (size_type i = 0; i < numQuad; ++i)
               spinDensVal[1].data()[i] = magZInQuadValues[i];
             if (xcType.rfind("GGA", 0) == 0)
               {
                 auto &spinDensGrad = initMixDescrMap[DensityDescrAttr::Grad];
                 std::vector<double> magZGradInQuadValues(numQuad * dim, 0.0);
-                atomicElectronicChargeDensityFunction.evaluateHost(
+                utils::MemoryStorage<double, memorySpace>
+                  magZGradInQuadValuesMemspace(numQuad * dim);
+                atomicElectronicChargeDensityFunction.evaluate(
                   numQuad,
                   atoms::AtomSuperpositionFuncType::Grad,
-                  quadRealPointsHost,
-                  magZGradInQuadValues.data(),
+                  quadRealPointsMemspace,
+                  magZGradInQuadValuesMemspace.data(),
                   1.0 / (atoms::Clm(0, 0) * atoms::Dm(0) * atoms::Qm(0, 0)),
                   atomMagZFactors);
+                utils::MemoryTransfer<memorySpaceHost, memorySpace>::copy(
+                  numQuad * dim,
+                  magZGradInQuadValues.data(),
+                  magZGradInQuadValuesMemspace.data());
                 for (size_type i = 0; i < numQuad * dim; ++i)
                   spinDensGrad[1].data()[i] = magZGradInQuadValues[i];
               }
@@ -1696,35 +1722,48 @@ namespace dftefe
           {
             auto &spinDensVal       = initMixDescrMap[DensityDescrAttr::Val];
             const size_type numQuad = spinDensVal[0].nQuadraturePoints();
-            const double *  quadRealPointsHost =
+            const double *  quadRealPointsMemspace =
               spinDensVal[0]
                 .getQuadratureRuleContainer()
-                ->template getRealPointsPtr<utils::MemorySpace::HOST>();
+                ->template getRealPointsPtr<memorySpace>();
             const double densNormFactor =
               std::abs(static_cast<double>(numElectrons) /
                        static_cast<double>(totalDensityInQuad));
-            std::vector<double> magZInQuadValues(numQuad, 0.0);
-            atomicElectronicChargeDensityFunction.evaluateHost(
+            std::vector<double>                       magZInQuadValues(numQuad,
+                                                                         0.0);
+            utils::MemoryStorage<double, memorySpace> magZInQuadValuesMemspace(
+              numQuad);
+            atomicElectronicChargeDensityFunction.evaluate(
               numQuad,
               atoms::AtomSuperpositionFuncType::Identity,
-              quadRealPointsHost,
-              magZInQuadValues.data(),
+              quadRealPointsMemspace,
+              magZInQuadValuesMemspace.data(),
               densNormFactor /
                 (atoms::Clm(0, 0) * atoms::Dm(0) * atoms::Qm(0, 0)),
               atomMagZFactors);
+            utils::MemoryTransfer<memorySpaceHost, memorySpace>::copy(
+              numQuad,
+              magZInQuadValues.data(),
+              magZInQuadValuesMemspace.data());
             for (size_type i = 0; i < numQuad; ++i)
               spinDensVal[1].data()[i] = magZInQuadValues[i];
             if (xcType.rfind("GGA", 0) == 0)
               {
                 auto &spinDensGrad = initMixDescrMap[DensityDescrAttr::Grad];
                 std::vector<double> magZGradInQuadValues(numQuad * dim, 0.0);
-                atomicElectronicChargeDensityFunction.evaluateHost(
+                utils::MemoryStorage<double, memorySpace>
+                  magZGradInQuadValuesMemspace(numQuad * dim);
+                atomicElectronicChargeDensityFunction.evaluate(
                   numQuad,
                   atoms::AtomSuperpositionFuncType::Grad,
-                  quadRealPointsHost,
-                  magZGradInQuadValues.data(),
+                  quadRealPointsMemspace,
+                  magZGradInQuadValuesMemspace.data(),
                   1.0 / (atoms::Clm(0, 0) * atoms::Dm(0) * atoms::Qm(0, 0)),
                   atomMagZFactors);
+                utils::MemoryTransfer<memorySpaceHost, memorySpace>::copy(
+                  numQuad * dim,
+                  magZGradInQuadValues.data(),
+                  magZGradInQuadValuesMemspace.data());
                 for (size_type i = 0; i < numQuad * dim; ++i)
                   spinDensGrad[1].data()[i] = magZGradInQuadValues[i];
               }
@@ -2356,35 +2395,48 @@ namespace dftefe
           {
             auto &spinDensVal       = initMixDescrMap[DensityDescrAttr::Val];
             const size_type numQuad = spinDensVal[0].nQuadraturePoints();
-            const double *  quadRealPointsHost =
+            const double *  quadRealPointsMemspace =
               spinDensVal[0]
                 .getQuadratureRuleContainer()
-                ->template getRealPointsPtr<utils::MemorySpace::HOST>();
+                ->template getRealPointsPtr<memorySpace>();
             const double densNormFactor =
               std::abs(static_cast<double>(numElectrons) /
                        static_cast<double>(totalDensityInQuad));
-            std::vector<double> magZInQuadValues(numQuad, 0.0);
-            atomicElectronicChargeDensityFunction.evaluateHost(
+            std::vector<double>                       magZInQuadValues(numQuad,
+                                                                         0.0);
+            utils::MemoryStorage<double, memorySpace> magZInQuadValuesMemspace(
+              numQuad);
+            atomicElectronicChargeDensityFunction.evaluate(
               numQuad,
               atoms::AtomSuperpositionFuncType::Identity,
-              quadRealPointsHost,
-              magZInQuadValues.data(),
+              quadRealPointsMemspace,
+              magZInQuadValuesMemspace.data(),
               densNormFactor /
                 (atoms::Clm(0, 0) * atoms::Dm(0) * atoms::Qm(0, 0)),
               atomMagZFactors);
+            utils::MemoryTransfer<memorySpaceHost, memorySpace>::copy(
+              numQuad,
+              magZInQuadValues.data(),
+              magZInQuadValuesMemspace.data());
             for (size_type i = 0; i < numQuad; ++i)
               spinDensVal[1].data()[i] = magZInQuadValues[i];
             if (xcType.rfind("GGA", 0) == 0)
               {
                 auto &spinDensGrad = initMixDescrMap[DensityDescrAttr::Grad];
                 std::vector<double> magZGradInQuadValues(numQuad * dim, 0.0);
-                atomicElectronicChargeDensityFunction.evaluateHost(
+                utils::MemoryStorage<double, memorySpace>
+                  magZGradInQuadValuesMemspace(numQuad * dim);
+                atomicElectronicChargeDensityFunction.evaluate(
                   numQuad,
                   atoms::AtomSuperpositionFuncType::Grad,
-                  quadRealPointsHost,
-                  magZGradInQuadValues.data(),
+                  quadRealPointsMemspace,
+                  magZGradInQuadValuesMemspace.data(),
                   1.0 / (atoms::Clm(0, 0) * atoms::Dm(0) * atoms::Qm(0, 0)),
                   atomMagZFactors);
+                utils::MemoryTransfer<memorySpaceHost, memorySpace>::copy(
+                  numQuad * dim,
+                  magZGradInQuadValues.data(),
+                  magZGradInQuadValuesMemspace.data());
                 for (size_type i = 0; i < numQuad * dim; ++i)
                   spinDensGrad[1].data()[i] = magZGradInQuadValues[i];
               }
@@ -2977,35 +3029,48 @@ namespace dftefe
           {
             auto &spinDensVal       = initMixDescrMap[DensityDescrAttr::Val];
             const size_type numQuad = spinDensVal[0].nQuadraturePoints();
-            const double *  quadRealPointsHost =
+            const double *  quadRealPointsMemspace =
               spinDensVal[0]
                 .getQuadratureRuleContainer()
-                ->template getRealPointsPtr<utils::MemorySpace::HOST>();
+                ->template getRealPointsPtr<memorySpace>();
             const double densNormFactor =
               std::abs(static_cast<double>(numElectrons) /
                        static_cast<double>(totalDensityInQuad));
-            std::vector<double> magZInQuadValues(numQuad, 0.0);
-            atomicElectronicChargeDensityFunction.evaluateHost(
+            std::vector<double>                       magZInQuadValues(numQuad,
+                                                                         0.0);
+            utils::MemoryStorage<double, memorySpace> magZInQuadValuesMemspace(
+              numQuad);
+            atomicElectronicChargeDensityFunction.evaluate(
               numQuad,
               atoms::AtomSuperpositionFuncType::Identity,
-              quadRealPointsHost,
-              magZInQuadValues.data(),
+              quadRealPointsMemspace,
+              magZInQuadValuesMemspace.data(),
               densNormFactor /
                 (atoms::Clm(0, 0) * atoms::Dm(0) * atoms::Qm(0, 0)),
               atomMagZFactors);
+            utils::MemoryTransfer<memorySpaceHost, memorySpace>::copy(
+              numQuad,
+              magZInQuadValues.data(),
+              magZInQuadValuesMemspace.data());
             for (size_type i = 0; i < numQuad; ++i)
               spinDensVal[1].data()[i] = magZInQuadValues[i];
             if (xcType.rfind("GGA", 0) == 0)
               {
                 auto &spinDensGrad = initMixDescrMap[DensityDescrAttr::Grad];
                 std::vector<double> magZGradInQuadValues(numQuad * dim, 0.0);
-                atomicElectronicChargeDensityFunction.evaluateHost(
+                utils::MemoryStorage<double, memorySpace>
+                  magZGradInQuadValuesMemspace(numQuad * dim);
+                atomicElectronicChargeDensityFunction.evaluate(
                   numQuad,
                   atoms::AtomSuperpositionFuncType::Grad,
-                  quadRealPointsHost,
-                  magZGradInQuadValues.data(),
+                  quadRealPointsMemspace,
+                  magZGradInQuadValuesMemspace.data(),
                   1.0 / (atoms::Clm(0, 0) * atoms::Dm(0) * atoms::Qm(0, 0)),
                   atomMagZFactors);
+                utils::MemoryTransfer<memorySpaceHost, memorySpace>::copy(
+                  numQuad * dim,
+                  magZGradInQuadValues.data(),
+                  magZGradInQuadValuesMemspace.data());
                 for (size_type i = 0; i < numQuad * dim; ++i)
                   spinDensGrad[1].data()[i] = magZGradInQuadValues[i];
               }
