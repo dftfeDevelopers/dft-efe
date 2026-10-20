@@ -193,14 +193,14 @@ namespace dftefe
 
 #  if defined(DFTEFE_WITH_DEVICE_LANG_CUDA) || \
     defined(DFTEFE_WITH_DEVICE_LANG_HIP)
-#    define DFTEFE_CREATE_KERNEL(RET, NAME, BODY, ...) \
-      __global__ RET NAME(__VA_ARGS__)                 \
-      {                                                \
-        const size_type globalThreadId =               \
-          blockIdx.x * blockDim.x + threadIdx.x;       \
-        const size_type nThreadsPerBlock = blockDim.x; \
-        const size_type nThreadBlock     = gridDim.x;  \
-        BODY                                           \
+#    define DFTEFE_CREATE_KERNEL(RET, NAME, BODY, ...)      \
+      __global__ RET NAME(__VA_ARGS__)                      \
+      {                                                     \
+        const size_type globalThreadId =                    \
+          (size_type)blockIdx.x * blockDim.x + threadIdx.x; \
+        const size_type nThreadsPerBlock = blockDim.x;      \
+        const size_type nThreadBlock     = gridDim.x;       \
+        BODY                                                \
       }
 #  elif defined(DFTEFE_WITH_DEVICE_LANG_SYCL)
 #    define DFTEFE_CREATE_KERNEL(RET, NAME, BODY, ...)             \
@@ -223,7 +223,7 @@ namespace dftefe
       {                                                                 \
         extern __shared__ SMEMTYPE smem[];                              \
         const size_type            globalThreadId =                     \
-          blockIdx.x * blockDim.x + threadIdx.x;                        \
+          (size_type)blockIdx.x * blockDim.x + threadIdx.x;             \
         const size_type threadId         = threadIdx.x;                 \
         const size_type blockId          = blockIdx.x;                  \
         const size_type nThreadsPerBlock = blockDim.x;                  \
@@ -248,18 +248,18 @@ namespace dftefe
 
 #  if defined(DFTEFE_WITH_DEVICE_LANG_CUDA) || \
     defined(DFTEFE_WITH_DEVICE_LANG_HIP)
-#    define DFTEFE_CREATE_KERNEL_SMEM_S(                \
-      SMEMTYPE, SMEMCOUNT, RET, NAME, BODY, ...)        \
-      __global__ RET NAME(__VA_ARGS__)                  \
-      {                                                 \
-        __shared__ SMEMTYPE smem[SMEMCOUNT];            \
-        const size_type     globalThreadId =            \
-          blockIdx.x * blockDim.x + threadIdx.x;        \
-        const size_type threadId         = threadIdx.x; \
-        const size_type blockId          = blockIdx.x;  \
-        const size_type nThreadsPerBlock = blockDim.x;  \
-        const size_type nThreadBlock     = gridDim.x;   \
-        BODY                                            \
+#    define DFTEFE_CREATE_KERNEL_SMEM_S(                    \
+      SMEMTYPE, SMEMCOUNT, RET, NAME, BODY, ...)            \
+      __global__ RET NAME(__VA_ARGS__)                      \
+      {                                                     \
+        __shared__ SMEMTYPE smem[SMEMCOUNT];                \
+        const size_type     globalThreadId =                \
+          (size_type)blockIdx.x * blockDim.x + threadIdx.x; \
+        const size_type threadId         = threadIdx.x;     \
+        const size_type blockId          = blockIdx.x;      \
+        const size_type nThreadsPerBlock = blockDim.x;      \
+        const size_type nThreadBlock     = gridDim.x;       \
+        BODY                                                \
       }
 #  elif defined(DFTEFE_WITH_DEVICE_LANG_SYCL)
 #    define DFTEFE_CREATE_KERNEL_SMEM_S(                           \

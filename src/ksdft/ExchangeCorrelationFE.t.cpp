@@ -28,6 +28,7 @@
 #include <ksdft/RDM1FE.h>
 #include <ksdft/RDM1Mixing.h>
 #include <quadrature/QuadratureValuesContainer.h>
+#include <algorithm>
 
 namespace dftefe
 {
@@ -47,15 +48,17 @@ namespace dftefe
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
                         linAlgOpContext,
         const size_type cellBlockSize,
-        std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
-          feBasisDataStorage)
-      : d_feBasisDataStorage(feBasisDataStorage)
+        const std::map<
+          basis::kpoint::KPointId,
+          std::shared_ptr<
+            const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>>
+          &feBasisDataStorage)
+      : d_currentKPointIndex(0)
       , d_cellBlockSize(cellBlockSize)
       , d_linAlgOpContext(linAlgOpContext)
     {
       d_excManager.init(xcType);
-      reinitBasis(rdm1);
+      reinitBasis(rdm1, feBasisDataStorage);
       reinitField(rdm1);
     }
 
@@ -73,22 +76,24 @@ namespace dftefe
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
                         linAlgOpContext,
         const size_type cellBlockSize,
-        std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
-          feBasisDataStorage,
+        const std::map<
+          basis::kpoint::KPointId,
+          std::shared_ptr<
+            const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>>
+          &feBasisDataStorage,
         std::shared_ptr<const atoms::AtomSphericalDataContainer>
                                          atomSphericalDataContainerPSP,
         const std::vector<std::string> & atomSymbolVec,
         const std::vector<utils::Point> &atomCoordinates)
-      : d_feBasisDataStorage(feBasisDataStorage)
+      : d_currentKPointIndex(0)
       , d_cellBlockSize(cellBlockSize)
       , d_linAlgOpContext(linAlgOpContext)
     {
       d_excManager.init(xcType);
-      reinitBasis(rdm1);
+      reinitBasis(rdm1, feBasisDataStorage);
 
       auto quadRuleContainer =
-        d_feBasisDataStorage->getQuadratureRuleContainer();
+        d_feBasisDataStorage[0]->getQuadratureRuleContainer();
 
       d_coreCorrectionUPF = std::make_shared<
         quadrature::QuadratureValuesContainer<RealType, memorySpaceHost>>(
@@ -165,8 +170,31 @@ namespace dftefe
     ExchangeCorrelationFE<ValueTypeBasisData,
                           ValueTypeBasisCoeff,
                           memorySpace,
-                          dim>::reinitBasis(RDM1<ValueType, memorySpace> &rdm1)
+                          dim>::
+      reinitBasis(
+        RDM1<ValueType, memorySpace> &rdm1,
+        const std::map<
+          basis::kpoint::KPointId,
+          std::shared_ptr<
+            const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>>
+          &feBasisDataStorage)
     {
+      // the map's keys are this object's k set; ascending key order makes the
+      // local index order deterministic
+      utils::throwException<utils::InvalidArgument>(
+        !feBasisDataStorage.empty(),
+        "ExchangeCorrelationFE::reinitBasis: the basis-storage map is empty. "
+        "A non-periodic caller passes one Gamma entry.");
+      d_kPointIds.resize(feBasisDataStorage.size(), (basis::kpoint::KPointId)0);
+      d_feBasisDataStorage.resize(feBasisDataStorage.size(), nullptr);
+      size_type iKPtLocal = 0;
+      for (const auto &kv : feBasisDataStorage)
+        {
+          d_kPointIds[iKPtLocal]          = kv.first;
+          d_feBasisDataStorage[iKPtLocal] = kv.second;
+          iKPtLocal++;
+        }
+
       using RDM1FEType =
         RDM1FE<ValueTypeBasisData, ValueTypeBasisCoeff, memorySpace, dim>;
 
@@ -188,7 +216,7 @@ namespace dftefe
       // the ctor fixed which storage this instance projects onto; the RDM1 must
       // agree, or V_xc would be assembled on a different basis than the density
       utils::throwException<utils::InvalidArgument>(
-        rdm1FEPtr->getFEBasisDataStorage() == d_feBasisDataStorage,
+        rdm1FEPtr->getFEBasisDataStorage() == d_feBasisDataStorage[0],
         "ExchangeCorrelationFE::reinitBasis: the RDM1's FEBasisDataStorage is not "
         "the one this ExchangeCorrelationFE was constructed with.");
 
@@ -221,7 +249,7 @@ namespace dftefe
       for (size_type k = 0; k < K; ++k)
         d_xcPotentialQuadMemspace[k] =
           quadrature::QuadratureValuesContainer<RealType, memorySpace>(
-            d_feBasisDataStorage->getQuadratureRuleContainer(), 1);
+            d_feBasisDataStorage[0]->getQuadratureRuleContainer(), 1);
 
       const bool isGGA =
         (d_excManager.getExcSSDFunctionalObj()->getExcFamilyType() ==
@@ -232,33 +260,72 @@ namespace dftefe
           for (size_type k = 0; k < K; ++k)
             d_derExcWithSigmaTimesGradRhoQuadMemspace[k] =
               quadrature::QuadratureValuesContainer<RealType, memorySpace>(
-                d_feBasisDataStorage->getQuadratureRuleContainer(), dim);
+                d_feBasisDataStorage[0]->getQuadratureRuleContainer(), dim);
         }
-      d_feBasisOp =
-        std::make_shared<const basis::FEBasisOperations<ValueTypeBasisCoeff,
-                                                        ValueTypeBasisData,
-                                                        memorySpace,
-                                                        dim>>(
-          d_feBasisDataStorage, d_cellBlockSize, K);
-
-      std::shared_ptr<const basis::BasisDofHandler> basisDofHandlerData =
-        d_feBasisDataStorage->getBasisDofHandler();
-      d_feBasisDofHandler = std::dynamic_pointer_cast<
-        const basis::FEBasisDofHandler<ValueTypeBasisCoeff, memorySpace, dim>>(
-        basisDofHandlerData);
-      utils::throwException(
-        d_feBasisDofHandler != nullptr,
-        "Could not cast BasisDofHandler of the input Field to FEBasisDofHandler "
-        "in ExchangeCorrelationFE::reinitBasis()");
-
-      const size_type nLocallyOwnedCells =
-        d_feBasisDofHandler->nLocallyOwnedCells();
-      d_numCellDofs.resize(nLocallyOwnedCells);
-      d_basisOverlapSize = 0;
-      for (size_type c = 0; c < nLocallyOwnedCells; ++c)
+      // one FEBasisOperations per DISTINCT storage: k sharing a basis alias
+      // one object, so CFE builds it once
+      const size_type nKLocal = d_feBasisDataStorage.size();
+      d_feBasisOp.resize(nKLocal, nullptr);
+      for (iKPtLocal = 0; iKPtLocal < nKLocal; ++iKPtLocal)
         {
-          d_numCellDofs[c] = d_feBasisDofHandler->nCellDofs(c);
-          d_basisOverlapSize += d_numCellDofs[c] * d_numCellDofs[c];
+          d_feBasisOp[iKPtLocal] = nullptr;
+          for (size_type jKPtLocal = 0; jKPtLocal < iKPtLocal; ++jKPtLocal)
+            if (d_feBasisDataStorage[jKPtLocal] ==
+                d_feBasisDataStorage[iKPtLocal])
+              {
+                d_feBasisOp[iKPtLocal] = d_feBasisOp[jKPtLocal];
+                break;
+              }
+          if (d_feBasisOp[iKPtLocal] == nullptr)
+            d_feBasisOp[iKPtLocal] = std::make_shared<
+              const basis::FEBasisOperations<ValueTypeBasisCoeff,
+                                             ValueTypeBasisData,
+                                             memorySpace,
+                                             dim>>(
+              d_feBasisDataStorage[iKPtLocal], d_cellBlockSize, K);
+        }
+
+      // structural queries must agree across k; slot 0 sets them and the
+      // rest are checked against it
+      d_feBasisDofHandler.resize(nKLocal, nullptr);
+      d_basisOverlapSize = 0;
+      for (iKPtLocal = 0; iKPtLocal < nKLocal; ++iKPtLocal)
+        {
+          std::shared_ptr<const basis::BasisDofHandler> basisDofHandlerData =
+            d_feBasisDataStorage[iKPtLocal]->getBasisDofHandler();
+          d_feBasisDofHandler[iKPtLocal] = std::dynamic_pointer_cast<
+            const basis::
+              FEBasisDofHandler<ValueTypeBasisCoeff, memorySpace, dim>>(
+            basisDofHandlerData);
+          utils::throwException(
+            d_feBasisDofHandler[iKPtLocal] != nullptr,
+            "Could not cast BasisDofHandler of the input Field to FEBasisDofHandler "
+            "in ExchangeCorrelationFE::reinitBasis()");
+
+          const size_type nLocallyOwnedCells =
+            d_feBasisDofHandler[iKPtLocal]->nLocallyOwnedCells();
+          if (iKPtLocal == 0)
+            {
+              d_numCellDofs.resize(nLocallyOwnedCells);
+              for (size_type c = 0; c < nLocallyOwnedCells; ++c)
+                {
+                  d_numCellDofs[c] = d_feBasisDofHandler[0]->nCellDofs(c);
+                  d_basisOverlapSize += d_numCellDofs[c] * d_numCellDofs[c];
+                }
+            }
+          else
+            {
+              utils::throwException<utils::InvalidArgument>(
+                nLocallyOwnedCells == d_numCellDofs.size(),
+                "ExchangeCorrelationFE::reinitBasis: the per-k basis-storage "
+                "slots disagree on the number of locally owned cells.");
+              for (size_type c = 0; c < nLocallyOwnedCells; ++c)
+                utils::throwException<utils::InvalidArgument>(
+                  d_feBasisDofHandler[iKPtLocal]->nCellDofs(c) ==
+                    d_numCellDofs[c],
+                  "ExchangeCorrelationFE::reinitBasis: the per-k "
+                  "basis-storage slots disagree on the dofs in a cell.");
+            }
         }
       d_xcCellWiseTemp.resize(K * d_basisOverlapSize, ValueType(0));
       if (isGGA)
@@ -291,10 +358,11 @@ namespace dftefe
             p = dynamic_cast<const RDM1FEType *>(&mix->getRDM1());
         }
       utils::throwException(
-        p != nullptr && p->getFEBasisDataStorage() == d_feBasisDataStorage,
+        p != nullptr && p->getFEBasisDataStorage() == d_feBasisDataStorage[0],
         "ExchangeCorrelationFE::reinitField: RDM1 uses a different "
         "FEBasisDataStorage than the one set in reinitBasis(). "
-        "Call reinitBasis(rdm1) whenever the basis is reinitialised.");
+        "Call reinitBasis(rdm1, feBasisDataStorage) whenever the basis is "
+        "reinitialised.");
 
       const ExcFamilyType excFamily =
         d_excManager.getExcSSDFunctionalObj()->getExcFamilyType();
@@ -323,7 +391,7 @@ namespace dftefe
       const auto &rhoTotalQuad = densAttr.at(DensityDescrAttr::Val)[0];
       utils::throwException(
         rhoTotalQuad.getQuadratureRuleContainer() ==
-          d_feBasisDataStorage->getQuadratureRuleContainer(),
+          d_feBasisDataStorage[0]->getQuadratureRuleContainer(),
         "ExchangeCorrelationFE::reinitField: density Quad from "
         "RDM1::getDescriptors has a different QuadratureRuleContainer "
         "than d_feBasisDataStorage.");
@@ -337,7 +405,7 @@ namespace dftefe
         xcPotentialQuad(
           K,
           quadrature::QuadratureValuesContainer<RealType, memorySpaceHost>(
-            d_feBasisDataStorage->getQuadratureRuleContainer(), 1));
+            d_feBasisDataStorage[0]->getQuadratureRuleContainer(), 1));
 
       ExcAttrStorage spinVals(2);
       spinVals[0].resize(nQuads);
@@ -358,7 +426,7 @@ namespace dftefe
           const auto &MzQuad = densAttr.at(DensityDescrAttr::Val)[1];
           utils::throwException(
             MzQuad.getQuadratureRuleContainer() ==
-              d_feBasisDataStorage->getQuadratureRuleContainer(),
+              d_feBasisDataStorage[0]->getQuadratureRuleContainer(),
             "ExchangeCorrelationFE::reinitField: Mz Quad has a different "
             "QuadratureRuleContainer than d_feBasisDataStorage.");
           utils::MemoryStorage<double, memorySpaceHost> Mz(nQuads);
@@ -583,21 +651,42 @@ namespace dftefe
     ExchangeCorrelationFE<ValueTypeBasisData,
                           ValueTypeBasisCoeff,
                           memorySpace,
+                          dim>::activateKpt(const basis::kpoint::KPointId kPointId)
+    {
+      // d_kPointIds is ascending (built from a std::map), so binary search
+      const std::vector<basis::kpoint::KPointId>::const_iterator itKPointId =
+        std::lower_bound(d_kPointIds.begin(), d_kPointIds.end(), kPointId);
+      utils::throwException<utils::InvalidArgument>(
+        itKPointId != d_kPointIds.end() && *itKPointId == kPointId,
+        "ExchangeCorrelationFE::activateKpt: this object does not hold that "
+        "k-point.");
+      d_currentKPointIndex = itKPointId - d_kPointIds.begin();
+    }
+
+    template <typename ValueTypeBasisData,
+              typename ValueTypeBasisCoeff,
+              utils::MemorySpace memorySpace,
+              size_type          dim>
+    void
+    ExchangeCorrelationFE<ValueTypeBasisData,
+                          ValueTypeBasisCoeff,
+                          memorySpace,
                           dim>::getLocal(Storage &cellWiseStorage) const
     {
       // LDA: ∫ V_xc · N_i N_j dV — K blocks into d_xcCellWiseTemp
-      d_feBasisOp->computeFEMatrices(basis::realspace::LinearLocalOp::IDENTITY,
-                                     basis::realspace::VectorMathOp::MULT,
-                                     d_xcPotentialQuadMemspace,
-                                     basis::realspace::VectorMathOp::MULT,
-                                     basis::realspace::LinearLocalOp::IDENTITY,
-                                     d_xcCellWiseTemp,
-                                     *d_linAlgOpContext);
+      d_feBasisOp[d_currentKPointIndex]->computeFEMatrices(
+        basis::realspace::LinearLocalOp::IDENTITY,
+        basis::realspace::VectorMathOp::MULT,
+        d_xcPotentialQuadMemspace,
+        basis::realspace::VectorMathOp::MULT,
+        basis::realspace::LinearLocalOp::IDENTITY,
+        d_xcCellWiseTemp,
+        *d_linAlgOpContext);
 
       // GGA: ∫ f · ∇(N_i N_j) dV — accumulated into d_xcCellWiseTemp via axpy
       if (!d_derExcWithSigmaTimesGradRhoQuadMemspace.empty())
         {
-          d_feBasisOp->computeFEMatrices(
+          d_feBasisOp[d_currentKPointIndex]->computeFEMatrices(
             d_derExcWithSigmaTimesGradRhoQuadMemspace,
             basis::realspace::VectorMathOp::DOT,
             basis::realspace::LinearLocalOp::GRAD,
@@ -660,10 +749,11 @@ namespace dftefe
             p = dynamic_cast<const RDM1FEType *>(&mix->getRDM1());
         }
       utils::throwException(
-        p != nullptr && p->getFEBasisDataStorage() == d_feBasisDataStorage,
+        p != nullptr && p->getFEBasisDataStorage() == d_feBasisDataStorage[0],
         "ExchangeCorrelationFE::evalEnergy: RDM1 uses a different "
         "FEBasisDataStorage than the one set in reinitBasis(). "
-        "Call reinitBasis(rdm1) whenever the basis is reinitialised.");
+        "Call reinitBasis(rdm1, feBasisDataStorage) whenever the basis is "
+        "reinitialised.");
 
       const ExcFamilyType excFamily =
         d_excManager.getExcSSDFunctionalObj()->getExcFamilyType();
@@ -685,7 +775,7 @@ namespace dftefe
       const auto &rhoTotalQuad = densAttr.at(DensityDescrAttr::Val)[0];
       utils::throwException(
         rhoTotalQuad.getQuadratureRuleContainer() ==
-          d_feBasisDataStorage->getQuadratureRuleContainer(),
+          d_feBasisDataStorage[0]->getQuadratureRuleContainer(),
         "ExchangeCorrelationFE::evalEnergy: density Quad from "
         "RDM1::getDescriptors has a different QuadratureRuleContainer "
         "than d_feBasisDataStorage.");
@@ -715,7 +805,7 @@ namespace dftefe
           const auto &MzQuad = densAttr.at(DensityDescrAttr::Val)[1];
           utils::throwException(
             MzQuad.getQuadratureRuleContainer() ==
-              d_feBasisDataStorage->getQuadratureRuleContainer(),
+              d_feBasisDataStorage[0]->getQuadratureRuleContainer(),
             "ExchangeCorrelationFE::evalEnergy: Mz Quad has a different "
             "QuadratureRuleContainer than d_feBasisDataStorage.");
           utils::MemoryStorage<double, memorySpaceHost> Mz(nQuads);
@@ -790,7 +880,7 @@ namespace dftefe
       const auto &exVals = xDataOut.at(xcRemainderOutputDataAttributes::e);
       const auto &ecVals = cDataOut.at(xcRemainderOutputDataAttributes::e);
       const auto &jxw =
-        d_feBasisDataStorage->getQuadratureRuleContainer()->getJxW();
+        d_feBasisDataStorage[0]->getQuadratureRuleContainer()->getJxW();
 
       RealType totalEnergy = (RealType)0;
       for (size_type i = 0; i < nQuads; ++i)
@@ -901,7 +991,7 @@ namespace dftefe
                           memorySpace,
                           dim>::getHamiltonianFEBasisOperations() const
     {
-      return d_feBasisOp;
+      return d_feBasisOp[d_currentKPointIndex];
     }
 
     template <typename ValueTypeBasisData,

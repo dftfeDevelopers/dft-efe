@@ -54,7 +54,6 @@ set(DFT-EFE-UTILS-SOURCES
 	LogModX.cpp
 	MathFunctions.cpp
 	MathConstants.cpp
-	ReciprocalLattice.cpp
 	StringOperations.cpp
 	ConditionalOStream.cpp
 	MPITypes.cpp

@@ -28,6 +28,7 @@
 #include <utils/ConditionalOStream.h>
 #include <linearAlgebra/MultiVectorProductSpace.h>
 #include <linearAlgebra/MultiVectorOps.h>
+#include <algorithm>
 namespace dftefe
 {
   namespace ksdft
@@ -91,10 +92,12 @@ namespace dftefe
                                                     ValueTypeBasisData,
                                                     memorySpaceHost,
                                                     dim>> feBMTotalCharge,
-        std::shared_ptr<const basis::FEBasisManager<ValueTypeWaveFnCoeff,
-                                                    ValueTypeWaveFnBasis,
-                                                    memorySpace,
-                                                    dim>> feBMWaveFn,
+        const std::map<
+          basis::kpoint::KPointId,
+          std::shared_ptr<const basis::FEBasisManager<ValueTypeWaveFnCoeff,
+                                                      ValueTypeWaveFnBasis,
+                                                      memorySpace,
+                                                      dim>>> &feBMWaveFn,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpaceHost>>
           feBDTotalChargeStiffnessMatrix,
@@ -104,12 +107,17 @@ namespace dftefe
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpaceHost>>
           feBDElectronicChargeRhs,
-        std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeWaveFnBasis, memorySpace>>
-          feBDHamiltonian,
-        std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeWaveFnBasis, memorySpace>>
-          feBDAtomCenterNonLocalOperator,
+        const std::map<
+          basis::kpoint::KPointId,
+          std::shared_ptr<
+            const basis::FEBasisDataStorage<ValueTypeWaveFnBasis, memorySpace>>>
+          &feBDHamiltonian,
+        const std::map<
+          basis::kpoint::KPointId,
+          std::shared_ptr<
+            const basis::FEBasisDataStorage<ValueTypeWaveFnBasis, memorySpace>>>
+          &feBDAtomCenterNonLocalOperator,
+        const std::map<basis::kpoint::KPointId, basis::kpoint::KPointData> &kPoints,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
                         linAlgOpContext,
         const size_type maxCellBlock,
@@ -130,6 +138,7 @@ namespace dftefe
       , d_spinMode(spinMode)
       , d_smearedChargeRadius(smearedChargeRadius)
       , d_atomCharges(atomCharges)
+      , d_currentKPointIndex(0)
     {
       int rank;
       utils::mpi::MPICommRank(d_mpiComm, &rank);
@@ -148,24 +157,49 @@ namespace dftefe
 
       d_imageAtomGenerator = imageAtomGenerator;
 
-      if (d_isNonLocPSP)
+      // ascending key order makes the local index order deterministic; every
+      // per-k map must carry exactly the k-point map's keys
+      utils::throwException<utils::InvalidArgument>(
+        !kPoints.empty() && feBMWaveFn.size() == kPoints.size() &&
+          feBDHamiltonian.size() == kPoints.size() &&
+          feBDAtomCenterNonLocalOperator.size() == kPoints.size(),
+        "ElectrostaticONCVNonLocFE: the k-point map is empty, or the per-k "
+        "maps do not have the same key set.");
+      d_kPointIds.resize(kPoints.size(), (basis::kpoint::KPointId)0);
+      d_kPointWeights.resize(kPoints.size(), 0.0);
+      // one context per k, never shared: the projector integrals carry the
+      // Bloch phase even when the FE basis is the same for every k (CFE)
+      d_atomNonLocOpContext.resize(kPoints.size(), nullptr);
+      size_type iKPtLocal = 0;
+      for (const auto &kv : kPoints)
         {
-          d_atomNonLocOpContext = std::make_shared<
-            const basis::AtomCenterNonLocalOpContextFE<ValueTypeWaveFnBasis,
-                                                       ValueTypeWaveFnCoeff,
-                                                       memorySpace,
-                                                       dim>>(
-            *feBMWaveFn,
-            *feBDAtomCenterNonLocalOperator,
-            d_atomSphericalDataContainerPSP,
-            ElectroHamiltonianDefaults::ATOM_PARTITION_TOL_BETA,
-            atomSymbolVec,
-            atomCoordinates,
-            maxCellBlock,
-            maxWaveFnBlock,
-            linAlgOpContext,
-            d_mpiComm,
-            d_imageAtomGenerator);
+          utils::throwException<utils::InvalidArgument>(
+            feBMWaveFn.count(kv.first) == 1 &&
+              feBDHamiltonian.count(kv.first) == 1 &&
+              feBDAtomCenterNonLocalOperator.count(kv.first) == 1,
+            "ElectrostaticONCVNonLocFE: the per-k maps do not have the same "
+            "key set as the k-point map.");
+          d_kPointIds[iKPtLocal]     = kv.first;
+          d_kPointWeights[iKPtLocal] = kv.second.weight;
+          if (d_isNonLocPSP)
+            d_atomNonLocOpContext[iKPtLocal] = std::make_shared<
+              const basis::AtomCenterNonLocalOpContextFE<ValueTypeWaveFnBasis,
+                                                         ValueTypeWaveFnCoeff,
+                                                         memorySpace,
+                                                         dim>>(
+              *feBMWaveFn.at(kv.first),
+              *feBDAtomCenterNonLocalOperator.at(kv.first),
+              d_atomSphericalDataContainerPSP,
+              ElectroHamiltonianDefaults::ATOM_PARTITION_TOL_BETA,
+              atomSymbolVec,
+              atomCoordinates,
+              maxCellBlock,
+              maxWaveFnBlock,
+              linAlgOpContext,
+              d_mpiComm,
+              d_imageAtomGenerator,
+              kv.second.coord);
+          iKPtLocal++;
         }
 
       std::vector<utils::Point> vLocCoordinates;
@@ -239,10 +273,12 @@ namespace dftefe
                                                     dim>>
           feBMTotalCharge, // will be same as bc of totalCharge -
                            // atomicTotalCharge
-        std::shared_ptr<const basis::FEBasisManager<ValueTypeWaveFnCoeff,
-                                                    ValueTypeWaveFnBasis,
-                                                    memorySpace,
-                                                    dim>> feBMWaveFn,
+        const std::map<
+          basis::kpoint::KPointId,
+          std::shared_ptr<const basis::FEBasisManager<ValueTypeWaveFnCoeff,
+                                                      ValueTypeWaveFnBasis,
+                                                      memorySpace,
+                                                      dim>>> &feBMWaveFn,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpaceHost>>
           feBDTotalChargeStiffnessMatrix,
@@ -252,12 +288,17 @@ namespace dftefe
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpaceHost>>
           feBDElectronicChargeRhs,
-        std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeWaveFnBasis, memorySpace>>
-          feBDHamiltonian,
-        std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeWaveFnBasis, memorySpace>>
-          feBDAtomCenterNonLocalOperator,
+        const std::map<
+          basis::kpoint::KPointId,
+          std::shared_ptr<
+            const basis::FEBasisDataStorage<ValueTypeWaveFnBasis, memorySpace>>>
+          &feBDHamiltonian,
+        const std::map<
+          basis::kpoint::KPointId,
+          std::shared_ptr<
+            const basis::FEBasisDataStorage<ValueTypeWaveFnBasis, memorySpace>>>
+          &feBDAtomCenterNonLocalOperator,
+        const std::map<basis::kpoint::KPointId, basis::kpoint::KPointData> &kPoints,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
                         linAlgOpContext,
         const size_type maxCellBlock,
@@ -281,6 +322,7 @@ namespace dftefe
       , d_spinMode(spinMode)
       , d_smearedChargeRadius(smearedChargeRadius)
       , d_atomCharges(atomCharges)
+      , d_currentKPointIndex(0)
     {
       int rank;
       utils::mpi::MPICommRank(d_mpiComm, &rank);
@@ -299,24 +341,49 @@ namespace dftefe
 
       d_imageAtomGenerator = imageAtomGenerator;
 
-      if (d_isNonLocPSP)
+      // ascending key order makes the local index order deterministic; every
+      // per-k map must carry exactly the k-point map's keys
+      utils::throwException<utils::InvalidArgument>(
+        !kPoints.empty() && feBMWaveFn.size() == kPoints.size() &&
+          feBDHamiltonian.size() == kPoints.size() &&
+          feBDAtomCenterNonLocalOperator.size() == kPoints.size(),
+        "ElectrostaticONCVNonLocFE: the k-point map is empty, or the per-k "
+        "maps do not have the same key set.");
+      d_kPointIds.resize(kPoints.size(), (basis::kpoint::KPointId)0);
+      d_kPointWeights.resize(kPoints.size(), 0.0);
+      // one context per k, never shared: the projector integrals carry the
+      // Bloch phase even when the FE basis is the same for every k (CFE)
+      d_atomNonLocOpContext.resize(kPoints.size(), nullptr);
+      size_type iKPtLocal = 0;
+      for (const auto &kv : kPoints)
         {
-          d_atomNonLocOpContext = std::make_shared<
-            const basis::AtomCenterNonLocalOpContextFE<ValueTypeWaveFnBasis,
-                                                       ValueTypeWaveFnCoeff,
-                                                       memorySpace,
-                                                       dim>>(
-            *feBMWaveFn,
-            *feBDAtomCenterNonLocalOperator,
-            d_atomSphericalDataContainerPSP,
-            ElectroHamiltonianDefaults::ATOM_PARTITION_TOL_BETA,
-            atomSymbolVec,
-            atomCoordinates,
-            maxCellBlock,
-            maxWaveFnBlock,
-            linAlgOpContext,
-            d_mpiComm,
-            d_imageAtomGenerator);
+          utils::throwException<utils::InvalidArgument>(
+            feBMWaveFn.count(kv.first) == 1 &&
+              feBDHamiltonian.count(kv.first) == 1 &&
+              feBDAtomCenterNonLocalOperator.count(kv.first) == 1,
+            "ElectrostaticONCVNonLocFE: the per-k maps do not have the same "
+            "key set as the k-point map.");
+          d_kPointIds[iKPtLocal]     = kv.first;
+          d_kPointWeights[iKPtLocal] = kv.second.weight;
+          if (d_isNonLocPSP)
+            d_atomNonLocOpContext[iKPtLocal] = std::make_shared<
+              const basis::AtomCenterNonLocalOpContextFE<ValueTypeWaveFnBasis,
+                                                         ValueTypeWaveFnCoeff,
+                                                         memorySpace,
+                                                         dim>>(
+              *feBMWaveFn.at(kv.first),
+              *feBDAtomCenterNonLocalOperator.at(kv.first),
+              d_atomSphericalDataContainerPSP,
+              ElectroHamiltonianDefaults::ATOM_PARTITION_TOL_BETA,
+              atomSymbolVec,
+              atomCoordinates,
+              maxCellBlock,
+              maxWaveFnBlock,
+              linAlgOpContext,
+              d_mpiComm,
+              d_imageAtomGenerator,
+              kv.second.coord);
+          iKPtLocal++;
         }
 
       std::vector<utils::Point> vLocCoordinates;
@@ -394,10 +461,12 @@ namespace dftefe
                                                     ValueTypeBasisData,
                                                     memorySpaceHost,
                                                     dim>> feBMTotalCharge,
-        std::shared_ptr<const basis::FEBasisManager<ValueTypeWaveFnCoeff,
-                                                    ValueTypeWaveFnBasis,
-                                                    memorySpace,
-                                                    dim>> feBMWaveFn,
+        const std::map<
+          basis::kpoint::KPointId,
+          std::shared_ptr<const basis::FEBasisManager<ValueTypeWaveFnCoeff,
+                                                      ValueTypeWaveFnBasis,
+                                                      memorySpace,
+                                                      dim>>> &feBMWaveFn,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpaceHost>>
           feBDTotalChargeStiffnessMatrix,
@@ -407,35 +476,65 @@ namespace dftefe
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpaceHost>>
           feBDElectronicChargeRhs,
-        std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeWaveFnBasis, memorySpace>>
-          feBDHamiltonian,
-        std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeWaveFnBasis, memorySpace>>
-          feBDAtomCenterNonLocalOperator,
+        const std::map<
+          basis::kpoint::KPointId,
+          std::shared_ptr<
+            const basis::FEBasisDataStorage<ValueTypeWaveFnBasis, memorySpace>>>
+          &feBDHamiltonian,
+        const std::map<
+          basis::kpoint::KPointId,
+          std::shared_ptr<
+            const basis::FEBasisDataStorage<ValueTypeWaveFnBasis, memorySpace>>>
+          &feBDAtomCenterNonLocalOperator,
+        const std::map<basis::kpoint::KPointId, basis::kpoint::KPointData> &kPoints,
         std::shared_ptr<const basis::PeriodicImageAtomGenerator>
           imageAtomGenerator)
     {
       d_imageAtomGenerator = imageAtomGenerator;
 
-      if (d_isNonLocPSP)
+      // ascending key order makes the local index order deterministic; every
+      // per-k map must carry exactly the k-point map's keys
+      utils::throwException<utils::InvalidArgument>(
+        !kPoints.empty() && feBMWaveFn.size() == kPoints.size() &&
+          feBDHamiltonian.size() == kPoints.size() &&
+          feBDAtomCenterNonLocalOperator.size() == kPoints.size(),
+        "ElectrostaticONCVNonLocFE: the k-point map is empty, or the per-k "
+        "maps do not have the same key set.");
+      d_kPointIds.resize(kPoints.size(), (basis::kpoint::KPointId)0);
+      d_kPointWeights.resize(kPoints.size(), 0.0);
+      // one context per k, never shared: the projector integrals carry the
+      // Bloch phase even when the FE basis is the same for every k (CFE)
+      d_atomNonLocOpContext.resize(kPoints.size(), nullptr);
+      size_type iKPtLocal = 0;
+      for (const auto &kv : kPoints)
         {
-          d_atomNonLocOpContext = std::make_shared<
-            const basis::AtomCenterNonLocalOpContextFE<ValueTypeWaveFnBasis,
-                                                       ValueTypeWaveFnCoeff,
-                                                       memorySpace,
-                                                       dim>>(
-            *feBMWaveFn,
-            *feBDAtomCenterNonLocalOperator,
-            d_atomSphericalDataContainerPSP,
-            ElectroHamiltonianDefaults::ATOM_PARTITION_TOL_BETA,
-            d_atomSymbolVec,
-            atomCoordinates,
-            d_maxCellBlock,
-            d_maxWaveFnBlock,
-            d_linAlgOpContext,
-            d_mpiComm,
-            d_imageAtomGenerator);
+          utils::throwException<utils::InvalidArgument>(
+            feBMWaveFn.count(kv.first) == 1 &&
+              feBDHamiltonian.count(kv.first) == 1 &&
+              feBDAtomCenterNonLocalOperator.count(kv.first) == 1,
+            "ElectrostaticONCVNonLocFE: the per-k maps do not have the same "
+            "key set as the k-point map.");
+          d_kPointIds[iKPtLocal]     = kv.first;
+          d_kPointWeights[iKPtLocal] = kv.second.weight;
+          if (d_isNonLocPSP)
+            d_atomNonLocOpContext[iKPtLocal] = std::make_shared<
+              const basis::AtomCenterNonLocalOpContextFE<ValueTypeWaveFnBasis,
+                                                         ValueTypeWaveFnCoeff,
+                                                         memorySpace,
+                                                         dim>>(
+              *feBMWaveFn.at(kv.first),
+              *feBDAtomCenterNonLocalOperator.at(kv.first),
+              d_atomSphericalDataContainerPSP,
+              ElectroHamiltonianDefaults::ATOM_PARTITION_TOL_BETA,
+              d_atomSymbolVec,
+              atomCoordinates,
+              d_maxCellBlock,
+              d_maxWaveFnBlock,
+              d_linAlgOpContext,
+              d_mpiComm,
+              d_imageAtomGenerator,
+              kv.second.coord);
+          iKPtLocal++;
         }
 
       std::vector<utils::Point> vLocCoordinates;
@@ -490,10 +589,12 @@ namespace dftefe
                                                     ValueTypeBasisData,
                                                     memorySpaceHost,
                                                     dim>> feBMTotalCharge,
-        std::shared_ptr<const basis::FEBasisManager<ValueTypeWaveFnCoeff,
-                                                    ValueTypeWaveFnBasis,
-                                                    memorySpace,
-                                                    dim>> feBMWaveFn,
+        const std::map<
+          basis::kpoint::KPointId,
+          std::shared_ptr<const basis::FEBasisManager<ValueTypeWaveFnCoeff,
+                                                      ValueTypeWaveFnBasis,
+                                                      memorySpace,
+                                                      dim>>> &feBMWaveFn,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpaceHost>>
           feBDTotalChargeStiffnessMatrix,
@@ -503,35 +604,65 @@ namespace dftefe
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpaceHost>>
           feBDElectronicChargeRhs,
-        std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeWaveFnBasis, memorySpace>>
-          feBDHamiltonian,
-        std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeWaveFnBasis, memorySpace>>
-          feBDAtomCenterNonLocalOperator,
+        const std::map<
+          basis::kpoint::KPointId,
+          std::shared_ptr<
+            const basis::FEBasisDataStorage<ValueTypeWaveFnBasis, memorySpace>>>
+          &feBDHamiltonian,
+        const std::map<
+          basis::kpoint::KPointId,
+          std::shared_ptr<
+            const basis::FEBasisDataStorage<ValueTypeWaveFnBasis, memorySpace>>>
+          &feBDAtomCenterNonLocalOperator,
+        const std::map<basis::kpoint::KPointId, basis::kpoint::KPointData> &kPoints,
         std::shared_ptr<const basis::PeriodicImageAtomGenerator>
           imageAtomGenerator)
     {
       d_imageAtomGenerator = imageAtomGenerator;
 
-      if (d_isNonLocPSP)
+      // ascending key order makes the local index order deterministic; every
+      // per-k map must carry exactly the k-point map's keys
+      utils::throwException<utils::InvalidArgument>(
+        !kPoints.empty() && feBMWaveFn.size() == kPoints.size() &&
+          feBDHamiltonian.size() == kPoints.size() &&
+          feBDAtomCenterNonLocalOperator.size() == kPoints.size(),
+        "ElectrostaticONCVNonLocFE: the k-point map is empty, or the per-k "
+        "maps do not have the same key set.");
+      d_kPointIds.resize(kPoints.size(), (basis::kpoint::KPointId)0);
+      d_kPointWeights.resize(kPoints.size(), 0.0);
+      // one context per k, never shared: the projector integrals carry the
+      // Bloch phase even when the FE basis is the same for every k (CFE)
+      d_atomNonLocOpContext.resize(kPoints.size(), nullptr);
+      size_type iKPtLocal = 0;
+      for (const auto &kv : kPoints)
         {
-          d_atomNonLocOpContext = std::make_shared<
-            const basis::AtomCenterNonLocalOpContextFE<ValueTypeWaveFnBasis,
-                                                       ValueTypeWaveFnCoeff,
-                                                       memorySpace,
-                                                       dim>>(
-            *feBMWaveFn,
-            *feBDAtomCenterNonLocalOperator,
-            d_atomSphericalDataContainerPSP,
-            ElectroHamiltonianDefaults::ATOM_PARTITION_TOL_BETA,
-            d_atomSymbolVec,
-            atomCoordinates,
-            d_maxCellBlock,
-            d_maxWaveFnBlock,
-            d_linAlgOpContext,
-            d_mpiComm,
-            d_imageAtomGenerator);
+          utils::throwException<utils::InvalidArgument>(
+            feBMWaveFn.count(kv.first) == 1 &&
+              feBDHamiltonian.count(kv.first) == 1 &&
+              feBDAtomCenterNonLocalOperator.count(kv.first) == 1,
+            "ElectrostaticONCVNonLocFE: the per-k maps do not have the same "
+            "key set as the k-point map.");
+          d_kPointIds[iKPtLocal]     = kv.first;
+          d_kPointWeights[iKPtLocal] = kv.second.weight;
+          if (d_isNonLocPSP)
+            d_atomNonLocOpContext[iKPtLocal] = std::make_shared<
+              const basis::AtomCenterNonLocalOpContextFE<ValueTypeWaveFnBasis,
+                                                         ValueTypeWaveFnCoeff,
+                                                         memorySpace,
+                                                         dim>>(
+              *feBMWaveFn.at(kv.first),
+              *feBDAtomCenterNonLocalOperator.at(kv.first),
+              d_atomSphericalDataContainerPSP,
+              ElectroHamiltonianDefaults::ATOM_PARTITION_TOL_BETA,
+              d_atomSymbolVec,
+              atomCoordinates,
+              d_maxCellBlock,
+              d_maxWaveFnBlock,
+              d_linAlgOpContext,
+              d_mpiComm,
+              d_imageAtomGenerator,
+              kv.second.coord);
+          iKPtLocal++;
         }
 
       std::vector<utils::Point> vLocCoordinates;
@@ -599,6 +730,29 @@ namespace dftefe
                               ValueTypeWaveFnBasis,
                               ValueTypeWaveFnCoeff,
                               memorySpace,
+                              dim>::activateKpt(const basis::kpoint::KPointId kPointId)
+    {
+      const std::vector<basis::kpoint::KPointId>::const_iterator itKPointId =
+        std::lower_bound(d_kPointIds.begin(), d_kPointIds.end(), kPointId);
+      utils::throwException<utils::InvalidArgument>(
+        itKPointId != d_kPointIds.end() && *itKPointId == kPointId,
+        "ElectrostaticONCVNonLocFE::activateKpt: this object does not hold that k-point.");
+      d_currentKPointIndex = itKPointId - d_kPointIds.begin();
+      d_electrostaticLocal->activateKpt(kPointId);
+    }
+
+    template <typename ValueTypeBasisData,
+              typename ValueTypeBasisCoeff,
+              typename ValueTypeWaveFnBasis,
+              typename ValueTypeWaveFnCoeff,
+              utils::MemorySpace memorySpace,
+              size_type          dim>
+    void
+    ElectrostaticONCVNonLocFE<ValueTypeBasisData,
+                              ValueTypeBasisCoeff,
+                              ValueTypeWaveFnBasis,
+                              ValueTypeWaveFnCoeff,
+                              memorySpace,
                               dim>::getLocal(Storage &cellWiseStorage) const
     {
       d_electrostaticLocal->getLocal(cellWiseStorage);
@@ -624,7 +778,10 @@ namespace dftefe
         bool updateGhostY) const
     {
       if (d_isNonLocPSP)
-        d_atomNonLocOpContext->apply(X, Y, updateGhostX, updateGhostY);
+        d_atomNonLocOpContext[d_currentKPointIndex]->apply(X,
+                                                           Y,
+                                                           updateGhostX,
+                                                           updateGhostY);
       else
         utils::throwException(
           false,
@@ -674,15 +831,16 @@ namespace dftefe
               utils::MemorySpace memorySpace,
               size_type          dim>
     void
-    ElectrostaticONCVNonLocFE<
-      ValueTypeBasisData,
-      ValueTypeBasisCoeff,
-      ValueTypeWaveFnBasis,
-      ValueTypeWaveFnCoeff,
-      memorySpace,
-      dim>::evalEnergy(const std::vector<RealType> &            occupation,
-                       linearAlgebra::MultiVector<ValueTypeWaveFnCoeff,
-                                                  memorySpace> &X)
+    ElectrostaticONCVNonLocFE<ValueTypeBasisData,
+                              ValueTypeBasisCoeff,
+                              ValueTypeWaveFnBasis,
+                              ValueTypeWaveFnCoeff,
+                              memorySpace,
+                              dim>::
+      evalEnergy(
+        RDM1<linearAlgebra::blasLapack::scalar_type<ValueTypeWaveFnBasis,
+                                                    ValueTypeWaveFnCoeff>,
+             memorySpace> &rdm1)
     {
       d_energy = (RealType)0;
       d_electrostaticLocal->evalEnergy();
@@ -691,124 +849,159 @@ namespace dftefe
       RealType       nonLocEnergy = (RealType)0;
       const RealType spinFactor =
         (d_spinMode == SpinMode::Unpolarized) ? (RealType)2 : (RealType)1;
+      const size_type nKLocal = d_kPointIds.size();
       if (d_isNonLocPSP)
         {
-          const linearAlgebra::MultiVectorProductSpace<ValueTypeWaveFnCoeff,
-                                                       memorySpace> *Xps =
-            static_cast<
+          const RDM1Spectral<
+            linearAlgebra::blasLapack::scalar_type<ValueTypeWaveFnBasis,
+                                                   ValueTypeWaveFnCoeff>,
+            memorySpace> *rdm1SpectralPtr =
+            dynamic_cast<const RDM1Spectral<
+              linearAlgebra::blasLapack::scalar_type<ValueTypeWaveFnBasis,
+                                                     ValueTypeWaveFnCoeff>,
+              memorySpace> *>(&rdm1);
+          utils::throwException(
+            rdm1SpectralPtr != nullptr,
+            "ElectrostaticONCVNonLocFE::evalEnergy: pass the spectral RDM1, which holds the "
+            "orbitals and occupancies.");
+          const SpectralRep<
+            linearAlgebra::blasLapack::scalar_type<ValueTypeWaveFnBasis,
+                                                   ValueTypeWaveFnCoeff>,
+            memorySpace> &spectral = rdm1SpectralPtr->getSpectral();
+
+          // sum_k w_k sum_n f_nk <psi|V_nl(k)|psi>
+          for (size_type iKPtLocal = 0; iKPtLocal < nKLocal; ++iKPtLocal)
+            {
+              const std::vector<double> &occupationK =
+                spectral.occupancies.at(d_kPointIds[iKPtLocal]);
+              const linearAlgebra::MultiVector<ValueTypeWaveFnCoeff,
+                                               memorySpace> &waveFuncK =
+                *spectral.ksOrbs.at(d_kPointIds[iKPtLocal]);
+              const RealType kWeight = (RealType)d_kPointWeights[iKPtLocal];
+
               const linearAlgebra::MultiVectorProductSpace<ValueTypeWaveFnCoeff,
-                                                           memorySpace> *>(&X);
+                                                           memorySpace> *Xps =
+                static_cast<const linearAlgebra::MultiVectorProductSpace<
+                  ValueTypeWaveFnCoeff,
+                  memorySpace> *>(&waveFuncK);
 
-          const size_type numSpaces      = Xps->numSpaces();
-          const size_type numVecPerSpace = Xps->numVectorsPerSpace();
-          const size_type batchPerSpin   = d_maxWaveFnBlock / numSpaces;
+              const size_type numSpaces      = Xps->numSpaces();
+              const size_type numVecPerSpace = Xps->numVectorsPerSpace();
+              const size_type batchPerSpin   = d_maxWaveFnBlock / numSpaces;
 
-          if (d_mpiPatternP2P == nullptr ||
-              !d_mpiPatternP2P->isCompatible(*X.getMPIPatternP2P()))
-            {
-              d_mpiPatternP2P = X.getMPIPatternP2P();
-              d_psiBatch      = std::make_shared<
-                linearAlgebra::MultiVector<ValueTypeWaveFnCoeff, memorySpace>>(
-                d_mpiPatternP2P,
-                X.getLinAlgOpContext(),
-                d_maxWaveFnBlock,
-                ValueTypeWaveFnCoeff());
-              d_YBatch = std::make_shared<
-                linearAlgebra::MultiVector<ValueTypeWaveFnCoeff, memorySpace>>(
-                d_mpiPatternP2P,
-                X.getLinAlgOpContext(),
-                d_maxWaveFnBlock,
-                ValueTypeWaveFnCoeff());
-            }
-
-          const size_type smallSpin  = numVecPerSpace % batchPerSpin;
-          const size_type smallTotal = numSpaces * smallSpin;
-          if (numVecPerSpace > batchPerSpin && smallSpin != 0)
-            {
-              if (d_psiBatchSmall == nullptr ||
-                  d_psiBatchSmall->getNumberComponents() != smallTotal)
+              if (d_mpiPatternP2P == nullptr ||
+                  !d_mpiPatternP2P->isCompatible(*waveFuncK.getMPIPatternP2P()))
                 {
-                  d_psiBatchSmall = std::make_shared<
-                    linearAlgebra::MultiVector<ValueTypeWaveFnCoeff, memorySpace>>(
+                  d_mpiPatternP2P = waveFuncK.getMPIPatternP2P();
+                  d_psiBatch      = std::make_shared<
+                    linearAlgebra::MultiVector<ValueTypeWaveFnCoeff,
+                                               memorySpace>>(
                     d_mpiPatternP2P,
-                    X.getLinAlgOpContext(),
-                    smallTotal,
+                    waveFuncK.getLinAlgOpContext(),
+                    d_maxWaveFnBlock,
                     ValueTypeWaveFnCoeff());
-                  d_YBatchSmall = std::make_shared<
-                    linearAlgebra::MultiVector<ValueTypeWaveFnCoeff, memorySpace>>(
+                  d_YBatch = std::make_shared<
+                    linearAlgebra::MultiVector<ValueTypeWaveFnCoeff,
+                                               memorySpace>>(
                     d_mpiPatternP2P,
-                    X.getLinAlgOpContext(),
-                    smallTotal,
+                    waveFuncK.getLinAlgOpContext(),
+                    d_maxWaveFnBlock,
                     ValueTypeWaveFnCoeff());
                 }
-            }
 
-          for (size_type psiStartId = 0; psiStartId < numVecPerSpace;
-               psiStartId += batchPerSpin)
-            {
-              const size_type numPsiInBatch =
-                std::min(psiStartId + batchPerSpin, numVecPerSpace) -
-                psiStartId;
-              const size_type numPsiInBatchTotal = numSpaces * numPsiInBatch;
-
-              std::vector<RealType> occupationInBatch(numPsiInBatchTotal,
-                                                      (RealType)0);
-              for (size_type s = 0; s < numSpaces; ++s)
-                std::copy(occupation.begin() + s * numVecPerSpace + psiStartId,
-                          occupation.begin() + s * numVecPerSpace + psiStartId +
-                            numPsiInBatch,
-                          occupationInBatch.begin() + s * numPsiInBatch);
-
-              std::vector<
-                linearAlgebra::blasLapack::scalar_type<ValueTypeWaveFnCoeff,
-                                                       ValueTypeWaveFnCoeff>>
-                dotProds(numPsiInBatchTotal);
-
-              if (numPsiInBatch < batchPerSpin)
+              const size_type smallSpin  = numVecPerSpace % batchPerSpin;
+              const size_type smallTotal = numSpaces * smallSpin;
+              if (numVecPerSpace > batchPerSpin && smallSpin != 0)
                 {
-                  linearAlgebra::MultiVectorOps::copyToBatch(
-                    *Xps,
-                    psiStartId,
-                    numPsiInBatch,
-                    *d_psiBatchSmall,
-                    *X.getLinAlgOpContext());
-
-                  d_atomNonLocOpContext->apply(*d_psiBatchSmall,
-                                               *d_YBatchSmall,
-                                               true,
-                                               true);
-                  linearAlgebra::dot(
-                    *d_psiBatchSmall,
-                    *d_YBatchSmall,
-                    dotProds,
-                    linearAlgebra::blasLapack::ScalarOp::Conj,
-                    linearAlgebra::blasLapack::ScalarOp::Identity);
-                }
-              else
-                {
-                  linearAlgebra::MultiVectorOps::copyToBatch(
-                    *Xps,
-                    psiStartId,
-                    numPsiInBatch,
-                    *d_psiBatch,
-                    *X.getLinAlgOpContext());
-
-                  d_atomNonLocOpContext->apply(*d_psiBatch,
-                                               *d_YBatch,
-                                               true,
-                                               true);
-                  linearAlgebra::dot(
-                    *d_psiBatch,
-                    *d_YBatch,
-                    dotProds,
-                    linearAlgebra::blasLapack::ScalarOp::Conj,
-                    linearAlgebra::blasLapack::ScalarOp::Identity);
+                  if (d_psiBatchSmall == nullptr ||
+                      d_psiBatchSmall->getNumberComponents() != smallTotal)
+                    {
+                      d_psiBatchSmall = std::make_shared<
+                        linearAlgebra::MultiVector<ValueTypeWaveFnCoeff,
+                                                   memorySpace>>(
+                        d_mpiPatternP2P,
+                        waveFuncK.getLinAlgOpContext(),
+                        smallTotal,
+                        ValueTypeWaveFnCoeff());
+                      d_YBatchSmall = std::make_shared<
+                        linearAlgebra::MultiVector<ValueTypeWaveFnCoeff,
+                                                   memorySpace>>(
+                        d_mpiPatternP2P,
+                        waveFuncK.getLinAlgOpContext(),
+                        smallTotal,
+                        ValueTypeWaveFnCoeff());
+                    }
                 }
 
-              for (size_type i = 0; i < numPsiInBatchTotal; ++i)
-                nonLocEnergy += utils::realPart(dotProds[i]) *
-                                spinFactor * occupationInBatch[i];
-            }
+              for (size_type psiStartId = 0; psiStartId < numVecPerSpace;
+                   psiStartId += batchPerSpin)
+                {
+                  const size_type numPsiInBatch =
+                    std::min(psiStartId + batchPerSpin, numVecPerSpace) -
+                    psiStartId;
+                  const size_type numPsiInBatchTotal =
+                    numSpaces * numPsiInBatch;
+
+                  std::vector<RealType> occupationInBatch(numPsiInBatchTotal,
+                                                          (RealType)0);
+                  for (size_type s = 0; s < numSpaces; ++s)
+                    std::copy(occupationK.begin() + s * numVecPerSpace +
+                                psiStartId,
+                              occupationK.begin() + s * numVecPerSpace +
+                                psiStartId + numPsiInBatch,
+                              occupationInBatch.begin() + s * numPsiInBatch);
+
+                  std::vector<linearAlgebra::blasLapack::scalar_type<
+                    ValueTypeWaveFnCoeff,
+                    ValueTypeWaveFnCoeff>>
+                    dotProds(numPsiInBatchTotal);
+
+                  if (numPsiInBatch < batchPerSpin)
+                    {
+                      linearAlgebra::MultiVectorOps::copyToBatch(
+                        *Xps,
+                        psiStartId,
+                        numPsiInBatch,
+                        *d_psiBatchSmall,
+                        *waveFuncK.getLinAlgOpContext());
+
+                      d_atomNonLocOpContext[iKPtLocal]->apply(*d_psiBatchSmall,
+                                                              *d_YBatchSmall,
+                                                              true,
+                                                              true);
+                      linearAlgebra::dot(
+                        *d_psiBatchSmall,
+                        *d_YBatchSmall,
+                        dotProds,
+                        linearAlgebra::blasLapack::ScalarOp::Conj,
+                        linearAlgebra::blasLapack::ScalarOp::Identity);
+                    }
+                  else
+                    {
+                      linearAlgebra::MultiVectorOps::copyToBatch(
+                        *Xps,
+                        psiStartId,
+                        numPsiInBatch,
+                        *d_psiBatch,
+                        *waveFuncK.getLinAlgOpContext());
+
+                      d_atomNonLocOpContext[iKPtLocal]->apply(*d_psiBatch,
+                                                              *d_YBatch,
+                                                              true,
+                                                              true);
+                      linearAlgebra::dot(
+                        *d_psiBatch,
+                        *d_YBatch,
+                        dotProds,
+                        linearAlgebra::blasLapack::ScalarOp::Conj,
+                        linearAlgebra::blasLapack::ScalarOp::Identity);
+                    }
+
+                  for (size_type i = 0; i < numPsiInBatchTotal; ++i)
+                    nonLocEnergy += kWeight * utils::realPart(dotProds[i]) *
+                                    spinFactor * occupationInBatch[i];
+                }
+            } // k loop
         }
       d_rootCout << "\nNonLocal PSP Energy: " << nonLocEnergy << "\n\n";
       d_energy += nonLocEnergy;
@@ -878,7 +1071,7 @@ namespace dftefe
                               memorySpace,
                               dim>::getAtomCenterNonLocalOpContextFE() const
     {
-      return d_atomNonLocOpContext;
+      return d_atomNonLocOpContext[d_currentKPointIndex];
     }
 
   } // end of namespace ksdft

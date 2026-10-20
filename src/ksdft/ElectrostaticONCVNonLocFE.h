@@ -40,8 +40,11 @@
 #include <electrostatics/PoissonSolverDealiiMatrixFreeFE.h>
 #include <basis/AtomCenterNonLocalOpContextFE.h>
 #include <basis/PeriodicImageAtomGenerator.h>
+#include <basis/ReciprocalLattice.h>
+#include <map>
 #include <atoms/AtomSevereFunction.h>
 #include <ksdft/ElectrostaticLocalFE.h>
+#include <ksdft/RDM1Spectral.h>
 
 namespace dftefe
 {
@@ -99,10 +102,12 @@ namespace dftefe
                                                     ValueTypeBasisData,
                                                     memorySpaceHost,
                                                     dim>> feBMTotalCharge,
-        std::shared_ptr<const basis::FEBasisManager<ValueTypeWaveFnCoeff,
-                                                    ValueTypeWaveFnBasis,
-                                                    memorySpace,
-                                                    dim>> feBMWaveFn,
+        const std::map<
+          basis::kpoint::KPointId,
+          std::shared_ptr<const basis::FEBasisManager<ValueTypeWaveFnCoeff,
+                                                      ValueTypeWaveFnBasis,
+                                                      memorySpace,
+                                                      dim>>> &feBMWaveFn,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpaceHost>>
           feBDTotalChargeStiffnessMatrix,
@@ -112,18 +117,23 @@ namespace dftefe
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpaceHost>>
           feBDElectronicChargeRhs,
-        std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeWaveFnBasis, memorySpace>>
-          feBDHamiltonian,
-        std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeWaveFnBasis, memorySpace>>
-          feBDAtomCenterNonLocalOperator,
+        const std::map<
+          basis::kpoint::KPointId,
+          std::shared_ptr<
+            const basis::FEBasisDataStorage<ValueTypeWaveFnBasis, memorySpace>>>
+          &feBDHamiltonian,
+        const std::map<
+          basis::kpoint::KPointId,
+          std::shared_ptr<
+            const basis::FEBasisDataStorage<ValueTypeWaveFnBasis, memorySpace>>>
+          &feBDAtomCenterNonLocalOperator,
+        const std::map<basis::kpoint::KPointId, basis::kpoint::KPointData> &kPoints,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
                         linAlgOpContext,
         const size_type maxCellBlock,
         const size_type maxWaveFnBlock,
         const bool      useDealiiMatrixFreePoissonSolve = true,
-        SpinMode        spinMode = SpinMode::Unpolarized,
+        SpinMode        spinMode                        = SpinMode::Unpolarized,
         std::shared_ptr<const basis::PeriodicImageAtomGenerator>
           imageAtomGenerator = nullptr);
 
@@ -146,10 +156,12 @@ namespace dftefe
                                                     dim>>
           feBMTotalCharge, // will be same as bc of totalCharge -
                            // atomicTotalCharge
-        std::shared_ptr<const basis::FEBasisManager<ValueTypeWaveFnCoeff,
-                                                    ValueTypeWaveFnBasis,
-                                                    memorySpace,
-                                                    dim>> feBMWaveFn,
+        const std::map<
+          basis::kpoint::KPointId,
+          std::shared_ptr<const basis::FEBasisManager<ValueTypeWaveFnCoeff,
+                                                      ValueTypeWaveFnBasis,
+                                                      memorySpace,
+                                                      dim>>> &feBMWaveFn,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpaceHost>>
           feBDTotalChargeStiffnessMatrix,
@@ -159,12 +171,17 @@ namespace dftefe
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpaceHost>>
           feBDElectronicChargeRhs,
-        std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeWaveFnBasis, memorySpace>>
-          feBDHamiltonian,
-        std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeWaveFnBasis, memorySpace>>
-          feBDAtomCenterNonLocalOperator,
+        const std::map<
+          basis::kpoint::KPointId,
+          std::shared_ptr<
+            const basis::FEBasisDataStorage<ValueTypeWaveFnBasis, memorySpace>>>
+          &feBDHamiltonian,
+        const std::map<
+          basis::kpoint::KPointId,
+          std::shared_ptr<
+            const basis::FEBasisDataStorage<ValueTypeWaveFnBasis, memorySpace>>>
+          &feBDAtomCenterNonLocalOperator,
+        const std::map<basis::kpoint::KPointId, basis::kpoint::KPointData> &kPoints,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
                         linAlgOpContext,
         const size_type maxCellBlock,
@@ -187,10 +204,12 @@ namespace dftefe
                                                     ValueTypeBasisData,
                                                     memorySpaceHost,
                                                     dim>> feBMTotalCharge,
-        std::shared_ptr<const basis::FEBasisManager<ValueTypeWaveFnCoeff,
-                                                    ValueTypeWaveFnBasis,
-                                                    memorySpace,
-                                                    dim>> feBMWaveFn,
+        const std::map<
+          basis::kpoint::KPointId,
+          std::shared_ptr<const basis::FEBasisManager<ValueTypeWaveFnCoeff,
+                                                      ValueTypeWaveFnBasis,
+                                                      memorySpace,
+                                                      dim>>> &feBMWaveFn,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpaceHost>>
           feBDTotalChargeStiffnessMatrix,
@@ -200,12 +219,17 @@ namespace dftefe
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpaceHost>>
           feBDElectronicChargeRhs,
-        std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeWaveFnBasis, memorySpace>>
-          feBDHamiltonian,
-        std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeWaveFnBasis, memorySpace>>
-          feBDAtomCenterNonLocalOperator,
+        const std::map<
+          basis::kpoint::KPointId,
+          std::shared_ptr<
+            const basis::FEBasisDataStorage<ValueTypeWaveFnBasis, memorySpace>>>
+          &feBDHamiltonian,
+        const std::map<
+          basis::kpoint::KPointId,
+          std::shared_ptr<
+            const basis::FEBasisDataStorage<ValueTypeWaveFnBasis, memorySpace>>>
+          &feBDAtomCenterNonLocalOperator,
+        const std::map<basis::kpoint::KPointId, basis::kpoint::KPointData> &kPoints,
         std::shared_ptr<const basis::PeriodicImageAtomGenerator>
           imageAtomGenerator = nullptr);
 
@@ -222,10 +246,12 @@ namespace dftefe
                                                     ValueTypeBasisData,
                                                     memorySpaceHost,
                                                     dim>> feBMTotalCharge,
-        std::shared_ptr<const basis::FEBasisManager<ValueTypeWaveFnCoeff,
-                                                    ValueTypeWaveFnBasis,
-                                                    memorySpace,
-                                                    dim>> feBMWaveFn,
+        const std::map<
+          basis::kpoint::KPointId,
+          std::shared_ptr<const basis::FEBasisManager<ValueTypeWaveFnCoeff,
+                                                      ValueTypeWaveFnBasis,
+                                                      memorySpace,
+                                                      dim>>> &feBMWaveFn,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpaceHost>>
           feBDTotalChargeStiffnessMatrix,
@@ -235,12 +261,17 @@ namespace dftefe
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpaceHost>>
           feBDElectronicChargeRhs,
-        std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeWaveFnBasis, memorySpace>>
-          feBDHamiltonian,
-        std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeWaveFnBasis, memorySpace>>
-          feBDAtomCenterNonLocalOperator,
+        const std::map<
+          basis::kpoint::KPointId,
+          std::shared_ptr<
+            const basis::FEBasisDataStorage<ValueTypeWaveFnBasis, memorySpace>>>
+          &feBDHamiltonian,
+        const std::map<
+          basis::kpoint::KPointId,
+          std::shared_ptr<
+            const basis::FEBasisDataStorage<ValueTypeWaveFnBasis, memorySpace>>>
+          &feBDAtomCenterNonLocalOperator,
+        const std::map<basis::kpoint::KPointId, basis::kpoint::KPointData> &kPoints,
         std::shared_ptr<const basis::PeriodicImageAtomGenerator>
           imageAtomGenerator = nullptr);
 
@@ -248,6 +279,13 @@ namespace dftefe
       reinitField(
         const quadrature::QuadratureValuesContainer<RealType, memorySpaceHost>
           &electronChargeDensity);
+
+      /**
+       * @brief Select the k whose nonlocal context applyNonLocal uses; also
+       * activates it on the owned ElectrostaticLocalFE, which getLocal uses.
+       */
+      void
+      activateKpt(const basis::kpoint::KPointId kPointId) override;
 
       void
       getLocal(Storage &cellWiseStorage) const override;
@@ -265,10 +303,16 @@ namespace dftefe
       bool
       hasNonLocalComponent() const override;
 
+      /**
+       * @brief The k-independent electrostatic energy plus
+       * sum_k w_k sum_n f_nk <psi|V_nl(k)|psi>, orbitals from the spectral
+       * RDM1.
+       */
       void
       evalEnergy(
-        const std::vector<RealType> &occupation,
-        linearAlgebra::MultiVector<ValueTypeWaveFnCoeff, memorySpace> &X);
+        RDM1<linearAlgebra::blasLapack::scalar_type<ValueTypeWaveFnBasis,
+                                                    ValueTypeWaveFnCoeff>,
+             memorySpace> &rdm1);
 
       RealType
       getEnergy() const override;
@@ -290,11 +334,11 @@ namespace dftefe
         d_atomSphericalDataContainerPSP;
       std::shared_ptr<const atoms::AtomSevereFunction<memorySpace>>
         d_atomVLocFunction;
-      std::shared_ptr<
+      std::vector<std::shared_ptr<
         const basis::AtomCenterNonLocalOpContextFE<ValueTypeWaveFnBasis,
                                                    ValueTypeWaveFnCoeff,
                                                    memorySpace,
-                                                   dim>>
+                                                   dim>>>
         d_atomNonLocOpContext;
       std::shared_ptr<ElectrostaticLocalFE<ValueTypeBasisData,
                                            ValueTypeBasisCoeff,
@@ -323,6 +367,10 @@ namespace dftefe
       std::shared_ptr<const basis::PeriodicImageAtomGenerator>
         d_imageAtomGenerator;
       const double              d_smearedChargeRadius;
+
+      std::vector<basis::kpoint::KPointId> d_kPointIds;
+      std::vector<double>          d_kPointWeights;
+      size_type                    d_currentKPointIndex;
 
     }; // end of class ElectrostaticONCVNonLocFE
   }    // end of namespace ksdft

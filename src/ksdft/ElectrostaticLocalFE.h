@@ -33,6 +33,8 @@
 #include <quadrature/QuadratureValuesContainer.h>
 #include <basis/FEBasisManager.h>
 #include <basis/PeriodicImageAtomGenerator.h>
+#include <basis/ReciprocalLattice.h>
+#include <map>
 #include <linearAlgebra/LinearSolverFunction.h>
 #include <electrostatics/PoissonLinearSolverFunctionFE.h>
 #include <linearAlgebra/LinearAlgebraProfiler.h>
@@ -106,16 +108,17 @@ namespace dftefe
           feBDNuclearChargeRhs,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpaceHost>>
-          feBDElectronicChargeRhs,
-        std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeWaveFnBasisData,
-                                          memorySpace>> feBDHamiltonian,
+                                                feBDElectronicChargeRhs,
+        const std::map<basis::kpoint::KPointId,
+                       std::shared_ptr<const basis::FEBasisDataStorage<
+                         ValueTypeWaveFnBasisData,
+                         memorySpace>>> &       feBDHamiltonian,
         const utils::ScalarSpatialFunctionReal &externalPotentialFunction,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
                         linAlgOpContext,
         const size_type maxCellBlock,
         bool            useDealiiMatrixFreePoissonSolve = true,
-        SpinMode        spinMode = SpinMode::Unpolarized,
+        SpinMode        spinMode                        = SpinMode::Unpolarized,
         std::shared_ptr<const basis::PeriodicImageAtomGenerator>
           imageAtomGenerator = nullptr);
 
@@ -144,16 +147,17 @@ namespace dftefe
           feBDNuclChargeStiffnessMatrixNumSol,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpaceHost>>
-          feBDNuclChargeRhsNumSol,
-        std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeWaveFnBasisData,
-                                          memorySpace>> feBDHamiltonian,
+                                                feBDNuclChargeRhsNumSol,
+        const std::map<basis::kpoint::KPointId,
+                       std::shared_ptr<const basis::FEBasisDataStorage<
+                         ValueTypeWaveFnBasisData,
+                         memorySpace>>> &       feBDHamiltonian,
         const utils::ScalarSpatialFunctionReal &externalPotentialFunction,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
                         linAlgOpContext,
         const size_type maxCellBlock,
         bool            useDealiiMatrixFreePoissonSolve = true,
-        SpinMode        spinMode = SpinMode::Unpolarized,
+        SpinMode        spinMode                        = SpinMode::Unpolarized,
         std::shared_ptr<const basis::PeriodicImageAtomGenerator>
           imageAtomGenerator = nullptr);
 
@@ -182,10 +186,11 @@ namespace dftefe
           feBDNuclearChargeRhs,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpaceHost>>
-          feBDElectronicChargeRhs,
-        std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeWaveFnBasisData,
-                                          memorySpace>> feBDHamiltonian,
+                                                feBDElectronicChargeRhs,
+        const std::map<basis::kpoint::KPointId,
+                       std::shared_ptr<const basis::FEBasisDataStorage<
+                         ValueTypeWaveFnBasisData,
+                         memorySpace>>> &       feBDHamiltonian,
         const utils::ScalarSpatialFunctionReal &externalPotentialFunction,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
                         linAlgOpContext,
@@ -218,10 +223,11 @@ namespace dftefe
           feBDNuclearChargeRhs,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpaceHost>>
-          feBDElectronicChargeRhs,
-        std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeWaveFnBasisData,
-                                          memorySpace>> feBDHamiltonian,
+                                                feBDElectronicChargeRhs,
+        const std::map<basis::kpoint::KPointId,
+                       std::shared_ptr<const basis::FEBasisDataStorage<
+                         ValueTypeWaveFnBasisData,
+                         memorySpace>>> &       feBDHamiltonian,
         const utils::ScalarSpatialFunctionReal &externalPotentialFunction,
         std::shared_ptr<const basis::PeriodicImageAtomGenerator>
           imageAtomGenerator = nullptr);
@@ -248,10 +254,11 @@ namespace dftefe
           feBDNuclChargeStiffnessMatrixNumSol,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpaceHost>>
-          feBDNuclChargeRhsNumSol,
-        std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeWaveFnBasisData,
-                                          memorySpace>> feBDHamiltonian,
+                                                feBDNuclChargeRhsNumSol,
+        const std::map<basis::kpoint::KPointId,
+                       std::shared_ptr<const basis::FEBasisDataStorage<
+                         ValueTypeWaveFnBasisData,
+                         memorySpace>>> &       feBDHamiltonian,
         const utils::ScalarSpatialFunctionReal &externalPotentialFunction,
         std::shared_ptr<const basis::PeriodicImageAtomGenerator>
           imageAtomGenerator = nullptr);
@@ -277,10 +284,11 @@ namespace dftefe
           feBDNuclearChargeRhs,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpaceHost>>
-          feBDElectronicChargeRhs,
-        std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeWaveFnBasisData,
-                                          memorySpace>> feBDHamiltonian,
+                                                feBDElectronicChargeRhs,
+        const std::map<basis::kpoint::KPointId,
+                       std::shared_ptr<const basis::FEBasisDataStorage<
+                         ValueTypeWaveFnBasisData,
+                         memorySpace>>> &       feBDHamiltonian,
         const utils::ScalarSpatialFunctionReal &externalPotentialFunction,
         std::shared_ptr<const basis::PeriodicImageAtomGenerator>
           imageAtomGenerator = nullptr);
@@ -289,6 +297,12 @@ namespace dftefe
       reinitField(
         const quadrature::QuadratureValuesContainer<RealType, memorySpaceHost>
           &electronChargeDensity);
+
+      /**
+       * @brief Select the k whose basis getLocal projects the potential onto.
+       */
+      void
+      activateKpt(const basis::kpoint::KPointId kPointId) override;
 
       void
       getLocal(Storage &cellWiseStorage) const override;
@@ -382,8 +396,11 @@ namespace dftefe
       quadrature::QuadratureValuesContainer<ValueType, memorySpaceHost>
         *d_scratchPotNuclearQuad;
 
-      quadrature::QuadratureValuesContainer<ValueType, memorySpace>
-        *d_potentialHamQuadMemspace;
+      // a vector because computeFEMatrices takes one; mutable because
+      // getLocal and getFunctionalDerivative refill it
+      mutable std::vector<
+        quadrature::QuadratureValuesContainer<ValueType, memorySpace>>
+        d_potentialHamQuadMemspace;
 
       linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpaceHost>
         *d_totalChargePotential;
@@ -406,11 +423,16 @@ namespace dftefe
                                                      memorySpaceHost,
                                                      dim>>
         d_feBasisOpElectronic;
-      std::shared_ptr<const basis::FEBasisOperations<ValueTypeWaveFnCoeff,
-                                                     ValueTypeWaveFnBasisData,
-                                                     memorySpace,
-                                                     dim>>
+      // per-k containers, nKLocal long, indexed by the LOCAL index
+      std::vector<
+        std::shared_ptr<const basis::FEBasisOperations<ValueTypeWaveFnCoeff,
+                                                       ValueTypeWaveFnBasisData,
+                                                       memorySpace,
+                                                       dim>>>
         d_feBasisOpHamiltonian;
+      std::vector<std::shared_ptr<
+        const basis::FEBasisDataStorage<ValueTypeWaveFnBasisData, memorySpace>>>
+        d_feBDHamiltonian;
 
       std::shared_ptr<const basis::FEBasisManager<ValueTypeBasisCoeff,
                                                   ValueTypeBasisData,
@@ -473,6 +495,10 @@ namespace dftefe
       std::vector<size_type> d_numCellDofs;
       size_type              d_basisOverlapSize;
       mutable Storage        d_elecCellWiseTemp;
+
+      // global ids of the local slots; OUTPUT ONLY, never used as an index
+      std::vector<basis::kpoint::KPointId> d_kPointIds;
+      size_type                    d_currentKPointIndex;
 
     }; // end of class ElectrostaticLocalFE
   }    // end of namespace ksdft

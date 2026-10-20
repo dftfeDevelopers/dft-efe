@@ -117,11 +117,14 @@ namespace dftefe
           const basis::FEBasisManager<ValueTypeElectrostaticsCoeff,
                                       ValueTypeElectrostaticsBasis,
                                       memorySpaceHost,
-                                      dim>>               feBMTotalCharge,
-        std::shared_ptr<const basis::FEBasisManager<ValueTypeWaveFunctionCoeff,
-                                                    ValueTypeWaveFunctionBasis,
-                                                    memorySpace,
-                                                    dim>> feBMWaveFn,
+                                      dim>>                  feBMTotalCharge,
+        const std::map<basis::kpoint::KPointId,
+                       std::shared_ptr<
+                         const basis::FEBasisManager<ValueTypeWaveFunctionCoeff,
+                                                     ValueTypeWaveFunctionBasis,
+                                                     memorySpace,
+                                                     dim>>> &feBMWaveFn,
+        const std::map<basis::kpoint::KPointId, basis::kpoint::KPointData> & kPoints,
         /* Field data storages poisson solves*/
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeElectrostaticsBasis,
@@ -136,16 +139,18 @@ namespace dftefe
                                           memorySpaceHost>>
           feBDElectronicChargeRhs,
         /* Field data storages eigen solve*/
-        std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeWaveFunctionBasis,
-                                          memorySpace>> feBDKineticHamiltonian,
-        std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeWaveFunctionBasis,
-                                          memorySpace>>
-          feBDElectrostaticsHamiltonian,
-        std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeWaveFunctionBasis,
-                                          memorySpace>> feBDEXCHamiltonian,
+        const std::map<basis::kpoint::KPointId,
+                       std::shared_ptr<const basis::FEBasisDataStorage<
+                         ValueTypeWaveFunctionBasis,
+                         memorySpace>>> &feBDKineticHamiltonian,
+        const std::map<basis::kpoint::KPointId,
+                       std::shared_ptr<const basis::FEBasisDataStorage<
+                         ValueTypeWaveFunctionBasis,
+                         memorySpace>>> &feBDElectrostaticsHamiltonian,
+        const std::map<basis::kpoint::KPointId,
+                       std::shared_ptr<const basis::FEBasisDataStorage<
+                         ValueTypeWaveFunctionBasis,
+                         memorySpace>>> &feBDEXCHamiltonian,
         /* PSP/AE related info */
         const utils::ScalarSpatialFunctionReal &externalPotentialFunction,
         /* exc type */
@@ -154,18 +159,12 @@ namespace dftefe
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
           linAlgOpContext,
         /* basis overlap related info */
-        const OpContext &MContextForInv =
-          linearAlgebra::IdentityOperatorContext<ValueTypeOperator,
-                                                 ValueTypeOperand,
-                                                 memorySpace>(),
-        const OpContext &MContext =
-          linearAlgebra::IdentityOperatorContext<ValueTypeOperator,
-                                                 ValueTypeOperand,
-                                                 memorySpace>(),
-        const OpContext &MInvContext =
-          linearAlgebra::IdentityOperatorContext<ValueTypeOperator,
-                                                 ValueTypeOperand,
-                                                 memorySpace>(),
+        const std::map<basis::kpoint::KPointId, std::shared_ptr<const OpContext>>
+          &MContextForInv,
+        const std::map<basis::kpoint::KPointId, std::shared_ptr<const OpContext>>
+          &MContext,
+        const std::map<basis::kpoint::KPointId, std::shared_ptr<const OpContext>>
+          &                                  MInvContext,
         bool                                 isResidualChebyshevFilter = true,
         const std::vector<double> &          atomMagZFactors           = {},
         SpinMode                             spinMode = SpinMode::Unpolarized,
@@ -216,11 +215,14 @@ namespace dftefe
           const basis::FEBasisManager<ValueTypeElectrostaticsCoeff,
                                       ValueTypeElectrostaticsBasis,
                                       memorySpaceHost,
-                                      dim>>               feBMTotalCharge,
-        std::shared_ptr<const basis::FEBasisManager<ValueTypeWaveFunctionCoeff,
-                                                    ValueTypeWaveFunctionBasis,
-                                                    memorySpace,
-                                                    dim>> feBMWaveFn,
+                                      dim>>                  feBMTotalCharge,
+        const std::map<basis::kpoint::KPointId,
+                       std::shared_ptr<
+                         const basis::FEBasisManager<ValueTypeWaveFunctionCoeff,
+                                                     ValueTypeWaveFunctionBasis,
+                                                     memorySpace,
+                                                     dim>>> &feBMWaveFn,
+        const std::map<basis::kpoint::KPointId, basis::kpoint::KPointData> & kPoints,
         /* Field data storages poisson solves */
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeElectrostaticsBasis,
@@ -243,16 +245,18 @@ namespace dftefe
                                           memorySpaceHost>>
           feBDNuclChargeRhsNumSol,
         /* Field data storages eigen solve*/
-        std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeWaveFunctionBasis,
-                                          memorySpace>> feBDKineticHamiltonian,
-        std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeWaveFunctionBasis,
-                                          memorySpace>>
-          feBDElectrostaticsHamiltonian,
-        std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeWaveFunctionBasis,
-                                          memorySpace>> feBDEXCHamiltonian,
+        const std::map<basis::kpoint::KPointId,
+                       std::shared_ptr<const basis::FEBasisDataStorage<
+                         ValueTypeWaveFunctionBasis,
+                         memorySpace>>> &feBDKineticHamiltonian,
+        const std::map<basis::kpoint::KPointId,
+                       std::shared_ptr<const basis::FEBasisDataStorage<
+                         ValueTypeWaveFunctionBasis,
+                         memorySpace>>> &feBDElectrostaticsHamiltonian,
+        const std::map<basis::kpoint::KPointId,
+                       std::shared_ptr<const basis::FEBasisDataStorage<
+                         ValueTypeWaveFunctionBasis,
+                         memorySpace>>> &feBDEXCHamiltonian,
         /* PSP/AE related info */
         const utils::ScalarSpatialFunctionReal &externalPotentialFunction,
         /* exc type */
@@ -261,18 +265,12 @@ namespace dftefe
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
           linAlgOpContext,
         /* basis overlap related info */
-        const OpContext &MContextForInv =
-          linearAlgebra::IdentityOperatorContext<ValueTypeOperator,
-                                                 ValueTypeOperand,
-                                                 memorySpace>(),
-        const OpContext &MContext =
-          linearAlgebra::IdentityOperatorContext<ValueTypeOperator,
-                                                 ValueTypeOperand,
-                                                 memorySpace>(),
-        const OpContext &MInvContext =
-          linearAlgebra::IdentityOperatorContext<ValueTypeOperator,
-                                                 ValueTypeOperand,
-                                                 memorySpace>(),
+        const std::map<basis::kpoint::KPointId, std::shared_ptr<const OpContext>>
+          &MContextForInv,
+        const std::map<basis::kpoint::KPointId, std::shared_ptr<const OpContext>>
+          &MContext,
+        const std::map<basis::kpoint::KPointId, std::shared_ptr<const OpContext>>
+          &                                  MInvContext,
         bool                                 isResidualChebyshevFilter = true,
         const std::vector<double> &          atomMagZFactors           = {},
         SpinMode                             spinMode = SpinMode::Unpolarized,
@@ -325,11 +323,14 @@ namespace dftefe
           const basis::FEBasisManager<ValueTypeElectrostaticsCoeff,
                                       ValueTypeElectrostaticsBasis,
                                       memorySpaceHost,
-                                      dim>>               feBMTotalCharge,
-        std::shared_ptr<const basis::FEBasisManager<ValueTypeWaveFunctionCoeff,
-                                                    ValueTypeWaveFunctionBasis,
-                                                    memorySpace,
-                                                    dim>> feBMWaveFn,
+                                      dim>>                  feBMTotalCharge,
+        const std::map<basis::kpoint::KPointId,
+                       std::shared_ptr<
+                         const basis::FEBasisManager<ValueTypeWaveFunctionCoeff,
+                                                     ValueTypeWaveFunctionBasis,
+                                                     memorySpace,
+                                                     dim>>> &feBMWaveFn,
+        const std::map<basis::kpoint::KPointId, basis::kpoint::KPointData> & kPoints,
         /* Field data storages poisson solves*/
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeElectrostaticsBasis,
@@ -344,16 +345,18 @@ namespace dftefe
                                           memorySpaceHost>>
           feBDElectronicChargeRhs,
         /* Field data storages eigen solve*/
-        std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeWaveFunctionBasis,
-                                          memorySpace>> feBDKineticHamiltonian,
-        std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeWaveFunctionBasis,
-                                          memorySpace>>
-          feBDElectrostaticsHamiltonian,
-        std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeWaveFunctionBasis,
-                                          memorySpace>> feBDEXCHamiltonian,
+        const std::map<basis::kpoint::KPointId,
+                       std::shared_ptr<const basis::FEBasisDataStorage<
+                         ValueTypeWaveFunctionBasis,
+                         memorySpace>>> &feBDKineticHamiltonian,
+        const std::map<basis::kpoint::KPointId,
+                       std::shared_ptr<const basis::FEBasisDataStorage<
+                         ValueTypeWaveFunctionBasis,
+                         memorySpace>>> &feBDElectrostaticsHamiltonian,
+        const std::map<basis::kpoint::KPointId,
+                       std::shared_ptr<const basis::FEBasisDataStorage<
+                         ValueTypeWaveFunctionBasis,
+                         memorySpace>>> &feBDEXCHamiltonian,
         /* PSP/AE related info */
         const utils::ScalarSpatialFunctionReal &externalPotentialFunction,
         /* exc type */
@@ -362,18 +365,12 @@ namespace dftefe
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
           linAlgOpContext,
         /* basis overlap related info */
-        const OpContext &MContextForInv =
-          linearAlgebra::IdentityOperatorContext<ValueTypeOperator,
-                                                 ValueTypeOperand,
-                                                 memorySpace>(),
-        const OpContext &MContext =
-          linearAlgebra::IdentityOperatorContext<ValueTypeOperator,
-                                                 ValueTypeOperand,
-                                                 memorySpace>(),
-        const OpContext &MInvContext =
-          linearAlgebra::IdentityOperatorContext<ValueTypeOperator,
-                                                 ValueTypeOperand,
-                                                 memorySpace>(),
+        const std::map<basis::kpoint::KPointId, std::shared_ptr<const OpContext>>
+          &MContextForInv,
+        const std::map<basis::kpoint::KPointId, std::shared_ptr<const OpContext>>
+          &MContext,
+        const std::map<basis::kpoint::KPointId, std::shared_ptr<const OpContext>>
+          &  MInvContext,
         bool isResidualChebyshevFilter = true,
         /* TCI related info */
         const atoms::TCIADataParams &params = TCIADataDefaults::TCIA_PARAMS,
@@ -426,11 +423,14 @@ namespace dftefe
           const basis::FEBasisManager<ValueTypeElectrostaticsCoeff,
                                       ValueTypeElectrostaticsBasis,
                                       memorySpaceHost,
-                                      dim>>               feBMTotalCharge,
-        std::shared_ptr<const basis::FEBasisManager<ValueTypeWaveFunctionCoeff,
-                                                    ValueTypeWaveFunctionBasis,
-                                                    memorySpace,
-                                                    dim>> feBMWaveFn,
+                                      dim>>                  feBMTotalCharge,
+        const std::map<basis::kpoint::KPointId,
+                       std::shared_ptr<
+                         const basis::FEBasisManager<ValueTypeWaveFunctionCoeff,
+                                                     ValueTypeWaveFunctionBasis,
+                                                     memorySpace,
+                                                     dim>>> &feBMWaveFn,
+        const std::map<basis::kpoint::KPointId, basis::kpoint::KPointData> & kPoints,
         /* Field data storages poisson solves*/
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeElectrostaticsBasis,
@@ -445,21 +445,23 @@ namespace dftefe
                                           memorySpaceHost>>
           feBDElectronicChargeRhs,
         /* Field data storages eigen solve*/
-        std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeWaveFunctionBasis,
-                                          memorySpace>> feBDKineticHamiltonian,
-        std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeWaveFunctionBasis,
-                                          memorySpace>>
-          feBDElectrostaticsHamiltonian,
-        std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeWaveFunctionBasis,
-                                          memorySpace>> feBDEXCHamiltonian,
+        const std::map<basis::kpoint::KPointId,
+                       std::shared_ptr<const basis::FEBasisDataStorage<
+                         ValueTypeWaveFunctionBasis,
+                         memorySpace>>> &feBDKineticHamiltonian,
+        const std::map<basis::kpoint::KPointId,
+                       std::shared_ptr<const basis::FEBasisDataStorage<
+                         ValueTypeWaveFunctionBasis,
+                         memorySpace>>> &feBDElectrostaticsHamiltonian,
+        const std::map<basis::kpoint::KPointId,
+                       std::shared_ptr<const basis::FEBasisDataStorage<
+                         ValueTypeWaveFunctionBasis,
+                         memorySpace>>> &feBDEXCHamiltonian,
         /* PSP related info */
-        std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeWaveFunctionBasis,
-                                          memorySpace>>
-          feBDAtomCenterNonLocalOperator,
+        const std::map<basis::kpoint::KPointId,
+                       std::shared_ptr<const basis::FEBasisDataStorage<
+                         ValueTypeWaveFunctionBasis,
+                         memorySpace>>> &feBDAtomCenterNonLocalOperator,
         const std::map<std::string, std::string> &atomSymbolToPSPFilename,
         /* exc type */
         const std::string &xcType,
@@ -467,18 +469,12 @@ namespace dftefe
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
           linAlgOpContext,
         /* basis overlap related info */
-        const OpContext &MContextForInv =
-          linearAlgebra::IdentityOperatorContext<ValueTypeOperator,
-                                                 ValueTypeOperand,
-                                                 memorySpace>(),
-        const OpContext &MContext =
-          linearAlgebra::IdentityOperatorContext<ValueTypeOperator,
-                                                 ValueTypeOperand,
-                                                 memorySpace>(),
-        const OpContext &MInvContext =
-          linearAlgebra::IdentityOperatorContext<ValueTypeOperator,
-                                                 ValueTypeOperand,
-                                                 memorySpace>(),
+        const std::map<basis::kpoint::KPointId, std::shared_ptr<const OpContext>>
+          &MContextForInv,
+        const std::map<basis::kpoint::KPointId, std::shared_ptr<const OpContext>>
+          &MContext,
+        const std::map<basis::kpoint::KPointId, std::shared_ptr<const OpContext>>
+          &                        MInvContext,
         bool                       isResidualChebyshevFilter = true,
         const std::vector<double> &atomMagZFactors           = {},
         SpinMode                   spinMode = SpinMode::Unpolarized,
@@ -529,11 +525,14 @@ namespace dftefe
           const basis::FEBasisManager<ValueTypeElectrostaticsCoeff,
                                       ValueTypeElectrostaticsBasis,
                                       memorySpaceHost,
-                                      dim>>               feBMTotalCharge,
-        std::shared_ptr<const basis::FEBasisManager<ValueTypeWaveFunctionCoeff,
-                                                    ValueTypeWaveFunctionBasis,
-                                                    memorySpace,
-                                                    dim>> feBMWaveFn,
+                                      dim>>                  feBMTotalCharge,
+        const std::map<basis::kpoint::KPointId,
+                       std::shared_ptr<
+                         const basis::FEBasisManager<ValueTypeWaveFunctionCoeff,
+                                                     ValueTypeWaveFunctionBasis,
+                                                     memorySpace,
+                                                     dim>>> &feBMWaveFn,
+        const std::map<basis::kpoint::KPointId, basis::kpoint::KPointData> & kPoints,
         /* Field data storages poisson solves*/
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeElectrostaticsBasis,
@@ -548,21 +547,23 @@ namespace dftefe
                                           memorySpaceHost>>
           feBDElectronicChargeRhs,
         /* Field data storages eigen solve*/
-        std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeWaveFunctionBasis,
-                                          memorySpace>> feBDKineticHamiltonian,
-        std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeWaveFunctionBasis,
-                                          memorySpace>>
-          feBDElectrostaticsHamiltonian,
-        std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeWaveFunctionBasis,
-                                          memorySpace>> feBDEXCHamiltonian,
+        const std::map<basis::kpoint::KPointId,
+                       std::shared_ptr<const basis::FEBasisDataStorage<
+                         ValueTypeWaveFunctionBasis,
+                         memorySpace>>> &feBDKineticHamiltonian,
+        const std::map<basis::kpoint::KPointId,
+                       std::shared_ptr<const basis::FEBasisDataStorage<
+                         ValueTypeWaveFunctionBasis,
+                         memorySpace>>> &feBDElectrostaticsHamiltonian,
+        const std::map<basis::kpoint::KPointId,
+                       std::shared_ptr<const basis::FEBasisDataStorage<
+                         ValueTypeWaveFunctionBasis,
+                         memorySpace>>> &feBDEXCHamiltonian,
         /* PSP related info */
-        std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeWaveFunctionBasis,
-                                          memorySpace>>
-          feBDAtomCenterNonLocalOperator,
+        const std::map<basis::kpoint::KPointId,
+                       std::shared_ptr<const basis::FEBasisDataStorage<
+                         ValueTypeWaveFunctionBasis,
+                         memorySpace>>> &feBDAtomCenterNonLocalOperator,
         const std::map<std::string, std::string> &atomSymbolToPSPFilename,
         /* exc type */
         const std::string &xcType,
@@ -570,18 +571,12 @@ namespace dftefe
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
           linAlgOpContext,
         /* basis overlap related info */
-        const OpContext &MContextForInv =
-          linearAlgebra::IdentityOperatorContext<ValueTypeOperator,
-                                                 ValueTypeOperand,
-                                                 memorySpace>(),
-        const OpContext &MContext =
-          linearAlgebra::IdentityOperatorContext<ValueTypeOperator,
-                                                 ValueTypeOperand,
-                                                 memorySpace>(),
-        const OpContext &MInvContext =
-          linearAlgebra::IdentityOperatorContext<ValueTypeOperator,
-                                                 ValueTypeOperand,
-                                                 memorySpace>(),
+        const std::map<basis::kpoint::KPointId, std::shared_ptr<const OpContext>>
+          &MContextForInv,
+        const std::map<basis::kpoint::KPointId, std::shared_ptr<const OpContext>>
+          &MContext,
+        const std::map<basis::kpoint::KPointId, std::shared_ptr<const OpContext>>
+          &  MInvContext,
         bool isResidualChebyshevFilter = false,
         /* TCI related info */
         const atoms::TCIADataParams &params = TCIADataDefaults::TCIA_PARAMS,
@@ -703,25 +698,30 @@ namespace dftefe
                                 dim>>
         d_hamitonianKin;
 
-      std::shared_ptr<const basis::FEBasisManager<ValueTypeWaveFunctionCoeff,
-                                                  ValueTypeWaveFunctionBasis,
-                                                  memorySpace,
-                                                  dim>>
-                                       d_feBMWaveFn;
-      std::vector<RealType>            d_kohnShamEnergies;
-      utils::ConditionalOStream        d_rootCout;
-      bool                             d_evaluateEnergyEverySCF;
-      size_type                        d_numMaxSCFIter;
-      const OpContext *                d_MContext, *d_MInvContext;
+      std::map<
+        basis::kpoint::KPointId,
+        std::shared_ptr<const basis::FEBasisManager<ValueTypeWaveFunctionCoeff,
+                                                    ValueTypeWaveFunctionBasis,
+                                                    memorySpace,
+                                                    dim>>>
+                                                       d_feBMWaveFn;
+      std::map<basis::kpoint::KPointId, basis::kpoint::KPointData>     d_kPoints;
+      std::map<basis::kpoint::KPointId, std::vector<RealType>> d_kohnShamEnergies;
+      utils::ConditionalOStream                        d_rootCout;
+      bool                                             d_evaluateEnergyEverySCF;
+      size_type                                        d_numMaxSCFIter;
+      std::map<basis::kpoint::KPointId, std::shared_ptr<const OpContext>> d_MContext,
+        d_MInvContext;
       const utils::mpi::MPIComm &      d_mpiCommDomain;
       MixingScheme<RealType, RealType> d_mixingScheme;
       std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
                       d_linAlgOpContext;
       const size_type d_numElectrons;
 
-      std::shared_ptr<
-        const basis::FEBasisDataStorage<ValueTypeWaveFunctionBasis,
-                                        memorySpace>>
+      std::map<basis::kpoint::KPointId,
+               std::shared_ptr<
+                 const basis::FEBasisDataStorage<ValueTypeWaveFunctionBasis,
+                                                 memorySpace>>>
         d_feBDEXCHamiltonian;
 
       RealType                     d_groundStateEnergy;
@@ -748,6 +748,9 @@ namespace dftefe
       std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpaceHost>>
                   d_linAlgOpContextHost;
       double      d_smearingTemperature, d_freeEnergy;
+      double      d_fermiEnergyTolerance, d_fracOccupancyTolerance;
+      double      d_eigenSolveResidualTolerance;
+      size_type   d_maxChebyshevFilterPass;
       std::string d_xcType;
 
     }; // end of KohnShamDFT

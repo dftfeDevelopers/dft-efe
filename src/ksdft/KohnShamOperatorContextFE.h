@@ -32,7 +32,9 @@
 #include <linearAlgebra/MultiVector.h>
 #include <linearAlgebra/OperatorContext.h>
 #include <basis/FEBasisManager.h>
+#include <basis/ReciprocalLattice.h>
 #include <ksdft/Hamiltonian.h>
+#include <map>
 #include <memory>
 #include <variant>
 #include <type_traits>
@@ -107,13 +109,16 @@ namespace dftefe
 
     public:
       /**
-       * @brief Constructor
+       * @brief Constructor; assembles the Hamiltonian of every k in
+       * @p feBasisManager and makes the first one current.
        */
       KohnShamOperatorContextFE(
-        const basis::FEBasisManager<ValueTypeOperand,
-                                    ValueTypeWaveFunctionBasis,
-                                    memorySpace,
-                                    dim> &        feBasisManager,
+        const std::map<basis::kpoint::KPointId,
+                       std::shared_ptr<
+                         const basis::FEBasisManager<ValueTypeOperand,
+                                                     ValueTypeWaveFunctionBasis,
+                                                     memorySpace,
+                                                     dim>>> &feBasisManager,
         const std::vector<HamiltonianPtrVariant> &hamiltonianComponentsVec,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
                         linAlgOpContext,
@@ -124,12 +129,22 @@ namespace dftefe
 
       ~KohnShamOperatorContextFE() = default;
 
+      // assembles the Hamiltonian of every k into its own slot and makes the
+      // first one current
       void
-      reinit(const basis::FEBasisManager<ValueTypeOperand,
-                                         ValueTypeWaveFunctionBasis,
-                                         memorySpace,
-                                         dim> &        feBasisManager,
+      reinit(const std::map<
+               basis::kpoint::KPointId,
+               std::shared_ptr<
+                 const basis::FEBasisManager<ValueTypeOperand,
+                                             ValueTypeWaveFunctionBasis,
+                                             memorySpace,
+                                             dim>>> &  feBasisManager,
              const std::vector<HamiltonianPtrVariant> &hamiltonianVec);
+
+      // selects a Hamiltonian assembled by reinit and activates every
+      // component on that k, as the non-local apply uses them
+      void
+      activateKpt(const basis::kpoint::KPointId kPointId);
 
       void
       apply(linearAlgebra::MultiVector<ValueTypeOperand, memorySpace> &X,
@@ -140,15 +155,21 @@ namespace dftefe
       const Storage &
       getHamiltonianInAllCells() const
       {
-        return d_hamiltonianInAllCells;
+        return d_hamiltonianInAllCells.at(d_currentKPointId);
       }
 
     private:
-      const basis::FEBasisManager<ValueTypeOperand,
-                                  ValueTypeWaveFunctionBasis,
-                                  memorySpace,
-                                  dim> *d_feBasisManager;
-      Storage                           d_hamiltonianInAllCells;
+      // one assembled Hamiltonian per k, built once per SCF; the fields do
+      // not change across the Chebyshev passes
+      std::map<basis::kpoint::KPointId,
+               std::shared_ptr<
+                 const basis::FEBasisManager<ValueTypeOperand,
+                                             ValueTypeWaveFunctionBasis,
+                                             memorySpace,
+                                             dim>>>
+                                         d_feBasisManager;
+      std::map<basis::kpoint::KPointId, Storage> d_hamiltonianInAllCells;
+      basis::kpoint::KPointId                    d_currentKPointId;
       const size_type                   d_maxCellBlock;
       const size_type                   d_maxWaveFnBatch;
       std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>

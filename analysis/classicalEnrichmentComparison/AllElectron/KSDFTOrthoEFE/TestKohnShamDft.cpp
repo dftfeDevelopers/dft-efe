@@ -36,6 +36,7 @@
 #include <utils/PointChargePotentialFunction.h>
 #include <ksdft/DensityCalculator.h>
 #include <ksdft/KohnShamDFT.h>
+#include <basis/ReciprocalLattice.h>
 #include <basis/GenerateMesh.h>
 #include <utils/ConditionalOStream.h>
 #include <atoms/AtomSevereFunction.h>
@@ -52,8 +53,8 @@ const utils::MemorySpace Host = utils::MemorySpace::HOST;
 // Gamma-complex run; the electrostatics pair is real in every case.
 using ValueTypeElectrostaticsCoeff = double;
 using ValueTypeElectrostaticsBasis = double;
-using ValueTypeWaveFunctionCoeff   = double; //std::complex<double>;
-using ValueTypeWaveFunctionBasis   = double; //std::complex<double>;
+using ValueTypeWaveFunctionCoeff   = std::complex<double>;
+using ValueTypeWaveFunctionBasis   = std::complex<double>;
 
 template<typename T>
 T readParameter(const std::string &ParamFile,
@@ -462,6 +463,58 @@ int main(int argc, char** argv)
       handedness > 0.0,
       "The domain bounding vectors must form a right-handed system, i.e. "
       "(a1 x a2).a3 > 0.");
+
+  // Brillouin zone sampling; every parameter is optional and the defaults
+  // give the single Gamma point. A non-periodic direction gets k = 0 only.
+  const int useGroupSymmetry = readParameter<int>(
+    parameterInputFileName, "useGroupSymmetry", rootCout, true, false, 0);
+  const int useTimeReversalSymmetry = readParameter<int>(
+    parameterInputFileName, "useTimeReversalSymmetry", rootCout, true, false, 0);
+  const std::string kPointRuleFile = readParameter<std::string>(
+    parameterInputFileName, "kPointRuleFile", rootCout, false, false, std::string(""));
+  std::vector<size_type> samplingPoints(dim, 1);
+  samplingPoints[0] = readParameter<size_type>(
+    parameterInputFileName, "samplingPointsX", rootCout, true, false, 1);
+  samplingPoints[1] = readParameter<size_type>(
+    parameterInputFileName, "samplingPointsY", rootCout, true, false, 1);
+  samplingPoints[2] = readParameter<size_type>(
+    parameterInputFileName, "samplingPointsZ", rootCout, true, false, 1);
+  std::vector<bool> samplingShift(dim, false);
+  samplingShift[0] = (readParameter<int>(
+    parameterInputFileName, "samplingShiftX", rootCout, true, false, 0) != 0);
+  samplingShift[1] = (readParameter<int>(
+    parameterInputFileName, "samplingShiftY", rootCout, true, false, 0) != 0);
+  samplingShift[2] = (readParameter<int>(
+    parameterInputFileName, "samplingShiftZ", rootCout, true, false, 0) != 0);
+
+  utils::throwException(
+    useGroupSymmetry == 0,
+    "useGroupSymmetry: reducing the k-points by the point group is not "
+    "implemented.");
+  utils::throwException(
+    kPointRuleFile.empty(),
+    "kPointRuleFile: reading the k-points from a file is not implemented; use "
+    "the Monkhorst-Pack parameters samplingPoints* and samplingShift*.");
+
+  std::map<basis::kpoint::KPointId, basis::kpoint::KPointData> kPoints;
+  basis::ReciprocalLattice(domainVectors)
+    .generateMonkhorstPackGrid(samplingPoints,
+                               isPeriodicFlags,
+                               samplingShift,
+                               useTimeReversalSymmetry != 0,
+                               kPoints);
+  // a non-periodic direction has k = 0 only, whatever was asked for
+  for (size_type iDim = 0; iDim < dim; iDim++)
+    if (!isPeriodicFlags[iDim] &&
+        (samplingPoints[iDim] > 1 || samplingShift[iDim]))
+      rootCout << "Warning: direction " << iDim
+               << " is not periodic, so its k-point sampling is ignored.\n";
+  rootCout << "Number of k-points: " << kPoints.size() << "\n";
+  for (const auto &kPoint : kPoints)
+    rootCout << "k-point " << (size_type)kPoint.first << ": ("
+             << kPoint.second.coord[0] << ", " << kPoint.second.coord[1]
+             << ", " << kPoint.second.coord[2]
+             << "), weight " << kPoint.second.weight << "\n";
 
   p.registerEnd("Reading Parameter file data");
   p.registerStart("Reading Other Input data");
@@ -1194,8 +1247,10 @@ int main(int argc, char** argv)
 
     // Set the CFE basis manager and handler for bassiInterfaceCoeffcient distributed vector
 
+  // the classical halves of the per k-point EFE storages below are taken from
+  // this one, so it carries what they store, gradients included
   basisAttrMap[basis::BasisStorageAttributes::StoreValues] = true;
-  basisAttrMap[basis::BasisStorageAttributes::StoreGradient] = false;
+  basisAttrMap[basis::BasisStorageAttributes::StoreGradient] = true;
   basisAttrMap[basis::BasisStorageAttributes::StoreHessian] = false;
   basisAttrMap[basis::BasisStorageAttributes::StoreOverlap] = false;
   basisAttrMap[basis::BasisStorageAttributes::StoreGradNiGradNj] = false;
@@ -1217,18 +1272,20 @@ int main(int argc, char** argv)
                                                                    dim>>
         enrichClassIntfceTotalPot = nullptr;
 
-    // Create the enrichmentClassicalInterface object for wavefn
+    // Create the enrichmentClassicalInterface object for wavefn, one per
+    // k-point with that k's Bloch phase, all on one common dof layout
   p.registerStart("ECI orbital construction");
-  std::shared_ptr<basis::EnrichmentClassicalInterfaceSpherical
+  std::map<basis::kpoint::KPointId,
+           std::shared_ptr<const basis::EnrichmentClassicalInterfaceSpherical
                           <ValueTypeWaveFunctionCoeff,
-                                                               ValueTypeWaveFunctionBasis,
-                                                               memorySpace,
-                                                               dim>>
-    enrichClassIntfceOrbital = std::make_shared<basis::EnrichmentClassicalInterfaceSpherical
+                            ValueTypeWaveFunctionBasis,
+                            memorySpace,
+                            dim>>>
+    enrichClassIntfceOrbital = basis::EnrichmentClassicalInterfaceSpherical
                           <ValueTypeWaveFunctionCoeff,
-                                                                                             ValueTypeWaveFunctionBasis,
-                                                                                             memorySpace,
-                                                                                             dim>>
+                          ValueTypeWaveFunctionBasis,
+                          memorySpace,
+                          dim>::createECIObjectsForKPoints
                           (cfeBasisDataStorageGLLEigen,
                           cfeBasisDataStorageAdaptiveOrbital,
                           atomSphericalDataContainer,
@@ -1240,7 +1297,8 @@ int main(int argc, char** argv)
                           comm,
                           basis::ECIDefaults::ENRICHMENT_BATCH_SIZE,
                           basis::BasisDataStorageDefaults<memorySpace>::CELL_BATCH_SIZE,
-                          imageAtomGenerator);
+                          imageAtomGenerator,
+                          kPoints);
   p.registerEnd("ECI orbital construction");
 
   // initialize the basis Manager
@@ -1295,16 +1353,20 @@ int main(int argc, char** argv)
     basisDofHandlerTotalPot = cfeBasisDofHandlerElec;
 
   p.registerStart("EFE DofHandler wavefn creation");
-  std::shared_ptr<basis::FEBasisDofHandler<ValueTypeWaveFunctionCoeff, memorySpace,dim>> basisDofHandlerWaveFn =
-    std::make_shared<basis::EFEBasisDofHandlerDealii<ValueTypeWaveFunctionCoeff, ValueTypeWaveFunctionBasis,memorySpace,dim>>(
-      enrichClassIntfceOrbital, comm);
+  std::map<basis::kpoint::KPointId,
+           std::shared_ptr<basis::FEBasisDofHandler<ValueTypeWaveFunctionCoeff, memorySpace,dim>>>
+    basisDofHandlerWaveFn;
+  for (const auto &kPoint : kPoints)
+    basisDofHandlerWaveFn[kPoint.first] =
+      std::make_shared<basis::EFEBasisDofHandlerDealii<ValueTypeWaveFunctionCoeff, ValueTypeWaveFunctionBasis,memorySpace,dim>>(
+        enrichClassIntfceOrbital.at(kPoint.first), comm);
   p.registerEnd("EFE DofHandler wavefn creation");
 
   p.registerEnd("Ortho EFE basis manager creation");
   utils::printCurrentMemoryUsage<memorySpace>(comm, "Ortho EFE basis manager creation");
 
   rootCout << "Total Number of dofs electrostatics: " << basisDofHandlerTotalPot->nGlobalNodes() << "\n";
-  rootCout << "Total Number of dofs eigensolve: " << basisDofHandlerWaveFn->nGlobalNodes() << "\n";
+  rootCout << "Total Number of dofs eigensolve: " << basisDofHandlerWaveFn.begin()->second->nGlobalNodes() << "\n";
 
   // Set up the quadrature rule
 
@@ -1402,15 +1464,28 @@ int main(int argc, char** argv)
   basisAttrMap[basis::BasisStorageAttributes::StoreGradNiGradNj] = false;
   basisAttrMap[basis::BasisStorageAttributes::StoreJxW] = true;
 
-  std::shared_ptr<basis::FEBasisDataStorage<ValueTypeWaveFunctionBasis, memorySpace>> efeBasisDataAdaptiveOrbital =
-  std::make_shared<basis::EFEBasisDataStorageDealii<ValueTypeWaveFunctionCoeff, ValueTypeWaveFunctionBasis, memorySpace,dim>>
-  (basisDofHandlerWaveFn, quadAttrAdaptive, basisAttrMap, *linAlgOpContext);
+  // one set of cell-block work buffers for every per k-point EFE storage
+  // and the FEBasisOperations built on them, which never run at once
+  std::shared_ptr<basis::BasisScratch<ValueTypeWaveFunctionBasis, memorySpace>>
+    basisScratchWaveFn = std::make_shared<
+      basis::BasisScratch<ValueTypeWaveFunctionBasis, memorySpace>>();
 
-  efeBasisDataAdaptiveOrbital->evaluateBasisData(quadAttrAdaptive, quadRuleContainerAdaptiveOrbital, basisAttrMap);
+  std::map<basis::kpoint::KPointId,
+           std::shared_ptr<const basis::FEBasisDataStorage<ValueTypeWaveFunctionBasis, memorySpace>>>
+    efeBasisDataAdaptiveOrbital;
+  for (const auto &kPoint : kPoints)
+    {
+      std::shared_ptr<basis::FEBasisDataStorage<ValueTypeWaveFunctionBasis, memorySpace>> efeBasisData =
+        std::make_shared<basis::EFEBasisDataStorageDealii<ValueTypeWaveFunctionCoeff, ValueTypeWaveFunctionBasis, memorySpace,dim>>
+          (basisDofHandlerWaveFn.at(kPoint.first), quadAttrAdaptive, basisAttrMap, *linAlgOpContext,
+           cfeBasisDataStorageAdaptiveOrbital, basisScratchWaveFn);
+      efeBasisData->evaluateBasisData(quadAttrAdaptive, quadRuleContainerAdaptiveOrbital, basisAttrMap);
+      efeBasisDataAdaptiveOrbital[kPoint.first] = efeBasisData;
+    }
 
-    std::shared_ptr<const basis::FEBasisDataStorage<ValueTypeWaveFunctionBasis, memorySpace>> feBDElectrostaticsHamiltonian = efeBasisDataAdaptiveOrbital;
-    std::shared_ptr<const basis::FEBasisDataStorage<ValueTypeWaveFunctionBasis,memorySpace>> feBDKineticHamiltonian =  efeBasisDataAdaptiveOrbital;
-    std::shared_ptr<const basis::FEBasisDataStorage<ValueTypeWaveFunctionBasis, memorySpace>> feBDEXCHamiltonian = efeBasisDataAdaptiveOrbital;
+    std::map<basis::kpoint::KPointId, std::shared_ptr<const basis::FEBasisDataStorage<ValueTypeWaveFunctionBasis, memorySpace>>> feBDElectrostaticsHamiltonian = efeBasisDataAdaptiveOrbital;
+    std::map<basis::kpoint::KPointId, std::shared_ptr<const basis::FEBasisDataStorage<ValueTypeWaveFunctionBasis,memorySpace>>> feBDKineticHamiltonian =  efeBasisDataAdaptiveOrbital;
+    std::map<basis::kpoint::KPointId, std::shared_ptr<const basis::FEBasisDataStorage<ValueTypeWaveFunctionBasis, memorySpace>>> feBDEXCHamiltonian = efeBasisDataAdaptiveOrbital;
   
     p.registerEnd("Orbital basis datastorage eval");
     p.registerStart("FE Basis Manager Init");
@@ -1426,11 +1501,14 @@ int main(int argc, char** argv)
           zeroFunction = std::make_shared
             <utils::ScalarZeroFunctionReal>();
             
-    std::shared_ptr<const basis::FEBasisManager
-      <ValueTypeWaveFunctionCoeff, ValueTypeWaveFunctionBasis, memorySpace,dim>>
-    basisManagerWaveFn = std::make_shared
-      <basis::FEBasisManager<ValueTypeWaveFunctionCoeff, ValueTypeWaveFunctionBasis, memorySpace,dim>>
-        (basisDofHandlerWaveFn);
+    std::map<basis::kpoint::KPointId,
+             std::shared_ptr<const basis::FEBasisManager
+      <ValueTypeWaveFunctionCoeff, ValueTypeWaveFunctionBasis, memorySpace,dim>>>
+    basisManagerWaveFn;
+    for (const auto &kPoint : kPoints)
+      basisManagerWaveFn[kPoint.first] = std::make_shared
+        <basis::FEBasisManager<ValueTypeWaveFunctionCoeff, ValueTypeWaveFunctionBasis, memorySpace,dim>>
+          (basisDofHandlerWaveFn.at(kPoint.first));
 
     std::shared_ptr<const basis::FEBasisManager
       <ValueTypeElectrostaticsCoeff, ValueTypeElectrostaticsBasis, Host,dim>>
@@ -1443,22 +1521,24 @@ int main(int argc, char** argv)
 
   // Create OperatorContext for Basisoverlap
 
-  std::shared_ptr<const basis::OrthoEFEOverlapOperatorContext<ValueTypeWaveFunctionBasis,
+  std::map<basis::kpoint::KPointId,
+           std::shared_ptr<const linearAlgebra::OperatorContext<ValueTypeWaveFunctionBasis,
                                                 ValueTypeWaveFunctionCoeff,
-                                                memorySpace,
-                                                dim>> MContext =
+                                                memorySpace>>> MContext;
+  for (const auto &kPoint : kPoints)
+    MContext[kPoint.first] =
   std::make_shared<basis::OrthoEFEOverlapOperatorContext<ValueTypeWaveFunctionBasis,
                                                       ValueTypeWaveFunctionCoeff,
                                                       memorySpace,
                                                       dim>>(
-                                                      *basisManagerWaveFn,
+                                                      *basisManagerWaveFn.at(kPoint.first),
                                                       *cfeBasisDataStorageAdaptiveOrbital,
-                                                      *efeBasisDataAdaptiveOrbital,
+                                                      *efeBasisDataAdaptiveOrbital.at(kPoint.first),
                                                       *cfeBasisDataStorageAdaptiveOrbital,
                                                       ksdft::KSDFTDefaults<memorySpace>::CELL_BATCH_SIZE,
                                                       numWantedEigenvalues,
                                                       linAlgOpContext,
-                                                      true); 
+                                                      true);
 
   utils::printCurrentMemoryUsage<memorySpace>(comm, "Hamiltonian Basis overlap");
 
@@ -1484,39 +1564,44 @@ int main(int argc, char** argv)
   //                                                       /**cfeBasisDataStorageGLLEigen,*/
   //                                                       numWantedEigenvalues * ksdft::KSDFTDefaults<memorySpace>::CELL_BATCH_SIZE,);  
 
-    std::shared_ptr<const basis::OrthoEFEOverlapOperatorContext<ValueTypeWaveFunctionBasis,
+    std::map<basis::kpoint::KPointId,
+             std::shared_ptr<const linearAlgebra::OperatorContext<ValueTypeWaveFunctionBasis,
                                                   ValueTypeWaveFunctionCoeff,
-                                                  memorySpace,
-                                                  dim>> MContextForInv =
+                                                  memorySpace>>> MContextForInv;
+    for (const auto &kPoint : kPoints)
+      MContextForInv[kPoint.first] =
     std::make_shared<basis::OrthoEFEOverlapOperatorContext<ValueTypeWaveFunctionBasis,
                                                         ValueTypeWaveFunctionCoeff,
                                                         memorySpace,
                                                         dim>>(
-                                                        *basisManagerWaveFn,
+                                                        *basisManagerWaveFn.at(kPoint.first),
                                                         *cfeBasisDataStorageGLLEigen,
-                                                        *efeBasisDataAdaptiveOrbital,
+                                                        *efeBasisDataAdaptiveOrbital.at(kPoint.first),
                                                         *cfeBasisDataStorageGLLEigen,
                                                         linAlgOpContext,
-                                                        true);  
+                                                        true);
 
     p.registerEnd("Hamiltonian Basis overlap eval");
     utils::printCurrentMemoryUsage<memorySpace>(comm, "Hamiltonian Basis overlap , overlap for inv");
 
     p.registerStart("Hamiltonian Basis overlap inverse eval");
 
-  std::shared_ptr<linearAlgebra::OperatorContext<ValueTypeWaveFunctionBasis,
+  std::map<basis::kpoint::KPointId,
+           std::shared_ptr<const linearAlgebra::OperatorContext<ValueTypeWaveFunctionBasis,
                                                    ValueTypeWaveFunctionCoeff,
-                                                   memorySpace>> MInvContext =
+                                                   memorySpace>>> MInvContext;
+  for (const auto &kPoint : kPoints)
+    MInvContext[kPoint.first] =
     std::make_shared<basis::/*OrthoEFEOverlapInverseOpContextGLL*/OEFEAtomBlockOverlapInvOpContextGLL<ValueTypeWaveFunctionBasis,
                                                    ValueTypeWaveFunctionCoeff,
                                                    memorySpace,
                                                    dim>>
-                                                   (*basisManagerWaveFn,
+                                                   (*basisManagerWaveFn.at(kPoint.first),
                                                     /**MContext,*/
                                                     *cfeBasisDataStorageGLLEigen,
-                                                    *efeBasisDataAdaptiveOrbital,
+                                                    *efeBasisDataAdaptiveOrbital.at(kPoint.first),
                                                     *cfeBasisDataStorageGLLEigen,
-                                                    linAlgOpContext);    
+                                                    linAlgOpContext);
 
   p.registerEnd("Hamiltonian Basis overlap inverse eval");
   utils::printCurrentMemoryUsage<memorySpace>(comm, "Hamiltonian Basis overlap and inv");
@@ -1572,6 +1657,7 @@ int main(int argc, char** argv)
                                   *elecChargeDens,
                                   basisManagerTotalPot,
                                   basisManagerWaveFn,
+                                  kPoints,
                                   feBDTotalChargeStiffnessMatrix,
                                   feBDNucChargeRhs,
                                   feBDElecChargeRhs,
@@ -1583,9 +1669,9 @@ int main(int argc, char** argv)
                                   *externalPotentialFunction,
                                   xcFunctional,
                                   linAlgOpContext,
-                                  *MContextForInv,
-                                  *MContext,
-                                  *MInvContext,
+                                  MContextForInv,
+                                  MContext,
+                                  MInvContext,
                                   true,
                                   atomMagZFactors,
                                   spinMode,
@@ -1623,6 +1709,7 @@ int main(int argc, char** argv)
                                   *elecChargeDens,
                                   basisManagerTotalPot,
                                   basisManagerWaveFn,
+                                  kPoints,
                                   feBDTotalChargeStiffnessMatrix,
                                   feBDNucChargeRhs,
                                   feBDElecChargeRhs,
@@ -1632,9 +1719,9 @@ int main(int argc, char** argv)
                                   *externalPotentialFunction,
                                   xcFunctional,
                                   linAlgOpContext,
-                                  *MContextForInv,
-                                  *MContext,
-                                  *MInvContext,
+                                  MContextForInv,
+                                  MContext,
+                                  MInvContext,
                                   true,
                                   atomMagZFactors,
                                   spinMode,
@@ -1682,6 +1769,7 @@ int main(int argc, char** argv)
                                   *elecChargeDens,
                                   basisManagerTotalPot,
                                   basisManagerWaveFn,
+                                  kPoints,
                                   feBDTotalChargeStiffnessMatrix,
                                   feBDNucChargeRhs, 
                                   feBDElecChargeRhs,  
@@ -1691,9 +1779,9 @@ int main(int argc, char** argv)
                                   *externalPotentialFunction,
                                   xcFunctional,
                                   linAlgOpContext,
-                                  *MContextForInv,
-                                  *MContext,
-                                  *MInvContext,
+                                  MContextForInv,
+                                  MContext,
+                                  MInvContext,
                                   true,
                                   tciaparams,
                                   atomMagZFactors,

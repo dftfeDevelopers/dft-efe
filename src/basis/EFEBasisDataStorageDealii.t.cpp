@@ -2371,6 +2371,7 @@ namespace dftefe
       , d_quadratureRuleAttributes(quadratureRuleAttributes)
       , d_basisStorageAttributesBoolMap(basisStorageAttributesBoolMap)
       , d_linAlgOpContext(linAlgOpContext)
+      , d_scratch(nullptr)
     {
       d_evaluateBasisData = false;
       d_efeBDH            = std::dynamic_pointer_cast<
@@ -2419,7 +2420,8 @@ namespace dftefe
         linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext,
         std::shared_ptr<
           const FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
-          cfeBasisDataStorage)
+          cfeBasisDataStorage,
+        std::shared_ptr<BasisScratch<ValueTypeBasisData, memorySpace>> scratch)
       : EFEBasisDataStorageDealii(efeBDH,
                                   quadratureRuleAttributes,
                                   basisStorageAttributesBoolMap,
@@ -2447,6 +2449,7 @@ namespace dftefe
         "The cfeBasisDataStorage given to EFEBasisDataStorageDealii has a different FE order, so its classical dofs per cell do not match.");
 
       d_cfeBasisDataStorage = cfeBasisDataStorage;
+      d_scratch             = scratch;
     }
 
     template <typename ValueTypeBasisCoeff,
@@ -2661,6 +2664,9 @@ namespace dftefe
             ->second)
         {
           d_basisClassQuadStorage  = std::move(basisClassQuadStorage);
+          // here it only lands the CFE block of a cell range, so it is shared
+          if (d_scratch != nullptr)
+            d_basisClassQuadStorage = d_scratch->getClassValues();
           d_basisEnrichQuadStorage = std::move(basisEnrichQuadStorage);
           d_cellStartIdsBasisClassQuadStorage =
             cellStartIdsBasisClassQuadStorage;
@@ -2674,6 +2680,8 @@ namespace dftefe
         {
           d_basisGradientClassQuadStorage =
             std::move(basisGradientClassQuadStorage);
+          if (d_scratch != nullptr)
+            d_basisGradientClassQuadStorage = d_scratch->getClassGradients();
           d_basisGradientEnrichQuadStorage =
             std::move(basisGradientEnrichQuadStorage);
           d_cellStartIdsBasisGradientClassQuadStorage =
@@ -2957,6 +2965,9 @@ namespace dftefe
             ->second)
         {
           d_basisClassQuadStorage  = std::move(basisClassQuadStorage);
+          // here it only lands the CFE block of a cell range, so it is shared
+          if (d_scratch != nullptr)
+            d_basisClassQuadStorage = d_scratch->getClassValues();
           d_basisEnrichQuadStorage = std::move(basisEnrichQuadStorage);
           d_cellStartIdsBasisClassQuadStorage =
             cellStartIdsBasisClassQuadStorage;
@@ -2970,6 +2981,8 @@ namespace dftefe
         {
           d_basisGradientClassQuadStorage =
             std::move(basisGradientClassQuadStorage);
+          if (d_scratch != nullptr)
+            d_basisGradientClassQuadStorage = d_scratch->getClassGradients();
           d_basisGradientEnrichQuadStorage =
             std::move(basisGradientEnrichQuadStorage);
           d_cellStartIdsBasisGradientClassQuadStorage =
@@ -3234,6 +3247,9 @@ namespace dftefe
             ->second)
         {
           d_basisClassQuadStorage  = std::move(basisClassQuadStorage);
+          // here it only lands the CFE block of a cell range, so it is shared
+          if (d_scratch != nullptr)
+            d_basisClassQuadStorage = d_scratch->getClassValues();
           d_basisEnrichQuadStorage = std::move(basisEnrichQuadStorage);
           d_cellStartIdsBasisClassQuadStorage =
             cellStartIdsBasisClassQuadStorage;
@@ -3247,6 +3263,8 @@ namespace dftefe
         {
           d_basisGradientClassQuadStorage =
             std::move(basisGradientClassQuadStorage);
+          if (d_scratch != nullptr)
+            d_basisGradientClassQuadStorage = d_scratch->getClassGradients();
           d_basisGradientEnrichQuadStorage =
             std::move(basisGradientEnrichQuadStorage);
           d_cellStartIdsBasisGradientClassQuadStorage =
@@ -3523,6 +3541,9 @@ namespace dftefe
             ->second)
         {
           d_basisClassQuadStorage  = std::move(basisClassQuadStorage);
+          // here it only lands the CFE block of a cell range, so it is shared
+          if (d_scratch != nullptr)
+            d_basisClassQuadStorage = d_scratch->getClassValues();
           d_basisEnrichQuadStorage = std::move(basisEnrichQuadStorage);
           d_cellStartIdsBasisClassQuadStorage =
             cellStartIdsBasisClassQuadStorage;
@@ -3536,6 +3557,8 @@ namespace dftefe
         {
           d_basisGradientClassQuadStorage =
             std::move(basisGradientClassQuadStorage);
+          if (d_scratch != nullptr)
+            d_basisGradientClassQuadStorage = d_scratch->getClassGradients();
           d_basisGradientEnrichQuadStorage =
             std::move(basisGradientEnrichQuadStorage);
           d_cellStartIdsBasisGradientClassQuadStorage =
@@ -3744,6 +3767,9 @@ namespace dftefe
     {
       const size_type numBatch = cellRange.second - cellRange.first;
 
+      if (d_scratch != nullptr)
+        d_scratch->acquireStorageScratch(this, d_linAlgOpContext);
+
       // fetched here, with d_basisClassQuadStorage as the landing buffer
       const bool classFromCfe = d_cfeBasisDataStorage != nullptr;
       if (classFromCfe)
@@ -3826,6 +3852,9 @@ namespace dftefe
         d_basisEnrichQuadStorage->data() + d_cellStartIdsBasisEnrichQuadStorage[cellRange.first],
         basisData.data(),
         d_linAlgOpContext);
+
+      if (d_scratch != nullptr)
+        d_scratch->releaseStorageScratch();
     }
 
     template <typename ValueTypeBasisCoeff,
@@ -3871,6 +3900,9 @@ namespace dftefe
                                       Storage &basisGradientData) const
     {
       const size_type numBatch = cellRange.second - cellRange.first;
+
+      if (d_scratch != nullptr)
+        d_scratch->acquireStorageScratch(this, d_linAlgOpContext);
 
       // as getBasisDataInCellRange, with the gradient buffer
       const bool classFromCfe = d_cfeBasisDataStorage != nullptr;
@@ -3954,6 +3986,9 @@ namespace dftefe
         d_basisGradientEnrichQuadStorage->data() + d_cellStartIdsBasisGradientEnrichQuadStorage[cellRange.first],
         basisGradientData.data(),
         d_linAlgOpContext);
+
+      if (d_scratch != nullptr)
+        d_scratch->releaseStorageScratch();
     }
 
     template <typename ValueTypeBasisCoeff,
@@ -4285,20 +4320,28 @@ namespace dftefe
                               memorySpace,
                               dim>::deleteBasisData()
     {
-      utils::throwException(
-        (d_basisClassQuadStorage).use_count() == 1,
-        "More than one owner for the basis quadrature storage found in EFEBasisDataStorageDealii. Not safe to delete it.");
-      delete (d_basisClassQuadStorage).get();
+      // the classical buffers then belong to the scratch, which other
+      // storages still use
+      if (d_scratch == nullptr)
+        {
+          utils::throwException(
+            (d_basisClassQuadStorage).use_count() == 1,
+            "More than one owner for the basis quadrature storage found in EFEBasisDataStorageDealii. Not safe to delete it.");
+          delete (d_basisClassQuadStorage).get();
+        }
 
       utils::throwException(
         (d_basisEnrichQuadStorage).use_count() == 1,
         "More than one owner for the basis quadrature storage found in EFEBasisDataStorageDealii. Not safe to delete it.");
       delete (d_basisEnrichQuadStorage).get();
 
-      utils::throwException(
-        (d_basisGradientClassQuadStorage).use_count() == 1,
-        "More than one owner for the basis quadrature storage found in EFEBasisDataStorageDealii. Not safe to delete it.");
-      delete (d_basisGradientClassQuadStorage).get();
+      if (d_scratch == nullptr)
+        {
+          utils::throwException(
+            (d_basisGradientClassQuadStorage).use_count() == 1,
+            "More than one owner for the basis quadrature storage found in EFEBasisDataStorageDealii. Not safe to delete it.");
+          delete (d_basisGradientClassQuadStorage).get();
+        }
 
       utils::throwException(
         (d_basisGradientEnrichQuadStorage).use_count() == 1,
@@ -4391,6 +4434,19 @@ namespace dftefe
         "Cannot call function before calling evaluateBasisData()");
 
       return (d_quadratureRuleContainer);
+    }
+
+    template <typename ValueTypeBasisCoeff,
+              typename ValueTypeBasisData,
+              utils::MemorySpace memorySpace,
+              size_type          dim>
+    std::shared_ptr<BasisScratch<ValueTypeBasisData, memorySpace>>
+    EFEBasisDataStorageDealii<ValueTypeBasisCoeff,
+                              ValueTypeBasisData,
+                              memorySpace,
+                              dim>::getScratch() const
+    {
+      return d_scratch;
     }
 
     template <typename ValueTypeBasisCoeff,

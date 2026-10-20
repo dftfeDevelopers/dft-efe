@@ -16,10 +16,10 @@ namespace dftefe
       __global__ void
       setValueKernel(ValueType *devPtr, ValueType value, std::size_t size)
       {
-        const unsigned int globalThreadId =
-          blockIdx.x * blockDim.x + threadIdx.x;
-        for (unsigned int i = globalThreadId; i < size;
-             i += blockDim.x * gridDim.x)
+        const std::size_t globalThreadId =
+          (std::size_t)blockIdx.x * blockDim.x + threadIdx.x;
+        for (std::size_t i = globalThreadId; i < size;
+             i += (std::size_t)blockDim.x * gridDim.x)
           {
             devPtr[i] = value;
           }

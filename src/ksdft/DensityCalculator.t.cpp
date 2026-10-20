@@ -41,17 +41,22 @@ namespace dftefe
                       memorySpace,
                       dim>::
       DensityCalculator(
-        std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
-                                          feBasisDataStorage,
-        const basis::FEBasisManager<ValueTypeBasisCoeff,
-                                    ValueTypeBasisData,
-                                    memorySpace,
-                                    dim> &feBMPsi,
+        const std::map<
+          basis::kpoint::KPointId,
+          std::shared_ptr<
+            const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>>
+          &feBasisDataStorage,
+        const std::map<
+          basis::kpoint::KPointId,
+          std::shared_ptr<const basis::FEBasisManager<ValueTypeBasisCoeff,
+                                                      ValueTypeBasisData,
+                                                      memorySpace,
+                                                      dim>>> &feBMPsi,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
-                        linAlgOpContext,
-        const size_type cellBlockSize,
-        const size_type waveFuncBatchSize)
+                                                            linAlgOpContext,
+        const size_type                                     cellBlockSize,
+        const size_type                                     waveFuncBatchSize,
+        const std::map<basis::kpoint::KPointId, basis::kpoint::KPointData> &kPoints)
       : d_linAlgOpContext(linAlgOpContext)
       , d_cellBlockSize(cellBlockSize)
       , d_waveFuncBatchSize(waveFuncBatchSize)
@@ -62,6 +67,21 @@ namespace dftefe
       , d_psiBatch(nullptr)
       , d_psiBatchSmall(nullptr)
     {
+      // ascending key order, so the local index order is deterministic
+      utils::throwException<utils::InvalidArgument>(
+        !kPoints.empty(),
+        "DensityCalculator: the k-point map is empty. A non-periodic caller "
+        "passes basis::kpoint::gammaIfEmpty({}, dim).");
+      d_kPointIds.resize(kPoints.size(), (basis::kpoint::KPointId)0);
+      d_kPointWeights.resize(kPoints.size(), 0.0);
+      size_type iKPtLocal = 0;
+      for (const auto &kv : kPoints)
+        {
+          d_kPointIds[iKPtLocal]     = kv.first;
+          d_kPointWeights[iKPtLocal] = kv.second.weight;
+          iKPtLocal++;
+        }
+
       reinit(feBasisDataStorage, feBMPsi);
     }
 
@@ -117,18 +137,67 @@ namespace dftefe
                       ValueTypeBasisCoeff,
                       memorySpace,
                       dim>::
-      reinit(std::shared_ptr<
-               const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
-                                               feBasisDataStorage,
-             const basis::FEBasisManager<ValueTypeBasisCoeff,
-                                         ValueTypeBasisData,
-                                         memorySpace,
-                                         dim> &feBMPsi)
+      reinit(
+        const std::map<
+          basis::kpoint::KPointId,
+          std::shared_ptr<
+            const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>>
+          &feBasisDataStorage,
+        const std::map<
+          basis::kpoint::KPointId,
+          std::shared_ptr<const basis::FEBasisManager<ValueTypeBasisCoeff,
+                                                      ValueTypeBasisData,
+                                                      memorySpace,
+                                                      dim>>> &feBMPsi)
     {
-      d_feBMPsi              = &feBMPsi;
-      d_batchSizeSmall       = ksdft::MaxSizeDefaults::SIZE_TYPE_MAX;
-      d_quadRuleContainer    = feBasisDataStorage->getQuadratureRuleContainer();
-      d_numLocallyOwnedCells = feBMPsi.nLocallyOwnedCells();
+      const size_type nKLocal = d_kPointIds.size();
+      utils::throwException<utils::InvalidArgument>(
+        feBasisDataStorage.size() == nKLocal && feBMPsi.size() == nKLocal,
+        "DensityCalculator::reinit: the basis-storage and basis-manager maps "
+        "do not match the k-point set this object was built with.");
+      d_feBasisDataStorage.resize(nKLocal, nullptr);
+      d_feBMPsi.resize(nKLocal, nullptr);
+      size_type iKPtLocal = 0;
+      for (const auto &kv : feBasisDataStorage)
+        {
+          utils::throwException<utils::InvalidArgument>(
+            kv.first == d_kPointIds[iKPtLocal],
+            "DensityCalculator::reinit: the basis-storage map keys differ "
+            "from the k-point map keys.");
+          d_feBasisDataStorage[iKPtLocal] = kv.second;
+          iKPtLocal++;
+        }
+      iKPtLocal = 0;
+      for (const auto &kv : feBMPsi)
+        {
+          utils::throwException<utils::InvalidArgument>(
+            kv.first == d_kPointIds[iKPtLocal],
+            "DensityCalculator::reinit: the basis-manager map keys differ "
+            "from the k-point map keys.");
+          d_feBMPsi[iKPtLocal] = kv.second;
+          iKPtLocal++;
+        }
+
+      // rho is summed over k on ONE quadrature grid, and one batch buffer built
+      // from slot 0 serves every k, so every k must share both with slot 0
+      for (iKPtLocal = 1; iKPtLocal < nKLocal; ++iKPtLocal)
+        {
+          utils::throwException<utils::InvalidArgument>(
+            d_feBasisDataStorage[iKPtLocal]->getQuadratureRuleContainer() ==
+              d_feBasisDataStorage[0]->getQuadratureRuleContainer(),
+            "DensityCalculator::reinit: the per-k basis storages do not share "
+            "one QuadratureRuleContainer.");
+          utils::throwException<utils::InvalidArgument>(
+            d_feBMPsi[iKPtLocal]->getMPIPatternP2P()->isCompatible(
+              *d_feBMPsi[0]->getMPIPatternP2P()),
+            "DensityCalculator::reinit: the per-k basis managers do not share "
+            "one local dof layout.");
+        }
+
+      d_batchSizeSmall = ksdft::MaxSizeDefaults::SIZE_TYPE_MAX;
+      d_quadRuleContainer =
+        d_feBasisDataStorage[0]->getQuadratureRuleContainer();
+      d_numLocallyOwnedCells = d_feBMPsi[0]->nLocallyOwnedCells();
 
       std::vector<size_type> numCellQuad(d_numLocallyOwnedCells, 0);
       for (size_type iCell = 0; iCell < d_numLocallyOwnedCells; ++iCell)
@@ -201,18 +270,34 @@ namespace dftefe
 
       d_psiBatch =
         new linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>(
-          feBMPsi.getMPIPatternP2P(),
+          d_feBMPsi[0]->getMPIPatternP2P(),
           d_linAlgOpContext,
           d_waveFuncBatchSize,
           ValueTypeBasisCoeff());
 
-      d_feBasisOp =
-        std::make_shared<basis::FEBasisOperations<ValueTypeBasisCoeff,
-                                                  ValueTypeBasisData,
-                                                  memorySpace,
-                                                  dim>>(feBasisDataStorage,
-                                                        d_cellBlockSize,
-                                                        d_waveFuncBatchSize);
+      // one FEBasisOperations per DISTINCT storage: k sharing a basis alias
+      // one object, so CFE builds it once
+      d_feBasisOp.resize(nKLocal, nullptr);
+      for (iKPtLocal = 0; iKPtLocal < nKLocal; ++iKPtLocal)
+        {
+          d_feBasisOp[iKPtLocal] = nullptr;
+          for (size_type jKPtLocal = 0; jKPtLocal < iKPtLocal; ++jKPtLocal)
+            if (d_feBasisDataStorage[jKPtLocal] ==
+                d_feBasisDataStorage[iKPtLocal])
+              {
+                d_feBasisOp[iKPtLocal] = d_feBasisOp[jKPtLocal];
+                break;
+              }
+          if (d_feBasisOp[iKPtLocal] == nullptr)
+            d_feBasisOp[iKPtLocal] =
+              std::make_shared<basis::FEBasisOperations<ValueTypeBasisCoeff,
+                                                        ValueTypeBasisData,
+                                                        memorySpace,
+                                                        dim>>(
+                d_feBasisDataStorage[iKPtLocal],
+                d_cellBlockSize,
+                d_waveFuncBatchSize);
+        }
     }
 
     template <typename ValueTypeBasisData,
@@ -225,9 +310,7 @@ namespace dftefe
                       memorySpace,
                       dim>::
       computeRho(
-        const std::vector<RealType> &occupation,
-        const linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
-          &waveFunc,
+        const SpectralRep<ValueType, memorySpace> &spectral,
         std::vector<
           quadrature::QuadratureValuesContainer<RealType, memorySpaceHost> *>
           &rho,
@@ -237,13 +320,12 @@ namespace dftefe
         const bool     computeGrad,
         const SpinMode spinMode)
     {
+      const size_type nKLocal   = d_kPointIds.size();
       const size_type numSpaces = (spinMode == SpinMode::Unpolarized) ? 1 : 2;
       const size_type ncomp     = (spinMode == SpinMode::Unpolarized) ? 1 :
                                   (spinMode == SpinMode::Collinear)   ? 2 :
                                                                         4;
       const size_type batchN    = d_waveFuncBatchSize / numSpaces;
-      const size_type numVecPerSpace =
-        waveFunc.getNumberComponents() / numSpaces;
 
       // Lazy-allocate per-component device QVC containers if needed
       if (d_rhoMemspace.size() != ncomp)
@@ -268,140 +350,160 @@ namespace dftefe
       utils::MemoryTransfer<memorySpace, memorySpaceHost> memoryTransferM2H;
       utils::MemoryTransfer<memorySpaceHost, memorySpace> memoryTransferH2M;
 
-      utils::MemoryStorage<RealType, memorySpace> occMemspace(
-        occupation.size());
-      memoryTransferH2M.copy(occupation.size(),
-                             occMemspace.data(),
-                             occupation.data());
-
-      const auto &wavePs = static_cast<
-        const linearAlgebra::MultiVectorProductSpace<ValueTypeBasisCoeff,
-                                                     memorySpace> &>(waveFunc);
-
-      for (size_type cellStartId = 0; cellStartId < d_numLocallyOwnedCells;
-           cellStartId += d_cellBlockSize)
+      // rho = sum_k w_k sum_n f_nk |psi_nk|^2
+      for (size_type iKPtLocal = 0; iKPtLocal < nKLocal; ++iKPtLocal)
         {
-          const size_type cellEndId =
-            std::min(cellStartId + d_cellBlockSize, d_numLocallyOwnedCells);
-          const std::pair<size_type, size_type> cellRange(cellStartId,
-                                                          cellEndId);
+          const std::vector<double> &occupationK =
+            spectral.occupancies.at(d_kPointIds[iKPtLocal]);
+          const linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
+            &waveFuncK            = *spectral.ksOrbs.at(d_kPointIds[iKPtLocal]);
+          const RealType  kWeight = (RealType)d_kPointWeights[iKPtLocal];
+          const size_type numVecPerSpace =
+            waveFuncK.getNumberComponents() / numSpaces;
 
-          size_type numQuadInBlock = 0;
-          for (size_type iCell = cellStartId; iCell < cellEndId; iCell++)
-            numQuadInBlock += d_quadRuleContainer->nCellQuadraturePoints(iCell);
+          utils::MemoryStorage<RealType, memorySpace> occMemspace(
+            occupationK.size());
+          memoryTransferH2M.copy(occupationK.size(),
+                                 occMemspace.data(),
+                                 occupationK.data());
 
-          for (size_type psiStartId = 0; psiStartId < numVecPerSpace;
-               psiStartId += batchN)
+          const auto &wavePs = static_cast<
+            const linearAlgebra::MultiVectorProductSpace<ValueTypeBasisCoeff,
+                                                         memorySpace> &>(
+            waveFuncK);
+
+          for (size_type cellStartId = 0; cellStartId < d_numLocallyOwnedCells;
+               cellStartId += d_cellBlockSize)
             {
-              const size_type numPsiInBatch =
-                std::min(batchN, numVecPerSpace - psiStartId);
-              const size_type numPsiInBatchTotal = numSpaces * numPsiInBatch;
+              const size_type cellEndId =
+                std::min(cellStartId + d_cellBlockSize, d_numLocallyOwnedCells);
+              const std::pair<size_type, size_type> cellRange(cellStartId,
+                                                              cellEndId);
 
-              linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
-                *psiBatchInterim = nullptr;
+              size_type numQuadInBlock = 0;
+              for (size_type iCell = cellStartId; iCell < cellEndId; iCell++)
+                numQuadInBlock +=
+                  d_quadRuleContainer->nCellQuadraturePoints(iCell);
 
-              if (numPsiInBatchTotal == d_waveFuncBatchSize)
+              for (size_type psiStartId = 0; psiStartId < numVecPerSpace;
+                   psiStartId += batchN)
                 {
-                  psiBatchInterim = d_psiBatch;
-                }
-              else if (numPsiInBatchTotal == d_batchSizeSmall)
-                {
-                  psiBatchInterim = d_psiBatchSmall;
-                }
-              else
-                {
-                  d_batchSizeSmall = numPsiInBatchTotal;
-                  delete d_psiBatchSmall;
-                  d_psiBatchSmall =
-                    new linearAlgebra::MultiVector<ValueTypeBasisCoeff,
-                                                   memorySpace>(
-                      waveFunc.getMPIPatternP2P(),
-                      d_linAlgOpContext,
-                      numPsiInBatchTotal,
-                      ValueTypeBasisCoeff());
-                  psiBatchInterim = d_psiBatchSmall;
-                }
+                  const size_type numPsiInBatch =
+                    std::min(batchN, numVecPerSpace - psiStartId);
+                  const size_type numPsiInBatchTotal =
+                    numSpaces * numPsiInBatch;
 
-              // Assemble occupation batch: spin-major layout in
-              // d_occupationInBatch
-              for (size_type s = 0; s < numSpaces; ++s)
-                linearAlgebra::blasLapack::copyValueType1ArrToValueType2Arr(
-                  numPsiInBatch,
-                  occMemspace.data() + s * numVecPerSpace + psiStartId,
-                  d_occupationInBatch.data() + s * numPsiInBatch,
-                  *waveFunc.getLinAlgOpContext());
+                  linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
+                    *psiBatchInterim = nullptr;
 
-              // Spin-aware gather into flat batch buffer
-              linearAlgebra::MultiVectorOps::copyToBatch(wavePs,
-                                                         psiStartId,
-                                                         numPsiInBatch,
-                                                         *psiBatchInterim,
-                                                         *d_linAlgOpContext);
+                  if (numPsiInBatchTotal == d_waveFuncBatchSize)
+                    {
+                      psiBatchInterim = d_psiBatch;
+                    }
+                  else if (numPsiInBatchTotal == d_batchSizeSmall)
+                    {
+                      psiBatchInterim = d_psiBatchSmall;
+                    }
+                  else
+                    {
+                      d_batchSizeSmall = numPsiInBatchTotal;
+                      delete d_psiBatchSmall;
+                      d_psiBatchSmall =
+                        new linearAlgebra::MultiVector<ValueTypeBasisCoeff,
+                                                       memorySpace>(
+                          waveFuncK.getMPIPatternP2P(),
+                          d_linAlgOpContext,
+                          numPsiInBatchTotal,
+                          ValueTypeBasisCoeff());
+                      psiBatchInterim = d_psiBatchSmall;
+                    }
 
-              // Basis data for cellRange is cached across psi-batch iterations
-              d_feBasisOp->interpolate(*psiBatchInterim,
-                                       *d_feBMPsi,
-                                       cellRange,
-                                       d_psiBatchQuad->data());
+                  // Assemble occupation batch: spin-major layout in
+                  // d_occupationInBatch
+                  for (size_type s = 0; s < numSpaces; ++s)
+                    linearAlgebra::blasLapack::copyValueType1ArrToValueType2Arr(
+                      numPsiInBatch,
+                      occMemspace.data() + s * numVecPerSpace + psiStartId,
+                      d_occupationInBatch.data() + s * numPsiInBatch,
+                      *waveFuncK.getLinAlgOpContext());
 
-              DensityCalculatorKernels<ValueType, RealType, memorySpace, dim>::
-                computeRhoInBatch(numPsiInBatchTotal,
-                                  cellRange,
-                                  d_occupationInBatch.data(),
-                                  d_psiBatchQuad->data(),
-                                  d_modPsiSqBatchQuad.data(),
-                                  d_quadRuleContainer,
-                                  d_rhoBatch->data(),
-                                  *d_linAlgOpContext,
-                                  spinMode);
-
-              for (size_type ic = 0; ic < ncomp; ++ic)
-                linearAlgebra::blasLapack::
-                  axpy<RealType, RealType, memorySpace>(
-                    numQuadInBlock,
-                    (RealType)1.0,
-                    d_rhoBatch->data() + ic * numQuadInBlock,
-                    1,
-                    d_rhoMemspace[ic].begin(cellStartId),
-                    1,
+                  // Spin-aware gather into flat batch buffer
+                  linearAlgebra::MultiVectorOps::copyToBatch(
+                    wavePs,
+                    psiStartId,
+                    numPsiInBatch,
+                    *psiBatchInterim,
                     *d_linAlgOpContext);
 
-              if (computeGrad)
-                {
-                  d_feBasisOp->interpolateWithBasisGradient(
-                    *psiBatchInterim,
-                    *d_feBMPsi,
-                    cellRange,
-                    d_gradPsiBatchQuad->data());
+                  // Basis data for cellRange is cached across psi-batch
+                  // iterations
+                  d_feBasisOp[iKPtLocal]->interpolate(*psiBatchInterim,
+                                                      *d_feBMPsi[iKPtLocal],
+                                                      cellRange,
+                                                      d_psiBatchQuad->data());
 
                   DensityCalculatorKernels<
                     ValueType,
                     RealType,
                     memorySpace,
-                    dim>::computeGradRhoInBatch(numPsiInBatchTotal,
-                                                cellRange,
-                                                d_occupationInBatch.data(),
-                                                d_psiBatchQuad->data(),
-                                                d_gradPsiBatchQuad->data(),
-                                                d_psiGradPsiBatch.data(),
-                                                d_quadRuleContainer,
-                                                d_gradRhoBatch->data(),
-                                                *d_linAlgOpContext,
-                                                spinMode);
+                    dim>::computeRhoInBatch(numPsiInBatchTotal,
+                                            cellRange,
+                                            d_occupationInBatch.data(),
+                                            d_psiBatchQuad->data(),
+                                            d_modPsiSqBatchQuad.data(),
+                                            d_quadRuleContainer,
+                                            d_rhoBatch->data(),
+                                            *d_linAlgOpContext,
+                                            spinMode);
 
                   for (size_type ic = 0; ic < ncomp; ++ic)
                     linearAlgebra::blasLapack::
                       axpy<RealType, RealType, memorySpace>(
-                        numQuadInBlock * dim,
-                        (RealType)1.0,
-                        d_gradRhoBatch->data() + ic * numQuadInBlock * dim,
+                        numQuadInBlock,
+                        kWeight,
+                        d_rhoBatch->data() + ic * numQuadInBlock,
                         1,
-                        d_gradRhoMemspace[ic].begin(cellStartId),
+                        d_rhoMemspace[ic].begin(cellStartId),
                         1,
                         *d_linAlgOpContext);
+
+                  if (computeGrad)
+                    {
+                      d_feBasisOp[iKPtLocal]->interpolateWithBasisGradient(
+                        *psiBatchInterim,
+                        *d_feBMPsi[iKPtLocal],
+                        cellRange,
+                        d_gradPsiBatchQuad->data());
+
+                      DensityCalculatorKernels<
+                        ValueType,
+                        RealType,
+                        memorySpace,
+                        dim>::computeGradRhoInBatch(numPsiInBatchTotal,
+                                                    cellRange,
+                                                    d_occupationInBatch.data(),
+                                                    d_psiBatchQuad->data(),
+                                                    d_gradPsiBatchQuad->data(),
+                                                    d_psiGradPsiBatch.data(),
+                                                    d_quadRuleContainer,
+                                                    d_gradRhoBatch->data(),
+                                                    *d_linAlgOpContext,
+                                                    spinMode);
+
+                      for (size_type ic = 0; ic < ncomp; ++ic)
+                        linearAlgebra::blasLapack::
+                          axpy<RealType, RealType, memorySpace>(
+                            numQuadInBlock * dim,
+                            kWeight,
+                            d_gradRhoBatch->data() + ic * numQuadInBlock * dim,
+                            1,
+                            d_gradRhoMemspace[ic].begin(cellStartId),
+                            1,
+                            *d_linAlgOpContext);
+                    }
                 }
             }
-        }
+        } // k loop
 
       for (size_type ic = 0; ic < ncomp; ++ic)
         memoryTransferM2H.copy(d_rhoMemspace[ic].nEntries(),

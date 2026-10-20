@@ -38,6 +38,8 @@
 #include <utils/Profiler.h>
 #include <linearAlgebra/MultivectorScratch.h>
 #include <ksdft/KSAttributes.h>
+#include <basis/ReciprocalLattice.h>
+#include <map>
 
 namespace dftefe
 {
@@ -83,34 +85,22 @@ namespace dftefe
 
     public:
       /**
-       * @brief Constructor
-       * The occupation Tolerance is such that one considers the
-       * Kohn Sham Orbitals occupied if occupationTolerance < f_i(from
-       * diftribution) < 1-1e-12
+       * @brief Constructor. solve() runs one Chebyshev filter pass; the pass
+       * loop, the Fermi energy and the occupancies belong to the caller.
        */
       KohnShamEigenSolver(
-        const size_type numElectrons,
-        const double    smearingTemperature,
-        const double    fermiEnergyTolerance,
-        const double    fracOccupancyTolerance,
-        const double    eigenSolveResidualTolerance,
-        const size_type maxChebyshevFilterPass,
         const size_type numWantedEigenvalues,
         std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
           mpiPatternP2P,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
                                                    linAlgOpContext,
         const linearAlgebra::ElpaScalapackManager &elpaScala,
-        bool             isResidualChebyshevFilter = true,
-        const size_type  waveFunctionBatchSize     = 0,
-        const OpContext &MLanczos =
-          linearAlgebra::IdentityOperatorContext<ValueTypeOperator,
-                                                 ValueTypeOperand,
-                                                 memorySpace>(),
-        const OpContext &MInvLanczos =
-          linearAlgebra::IdentityOperatorContext<ValueTypeOperator,
-                                                 ValueTypeOperand,
-                                                 memorySpace>(),
+        bool                                       isResidualChebyshevFilter,
+        const size_type                            waveFunctionBatchSize,
+        const std::map<basis::kpoint::KPointId, std::shared_ptr<const OpContext>>
+          &MLanczos,
+        const std::map<basis::kpoint::KPointId, std::shared_ptr<const OpContext>>
+          &                                  MInvLanczos,
         const bool                           isGHEP = true,
         linearAlgebra::OrthogonalizationType orthoType =
           linearAlgebra::OrthogonalizationType::CHOLESKY_GRAMSCHMIDT,
@@ -126,28 +116,26 @@ namespace dftefe
       ~KohnShamEigenSolver() = default;
 
       void
-      reinitBasis(std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
-                    mpiPatternP2P,
-                  std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
-                                   linAlgOpContext,
-                  const OpContext &MLanczos =
-                    linearAlgebra::IdentityOperatorContext<ValueTypeOperator,
-                                                           ValueTypeOperand,
-                                                           memorySpace>(),
-                  const OpContext &MInvLanczos =
-                    linearAlgebra::IdentityOperatorContext<ValueTypeOperator,
-                                                           ValueTypeOperand,
-                                                           memorySpace>());
+      reinitBasis(
+        std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
+          mpiPatternP2P,
+        std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
+          linAlgOpContext,
+        const std::map<basis::kpoint::KPointId, std::shared_ptr<const OpContext>>
+          &MLanczos,
+        const std::map<basis::kpoint::KPointId, std::shared_ptr<const OpContext>>
+          &MInvLanczos);
 
+      // selects the Lanczos overlap pair of this k; solve() uses it
       void
-      reinitBounds(double wantedSpectrumLowerBound,
-                   double wantedSpectrumUpperBound);
+      activateKpt(const basis::kpoint::KPointId kPointId);
 
-      RealType
-      getFermiEnergy();
-
-      std::vector<RealType>
-      getFractionalOccupancy();
+      // keepChebyshevPolynomialDegree: the next solve() reuses the current
+      // degree, as a further pass on the same Hamiltonian should
+      void
+      reinitBounds(double     wantedSpectrumLowerBound,
+                   double     wantedSpectrumUpperBound,
+                   const bool keepChebyshevPolynomialDegree);
 
       std::vector<RealType>
       getEigenSolveResidualNorm();
@@ -195,11 +183,6 @@ namespace dftefe
 
       SpinMode        d_spinMode;
       const size_type d_S;
-      double          d_smearingTemperature;
-      double          d_fermiEnergyTolerance;
-      double          d_fracOccupancyTolerance;
-      double          d_eigenSolveResidualTolerance;
-      size_type       d_maxChebyshevFilterPass;
       size_type       d_chebyshevPolynomialDegree;
       const size_type d_numWantedEigenvalues;
       size_type       d_waveFunctionBatchSize;
@@ -209,18 +192,17 @@ namespace dftefe
         d_mpiPatternP2P;
       std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
                                 d_linAlgOpContext;
-      const OpContext *         d_MLanczos;
-      const OpContext *         d_MInvLanczos;
-      std::vector<RealType>     d_fracOccupancy;
+      std::map<basis::kpoint::KPointId, std::shared_ptr<const OpContext>> d_MLanczos;
+      std::map<basis::kpoint::KPointId, std::shared_ptr<const OpContext>> d_MInvLanczos;
+      basis::kpoint::KPointId           d_currentKPointId;
       std::vector<RealType>     d_eigSolveResNorm;
-      RealType                  d_fermiEnergy;
       bool                      d_isSolved;
-      const size_type           d_numElectrons;
       utils::ConditionalOStream d_rootCout;
       double                    d_wantedSpectrumLowerBound;
       double                    d_wantedSpectrumUpperBound;
       bool                      d_isBoundKnown;
       double                    d_chebyPolyScalingFactor;
+      bool                      d_keepChebyshevPolynomialDegree;
       bool                      d_setChebyPolDegExternally;
       bool                      d_isChebyPolDegComputed;
       CalculationType           d_calculationType;

@@ -27,8 +27,6 @@
 #include <linearAlgebra/LanczosExtremeEigenSolver.h>
 #include <linearAlgebra/ChebyshevFilteredEigenSolver.h>
 #include <linearAlgebra/MultiVectorOps.h>
-#include <ksdft/FractionalOccupancyFunction.h>
-#include <linearAlgebra/BisectionSolver.h>
 #include <iomanip>
 #include <cmath>
 namespace dftefe
@@ -116,12 +114,6 @@ namespace dftefe
               utils::MemorySpace memorySpace>
     KohnShamEigenSolver<ValueTypeOperator, ValueTypeOperand, memorySpace>::
       KohnShamEigenSolver(
-        const size_type numElectrons,
-        const double    smearingTemperature,
-        const double    fermiEnergyTolerance,
-        const double    fracOccupancyTolerance,
-        const double    eigenSolveResidualTolerance,
-        const size_type maxChebyshevFilterPass,
         const size_type numWantedEigenvalues,
         std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
           mpiPatternP2P,
@@ -130,32 +122,29 @@ namespace dftefe
         const linearAlgebra::ElpaScalapackManager &elpaScala,
         bool                                       isResidualChebyshevFilter,
         const size_type                            waveFunctionBatchSize,
-        const OpContext &                          MLanczos,
-        const OpContext &                          MInvLanczos,
-        const bool                                 isGHEP,
-        linearAlgebra::OrthogonalizationType       orthoType,
-        bool                                       storeIntermediateSubspaces,
-        bool                                       useSameScratchInEigenSolver,
-        SpinMode                                   spinMode,
-        CalculationType                            calculationType)
+        const std::map<basis::kpoint::KPointId, std::shared_ptr<const OpContext>>
+          &MLanczos,
+        const std::map<basis::kpoint::KPointId, std::shared_ptr<const OpContext>>
+          &                                  MInvLanczos,
+        const bool                           isGHEP,
+        linearAlgebra::OrthogonalizationType orthoType,
+        bool                                 storeIntermediateSubspaces,
+        bool                                 useSameScratchInEigenSolver,
+        SpinMode                             spinMode,
+        CalculationType                      calculationType)
       : d_spinMode(spinMode)
       , d_S((spinMode == SpinMode::Unpolarized) ? 1 : 2)
       , d_numWantedEigenvalues(numWantedEigenvalues)
-      , d_eigenSolveResidualTolerance(eigenSolveResidualTolerance)
-      , d_maxChebyshevFilterPass(maxChebyshevFilterPass)
       , d_waveFunctionBatchSize(spinMode == SpinMode::Collinear ?
                                   waveFunctionBatchSize / 2 :
                                   waveFunctionBatchSize)
-      , d_fermiEnergyTolerance(fermiEnergyTolerance)
-      , d_fracOccupancyTolerance(fracOccupancyTolerance)
-      , d_smearingTemperature(smearingTemperature)
-      , d_fracOccupancy(d_S * d_numWantedEigenvalues)
+      , d_currentKPointId((basis::kpoint::KPointId)0)
       , d_eigSolveResNorm(d_S * d_numWantedEigenvalues)
-      , d_numElectrons(numElectrons)
       , d_rootCout(std::cout)
       , d_batchSizeSmall(0)
       , d_p(mpiPatternP2P->mpiCommunicator(), "Kohn Sham EigenSolver")
       , d_chebyPolyScalingFactor(1.0)
+      , d_keepChebyshevPolynomialDegree(false)
       , d_isResidualChebyFilter(isResidualChebyshevFilter)
       , d_setChebyPolDegExternally(false)
       , d_isChebyPolDegComputed(false)
@@ -182,10 +171,16 @@ namespace dftefe
       reinitBasis(std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
                     mpiPatternP2P,
                   std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
-                                   linAlgOpContext,
-                  const OpContext &MLanczos,
-                  const OpContext &MInvLanczos)
+                    linAlgOpContext,
+                  const std::map<basis::kpoint::KPointId,
+                                 std::shared_ptr<const OpContext>> &MLanczos,
+                  const std::map<basis::kpoint::KPointId,
+                                 std::shared_ptr<const OpContext>> &MInvLanczos)
     {
+      utils::throwException<utils::InvalidArgument>(
+        !MLanczos.empty() && MLanczos.size() == MInvLanczos.size(),
+        "KohnShamEigenSolver::reinitBasis: MLanczos and MInvLanczos must hold "
+        "the same, non-empty set of k-points.");
       d_isSolved     = false;
       d_isBoundKnown = false;
       // A new basis means a new spectrum, so any all-electron degree latched
@@ -193,8 +188,9 @@ namespace dftefe
       d_isChebyPolDegComputed = false;
       d_mpiPatternP2P         = mpiPatternP2P;
       d_linAlgOpContext       = linAlgOpContext;
-      d_MLanczos              = &MLanczos;
-      d_MInvLanczos           = &MInvLanczos;
+      d_MLanczos              = MLanczos;
+      d_MInvLanczos           = MInvLanczos;
+      d_currentKPointId       = MLanczos.begin()->first;
       int rank;
       utils::mpi::MPICommRank(mpiPatternP2P->mpiCommunicator(), &rank);
       d_rootCout.setCondition(rank == 0);
@@ -249,13 +245,30 @@ namespace dftefe
               utils::MemorySpace memorySpace>
     void
     KohnShamEigenSolver<ValueTypeOperator, ValueTypeOperand, memorySpace>::
-      reinitBounds(double wantedSpectrumLowerBound,
-                   double wantedSpectrumUpperBound)
+      activateKpt(const basis::kpoint::KPointId kPointId)
     {
-      d_isSolved                 = false;
-      d_isBoundKnown             = true;
-      d_wantedSpectrumLowerBound = wantedSpectrumLowerBound;
-      d_wantedSpectrumUpperBound = wantedSpectrumUpperBound;
+      utils::throwException<utils::InvalidArgument>(
+        d_MLanczos.find(kPointId) != d_MLanczos.end() &&
+          d_MInvLanczos.find(kPointId) != d_MInvLanczos.end(),
+        "KohnShamEigenSolver::activateKpt: this object does not hold that "
+        "k-point.");
+      d_currentKPointId = kPointId;
+    }
+
+    template <typename ValueTypeOperator,
+              typename ValueTypeOperand,
+              utils::MemorySpace memorySpace>
+    void
+    KohnShamEigenSolver<ValueTypeOperator, ValueTypeOperand, memorySpace>::
+      reinitBounds(double     wantedSpectrumLowerBound,
+                   double     wantedSpectrumUpperBound,
+                   const bool keepChebyshevPolynomialDegree)
+    {
+      d_isSolved                      = false;
+      d_isBoundKnown                  = true;
+      d_wantedSpectrumLowerBound      = wantedSpectrumLowerBound;
+      d_wantedSpectrumUpperBound      = wantedSpectrumUpperBound;
+      d_keepChebyshevPolynomialDegree = keepChebyshevPolynomialDegree;
     }
 
     template <typename ValueTypeOperator,
@@ -302,12 +315,6 @@ namespace dftefe
             const OpContext &M,
             const OpContext &MInv)
     {
-      // d_fracOccupancy memory layout: spin-major, size S*N (= d_S *
-      // d_numWantedEigenvalues).
-      //   d_fracOccupancy[ s*N + n ]  — fractional occupancy for spin s,
-      //   orbital n. Mirrors kohnShamEnergies layout exactly (filled via
-      //   fermiDirac(kohnShamEnergies[i])).
-      //
       // d_eigSolveResNorm memory layout: spin-major, size S*N (= d_S *
       // d_numWantedEigenvalues).
       //   d_eigSolveResNorm[ s*N + n ]  — ||H*psi_{s,n} - E_{s,n}*M*psi_{s,n}||
@@ -325,7 +332,6 @@ namespace dftefe
       linearAlgebra::EigenSolverError     chfsiErr;
       linearAlgebra::EigenSolverErrorCode err =
         linearAlgebra::EigenSolverErrorCode::OTHER_ERROR;
-      linearAlgebra::NewtonRaphsonError nrErr;
 
       // get bounds from lanczos
       std::vector<double> tol{
@@ -353,8 +359,8 @@ namespace dftefe
                                  eigenValuesLanczos,
                                  eigenVectorsLanczos,
                                  false,
-                                 *d_MLanczos,
-                                 *d_MInvLanczos);
+                                 *d_MLanczos.at(d_currentKPointId),
+                                 *d_MInvLanczos.at(d_currentKPointId));
       d_p.registerEnd("Lanczos Solve");
       d_pTotal.registerEnd("Lanczos Solve");
 
@@ -364,7 +370,6 @@ namespace dftefe
       residual =
         residual / 10; // Done in dftfe because the subspace size is 20. TODO.
 
-      size_type iPass = 0;
       if (lanczosErr.isSuccess ||
           lanczosErr.err ==
             linearAlgebra::EigenSolverErrorCode::LANCZOS_SUBSPACE_INSUFFICIENT)
@@ -398,7 +403,7 @@ namespace dftefe
           // is under way. It is therefore computed once and kept for every
           // later SCF. Pseudopotential keeps recomputing from the lookup
           // each SCF, as before.
-          if (!d_setChebyPolDegExternally &&
+          if (!d_setChebyPolDegExternally && !d_keepChebyshevPolynomialDegree &&
               !(d_calculationType == CalculationType::AE &&
                 d_isChebyPolDegComputed))
             {
@@ -439,311 +444,116 @@ namespace dftefe
           d_pTotal.registerStart("Reinit CHFSI");
           d_p.registerEnd("Reinit CHFSI");
 
-          for (; iPass < d_maxChebyshevFilterPass; iPass++)
+          // do chebyshev filetered eigensolve
+
+          d_p.registerStart("Solve CHFSI");
+          d_pTotal.registerStart("Solve CHFSI");
+          chfsiErr = d_chfsi->solve(kohnShamOperator,
+                                    kohnShamEnergies,
+                                    kohnShamWaveFunctions,
+                                    computeWaveFunctions,
+                                    M,
+                                    MInv);
+
+          kohnShamWaveFunctions.updateGhostValues();
+          d_pTotal.registerEnd("Solve CHFSI");
+          d_p.registerEnd("Solve CHFSI");
+
+          /*
+          // Compute projected hamiltonian = Y^H M Y
+
+          size_type                           numVec  =
+      kohnShamWaveFunctions.getNumberComponents(); size_type vecSize =
+      kohnShamWaveFunctions.locallyOwnedSize();
+          linearAlgebra::MultiVector<ValueType, memorySpace>
+      temp(kohnShamWaveFunctions, (ValueType)0);
+
+          utils::MemoryStorage<ValueType, memorySpace> temp1(
+            numVec * numVec, utils::Types<ValueType>::zero);
+
+          M.apply(kohnShamWaveFunctions, temp, true, true);
+
+          linearAlgebra::blasLapack::gemm<ValueType, ValueType,
+      memorySpace>('N',
+            'C',
+            numVec,
+            numVec,
+            vecSize,
+            (ValueType)1,
+            temp.data(),
+            numVec,
+            kohnShamWaveFunctions.data(),
+            numVec,
+            (ValueType)0,
+            temp1.data(),
+            numVec,
+            *kohnShamWaveFunctions.getLinAlgOpContext());
+
+          int mpierr = utils::mpi::MPIAllreduce<memorySpace>(
+            utils::mpi::MPIInPlace,
+            temp1.data(),
+            temp1.size(),
+            utils::mpi::Types<ValueType>::getMPIDatatype(),
+            utils::mpi::MPISum,
+            kohnShamWaveFunctions.getMPIPatternP2P()->mpiCommunicator());
+
+      d_rootCout<< "Y^TMY:" <<std::endl;
+        for(size_type i= 0 ; i < numVec ; i++)
+        {
+          d_rootCout << "[";
+          for(size_type j= 0 ; j < numVec ; j++)
+            d_rootCout << *(temp1.data() + numVec * i + j) << ",";
+          d_rootCout<< "]" << std::endl;
+        }
+        */
+
+          if (d_storeIntermediateSubspaces)
             {
-              // do chebyshev filetered eigensolve
-
-              d_p.registerStart("Solve CHFSI");
-              d_pTotal.registerStart("Solve CHFSI");
-              chfsiErr = d_chfsi->solve(kohnShamOperator,
-                                        kohnShamEnergies,
-                                        kohnShamWaveFunctions,
-                                        computeWaveFunctions,
-                                        M,
-                                        MInv);
-
-              kohnShamWaveFunctions.updateGhostValues();
-              d_pTotal.registerEnd("Solve CHFSI");
-              d_p.registerEnd("Solve CHFSI");
-
-              /*
-              // Compute projected hamiltonian = Y^H M Y
-
-              size_type                           numVec  =
-          kohnShamWaveFunctions.getNumberComponents(); size_type vecSize =
-          kohnShamWaveFunctions.locallyOwnedSize();
-              linearAlgebra::MultiVector<ValueType, memorySpace>
-          temp(kohnShamWaveFunctions, (ValueType)0);
-
-              utils::MemoryStorage<ValueType, memorySpace> temp1(
-                numVec * numVec, utils::Types<ValueType>::zero);
-
-              M.apply(kohnShamWaveFunctions, temp, true, true);
-
-              linearAlgebra::blasLapack::gemm<ValueType, ValueType,
-          memorySpace>('N',
-                'C',
-                numVec,
-                numVec,
-                vecSize,
-                (ValueType)1,
-                temp.data(),
-                numVec,
-                kohnShamWaveFunctions.data(),
-                numVec,
-                (ValueType)0,
-                temp1.data(),
-                numVec,
-                *kohnShamWaveFunctions.getLinAlgOpContext());
-
-              int mpierr = utils::mpi::MPIAllreduce<memorySpace>(
-                utils::mpi::MPIInPlace,
-                temp1.data(),
-                temp1.size(),
-                utils::mpi::Types<ValueType>::getMPIDatatype(),
-                utils::mpi::MPISum,
-                kohnShamWaveFunctions.getMPIPatternP2P()->mpiCommunicator());
-
-          d_rootCout<< "Y^TMY:" <<std::endl;
-            for(size_type i= 0 ; i < numVec ; i++)
-            {
-              d_rootCout << "[";
-              for(size_type j= 0 ; j < numVec ; j++)
-                d_rootCout << *(temp1.data() + numVec * i + j) << ",";
-              d_rootCout<< "]" << std::endl;
+              d_filteredSubspace = &d_chfsi->getFilteredSubspace();
+              d_filteredSubspaceOrtho =
+                &d_chfsi->getOrthogonalizedFilteredSubspace();
             }
-            */
 
-              if (d_storeIntermediateSubspaces)
+          d_rootCout << chfsiErr.msg << std::endl;
+
+          // // TODO : Implement blocked approach for wavefns
+          // // calculate residualEigenSolver
+          const size_type       numVecPerSpace   = d_numWantedEigenvalues;
+          const size_type       eigVecBatchPerSp = d_waveFunctionBatchSize;
+          std::vector<RealType> energiesBatchMajor(d_S *
+                                                   d_numWantedEigenvalues);
+          size_type             dstOffset = 0;
+          for (size_type psiStart = 0; psiStart < numVecPerSpace;
+               psiStart += eigVecBatchPerSp)
+            {
+              const size_type batchN =
+                std::min(eigVecBatchPerSp, numVecPerSpace - psiStart);
+              for (size_type s = 0; s < d_S; ++s)
                 {
-                  d_filteredSubspace = &d_chfsi->getFilteredSubspace();
-                  d_filteredSubspaceOrtho =
-                    &d_chfsi->getOrthogonalizedFilteredSubspace();
-                }
-
-              d_rootCout << "Chebyshev Filter Pass: [" << iPass << "] "
-                         << chfsiErr.msg << std::endl;
-
-              d_p.registerStart("Compute chemical potential");
-              d_pTotal.registerStart("Compute chemical potential");
-              // Calculate the chemical potential: bisect within the
-              // bracket of all filtered eigenvalues first (see
-              // BisectionSolver - immune to sharply-peaked/vanishing
-              // derivatives since it only ever evaluates getValue()), then
-              // hand off to Newton
-
-              const size_type initialGuessIdx =
-                (d_spinMode == SpinMode::Collinear) ?
-                  std::ceil(static_cast<double>(d_numElectrons) / 2.0) - 1 :
-                  std::ceil(static_cast<double>(d_numElectrons * d_S) / 2.0) -
-                    1;
-
-              std::shared_ptr<ksdft::FractionalOccupancyFunction> fOcc =
-                std::make_shared<ksdft::FractionalOccupancyFunction>(
-                  kohnShamEnergies,
-                  d_numElectrons * d_S,
-                  Constants::BOLTZMANN_CONST_HARTREE,
-                  d_smearingTemperature,
-                  kohnShamEnergies[initialGuessIdx]);
-
-              linearAlgebra::BisectionSolver<double> bisectionSolver(
-                BisectionSolverDefaults::MAX_ITER,
-                BisectionSolverDefaults::TOL);
-
-              linearAlgebra::BisectionError bisectionErr =
-                bisectionSolver.solve(*fOcc);
-
-              utils::throwException(
-                bisectionErr.isSuccess,
-                "KohnShamEigenSolver: bisection pre-pass for the Fermi "
-                "energy failed - " +
-                  bisectionErr.msg +
-                  " This should not happen for a monotonic occupancy "
-                  "function; check for NaN/Inf eigenvalues.");
-
-              linearAlgebra::NewtonRaphsonSolver<double> nrs(
-                NewtonRaphsonSolverDefaults::MAX_ITER,
-                d_fermiEnergyTolerance,
-                NewtonRaphsonSolverDefaults::FORCE_TOL);
-
-              nrErr = nrs.solve(*fOcc);
-
-              if (!nrErr.isSuccess &&
-                  nrErr.err ==
-                    linearAlgebra::NewtonRaphsonErrorCode::FORCE_TOLERANCE_ERR)
-                {
-                  d_rootCout
-                    << "KohnShamEigenSolver: Newton-Raphson found the "
-                       "derivative already vanished at the bisected Fermi "
-                       "energy estimate (likely a HOMO-LUMO gap); keeping "
-                       "the bisected value. "
-                    << nrErr.msg << std::endl;
-
-                  // The bisected estimate is being deliberately accepted
-                  // here, so this is not a genuine failure - reset nrErr
-                  // to SUCCESS so it does not spuriously trip the CHFSI
-                  // break condition or get reported as a
-                  // KS_NEWTON_RAPHSON_ERROR below.
-                  nrErr = linearAlgebra::NewtonRaphsonErrorMsg::isSuccessAndMsg(
-                    linearAlgebra::NewtonRaphsonErrorCode::SUCCESS);
-                }
-              else
-                {
-                  utils::throwException(
-                    nrErr.isSuccess,
-                    "KohnShamEigenSolver: Newton-Raphson polish for the "
-                    "Fermi energy failed - " +
-                      nrErr.msg +
-                      " This should not happen starting from a "
-                      "bisection-refined estimate; check for NaN/Inf "
-                      "eigenvalues.");
-                }
-
-              fOcc->getSolution(d_fermiEnergy);
-
-              size_type numLevelsBelowFermiEnergy = 0;
-              // Calculate the frac occupancy vector
-              for (size_type i = 0; i < d_fracOccupancy.size(); i++)
-                {
-                  d_fracOccupancy[i] =
-                    fermiDirac(kohnShamEnergies[i],
-                               d_fermiEnergy,
-                               Constants::BOLTZMANN_CONST_HARTREE,
-                               d_smearingTemperature);
-                  if (d_fracOccupancy[i] > d_fracOccupancyTolerance)
-                    numLevelsBelowFermiEnergy += 1;
-                }
-
-              // // TODO : Implement blocked approach for wavefns
-              // // calculate residualEigenSolver
-              const size_type       numVecPerSpace   = d_numWantedEigenvalues;
-              const size_type       eigVecBatchPerSp = d_waveFunctionBatchSize;
-              std::vector<RealType> energiesBatchMajor(d_S *
-                                                       d_numWantedEigenvalues);
-              size_type             dstOffset = 0;
-              for (size_type psiStart = 0; psiStart < numVecPerSpace;
-                   psiStart += eigVecBatchPerSp)
-                {
-                  const size_type batchN =
-                    std::min(eigVecBatchPerSp, numVecPerSpace - psiStart);
-                  for (size_type s = 0; s < d_S; ++s)
-                    {
-                      std::copy(kohnShamEnergies.begin() + s * numVecPerSpace +
-                                  psiStart,
-                                kohnShamEnergies.begin() + s * numVecPerSpace +
-                                  psiStart + batchN,
-                                energiesBatchMajor.begin() + dstOffset);
-                      dstOffset += batchN;
-                    }
-                }
-              memoryTransfer.copy(d_S * d_numWantedEigenvalues,
-                                  d_kohnShamEnergiesMemspace.data(),
-                                  energiesBatchMajor.data());
-
-              d_p.registerEnd("Compute chemical potential");
-              d_pTotal.registerEnd("Compute chemical potential");
-              d_p.registerStart("Compute Residuals");
-              d_pTotal.registerStart("Compute Residuals");
-
-              size_type numLevelsBelowFermiEnergyResidualConverged = 0;
-              if (computeWaveFunctions)
-                {
-                  d_eigSolveResNorm =
-                    getLinearEigenSolveResidual(kohnShamOperator,
-                                                kohnShamWaveFunctions,
-                                                M);
-
-                  for (size_type i = 0; i < d_S * d_numWantedEigenvalues; i++)
-                    {
-                      if (d_fracOccupancy[i] > d_fracOccupancyTolerance &&
-                          d_eigSolveResNorm[i] <= d_eigenSolveResidualTolerance)
-                        numLevelsBelowFermiEnergyResidualConverged += 1;
-                    }
-
-                  d_rootCout << "*****************The CHFSI results are: "
-                                "******************\n";
-                  d_rootCout << "Fermi Energy is : " << d_fermiEnergy << "\n";
-                  d_rootCout
-                    << "Fermi Energy residual is : " << nrs.getResidual()
-                    << "\n";
-                  {
-                    std::ostream &          os       = d_rootCout.getOStream();
-                    std::ios_base::fmtflags oldFlag  = os.flags();
-                    std::streamsize         oldPrec  = os.precision();
-                    std::streamsize         oldWidth = os.width();
-                    os << std::scientific << std::right;
-                    if (d_spinMode == SpinMode::Collinear)
-                      {
-                        d_rootCout << std::setw(6) << "No." << std::setw(24)
-                                   << "[Spin 0] KS Energy" << std::setw(24)
-                                   << "[Spin 1] KS Energy" << std::setw(22)
-                                   << "[Spin 0] Frac. Occ." << std::setw(22)
-                                   << "[Spin 1] Frac. Occ." << std::setw(22)
-                                   << "[Spin 0] Residual" << std::setw(22)
-                                   << "[Spin 1] Residual"
-                                   << "\n";
-                        for (size_type i = 0; i < d_numWantedEigenvalues; i++)
-                          d_rootCout
-                            << std::setw(6) << i << std::setw(24)
-                            << std::setprecision(10) << kohnShamEnergies[i]
-                            << std::setw(24) << std::setprecision(10)
-                            << kohnShamEnergies[d_numWantedEigenvalues + i]
-                            << std::setw(22) << std::setprecision(8)
-                            << d_fracOccupancy[i] << std::setw(22)
-                            << std::setprecision(8)
-                            << d_fracOccupancy[d_numWantedEigenvalues + i]
-                            << std::setw(22) << std::setprecision(8)
-                            << d_eigSolveResNorm[i] << std::setw(22)
-                            << std::setprecision(8)
-                            << d_eigSolveResNorm[d_numWantedEigenvalues + i]
-                            << "\n";
-                      }
-                    else
-                      {
-                        d_rootCout << std::setw(6) << "No." << std::setw(24)
-                                   << "Kohn Sham Energy" << std::setw(22)
-                                   << "Frac. Occupancy" << std::setw(22)
-                                   << "Residual Norm"
-                                   << "\n";
-                        for (size_type i = 0; i < d_S * d_numWantedEigenvalues;
-                             i++)
-                          d_rootCout
-                            << std::setw(6) << i + 1 << std::setw(24)
-                            << std::setprecision(10) << kohnShamEnergies[i]
-                            << std::setw(22) << std::setprecision(8)
-                            << d_fracOccupancy[i] << std::setw(22)
-                            << std::setprecision(8) << d_eigSolveResNorm[i]
-                            << "\n";
-                      }
-                    os.flags(oldFlag);
-                    os.precision(oldPrec);
-                    os.width(oldWidth);
-                  }
-                  d_rootCout << "\n";
-                }
-              else
-                {
-                  d_rootCout
-                    << "Not Computing EigenVectors. Linear Eigensolve break condition only satisfied by Max Cheby Filter Pass.";
-                }
-              d_p.registerEnd("Compute Residuals");
-              d_pTotal.registerEnd("Compute Residuals");
-
-              // *d_waveFunctionSubspaceGuess = kohnShamWaveFunctions;
-
-              if (numLevelsBelowFermiEnergy ==
-                    numLevelsBelowFermiEnergyResidualConverged ||
-                  !chfsiErr.isSuccess || !nrErr.isSuccess)
-                break;
-              else
-                {
-                  d_wantedSpectrumLowerBound = kohnShamEnergies[0];
-                  d_wantedSpectrumUpperBound =
-                    kohnShamEnergies[d_S * d_numWantedEigenvalues - 1];
-                  d_pTotal.registerStart("Reinit CHFSI");
-                  d_p.registerStart("Reinit CHFSI");
-                  d_chfsi->reinit(
-                    d_wantedSpectrumLowerBound,
-                    d_wantedSpectrumUpperBound,
-                    eigenValuesLanczos[1] + residual,
-                    d_chebyshevPolynomialDegree,
-                    ksdft::LinearEigenSolverDefaults::ILL_COND_TOL,
-                    kohnShamWaveFunctions.getMPIPatternP2P(),
-                    kohnShamWaveFunctions.getLinAlgOpContext());
-                  d_p.registerEnd("Reinit CHFSI");
-                  d_pTotal.registerEnd("Reinit CHFSI");
+                  std::copy(kohnShamEnergies.begin() + s * numVecPerSpace +
+                              psiStart,
+                            kohnShamEnergies.begin() + s * numVecPerSpace +
+                              psiStart + batchN,
+                            energiesBatchMajor.begin() + dstOffset);
+                  dstOffset += batchN;
                 }
             }
+          memoryTransfer.copy(d_S * d_numWantedEigenvalues,
+                              d_kohnShamEnergiesMemspace.data(),
+                              energiesBatchMajor.data());
+
+          d_p.registerStart("Compute Residuals");
+          d_pTotal.registerStart("Compute Residuals");
+
+          if (computeWaveFunctions)
+            d_eigSolveResNorm =
+              getLinearEigenSolveResidual(kohnShamOperator,
+                                          kohnShamWaveFunctions,
+                                          M);
+
+          d_p.registerEnd("Compute Residuals");
+          d_pTotal.registerEnd("Compute Residuals");
+
           if (!chfsiErr.isSuccess)
             {
               err = linearAlgebra::EigenSolverErrorCode::KS_CHFSI_ERROR;
@@ -751,32 +561,9 @@ namespace dftefe
                 linearAlgebra::EigenSolverErrorMsg::isSuccessAndMsg(err);
               returnValue.msg += chfsiErr.msg;
             }
-          else if (!nrErr.isSuccess)
-            {
-              err =
-                linearAlgebra::EigenSolverErrorCode::KS_NEWTON_RAPHSON_ERROR;
-              returnValue =
-                linearAlgebra::EigenSolverErrorMsg::isSuccessAndMsg(err);
-              returnValue.msg += nrErr.msg;
-            }
-          else if (iPass >= d_maxChebyshevFilterPass && chfsiErr.isSuccess &&
-                   nrErr.isSuccess)
-            {
-              err = linearAlgebra::EigenSolverErrorCode::KS_MAX_PASS_ERROR;
-              returnValue =
-                linearAlgebra::EigenSolverErrorMsg::isSuccessAndMsg(err);
-            }
-          else if (iPass < d_maxChebyshevFilterPass && chfsiErr.isSuccess &&
-                   nrErr.isSuccess)
-            {
-              err = linearAlgebra::EigenSolverErrorCode::SUCCESS;
-              returnValue =
-                linearAlgebra::EigenSolverErrorMsg::isSuccessAndMsg(err);
-              returnValue.msg += "Number of CHFSI passes required are " +
-                                 std::to_string(iPass + 1) + ".";
-            }
           else
             {
+              err = linearAlgebra::EigenSolverErrorCode::SUCCESS;
               returnValue =
                 linearAlgebra::EigenSolverErrorMsg::isSuccessAndMsg(err);
             }
@@ -789,41 +576,11 @@ namespace dftefe
           returnValue.msg += lanczosErr.msg;
         }
 
-      d_chebyPolyScalingFactor = 1.0;
+      d_chebyPolyScalingFactor        = 1.0;
+      d_keepChebyshevPolynomialDegree = false;
 
       d_p.print();
       return returnValue;
-    }
-
-    template <typename ValueTypeOperator,
-              typename ValueTypeOperand,
-              utils::MemorySpace memorySpace>
-    typename linearAlgebra::HermitianIterativeEigenSolver<ValueTypeOperator,
-                                                          ValueTypeOperand,
-                                                          memorySpace>::RealType
-    KohnShamEigenSolver<ValueTypeOperator, ValueTypeOperand, memorySpace>::
-      getFermiEnergy()
-    {
-      utils::throwException(
-        d_isSolved,
-        "Cannot call getFermiEnergy() before solving the eigenproblem.");
-      return d_fermiEnergy;
-    }
-
-    template <typename ValueTypeOperator,
-              typename ValueTypeOperand,
-              utils::MemorySpace memorySpace>
-    std::vector<typename linearAlgebra::HermitianIterativeEigenSolver<
-      ValueTypeOperator,
-      ValueTypeOperand,
-      memorySpace>::RealType>
-    KohnShamEigenSolver<ValueTypeOperator, ValueTypeOperand, memorySpace>::
-      getFractionalOccupancy()
-    {
-      utils::throwException(
-        d_isSolved,
-        "Cannot call getFractionalOccupancy() before solving the eigenproblem.");
-      return d_fracOccupancy;
     }
 
     template <typename ValueTypeOperator,

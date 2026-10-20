@@ -24,6 +24,7 @@ ENDIF()
 set(DFT-EFE-BASIS-SOURCES
 	TriangulationCellDealii.cpp
 	PeriodicImageAtomGenerator.cpp
+	ReciprocalLattice.cpp
 	TriangulationDealiiSerial.cpp
 	LinearCellMappingDealii.cpp
 	ParentToChildCellsManagerDealii.cpp

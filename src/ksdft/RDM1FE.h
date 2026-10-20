@@ -37,7 +37,9 @@
 #include <basis/FEBasisDataStorage.h>
 #include <utils/Point.h>
 #include <basis/FEBasisManager.h>
+#include <basis/ReciprocalLattice.h>
 #include <linearAlgebra/LinAlgOpContext.h>
+#include <map>
 
 namespace dftefe
 {
@@ -67,31 +69,40 @@ namespace dftefe
     public:
       virtual ~RDM1FE() = default;
 
-      RDM1FE(std::shared_ptr<
-               const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
-                                               feBasisDataStorage,
-             const basis::FEBasisManager<ValueTypeBasisCoeff,
-                                         ValueTypeBasisData,
-                                         memorySpace,
-                                         dim> &feBMPsi,
-             std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
-                                        linAlgOpContext,
-             const utils::mpi::MPIComm &mpiCommDomain,
-             const size_type            cellBlockSize,
-             const size_type            waveFuncBatchSize,
-             const SpinMode             spinMode      = SpinMode::Unpolarized,
-             const bool                 isSOC         = false,
-             const std::vector<utils::Point> &kPointCoords = {},
-             const std::vector<double> &kPointWeights = std::vector<double>{});
+      RDM1FE(
+        const std::map<
+          basis::kpoint::KPointId,
+          std::shared_ptr<
+            const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>>
+          &feBasisDataStorage,
+        const std::map<
+          basis::kpoint::KPointId,
+          std::shared_ptr<const basis::FEBasisManager<ValueTypeBasisCoeff,
+                                                      ValueTypeBasisData,
+                                                      memorySpace,
+                                                      dim>>> &feBMPsi,
+        const std::map<basis::kpoint::KPointId, basis::kpoint::KPointData> &  kPoints,
+        std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
+                                   linAlgOpContext,
+        const utils::mpi::MPIComm &mpiCommDomain,
+        const size_type            cellBlockSize,
+        const size_type            waveFuncBatchSize,
+        const SpinMode             spinMode = SpinMode::Unpolarized,
+        const bool                 isSOC    = false);
 
       void
-      reinit(std::shared_ptr<
-               const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
-                                               feBasisDataStorage,
-             const basis::FEBasisManager<ValueTypeBasisCoeff,
-                                         ValueTypeBasisData,
-                                         memorySpace,
-                                         dim> &feBMPsi);
+      reinit(
+        const std::map<
+          basis::kpoint::KPointId,
+          std::shared_ptr<
+            const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>>
+          &feBasisDataStorage,
+        const std::map<
+          basis::kpoint::KPointId,
+          std::shared_ptr<const basis::FEBasisManager<ValueTypeBasisCoeff,
+                                                      ValueTypeBasisData,
+                                                      memorySpace,
+                                                      dim>>> &feBMPsi);
 
       void
       setEvalDescrFlag(const bool evalFlag) override;
@@ -144,13 +155,19 @@ namespace dftefe
       getFEBasisManager() const;
 
     private:
-      std::shared_ptr<
-        const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
-                                        d_feBasisDataStorage;
-      const basis::FEBasisManager<ValueTypeBasisCoeff,
-                                  ValueTypeBasisData,
-                                  memorySpace,
-                                  dim> *d_feBMPsiPtr;
+      // the per-k inputs, held as given: this class runs no k loop, it only
+      // forwards them to the DensityCalculator and to clone()
+      std::map<
+        basis::kpoint::KPointId,
+        std::shared_ptr<
+          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>>
+        d_feBasisDataStorage;
+      std::map<basis::kpoint::KPointId,
+               std::shared_ptr<const basis::FEBasisManager<ValueTypeBasisCoeff,
+                                                           ValueTypeBasisData,
+                                                           memorySpace,
+                                                           dim>>>
+        d_feBMPsi;
       std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
         d_linAlgOpContext;
       std::shared_ptr<DensityCalculator<ValueTypeBasisData,
@@ -159,8 +176,7 @@ namespace dftefe
                                         dim>>
         d_densCalc;
 
-      std::vector<utils::Point>                         d_kPointCoords;
-      std::vector<double>                               d_kPointWeights;
+      std::map<basis::kpoint::KPointId, basis::kpoint::KPointData>      d_kPoints;
       SpinMode                                          d_spinMode;
       bool                                              d_isSOC;
       std::reference_wrapper<const utils::mpi::MPIComm> d_mpiCommDomain;

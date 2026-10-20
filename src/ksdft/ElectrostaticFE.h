@@ -32,6 +32,7 @@
 #include <ksdft/Energy.h>
 #include <quadrature/QuadratureValuesContainer.h>
 #include <basis/FEBasisDataStorage.h>
+#include <basis/ReciprocalLattice.h>
 #include <vector>
 
 namespace dftefe

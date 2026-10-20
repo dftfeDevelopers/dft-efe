@@ -37,27 +37,29 @@ namespace dftefe
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
     RDM1FE<ValueTypeBasisData, ValueTypeBasisCoeff, memorySpace, dim>::RDM1FE(
-      std::shared_ptr<
-        const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
-                                        feBasisDataStorage,
-      const basis::FEBasisManager<ValueTypeBasisCoeff,
-                                  ValueTypeBasisData,
-                                  memorySpace,
-                                  dim> &feBMPsi,
+      const std::map<
+        basis::kpoint::KPointId,
+        std::shared_ptr<
+          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>>
+        &feBasisDataStorage,
+      const std::map<
+        basis::kpoint::KPointId,
+        std::shared_ptr<const basis::FEBasisManager<ValueTypeBasisCoeff,
+                                                    ValueTypeBasisData,
+                                                    memorySpace,
+                                                    dim>>> &feBMPsi,
+      const std::map<basis::kpoint::KPointId, basis::kpoint::KPointData> &  kPoints,
       std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
                                  linAlgOpContext,
       const utils::mpi::MPIComm &mpiCommDomain,
       const size_type            cellBlockSize,
       const size_type            waveFuncBatchSize,
       const SpinMode             spinMode /*= SpinMode::Unpolarized*/,
-      const bool                 isSOC /*= false*/,
-      const std::vector<utils::Point> &kPointCoords /*= {}*/,
-      const std::vector<double> &kPointWeights /*= std::vector<double>{}*/)
+      const bool                 isSOC /*= false*/)
       : d_feBasisDataStorage(feBasisDataStorage)
-      , d_feBMPsiPtr(&feBMPsi)
+      , d_feBMPsi(feBMPsi)
       , d_linAlgOpContext(linAlgOpContext)
-      , d_kPointCoords(kPointCoords)
-      , d_kPointWeights(kPointWeights)
+      , d_kPoints(kPoints)
       , d_spinMode(spinMode)
       , d_isSOC(isSOC)
       , d_mpiCommDomain(mpiCommDomain)
@@ -70,12 +72,12 @@ namespace dftefe
       d_densCalc = std::make_shared<DensityCalculator<ValueTypeBasisData,
                                                       ValueTypeBasisCoeff,
                                                       memorySpace,
-                                                      dim>>(
-        feBasisDataStorage,
-        feBMPsi,
-        linAlgOpContext,
-        cellBlockSize,
-        waveFuncBatchSize);
+                                                      dim>>(feBasisDataStorage,
+                                                            feBMPsi,
+                                                            linAlgOpContext,
+                                                            cellBlockSize,
+                                                            waveFuncBatchSize,
+                                                            kPoints);
     }
 
     template <typename ValueTypeBasisData,
@@ -84,16 +86,20 @@ namespace dftefe
               size_type                  dim>
     void
     RDM1FE<ValueTypeBasisData, ValueTypeBasisCoeff, memorySpace, dim>::reinit(
-      std::shared_ptr<
-        const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
-                                        feBasisDataStorage,
-      const basis::FEBasisManager<ValueTypeBasisCoeff,
-                                  ValueTypeBasisData,
-                                  memorySpace,
-                                  dim> &feBMPsi)
+      const std::map<
+        basis::kpoint::KPointId,
+        std::shared_ptr<
+          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>>
+        &feBasisDataStorage,
+      const std::map<
+        basis::kpoint::KPointId,
+        std::shared_ptr<const basis::FEBasisManager<ValueTypeBasisCoeff,
+                                                    ValueTypeBasisData,
+                                                    memorySpace,
+                                                    dim>>> &feBMPsi)
     {
       d_feBasisDataStorage = feBasisDataStorage;
-      d_feBMPsiPtr         = &feBMPsi;
+      d_feBMPsi            = feBMPsi;
       d_densCalc->reinit(feBasisDataStorage, feBMPsi);
     }
 
@@ -138,7 +144,15 @@ namespace dftefe
     RDM1FE<ValueTypeBasisData, ValueTypeBasisCoeff, memorySpace, dim>::
       getkPointCoords() const
     {
-      return d_kPointCoords;
+      std::vector<utils::Point> kPointCoords(d_kPoints.size(),
+                                             utils::Point((size_type)dim, 0.0));
+      size_type                 iKPtLocal = 0;
+      for (const auto &kv : d_kPoints)
+        {
+          kPointCoords[iKPtLocal] = kv.second.coord;
+          iKPtLocal++;
+        }
+      return kPointCoords;
     }
 
     template <typename ValueTypeBasisData,
@@ -149,7 +163,14 @@ namespace dftefe
     RDM1FE<ValueTypeBasisData, ValueTypeBasisCoeff, memorySpace, dim>::
       getkPointWeights() const
     {
-      return d_kPointWeights;
+      std::vector<double> kPointWeights(d_kPoints.size(), 0.0);
+      size_type           iKPtLocal = 0;
+      for (const auto &kv : d_kPoints)
+        {
+          kPointWeights[iKPtLocal] = kv.second.weight;
+          iKPtLocal++;
+        }
+      return kPointWeights;
     }
 
     template <typename ValueTypeBasisData,
@@ -214,11 +235,9 @@ namespace dftefe
           else if (d_spinMode == SpinMode::NonCollinear)
             ncomp = 4;
 
-          const std::vector<double> &occ = this->d_spectral->occupancies;
-
           std::shared_ptr<const quadrature::QuadratureRuleContainer>
-            quadRuleContainer =
-              d_feBasisDataStorage->getQuadratureRuleContainer();
+            quadRuleContainer = d_feBasisDataStorage.begin()
+                                  ->second->getQuadratureRuleContainer();
 
           auto &densVal = d_densityAttrVals[DensityDescrAttr::Val];
           if (densVal.size() != ncomp ||
@@ -263,12 +282,8 @@ namespace dftefe
             gradRhoVec(gradNcomp);
           for (size_type ic = 0; ic < gradNcomp; ++ic)
             gradRhoVec[ic] = &gradDensVal[ic];
-          d_densCalc->computeRho(occ,
-                                 *this->d_spectral->ksOrbs,
-                                 rhoVec,
-                                 gradRhoVec,
-                                 needGrad,
-                                 d_spinMode);
+          d_densCalc->computeRho(
+            *this->d_spectral, rhoVec, gradRhoVec, needGrad, d_spinMode);
 
           this->d_evalFlag = false;
         }
@@ -281,7 +296,8 @@ namespace dftefe
           if (it != d_densityAttrVals.end() && !it->second.empty())
             dftefe::utils::throwException(
               it->second[0].getQuadratureRuleContainer() ==
-                d_feBasisDataStorage->getQuadratureRuleContainer(),
+                d_feBasisDataStorage.begin()
+                  ->second->getQuadratureRuleContainer(),
               "RDM1FE::getDescriptors: cached density Quad has a different "
               "QuadratureRuleContainer than the current d_feBasisDataStorage. "
               "Call setEvalDescrFlag(true) after reinit().");
@@ -323,15 +339,14 @@ namespace dftefe
       return std::make_unique<
         RDM1FE<ValueTypeBasisData, ValueTypeBasisCoeff, memorySpace, dim>>(
         d_feBasisDataStorage,
-        *d_feBMPsiPtr,
+        d_feBMPsi,
+        d_kPoints,
         d_linAlgOpContext,
         d_mpiCommDomain.get(),
         d_cellBlockSize,
         d_waveFuncBatchSize,
         d_spinMode,
-        d_isSOC,
-        d_kPointCoords,
-        d_kPointWeights);
+        d_isSOC);
     }
 
     template <typename ValueTypeBasisData,
@@ -362,11 +377,9 @@ namespace dftefe
             "Re-evaluation of density observables in RDM1FE::getDensityObs() "
             "requires KS orbitals set via RDM1Spectral::setSpectral().");
 
-          const std::vector<double> &occ = this->d_spectral->occupancies;
-
           std::shared_ptr<const quadrature::QuadratureRuleContainer>
-            quadRuleContainer =
-              d_feBasisDataStorage->getQuadratureRuleContainer();
+            quadRuleContainer = d_feBasisDataStorage.begin()
+                                  ->second->getQuadratureRuleContainer();
 
           auto &densVal = d_densityAttrVals[DensityDescrAttr::Val];
           if (densVal.size() != ncomp ||
@@ -388,12 +401,8 @@ namespace dftefe
           for (size_type ic = 0; ic < ncomp; ++ic)
             rhoVec2[ic] = &densVal[ic];
           gradRhoVec2[0] = &gradDensVal[0];
-          d_densCalc->computeRho(occ,
-                                 *this->d_spectral->ksOrbs,
-                                 rhoVec2,
-                                 gradRhoVec2,
-                                 false,
-                                 d_spinMode);
+          d_densCalc->computeRho(
+            *this->d_spectral, rhoVec2, gradRhoVec2, false, d_spinMode);
         }
 
       // Determine the maximum moment order requested.
@@ -407,7 +416,8 @@ namespace dftefe
         }
 
       std::shared_ptr<const quadrature::QuadratureRuleContainer>
-        quadRuleContainer = d_feBasisDataStorage->getQuadratureRuleContainer();
+        quadRuleContainer =
+          d_feBasisDataStorage.begin()->second->getQuadratureRuleContainer();
 
       const std::vector<double> &      jxw = quadRuleContainer->getJxW();
       const std::vector<utils::Point> &pts = quadRuleContainer->getRealPoints();
@@ -508,7 +518,7 @@ namespace dftefe
     RDM1FE<ValueTypeBasisData, ValueTypeBasisCoeff, memorySpace, dim>::
       getFEBasisDataStorage() const
     {
-      return d_feBasisDataStorage;
+      return d_feBasisDataStorage.begin()->second;
     }
 
     template <typename ValueTypeBasisData,
@@ -521,7 +531,7 @@ namespace dftefe
         RDM1FE<ValueTypeBasisData, ValueTypeBasisCoeff, memorySpace, dim>::
           getFEBasisManager() const
     {
-      return *d_feBMPsiPtr;
+      return *d_feBMPsi.begin()->second;
     }
 
   } // end of namespace ksdft

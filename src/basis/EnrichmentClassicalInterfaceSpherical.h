@@ -46,8 +46,10 @@
 #include <atoms/AtomSphericalDataContainer.h>
 #include <basis/EnrichmentIdsPartition.h>
 #include <basis/TriangulationBase.h>
+#include <basis/ReciprocalLattice.h>
 #include <linearAlgebra/LinAlgOpContext.h>
 #include <basis/Defaults.h>
+#include <map>
 
 namespace dftefe
 {
@@ -153,6 +155,38 @@ namespace dftefe
         std::shared_ptr<const PeriodicImageAtomGenerator> imageAtomGenerator =
           nullptr,
         const utils::Point &kPointCoord = utils::Point(dim, 0.0));
+
+      /**
+       * @brief One orthogonalized interface per k point, as the first
+       * constructor builds it, all sharing one dof layout. With one k point
+       * that is the constructor's result. With several, each is repartitioned
+       * to the per cell union over k of the narrowed enrichment ids, since
+       * orthogonalization keeps a k dependent subset; the added cells carry
+       * zero classical components.
+       */
+      static std::map<
+        kpoint::KPointId,
+        std::shared_ptr<const EnrichmentClassicalInterfaceSpherical>>
+      createECIObjectsForKPoints(
+        std::shared_ptr<
+          const FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+          cfeBasisDataStorageOverlapMatrix,
+        std::shared_ptr<
+          const FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+          cfeBasisDataStorageRhs,
+        std::shared_ptr<const atoms::AtomSphericalDataContainer>
+                                         atomSphericalDataContainer,
+        const double                     atomPartitionTolerance,
+        const std::vector<std::string> & atomSymbolVec,
+        const std::vector<utils::Point> &atomCoordinatesVec,
+        const std::string                fieldName,
+        std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
+                                                          linAlgOpContext,
+        const utils::mpi::MPIComm &                       comm,
+        const size_type                                   enrichmentBatchSize,
+        const size_type                                   cellBlockSize,
+        std::shared_ptr<const PeriodicImageAtomGenerator> imageAtomGenerator,
+        const std::map<kpoint::KPointId, kpoint::KPointData> &            kPoints);
 
       /**
        * @brief Destructor for the class

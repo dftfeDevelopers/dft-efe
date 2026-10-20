@@ -29,6 +29,8 @@
 #include <linearAlgebra/NewtonRaphsonSolver.h>
 #include <linearAlgebra/NewtonRaphsonSolverFunction.h>
 #include <linearAlgebra/BisectionSolverFunction.h>
+#include <basis/ReciprocalLattice.h>
+#include <map>
 
 namespace dftefe
 {
@@ -54,11 +56,13 @@ namespace dftefe
       /**
        * @brief Constructor
        */
-      FractionalOccupancyFunction(const std::vector<double> &eigenValues,
-                                  const size_type            numElectrons,
-                                  const double               kb,
-                                  const double               T,
-                                  const double               initialGuess);
+      FractionalOccupancyFunction(
+        const std::map<basis::kpoint::KPointId, std::vector<double>> &eigenValues,
+        const size_type                                       numElectrons,
+        const double                                          kb,
+        const double                                          T,
+        const double                                          initialGuess,
+        const std::map<basis::kpoint::KPointId, basis::kpoint::KPointData> &  kPoints);
 
       ~FractionalOccupancyFunction() = default;
 
@@ -99,12 +103,13 @@ namespace dftefe
 
       double              d_x;
       double              d_initialGuess;
-      std::vector<double> d_eigenValues;
-      size_type           d_numElectrons;
-      double              d_kb;
-      double              d_T;
-      double              d_lowerBound;
-      double              d_upperBound;
+      std::map<basis::kpoint::KPointId, std::vector<double>> d_eigenValues;
+      std::map<basis::kpoint::KPointId, basis::kpoint::KPointData>   d_kPoints;
+      size_type                                      d_numElectrons;
+      double                                         d_kb;
+      double                                         d_T;
+      double                                         d_lowerBound;
+      double                                         d_upperBound;
 
     }; // end of class FractionalOccupancyFunction
   }    // end of namespace ksdft

@@ -37,14 +37,16 @@ namespace dftefe
     }
 
     FractionalOccupancyFunction::FractionalOccupancyFunction(
-      const std::vector<double> &eigenValues,
-      const size_type            numElectrons,
-      const double               kb,
-      const double               T,
-      const double               initialGuess)
+      const std::map<basis::kpoint::KPointId, std::vector<double>> &eigenValues,
+      const size_type                                       numElectrons,
+      const double                                          kb,
+      const double                                          T,
+      const double                                          initialGuess,
+      const std::map<basis::kpoint::KPointId, basis::kpoint::KPointData> &  kPoints)
       : d_x(initialGuess)
       , d_initialGuess(initialGuess)
       , d_eigenValues(eigenValues)
+      , d_kPoints(kPoints)
       , d_kb(kb)
       , d_T(T)
       , d_numElectrons(numElectrons)
@@ -68,10 +70,17 @@ namespace dftefe
       // Fermi energy solver (src/dft/fermiEnergy.cc).
       const size_type maxBracketExpansionIter = 1000;
 
-      double xLeft =
-        *std::min_element(d_eigenValues.begin(), d_eigenValues.end());
-      double xRight =
-        *std::max_element(d_eigenValues.begin(), d_eigenValues.end());
+      double xLeft  = d_eigenValues.begin()->second[0];
+      double xRight = d_eigenValues.begin()->second[0];
+      for (auto &kPointEigenValues : d_eigenValues)
+        {
+          xLeft  = std::min(xLeft,
+                           *std::min_element(kPointEigenValues.second.begin(),
+                                             kPointEigenValues.second.end()));
+          xRight = std::max(xRight,
+                            *std::max_element(kPointEigenValues.second.begin(),
+                                              kPointEigenValues.second.end()));
+        }
 
       double spectrumWidth = xRight - xLeft;
       if (spectrumWidth <= 0.0)
@@ -113,9 +122,11 @@ namespace dftefe
     {
       double retValue = 0;
 
-      for (auto &i : d_eigenValues)
+      for (auto &kPointEigenValues : d_eigenValues)
         {
-          retValue += 2 * fermiDirac(i, x, d_kb, d_T);
+          const double kWeight = d_kPoints.at(kPointEigenValues.first).weight;
+          for (auto &i : kPointEigenValues.second)
+            retValue += 2 * kWeight * fermiDirac(i, x, d_kb, d_T);
         }
       retValue -= (double)d_numElectrons;
       return retValue;
@@ -126,9 +137,11 @@ namespace dftefe
     {
       double retValue = 0;
 
-      for (auto &i : d_eigenValues)
+      for (auto &kPointEigenValues : d_eigenValues)
         {
-          retValue += 2 * fermiDiracDer(i, x, d_kb, d_T);
+          const double kWeight = d_kPoints.at(kPointEigenValues.first).weight;
+          for (auto &i : kPointEigenValues.second)
+            retValue += 2 * kWeight * fermiDiracDer(i, x, d_kb, d_T);
         }
       return retValue;
     }

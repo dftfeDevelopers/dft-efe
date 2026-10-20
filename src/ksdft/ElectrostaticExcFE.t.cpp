@@ -236,6 +236,37 @@ namespace dftefe
               typename ValueTypeWaveFunctionBasis,
               utils::MemorySpace memorySpace,
               size_type          dim>
+    void
+    ElectrostaticExcFE<ValueTypeElectrostaticsCoeff,
+                       ValueTypeElectrostaticsBasis,
+                       ValueTypeWaveFunctionCoeff,
+                       ValueTypeWaveFunctionBasis,
+                       memorySpace,
+                       dim>::activateKpt(const basis::kpoint::KPointId kPointId)
+    {
+      // the parts are held const but selecting k only changes which slot
+      // getLocal reads
+      std::const_pointer_cast<
+        ElectrostaticFE<ValueTypeElectrostaticsBasis,
+                        ValueTypeElectrostaticsCoeff,
+                        ValueTypeWaveFunctionBasis,
+                        ValueTypeWaveFunctionCoeff,
+                        memorySpace,
+                        dim>>(d_electroHamiltonian)
+        ->activateKpt(kPointId);
+      std::const_pointer_cast<ExchangeCorrelationFE<ValueTypeWaveFunctionBasis,
+                                                    ValueTypeWaveFunctionCoeff,
+                                                    memorySpace,
+                                                    dim>>(d_excHamiltonian)
+        ->activateKpt(kPointId);
+    }
+
+    template <typename ValueTypeElectrostaticsCoeff,
+              typename ValueTypeElectrostaticsBasis,
+              typename ValueTypeWaveFunctionCoeff,
+              typename ValueTypeWaveFunctionBasis,
+              utils::MemorySpace memorySpace,
+              size_type          dim>
     std::shared_ptr<const ElectrostaticFE<ValueTypeElectrostaticsBasis,
                                           ValueTypeElectrostaticsCoeff,
                                           ValueTypeWaveFunctionBasis,

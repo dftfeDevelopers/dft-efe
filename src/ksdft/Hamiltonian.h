@@ -29,6 +29,7 @@
 #include <utils/MemoryStorage.h>
 #include <linearAlgebra/MultiVector.h>
 #include <linearAlgebra/BlasLapackTypedef.h>
+#include <basis/ReciprocalLattice.h>
 
 namespace dftefe
 {
@@ -66,6 +67,9 @@ namespace dftefe
       hasLocalComponent() const = 0;
       virtual bool
       hasNonLocalComponent() const = 0;
+      // selects the k whose basis getLocal and applyNonLocal then use
+      virtual void
+      activateKpt(const basis::kpoint::KPointId kPointId) = 0;
 
     }; // end of Hamiltonian
   }    // end of namespace ksdft

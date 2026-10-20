@@ -35,6 +35,7 @@
 #include <utils/PointChargePotentialFunction.h>
 #include <ksdft/DensityCalculator.h>
 #include <ksdft/KohnShamDFT.h>
+#include <basis/ReciprocalLattice.h>
 #include <basis/GenerateMesh.h>
 #include <utils/ConditionalOStream.h>
 #include <atoms/AtomSphericalDataContainer.h>
@@ -476,6 +477,58 @@ int main(int argc, char** argv)
       "(a1 x a2).a3 > 0.");
   }
 
+  // Brillouin zone sampling; every parameter is optional and the defaults
+  // give the single Gamma point. A non-periodic direction gets k = 0 only.
+  const int useGroupSymmetry = readParameter<int>(
+    parameterInputFileName, "useGroupSymmetry", rootCout, true, false, 0);
+  const int useTimeReversalSymmetry = readParameter<int>(
+    parameterInputFileName, "useTimeReversalSymmetry", rootCout, true, false, 0);
+  const std::string kPointRuleFile = readParameter<std::string>(
+    parameterInputFileName, "kPointRuleFile", rootCout, false, false, std::string(""));
+  std::vector<size_type> samplingPoints(dim, 1);
+  samplingPoints[0] = readParameter<size_type>(
+    parameterInputFileName, "samplingPointsX", rootCout, true, false, 1);
+  samplingPoints[1] = readParameter<size_type>(
+    parameterInputFileName, "samplingPointsY", rootCout, true, false, 1);
+  samplingPoints[2] = readParameter<size_type>(
+    parameterInputFileName, "samplingPointsZ", rootCout, true, false, 1);
+  std::vector<bool> samplingShift(dim, false);
+  samplingShift[0] = (readParameter<int>(
+    parameterInputFileName, "samplingShiftX", rootCout, true, false, 0) != 0);
+  samplingShift[1] = (readParameter<int>(
+    parameterInputFileName, "samplingShiftY", rootCout, true, false, 0) != 0);
+  samplingShift[2] = (readParameter<int>(
+    parameterInputFileName, "samplingShiftZ", rootCout, true, false, 0) != 0);
+
+  utils::throwException(
+    useGroupSymmetry == 0,
+    "useGroupSymmetry: reducing the k-points by the point group is not "
+    "implemented.");
+  utils::throwException(
+    kPointRuleFile.empty(),
+    "kPointRuleFile: reading the k-points from a file is not implemented; use "
+    "the Monkhorst-Pack parameters samplingPoints* and samplingShift*.");
+
+  std::map<basis::kpoint::KPointId, basis::kpoint::KPointData> kPoints;
+  basis::ReciprocalLattice(domainVectors)
+    .generateMonkhorstPackGrid(samplingPoints,
+                               isPeriodicFlags,
+                               samplingShift,
+                               useTimeReversalSymmetry != 0,
+                               kPoints);
+  // a non-periodic direction has k = 0 only, whatever was asked for
+  for (size_type iDim = 0; iDim < dim; iDim++)
+    if (!isPeriodicFlags[iDim] &&
+        (samplingPoints[iDim] > 1 || samplingShift[iDim]))
+      rootCout << "Warning: direction " << iDim
+               << " is not periodic, so its k-point sampling is ignored.\n";
+  rootCout << "Number of k-points: " << kPoints.size() << "\n";
+  for (const auto &kPoint : kPoints)
+    rootCout << "k-point " << (size_type)kPoint.first << ": ("
+             << kPoint.second.coord[0] << ", " << kPoint.second.coord[1]
+             << ", " << kPoint.second.coord[2]
+             << "), weight " << kPoint.second.weight << "\n";
+
   std::fstream fstream;
   
   // read the input file and create atomsymbol vector and atom coordinates vector.
@@ -768,10 +821,9 @@ int main(int argc, char** argv)
   feBasisDataGLLEigen->evaluateBasisData(quadAttrGLLEigen, basisAttrMap);
 
   // Create OperatorContext for Basisoverlap
-  std::shared_ptr<const basis::CFEOverlapOperatorContext<ValueTypeWaveFunctionBasis,
+  std::shared_ptr<const linearAlgebra::OperatorContext<ValueTypeWaveFunctionBasis,
                                                 ValueTypeWaveFunctionCoeff,
-                                                memorySpace,
-                                                dim>> MContextForInv =
+                                                memorySpace>> MContextForInv =
   std::make_shared<basis::CFEOverlapOperatorContext<ValueTypeWaveFunctionBasis,
                                                       ValueTypeWaveFunctionCoeff,
                                                       memorySpace,
@@ -780,7 +832,7 @@ int main(int argc, char** argv)
                                                       *feBasisDataGLLEigen,
                                                       linAlgOpContext);
 
-std::shared_ptr<linearAlgebra::OperatorContext<ValueTypeWaveFunctionBasis,
+std::shared_ptr<const linearAlgebra::OperatorContext<ValueTypeWaveFunctionBasis,
                                                   ValueTypeWaveFunctionCoeff,
                                                   memorySpace>> MInvContext =
   std::make_shared<basis::CFEOverlapInverseOpContextGLL<ValueTypeWaveFunctionBasis,
@@ -896,7 +948,9 @@ std::shared_ptr<linearAlgebra::OperatorContext<ValueTypeWaveFunctionBasis,
     triangulationBase, 
     *cellMapping); 
 
-  basisAttrMap[basis::BasisStorageAttributes::StoreValues] = false;
+  // values too: away from Gamma the kinetic term also needs M and the k.A
+  // cross term, both built from values on this quadrature
+  basisAttrMap[basis::BasisStorageAttributes::StoreValues] = true;
   basisAttrMap[basis::BasisStorageAttributes::StoreGradient] = true;
   basisAttrMap[basis::BasisStorageAttributes::StoreHessian] = false;
   basisAttrMap[basis::BasisStorageAttributes::StoreOverlap] = false;
@@ -915,10 +969,9 @@ std::shared_ptr<linearAlgebra::OperatorContext<ValueTypeWaveFunctionBasis,
   std::shared_ptr<const basis::FEBasisDataStorage<ValueTypeWaveFunctionBasis, memorySpace>> feBDEXCHamiltonian = feBDElectrostaticsHamiltonian;
 
   // Create OperatorContext for Basisoverlap
-  std::shared_ptr<const basis::CFEOverlapOperatorContext<ValueTypeWaveFunctionBasis,
+  std::shared_ptr<const linearAlgebra::OperatorContext<ValueTypeWaveFunctionBasis,
                                                 ValueTypeWaveFunctionCoeff,
-                                                memorySpace,
-                                                dim>> MContext =
+                                                memorySpace>> MContext =
   std::make_shared<basis::CFEOverlapOperatorContext<ValueTypeWaveFunctionBasis,
                                                       ValueTypeWaveFunctionCoeff,
                                                       memorySpace,
@@ -995,21 +1048,23 @@ std::shared_ptr<linearAlgebra::OperatorContext<ValueTypeWaveFunctionBasis,
                                           isAdaptiveAndersonMixingParameter,
                                           *elecChargeDens,
                                           basisManagerTotalPot,
-                                          basisManagerWaveFn,
+                                          // the classical basis is the same at every k
+                                          basis::kpoint::sameForEveryKPoint(kPoints, basisManagerWaveFn),
+                                          kPoints,
                                           feBDTotalChargeStiffnessMatrix,
                                           feBDNucChargeRhs,
                                           feBDElecChargeRhs,
-                                          feBDKineticHamiltonian,
-                                          feBDElectrostaticsHamiltonian,
-                                          feBDEXCHamiltonian,
-                                          feBDAtomCenterNonLocalOperator,
+                                          basis::kpoint::sameForEveryKPoint(kPoints, feBDKineticHamiltonian),
+                                          basis::kpoint::sameForEveryKPoint<std::shared_ptr<const basis::FEBasisDataStorage<ValueTypeWaveFunctionBasis, memorySpace>>>(kPoints, feBDElectrostaticsHamiltonian),
+                                          basis::kpoint::sameForEveryKPoint(kPoints, feBDEXCHamiltonian),
+                                          basis::kpoint::sameForEveryKPoint<std::shared_ptr<const basis::FEBasisDataStorage<ValueTypeWaveFunctionBasis, memorySpace>>>(kPoints, feBDAtomCenterNonLocalOperator),
                                           atomSymbolToPSPFileName,
                                           xcFunctional,
                                           linAlgOpContext,
-                                          *MContextForInv,
+                                          basis::kpoint::sameForEveryKPoint(kPoints, MContextForInv),
                                           /**MContextForInv,*/
-                                          *MContext,
-                                          *MInvContext,
+                                          basis::kpoint::sameForEveryKPoint(kPoints, MContext),
+                                          basis::kpoint::sameForEveryKPoint(kPoints, MInvContext),
                                           true,
                                           atomMagZFactors,
                                           spinMode,
@@ -1054,21 +1109,23 @@ std::shared_ptr<linearAlgebra::OperatorContext<ValueTypeWaveFunctionBasis,
                                           *smfuncAtTotPot,
                                           *elecChargeDens,
                                           basisManagerTotalPot,
-                                          basisManagerWaveFn,
+                                          // the classical basis is the same at every k
+                                          basis::kpoint::sameForEveryKPoint(kPoints, basisManagerWaveFn),
+                                          kPoints,
                                           feBDTotalChargeStiffnessMatrix,
                                           feBDNucChargeRhs,
                                           feBDElecChargeRhs,
-                                          feBDKineticHamiltonian,
-                                          feBDElectrostaticsHamiltonian,
-                                          feBDEXCHamiltonian,
-                                          feBDAtomCenterNonLocalOperator,
+                                          basis::kpoint::sameForEveryKPoint(kPoints, feBDKineticHamiltonian),
+                                          basis::kpoint::sameForEveryKPoint<std::shared_ptr<const basis::FEBasisDataStorage<ValueTypeWaveFunctionBasis, memorySpace>>>(kPoints, feBDElectrostaticsHamiltonian),
+                                          basis::kpoint::sameForEveryKPoint(kPoints, feBDEXCHamiltonian),
+                                          basis::kpoint::sameForEveryKPoint<std::shared_ptr<const basis::FEBasisDataStorage<ValueTypeWaveFunctionBasis, memorySpace>>>(kPoints, feBDAtomCenterNonLocalOperator),
                                           atomSymbolToPSPFileName,
                                           xcFunctional,
                                           linAlgOpContext,
-                                          *MContextForInv,
+                                          basis::kpoint::sameForEveryKPoint(kPoints, MContextForInv),
                                           /**MContextForInv,*/
-                                          *MContext,
-                                          *MInvContext,
+                                          basis::kpoint::sameForEveryKPoint(kPoints, MContext),
+                                          basis::kpoint::sameForEveryKPoint(kPoints, MInvContext),
                                           true,
                                           tciaparams,
                                           atomMagZFactors,

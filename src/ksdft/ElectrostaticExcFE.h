@@ -117,6 +117,9 @@ namespace dftefe
       bool
       hasNonLocalComponent() const override;
 
+      void
+      activateKpt(const basis::kpoint::KPointId kPointId) override;
+
       std::shared_ptr<const ElectrostaticFE<ValueTypeElectrostaticsBasis,
                                             ValueTypeElectrostaticsCoeff,
                                             ValueTypeWaveFunctionBasis,

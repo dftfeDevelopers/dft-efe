@@ -175,7 +175,9 @@ namespace dftefe
     {
       if (&rhs != this)
         {
-          delete[] d_data;
+          // through the memory manager: a device buffer cannot go to delete[]
+          dftefe::utils::MemoryManager<ValueType, memorySpace>::deallocate(
+            d_data);
           d_data     = rhs.d_data;
           d_size     = rhs.d_size;
           rhs.d_size = 0;

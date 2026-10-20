@@ -30,6 +30,7 @@
 #include <utils/MemorySpaceType.h>
 #include <utils/MemoryStorage.h>
 #include <basis/BasisDataStorage.h>
+#include <basis/BasisScratch.h>
 #include <basis/EFEBasisDataStorage.h>
 #include <basis/CFEBasisDofHandlerDealii.h>
 #include <basis/EFEBasisDofHandlerDealii.h>
@@ -78,7 +79,10 @@ namespace dftefe
       /**
        * @brief The classical half is served by @p cfeBasisDataStorage and is not
        * built here, so several k points can use one classical block, jacobian
-       * inverse included, while each holds only its own enrichment.
+       * inverse included, while each holds only its own enrichment. With
+       * @p scratch, the cell-block work buffers are shared as well; it must be
+       * the same object for every k point and for no two storages in use at
+       * the same time.
        */
       EFEBDSOnTheFlyComputeDealii(
         std::shared_ptr<const BasisDofHandler>      feBDH,
@@ -90,7 +94,9 @@ namespace dftefe
           const FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
                    cfeBasisDataStorage,
         const bool calculateEnrichmentDataOnTheFly = true,
-        const bool useMemOptGradScratchSpace       = false);
+        const bool useMemOptGradScratchSpace       = false,
+        std::shared_ptr<BasisScratch<ValueTypeBasisData, memorySpace>> scratch =
+          nullptr);
 
       ~EFEBDSOnTheFlyComputeDealii() = default;
 
@@ -225,6 +231,9 @@ namespace dftefe
       std::shared_ptr<const quadrature::QuadratureRuleContainer>
       getQuadratureRuleContainer() const override;
 
+      std::shared_ptr<BasisScratch<ValueTypeBasisData, memorySpace>>
+      getScratch() const override;
+
       // functions to get data for  basis functions on all quad points in range
       // of cells
       void
@@ -270,6 +279,7 @@ namespace dftefe
 
       std::shared_ptr<const FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
                                     d_cfeBasisDataStorage;
+      std::shared_ptr<BasisScratch<ValueTypeBasisData, memorySpace>> d_scratch;
 
     }; // end of EFEBDSOnTheFlyComputeDealii
   }    // end of namespace basis

@@ -1433,10 +1433,12 @@ namespace dftefe
                               memorySpace,
                               dim>::
       KohnShamOperatorContextFE(
-        const basis::FEBasisManager<ValueTypeOperand,
-                                    ValueTypeWaveFunctionBasis,
-                                    memorySpace,
-                                    dim> &        feBasisManager,
+        const std::map<basis::kpoint::KPointId,
+                       std::shared_ptr<
+                         const basis::FEBasisManager<ValueTypeOperand,
+                                                     ValueTypeWaveFunctionBasis,
+                                                     memorySpace,
+                                                     dim>>> &feBasisManager,
         const std::vector<HamiltonianPtrVariant> &hamiltonianComponentsVec,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
                         linAlgOpContext,
@@ -1459,7 +1461,9 @@ namespace dftefe
       , d_YCellValues(
           std::make_shared<utils::MemoryStorage<ValueTypeOperand, memorySpace>>(
             0))
-      , d_hamiltonianInAllCells(0)
+      , d_feBasisManager()
+      , d_hamiltonianInAllCells()
+      , d_currentKPointId(feBasisManager.begin()->first)
     {
       reinit(feBasisManager, hamiltonianComponentsVec);
 
@@ -1481,48 +1485,70 @@ namespace dftefe
                               ValueTypeWaveFunctionBasis,
                               memorySpace,
                               dim>::
-      reinit(const basis::FEBasisManager<ValueTypeOperand,
-                                         ValueTypeWaveFunctionBasis,
-                                         memorySpace,
-                                         dim> &        feBasisManager,
+      reinit(const std::map<
+               basis::kpoint::KPointId,
+               std::shared_ptr<
+                 const basis::FEBasisManager<ValueTypeOperand,
+                                             ValueTypeWaveFunctionBasis,
+                                             memorySpace,
+                                             dim>>> &  feBasisManager,
              const std::vector<HamiltonianPtrVariant> &hamiltonianComponentsVec)
     {
       d_hamiltonianComponentsVec = hamiltonianComponentsVec;
+      d_feBasisManager           = feBasisManager;
 
       const size_type numLocallyOwnedCells =
-        feBasisManager.nLocallyOwnedCells();
-
-      size_type cellWiseDataSize = 0;
-      for (size_type iCell = 0; iCell < numLocallyOwnedCells; iCell++)
-        {
-          size_type x = feBasisManager.nLocallyOwnedCellDofs(iCell);
-          cellWiseDataSize += (d_S * x) * (d_S * x);
-        }
-
-      d_feBasisManager = &feBasisManager;
-
-      if (d_hamiltonianInAllCells.size() != cellWiseDataSize)
-        {
-          d_hamiltonianInAllCells.resize(cellWiseDataSize, (ValueType)0);
-        }
-      else
-        d_hamiltonianInAllCells.setValue((ValueType)0);
+        feBasisManager.begin()->second->nLocallyOwnedCells();
 
       HamiltonianComponentsOperations<ValueType,
                                       ValueTypeWaveFunctionCoeff,
                                       memorySpace>
         op;
-      for (size_type i = 0; i < hamiltonianComponentsVec.size(); ++i)
+      size_type maxDofInCell = 0;
+      for (const auto &kPointBasisManager : feBasisManager)
         {
-          op.addLocalComponent(d_hamiltonianInAllCells,
-                               hamiltonianComponentsVec[i],
-                               *d_linAlgOpContext);
+          // the components project onto the basis of the k they hold active
+          for (size_type i = 0; i < hamiltonianComponentsVec.size(); ++i)
+            std::visit(
+              [&](auto &hamiltonian) {
+                hamiltonian->activateKpt(kPointBasisManager.first);
+              },
+              hamiltonianComponentsVec[i]);
+
+          size_type cellWiseDataSize = 0;
+          for (size_type iCell = 0; iCell < numLocallyOwnedCells; iCell++)
+            {
+              size_type x =
+                kPointBasisManager.second->nLocallyOwnedCellDofs(iCell);
+              cellWiseDataSize += (d_S * x) * (d_S * x);
+              maxDofInCell = std::max(maxDofInCell, x);
+            }
+
+          if (d_hamiltonianInAllCells[kPointBasisManager.first].size() !=
+              cellWiseDataSize)
+            {
+              d_hamiltonianInAllCells[kPointBasisManager.first].resize(
+                cellWiseDataSize, (ValueType)0);
+            }
+          else
+            d_hamiltonianInAllCells[kPointBasisManager.first].setValue(
+              (ValueType)0);
+
+          for (size_type i = 0; i < hamiltonianComponentsVec.size(); ++i)
+            {
+              op.addLocalComponent(
+                d_hamiltonianInAllCells.at(kPointBasisManager.first),
+                hamiltonianComponentsVec[i],
+                *d_linAlgOpContext);
+            }
         }
+
+      activateKpt(feBasisManager.begin()->first);
 
       if (!d_useOptimizedImplement)
         d_scratchNonLocPSPApply =
           linearAlgebra::MultiVector<ValueTypeOperand, memorySpace>(
-            feBasisManager.getMPIPatternP2P(),
+            feBasisManager.begin()->second->getMPIPatternP2P(),
             d_linAlgOpContext,
             d_maxWaveFnBatch);
 
@@ -1530,18 +1556,6 @@ namespace dftefe
         {
           KohnShamOperatorContextFEInternal::getElectrostaticONCVHamiltonian(
             hamiltonianComponentsVec, d_electroONCVHamiltonian);
-
-          const size_type numLocallyOwnedCells =
-            d_feBasisManager->nLocallyOwnedCells();
-          std::vector<size_type> numCellDofs(numLocallyOwnedCells, 0);
-          for (size_type iCell = 0; iCell < numLocallyOwnedCells; ++iCell)
-            {
-              numCellDofs[iCell] =
-                d_feBasisManager->nLocallyOwnedCellDofs(iCell);
-            }
-
-          size_type maxDofInCell =
-            *std::max_element(numCellDofs.begin(), numCellDofs.end());
 
           if (d_XCellValues->size() !=
               d_S * d_maxWaveFnBatch * numLocallyOwnedCells * maxDofInCell)
@@ -1568,6 +1582,31 @@ namespace dftefe
               utils::MemorySpace memorySpace,
               size_type          dim>
     void
+    KohnShamOperatorContextFE<ValueTypeElectrostaticsCoeff,
+                              ValueTypeElectrostaticsBasis,
+                              ValueTypeWaveFunctionCoeff,
+                              ValueTypeWaveFunctionBasis,
+                              memorySpace,
+                              dim>::activateKpt(const basis::kpoint::KPointId kPointId)
+    {
+      utils::throwException<utils::InvalidArgument>(
+        d_hamiltonianInAllCells.find(kPointId) != d_hamiltonianInAllCells.end(),
+        "KohnShamOperatorContextFE::activateKpt: the Hamiltonian of that "
+        "k-point was not assembled by reinit.");
+      d_currentKPointId = kPointId;
+      for (size_type i = 0; i < d_hamiltonianComponentsVec.size(); ++i)
+        std::visit(
+          [&](auto &hamiltonian) { hamiltonian->activateKpt(kPointId); },
+          d_hamiltonianComponentsVec[i]);
+    }
+
+    template <typename ValueTypeElectrostaticsCoeff,
+              typename ValueTypeElectrostaticsBasis,
+              typename ValueTypeWaveFunctionCoeff,
+              typename ValueTypeWaveFunctionBasis,
+              utils::MemorySpace memorySpace,
+              size_type          dim>
+    void
     KohnShamOperatorContextFE<
       ValueTypeElectrostaticsCoeff,
       ValueTypeElectrostaticsBasis,
@@ -1580,11 +1619,12 @@ namespace dftefe
                   bool updateGhostY) const
     {
       const size_type numLocallyOwnedCells =
-        d_feBasisManager->nLocallyOwnedCells();
+        d_feBasisManager.at(d_currentKPointId)->nLocallyOwnedCells();
       std::vector<size_type> numCellDofs(numLocallyOwnedCells, 0);
       for (size_type iCell = 0; iCell < numLocallyOwnedCells; ++iCell)
         {
-          numCellDofs[iCell] = d_feBasisManager->nLocallyOwnedCellDofs(iCell);
+          numCellDofs[iCell] = d_feBasisManager.at(d_currentKPointId)
+                                 ->nLocallyOwnedCellDofs(iCell);
         }
 
       if (!d_useOptimizedImplement &&
@@ -1593,25 +1633,25 @@ namespace dftefe
         {
           d_scratchNonLocPSPApply =
             linearAlgebra::MultiVector<ValueTypeOperand, memorySpace>(
-              d_feBasisManager->getMPIPatternP2P(),
+              d_feBasisManager.at(d_currentKPointId)->getMPIPatternP2P(),
               d_linAlgOpContext,
               X.getNumberComponents());
         }
 
-      auto itCellLocalIdsBeginX =
-        d_feBasisManager->locallyOwnedCellLocalDofIdsBegin();
+      auto itCellLocalIdsBeginX = d_feBasisManager.at(d_currentKPointId)
+                                    ->locallyOwnedCellLocalDofIdsBegin();
 
-      auto itCellLocalIdsBeginY =
-        d_feBasisManager->locallyOwnedCellLocalDofIdsBegin();
+      auto itCellLocalIdsBeginY = d_feBasisManager.at(d_currentKPointId)
+                                    ->locallyOwnedCellLocalDofIdsBegin();
 
       const size_type numVecs = X.getNumberComponents();
 
       // get handle to constraints
       const basis::ConstraintsLocal<ValueType, memorySpace> &constraintsX =
-        d_feBasisManager->getConstraints();
+        d_feBasisManager.at(d_currentKPointId)->getConstraints();
 
       const basis::ConstraintsLocal<ValueType, memorySpace> &constraintsY =
-        d_feBasisManager->getConstraints();
+        d_feBasisManager.at(d_currentKPointId)->getConstraints();
 
       if (updateGhostX)
         X.updateGhostValues();
@@ -1630,22 +1670,21 @@ namespace dftefe
         KohnShamOperatorContextFEInternal::computeAxCellWiseLocal<
           ValueTypeOperator,
           ValueTypeOperand,
-          memorySpace>(
-          d_hamiltonianInAllCells,
-          X.begin(),
-          Y.begin(),
-          numVecs,
-          numLocallyOwnedCells,
-          numCellDofs,
-          itCellLocalIdsBeginX,
-          itCellLocalIdsBeginY,
-          cellBlockSize,
-          d_spinMode,
-          d_S,
-          *(X.getLinAlgOpContext()));
+          memorySpace>(d_hamiltonianInAllCells.at(d_currentKPointId),
+                       X.begin(),
+                       Y.begin(),
+                       numVecs,
+                       numLocallyOwnedCells,
+                       numCellDofs,
+                       itCellLocalIdsBeginX,
+                       itCellLocalIdsBeginY,
+                       cellBlockSize,
+                       d_spinMode,
+                       d_S,
+                       *(X.getLinAlgOpContext()));
       else
         KohnShamOperatorContextFEInternal::computeAxCellWiseOptimized(
-          d_hamiltonianInAllCells,
+          d_hamiltonianInAllCells.at(d_currentKPointId),
           d_electroONCVHamiltonian,
           X.begin(),
           Y.begin(),

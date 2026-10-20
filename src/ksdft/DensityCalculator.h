@@ -30,7 +30,10 @@
 #include <linearAlgebra/MultiVectorProductSpace.h>
 #include <basis/FEBasisDataStorage.h>
 #include <basis/FEBasisOperations.h>
+#include <basis/ReciprocalLattice.h>
 #include <ksdft/KSAttributes.h>
+#include <ksdft/RDM1Spectral.h>
+#include <map>
 #include "Defaults.h"
 
 namespace dftefe
@@ -56,17 +59,22 @@ namespace dftefe
        */
 
       DensityCalculator(
-        std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
-                                          feBasisDataStorage,
-        const basis::FEBasisManager<ValueTypeBasisCoeff,
-                                    ValueTypeBasisData,
-                                    memorySpace,
-                                    dim> &feBMPsi,
+        const std::map<
+          basis::kpoint::KPointId,
+          std::shared_ptr<
+            const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>>
+          &feBasisDataStorage,
+        const std::map<
+          basis::kpoint::KPointId,
+          std::shared_ptr<const basis::FEBasisManager<ValueTypeBasisCoeff,
+                                                      ValueTypeBasisData,
+                                                      memorySpace,
+                                                      dim>>> &feBMPsi,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
-                        linAlgOpContext,
-        const size_type cellBlockSize,
-        const size_type waveFuncBatchSize);
+                                                            linAlgOpContext,
+        const size_type                                     cellBlockSize,
+        const size_type                                     waveFuncBatchSize,
+        const std::map<basis::kpoint::KPointId, basis::kpoint::KPointData> &kPoints);
 
       /**
        *@brief Default Destructor
@@ -75,19 +83,26 @@ namespace dftefe
       ~DensityCalculator();
 
       void
-      reinit(std::shared_ptr<
-               const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
-                                               feBasisDataStorage,
-             const basis::FEBasisManager<ValueTypeBasisCoeff,
-                                         ValueTypeBasisData,
-                                         memorySpace,
-                                         dim> &feBMPsi);
+      reinit(
+        const std::map<
+          basis::kpoint::KPointId,
+          std::shared_ptr<
+            const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>>
+          &feBasisDataStorage,
+        const std::map<
+          basis::kpoint::KPointId,
+          std::shared_ptr<const basis::FEBasisManager<ValueTypeBasisCoeff,
+                                                      ValueTypeBasisData,
+                                                      memorySpace,
+                                                      dim>>> &feBMPsi);
 
+      /**
+       * @brief rho = sum_k w_k sum_n f_nk |psi_nk|^2, with the orbitals and
+       * occupancies read from the spectral representation.
+       */
       void
       computeRho(
-        const std::vector<RealType> &occupation,
-        const linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
-          &waveFunc,
+        const SpectralRep<ValueType, memorySpace> &spectral,
         std::vector<
           quadrature::QuadratureValuesContainer<RealType, memorySpaceHost> *>
           &rho,
@@ -100,15 +115,24 @@ namespace dftefe
     private:
       std::shared_ptr<const quadrature::QuadratureRuleContainer>
         d_quadRuleContainer;
-      std::shared_ptr<basis::FEBasisOperations<ValueTypeBasisCoeff,
-                                               ValueTypeBasisData,
-                                               memorySpace,
-                                               dim>>
-                                        d_feBasisOp;
-      const basis::FEBasisManager<ValueTypeBasisCoeff,
-                                  ValueTypeBasisData,
-                                  memorySpace,
-                                  dim> *d_feBMPsi;
+      // per-k containers, nKLocal long, indexed by the LOCAL index
+      std::vector<std::shared_ptr<
+        const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>>
+        d_feBasisDataStorage;
+      std::vector<std::shared_ptr<basis::FEBasisOperations<ValueTypeBasisCoeff,
+                                                           ValueTypeBasisData,
+                                                           memorySpace,
+                                                           dim>>>
+        d_feBasisOp;
+      std::vector<
+        std::shared_ptr<const basis::FEBasisManager<ValueTypeBasisCoeff,
+                                                    ValueTypeBasisData,
+                                                    memorySpace,
+                                                    dim>>>
+        d_feBMPsi;
+      // global ids of the local slots: keys into SpectralRep, never an index
+      std::vector<basis::kpoint::KPointId>      d_kPointIds;
+      std::vector<double>               d_kPointWeights;
       const size_type                   d_cellBlockSize;
       const size_type                   d_waveFuncBatchSize;
       std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>

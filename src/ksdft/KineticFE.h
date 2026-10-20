@@ -33,7 +33,11 @@
 #include <electrostatics/LaplaceOperatorContextFE.h>
 #include <basis/FEBasisOperations.h>
 #include <basis/FEBasisDofHandler.h>
+#include <basis/FEBasisManager.h>
+#include <basis/ReciprocalLattice.h>
+#include <map>
 #include <ksdft/KSAttributes.h>
+#include <ksdft/RDM1Spectral.h>
 #include <ksdft/HamiltonianSpinBlockCopyKernels.h>
 
 namespace dftefe
@@ -66,32 +70,48 @@ namespace dftefe
        * @brief Constructor
        */
       KineticFE(
-        std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
-          feBasisDataStorage,
+        const std::map<
+          basis::kpoint::KPointId,
+          std::shared_ptr<
+            const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>>
+          &feBasisDataStorage,
+        const std::map<
+          basis::kpoint::KPointId,
+          std::shared_ptr<const basis::FEBasisManager<ValueTypeBasisCoeff,
+                                                      ValueTypeBasisData,
+                                                      memorySpace,
+                                                      dim>>> &feBasisManager,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
-                        linAlgOpContext,
-        const size_type maxCellBlock,
-        const size_type waveFuncBatchSize,
-        SpinMode        spinMode = SpinMode::Unpolarized);
+                                                            linAlgOpContext,
+        const size_type                                     maxCellBlock,
+        const size_type                                     waveFuncBatchSize,
+        SpinMode                                            spinMode,
+        const std::map<basis::kpoint::KPointId, basis::kpoint::KPointData> &kPoints);
 
       ~KineticFE() = default;
 
       void
-      reinit(std::shared_ptr<
-             const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
-               feBasisDataStorage);
+      reinit(
+        const std::map<
+          basis::kpoint::KPointId,
+          std::shared_ptr<
+            const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>>
+          &feBasisDataStorage);
+
+      /**
+       * @brief Select the k that getLocal and evalEnergy then use.
+       */
+      void
+      activateKpt(const basis::kpoint::KPointId kPointId) override;
 
       void
       getLocal(Storage &cellWiseStorage) const override;
+      /**
+       * @brief sum_k w_k sum_n f_nk <psi|T(k)|psi>, with the orbitals and
+       * occupancies read from the spectral RDM1.
+       */
       void
-      evalEnergy(const std::vector<RealType> &                  occupation,
-                 const basis::FEBasisManager<ValueTypeBasisCoeff,
-                                             ValueTypeBasisData,
-                                             memorySpace,
-                                             dim> &             feBMPsi,
-                 const linearAlgebra::MultiVector<ValueTypeBasisCoeff,
-                                                  memorySpace> &waveFunc);
+      evalEnergy(RDM1<ValueType, memorySpace> &rdm1);
       RealType
       getEnergy() const override;
 
@@ -109,21 +129,33 @@ namespace dftefe
       hasNonLocalComponent() const override;
 
     private:
-      std::shared_ptr<
-        const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+      // per-k containers, nKLocal long, indexed by the LOCAL index
+      std::vector<std::shared_ptr<
+        const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>>
         d_feBasisDataStorage;
-      std::shared_ptr<basis::FEBasisOperations<ValueTypeBasisCoeff,
-                                               ValueTypeBasisData,
-                                               memorySpace,
-                                               dim>>
-                      d_feBasisOp;
+      std::vector<
+        std::shared_ptr<const basis::FEBasisManager<ValueTypeBasisCoeff,
+                                                    ValueTypeBasisData,
+                                                    memorySpace,
+                                                    dim>>>
+        d_feBasisManager;
+      std::vector<std::shared_ptr<basis::FEBasisOperations<ValueTypeBasisCoeff,
+                                                           ValueTypeBasisData,
+                                                           memorySpace,
+                                                           dim>>>
+        d_feBasisOp;
+      // global ids of the local slots: keys into SpectralRep, never an index
+      std::vector<basis::kpoint::KPointId> d_kPointIds;
+      std::vector<utils::Point>    d_kPointCoordinates;
+      std::vector<double>          d_kPointWeights;
+      size_type                    d_currentKPointIndex;
       RealType        d_energy;
       const size_type d_maxCellBlock, d_waveFuncBatchSize;
       std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
         d_linAlgOpContext;
       // quadrature::QuadratureValuesContainer<ValueType, memorySpace>
       // *d_gradPsi;
-      std::shared_ptr<Storage> d_cellWiseStorageKineticEnergy;
+      std::vector<std::shared_ptr<Storage>> d_cellWiseStorageKineticEnergy;
 
       SpinMode               d_spinMode;
       size_type              d_S;
@@ -136,11 +168,11 @@ namespace dftefe
       std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
         d_mpiPatternP2P;
 
-      std::shared_ptr<
+      std::vector<std::shared_ptr<
         electrostatics::LaplaceOperatorContextFE<ValueTypeBasisData,
                                                  ValueTypeBasisCoeff,
                                                  memorySpace,
-                                                 dim>>
+                                                 dim>>>
         d_laplaceOp;
 
     }; // end of class KineticFE

@@ -35,9 +35,9 @@ namespace dftefe
       setValueKernel(ValueType *devPtr, ValueType value, std::size_t size)
       {
         const std::size_t globalThreadId =
-          blockIdx.x * blockDim.x + threadIdx.x;
+          (std::size_t)blockIdx.x * blockDim.x + threadIdx.x;
         for (std::size_t i = globalThreadId; i < size;
-             i += blockDim.x * gridDim.x)
+             i += (std::size_t)blockDim.x * gridDim.x)
           {
             devPtr[i] = value;
           }

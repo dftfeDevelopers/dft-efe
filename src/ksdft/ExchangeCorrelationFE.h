@@ -38,6 +38,8 @@
 #include <ksdft/KSAttributes.h>
 #include <ksdft/HamiltonianSpinBlockCopyKernels.h>
 #include <atoms/AtomSuperpositionFunction.h>
+#include <basis/ReciprocalLattice.h>
+#include <map>
 #include <utils/Point.h>
 #include <vector>
 
@@ -72,9 +74,11 @@ namespace dftefe
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
                         linAlgOpContext,
         const size_type cellBlockSize,
-        std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
-          feBasisDataStorage);
+        const std::map<
+          basis::kpoint::KPointId,
+          std::shared_ptr<
+            const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>>
+          &feBasisDataStorage);
 
       // With NLCC. Core correction is added internally before every libxc call.
       ExchangeCorrelationFE(
@@ -83,9 +87,11 @@ namespace dftefe
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
                         linAlgOpContext,
         const size_type cellBlockSize,
-        std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
-          feBasisDataStorage,
+        const std::map<
+          basis::kpoint::KPointId,
+          std::shared_ptr<
+            const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>>
+          &feBasisDataStorage,
         std::shared_ptr<const atoms::AtomSphericalDataContainer>
                                          atomSphericalDataContainerPSP,
         const std::vector<std::string> & atomSymbolVec,
@@ -94,10 +100,21 @@ namespace dftefe
       ~ExchangeCorrelationFE();
 
       void
-      reinitBasis(RDM1<ValueType, memorySpace> &rdm1);
+      reinitBasis(
+        RDM1<ValueType, memorySpace> &rdm1,
+        const std::map<
+          basis::kpoint::KPointId, std::shared_ptr<
+            const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>>
+          &feBasisDataStorage);
 
       void
       reinitField(RDM1<ValueType, memorySpace> &rdm1);
+
+      /**
+       * @brief Select the k whose basis getLocal projects V_xc onto.
+       */
+      void
+      activateKpt(const basis::kpoint::KPointId kPointId) override;
 
       void
       getLocal(Storage &cellWiseStorage) const override;
@@ -146,17 +163,22 @@ namespace dftefe
       // used by getLocal to assemble ∫ f·∇(φ_iφ_j) dV
       std::vector<quadrature::QuadratureValuesContainer<RealType, memorySpace>>
         d_derExcWithSigmaTimesGradRhoQuadMemspace;
-      std::shared_ptr<
-        const basis::FEBasisDofHandler<ValueTypeBasisCoeff, memorySpace, dim>>
+      // per-k containers, nKLocal long, indexed by the LOCAL index
+      std::vector<std::shared_ptr<
+        const basis::FEBasisDofHandler<ValueTypeBasisCoeff, memorySpace, dim>>>
         d_feBasisDofHandler;
-      std::shared_ptr<
-        const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+      std::vector<std::shared_ptr<
+        const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>>
         d_feBasisDataStorage;
-      std::shared_ptr<const basis::FEBasisOperations<ValueTypeBasisCoeff,
-                                                     ValueTypeBasisData,
-                                                     memorySpace,
-                                                     dim>>
-                      d_feBasisOp;
+      std::vector<
+        std::shared_ptr<const basis::FEBasisOperations<ValueTypeBasisCoeff,
+                                                       ValueTypeBasisData,
+                                                       memorySpace,
+                                                       dim>>>
+        d_feBasisOp;
+      // global ids of the local slots; OUTPUT ONLY, never used as an index
+      std::vector<basis::kpoint::KPointId> d_kPointIds;
+      size_type                    d_currentKPointIndex;
       RealType        d_energy;
       const size_type d_cellBlockSize;
       std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>

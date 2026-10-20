@@ -28,7 +28,9 @@
 
 #include <vector>
 #include <memory>
+#include <map>
 #include <ksdft/RDM1.h>
+#include <basis/ReciprocalLattice.h>
 #include <linearAlgebra/MultiVector.h>
 
 namespace dftefe
@@ -45,10 +47,12 @@ namespace dftefe
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
     struct SpectralRep
     {
-      std::unique_ptr<linearAlgebra::MultiVector<ValueType, memorySpace>>
-                          ksOrbs;
-      std::vector<double> occupancies;
-      size_type           nKSOrbs;
+      std::map<
+        basis::kpoint::KPointId,
+        std::unique_ptr<linearAlgebra::MultiVector<ValueType, memorySpace>>>
+                                                     ksOrbs;
+      std::map<basis::kpoint::KPointId, std::vector<double>> occupancies;
+      size_type                                      nKSOrbs;
     };
 
     /**

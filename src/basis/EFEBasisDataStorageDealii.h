@@ -30,6 +30,7 @@
 #include <utils/MemorySpaceType.h>
 #include <utils/MemoryStorage.h>
 #include <basis/BasisDataStorage.h>
+#include <basis/BasisScratch.h>
 #include <basis/FEBasisDataStorage.h>
 #include <basis/FEBasisOperations.h>
 #include <basis/EFEBasisDataStorage.h>
@@ -76,7 +77,10 @@ namespace dftefe
       /**
        * @brief The classical half is served by @p cfeBasisDataStorage and is not
        * stored here, so several k points can use one classical block while each
-       * holds only its own enrichment.
+       * holds only its own enrichment. With @p scratch, the buffer the
+       * classical block of a cell range lands in is shared as well; it must be
+       * the same object for every k point and for no two storages in use at
+       * the same time.
        */
       EFEBasisDataStorageDealii(
         std::shared_ptr<const BasisDofHandler>      efeBDH,
@@ -85,7 +89,9 @@ namespace dftefe
         linearAlgebra::LinAlgOpContext<memorySpace> &linAlgOpContext,
         std::shared_ptr<
           const FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
-          cfeBasisDataStorage);
+          cfeBasisDataStorage,
+        std::shared_ptr<BasisScratch<ValueTypeBasisData, memorySpace>> scratch =
+          nullptr);
 
       ~EFEBasisDataStorageDealii() = default;
 
@@ -205,6 +211,9 @@ namespace dftefe
       std::shared_ptr<const quadrature::QuadratureRuleContainer>
       getQuadratureRuleContainer() const override;
 
+      std::shared_ptr<BasisScratch<ValueTypeBasisData, memorySpace>>
+      getScratch() const override;
+
       // functions to get data for  basis functions on all quad points in range
       // of cells
       void
@@ -248,6 +257,7 @@ namespace dftefe
 
       std::shared_ptr<const FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
                                     d_cfeBasisDataStorage;
+      std::shared_ptr<BasisScratch<ValueTypeBasisData, memorySpace>> d_scratch;
     };
   } // end of namespace basis
 } // end of namespace dftefe

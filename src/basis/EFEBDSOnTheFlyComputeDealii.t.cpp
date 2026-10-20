@@ -1644,6 +1644,7 @@ namespace dftefe
       , d_linAlgOpContext(linAlgOpContext)
       , d_useMemOptGradScratchSpace(useMemOptGradScratchSpace)
       , d_calculateEnrichmentDataOnTheFly(calculateEnrichmentDataOnTheFly)
+      , d_scratch(nullptr)
     {
       d_evaluateBasisData = false;
       d_efeBDH            = std::dynamic_pointer_cast<
@@ -1690,7 +1691,8 @@ namespace dftefe
           const FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
                    cfeBasisDataStorage,
         const bool calculateEnrichmentDataOnTheFly,
-        const bool useMemOptGradScratchSpace)
+        const bool useMemOptGradScratchSpace,
+        std::shared_ptr<BasisScratch<ValueTypeBasisData, memorySpace>> scratch)
       : EFEBDSOnTheFlyComputeDealii(efeBDH,
                                     quadratureRuleAttributes,
                                     basisStorageAttributesBoolMap,
@@ -1721,6 +1723,7 @@ namespace dftefe
         "The cfeBasisDataStorage given to EFEBDSOnTheFlyComputeDealii has a different FE order, so its classical dofs per cell do not match.");
 
       d_cfeBasisDataStorage = cfeBasisDataStorage;
+      d_scratch             = scratch;
     }
 
     template <typename ValueTypeBasisCoeff,
@@ -1945,6 +1948,10 @@ namespace dftefe
         {
           d_basisParaCellClassQuadStorage =
             std::move(basisParaCellClassQuadStorage);
+          // refilled from the CFE storage before every use, so it can be the
+          // shared buffer
+          if (d_scratch != nullptr)
+            d_basisParaCellClassQuadStorage = d_scratch->getClassValues();
           if (!d_calculateEnrichmentDataOnTheFly)
             d_basisEnrichQuadStorage = std::move(basisEnrichQuadStorage);
         }
@@ -1959,7 +1966,10 @@ namespace dftefe
             std::move(basisJacobianInvQuadStorage);
           d_cellStartIdsBasisJacobianInvQuadStorage =
             cellStartIdsBasisJacobianInvQuadStorage;
-          if (d_maxCellBlock != 1 || d_calculateEnrichmentDataOnTheFly)
+          // the classical gradient comes from the CFE storage when there is
+          // one, which never reads this block
+          if (d_cfeBasisDataStorage == nullptr &&
+              (d_maxCellBlock != 1 || d_calculateEnrichmentDataOnTheFly))
             {
               d_tmpGradientBlock = std::make_shared<Storage>(
                 d_classialDofsInCell * nQuadPointsInCell[0] * dim *
@@ -1987,9 +1997,22 @@ namespace dftefe
                 }
             }
           if (!d_useMemOptGradScratchSpace || d_calculateEnrichmentDataOnTheFly)
-            d_basisGradientDataClass = std::make_shared<Storage>(
-              d_classialDofsInCell * nQuadPointsInCell[0] * dim *
-              d_maxCellBlock);
+            {
+              if (d_scratch != nullptr)
+                {
+                  d_basisGradientDataClass = d_scratch->getClassGradients();
+                  if (d_basisGradientDataClass->size() <
+                      d_classialDofsInCell * nQuadPointsInCell[0] * dim *
+                        d_maxCellBlock)
+                    d_basisGradientDataClass->resize(d_classialDofsInCell *
+                                                     nQuadPointsInCell[0] *
+                                                     dim * d_maxCellBlock);
+                }
+              else
+                d_basisGradientDataClass = std::make_shared<Storage>(
+                  d_classialDofsInCell * nQuadPointsInCell[0] * dim *
+                  d_maxCellBlock);
+            }
           if (!d_calculateEnrichmentDataOnTheFly)
             d_basisGradientEnrichQuadStorage =
               std::move(basisGradientEnrichQuadStorage);
@@ -2022,14 +2045,38 @@ namespace dftefe
           if (basisStorageAttributesBoolMap
                 .find(BasisStorageAttributes::StoreValues)
                 ->second)
-            d_basisEnrichScratch = std::make_shared<Storage>(
-              maxEnrich * d_nQuadPointsIncell[0] * d_maxCellBlock);
+            {
+              if (d_scratch != nullptr)
+                {
+                  d_basisEnrichScratch = d_scratch->getEnrichValues();
+                  if (d_basisEnrichScratch->size() <
+                      maxEnrich * d_nQuadPointsIncell[0] * d_maxCellBlock)
+                    d_basisEnrichScratch->resize(
+                      maxEnrich * d_nQuadPointsIncell[0] * d_maxCellBlock);
+                }
+              else
+                d_basisEnrichScratch = std::make_shared<Storage>(
+                  maxEnrich * d_nQuadPointsIncell[0] * d_maxCellBlock);
+            }
 
           if (basisStorageAttributesBoolMap
                 .find(BasisStorageAttributes::StoreGradient)
                 ->second)
-            d_basisGradientEnrichScratch = std::make_shared<Storage>(
-              maxEnrich * d_nQuadPointsIncell[0] * dim * d_maxCellBlock);
+            {
+              if (d_scratch != nullptr)
+                {
+                  d_basisGradientEnrichScratch =
+                    d_scratch->getEnrichGradients();
+                  if (d_basisGradientEnrichScratch->size() <
+                      maxEnrich * d_nQuadPointsIncell[0] * dim * d_maxCellBlock)
+                    d_basisGradientEnrichScratch->resize(
+                      maxEnrich * d_nQuadPointsIncell[0] * dim *
+                      d_maxCellBlock);
+                }
+              else
+                d_basisGradientEnrichScratch = std::make_shared<Storage>(
+                  maxEnrich * d_nQuadPointsIncell[0] * dim * d_maxCellBlock);
+            }
 
           if (d_efeBDH->isOrthogonalized())
             {
@@ -2269,6 +2316,10 @@ namespace dftefe
         {
           d_basisParaCellClassQuadStorage =
             std::move(basisParaCellClassQuadStorage);
+          // refilled from the CFE storage before every use, so it can be the
+          // shared buffer
+          if (d_scratch != nullptr)
+            d_basisParaCellClassQuadStorage = d_scratch->getClassValues();
           if (!d_calculateEnrichmentDataOnTheFly)
             d_basisEnrichQuadStorage = std::move(basisEnrichQuadStorage);
         }
@@ -2283,7 +2334,10 @@ namespace dftefe
             std::move(basisJacobianInvQuadStorage);
           d_cellStartIdsBasisJacobianInvQuadStorage =
             cellStartIdsBasisJacobianInvQuadStorage;
-          if (d_maxCellBlock != 1 || d_calculateEnrichmentDataOnTheFly)
+          // the classical gradient comes from the CFE storage when there is
+          // one, which never reads this block
+          if (d_cfeBasisDataStorage == nullptr &&
+              (d_maxCellBlock != 1 || d_calculateEnrichmentDataOnTheFly))
             {
               d_tmpGradientBlock = std::make_shared<Storage>(
                 d_classialDofsInCell * nQuadPointsInCell[0] * dim *
@@ -2311,9 +2365,22 @@ namespace dftefe
                 }
             }
           if (!d_useMemOptGradScratchSpace || d_calculateEnrichmentDataOnTheFly)
-            d_basisGradientDataClass = std::make_shared<Storage>(
-              d_classialDofsInCell * nQuadPointsInCell[0] * dim *
-              d_maxCellBlock);
+            {
+              if (d_scratch != nullptr)
+                {
+                  d_basisGradientDataClass = d_scratch->getClassGradients();
+                  if (d_basisGradientDataClass->size() <
+                      d_classialDofsInCell * nQuadPointsInCell[0] * dim *
+                        d_maxCellBlock)
+                    d_basisGradientDataClass->resize(d_classialDofsInCell *
+                                                     nQuadPointsInCell[0] *
+                                                     dim * d_maxCellBlock);
+                }
+              else
+                d_basisGradientDataClass = std::make_shared<Storage>(
+                  d_classialDofsInCell * nQuadPointsInCell[0] * dim *
+                  d_maxCellBlock);
+            }
           if (!d_calculateEnrichmentDataOnTheFly)
             d_basisGradientEnrichQuadStorage =
               std::move(basisGradientEnrichQuadStorage);
@@ -2339,14 +2406,38 @@ namespace dftefe
           if (basisStorageAttributesBoolMap
                 .find(BasisStorageAttributes::StoreValues)
                 ->second)
-            d_basisEnrichScratch = std::make_shared<Storage>(
-              maxEnrich * d_nQuadPointsIncell[0] * d_maxCellBlock);
+            {
+              if (d_scratch != nullptr)
+                {
+                  d_basisEnrichScratch = d_scratch->getEnrichValues();
+                  if (d_basisEnrichScratch->size() <
+                      maxEnrich * d_nQuadPointsIncell[0] * d_maxCellBlock)
+                    d_basisEnrichScratch->resize(
+                      maxEnrich * d_nQuadPointsIncell[0] * d_maxCellBlock);
+                }
+              else
+                d_basisEnrichScratch = std::make_shared<Storage>(
+                  maxEnrich * d_nQuadPointsIncell[0] * d_maxCellBlock);
+            }
 
           if (basisStorageAttributesBoolMap
                 .find(BasisStorageAttributes::StoreGradient)
                 ->second)
-            d_basisGradientEnrichScratch = std::make_shared<Storage>(
-              maxEnrich * d_nQuadPointsIncell[0] * dim * d_maxCellBlock);
+            {
+              if (d_scratch != nullptr)
+                {
+                  d_basisGradientEnrichScratch =
+                    d_scratch->getEnrichGradients();
+                  if (d_basisGradientEnrichScratch->size() <
+                      maxEnrich * d_nQuadPointsIncell[0] * dim * d_maxCellBlock)
+                    d_basisGradientEnrichScratch->resize(
+                      maxEnrich * d_nQuadPointsIncell[0] * dim *
+                      d_maxCellBlock);
+                }
+              else
+                d_basisGradientEnrichScratch = std::make_shared<Storage>(
+                  maxEnrich * d_nQuadPointsIncell[0] * dim * d_maxCellBlock);
+            }
 
           if (d_efeBDH->isOrthogonalized())
             {
@@ -2573,6 +2664,9 @@ namespace dftefe
           .find(BasisStorageAttributes::StoreValues)
           ->second,
         "Basis values are not evaluated for the given QuadratureRuleAttributes");
+
+      if (d_scratch != nullptr)
+        d_scratch->acquireStorageScratch(this, d_linAlgOpContext);
 
       // size_type cumulativeOffsetEnrichQuad = 0;
       // for (size_type cellId = 0; cellId < cellRange.first; cellId++)
@@ -2870,6 +2964,9 @@ namespace dftefe
             basisData.data(),
             d_linAlgOpContext);
         }
+
+      if (d_scratch != nullptr)
+        d_scratch->releaseStorageScratch();
     }
 
     template <typename ValueTypeBasisCoeff,
@@ -2918,6 +3015,9 @@ namespace dftefe
                                       Storage &basisGradientData) const
     {
       const bool classFromCfe = d_cfeBasisDataStorage != nullptr;
+
+      if (d_scratch != nullptr)
+        d_scratch->acquireStorageScratch(this, d_linAlgOpContext);
 
       std::shared_ptr<Storage> tmpGradientBlock = nullptr;
       if (!classFromCfe && (cellRange.second - cellRange.first) > d_maxCellBlock)
@@ -3221,6 +3321,16 @@ namespace dftefe
           //  tmpGradientBlock)
           // so that tmpGradientBlock (ref-space grads) is not corrupted for
           // future calls.
+          size_type maxEnrich = 0;
+          for (size_type cellId = cellRange.first; cellId < cellRange.second;
+               cellId++)
+            maxEnrich =
+              std::max(maxEnrich, d_dofsInCell[cellId] - d_classialDofsInCell);
+          if (d_basisGradientEnrichScratch->size() <
+              maxEnrich * d_nQuadPointsIncell[0] * dim * numBatchEnrichGrad)
+            d_basisGradientEnrichScratch->resize(
+              maxEnrich * d_nQuadPointsIncell[0] * dim * numBatchEnrichGrad);
+
           d_efeBDH->getEnrichmentClassicalInterface()
             ->getEnrichmentGradientsInCellRangeAtQuadPts(
               *d_quadratureRuleContainer,
@@ -3309,6 +3419,9 @@ namespace dftefe
             basisGradientData.data(),
             d_linAlgOpContext);
         }
+
+      if (d_scratch != nullptr)
+        d_scratch->releaseStorageScratch();
     }
 
     template <typename ValueTypeBasisCoeff,
@@ -3594,7 +3707,8 @@ namespace dftefe
         "More than one owner for the basis quadrature storage found in EFEBDSOnTheFlyComputeDealii. Not safe to delete it.");
       delete (d_basisHessianQuadStorage).get();
 
-      d_tmpGradientBlock->resize(0);
+      if (d_tmpGradientBlock != nullptr)
+        d_tmpGradientBlock->resize(0);
     }
 
     template <typename ValueTypeBasisCoeff,
@@ -3672,6 +3786,19 @@ namespace dftefe
         "Cannot call function before calling evaluateBasisData()");
 
       return d_quadratureRuleContainer;
+    }
+
+    template <typename ValueTypeBasisCoeff,
+              typename ValueTypeBasisData,
+              dftefe::utils::MemorySpace memorySpace,
+              size_type                  dim>
+    std::shared_ptr<BasisScratch<ValueTypeBasisData, memorySpace>>
+    EFEBDSOnTheFlyComputeDealii<ValueTypeBasisCoeff,
+                                ValueTypeBasisData,
+                                memorySpace,
+                                dim>::getScratch() const
+    {
+      return d_scratch;
     }
 
     template <typename ValueTypeBasisCoeff,

@@ -198,8 +198,10 @@ namespace dftefe
       // the gemms read the union-typed ones
       mutable StorageBasis d_basisDataInCellRangeBasisType,
         d_basisGradientDataInCellRangeBasisType;
-      mutable StorageUnion d_fieldCellValues, d_fxJxWxNBlock, d_JxWxNBlock,
-        d_basisDataInCellRange, d_basisGradientDataInCellRange;
+      // the storage's BasisScratch when it has one else owned by this object
+      std::shared_ptr<StorageUnion> d_fieldCellValues, d_fxJxWxNBlock,
+        d_JxWxNBlock, d_basisDataInCellRange, d_basisGradientDataInCellRange;
+      std::shared_ptr<BasisScratch<ValueTypeBasisData, memorySpace>> d_scratch;
       mutable std::pair<size_type, size_type> d_cellRangeForBasisDataCache;
       mutable bool                            d_isBasisDataCellRangeCached;
       mutable std::pair<size_type, size_type>

@@ -32,6 +32,7 @@
 #include <linearAlgebra/BlasLapackTypedef.h>
 #include <quadrature/QuadratureAttributes.h>
 #include <basis/BasisDofHandler.h>
+#include <basis/BasisScratch.h>
 #include <memory>
 namespace dftefe
 {
@@ -143,6 +144,14 @@ namespace dftefe
 
       virtual std::shared_ptr<const quadrature::QuadratureRuleContainer>
       getQuadratureRuleContainer() const = 0;
+
+      // scratch shared with other storages and with the operations built on
+      // this one; null means every object keeps its own
+      virtual std::shared_ptr<BasisScratch<ValueTypeBasisData, memorySpace>>
+      getScratch() const
+      {
+        return nullptr;
+      }
 
     }; // end of BasisDataStorage
   }    // end of namespace basis

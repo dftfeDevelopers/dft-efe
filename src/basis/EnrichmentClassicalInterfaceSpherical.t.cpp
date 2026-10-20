@@ -727,6 +727,194 @@ namespace dftefe
               typename ValueTypeBasisData,
               utils::MemorySpace memorySpace,
               size_type          dim>
+    std::map<kpoint::KPointId,
+             std::shared_ptr<
+               const EnrichmentClassicalInterfaceSpherical<ValueTypeBasisCoeff,
+                                                           ValueTypeBasisData,
+                                                           memorySpace,
+                                                           dim>>>
+    EnrichmentClassicalInterfaceSpherical<ValueTypeBasisCoeff,
+                                          ValueTypeBasisData,
+                                          memorySpace,
+                                          dim>::
+      createECIObjectsForKPoints(
+        std::shared_ptr<
+          const FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+          cfeBasisDataStorageOverlapMatrix,
+        std::shared_ptr<
+          const FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+          cfeBasisDataStorageRhs,
+        std::shared_ptr<const atoms::AtomSphericalDataContainer>
+                                         atomSphericalDataContainer,
+        const double                     atomPartitionTolerance,
+        const std::vector<std::string> & atomSymbolVec,
+        const std::vector<utils::Point> &atomCoordinatesVec,
+        const std::string                fieldName,
+        std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
+                                                          linAlgOpContext,
+        const utils::mpi::MPIComm &                       comm,
+        const size_type                                   enrichmentBatchSize,
+        const size_type                                   cellBlockSize,
+        std::shared_ptr<const PeriodicImageAtomGenerator> imageAtomGenerator,
+        const std::map<kpoint::KPointId, kpoint::KPointData> &            kPoints)
+    {
+      utils::throwException<utils::InvalidArgument>(
+        !kPoints.empty(),
+        "EnrichmentClassicalInterfaceSpherical::createECIObjectsForKPoints: "
+        "no k-points given.");
+
+      // each k orthogonalized against its own Bloch phase, narrowed as usual
+      std::map<kpoint::KPointId, std::shared_ptr<EnrichmentClassicalInterfaceSpherical>> eciMap;
+
+      for (const auto &kPoint : kPoints)
+        eciMap[kPoint.first] =
+          std::make_shared<EnrichmentClassicalInterfaceSpherical>(
+            cfeBasisDataStorageOverlapMatrix,
+            cfeBasisDataStorageRhs,
+            atomSphericalDataContainer,
+            atomPartitionTolerance,
+            atomSymbolVec,
+            atomCoordinatesVec,
+            fieldName,
+            linAlgOpContext,
+            comm,
+            enrichmentBatchSize,
+            cellBlockSize,
+            imageAtomGenerator,
+            kPoint.second.coord);
+
+      std::map<kpoint::KPointId,
+               std::shared_ptr<const EnrichmentClassicalInterfaceSpherical>> eciMapConst;
+               
+      for (const auto &eci : eciMap)
+        eciMapConst[eci.first] = eci.second;
+
+      // one k already has its own layout
+      if (kPoints.size() == 1)
+        return eciMapConst;
+
+      // per cell the union over k of the narrowed ids, sorted, so that every
+      // k numbers the cell's dofs the same way
+      const size_type numLocallyOwnedCells =
+        eciMap.begin()->second->d_overlappingEnrichmentIdsInCells.size();
+
+      for (const auto &eci : eciMap)
+        utils::throwException<utils::InvalidArgument>(
+          eci.second->d_overlappingEnrichmentIdsInCells.size() ==
+            numLocallyOwnedCells,
+          "EnrichmentClassicalInterfaceSpherical::createECIObjectsForKPoints: "
+          "the k-points disagree on the number of locally owned cells.");
+
+      std::vector<std::vector<global_size_type>>
+        overlappingEnrichmentIdsInCells(numLocallyOwnedCells);
+      for (size_type iCell = 0; iCell < numLocallyOwnedCells; iCell++)
+        {
+          std::set<global_size_type> enrichmentIdsInCell;
+          for (const auto &eci : eciMap)
+            enrichmentIdsInCell.insert(
+              eci.second->d_overlappingEnrichmentIdsInCells[iCell].begin(),
+              eci.second->d_overlappingEnrichmentIdsInCells[iCell].end());
+          overlappingEnrichmentIdsInCells[iCell].assign(
+            enrichmentIdsInCell.begin(), enrichmentIdsInCell.end());
+        }
+
+      // the partition before narrowing, as the constructor builds it: it
+      // depends only on geometry and cutoffs, so one serves every k
+      std::vector<utils::Point> cellVertices(0, utils::Point(dim, 0.0));
+      std::vector<std::vector<utils::Point>> cellVerticesVector(
+        numLocallyOwnedCells);
+      auto      cell = eciMap.begin()->second->d_triangulation->beginLocal();
+      auto      endc = eciMap.begin()->second->d_triangulation->endLocal();
+      size_type cellIndex = 0;
+      for (; cell != endc; cell++)
+        {
+          (*cell)->getVertices(cellVertices);
+          cellVerticesVector[cellIndex] = cellVertices;
+          cellIndex++;
+        }
+
+      std::vector<double> minbound(dim, 0);
+      std::vector<double> maxbound(dim, 0);
+      for (size_type k = 0; k < dim; k++)
+        {
+          double maxtmp = -DBL_MAX, mintmp = DBL_MAX;
+          auto   cellIter = cellVerticesVector.begin();
+          for (; cellIter != cellVerticesVector.end(); ++cellIter)
+            {
+              auto cellVertex = cellIter->begin();
+              for (; cellVertex != cellIter->end(); ++cellVertex)
+                {
+                  if (maxtmp <= *(cellVertex->begin() + k))
+                    maxtmp = *(cellVertex->begin() + k);
+                  if (mintmp >= *(cellVertex->begin() + k))
+                    mintmp = *(cellVertex->begin() + k);
+                }
+            }
+          maxbound[k] = maxtmp;
+          minbound[k] = mintmp;
+        }
+
+      std::shared_ptr<EnrichmentIdsPartition<dim>> widePartition =
+        std::make_shared<EnrichmentIdsPartition<dim>>(
+          atomSphericalDataContainer,
+          eciMap.begin()->second->d_atomIdsPartition,
+          atomSymbolVec,
+          atomCoordinatesVec,
+          fieldName,
+          minbound,
+          maxbound,
+          // the ball must cover the orthogonalized reach, or origins are lost
+          3 * eciMap.begin()->second->d_triangulation->maxElementLength(),
+          eciMap.begin()->second->d_triangulation->getDomainVectors(),
+          eciMap.begin()->second->d_triangulation->getPeriodicFlags(),
+          cellVerticesVector,
+          comm,
+          imageAtomGenerator);
+
+      // each k repartitioned from the wide partition to the union overlap,
+      // as the constructor's Repartition step does with its own
+      for (const auto &eci : eciMap)
+        {
+          eci.second->d_enrichmentIdsPartition =
+            std::make_shared<EnrichmentIdsPartition<dim>>(*widePartition);
+          eci.second->d_enrichmentIdsPartition
+            ->modifyNumCellsOverlapWithEnrichments(
+              overlappingEnrichmentIdsInCells);
+          eci.second->d_overlappingEnrichmentIdsInCells =
+            eci.second->d_enrichmentIdsPartition
+              ->overlappingEnrichmentIdsInCells();
+          checkEnrichmentsSpillToBoundary(
+            eci.second->d_triangulation,
+            eci.second->d_overlappingEnrichmentIdsInCells);
+          eci.second->getOverlappingEnrichmentInCellsAdditionalData();
+        }
+
+      global_size_type maxEnrich = 0;
+      for (size_type iCell = 0; iCell < numLocallyOwnedCells; iCell++)
+        if (maxEnrich < overlappingEnrichmentIdsInCells[iCell].size())
+          maxEnrich = overlappingEnrichmentIdsInCells[iCell].size();
+      utils::mpi::MPIAllreduce<utils::MemorySpace::HOST>(
+        utils::mpi::MPIInPlace,
+        &maxEnrich,
+        1,
+        utils::mpi::Types<global_size_type>::getMPIDatatype(),
+        utils::mpi::MPIMax,
+        comm);
+      int rank;
+      utils::mpi::MPICommRank(comm, &rank);
+      utils::ConditionalOStream rootCout(std::cout);
+      rootCout.setCondition(rank == 0);
+      rootCout << "Maximum " << fieldName
+               << " Enrichment Ids In a Cell in a Processor, union over the "
+               << kPoints.size() << " k-points: " << maxEnrich << "\n";
+
+      return eciMapConst;
+    }
+
+    template <typename ValueTypeBasisCoeff,
+              typename ValueTypeBasisData,
+              utils::MemorySpace memorySpace,
+              size_type          dim>
     EnrichmentClassicalInterfaceSpherical<ValueTypeBasisCoeff,
                                           ValueTypeBasisData,
                                           memorySpace,

@@ -34,6 +34,7 @@
 #include <limits>
 #include <iomanip>
 #include <sstream>
+#include <algorithm>
 namespace dftefe
 {
   namespace ksdft
@@ -225,10 +226,11 @@ namespace dftefe
           feBDNuclearChargeRhs,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpaceHost>>
-          feBDElectronicChargeRhs,
-        std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeWaveFnBasisData,
-                                          memorySpace>> feBDHamiltonian,
+                                                feBDElectronicChargeRhs,
+        const std::map<basis::kpoint::KPointId,
+                       std::shared_ptr<const basis::FEBasisDataStorage<
+                         ValueTypeWaveFnBasisData,
+                         memorySpace>>> &       feBDHamiltonian,
         const utils::ScalarSpatialFunctionReal &externalPotentialFunction,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
                         linAlgOpContext,
@@ -259,12 +261,13 @@ namespace dftefe
       , d_isTCIEnabled(false)
       , d_linAlgOpContextHost(
           linearAlgebra::LinAlgOpContextDefaults::LINALG_OP_CONTXT_HOST)
-      , d_potentialHamQuadMemspace(nullptr)
+      , d_potentialHamQuadMemspace()
       , d_S((spinMode == SpinMode::Unpolarized) ? 1 : 2)
       , d_layout((spinMode == SpinMode::NonCollinear) ?
                    SpinStorageLayout::SpinFastest :
                    SpinStorageLayout::DofFastest)
       , d_basisOverlapSize(0)
+      , d_currentKPointIndex(0)
     {
       int rank;
       utils::mpi::MPICommRank(
@@ -332,10 +335,11 @@ namespace dftefe
           feBDNuclChargeStiffnessMatrixNumSol,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpaceHost>>
-          feBDNuclChargeRhsNumSol,
-        std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeWaveFnBasisData,
-                                          memorySpace>> feBDHamiltonian,
+                                                feBDNuclChargeRhsNumSol,
+        const std::map<basis::kpoint::KPointId,
+                       std::shared_ptr<const basis::FEBasisDataStorage<
+                         ValueTypeWaveFnBasisData,
+                         memorySpace>>> &       feBDHamiltonian,
         const utils::ScalarSpatialFunctionReal &externalPotentialFunction,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
                         linAlgOpContext,
@@ -364,12 +368,13 @@ namespace dftefe
       , d_atomicTotalElecPotElectronicQuad(nullptr)
       , d_isCalculateIntegralDeltaRho(false)
       , d_isTCIEnabled(false)
-      , d_potentialHamQuadMemspace(nullptr)
+      , d_potentialHamQuadMemspace()
       , d_S((spinMode == SpinMode::Unpolarized) ? 1 : 2)
       , d_layout((spinMode == SpinMode::NonCollinear) ?
                    SpinStorageLayout::SpinFastest :
                    SpinStorageLayout::DofFastest)
       , d_basisOverlapSize(0)
+      , d_currentKPointIndex(0)
     {
       int rank;
       utils::mpi::MPICommRank(
@@ -438,10 +443,11 @@ namespace dftefe
           feBDNuclearChargeRhs,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpaceHost>>
-          feBDElectronicChargeRhs,
-        std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeWaveFnBasisData,
-                                          memorySpace>> feBDHamiltonian,
+                                                feBDElectronicChargeRhs,
+        const std::map<basis::kpoint::KPointId,
+                       std::shared_ptr<const basis::FEBasisDataStorage<
+                         ValueTypeWaveFnBasisData,
+                         memorySpace>>> &       feBDHamiltonian,
         const utils::ScalarSpatialFunctionReal &externalPotentialFunction,
         std::shared_ptr<linearAlgebra::LinAlgOpContext<memorySpace>>
                         linAlgOpContext,
@@ -478,12 +484,13 @@ namespace dftefe
       , d_fieldToTCIASplineMap(fieldToTCIASplineMap)
       , d_isTCIEnabled(!d_fieldToTCIASplineMap.empty() ? true : false)
       , d_integralAtRho(0.)
-      , d_potentialHamQuadMemspace(nullptr)
+      , d_potentialHamQuadMemspace()
       , d_S((spinMode == SpinMode::Unpolarized) ? 1 : 2)
       , d_layout((spinMode == SpinMode::NonCollinear) ?
                    SpinStorageLayout::SpinFastest :
                    SpinStorageLayout::DofFastest)
       , d_basisOverlapSize(0)
+      , d_currentKPointIndex(0)
     {
       int rank;
       utils::mpi::MPICommRank(
@@ -550,11 +557,7 @@ namespace dftefe
           delete d_scratchPotHamQuad;
           d_scratchPotHamQuad = nullptr;
         }
-      if (d_potentialHamQuadMemspace != nullptr)
-        {
-          delete d_potentialHamQuadMemspace;
-          d_potentialHamQuadMemspace = nullptr;
-        }
+      d_potentialHamQuadMemspace.clear();
       if (d_correctionPotHamQuad != nullptr)
         {
           delete d_correctionPotHamQuad;
@@ -620,9 +623,10 @@ namespace dftefe
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpaceHost>>
           feBDNuclChargeRhsNumSol,
-        std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeWaveFnBasisData,
-                                          memorySpace>> feBDHamiltonian,
+        const std::map<basis::kpoint::KPointId,
+                       std::shared_ptr<const basis::FEBasisDataStorage<
+                         ValueTypeWaveFnBasisData,
+                         memorySpace>>> &feBDHamiltonian,
         const utils::ScalarSpatialFunctionReal &externalPotentialFunction,
         std::shared_ptr<const basis::PeriodicImageAtomGenerator>
           imageAtomGenerator
@@ -646,17 +650,36 @@ namespace dftefe
             feBDNuclearChargeRhs->getQuadratureRuleContainer(),
         "The nuclearCharges RHS for both poisson solves should have same Quadrature.");
 
-      utils::throwException(
-        feBDElectronicChargeRhs->getQuadratureRuleContainer()
-            ->getQuadratureRuleAttributes()
-            .isCartesianTensorStructured() ?
+      // the map's keys are this object's k set; ascending key order makes the
+      // local index order deterministic
+      utils::throwException<utils::InvalidArgument>(
+        !feBDHamiltonian.empty(),
+        "ElectrostaticLocalFE::reinitBasis: the basis-storage map is empty. "
+        "A non-periodic caller passes one Gamma entry.");
+      d_kPointIds.resize(feBDHamiltonian.size(), (basis::kpoint::KPointId)0);
+      d_feBDHamiltonian.resize(feBDHamiltonian.size(), nullptr);
+      size_type iKPtLocal = 0;
+      for (const auto &kv : feBDHamiltonian)
+        {
+          d_kPointIds[iKPtLocal]       = kv.first;
+          d_feBDHamiltonian[iKPtLocal] = kv.second;
+          iKPtLocal++;
+        }
+      const size_type nKLocal = d_feBDHamiltonian.size();
+
+      for (iKPtLocal = 0; iKPtLocal < nKLocal; ++iKPtLocal)
+        utils::throwException(
           feBDElectronicChargeRhs->getQuadratureRuleContainer()
-              ->getQuadratureRuleAttributes() ==
-            feBDHamiltonian->getQuadratureRuleContainer()
-              ->getQuadratureRuleAttributes() :
-          feBDElectronicChargeRhs->getQuadratureRuleContainer() ==
-            feBDHamiltonian->getQuadratureRuleContainer(),
-        "The  feBDElectronicChargeRHS and feBDHamiltonian should have same Quadrature.");
+              ->getQuadratureRuleAttributes()
+              .isCartesianTensorStructured() ?
+            feBDElectronicChargeRhs->getQuadratureRuleContainer()
+                ->getQuadratureRuleAttributes() ==
+              d_feBDHamiltonian[iKPtLocal]
+                ->getQuadratureRuleContainer()
+                ->getQuadratureRuleAttributes() :
+            feBDElectronicChargeRhs->getQuadratureRuleContainer() ==
+              d_feBDHamiltonian[iKPtLocal]->getQuadratureRuleContainer(),
+          "The  feBDElectronicChargeRHS and feBDHamiltonian should have same Quadrature.");
 
       d_isNumericalVSelfSolve          = true;
       d_atomCoordinates                = atomCoordinates;
@@ -691,41 +714,75 @@ namespace dftefe
                                                   dim>>(
           d_feBDElectronicChargeRhs, d_maxCellBlock, d_numComponents);
 
-      d_feBasisOpHamiltonian =
-        std::make_shared<basis::FEBasisOperations<ValueTypeWaveFnCoeff,
-                                                  ValueTypeWaveFnBasisData,
-                                                  memorySpace,
-                                                  dim>>(feBDHamiltonian,
-                                                        d_maxCellBlock,
-                                                        d_numComponents);
+      // one FEBasisOperations per DISTINCT storage: k sharing a basis alias
+      // one object, so CFE builds it once
+      d_feBasisOpHamiltonian.resize(nKLocal, nullptr);
+      for (iKPtLocal = 0; iKPtLocal < nKLocal; ++iKPtLocal)
+        {
+          d_feBasisOpHamiltonian[iKPtLocal] = nullptr;
+          for (size_type jKPtLocal = 0; jKPtLocal < iKPtLocal; ++jKPtLocal)
+            if (d_feBDHamiltonian[jKPtLocal] == d_feBDHamiltonian[iKPtLocal])
+              {
+                d_feBasisOpHamiltonian[iKPtLocal] =
+                  d_feBasisOpHamiltonian[jKPtLocal];
+                break;
+              }
+          if (d_feBasisOpHamiltonian[iKPtLocal] == nullptr)
+            d_feBasisOpHamiltonian[iKPtLocal] = std::make_shared<
+              basis::FEBasisOperations<ValueTypeWaveFnCoeff,
+                                       ValueTypeWaveFnBasisData,
+                                       memorySpace,
+                                       dim>>(d_feBDHamiltonian[iKPtLocal],
+                                             d_maxCellBlock,
+                                             d_numComponents);
+        }
 
-      {
-        // feBDHamiltonian is the wavefunction-side storage, so its handler
-        // is keyed by the wavefunction coefficient
-        auto feBDH = std::dynamic_pointer_cast<
-          const basis::
-            FEBasisDofHandler<ValueTypeWaveFnCoeff, memorySpace, dim>>(
-          feBDHamiltonian->getBasisDofHandler());
-        utils::throwException(
-          feBDH != nullptr,
-          "Could not cast BasisDofHandler to FEBasisDofHandler in "
-          "ElectrostaticLocalFE::reinitBasis");
-        const size_type nCells = feBDH->nLocallyOwnedCells();
-        d_numCellDofs.resize(nCells);
-        d_basisOverlapSize = 0;
-        for (size_type c = 0; c < nCells; ++c)
-          {
-            d_numCellDofs[c] = feBDH->nCellDofs(c);
-            d_basisOverlapSize += d_numCellDofs[c] * d_numCellDofs[c];
-          }
-      }
+      // structural queries must agree across k; slot 0 sets them and the
+      // rest are checked against it
+      d_basisOverlapSize = 0;
+      for (iKPtLocal = 0; iKPtLocal < nKLocal; ++iKPtLocal)
+        {
+          // feBDHamiltonian is the wavefunction-side storage, so its handler
+          // is keyed by the wavefunction coefficient
+          auto feBDH = std::dynamic_pointer_cast<
+            const basis::
+              FEBasisDofHandler<ValueTypeWaveFnCoeff, memorySpace, dim>>(
+            d_feBDHamiltonian[iKPtLocal]->getBasisDofHandler());
+          utils::throwException(
+            feBDH != nullptr,
+            "Could not cast BasisDofHandler to FEBasisDofHandler in "
+            "ElectrostaticLocalFE::reinitBasis");
+          const size_type nCells = feBDH->nLocallyOwnedCells();
+          if (iKPtLocal == 0)
+            {
+              d_numCellDofs.resize(nCells);
+              for (size_type c = 0; c < nCells; ++c)
+                {
+                  d_numCellDofs[c] = feBDH->nCellDofs(c);
+                  d_basisOverlapSize += d_numCellDofs[c] * d_numCellDofs[c];
+                }
+            }
+          else
+            {
+              utils::throwException<utils::InvalidArgument>(
+                nCells == d_numCellDofs.size(),
+                "ElectrostaticLocalFE::reinitBasis: the per-k basis-storage "
+                "slots disagree on the number of locally owned cells.");
+              for (size_type c = 0; c < nCells; ++c)
+                utils::throwException<utils::InvalidArgument>(
+                  feBDH->nCellDofs(c) == d_numCellDofs[c],
+                  "ElectrostaticLocalFE::reinitBasis: the per-k "
+                  "basis-storage slots disagree on the dofs in a cell.");
+            }
+        }
 
       std::shared_ptr<const quadrature::QuadratureRuleContainer>
         quadRuleContainerElec =
           d_feBDElectronicChargeRhs->getQuadratureRuleContainer();
 
       std::shared_ptr<const quadrature::QuadratureRuleContainer>
-        quadRuleContainerHam = feBDHamiltonian->getQuadratureRuleContainer();
+        quadRuleContainerHam =
+          d_feBDHamiltonian[0]->getQuadratureRuleContainer();
 
       std::shared_ptr<const quadrature::QuadratureRuleContainer>
         quadRuleContainerNucl =
@@ -736,8 +793,9 @@ namespace dftefe
         new quadrature::QuadratureValuesContainer<ValueType, memorySpaceHost>(
           quadRuleContainerHam, d_numComponents);
 
-      d_potentialHamQuadMemspace =
-        new quadrature::QuadratureValuesContainer<ValueType, memorySpace>(
+      d_potentialHamQuadMemspace.resize(1);
+      d_potentialHamQuadMemspace[0] =
+        quadrature::QuadratureValuesContainer<ValueType, memorySpace>(
           quadRuleContainerHam, d_numComponents);
 
       d_correctionPotHamQuad =
@@ -1003,10 +1061,11 @@ namespace dftefe
           feBDNuclearChargeRhs,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpaceHost>>
-          feBDElectronicChargeRhs,
-        std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeWaveFnBasisData,
-                                          memorySpace>> feBDHamiltonian,
+                                                feBDElectronicChargeRhs,
+        const std::map<basis::kpoint::KPointId,
+                       std::shared_ptr<const basis::FEBasisDataStorage<
+                         ValueTypeWaveFnBasisData,
+                         memorySpace>>> &       feBDHamiltonian,
         const utils::ScalarSpatialFunctionReal &externalPotentialFunction,
         std::shared_ptr<const basis::PeriodicImageAtomGenerator>
           imageAtomGenerator)
@@ -1015,17 +1074,36 @@ namespace dftefe
       utils::throwException(
         !d_isDeltaRhoSolve,
         "cannot call this reinitBasis() if Analytical/1D Solve rho, b and PhiTotal is used. Use different reinitBasis() instead.");
-      utils::throwException(
-        feBDElectronicChargeRhs->getQuadratureRuleContainer()
-            ->getQuadratureRuleAttributes()
-            .isCartesianTensorStructured() ?
+      // the map's keys are this object's k set; ascending key order makes the
+      // local index order deterministic
+      utils::throwException<utils::InvalidArgument>(
+        !feBDHamiltonian.empty(),
+        "ElectrostaticLocalFE::reinitBasis: the basis-storage map is empty. "
+        "A non-periodic caller passes one Gamma entry.");
+      d_kPointIds.resize(feBDHamiltonian.size(), (basis::kpoint::KPointId)0);
+      d_feBDHamiltonian.resize(feBDHamiltonian.size(), nullptr);
+      size_type iKPtLocal = 0;
+      for (const auto &kv : feBDHamiltonian)
+        {
+          d_kPointIds[iKPtLocal]       = kv.first;
+          d_feBDHamiltonian[iKPtLocal] = kv.second;
+          iKPtLocal++;
+        }
+      const size_type nKLocal = d_feBDHamiltonian.size();
+
+      for (iKPtLocal = 0; iKPtLocal < nKLocal; ++iKPtLocal)
+        utils::throwException(
           feBDElectronicChargeRhs->getQuadratureRuleContainer()
-              ->getQuadratureRuleAttributes() ==
-            feBDHamiltonian->getQuadratureRuleContainer()
-              ->getQuadratureRuleAttributes() :
-          feBDElectronicChargeRhs->getQuadratureRuleContainer() ==
-            feBDHamiltonian->getQuadratureRuleContainer(),
-        "The  feBDElectronicChargeRHS and feBDHamiltonian should have same Quadrature.");
+              ->getQuadratureRuleAttributes()
+              .isCartesianTensorStructured() ?
+            feBDElectronicChargeRhs->getQuadratureRuleContainer()
+                ->getQuadratureRuleAttributes() ==
+              d_feBDHamiltonian[iKPtLocal]
+                ->getQuadratureRuleContainer()
+                ->getQuadratureRuleAttributes() :
+            feBDElectronicChargeRhs->getQuadratureRuleContainer() ==
+              d_feBDHamiltonian[iKPtLocal]->getQuadratureRuleContainer(),
+          "The  feBDElectronicChargeRHS and feBDHamiltonian should have same Quadrature.");
 
       d_isNumericalVSelfSolve          = false;
       d_atomCoordinates                = atomCoordinates;
@@ -1059,41 +1137,75 @@ namespace dftefe
                                                   dim>>(
           d_feBDElectronicChargeRhs, d_maxCellBlock, d_numComponents);
 
-      d_feBasisOpHamiltonian =
-        std::make_shared<basis::FEBasisOperations<ValueTypeWaveFnCoeff,
-                                                  ValueTypeWaveFnBasisData,
-                                                  memorySpace,
-                                                  dim>>(feBDHamiltonian,
-                                                        d_maxCellBlock,
-                                                        d_numComponents);
+      // one FEBasisOperations per DISTINCT storage: k sharing a basis alias
+      // one object, so CFE builds it once
+      d_feBasisOpHamiltonian.resize(nKLocal, nullptr);
+      for (iKPtLocal = 0; iKPtLocal < nKLocal; ++iKPtLocal)
+        {
+          d_feBasisOpHamiltonian[iKPtLocal] = nullptr;
+          for (size_type jKPtLocal = 0; jKPtLocal < iKPtLocal; ++jKPtLocal)
+            if (d_feBDHamiltonian[jKPtLocal] == d_feBDHamiltonian[iKPtLocal])
+              {
+                d_feBasisOpHamiltonian[iKPtLocal] =
+                  d_feBasisOpHamiltonian[jKPtLocal];
+                break;
+              }
+          if (d_feBasisOpHamiltonian[iKPtLocal] == nullptr)
+            d_feBasisOpHamiltonian[iKPtLocal] = std::make_shared<
+              basis::FEBasisOperations<ValueTypeWaveFnCoeff,
+                                       ValueTypeWaveFnBasisData,
+                                       memorySpace,
+                                       dim>>(d_feBDHamiltonian[iKPtLocal],
+                                             d_maxCellBlock,
+                                             d_numComponents);
+        }
 
-      {
-        // feBDHamiltonian is the wavefunction-side storage, so its handler
-        // is keyed by the wavefunction coefficient
-        auto feBDH = std::dynamic_pointer_cast<
-          const basis::
-            FEBasisDofHandler<ValueTypeWaveFnCoeff, memorySpace, dim>>(
-          feBDHamiltonian->getBasisDofHandler());
-        utils::throwException(
-          feBDH != nullptr,
-          "Could not cast BasisDofHandler to FEBasisDofHandler in "
-          "ElectrostaticLocalFE::reinitBasis");
-        const size_type nCells = feBDH->nLocallyOwnedCells();
-        d_numCellDofs.resize(nCells);
-        d_basisOverlapSize = 0;
-        for (size_type c = 0; c < nCells; ++c)
-          {
-            d_numCellDofs[c] = feBDH->nCellDofs(c);
-            d_basisOverlapSize += d_numCellDofs[c] * d_numCellDofs[c];
-          }
-      }
+      // structural queries must agree across k; slot 0 sets them and the
+      // rest are checked against it
+      d_basisOverlapSize = 0;
+      for (iKPtLocal = 0; iKPtLocal < nKLocal; ++iKPtLocal)
+        {
+          // feBDHamiltonian is the wavefunction-side storage, so its handler
+          // is keyed by the wavefunction coefficient
+          auto feBDH = std::dynamic_pointer_cast<
+            const basis::
+              FEBasisDofHandler<ValueTypeWaveFnCoeff, memorySpace, dim>>(
+            d_feBDHamiltonian[iKPtLocal]->getBasisDofHandler());
+          utils::throwException(
+            feBDH != nullptr,
+            "Could not cast BasisDofHandler to FEBasisDofHandler in "
+            "ElectrostaticLocalFE::reinitBasis");
+          const size_type nCells = feBDH->nLocallyOwnedCells();
+          if (iKPtLocal == 0)
+            {
+              d_numCellDofs.resize(nCells);
+              for (size_type c = 0; c < nCells; ++c)
+                {
+                  d_numCellDofs[c] = feBDH->nCellDofs(c);
+                  d_basisOverlapSize += d_numCellDofs[c] * d_numCellDofs[c];
+                }
+            }
+          else
+            {
+              utils::throwException<utils::InvalidArgument>(
+                nCells == d_numCellDofs.size(),
+                "ElectrostaticLocalFE::reinitBasis: the per-k basis-storage "
+                "slots disagree on the number of locally owned cells.");
+              for (size_type c = 0; c < nCells; ++c)
+                utils::throwException<utils::InvalidArgument>(
+                  feBDH->nCellDofs(c) == d_numCellDofs[c],
+                  "ElectrostaticLocalFE::reinitBasis: the per-k "
+                  "basis-storage slots disagree on the dofs in a cell.");
+            }
+        }
 
       std::shared_ptr<const quadrature::QuadratureRuleContainer>
         quadRuleContainerElec =
           d_feBDElectronicChargeRhs->getQuadratureRuleContainer();
 
       std::shared_ptr<const quadrature::QuadratureRuleContainer>
-        quadRuleContainerHam = feBDHamiltonian->getQuadratureRuleContainer();
+        quadRuleContainerHam =
+          d_feBDHamiltonian[0]->getQuadratureRuleContainer();
 
       std::shared_ptr<const quadrature::QuadratureRuleContainer>
         quadRuleContainerNucl =
@@ -1104,8 +1216,9 @@ namespace dftefe
         new quadrature::QuadratureValuesContainer<ValueType, memorySpaceHost>(
           quadRuleContainerHam, d_numComponents);
 
-      d_potentialHamQuadMemspace =
-        new quadrature::QuadratureValuesContainer<ValueType, memorySpace>(
+      d_potentialHamQuadMemspace.resize(1);
+      d_potentialHamQuadMemspace[0] =
+        quadrature::QuadratureValuesContainer<ValueType, memorySpace>(
           quadRuleContainerHam, d_numComponents);
 
       d_correctionPotHamQuad =
@@ -1336,10 +1449,11 @@ namespace dftefe
           feBDNuclearChargeRhs,
         std::shared_ptr<
           const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpaceHost>>
-          feBDElectronicChargeRhs,
-        std::shared_ptr<
-          const basis::FEBasisDataStorage<ValueTypeWaveFnBasisData,
-                                          memorySpace>> feBDHamiltonian,
+                                                feBDElectronicChargeRhs,
+        const std::map<basis::kpoint::KPointId,
+                       std::shared_ptr<const basis::FEBasisDataStorage<
+                         ValueTypeWaveFnBasisData,
+                         memorySpace>>> &       feBDHamiltonian,
         const utils::ScalarSpatialFunctionReal &externalPotentialFunction,
         std::shared_ptr<const basis::PeriodicImageAtomGenerator>
           imageAtomGenerator)
@@ -1348,17 +1462,36 @@ namespace dftefe
       utils::throwException(
         d_isDeltaRhoSolve,
         "cannot call this reinitBasis() if Analytical/1D Solve rho, b and PhiTotal is used. Use different reinitBasis() instead.");
-      utils::throwException(
-        feBDElectronicChargeRhs->getQuadratureRuleContainer()
-            ->getQuadratureRuleAttributes()
-            .isCartesianTensorStructured() ?
+      // the map's keys are this object's k set; ascending key order makes the
+      // local index order deterministic
+      utils::throwException<utils::InvalidArgument>(
+        !feBDHamiltonian.empty(),
+        "ElectrostaticLocalFE::reinitBasis: the basis-storage map is empty. "
+        "A non-periodic caller passes one Gamma entry.");
+      d_kPointIds.resize(feBDHamiltonian.size(), (basis::kpoint::KPointId)0);
+      d_feBDHamiltonian.resize(feBDHamiltonian.size(), nullptr);
+      size_type iKPtLocal = 0;
+      for (const auto &kv : feBDHamiltonian)
+        {
+          d_kPointIds[iKPtLocal]       = kv.first;
+          d_feBDHamiltonian[iKPtLocal] = kv.second;
+          iKPtLocal++;
+        }
+      const size_type nKLocal = d_feBDHamiltonian.size();
+
+      for (iKPtLocal = 0; iKPtLocal < nKLocal; ++iKPtLocal)
+        utils::throwException(
           feBDElectronicChargeRhs->getQuadratureRuleContainer()
-              ->getQuadratureRuleAttributes() ==
-            feBDHamiltonian->getQuadratureRuleContainer()
-              ->getQuadratureRuleAttributes() :
-          feBDElectronicChargeRhs->getQuadratureRuleContainer() ==
-            feBDHamiltonian->getQuadratureRuleContainer(),
-        "The  feBDElectronicChargeRHS and feBDHamiltonian should have same Quadrature.");
+              ->getQuadratureRuleAttributes()
+              .isCartesianTensorStructured() ?
+            feBDElectronicChargeRhs->getQuadratureRuleContainer()
+                ->getQuadratureRuleAttributes() ==
+              d_feBDHamiltonian[iKPtLocal]
+                ->getQuadratureRuleContainer()
+                ->getQuadratureRuleAttributes() :
+            feBDElectronicChargeRhs->getQuadratureRuleContainer() ==
+              d_feBDHamiltonian[iKPtLocal]->getQuadratureRuleContainer(),
+          "The  feBDElectronicChargeRHS and feBDHamiltonian should have same Quadrature.");
 
       // utils::Profiler<utils::MemorySpace::HOST>
       // p(feBMTotalCharge->getMPIPatternP2P()->mpiCommunicator());
@@ -1393,41 +1526,75 @@ namespace dftefe
                                                   dim>>(
           d_feBDElectronicChargeRhs, d_maxCellBlock, d_numComponents);
 
-      d_feBasisOpHamiltonian =
-        std::make_shared<basis::FEBasisOperations<ValueTypeWaveFnCoeff,
-                                                  ValueTypeWaveFnBasisData,
-                                                  memorySpace,
-                                                  dim>>(feBDHamiltonian,
-                                                        d_maxCellBlock,
-                                                        d_numComponents);
+      // one FEBasisOperations per DISTINCT storage: k sharing a basis alias
+      // one object, so CFE builds it once
+      d_feBasisOpHamiltonian.resize(nKLocal, nullptr);
+      for (iKPtLocal = 0; iKPtLocal < nKLocal; ++iKPtLocal)
+        {
+          d_feBasisOpHamiltonian[iKPtLocal] = nullptr;
+          for (size_type jKPtLocal = 0; jKPtLocal < iKPtLocal; ++jKPtLocal)
+            if (d_feBDHamiltonian[jKPtLocal] == d_feBDHamiltonian[iKPtLocal])
+              {
+                d_feBasisOpHamiltonian[iKPtLocal] =
+                  d_feBasisOpHamiltonian[jKPtLocal];
+                break;
+              }
+          if (d_feBasisOpHamiltonian[iKPtLocal] == nullptr)
+            d_feBasisOpHamiltonian[iKPtLocal] = std::make_shared<
+              basis::FEBasisOperations<ValueTypeWaveFnCoeff,
+                                       ValueTypeWaveFnBasisData,
+                                       memorySpace,
+                                       dim>>(d_feBDHamiltonian[iKPtLocal],
+                                             d_maxCellBlock,
+                                             d_numComponents);
+        }
 
-      {
-        // feBDHamiltonian is the wavefunction-side storage, so its handler
-        // is keyed by the wavefunction coefficient
-        auto feBDH = std::dynamic_pointer_cast<
-          const basis::
-            FEBasisDofHandler<ValueTypeWaveFnCoeff, memorySpace, dim>>(
-          feBDHamiltonian->getBasisDofHandler());
-        utils::throwException(
-          feBDH != nullptr,
-          "Could not cast BasisDofHandler to FEBasisDofHandler in "
-          "ElectrostaticLocalFE::reinitBasis");
-        const size_type nCells = feBDH->nLocallyOwnedCells();
-        d_numCellDofs.resize(nCells);
-        d_basisOverlapSize = 0;
-        for (size_type c = 0; c < nCells; ++c)
-          {
-            d_numCellDofs[c] = feBDH->nCellDofs(c);
-            d_basisOverlapSize += d_numCellDofs[c] * d_numCellDofs[c];
-          }
-      }
+      // structural queries must agree across k; slot 0 sets them and the
+      // rest are checked against it
+      d_basisOverlapSize = 0;
+      for (iKPtLocal = 0; iKPtLocal < nKLocal; ++iKPtLocal)
+        {
+          // feBDHamiltonian is the wavefunction-side storage, so its handler
+          // is keyed by the wavefunction coefficient
+          auto feBDH = std::dynamic_pointer_cast<
+            const basis::
+              FEBasisDofHandler<ValueTypeWaveFnCoeff, memorySpace, dim>>(
+            d_feBDHamiltonian[iKPtLocal]->getBasisDofHandler());
+          utils::throwException(
+            feBDH != nullptr,
+            "Could not cast BasisDofHandler to FEBasisDofHandler in "
+            "ElectrostaticLocalFE::reinitBasis");
+          const size_type nCells = feBDH->nLocallyOwnedCells();
+          if (iKPtLocal == 0)
+            {
+              d_numCellDofs.resize(nCells);
+              for (size_type c = 0; c < nCells; ++c)
+                {
+                  d_numCellDofs[c] = feBDH->nCellDofs(c);
+                  d_basisOverlapSize += d_numCellDofs[c] * d_numCellDofs[c];
+                }
+            }
+          else
+            {
+              utils::throwException<utils::InvalidArgument>(
+                nCells == d_numCellDofs.size(),
+                "ElectrostaticLocalFE::reinitBasis: the per-k basis-storage "
+                "slots disagree on the number of locally owned cells.");
+              for (size_type c = 0; c < nCells; ++c)
+                utils::throwException<utils::InvalidArgument>(
+                  feBDH->nCellDofs(c) == d_numCellDofs[c],
+                  "ElectrostaticLocalFE::reinitBasis: the per-k "
+                  "basis-storage slots disagree on the dofs in a cell.");
+            }
+        }
 
       std::shared_ptr<const quadrature::QuadratureRuleContainer>
         quadRuleContainerElec =
           d_feBDElectronicChargeRhs->getQuadratureRuleContainer();
 
       std::shared_ptr<const quadrature::QuadratureRuleContainer>
-        quadRuleContainerHam = feBDHamiltonian->getQuadratureRuleContainer();
+        quadRuleContainerHam =
+          d_feBDHamiltonian[0]->getQuadratureRuleContainer();
 
       std::shared_ptr<const quadrature::QuadratureRuleContainer>
         quadRuleContainerNucl =
@@ -1438,8 +1605,9 @@ namespace dftefe
         new quadrature::QuadratureValuesContainer<ValueType, memorySpaceHost>(
           quadRuleContainerHam, d_numComponents);
 
-      d_potentialHamQuadMemspace =
-        new quadrature::QuadratureValuesContainer<ValueType, memorySpace>(
+      d_potentialHamQuadMemspace.resize(1);
+      d_potentialHamQuadMemspace[0] =
+        quadrature::QuadratureValuesContainer<ValueType, memorySpace>(
           quadRuleContainerHam, d_numComponents);
 
       d_correctionPotHamQuad =
@@ -2372,6 +2540,30 @@ namespace dftefe
                          ValueTypeWaveFnBasisData,
                          ValueTypeWaveFnCoeff,
                          memorySpace,
+                         dim>::activateKpt(const basis::kpoint::KPointId kPointId)
+    {
+      // d_kPointIds is ascending (built from a std::map), so binary search
+      const std::vector<basis::kpoint::KPointId>::const_iterator itKPointId =
+        std::lower_bound(d_kPointIds.begin(), d_kPointIds.end(), kPointId);
+      utils::throwException<utils::InvalidArgument>(
+        itKPointId != d_kPointIds.end() && *itKPointId == kPointId,
+        "ElectrostaticLocalFE::activateKpt: this object does not hold that "
+        "k-point.");
+      d_currentKPointIndex = itKPointId - d_kPointIds.begin();
+    }
+
+    template <typename ValueTypeBasisData,
+              typename ValueTypeBasisCoeff,
+              typename ValueTypeWaveFnBasisData,
+              typename ValueTypeWaveFnCoeff,
+              utils::MemorySpace memorySpace,
+              size_type          dim>
+    void
+    ElectrostaticLocalFE<ValueTypeBasisData,
+                         ValueTypeBasisCoeff,
+                         ValueTypeWaveFnBasisData,
+                         ValueTypeWaveFnCoeff,
+                         memorySpace,
                          dim>::getLocal(Storage &cellWiseStorage) const
     {
       // add the correction quadValuesCOntainer for potential to
@@ -2400,13 +2592,13 @@ namespace dftefe
       utils::MemoryTransfer<memorySpace, memorySpaceHost> memoryTransfer;
 
       memoryTransfer.copy(d_scratchPotHamQuad->nEntries(),
-                          d_potentialHamQuadMemspace->data(),
+                          d_potentialHamQuadMemspace[0].data(),
                           d_scratchPotHamQuad->data());
 
-      d_feBasisOpHamiltonian->computeFEMatrices(
+      d_feBasisOpHamiltonian[d_currentKPointIndex]->computeFEMatrices(
         basis::realspace::LinearLocalOp::IDENTITY,
         basis::realspace::VectorMathOp::MULT,
-        std::vector{*d_potentialHamQuadMemspace},
+        d_potentialHamQuadMemspace,
         basis::realspace::VectorMathOp::MULT,
         basis::realspace::LinearLocalOp::IDENTITY,
         d_elecCellWiseTemp,
@@ -3227,10 +3419,10 @@ namespace dftefe
       utils::MemoryTransfer<memorySpace, memorySpaceHost> memoryTransfer;
 
       memoryTransfer.copy(d_scratchPotHamQuad->nEntries(),
-                          d_potentialHamQuadMemspace->data(),
+                          d_potentialHamQuadMemspace[0].data(),
                           d_scratchPotHamQuad->data());
 
-      return {*d_potentialHamQuadMemspace};
+      return d_potentialHamQuadMemspace;
     }
 
     template <typename ValueTypeBasisData,
