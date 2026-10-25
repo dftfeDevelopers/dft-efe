@@ -324,25 +324,14 @@ namespace dftefe
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    std::vector<utils::Point>
-    RDM1Mixing<ValueType, memorySpace>::getkPointCoords() const
+    const std::map<basis::kpoint::KPointId, basis::kpoint::KPointData> &
+    RDM1Mixing<ValueType, memorySpace>::getKPoints() const
     {
       auto rdm1 = d_rdm1Ptr.lock();
       dftefe::utils::throwException<dftefe::utils::LogicError>(
         rdm1 != nullptr,
-        "RDM1Mixing::getkPointCoords(): stored RDM1 has expired or setRDM1() was not called.");
-      return rdm1->getkPointCoords();
-    }
-
-    template <typename ValueType, dftefe::utils::MemorySpace memorySpace>
-    std::vector<double>
-    RDM1Mixing<ValueType, memorySpace>::getkPointWeights() const
-    {
-      auto rdm1 = d_rdm1Ptr.lock();
-      dftefe::utils::throwException<dftefe::utils::LogicError>(
-        rdm1 != nullptr,
-        "RDM1Mixing::getkPointWeights(): stored RDM1 has expired or setRDM1() was not called.");
-      return rdm1->getkPointWeights();
+        "RDM1Mixing::getKPoints(): stored RDM1 has expired or setRDM1() was not called.");
+      return rdm1->getKPoints();
     }
 
     template <typename ValueType, dftefe::utils::MemorySpace memorySpace>

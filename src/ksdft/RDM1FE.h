@@ -135,17 +135,16 @@ namespace dftefe
       size_type
       getnKSOrbs() const;
 
-      std::vector<utils::Point>
-      getkPointCoords() const;
-
-      std::vector<double>
-      getkPointWeights() const;
+      const std::map<basis::kpoint::KPointId, basis::kpoint::KPointData> &
+      getKPoints() const;
 
       std::unique_ptr<RDM1<ValueType, memorySpace>>
       clone() const;
 
-      std::shared_ptr<
-        const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+      const std::map<
+        basis::kpoint::KPointId,
+        std::shared_ptr<
+          const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>> &
       getFEBasisDataStorage() const;
 
       const basis::FEBasisManager<ValueTypeBasisCoeff,

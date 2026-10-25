@@ -157,10 +157,8 @@ namespace dftefe
       isSOC() const override;
       size_type
       getnKSOrbs() const override;
-      std::vector<utils::Point>
-      getkPointCoords() const override;
-      std::vector<double>
-      getkPointWeights() const override;
+      const std::map<basis::kpoint::KPointId, basis::kpoint::KPointData> &
+      getKPoints() const override;
       std::unique_ptr<RDM1<ValueType, memorySpace>>
       clone() const override;
 

@@ -33,6 +33,7 @@
 #include <unordered_map>
 #include <functional>
 #include <memory>
+#include <map>
 
 #include <utils/MemoryStorage.h>
 #include <utils/TypeConfig.h>
@@ -40,6 +41,7 @@
 #include <ksdft/KSAttributes.h>
 #include <linearAlgebra/MultiVector.h>
 #include <quadrature/QuadratureValuesContainer.h>
+#include <basis/ReciprocalLattice.h>
 
 namespace dftefe
 {
@@ -98,11 +100,9 @@ namespace dftefe
       virtual size_type
       getnKSOrbs() const = 0;
 
-      virtual std::vector<utils::Point>
-      getkPointCoords() const = 0;
-
-      virtual std::vector<double>
-      getkPointWeights() const = 0;
+      virtual const std::map<basis::kpoint::KPointId,
+                             basis::kpoint::KPointData> &
+      getKPoints() const = 0;
 
       virtual std::unique_ptr<RDM1<ValueType, memorySpace>>
       clone() const = 0;

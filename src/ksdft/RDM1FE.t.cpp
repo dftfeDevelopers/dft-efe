@@ -140,37 +140,11 @@ namespace dftefe
               typename ValueTypeBasisCoeff,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
-    std::vector<utils::Point>
+    const std::map<basis::kpoint::KPointId, basis::kpoint::KPointData> &
     RDM1FE<ValueTypeBasisData, ValueTypeBasisCoeff, memorySpace, dim>::
-      getkPointCoords() const
+      getKPoints() const
     {
-      std::vector<utils::Point> kPointCoords(d_kPoints.size(),
-                                             utils::Point((size_type)dim, 0.0));
-      size_type                 iKPtLocal = 0;
-      for (const auto &kv : d_kPoints)
-        {
-          kPointCoords[iKPtLocal] = kv.second.coord;
-          iKPtLocal++;
-        }
-      return kPointCoords;
-    }
-
-    template <typename ValueTypeBasisData,
-              typename ValueTypeBasisCoeff,
-              dftefe::utils::MemorySpace memorySpace,
-              size_type                  dim>
-    std::vector<double>
-    RDM1FE<ValueTypeBasisData, ValueTypeBasisCoeff, memorySpace, dim>::
-      getkPointWeights() const
-    {
-      std::vector<double> kPointWeights(d_kPoints.size(), 0.0);
-      size_type           iKPtLocal = 0;
-      for (const auto &kv : d_kPoints)
-        {
-          kPointWeights[iKPtLocal] = kv.second.weight;
-          iKPtLocal++;
-        }
-      return kPointWeights;
+      return d_kPoints;
     }
 
     template <typename ValueTypeBasisData,
@@ -513,12 +487,14 @@ namespace dftefe
               typename ValueTypeBasisCoeff,
               dftefe::utils::MemorySpace memorySpace,
               size_type                  dim>
-    std::shared_ptr<
-      const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>
+    const std::map<
+      basis::kpoint::KPointId,
+      std::shared_ptr<
+        const basis::FEBasisDataStorage<ValueTypeBasisData, memorySpace>>> &
     RDM1FE<ValueTypeBasisData, ValueTypeBasisCoeff, memorySpace, dim>::
       getFEBasisDataStorage() const
     {
-      return d_feBasisDataStorage.begin()->second;
+      return d_feBasisDataStorage;
     }
 
     template <typename ValueTypeBasisData,

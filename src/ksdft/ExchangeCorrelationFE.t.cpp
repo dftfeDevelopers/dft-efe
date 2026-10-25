@@ -213,10 +213,8 @@ namespace dftefe
         "ExchangeCorrelationFE::reinitBasis: could not resolve RDM1 to RDM1FE. "
         "Pass an RDM1FE or an RDM1Mixing wrapping one.");
 
-      // the ctor fixed which storage this instance projects onto; the RDM1 must
-      // agree, or V_xc would be assembled on a different basis than the density
       utils::throwException<utils::InvalidArgument>(
-        rdm1FEPtr->getFEBasisDataStorage() == d_feBasisDataStorage[0],
+        rdm1FEPtr->getFEBasisDataStorage() == feBasisDataStorage,
         "ExchangeCorrelationFE::reinitBasis: the RDM1's FEBasisDataStorage is not "
         "the one this ExchangeCorrelationFE was constructed with.");
 
@@ -315,6 +313,13 @@ namespace dftefe
             }
           else
             {
+              // V_xc is held on slot 0's quadrature and projected with every
+              // slot's FEBasisOperations
+              utils::throwException<utils::InvalidArgument>(
+                d_feBasisDataStorage[iKPtLocal]->getQuadratureRuleContainer() ==
+                  d_feBasisDataStorage[0]->getQuadratureRuleContainer(),
+                "ExchangeCorrelationFE::reinitBasis: the per-k basis-storage "
+                "slots disagree on the QuadratureRuleContainer.");
               utils::throwException<utils::InvalidArgument>(
                 nLocallyOwnedCells == d_numCellDofs.size(),
                 "ExchangeCorrelationFE::reinitBasis: the per-k basis-storage "
@@ -358,11 +363,20 @@ namespace dftefe
             p = dynamic_cast<const RDM1FEType *>(&mix->getRDM1());
         }
       utils::throwException(
-        p != nullptr && p->getFEBasisDataStorage() == d_feBasisDataStorage[0],
+        p != nullptr &&
+          p->getFEBasisDataStorage().size() == d_kPointIds.size(),
         "ExchangeCorrelationFE::reinitField: RDM1 uses a different "
         "FEBasisDataStorage than the one set in reinitBasis(). "
         "Call reinitBasis(rdm1, feBasisDataStorage) whenever the basis is "
         "reinitialised.");
+      for (size_type iKPtLocal = 0; iKPtLocal < d_kPointIds.size(); ++iKPtLocal)
+        utils::throwException(
+          p->getFEBasisDataStorage().at(d_kPointIds[iKPtLocal]) ==
+            d_feBasisDataStorage[iKPtLocal],
+          "ExchangeCorrelationFE::reinitField: RDM1 uses a different "
+          "FEBasisDataStorage than the one set in reinitBasis(). "
+          "Call reinitBasis(rdm1, feBasisDataStorage) whenever the basis is "
+          "reinitialised.");
 
       const ExcFamilyType excFamily =
         d_excManager.getExcSSDFunctionalObj()->getExcFamilyType();
@@ -749,11 +763,20 @@ namespace dftefe
             p = dynamic_cast<const RDM1FEType *>(&mix->getRDM1());
         }
       utils::throwException(
-        p != nullptr && p->getFEBasisDataStorage() == d_feBasisDataStorage[0],
+        p != nullptr &&
+          p->getFEBasisDataStorage().size() == d_kPointIds.size(),
         "ExchangeCorrelationFE::evalEnergy: RDM1 uses a different "
         "FEBasisDataStorage than the one set in reinitBasis(). "
         "Call reinitBasis(rdm1, feBasisDataStorage) whenever the basis is "
         "reinitialised.");
+      for (size_type iKPtLocal = 0; iKPtLocal < d_kPointIds.size(); ++iKPtLocal)
+        utils::throwException(
+          p->getFEBasisDataStorage().at(d_kPointIds[iKPtLocal]) ==
+            d_feBasisDataStorage[iKPtLocal],
+          "ExchangeCorrelationFE::evalEnergy: RDM1 uses a different "
+          "FEBasisDataStorage than the one set in reinitBasis(). "
+          "Call reinitBasis(rdm1, feBasisDataStorage) whenever the basis is "
+          "reinitialised.");
 
       const ExcFamilyType excFamily =
         d_excManager.getExcSSDFunctionalObj()->getExcFamilyType();

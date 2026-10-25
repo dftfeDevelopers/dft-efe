@@ -441,7 +441,7 @@ namespace dftefe
                           ksdft::LinearEigenSolverDefaults::ILL_COND_TOL,
                           kohnShamWaveFunctions.getMPIPatternP2P(),
                           kohnShamWaveFunctions.getLinAlgOpContext());
-          d_pTotal.registerStart("Reinit CHFSI");
+          d_pTotal.registerEnd("Reinit CHFSI");
           d_p.registerEnd("Reinit CHFSI");
 
           // do chebyshev filetered eigensolve
@@ -579,7 +579,9 @@ namespace dftefe
       d_chebyPolyScalingFactor        = 1.0;
       d_keepChebyshevPolynomialDegree = false;
 
-      d_p.print();
+      // one call is now one pass at one k; d_pTotal holds the same sections
+      // summed over all calls
+      // d_p.print();
       return returnValue;
     }
 

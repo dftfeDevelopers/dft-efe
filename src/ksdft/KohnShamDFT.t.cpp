@@ -445,7 +445,6 @@ namespace dftefe
         std::shared_ptr<const basis::PeriodicImageAtomGenerator>
           imageAtomGenerator)
       : d_feBMWaveFn(feBMWaveFn)
-      , d_kPoints(kPoints)
       , d_evaluateEnergyEverySCF(evaluateEnergyEverySCF)
       , d_numMaxSCFIter(maxSCFIter)
       , d_MContext(MContext)
@@ -1016,7 +1015,6 @@ namespace dftefe
         std::shared_ptr<const basis::PeriodicImageAtomGenerator>
           imageAtomGenerator)
       : d_feBMWaveFn(feBMWaveFn)
-      , d_kPoints(kPoints)
       , d_evaluateEnergyEverySCF(evaluateEnergyEverySCF)
       , d_numMaxSCFIter(maxSCFIter)
       , d_MContext(MContext)
@@ -1585,7 +1583,6 @@ namespace dftefe
         std::shared_ptr<const basis::PeriodicImageAtomGenerator>
           imageAtomGenerator)
       : d_feBMWaveFn(feBMWaveFn)
-      , d_kPoints(kPoints)
       , d_evaluateEnergyEverySCF(evaluateEnergyEverySCF)
       // , d_densityInQuadValues(electronChargeDensityInput)
       // , d_densityResidualQuadValues(electronChargeDensityInput)
@@ -2218,7 +2215,6 @@ namespace dftefe
         std::shared_ptr<const basis::PeriodicImageAtomGenerator>
           imageAtomGenerator)
       : d_feBMWaveFn(feBMWaveFn)
-      , d_kPoints(kPoints)
       , d_evaluateEnergyEverySCF(evaluateEnergyEverySCF)
       , d_numMaxSCFIter(maxSCFIter)
       , d_MContext(MContext)
@@ -2870,7 +2866,6 @@ namespace dftefe
         std::shared_ptr<const basis::PeriodicImageAtomGenerator>
           imageAtomGenerator)
       : d_feBMWaveFn(feBMWaveFn)
-      , d_kPoints(kPoints)
       , d_evaluateEnergyEverySCF(evaluateEnergyEverySCF)
       , d_numMaxSCFIter(maxSCFIter)
       , d_MContext(MContext)
@@ -3724,10 +3719,10 @@ namespace dftefe
           const size_type numSpacesS =
             (d_spinMode == SpinMode::Unpolarized) ? 1 : 2;
           std::map<basis::kpoint::KPointId, bool> isConverged =
-            basis::kpoint::sameForEveryKPoint(d_kPoints, false);
+            basis::kpoint::sameForEveryKPoint(d_rdm1Spectral->getKPoints(), false);
           std::map<basis::kpoint::KPointId, std::vector<RealType>> eigSolveResNorm =
             basis::kpoint::sameForEveryKPoint(
-              d_kPoints,
+              d_rdm1Spectral->getKPoints(),
               std::vector<RealType>(numSpacesS * d_numWantedEigenvalues, 0.0));
           bool isAllConverged = false;
 
@@ -3740,7 +3735,7 @@ namespace dftefe
                iPass++)
             {
               d_rootCout << "Chebyshev Filter Pass: [" << iPass << "]\n";
-              for (const auto &kPoint : d_kPoints)
+              for (const auto &kPoint : d_rdm1Spectral->getKPoints())
                 {
                   if (iPass > 0 && isConverged.at(kPoint.first))
                     continue;
@@ -3748,14 +3743,9 @@ namespace dftefe
                   d_hamitonianOperator->activateKpt(kPoint.first);
                   d_ksEigSolve->activateKpt(kPoint.first);
 
-                  // reinit the chfsi bounds from this k's eigenvalues
-                  if (iPass > 0)
-                    d_ksEigSolve->reinitBounds(
-                      d_kohnShamEnergies.at(kPoint.first)[0],
-                      d_kohnShamEnergies.at(
-                        kPoint.first)[numSpacesS * d_numWantedEigenvalues - 1],
-                      true);
-                  else if (scfIter > 0)
+                  // reinit the chfsi bounds from this k's eigenvalues; the top
+                  // is the max over spins, on every pass
+                  if (iPass > 0 || scfIter > 0)
                     {
                       RealType topEig = d_kohnShamEnergies.at(
                         kPoint.first)[d_numWantedEigenvalues - 1];
@@ -3766,7 +3756,9 @@ namespace dftefe
                             kPoint.first)[(iSpin + 1) * d_numWantedEigenvalues -
                                           1]);
                       d_ksEigSolve->reinitBounds(
-                        d_kohnShamEnergies.at(kPoint.first)[0], topEig, false);
+                        d_kohnShamEnergies.at(kPoint.first)[0],
+                        topEig,
+                        iPass > 0);
                     }
 
                   if (scfIter == 0 && iPass == 0 &&
@@ -3815,7 +3807,7 @@ namespace dftefe
                   Constants::BOLTZMANN_CONST_HARTREE,
                   d_smearingTemperature,
                   d_kohnShamEnergies.begin()->second[initialGuessIdx],
-                  d_kPoints);
+                  d_rdm1Spectral->getKPoints());
 
               linearAlgebra::BisectionSolver<double> bisectionSolver(
                 BisectionSolverDefaults::MAX_ITER,
@@ -3867,7 +3859,7 @@ namespace dftefe
                          << "\n";
 
               isAllConverged = true;
-              for (const auto &kPoint : d_kPoints)
+              for (const auto &kPoint : d_rdm1Spectral->getKPoints())
                 {
                   // a converged k is tested again: the new mu can occupy one
                   // of its states that was not checked before
@@ -3897,7 +3889,7 @@ namespace dftefe
                   isAllConverged =
                     isAllConverged && isConverged.at(kPoint.first);
 
-                  if (d_kPoints.size() > 1)
+                  if (d_rdm1Spectral->getKPoints().size() > 1)
                     d_rootCout << "k-point " << (size_type)kPoint.first
                                << ", weight " << kPoint.second.weight << "\n";
                   std::ostream &          os       = d_rootCout.getOStream();
@@ -4135,7 +4127,7 @@ namespace dftefe
                 (d_spinMode == SpinMode::Unpolarized) ? (RealType)2 :
                                                         (RealType)1;
               RealType bandEnergy = 0;
-              for (const auto &kPoint : d_kPoints)
+              for (const auto &kPoint : d_rdm1Spectral->getKPoints())
                 for (size_type i = 0; i < s.occupancies.at(kPoint.first).size();
                      i++)
                   {
@@ -4153,7 +4145,7 @@ namespace dftefe
               d_groundStateEnergy = totalEnergy;
 
               RealType entEnergy = 0;
-              for (const auto &kPoint : d_kPoints)
+              for (const auto &kPoint : d_rdm1Spectral->getKPoints())
                 entEnergy +=
                   kPoint.second.weight *
                   KohnShamDFTInternal::computeEntropicEnergy(
@@ -4281,7 +4273,7 @@ namespace dftefe
           const RealType bandEnergySpinFactor =
             (d_spinMode == SpinMode::Unpolarized) ? (RealType)2 : (RealType)1;
           RealType bandEnergy = 0;
-          for (const auto &kPoint : d_kPoints)
+          for (const auto &kPoint : d_rdm1Spectral->getKPoints())
             for (size_type i = 0; i < sp.occupancies.at(kPoint.first).size();
                  i++)
               {
@@ -4299,7 +4291,7 @@ namespace dftefe
           d_groundStateEnergy = totalEnergy;
 
           RealType entEnergy = 0;
-          for (const auto &kPoint : d_kPoints)
+          for (const auto &kPoint : d_rdm1Spectral->getKPoints())
             entEnergy += kPoint.second.weight *
                          KohnShamDFTInternal::computeEntropicEnergy(
                            sp.occupancies.at(kPoint.first),

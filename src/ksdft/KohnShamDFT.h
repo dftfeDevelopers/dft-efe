@@ -705,7 +705,6 @@ namespace dftefe
                                                     memorySpace,
                                                     dim>>>
                                                        d_feBMWaveFn;
-      std::map<basis::kpoint::KPointId, basis::kpoint::KPointData>     d_kPoints;
       std::map<basis::kpoint::KPointId, std::vector<RealType>> d_kohnShamEnergies;
       utils::ConditionalOStream                        d_rootCout;
       bool                                             d_evaluateEnergyEverySCF;
